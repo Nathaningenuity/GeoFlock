@@ -10804,7 +10804,10 @@ const BROWN="#3f9e4a";
 const CATS=[
  ["seas","Seas & gulfs","#2f7fc4","poly"],["ranges","Mountain ranges","#8d5a2b","poly"],["peaks","Peaks","#2b2b2b","pt"],["volcanoes","Volcanoes","#d9480f","pt"],
  ["deserts","Deserts","#e2ad2c","poly"],["forests","Forests","#2f8a3e","poly"],["rivers","Rivers & waterfalls","#1c64c8","line"],["lakes","Lakes","#4aa3e0","poly"],
- ["groups","Island chains","#c2259a","poly"],["islands","Islands","#e0569f","poly"],["peninsulas","Peninsulas","#2f9e95","poly"]];
+ ["groups","Island chains","#c2259a","poly"],["islands","Islands","#e0569f","poly"],["peninsulas","Peninsulas","#2f9e95","poly"],
+ ["countries","Countries","#5b6b82","poly"],["capitals","Capitals","#7a3fb8","pt"],["cities","Major cities","#c0392b","pt"]];
+/* countries, capitals and cities: hundreds of them, so the quiz evens them out against the landforms (see catFactor) */
+const PLACES=new Set(["countries","capitals","cities"]);
 const CAT=Object.fromEntries(CATS.map(c=>[c[0],{key:c[0],label:c[1],col:c[2],kind:c[3]}]));
 const REGIONS=["Africa","Asia","Europe","North America","South America","Oceania","Antarctica"];
 const LEVELS=[[1,"Easy"],[2,"Medium"],[3,"Hard"]];
@@ -10835,17 +10838,31 @@ function build(){if(ITEMS)return ITEMS;ITEMS=[];const P0={proj:LFP},path=d3.geoP
       o.d=path(g);if(!o.d)return;o.b=path.bounds(g);const bp=bigPiece(o.d);if(it.geom.t==="line"){const c=path.centroid(g);o.lx=c[0];o.ly=c[1]}if(bp){if(it.geom.t!=="line"){o.lx=bp.c[0];o.ly=bp.c[1]}if(o.b[1][0]-o.b[0][0]>1000){o.b=bp.b;if(it.geom.t==="line"){o.lx=bp.c[0];o.ly=bp.c[1]}}}
       if(it.cat==="seas"){try{const ll=d3.geoCentroid(g);o.region=o.region||regionOf(ll[0],ll[1]);o.basin=basinOf(it.name,ll[0],ll[1]);if(!o.size)o.size={area_km2:Math.round(d3.geoArea(g)*6371*6371/1000)*1000}}catch(e){}}}
     if(!o.region&&it.geom)o.region="";ITEMS.push(o)}catch(e){}});
+  try{buildPlaces(path)}catch(e){console.error(e)}
   ITEMS.forEach(o=>{BYID[o.id]=o;});{const gn=new Set(ITEMS.filter(o=>o.cat==="groups").map(o=>norm0(o.name)));ITEMS.filter(o=>o.cat==="islands"&&!o.group&&o.quiz!==false&&!gn.has(norm0(o.name))).forEach(o=>{const c=Object.assign({},o,{id:o.id+"__c",cat:"groups",single:1});ITEMS.push(c);BYID[c.id]=c})}
   try{if(!FILL_D&&LANDFORMS.filler)FILL_D=path({type:"MultiPolygon",coordinates:LANDFORMS.filler})}catch(e){}ITEMS.forEach(o=>{if(o.cat==="islands"){const G=o.group&&BYID[o.group];if(G&&!o.groupName)o.groupName=G.name;if(!o.fact&&G&&G.fact&&o.groupName&&!/\bislands\b|archipelago|chain/i.test(G.fact))o.fact=G.fact;if(o.groupName&&o.groupName===o.name)o.groupName=""}});ITEMS.forEach(o=>{if(o.px){o.lx=o.px[0];o.ly=o.px[1];o.b=[[o.px[0]-1,o.px[1]-1],[o.px[0]+1,o.px[1]+1]]}
     if(!o.b&&o.d){try{const t=document.createElementNS("http://www.w3.org/2000/svg","path");t.setAttribute("d",o.d);o._needB=1}catch(e){}}
     o.n=norm(o.name);o.alts=[o.n].concat((o.alt||[]).map(norm)).filter(Boolean);o.fulls=[o.name].concat(o.alt||[]).map(norm0).filter(Boolean)});
   return ITEMS}
+/* countries from the map's own shapes; capitals and cities from the World Maps city list ([name, size tier 0-4, capital?, x, y] in this same map space) */
+function buildPlaces(path){const pop=c=>(typeof COUNTRY_POPULATION!=="undefined"&&COUNTRY_POPULATION[c])||0,common=c=>{try{return COMMON_MAP_CODES.has(c)}catch(e){return false}};
+  const ctier=c=>common(c)?1:pop(c)>=15e6?2:3,alias=(T,c)=>{try{return(T[c]||[]).slice()}catch(e){return[]}};
+  const capOf={};(typeof COUNTRIES!=="undefined"?COUNTRIES:[]).forEach(c=>(c.caps||[]).forEach(n=>{capOf[norm0(n)]=c}));
+  const CITY=(typeof ALLMAPS_CITIES!=="undefined"?ALLMAPS_CITIES:[]),capXY={};
+  CITY.forEach(([n,t,cap,x,y],i)=>{const ll=LFP.invert([x,y]);if(!ll)return;const C=cap?capOf[norm0(n)]:null,region=regionOf(ll[0],ll[1]);
+    if(C){capXY[C.c]=ll;ITEMS.push({id:"cap_"+C.c,cat:"capitals",name:n,alt:alias(typeof CAP_ALIASES!=="undefined"?CAP_ALIASES:{},C.c),tier:(typeof COMMON_CAPITAL_CODES!=="undefined"&&COMMON_CAPITAL_CODES.has&&COMMON_CAPITAL_CODES.has(C.c))?1:ctier(C.c),region,px:[x,y],countries:[C.c],fact:"Capital of "+C.n})}
+    else if(!cap)ITEMS.push({id:"city_"+i,cat:"cities",name:n,alt:[],tier:t<=1?1:t===2?2:3,region,px:[x,y],ll,fact:""})});
+  const seen=new Set();(typeof projFeatures==="function"?projFeatures():[]).forEach(f=>{const c=f.properties&&f.properties.c,C=c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[c];if(!C||seen.has(c)||!f.geometry)return;seen.add(c);
+    const d=path(f);if(!d)return;const bp=bigPiece(d),ll=capXY[c]||d3.geoCentroid(f),cap=(C.caps||[])[0];
+    ITEMS.push({id:"cty_"+c,cat:"countries",name:C.n,alt:alias(typeof COUNTRY_ALIASES!=="undefined"?COUNTRY_ALIASES:{},c),tier:ctier(c),region:regionOf(ll[0],ll[1]),d,b:bp?bp.b:path.bounds(f),lx:bp?bp.c[0]:0,ly:bp?bp.c[1]:0,countries:[c],fact:cap?"Capital: "+cap:"",geo:f})})}
+/* a city's country, found the first time it is needed */
+function cityCountry(o){if(o.cat!=="cities"||o.countries)return;o.countries=[];try{const f=projFeatures().find(f=>f.geometry&&d3.geoContains(f,o.ll));if(f&&f.properties.c){o.countries=[f.properties.c];const C=COUNTRY_BY_CODE[f.properties.c];if(C)o.fact="A city in "+C.n}}catch(e){}}
 /* ---------- answer matching ---------- */
 const STRIP=/\b(the|mount|mt|mountains?|range|lake|river|rio|desert|forest|rainforest|islands?|isles?|island group|archipelago|peninsula|sea|ocean|gulf|bay|of|straits?|channel|sound|passage|falls|waterfalls?|volcano|peak|highlands?|de|la|el|del|do|da)\b/g;
 function norm0(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[ʻ’'`.]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim()}
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[ʻ’'`.]/g,"").replace(/[^a-z0-9 ]/g," ").replace(STRIP," ").replace(/\s+/g," ").trim()}
 function lev(a,b){if(Math.abs(a.length-b.length)>2)return 9;const m=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=m[0];m[0]=i;for(let j=1;j<=b.length;j++){const t=m[j];m[j]=Math.min(m[j]+1,m[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return m[b.length]}
-const SING={seas:"sea or gulf",ranges:"mountain range",peaks:"peak",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula"};const sing=c=>SING[c]||c;const nth=n=>n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]);
+const SING={countries:"country",capitals:"capital city",cities:"city",seas:"sea or gulf",ranges:"mountain range",peaks:"peak",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula"};const sing=c=>SING[c]||c;const nth=n=>n+(["th","st","nd","rd"][(n%100>10&&n%100<14)?0:(n%10<4?n%10:0)]);
 let LOOSE=false;function exact(input,o){const s=norm(input);return!!s&&o.alts.includes(s)}
 function matches(input,o){const s=norm(input);if(!s)return false;return o.alts.some(a=>a&&(a===s||(a.length>=5&&s.length>=a.length-1&&lev(a,s)<=(a.length>=9?2:1))))}
 /* ---------- filtering ---------- */
@@ -10885,14 +10902,14 @@ function makeMap(host,opt){opt=opt||{};host.innerHTML='<div class="lf-map"><svg 
 function rescale(M){const k=M.k;M.z.style.setProperty("--ps",(1/Math.pow(k,.85)).toFixed(4));const Lb=M.z.querySelector(".lf-lab");if(Lb){Lb.style.fontSize=(17/Math.pow(k,.92)).toFixed(3)+"px";Lb.style.strokeWidth=(4/Math.pow(k,.92)).toFixed(3)}clearTimeout(M._dc);M._dc=setTimeout(()=>declutter(M),M._moving?160:40)}
 /* draw items with a style per item: "study" | "hidden" | "target" | "done" | "missed" | "context" | "wrong" */
 function draw(M,items,styleOf,labelOf){M.items=items;const F=M.z.querySelector(".lf-feat"),U=M.z.querySelector(".lf-under"),Lb=M.z.querySelector(".lf-lab");let h="",uh="",lh="";const LS=[];
-  const LYR={seas:0,peninsulas:.5,groups:1,islands:2,deserts:3,forests:3,ranges:3,lakes:4,rivers:5,volcanoes:6,peaks:7},bA=o=>{const b=o.b;return b?(b[1][0]-b[0][0])*(b[1][1]-b[0][1]):0},TOP={target:1,"target-fc":1,sel:1};const ord=items.slice().sort((a,b)=>(LYR[a.cat]||0)-(LYR[b.cat]||0)||(LYR[a.cat]===3?bA(b)-bA(a):0)).sort((a,b)=>(TOP[styleOf(a)]||0)-(TOP[styleOf(b)]||0));
+  const LYR={countries:-1,seas:0,peninsulas:.5,groups:1,islands:2,deserts:3,forests:3,ranges:3,lakes:4,rivers:5,volcanoes:6,peaks:7},bA=o=>{const b=o.b;return b?(b[1][0]-b[0][0])*(b[1][1]-b[0][1]):0},TOP={target:1,"target-fc":1,sel:1};const ord=items.slice().sort((a,b)=>(LYR[a.cat]||0)-(LYR[b.cat]||0)||(LYR[a.cat]===3?bA(b)-bA(a):0)).sort((a,b)=>(TOP[styleOf(a)]||0)-(TOP[styleOf(b)]||0));
   ord.forEach(o=>{const st=styleOf(o);if(!st||st==="none")return;const c=CAT[o.cat],cls="lf-f lf-"+c.kind+" st-"+st;
-    if(o.px){const sym=o.wf?'<rect x="-8" y="-8" width="16" height="16" rx="4" fill="#fff" stroke="var(--fc)" stroke-width="1.6"/><path d="M-5,-4.5 H5" stroke="var(--fc)" stroke-width="1.8" stroke-linecap="round"/><path d="M-3,-4.5 C-3.6,-1 -2.4,2 -3,5 M0,-4.5 C-.6,-1 .6,2 0,5.5 M3,-4.5 C2.4,-1 3.6,2 3,5" fill="none" stroke="var(--fc)" stroke-width="1.5" stroke-linecap="round"/>':o.cat==="volcanoes"?'<path d="M-7,6 L-2,-5 L2,-5 L7,6Z" fill="var(--fc)" stroke="#fff" stroke-width="1.2"/><path d="M-2,-5 C-3,-9 2,-9 0,-12" fill="none" stroke="var(--fc)" stroke-width="1.4"/>':'<path d="M-7,6 L0,-7 L7,6Z" fill="var(--fc)" stroke="#fff" stroke-width="1.2"/>';
+    if(o.px){const sym=o.wf?'<rect x="-8" y="-8" width="16" height="16" rx="4" fill="#fff" stroke="var(--fc)" stroke-width="1.6"/><path d="M-5,-4.5 H5" stroke="var(--fc)" stroke-width="1.8" stroke-linecap="round"/><path d="M-3,-4.5 C-3.6,-1 -2.4,2 -3,5 M0,-4.5 C-.6,-1 .6,2 0,5.5 M3,-4.5 C2.4,-1 3.6,2 3,5" fill="none" stroke="var(--fc)" stroke-width="1.5" stroke-linecap="round"/>':o.cat==="capitals"?'<path d="M0,-5.2 L1.5,-1.7 5.2,-1.6 2.3,0.7 3.3,4.4 0,2.3 -3.3,4.4 -2.3,0.7 -5.2,-1.6 -1.5,-1.7Z" fill="var(--fc)" stroke="#fff" stroke-width=".9"/>':o.cat==="cities"?'<path d="M-2.8,0 a2.8,2.8 0 1,0 5.6,0 a2.8,2.8 0 1,0 -5.6,0Z" fill="var(--fc)" stroke="#fff" stroke-width="1"/>':o.cat==="volcanoes"?'<path d="M-7,6 L-2,-5 L2,-5 L7,6Z" fill="var(--fc)" stroke="#fff" stroke-width="1.2"/><path d="M-2,-5 C-3,-9 2,-9 0,-12" fill="none" stroke="var(--fc)" stroke-width="1.4"/>':'<path d="M-7,6 L0,-7 L7,6Z" fill="var(--fc)" stroke="#fff" stroke-width="1.2"/>';
       h+='<g class="'+cls+' lf-pt" data-id="'+o.id+'" style="--fc:'+c.col+';transform:translate('+o.px[0].toFixed(2)+'px,'+o.px[1].toFixed(2)+'px) scale(var(--ps,1))"><circle r="12" fill="transparent"/>'+sym+'</g>'}
     else if(c.kind==="line"){h+='<g class="'+cls+'" data-id="'+o.id+'" style="--fc:'+c.col+'"><path class="hit" d="'+o.d+'"/><path class="ln" d="'+o.d+'"/></g>'}
     else if(o.cat==="seas")uh+='<path class="'+cls+'" data-id="'+o.id+'" d="'+o.d+'" style="--fc:'+c.col+'"/>';
-    else h+='<path class="'+cls+'" data-id="'+o.id+'" d="'+o.d+'" style="--fc:'+c.col+'"/>';
-    const lab=labelOf&&labelOf(o,st);if(lab)LS.push([labPri(o),'<text x="'+o.lx.toFixed(1)+'" y="'+(o.ly-(o.px?9:0)).toFixed(1)+'" text-anchor="middle" class="lf-t'+(o.cat==="seas"?" sea":"")+'">'+esc(lab)+'</text>'])});
+    else h+='<path class="'+cls+(o.cat==="countries"?" lf-ctry":"")+'" data-id="'+o.id+'" d="'+o.d+'" style="--fc:'+c.col+'"/>';
+    const lab=labelOf&&labelOf(o,st);if(lab)LS.push([labPri(o),'<text x="'+o.lx.toFixed(1)+'" y="'+(o.ly-(o.px?9:0)).toFixed(1)+'" text-anchor="middle" class="lf-t'+(o.cat==="seas"?" sea":"")+(o.cat==="cities"||o.cat==="capitals"?" place":"")+'">'+esc(lab)+'</text>'])});
   LS.sort((a,b)=>a[0]-b[0]);lh=LS.map(x=>x[1]).join("");const tg=items.find(o=>{const st=styleOf(o);return st==="target"||st==="target-fc"});if(tg){const b=tg.px?[[tg.px[0],tg.px[1]],[tg.px[0],tg.px[1]]]:bboxOf(tg,M);if(b&&(tg.px||Math.hypot(b[1][0]-b[0][0],b[1][1]-b[0][1])<24)){const cx=(b[0][0]+b[1][0])/2,cy=(b[0][1]+b[1][1])/2;h+='<g class="lf-ring" style="transform:translate('+cx.toFixed(2)+'px,'+cy.toFixed(2)+'px) scale(var(--ps,1))"><circle r="26"/></g>'}}
   {const fc=items.some(o=>o.cat==="islands")?CAT.islands.col:items.some(o=>o.cat==="groups")?CAT.groups.col:null;if(fc&&FILL_D)h='<path class="lf-filler" d="'+FILL_D+'" style="--fc:'+fc+'"/>'+h}
   F.innerHTML=h;U.innerHTML=uh;Lb.innerHTML=lh;rescale(M)}
@@ -10934,19 +10951,19 @@ function groupSel(){return ""}
 function groupSelOld(key,allowAll){key=key||"group";build();const gs=[...new Set(ITEMS.filter(o=>o.cat==="islands").map(o=>o.group))].map(g=>BYID[g]).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name));if(!gs.length)return"";if(allowAll){if(S[key]&&!gs.some(g=>g.id===S[key]))S[key]=""}else if(!S[key]||!gs.some(g=>g.id===S[key]))S[key]=gs[0].id;
   return '<label>Island group <select data-f="'+key+'">'+(allowAll?'<option value="">All island groups</option>':'')+gs.map(g=>'<option value="'+g.id+'"'+(S[key]===g.id?" selected":"")+'>'+esc(g.name)+'</option>').join("")+'</select></label>'}
 function wireFilters(root){root.querySelectorAll(".lf-filters select").forEach(s=>s.onchange=()=>{const f=s.dataset.f;S[f]=s.value;if(f==="studyGroup"&&s.value)S._flyG=1;render()});root.querySelectorAll("[data-lfr]").forEach(b=>b.onclick=()=>{S.region=b.dataset.lfr;S._flyR=1;render()});root.querySelectorAll("[data-lfl]").forEach(b=>b.onclick=()=>{S.level=+b.dataset.lfl;render()});root.querySelectorAll("[data-ans]").forEach(b=>b.onclick=()=>{S.ans=b.dataset.ans;render()})}
-const hoverCard=o=>'<b>'+esc(o.name)+'</b>'+(o.cat==="islands"&&o.groupName?'<span class="lf-in-grp">Part of '+esc(o.groupName)+'</span>':'')+'<span style="color:'+CAT[o.cat].col+'">'+(s=>s[0].toUpperCase()+s.slice(1))(o.wf?"waterfall":sing(o.cat))+(sizeTxt(o)?" · "+sizeTxt(o):"")+'</span>'+(o.members&&o.members.length?'<em>On this level it includes '+esc(o.members.slice(0,6).join(", "))+(o.members.length>6?' and '+(o.members.length-6)+' more':'')+'</em>':'')+(o.fact?'<em>'+esc(o.fact)+'</em>':'');
+const hoverCard=o=>(cityCountry(o),'')+'<b>'+esc(o.name)+'</b>'+(o.cat==="islands"&&o.groupName?'<span class="lf-in-grp">Part of '+esc(o.groupName)+'</span>':'')+'<span style="color:'+CAT[o.cat].col+'">'+(s=>s[0].toUpperCase()+s.slice(1))(o.wf?"waterfall":sing(o.cat))+(sizeTxt(o)?" · "+sizeTxt(o):"")+'</span>'+(o.members&&o.members.length?'<em>On this level it includes '+esc(o.members.slice(0,6).join(", "))+(o.members.length>6?' and '+(o.members.length-6)+' more':'')+'</em>':'')+(o.fact?'<em>'+esc(o.fact)+'</em>':'');
 /* ---------- STUDY ---------- */
 function renderStudy(body){const usesIsl=S.cats.includes("islands");S.labels=S.labels||3;
   body.innerHTML=filters('<div class="lf-find"><input type="search" placeholder="Search for a landform…" aria-label="Search for a landform"><div class="lf-sugg"></div></div>'+'<label class="switch lf-relief"><input type="checkbox"'+(S.relief?" checked":"")+'><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">Relief underneath</span></label>')+chips(S.cats,true,null,true,"")+'<div class="lf-stage"><div class="lf-mapbox"></div><div class="lf-card" hidden></div><label class="lf-labctl switch"><input type="checkbox"'+(S.labOff?"":" checked")+'><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">Labels</span></label><button type="button" class="lf-quizme">◎ Quiz myself</button></div>';
   wireChips(body,true,()=>S.cats,a=>S.cats=a);wireFilters(body);
   body.querySelector(".lf-relief input").onchange=e=>{S.relief=e.target.checked;render()};
   body.querySelector(".lf-quizme").onclick=()=>{S.mode="quiz";S.quizType="identify";S.quizCats=S.cats.slice();render()};
-  const items=pool(S.cats.filter(c=>c!=="islands"&&c!=="seas"),S.region,S.level,"").concat(pool(S.cats.filter(c=>c==="islands"),S.region,3,"",true)).concat(pool(S.cats.filter(c=>c==="seas"),S.region,S.level,"",true));{const d=dedupeIsl(items);items.length=0;d.forEach(x=>items.push(x))}
+  const items=pool(S.cats.filter(c=>c!=="islands"&&c!=="seas"),S.region,S.level,"").concat(pool(S.cats.filter(c=>c==="islands"),S.region,3,"",true)).concat(pool(S.cats.filter(c=>c==="seas"),S.region,S.level,"",true));{const d=dedupeIsl(items).slice();items.length=0;d.forEach(x=>items.push(x))}
   MAP=makeMap(body.querySelector(".lf-mapbox"),{uid:"s",hover:hoverCard,click:o=>{const card=body.querySelector(".lf-card");if(o){showCard(body,o);card.hidden=false;MAP.z.querySelectorAll(".st-sel").forEach(e=>e.setAttribute("class",e.getAttribute("class").replace(" st-sel","")));const el=MAP.z.querySelector('[data-id="'+o.id+'"]');if(el)el.setAttribute("class",el.getAttribute("class")+" st-sel")}else card.hidden=true}});
   if(S.relief)addRelief(MAP);
   if(KEEPV&&!S._flyG&&!S._flyR)MAP.setT(KEEPV,0);
   const xs=S.cats.includes("seas")?pool(["seas"],S.region,3,"").filter(o=>(o.tier||3)>S.level):[],xset=new Set(xs.map(o=>o.id)),drawn=items.concat(xs);
-  const lab=()=>draw(MAP,drawn,o=>xset.has(o.id)?"context":"study",o=>{if(xset.has(o.id)||S.labOff)return "";return o.name;const lim=Math.min(3,Math.floor((S.labels-1)/2+MAP.k/2.4)+(S.labels>=3?1:0));return o.tier<=lim||S.labels>=5?o.name:""});lab();
+  const lab=()=>draw(MAP,drawn,o=>xset.has(o.id)?"context":"study",o=>{if(xset.has(o.id)||S.labOff||o.cat==="countries")return "";return o.name;const lim=Math.min(3,Math.floor((S.labels-1)/2+MAP.k/2.4)+(S.labels>=3?1:0));return o.tier<=lim||S.labels>=5?o.name:""});lab();
   body.querySelector(".lf-labctl input").onchange=e=>{S.labOff=!e.target.checked;saveS();lab()};
   
   if(usesIsl&&S._flyG&&S.studyGroup&&BYID[S.studyGroup]){const g=BYID[S.studyGroup];setTimeout(()=>flyTo(MAP,[bboxOf(g,MAP)],1.3),30)}
@@ -10957,7 +10974,7 @@ function renderStudy(body){const usesIsl=S.cats.includes("islands");S.labels=S.l
     sg.querySelectorAll("button").forEach(b=>b.onclick=()=>{const o=BYID[b.dataset.id];const go=()=>{const ob=BYID[o.id];flyTo(MAP,[bboxOf(ob,MAP)],3);const bd=document.querySelector("#landformsView .lf-body");showCard(bd,ob);bd.querySelector(".lf-card").hidden=false};
       if(!S.cats.includes(o.cat)||(o.tier||3)>S.level||(S.region!=="all"&&o.region!==S.region)){if(!S.cats.includes(o.cat))S.cats=S.cats.concat(o.cat);S.level=Math.max(S.level,o.tier||3);S.region="all";if(o.cat==="islands")S.studyGroup="";render();setTimeout(go,60);return}go();sg.innerHTML="";inp.value=""})}}
 function addRelief(M){try{const u=blobUrl("b64-reliefAllMaps","image/webp");const sea=M.z.querySelector(".lf-sea");const im=document.createElementNS(NS,"image");im.setAttribute("href",u);im.setAttribute("x","0");im.setAttribute("y","-6.688");im.setAttribute("width","2000");im.setAttribute("height","1014.376");im.setAttribute("preserveAspectRatio","none");im.setAttribute("clip-path","url(#lfClip"+(M.opt.uid||"")+")");sea.after(im);M.host.querySelector(".lf-map").classList.add("lf-relief-on")}catch(e){console.error(e)}}
-function showCard(body,o){const c=CAT[o.cat],card=body.querySelector(".lf-card");if(!card)return;const ct=countriesTxt(o);
+function showCard(body,o){cityCountry(o);const c=CAT[o.cat],card=body.querySelector(".lf-card");if(!card)return;const ct=countriesTxt(o);
   card.innerHTML='<button type="button" class="lf-x" aria-label="Close">×</button><div class="lf-cat" style="--cc:'+c.col+'"><i></i>'+c.label+'</div><h3>'+esc(o.name)+'</h3>'+(o.cat==="islands"&&o.groupName?'<p class="lf-alt">Part of <b>'+esc(o.groupName)+'</b></p>':'')+(o.alt&&o.alt.length?'<p class="lf-alt">Also: '+esc(o.alt.slice(0,3).join(", "))+'</p>':'')+(sizeTxt(o)?'<p class="lf-size">'+sizeTxt(o)+'</p>':'')+(ct?'<p class="lf-ct">'+esc(ct)+'</p>':'')+(o.fact?'<p class="lf-fact">'+esc(o.fact)+'</p>':'')+'<p class="lf-mast">'+(mastered(o.id)?"✓ Mastered":"Get it right 3 times in a quiz to master it")+'</p><button type="button" class="lf-fly">Zoom to it</button>';
   card.querySelector(".lf-fly").onclick=()=>flyTo(MAP,[bboxOf(o,MAP)],2.4);card.querySelector(".lf-x").onclick=()=>card.hidden=true}
 /* ---------- FLASHCARDS ---------- */
@@ -10988,7 +11005,9 @@ function renderQuiz(body){const types=[["identify","Identify: name the highlight
   wireChips(body,true,()=>S.quizCats,a=>S.quizCats=a);wireFilters(body);body.querySelectorAll("[data-alln]").forEach(b=>b.onclick=()=>{S.allN=b.dataset.alln==="all"?"all":+b.dataset.alln;render()});const an=body.querySelector(".lf-allnum");if(an)an.onchange=()=>{const v=Math.round(+an.value);if(v>=5){S.allN=Math.min(999,v);render()}};
   const box=body.querySelector(".lf-quiz");(isAll?quizAll:S.quizType==="click"?quizClick:quizIdentify)(box)}
 function grp(cats){return cats.length===1&&cats[0]==="islands"?S.group:""}
-function pickQs(cats,n){const p=pool(cats,S.region,S.level,grp(cats));const w=o=>{const s=P.seen[o.id];return s?(1+s.w*2)/(1+s.c):2};
+function catFactor(p){const n={};p.forEach(o=>n[o.cat]=(n[o.cat]||0)+1);const ks=Object.keys(n),lf=ks.filter(k=>!PLACES.has(k)),pl=ks.filter(k=>PLACES.has(k));
+  const cap=lf.length?lf.reduce((a,k)=>a+n[k],0)/lf.length:Math.min(...pl.map(k=>n[k]));const f={};ks.forEach(k=>f[k]=PLACES.has(k)?Math.min(1,cap/n[k]):1);return f}
+function pickQs(cats,n){const p=pool(cats,S.region,S.level,grp(cats));const cf=catFactor(p);const w=o=>{const s=P.seen[o.id];return(s?(1+s.w*2)/(1+s.c):2)*cf[o.cat]};
   const out=[],used=new Set();for(let t=0;t<n&&out.length<Math.min(n,p.length);t++){let tot=0;const cand=p.filter(o=>!used.has(o.id));cand.forEach(o=>tot+=w(o));let r=Math.random()*tot;for(const o of cand){r-=w(o);if(r<=0){out.push(o);used.add(o.id);break}}}return{qs:out,pool:p}}
 function finish(box,res,again){const ok=res.filter(r=>r.ok).length;try{if(ok)xpGain(ok,"landforms")}catch(e){}try{gmEvent("round",{score:ok,total:res.length})}catch(e){}
   box.innerHTML='<div class="lf-done"><h3>'+ok+' / '+res.length+'</h3><p>'+(ok===res.length?"Perfect round.":ok>=res.length*.7?"Nicely done.":"Keep going: the ones you missed come back sooner.")+'</p><ul class="lf-res">'+res.map(r=>'<li class="'+(r.ok?"ok":"no")+'"><i style="background:'+CAT[r.o.cat].col+'"></i>'+esc(r.o.name)+(r.ok?"":" <small>"+esc(r.given||"skipped")+"</small>")+'</li>').join("")+'</ul><button type="button" class="lf-btn">Play again</button></div>';box.querySelector(".lf-btn").onclick=again}
@@ -11038,7 +11057,8 @@ function renderSpeed(body){body.innerHTML=filters("")+chips(S.speedCats,true)+'<
   box.innerHTML='<div class="lf-speedstart"><h3>60 seconds. Four choices. As many as you can.</h3><p class="lf-hint">'+p.length+' landforms in play'+(best?' · your best: '+best.n:'')+'</p><button type="button" class="lf-btn big">Start</button></div>';
   box.querySelector(".lf-btn").onclick=()=>{box.innerHTML='<div class="lf-stage"><div class="lf-mapbox"></div><div class="lf-qpanel lf-float"></div></div>';MAP=makeMap(box.querySelector(".lf-mapbox"),{uid:"sp"});const ctx=pool(S.speedCats,"all",3,"");
     let score=0,streak=0,left=60,last=null,over=false;const pnl=box.querySelector(".lf-qpanel");
-    const next=()=>{let o;do{o=p[Math.floor(Math.random()*p.length)]}while(p.length>1&&o===last);last=o;draw(MAP,ctx,x=>x.id===o.id?"target":"context",null);MAP.ctx=1;flyTo(MAP,[bboxOf(o,MAP)],o.cat==="rivers"?1.6:3.2,280);
+    const cf=catFactor(p),tot=p.reduce((a,x)=>a+cf[x.cat],0),rnd=()=>{let r=Math.random()*tot;for(const x of p){r-=cf[x.cat];if(r<=0)return x}return p[p.length-1]};
+    const next=()=>{let o;do{o=rnd()}while(p.length>1&&o===last);last=o;draw(MAP,ctx,x=>x.id===o.id?"target":"context",null);MAP.ctx=1;flyTo(MAP,[bboxOf(o,MAP)],o.cat==="rivers"?1.6:3.2,280);
       const same=p.filter(x=>x.cat===o.cat&&x.id!==o.id),others=(same.length>=3?same:p.filter(x=>x.id!==o.id)).sort(()=>Math.random()-.5).slice(0,3),opts=[o].concat(others).sort(()=>Math.random()-.5);
       pnl.innerHTML='<div class="lf-speedbar"><b class="lf-sc">'+score+'</b><span class="lf-timer'+(left<=10?" low":"")+'">'+left+'s</span>'+(streak>=3?'<span class="lf-streak">🔥 '+streak+'</span>':'')+'</div><h3>What is this?</h3><div class="lf-opts">'+opts.map((x,j)=>'<button type="button" data-id="'+x.id+'"><kbd>'+(j+1)+'</kbd>'+esc(x.name)+'</button>').join("")+'</div>';
       pnl.querySelectorAll(".lf-opts button").forEach(b=>b.onclick=()=>{if(over)return;const ok=b.dataset.id===o.id;mark(o.id,ok);if(ok){score++;streak++}else streak=0;b.classList.add(ok?"ok":"no");pnl.querySelector('.lf-opts [data-id="'+o.id+'"]').classList.add("ok");setTimeout(next,ok?180:650)})};
@@ -11200,6 +11220,10 @@ body.sky-theme .topbar .app-mode-tabs #appModeToursBtn,body.sky-theme .topbar .a
 body.sky-theme .topbar .app-mode-tabs #appModeToursBtn.active{ box-shadow:0 0 0 2px #a99ae6; }
 .gf-logo-home{ cursor:pointer; }
 #landformsView .lf-fc{ position:relative; }
+#landformsView path.lf-ctry.st-study,#landformsView path.lf-ctry.st-context{ fill:#5b6b82; fill-opacity:0; stroke:#56657a; stroke-opacity:.5; stroke-width:.7; vector-effect:non-scaling-stroke; }
+#landformsView path.lf-ctry.st-study:hover,#landformsView path.lf-ctry.st-sel{ fill-opacity:.16; stroke-opacity:.9; }
+#landformsView path.lf-ctry.st-hidden{ fill-opacity:.12; }
+#landformsView .lf-t.place{ font-weight:600; }
 #landformsView path.lf-filler{ fill:var(--fc); fill-opacity:.45; stroke:var(--fc); stroke-opacity:.6; stroke-width:.4; vector-effect:non-scaling-stroke; pointer-events:none; }
 #landformsView path.lf-f.lf-poly[data-id^="pen_"]{ fill-opacity:.28; }
 #landformsView .lf-allmode .lf-f.st-study{ cursor:default; }
