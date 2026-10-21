@@ -7470,6 +7470,28 @@ body:not(.light-theme) .hg-tqbtn{ background:rgba(31,138,125,.15) !important; co
   .globe-host .ps-card.ps-over:not(.ps-free):not([style*="top"]){ top:6px; bottom:auto; }
   .ps-card.ps-over:not(.ps-free):not([style*="top"]){ top:6px; bottom:auto; }
 </style>
+<style id="gf-tighten">
+/* tighter spacing: capital -> country quiz card */
+#quizView .quiz-stage:has(.cap-rev){ gap:12px !important; }
+.stamp-frame.cap-rev{ gap:2px !important; padding:4px 12px 4px !important; margin-bottom:0 !important; }
+.stamp-frame.cap-rev img.cap-rev-img{ margin:0 auto !important; }
+.cap-rev-credit{ margin:2px 0 6px !important; line-height:1.2; }
+.cap-rev-q{ margin:0 !important; line-height:1.2; }
+#quizView .cap-rev ~ .options-grid,#quizView .cap-rev ~ .type-wrap{ margin-top:0 !important; }
+/* country profile: every slide the same height, flag centred and as large as fits, photo captions over the photo */
+.pf-v385 .zoom-track{ aspect-ratio:5/3; max-height:40vh; }
+.pf-v385 .zoom-slide{ height:100%; box-sizing:border-box; }
+.pf-v385 .zoom-slide:not(.zoom-slide-photo):not(.zoom-slide-outline){ padding:8px; }
+.pf-v385 .zoom-slide:not(.zoom-slide-photo):not(.zoom-slide-outline) img{ width:100%; height:100%; max-height:none !important; object-fit:contain; box-shadow:none; }
+.pf-v385 .zoom-slide-photo figure{ position:relative; height:100%; }
+.pf-v385 .zoom-slide-photo img{ height:100% !important; max-height:none !important; object-fit:cover !important; filter:none !important; }
+.pf-v385 .zoom-slide-photo figcaption{ position:absolute; left:0; right:0; bottom:0; padding:22px 12px 8px; border-radius:0 0 12px 12px; color:#fff; background:linear-gradient(transparent,rgba(0,0,0,.6)); text-shadow:0 1px 2px rgba(0,0,0,.5); }
+.pf-v385 .zoom-slide-photo figcaption a{ opacity:.85; }
+.flag-zoom-panel.pf-v385{ gap:10px; }
+.pf-v385 .zoom-dots{ margin-top:-4px; }
+.pf-v385 .flag-zoom-name{ margin-top:0; }
+.pf-v385 .pf-chips{ margin:2px 0 0; }
+</style>
 </head>
 <body>
 <!-- The six main modes live in a bar pinned to the top of the page, with the name on the left and
