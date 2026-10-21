@@ -11330,7 +11330,11 @@ function gfMergeExtra(){if(window._gfExtraDone||typeof GF_EXTRA_PHOTOS==="undefi
   try{const B=have.get("Baikal ice on sunset.jpg"),P=have.get("Eiffel Tower and Pont Alexandre III at night.jpg");if(B!=null&&window.PS_SQ_IMG)PS_SQ_IMG["1,642 m deep"]=B;}catch(e){}
   try{if(typeof PS_CPHOTO!=="undefined")Object.entries(GF_CPHOTO_EXTRA||{}).forEach(([c,arr])=>{const L=PS_CPHOTO[c]||(PS_CPHOTO[c]=[]);arr.forEach(([f,cap])=>{const i=have.get(f);if(i!=null&&!L.some(x=>x[0]===i))L.push([i,cap])})})}catch(e){}CAPPHI=null}
 /* stops that should show a particular photo, chosen when the card is drawn so earlier setup cannot override it */
-const GF_STOP_PHOTO={"geo|France: the most time zones":"Eiffel Tower and Pont Alexandre III at night.jpg"};
+const GF_STOP_PHOTO={"geo|France: the most time zones":"Eiffel Tower and Pont Alexandre III at night.jpg",
+  /* stops about a whole country, where its best-known sight says more than a generic view; topical stops keep their own photo */
+  "geo|Wider than the Moon":"Sydney Opera House and Harbour Bridge Dusk (3) 2019-06-21.jpg","oceania|Wider than the Moon":"Sydney Opera House and Harbour Bridge Dusk (3) 2019-06-21.jpg",
+  "oceania|Australia is most of it":"Sydney Opera House and Harbour Bridge Dusk (3) 2019-06-21.jpg",
+  "samerica|Brazil is half the continent":"Rio de Janeiro - Cristo Redentor 01.jpg"};
 {const _ppF=psPhotoFor;psPhotoFor=function(S){try{const f=ps&&S&&GF_STOP_PHOTO[ps.tour+"|"+S.title];if(f){const p=PS_PHOTO_DATA.find(x=>x&&x.f===f&&x.d);if(p)return p}}catch(e){}return _ppF.apply(this,arguments)}}
 function capPhoto(code){gfMergeExtra();try{if(!CAPPHI){CAPPHI=new Map();PS_PHOTO_DATA.forEach((p,i)=>CAPPHI.set(p.f,i))}const i=CAPPHI.get(CAPPH[code]);if(i==null)return null;const p=PS_PHOTO_DATA[i];if(!p||!p.d)return null;return{src:"data:image/webp;base64,"+p.d,by:p.by||"",lic:p.lic||""}}catch(e){return null}}
 const DIRS=[["c2cap","Country → capital"],["cap2c","Capital → country"],["map2cap","Map → capital"]];
