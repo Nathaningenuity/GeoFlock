@@ -8173,7 +8173,7 @@ function hiRender(){
   const h=[];
   h.push('<div class="hi">');
   // 1. hero: the original pitch, tighter, with the six map covers
-  const MOS=[["geo","Geography"],["pop","Population"],["plates","Tectonics"],["climate","Climate & biomes"],["seas","Oceans"],["hempires","History"]];
+  const MOS=[["geo","Geography"],["pop","Population"],["plates","Tectonics"],["climate","Climate"],["seas","Oceans"],["hempires","History"]];
   const FL=[["F","lags","--mc-flag","flag","Flag quiz",-5],["L","ocations","--mc-map","loc","Find it on the map",3],["O","utlines","--mc-allmaps","outline","Name the shape",-2],["C","apitals","--mc-capital","cap","Capitals quiz",4],["K","nowledge","--mc-trivia","know","Trivia",-3]];
   const thumb=k=>T(()=>k==="hempires"&&TOUR_THUMBS.histmap||TOUR_THUMBS[k])||"";
   h.push('<section class="hi-hero"><div class="hi-pitch">'+
