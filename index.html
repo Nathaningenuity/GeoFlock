@@ -8171,16 +8171,16 @@ function you(){
 function ring(f,lab){const r=26,c=2*Math.PI*r;return '<svg viewBox="0 0 64 64" class="hi-ring" aria-hidden="true"><circle cx="32" cy="32" r="'+r+'" class="hi-ring-bg"/><circle cx="32" cy="32" r="'+r+'" class="hi-ring-fg" stroke-dasharray="'+(c*f).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 32 32)"/><text x="32" y="38" text-anchor="middle">'+esc(lab)+'</text></svg>'}
 
 /* the spinning globe under the tour tiles: the satellite texture drawn onto a turning, tilted sphere */
-let hiGlobeTex=null;
+let hiGlobeTex=null;const HI_T0=performance.now();
 function hiGlobe(cv){
   if(!cv)return;
   const dpr=Math.min(2,window.devicePixelRatio||1),css=cv.getBoundingClientRect().width||500;
   cv.width=cv.height=Math.round(css*dpr);
   let G=null;try{G=new GlobeGL(cv)}catch(e){G=null}
-  if(G){const still=matchMedia("(prefers-reduced-motion: reduce)").matches,N=cv.width;let lam=-1.4,last=0,TX=null;
+  if(G){const still=matchMedia("(prefers-reduced-motion: reduce)").matches,N=cv.width;let last=0,TX=null;
     const frame=t=>{if(!cv.isConnected)return;requestAnimationFrame(frame);if(appMode!=="home"||document.hidden)return;
       if(!TX){const im=T0();if(!im)return;TX=G.texture("relief",im)}
-      const dt=last?Math.min(100,t-last):16;last=t;if(!still)lam-=dt*.00012;
+      const lam=still?-1.4:-1.4-(performance.now()-HI_T0)*.00012;last=t;
       G.draw({tex:TX,cx:N/2,cy:N/2,s:N/2-1,frame:N/2-1,lam0:lam,phi0:.32,roll:0,ocean:[87,151,207],lut:null,space:false,clouds:0})};
     const T0=()=>T(()=>globeImages("relief",()=>{}));
     requestAnimationFrame(frame);return}
@@ -8266,7 +8266,12 @@ function hiRender(){
       '<li><b>Travel the world.</b> The route goes continent by continent: find the countries, then their flags and capitals.</li></ul></details>'+
   '</section>');
   h.push('</div>');
-  v.innerHTML=h.join("");
+  /* the home page is redrawn as photo files arrive; an unchanged page is left alone so the globe and flock never restart */
+  const html=h.join("");if(v._hiHtml===html&&v.querySelector(".hi-bigglobe"))return;v._hiHtml=html;
+  const keepG=v.querySelector(".hi-bigglobe"),keepB=v.querySelector(".hi-birds"),fa=keepB&&keepB.getAnimations()[0],ft=fa?fa.currentTime:null,wt=keepB&&keepB.getCurrentTime?keepB.getCurrentTime():null;
+  v.innerHTML=html;
+  /* when something did change, move the running globe and flock across and carry on from the same moment */
+  {const nG=v.querySelector(".hi-bigglobe"),nB=v.querySelector(".hi-birds");if(keepG&&nG)nG.replaceWith(keepG);if(keepB&&nB){nB.replaceWith(keepB);try{const a=keepB.getAnimations()[0];if(a&&ft!=null)a.currentTime=ft;if(wt!=null)keepB.setCurrentTime(wt)}catch(e){}}}
   // wire
   const $=id=>document.getElementById(id);
   const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
@@ -8279,7 +8284,7 @@ function hiRender(){
   v.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{try{CHALLENGES[+b.dataset.ch][3]()}catch(e){console.error(e)}});
   v.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>hiTour(b.dataset.tour));
   try{gfBrand()}catch(e){}
-  try{hiGlobe(v.querySelector(".hi-globe-c"))}catch(e){console.error(e)}
+  try{const c=v.querySelector(".hi-globe-c");if(c&&!c._hiOn){c._hiOn=1;hiGlobe(c)}}catch(e){console.error(e)}
 }
 renderHome=hiRender;
 try{if(typeof appMode!=="undefined"&&appMode==="home")hiRender()}catch(e){}
