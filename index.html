@@ -11205,6 +11205,7 @@ const CAPPH={"fr": "Eiffel Tower and Pont Alexandre III at night.jpg", "gb": "To
 function gfMergeExtra(){if(window._gfExtraDone||typeof GF_EXTRA_PHOTOS==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;window._gfExtraDone=1;
   const have=new Map(PS_PHOTO_DATA.map((p,i)=>[p.f,i]));GF_EXTRA_PHOTOS.forEach(p=>{if(!have.has(p.f)){have.set(p.f,PS_PHOTO_DATA.length);PS_PHOTO_DATA.push(p)}});
   try{Object.assign(CAPPH,GF_CAPPH_EXTRA||{})}catch(e){}
+  try{(window.GF_PHOTO_SWAP||[]).forEach(r=>{const i=have.get(r.old);if(i==null)return;const p=PS_PHOTO_DATA[i];p.d=r.d;p.by=r.by;p.lic=r.lic;p.page=r.page;delete p._ref})}catch(e){}
   try{if(typeof PS_CPHOTO!=="undefined")Object.entries(GF_CPHOTO_EXTRA||{}).forEach(([c,arr])=>{const L=PS_CPHOTO[c]||(PS_CPHOTO[c]=[]);arr.forEach(([f,cap])=>{const i=have.get(f);if(i!=null&&!L.some(x=>x[0]===i))L.push([i,cap])})})}catch(e){}CAPPHI=null}
 function capPhoto(code){gfMergeExtra();try{if(!CAPPHI){CAPPHI=new Map();PS_PHOTO_DATA.forEach((p,i)=>CAPPHI.set(p.f,i))}const i=CAPPHI.get(CAPPH[code]);if(i==null)return null;const p=PS_PHOTO_DATA[i];if(!p||!p.d)return null;return{src:"data:image/webp;base64,"+p.d,by:p.by||"",lic:p.lic||""}}catch(e){return null}}
 const DIRS=[["c2cap","Country → capital"],["cap2c","Capital → country"],["map2cap","Map → capital"]];
