@@ -7481,6 +7481,9 @@ body:not(.light-theme) .hg-tqbtn{ background:rgba(31,138,125,.15) !important; co
 .hi-bigglobe{ position:absolute; z-index:1; right:7%; bottom:-300px; width:520px; height:520px; padding:0; border:0; border-radius:50%; background:none; cursor:pointer; opacity:.5; transition:opacity .45s ease, transform .45s ease; }
 .hi-bigglobe::after{ content:''; position:absolute; inset:0; border-radius:50%; background:linear-gradient(180deg, transparent 22%, rgba(240,248,252,.92) 72%); transition:opacity .45s ease; pointer-events:none; }
 .hi-bigglobe .hi-globe-c{ display:block; width:100%; height:100%; border-radius:50%; }
+/* light from the upper left: a soft highlight, then the night side */
+.hi-bigglobe::before{ content:''; position:absolute; inset:0; z-index:1; border-radius:50%; pointer-events:none; background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 32%, rgba(8,22,48,0) 52%, rgba(8,22,48,.38) 78%, rgba(4,12,30,.62) 100%); }
+.hi-bigglobe::after{ z-index:2; }
 .hi-bigglobe:hover, .hi-bigglobe:focus-visible{ opacity:1; transform:scale(1.05); }
 .hi-bigglobe:hover::after, .hi-bigglobe:focus-visible::after{ opacity:0; }
 .hi-birds{ position:absolute; z-index:2; left:0; top:0; width:190px; pointer-events:none; fill:#1d3550; opacity:.85; animation:hiFlock 30s linear infinite; }
@@ -8228,7 +8231,7 @@ function hiRender(){
   const h=[];
   h.push('<div class="hi">');
   // 1. hero: the original pitch, tighter, with the six map covers
-  const MOS=[["geo","Geography"],["pop","Population"],["plates","Tectonics"],["climate","Climate"],["seas","Oceans"],["hempires","History"]];
+  const MOS=[["geo","Geography"],["pop","Population"],["plates","Tectonics"],["climate","Climate"],["explorers","Explorers"],["hempires","History"]];
   const FL=[["F","lags","--mc-flag","flag","Flag quiz",-5],["L","ocations","--mc-map","loc","Find it on the map",3],["O","utlines","--mc-allmaps","outline","Name the shape",-2],["C","apitals","--mc-capital","cap","Capitals quiz",4],["K","nowledge","--mc-trivia","know","Trivia",-3]];
   const thumb=k=>T(()=>k==="hempires"&&TOUR_THUMBS.histmap||TOUR_THUMBS[k])||"";
   h.push('<section class="hi-hero"><div class="hi-pitch">'+
