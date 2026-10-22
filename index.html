@@ -11352,7 +11352,7 @@ window.gfMergeExtra=gfMergeExtra;function gfMergeExtra(){if(window._gfExtraDone|
   try{if(typeof PS_CPHOTO!=="undefined")Object.entries(GF_CPHOTO_EXTRA||{}).forEach(([c,arr])=>{const L=PS_CPHOTO[c]||(PS_CPHOTO[c]=[]);arr.forEach(([f,cap])=>{const i=have.get(f);if(i!=null&&!L.some(x=>x[0]===i))L.push([i,cap])})})}catch(e){}CAPPHI=null}
 /* stops that should show a particular photo, chosen when the card is drawn so earlier setup cannot override it */
 const GF_STOP_PHOTO={/* explorers: show the people themselves */
-  "explorers|Columbus, 1492":"Columbus portrait (Casa de Colón).jpg","explorers|Around the world":"Magellan portrait engraving.jpg","explorers|Zheng He’s treasure fleets":"Zheng He statue.jpg",
+  "explorers|Columbus, 1492":"Columbus portrait (Casa de Colón).jpg","explorers|Around the world":"Magellan portrait engraving.jpg",
   "explorers|Marco Polo":"Marco Polo mosaic.jpg","explorers|Captain Cook":"Captain James Cook by Nathaniel Dance.jpg",
   "explorers|Lewis and Clark":"Lewis and Clark statue.jpg","explorers|Livingstone and the Nile":"Livingstone at Manyuema.jpg",
   "geo|France: the most time zones":"Eiffel Tower and Pont Alexandre III at night.jpg",
