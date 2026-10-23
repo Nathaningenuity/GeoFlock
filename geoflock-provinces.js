@@ -110,5 +110,5 @@ const css=document.createElement("style");css.textContent=`
 body.sky-night .pv-tile, body.sky-night .pv-card, body.dark-theme .pv-tile, body.dark-theme .pv-card{ background:rgba(30,34,60,.9); }
 body.sky-night .pv-map, body.dark-theme .pv-map{ background:linear-gradient(#16223a,#101a2e); }`;
 document.head.appendChild(css);
-window.gfProvinces={start:start,LIST:LIST};
+window.gfProvinces={start:start,LIST:LIST,load:load,projFor:projFor};
 })();
