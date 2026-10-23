@@ -9412,7 +9412,7 @@ DG.platebound={title:"How plates meet: four cases",
 function pbSet(svg){const s=svg._s,C=CASES[s.k],t=s.t;
   const k=q(svg,".pb-knob");if(k)k.setAttribute("transform","translate("+f(14+272*t)+",236)");const fl=q(svg,".pb-fill");if(fl)fl.setAttribute("width",f(272*t));
   txt(svg,".pb-sv",(t*4).toFixed(1).replace(/\.0$/,"")+" million years");txt(svg,".pb-k",C.kind.toUpperCase()+" · "+C.ex);txt(svg,".pb-t",C.title);const d=q(svg,".pb-d");if(d&&d.textContent!==C.say)d.textContent=C.say;
-  q(svg,".pb-g").innerHTML=[pbDiv,pbSub,pbCol,pbTra][s.k](t)}
+  {/* the figure gets unique gradient ids (dgPbSea_g1…), so point the redrawn layer at them */const sea=svg.querySelector('[id^="dgPbSea"]'),suf=sea?sea.id.slice(7):"";let body=[pbDiv,pbSub,pbCol,pbTra][s.k](t);if(suf)body=body.replace(/url\(#(dgPb[A-Za-z]+)\)/g,"url(#$1"+suf+")");q(svg,".pb-g").innerHTML=body}}
 const SKY='<rect x="0" y="0" width="300" height="200" fill="#e7f2fb"/>',MANTLE=y=>'<rect x="0" y="'+y+'" width="300" height="'+(200-y)+'" fill="url(#dgPbMan)"/>';
 const conv=(x0,dir,col)=>'<path d="M'+x0+',166 C'+x0+',146 '+(x0+dir*24)+',140 '+(x0+dir*58)+',148" fill="none" stroke="'+(col||"rgba(255,255,255,.55)")+'" stroke-width="1.6" stroke-dasharray="3 3"/><path d="M'+(x0+dir*52)+',144 L'+(x0+dir*58)+',148 L'+(x0+dir*51)+',151" fill="none" stroke="'+(col||"rgba(255,255,255,.7)")+'" stroke-width="1.6"/>';
 
