@@ -7471,6 +7471,12 @@ body:not(.light-theme) .hg-tqbtn{ background:rgba(31,138,125,.15) !important; co
   .ps-card.ps-over:not(.ps-free):not([style*="top"]){ top:6px; bottom:auto; }
 </style>
 <style id="gf-tighten">
+/* dark mode: the selected carousel dot keeps its colour */
+body.sky-theme.sky-night .zoom-dot.active{ background:var(--gold); }
+/* gold stamps: bright metal, not a dim tint */
+.pp-ms.on.gold, .pp-stamp.gold{ background:radial-gradient(circle at 32% 28%, #fff6c8 0%, #ffd75a 38%, #e0a800 72%, #a87400 100%) !important; color:#5a3a00 !important; box-shadow:0 0 0 1.5px #8a5e00, 0 0 10px rgba(255,200,40,.55), inset 0 1px 2px rgba(255,255,255,.7) !important; opacity:1 !important; filter:none !important; }
+.pp-ms.on.gold svg, .pp-ms.on.gold b, .pp-stamp.gold svg, .pp-stamp.gold b{ color:#5a3a00 !important; stroke:#5a3a00; opacity:1 !important; }
+
 .ps-card .ps-dg .ps-dg-svg svg{ max-height:min(260px,34vh); width:100%; }
 
 .hi-right{ display:flex; flex-direction:column; align-items:center; gap:14px; min-width:0; }
