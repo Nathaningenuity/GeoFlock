@@ -51,7 +51,7 @@ DG.pangaea={title:"From Pangaea to today",src:"Plate motions: C. R. Scotese, PAL
   D._set(svg);gfDrift.load().then(()=>D._set(svg)).catch(e=>console.error(e))},
  drag:(svg,n,x)=>{const D=DG.pangaea;D._t=Math.max(0,Math.min(1,(x-14)/272));D._set(svg)},
  _set:svg=>{const D=DG.pangaea,my=D._from*(1-D._t),cv=svg.parentNode&&svg.parentNode.querySelector("canvas.gf-drift");
-  if(cv&&window.gfDrift&&gfDrift.ready())gfDrift.draw(cv,my,-10,{margin:2,fs:9});
+  if(cv&&window.gfDrift&&gfDrift.ready())gfDrift.draw(cv,my,-10,{margin:2,fs:8.5,short:true});
   const loading=!(window.gfDrift&&gfDrift.ready());
   const g=dgT(14,172,loading?"loading the map…":my<.5?"today":Math.round(my)+" million years ago",'font-size="8" font-weight="800"')+dgT(286,172,"drag to today",'text-anchor="end" class="dg-hint"')+dgT(150,181,window.gfDrift?gfDrift.stage(my)[1]:"",'text-anchor="middle" font-size="6.6" fill="#b04a14" font-weight="700"');
   dgDyn(svg,g);const kk=svg.querySelector(".dg-pg-k");if(kk)kk.setAttribute("cx",(14+272*D._t).toFixed(1))}};

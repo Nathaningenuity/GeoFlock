@@ -7,7 +7,7 @@ const DEG=Math.PI/180;
 let G=null,loading=null;
 const STAGES=[[750,"Rodinia, the supercontinent before Pangaea, is breaking apart"],[640,"Snowball Earth: ice may have reached the equator"],[560,"Gondwana assembles in the south"],[500,"Life explodes in the seas; Gondwana sits over the South Pole"],[420,"Plants and animals begin to move onto land"],[330,"The continents crash together, building the Appalachians"],[250,"Pangaea: one supercontinent, ringed by one ocean, Panthalassa"],[200,"Pangaea starts to split; dinosaurs can walk to every continent"],[150,"The Atlantic opens between Africa and North America"],[100,"Gondwana breaks up: South America leaves Africa"],[66,"An asteroid ends the dinosaurs; India races north"],[45,"India hits Asia and pushes up the Himalaya"],[0,"Today"]];
 function stage(t){return STAGES.find(s=>t>=s[0]-(s[0]>100?40:12))||STAGES[STAGES.length-1]}
-const NAME={na:"North America",sa:"South America",af:"Africa",eu:"Eurasia",in:"India",au:"Australia",an:"Antarctica"};
+const NAME={na:"North America",sa:"South America",af:"Africa",eu:"Eurasia",in:"India",au:"Australia",an:"Antarctica"},SHORT={na:"N. America",sa:"S. America",af:"Africa",eu:"Eurasia",in:"India",au:"Australia",an:"Antarctica"};
 const VS=`#version 300 es
 precision highp float;
 layout(location=0) in vec2 aCorner;
@@ -116,7 +116,7 @@ function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,w
  ctx.beginPath();path({type:"Sphere"});ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=dpr;ctx.stroke();
  if(o.labels!==false){const fs=Math.round((o.fs||Math.max(10,Math.min(15,W/dpr/70)))*dpr);ctx.font="800 "+fs+"px system-ui,-apple-system,'Segoe UI',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
   const q=[0,0,0,0];for(const kk in G.meta.anchors){if(kk==="an"&&t<40)continue;const a=G.meta.anchors[kk];if(a[2]<0)continue;quat(a[2],t,q,0);const xy=p(turnPt(q,a[0],a[1]));if(!xy)continue;
-   ctx.lineWidth=3.5*dpr;ctx.strokeStyle="rgba(255,255,255,.92)";ctx.strokeText(NAME[kk],xy[0],xy[1]);ctx.fillStyle="#1b130c";ctx.fillText(NAME[kk],xy[0],xy[1])}}
+   ctx.lineWidth=3.5*dpr;ctx.strokeStyle="rgba(255,255,255,.92)";const nm=(o.short?SHORT:NAME)[kk];ctx.strokeText(nm,xy[0],xy[1]);ctx.fillStyle="#1b130c";ctx.fillText(nm,xy[0],xy[1])}}
  return true}
 window.gfDrift={load:load,draw:draw,stage:stage,MAX:750,ready:()=>!!G,credit:"Plate motions: C. R. Scotese, PALEOMAP Project"};
 
