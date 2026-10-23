@@ -16,7 +16,7 @@ uniform highp sampler2D uQ;
 uniform float uRes,uT,uLon0,uOff;
 uniform vec3 uK;
 uniform vec2 uSize;
-out vec2 vUV; out float vL; out float vFade;
+out vec2 vUV; out float vL; out float vFade; out float vLat;
 const float PI=3.14159265359;
 vec3 sph(vec2 d){vec2 r=radians(d);return vec3(cos(r.y)*cos(r.x),cos(r.y)*sin(r.x),sin(r.y));}
 vec3 qr(vec4 q,vec3 v){vec3 t=2.0*cross(q.yzw,v);return v+q.x*t+cross(q.yzw,t);}
@@ -24,12 +24,14 @@ float wr(float a){return a-2.0*PI*floor((a+PI)/(2.0*PI));}
 void main(){
  vFade=clamp(1.0-(uT-aCell.w)/15.0,0.0,1.0);
  if(vFade<=0.0){gl_Position=vec4(2.,2.,2.,1.);return;}
- vec2 ll=aCell.xy+vec2(aCorner.x,-aCorner.y)*uRes;
  vec2 cc=aCell.xy+vec2(0.5,-0.5)*uRes;
+ vec2 tl=aCell.xy+vec2(aCorner.x,-aCorner.y)*uRes;
+ /* grow each cell by 6% around its centre so neighbouring cells on different plates don't show hairline cracks */
+ vec2 ll=cc+(tl-cc)*1.06;
  vUV=vec2((ll.x+180.0)/360.0,(90.0-ll.y)/180.0);
  vec4 q=texelFetch(uQ,ivec2(int(aCell.z+0.5),0),0);
  vec3 v=qr(q,sph(ll)),c=qr(q,sph(cc));
- float lon=atan(v.y,v.x),lat=asin(clamp(v.z,-1.0,1.0));
+ float lon=atan(v.y,v.x),lat=asin(clamp(v.z,-1.0,1.0));vLat=degrees(lat);
  float cr=atan(c.y,c.x),cl=wr(cr+uLon0);
  if(uOff!=0.0&&abs(cl)<PI-0.15){gl_Position=vec4(2.,2.,2.,1.);return;}
  float L=cl+wr(lon-cr)+uOff;
@@ -42,7 +44,7 @@ void main(){
 }`;
 const FS=`#version 300 es
 precision mediump float;
-in vec2 vUV; in float vL; in float vFade;
+in vec2 vUV; in float vL; in float vFade; in float vLat;
 uniform sampler2D uW,uE;
 out vec4 o;
 void main(){
@@ -53,7 +55,14 @@ void main(){
  bool blue=c.b>c.r+18.0&&c.b>c.g-6.0;
  float a=(blue?smoothstep(150.0,172.0,L):1.0)*vFade;
  if(a<0.01)discard;
- o=vec4(c/255.0*a,a);
+ vec3 col=c/255.0;
+ /* today's ice sheets and snow: carried towards the equator they become bare highland instead of staying white */
+ float ice=smoothstep(0.80,0.93,min(col.r,min(col.g,col.b)))*(blue?0.0:1.0);
+ float warm=1.0-smoothstep(50.0,68.0,abs(vLat));
+ col=mix(col,vec3(0.70,0.62,0.50)*(0.85+0.25*L/255.0),ice*warm);
+ /* continental shelves read as shallow, sunlit sea */
+ if(blue)col=mix(col,vec3(0.36,0.70,0.78),0.45);
+ o=vec4(col*a,a);
 }`;
 function bitmap(url,raw){return fetch(url).then(r=>{if(!r.ok)throw new Error(url+" "+r.status);return r.blob()}).then(b=>createImageBitmap(b,raw?{premultiplyAlpha:"none",colorSpaceConversion:"none"}:{}))}
 const frame=()=>new Promise(r=>requestAnimationFrame(()=>r()));
@@ -74,6 +83,8 @@ function load(progress){if(G)return Promise.resolve(G);if(loading)return loading
   const c2=document.createElement("canvas");c2.width=cells.width;c2.height=cells.height;const x2=c2.getContext("2d",{willReadFrequently:true});x2.drawImage(cells,0,0);const px=x2.getImageData(0,0,cells.width,cells.height).data;
   const NX=cells.width,NY=cells.height,res=meta.res,inst=[];
   for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const k=(j*NX+i)*4,p=px[k];if(p===255)continue;const b=px[k+1];inst.push(-180+i*res,90-j*res,p,b>=255?1e5:b*5)}
+  /* how far back each continent's anchor cell goes, so its name is only shown while there is land under it */
+  const AB={};for(const kk in meta.anchors){const A=meta.anchors[kk],i=Math.max(0,Math.min(NX-1,Math.round((A[0]+180)/res))),j=Math.max(0,Math.min(NY-1,Math.round((90-A[1])/res))),k=(j*NX+i)*4;AB[kk]=px[k]===255?-1:px[k+1]>=255?1e5:px[k+1]*5}
   const prog=gl.createProgram();gl.attachShader(prog,sh(gl,gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl,gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog));
   const vao=gl.createVertexArray();gl.bindVertexArray(vao);
   const qb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,qb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,1,1,0,1]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
@@ -84,7 +95,7 @@ function load(progress){if(G)return Promise.resolve(G);if(loading)return loading
   const P=meta.plates,QT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,QT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,P,1,0,gl.RGBA,gl.FLOAT,null);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
   const U={};["uQ","uRes","uT","uLon0","uOff","uK","uSize","uW","uE"].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
-  G={cv,gl,prog,vao,n:inst.length/4,meta,Q:new Int16Array(bin),P,QT,TW,TE,U,qf:new Float32Array(P*4)};
+  G={cv,gl,prog,vao,n:inst.length/4,meta,AB,Q:new Int16Array(bin),P,QT,TW,TE,U,qf:new Float32Array(P*4)};
   return G})();
  loading.catch(()=>{loading=null});return loading}
 /* plate p's rotation at t million years ago, blended between the stored 5-million-year steps */
@@ -99,7 +110,7 @@ function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,w
  if(target.width!==W)target.width=W;if(target.height!==H)target.height=H;
  const m=(o.margin||8)*dpr,p=d3.geoEqualEarth().rotate([lon0,0]).fitExtent([[m,m],[W-m,H-m]],{type:"Sphere"}),k=p.scale(),tr=p.translate();
  const ctx=target.getContext("2d"),path=d3.geoPath(p,ctx);ctx.clearRect(0,0,W,H);
- const sea=ctx.createRadialGradient(W/2,H*.45,0,W/2,H*.45,W*.6);sea.addColorStop(0,o.sea0||"#2d6fa8");sea.addColorStop(1,o.sea1||"#163f6b");
+ const sea=ctx.createRadialGradient(W/2,H*.42,0,W/2,H*.45,W*.62);sea.addColorStop(0,o.sea0||"#2a6aa5");sea.addColorStop(.6,"#1d5289");sea.addColorStop(1,o.sea1||"#123a64");
  ctx.beginPath();path({type:"Sphere"});ctx.fillStyle=sea;ctx.fill();
  ctx.beginPath();path(d3.geoGraticule().step([30,30])());ctx.strokeStyle="rgba(255,255,255,.10)";ctx.lineWidth=dpr;ctx.stroke();
  const gl=G.gl,U=G.U;if(G.cv.width!==W)G.cv.width=W;if(G.cv.height!==H)G.cv.height=H;
@@ -112,13 +123,46 @@ function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,w
  gl.uniform1f(U.uRes,G.meta.res);gl.uniform1f(U.uT,t);gl.uniform1f(U.uLon0,lon0*DEG);gl.uniform3f(U.uK,k,tr[0],tr[1]);gl.uniform2f(U.uSize,W,H);
  for(const off of [0,2*Math.PI,-2*Math.PI]){gl.uniform1f(U.uOff,off);gl.drawElementsInstanced(gl.TRIANGLES,6,gl.UNSIGNED_SHORT,0,G.n)}
  gl.bindVertexArray(null);
- ctx.drawImage(G.cv,0,0);
+ ctx.save();if(!o.noShadow&&!G.noShadow)ctx.filter="drop-shadow(0 0 "+(1.2*dpr).toFixed(1)+"px rgba(8,22,40,.85)) drop-shadow(0 "+(1.5*dpr).toFixed(1)+"px "+(3*dpr).toFixed(1)+"px rgba(0,0,0,.25))";ctx.drawImage(G.cv,0,0);ctx.restore();
  ctx.beginPath();path({type:"Sphere"});ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=dpr;ctx.stroke();
  if(o.labels!==false){const fs=Math.round((o.fs||Math.max(10,Math.min(15,W/dpr/70)))*dpr);ctx.font="800 "+fs+"px system-ui,-apple-system,'Segoe UI',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
-  const q=[0,0,0,0];for(const kk in G.meta.anchors){if(kk==="an"&&t<40)continue;const a=G.meta.anchors[kk];if(a[2]<0)continue;quat(a[2],t,q,0);const xy=p(turnPt(q,a[0],a[1]));if(!xy)continue;
-   ctx.lineWidth=3.5*dpr;ctx.strokeStyle="rgba(255,255,255,.92)";const nm=(o.short?SHORT:NAME)[kk];ctx.strokeText(nm,xy[0],xy[1]);ctx.fillStyle="#1b130c";ctx.fillText(nm,xy[0],xy[1])}}
+  /* where each of today's continents is at time t, as unit vectors */
+  const q=[0,0,0,0],V={};for(const kk in G.meta.anchors){const a=G.meta.anchors[kk];if(a[2]<0)continue;quat(a[2],t,q,0);V[kk]=turnPt(q,a[0],a[1])}
+  /* the supercontinent of the age, named at the middle of its pieces */
+  const SUPER=t>=650?[["Rodinia",["na","sa","af","eu","in","au","an"]]]:t>335?[["Gondwana",["sa","af","in","au","an"]]]:t>=175?[["Pangaea",["na","sa","af","eu","in","au","an"]]]:t>=130?[["Laurasia",["na","eu"]],["Gondwana",["sa","af","in","au","an"]]]:[];
+  const old=SUPER.length>0;
+  const mid=(ks,anti)=>{let x=0,y=0,z=0;ks.forEach(k=>{const v=V[k];if(!v)return;const c=Math.cos(v[1]*DEG);x+=c*Math.cos(v[0]*DEG);y+=c*Math.sin(v[0]*DEG);z+=Math.sin(v[1]*DEG)});if(anti){x=-x;y=-y;z=-z}return[Math.atan2(y,x)/DEG,Math.atan2(z,Math.hypot(x,y))/DEG]};
+  /* keep a label of width w inside the map */
+  const inside=(xy,w)=>[Math.max(m+w/2+4*dpr,Math.min(W-m-w/2-4*dpr,xy[0])),Math.max(m+fs,Math.min(H-m-fs,xy[1]))];
+  /* oceans: in deep time placed between the moving continents rather than at fixed spots */
+  if(o.oceans!==false){const ALL=["na","sa","af","eu","in","au","an"];
+   /* the superocean's name goes at the open-sea spot in view that is farthest from every continent */
+   const far=()=>{let best=null,bs=-1;for(let cl=-135;cl<=135;cl+=15)for(let la=-30;la<=30;la+=15){const lo=cl-lon0;let mn=9;for(const k in V){const v=V[k];const d=Math.acos(Math.max(-1,Math.min(1,Math.sin(la*DEG)*Math.sin(v[1]*DEG)+Math.cos(la*DEG)*Math.cos(v[1]*DEG)*Math.cos((lo-v[0])*DEG))));if(d<mn)mn=d}if(mn>bs){bs=mn;best=[lo,la]}}return best};
+   const OC=t>=650?[["Mirovia",far()]]:t>=560?[["Panthalassa",far()]]:t>=420?[["Panthalassa",far()],["Iapetus Ocean",mid(["na","eu"])]]:t>=130?[["Panthalassa",far()],["Tethys Ocean",mid(["eu","au"])]]:t>=60?[["Pacific Ocean",[-150,0]],["Tethys Ocean",mid(["eu","in"])],["Atlantic",mid(["na","eu","sa","af"])]]:[["Pacific Ocean",[-150,0]],["Atlantic Ocean",[-32,8]],["Indian Ocean",[78,-22]]];
+   ctx.font="italic 600 "+Math.round((o.fs?o.fs*.95:Math.max(10,Math.min(14,W/dpr/80)))*dpr)+"px Georgia,serif";ctx.fillStyle="rgba(190,222,255,.75)";
+   OC.forEach(([n,ll])=>{const xy=p(ll);if(xy){const q2=inside(xy,ctx.measureText(n).width);ctx.fillText(n,q2[0],q2[1])}})}
+  const taken=[],hit=(x,y,hw,hh)=>taken.some(T=>Math.abs(x-T[0])<T[2]+hw&&Math.abs(y-T[1])<T[3]+hh);
+  /* in deep time, today's names become small hints of what each piece will become */
+  ctx.font=(old?"700 "+Math.round(fs*.78):"800 "+fs)+"px system-ui,-apple-system,'Segoe UI',sans-serif";
+  for(const kk in V){if(kk==="an"&&t<40)continue;if(G.AB&&G.AB[kk]>=0&&t>G.AB[kk]-5)continue;const xy=p(V[kk]);if(!xy)continue;const nm=(o.short||old?SHORT:NAME)[kk]+(old?"*":"");const hw=ctx.measureText(nm).width/2,hh=fs*.55;let q2=inside(xy,hw*2);
+   /* step down, then up, until it doesn't sit on an earlier name */
+   for(const d of [0,1,-1,2,-2,3]){const y=q2[1]+d*fs*1.15;if(y<m+fs*.6||y>H-m-fs*.6)continue;if(!hit(q2[0],y,hw,hh)){q2=[q2[0],y];break}}taken.push([q2[0],q2[1],hw+3*dpr,hh]);
+   ctx.lineWidth=(old?2.5:3.5)*dpr;ctx.strokeStyle=old?"rgba(255,255,255,.7)":"rgba(255,255,255,.92)";ctx.strokeText(nm,q2[0],q2[1]);ctx.fillStyle=old?"rgba(27,19,12,.8)":"#1b130c";ctx.fillText(nm,q2[0],q2[1])}
+  /* the supercontinent's name: near the middle of its pieces, in the first clear spot */
+  SUPER.forEach(([nm,ks])=>{const xy0=p(mid(ks));if(!xy0)return;
+   const f=Math.round(fs*1.5);ctx.font="900 "+f+"px system-ui,-apple-system,'Segoe UI',sans-serif";const txt=nm.toUpperCase().split("").join(String.fromCharCode(8202)),hw=ctx.measureText(txt).width/2,hh=f*.6;
+   let xy=inside(xy0,hw*2);xy[1]=Math.max(m+f*1.6,Math.min(H-m-f*1.6,xy[1]));
+   let ok=false;for(const dx of [0,-.6,.6,-1.2,1.2]){for(const d of [-1,0,1,-2,2,-3,3,-4]){const y=xy0[1]+d*f*.9,x=Math.max(m+hw+4*dpr,Math.min(W-m-hw-4*dpr,xy0[0]+dx*hw*2));if(y<m+f*1.6||y>H-m-f*1.6)continue;if(!hit(x,y,hw,hh)){xy=[x,y];ok=true;break}}if(ok)break}taken.push([xy[0],xy[1],hw+6*dpr,hh]);
+   ctx.lineWidth=5*dpr;ctx.strokeStyle="rgba(20,14,8,.55)";ctx.strokeText(txt,xy[0],xy[1]);ctx.fillStyle="rgba(255,248,235,.95)";ctx.fillText(txt,xy[0],xy[1])});
+  if(old&&o.legend!==false){ctx.font="600 "+Math.round(fs*.72)+"px system-ui,sans-serif";ctx.textAlign="left";ctx.fillStyle="rgba(220,235,255,.75)";ctx.fillText("* the land that becomes today’s continent",m+4*dpr,H-m-6*dpr);ctx.textAlign="center"}}
  return true}
-window.gfDrift={load:load,draw:draw,stage:stage,MAX:750,ready:()=>!!G,credit:"Plate motions: C. R. Scotese, PALEOMAP Project"};
+/* the longitude of the middle of the land at time t, unwrapped so it changes smoothly; used to keep deep-time land in view */
+let LL=null;function landLon(t){if(!G)return 0;if(!LL){LL=new Float32Array(751);const q=[0,0,0,0];let prev=null;
+ for(let y=0;y<=750;y++){let x=0,yy=0;for(const kk in G.meta.anchors){const a=G.meta.anchors[kk];if(a[2]<0)continue;quat(a[2],y,q,0);const v=turnPt(q,a[0],a[1]),c=Math.cos(v[1]*DEG);x+=c*Math.cos(v[0]*DEG);yy+=c*Math.sin(v[0]*DEG)}
+  let L=Math.atan2(yy,x)/DEG;if(prev!=null){while(L-prev>180)L-=360;while(L-prev<-180)L+=360}LL[y]=prev=L}
+ /* a 60-million-year running mean, so the view turns gently */const S=new Float32Array(751);for(let y=0;y<=750;y++){let a=0,n=0;for(let k=Math.max(0,y-30);k<=Math.min(750,y+30);k++){a+=LL[k];n++}S[y]=a/n}LL=S}
+ t=Math.max(0,Math.min(750,t));const a=Math.floor(t),b=Math.min(750,a+1);return LL[a]+(LL[b]-LL[a])*(t-a)}
+window.gfDrift={load:load,draw:draw,landLon:landLon,stage:stage,MAX:750,ready:()=>!!G,credit:"Plate motions: C. R. Scotese, PALEOMAP Project"};
 
 /* All Maps: a "Deep Time" chip that opens a full-size drift map with a smooth time slider */
 if(typeof renderAllMapsView!=="function")return;
@@ -140,7 +184,7 @@ const css=document.createElement("style");css.textContent=`
 const st={t:250,lon:-10,playing:false,raf:0,pend:0};
 function box(){return document.getElementById("gfDeep")}
 function paint(){if(st.pend)return;st.pend=requestAnimationFrame(()=>{st.pend=0;const b=box();if(!b||b.hidden)return;
- if(gfDrift.ready())gfDrift.draw(b.querySelector("canvas"),st.t,st.lon,{margin:12});
+ if(gfDrift.ready()){/* past ~150 Ma turn the world gradually so the land stays in the middle; a drag adds on top */const w=Math.max(0,Math.min(1,(st.t-150)/200)),f=w*w*(3-2*w);gfDrift.draw(b.querySelector("canvas"),st.t,st.lon-f*(gfDrift.landLon(st.t)-gfDrift.landLon(150)),{margin:12})}
  b.querySelector(".gfd-time").textContent=st.t<.5?"Today":(st.t<10?st.t.toFixed(1):Math.round(st.t))+" million years ago";
  b.querySelector(".gfd-stage").textContent=gfDrift.stage(st.t)[1];
  const r=b.querySelector("input[type=range]"),v=gfDrift.MAX-st.t;if(Math.abs(+r.value-v)>.05)r.value=v})}
