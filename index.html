@@ -11355,8 +11355,8 @@ function capStudyMap(){const view=$("studyView");if(!view||appMode!=="capital")r
     st.addEventListener("mousemove",e=>{const rr=wrap.getBoundingClientRect();tip.style.left=Math.min(rr.width-220,e.clientX-rr.left+14)+"px";tip.style.top=(e.clientY-rr.top+14)+"px"});
     st.addEventListener("mouseleave",()=>tip.hidden=true);
     st.addEventListener("click",e=>{e.stopPropagation();try{openFlagZoom(c)}catch(er){}})});
-  /* keep stars and names the same size on screen at any zoom, and stop names from piling up */
-  let dc=0;const fit=()=>{const vb=(svg.getAttribute("viewBox")||"0 0 2000 1000").split(/\s+/).map(Number),s=vb[2]/2000*1.15;
+  /* stars and names grow gently with zoom, and names never pile up */
+  let dc=0;const fit=()=>{const vb=(svg.getAttribute("viewBox")||"0 0 2000 1000").split(/\s+/).map(Number),s=.6*Math.pow(vb[2]/2000,.5);/* small when zoomed out, then growing at about half the rate of the map */
     g.querySelectorAll(".cap-st").forEach(st=>st.setAttribute("transform","translate("+st.dataset.x+","+st.dataset.y+") scale("+s.toFixed(4)+")"));
     clearTimeout(dc);dc=setTimeout(()=>{const placed=[];g.querySelectorAll(".cap-st text").forEach(t=>{t.style.display="";const b=t.getBoundingClientRect();if(!b.width)return;const r=[b.left-2,b.top-1,b.right+2,b.bottom+1];if(placed.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1]<q[3]&&r[3]>q[1]))t.style.display="none";else placed.push(r)})},60)};
   fit();new MutationObserver(fit).observe(svg,{attributes:true,attributeFilter:["viewBox"]})}
