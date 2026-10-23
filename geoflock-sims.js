@@ -43,18 +43,17 @@ DG.supercont={title:"The next supercontinent",src:"Simplified sketches after Sco
   if(t>.97)g+=dgT(150,TOP+H+9,S.line,'text-anchor="middle" font-size="6.8" font-weight="700" fill="#b04a14"');
   dgDyn(svg,g);const k=svg.querySelector(".dg-sc-k");if(k)k.setAttribute("cx",(14+272*t).toFixed(1))}};
 PS_DIAG["plates|The next supercontinent"]="supercont";
-/* Pangaea to today, from real plate rotations (geoflock-paleo.js): drag from 300 million years ago to now */
-DG.pangaea={title:"From Pangaea to today",src:"Plate model: C. R. Scotese, PALEOMAP Project; today's coastlines carried back in time",_t:0,_from:300,
- svg:()=>'<svg viewBox="0 0 300 200"><g class="dg-dyn"></g><g class="dg-handle" data-drag="t"><rect x="14" y="184" width="272" height="16" fill="transparent"/><line x1="14" x2="286" y1="192" y2="192" stroke="#c9d3dc" stroke-width="3" stroke-linecap="round"/><circle class="dg-pg-k" cy="192" r="6.5" fill="#e8701a" stroke="#fff" stroke-width="1.5"/></g></svg>',
- init:svg=>{const D=DG.pangaea;if(!window.gfPaleo)return;gfPaleo.load().then(()=>D._set(svg)).catch(e=>console.error(e))},
+/* Pangaea to today on the relief map, drawn by geoflock-drift.js: drag from 300 million years ago to now */
+DG.pangaea={title:"From Pangaea to today",src:"Plate motions: C. R. Scotese, PALEOMAP Project; today's landscapes carried back in time",_t:0,_from:300,
+ svg:()=>'<svg viewBox="0 0 300 200"><rect x="6" y="8" width="288" height="150" fill="#163f6b" rx="6"/><g class="dg-dyn"></g><g class="dg-handle" data-drag="t"><rect x="14" y="184" width="272" height="16" fill="transparent"/><line x1="14" x2="286" y1="192" y2="192" stroke="#c9d3dc" stroke-width="3" stroke-linecap="round"/><circle class="dg-pg-k" cy="192" r="6.5" fill="#e8701a" stroke="#fff" stroke-width="1.5"/></g></svg>',
+ init:svg=>{const D=DG.pangaea,host=svg.parentNode;if(!host||!window.gfDrift)return;if(getComputedStyle(host).position==="static")host.style.position="relative";
+  let cv=host.querySelector("canvas.gf-drift");if(!cv){cv=document.createElement("canvas");cv.className="gf-drift";cv.style.cssText="position:absolute;left:2%;top:4%;width:96%;height:75%;pointer-events:none;border-radius:6px";host.appendChild(cv)}
+  D._set(svg);gfDrift.load().then(()=>D._set(svg)).catch(e=>console.error(e))},
  drag:(svg,n,x)=>{const D=DG.pangaea;D._t=Math.max(0,Math.min(1,(x-14)/272));D._set(svg)},
- _set:svg=>{const D=DG.pangaea,my=Math.round(D._from*(1-D._t)),P=window.gfPaleo&&gfPaleo.at(my);if(!P)return;
-  const p=d3.geoEqualEarth().rotate([-10,0]).fitExtent([[6,8],[294,158]],{type:"Sphere"}),path=d3.geoPath(p);
-  let g='<path d="'+path({type:"Sphere"})+'" fill="#bcd9ee" stroke="#8fb3cf" stroke-width=".6"/>';
-  g+='<path d="'+path(d3.geoGraticule().step([30,30])())+'" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width=".4"/>';
-  for(const k in P.groups){const dd=path({type:"MultiPolygon",coordinates:P.groups[k].map(r=>[r])});if(dd)g+='<path d="'+dd+'" fill="'+gfPaleo.COL[k]+'" stroke="'+gfPaleo.COL[k]+'" stroke-width=".4" data-tip="'+gfPaleo.NAME[k]+'"/>'}
-  for(const k in P.centres){if(k==="an")continue;const xy=p(P.centres[k]);if(xy)g+=dgT(xy[0].toFixed(1),(xy[1]+2).toFixed(1),gfPaleo.NAME[k],'text-anchor="middle" font-size="6.4" font-weight="800" fill="#2b1d12" stroke="#fff" stroke-width="2" paint-order="stroke"')}
-  g+=dgT(14,172,my?my+" million years ago":"today",'font-size="8" font-weight="800"')+dgT(286,172,"drag to today",'text-anchor="end" class="dg-hint"')+dgT(150,181,gfPaleo.stage(my)[1],'text-anchor="middle" font-size="6.6" fill="#b04a14" font-weight="700"');
+ _set:svg=>{const D=DG.pangaea,my=D._from*(1-D._t),cv=svg.parentNode&&svg.parentNode.querySelector("canvas.gf-drift");
+  if(cv&&window.gfDrift&&gfDrift.ready())gfDrift.draw(cv,my,-10,{margin:2,fs:9});
+  const loading=!(window.gfDrift&&gfDrift.ready());
+  const g=dgT(14,172,loading?"loading the map…":my<.5?"today":Math.round(my)+" million years ago",'font-size="8" font-weight="800"')+dgT(286,172,"drag to today",'text-anchor="end" class="dg-hint"')+dgT(150,181,window.gfDrift?gfDrift.stage(my)[1]:"",'text-anchor="middle" font-size="6.6" fill="#b04a14" font-weight="700"');
   dgDyn(svg,g);const kk=svg.querySelector(".dg-pg-k");if(kk)kk.setAttribute("cx",(14+272*D._t).toFixed(1))}};
 PS_DIAG["plates|The continents fit together"]="pangaea";
 try{if(!DG_ORDER.includes("pangaea"))DG_ORDER.push("pangaea");if(!SIM_KEYS.includes("pangaea"))SIM_KEYS.push("pangaea")}catch(e){}
