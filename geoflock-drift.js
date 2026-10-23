@@ -95,7 +95,7 @@ function load(progress){if(G)return Promise.resolve(G);if(loading)return loading
   const P=meta.plates,QT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,QT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,P,1,0,gl.RGBA,gl.FLOAT,null);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
   const U={};["uQ","uRes","uT","uLon0","uOff","uK","uSize","uW","uE"].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
-  G={cv,gl,prog,vao,n:inst.length/4,meta,AB,Q:new Int16Array(bin),P,QT,TW,TE,U,qf:new Float32Array(P*4)};
+  G={cv,gl,prog,vao,n:inst.length/4,meta,AB,NX,NY,PX:px.filter((_,k)=>k%4<2),Q:new Int16Array(bin),P,QT,TW,TE,U,qf:new Float32Array(P*4)};
   return G})();
  loading.catch(()=>{loading=null});return loading}
 /* plate p's rotation at t million years ago, blended between the stored 5-million-year steps */
@@ -108,7 +108,7 @@ function turnPt(q,lo,la){const v=[Math.cos(la*DEG)*Math.cos(lo*DEG),Math.cos(la*
 /* draw the world at t (million years ago) into a 2D canvas; lon0 turns the map */
 function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,window.devicePixelRatio||1),W=Math.max(1,Math.round(target.clientWidth*dpr)),H=Math.max(1,Math.round(target.clientHeight*dpr));
  if(target.width!==W)target.width=W;if(target.height!==H)target.height=H;
- const m=(o.margin||8)*dpr,p=d3.geoEqualEarth().rotate([lon0,0]).fitExtent([[m,m],[W-m,H-m]],{type:"Sphere"}),k=p.scale(),tr=p.translate();
+ const m=(o.margin||8)*dpr,lf=(o.left||0)*dpr,p=d3.geoEqualEarth().rotate([lon0,0]).fitExtent([[m+lf,m],[W-m,H-m]],{type:"Sphere"}),k=p.scale(),tr=p.translate();
  const ctx=target.getContext("2d"),path=d3.geoPath(p,ctx);ctx.clearRect(0,0,W,H);
  const sea=ctx.createRadialGradient(W/2,H*.42,0,W/2,H*.45,W*.62);sea.addColorStop(0,o.sea0||"#2a6aa5");sea.addColorStop(.6,"#1d5289");sea.addColorStop(1,o.sea1||"#123a64");
  ctx.beginPath();path({type:"Sphere"});ctx.fillStyle=sea;ctx.fill();
@@ -154,15 +154,23 @@ function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,w
    let xy=inside(xy0,hw*2);xy[1]=Math.max(m+f*1.6,Math.min(H-m-f*1.6,xy[1]));
    let ok=false;for(const dx of [0,-.6,.6,-1.2,1.2]){for(const d of [-1,0,1,-2,2,-3,3,-4]){const y=xy0[1]+d*f*.9,x=Math.max(m+hw+4*dpr,Math.min(W-m-hw-4*dpr,xy0[0]+dx*hw*2));if(y<m+f*1.6||y>H-m-f*1.6)continue;if(!hit(x,y,hw,hh)){xy=[x,y];ok=true;break}}if(ok)break}taken.push([xy[0],xy[1],hw+6*dpr,hh]);
    ctx.lineWidth=5*dpr;ctx.strokeStyle="rgba(20,14,8,.55)";ctx.strokeText(txt,xy[0],xy[1]);ctx.fillStyle="rgba(255,248,235,.95)";ctx.fillText(txt,xy[0],xy[1])});
+  /* pins for present-day places, carried with their plates */
+  (o.marks||[]).forEach(M=>{const ll=placeAt(M.lon,M.lat,t);if(!ll)return;const xy=p(ll);if(!xy)return;const r=5*dpr;
+   ctx.beginPath();ctx.arc(xy[0],xy[1],r*2.2,0,7);ctx.fillStyle="rgba(255,90,60,.25)";ctx.fill();ctx.beginPath();ctx.arc(xy[0],xy[1],r,0,7);ctx.fillStyle="#ff5a3c";ctx.fill();ctx.lineWidth=1.6*dpr;ctx.strokeStyle="#fff";ctx.stroke();
+   if(M.label){const f=Math.round(fs*.85);ctx.font="700 "+f+"px system-ui,-apple-system,'Segoe UI',sans-serif";const w=ctx.measureText(M.label).width,pad=5*dpr,left=M.side==="l"||xy[0]+w+r*3+pad*2>W-m;const bx=left?xy[0]-r*2-w-pad*2:xy[0]+r*2,by=xy[1]-f*.8;
+    ctx.fillStyle="rgba(12,22,40,.88)";ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,w+pad*2,f*1.6,6*dpr):ctx.rect(bx,by,w+pad*2,f*1.6);ctx.fill();ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(M.label,bx+pad,xy[1]);ctx.textAlign="center"}});
   if(old&&o.legend!==false){ctx.font="600 "+Math.round(fs*.72)+"px system-ui,sans-serif";ctx.textAlign="left";ctx.fillStyle="rgba(220,235,255,.75)";ctx.fillText("* the land that becomes today’s continent",m+4*dpr,H-m-6*dpr);ctx.textAlign="center"}}
  return true}
+/* where a present-day place was at time t: the plate under it, turned back; null if that land didn't exist yet */
+function placeAt(lon,lat,t){if(!G)return null;const r=G.meta.res,i=Math.max(0,Math.min(G.NX-1,Math.floor((lon+180)/r))),j=Math.max(0,Math.min(G.NY-1,Math.floor((90-lat)/r))),k=(j*G.NX+i)*2,pl=G.PX[k],b=G.PX[k+1];
+ if(pl===255)return null;if(b<255&&t>b*5)return null;const q=[0,0,0,0];quat(pl,t,q,0);return turnPt(q,lon,lat)}
 /* the longitude of the middle of the land at time t, unwrapped so it changes smoothly; used to keep deep-time land in view */
 let LL=null;function landLon(t){if(!G)return 0;if(!LL){LL=new Float32Array(751);const q=[0,0,0,0];let prev=null;
  for(let y=0;y<=750;y++){let x=0,yy=0;for(const kk in G.meta.anchors){const a=G.meta.anchors[kk];if(a[2]<0)continue;quat(a[2],y,q,0);const v=turnPt(q,a[0],a[1]),c=Math.cos(v[1]*DEG);x+=c*Math.cos(v[0]*DEG);yy+=c*Math.sin(v[0]*DEG)}
   let L=Math.atan2(yy,x)/DEG;if(prev!=null){while(L-prev>180)L-=360;while(L-prev<-180)L+=360}LL[y]=prev=L}
  /* a 60-million-year running mean, so the view turns gently */const S=new Float32Array(751);for(let y=0;y<=750;y++){let a=0,n=0;for(let k=Math.max(0,y-30);k<=Math.min(750,y+30);k++){a+=LL[k];n++}S[y]=a/n}LL=S}
  t=Math.max(0,Math.min(750,t));const a=Math.floor(t),b=Math.min(750,a+1);return LL[a]+(LL[b]-LL[a])*(t-a)}
-window.gfDrift={load:load,draw:draw,landLon:landLon,stage:stage,MAX:750,ready:()=>!!G,credit:"Plate motions: C. R. Scotese, PALEOMAP Project"};
+window.gfDrift={load:load,draw:draw,landLon:landLon,placeAt:placeAt,stage:stage,MAX:750,ready:()=>!!G,credit:"Plate motions: C. R. Scotese, PALEOMAP Project"};
 
 /* All Maps: a "Deep Time" chip that opens a full-size drift map with a smooth time slider */
 if(typeof renderAllMapsView!=="function")return;
@@ -181,10 +189,10 @@ const css=document.createElement("style");css.textContent=`
 #gfDeep .gfd-x{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer;z-index:2}
 #gfDeep .gfd-load{position:absolute;inset:0 0 120px;display:grid;place-items:center;font-weight:700;opacity:.85;pointer-events:none}
 `;document.head.appendChild(css);
-const st={t:250,lon:-10,playing:false,raf:0,pend:0};
+const st={t:250,lon:-10,playing:false,raf:0,pend:0,marks:null};
 function box(){return document.getElementById("gfDeep")}
 function paint(){if(st.pend)return;st.pend=requestAnimationFrame(()=>{st.pend=0;const b=box();if(!b||b.hidden)return;
- if(gfDrift.ready()){/* past ~150 Ma turn the world gradually so the land stays in the middle; a drag adds on top */const w=Math.max(0,Math.min(1,(st.t-150)/200)),f=w*w*(3-2*w);gfDrift.draw(b.querySelector("canvas"),st.t,st.lon-f*(gfDrift.landLon(st.t)-gfDrift.landLon(150)),{margin:12})}
+ if(gfDrift.ready()){/* past ~150 Ma turn the world gradually so the land stays in the middle; a drag adds on top */const w=Math.max(0,Math.min(1,(st.t-150)/200)),f=w*w*(3-2*w);gfDrift.draw(b.querySelector("canvas"),st.t,st.lon-f*(gfDrift.landLon(st.t)-gfDrift.landLon(150)),{margin:12,marks:st.marks,left:st.left||0})}
  b.querySelector(".gfd-time").textContent=st.t<.5?"Today":(st.t<10?st.t.toFixed(1):Math.round(st.t))+" million years ago";
  b.querySelector(".gfd-stage").textContent=gfDrift.stage(st.t)[1];
  const r=b.querySelector("input[type=range]"),v=gfDrift.MAX-st.t;if(Math.abs(+r.value-v)>.05)r.value=v})}
@@ -213,4 +221,5 @@ function ensure(){const row=document.getElementById("allMapsToggleRow");if(!row|
  row.addEventListener("click",e=>{if(e.target.closest("[data-allmaps-mode]"))close()},true)}
 const _r=renderAllMapsView;renderAllMapsView=function(){const r=_r.apply(this,arguments);try{ensure()}catch(e){console.error(e)}return r};
 window.gfDeepTimeOpen=open;
+window.gfDeepUI={st:st,paint:paint,open:open,stop:stop,close:close,box:box};
 })();
