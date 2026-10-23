@@ -45,3 +45,18 @@ DG.supercont={title:"The next supercontinent",src:"Simplified sketches after Sco
 PS_DIAG["plates|The next supercontinent"]="supercont";
 try{if(!DG_ORDER.includes("supercont"))DG_ORDER.push("supercont");if(!SIM_KEYS.includes("supercont"))SIM_KEYS.push("supercont")}catch(e){}
 })();
+/* Geopolitics tour: shorter cards, so the text fits without scrolling; the rest moves into "Tell me more" */
+(function(){
+if(typeof PS_TOURS==="undefined"||!PS_TOURS.geopol)return;
+const CUT={
+ "The open plain":["The North European Plain has no mountains or seas to stop an army. Napoleon marched across it in 1812 and Germany in 1941; Russian armies have used it the other way.","It is narrowest in Poland, between the Baltic and the Carpathians, and widens like a slice of pizza into Russia."],
+ "The luckiest country":["The United States has one of the largest networks of navigable rivers in the world, through some of the richest farmland on Earth. Oceans keep rivals far away, and its neighbours are no threat.","Most of those rivers belong to the Mississippi basin, which reaches the sea at one port, New Orleans."],
+ "Lines in the sand":["After the First World War, Britain and France divided much of the Ottoman Empire’s Arab lands. Straight lines across the desert took little account of where peoples, faiths and tribes lived.","They built on a secret plan of 1916, the Sykes–Picot agreement."],
+ "Rivers you can’t sail up":["Southern and eastern Africa is a high plateau that drops steeply close to the coast, so its great rivers tumble over falls and rapids near the sea. Ships cannot sail far inland, as they can up the Rhine or the Mississippi.","The plateau is mostly over 1,000 m high. The Yangtze, too, carries ocean-going ships deep into China."],
+ "The strait that closed":["After US and Israeli strikes on Iran on 28 February 2026, Iran declared the strait closed and insurers pulled cover. The US and Gulf states say no country may block an international waterway.","Iran says it is defending itself and claims authority over the strait."],
+ "The Red Sea shortcut":["Ships between Asia and Europe squeeze through the Bab-el-Mandeb, then the Suez Canal. From late 2023 Yemen’s Houthis fired on passing ships, and many lines switched to the route round Africa, about 10 days longer.","The Houthi movement said it was acting over the war in Gaza."],
+ "The Arctic opens":["Greenland lies on the shortest routes between North America and Russia. A US base at Pituffik watches for missiles over the pole, and Russia’s Northern Fleet must slip past Greenland, Iceland and the UK to reach the Atlantic.","Its rocks also hold rare earths and other minerals."],
+ "What lies underneath":["Batteries, motors and electronics depend on a few places. Most mined cobalt comes from the DR Congo, Chile, Argentina and Bolivia hold about half the known lithium, and China dominates rare earths.","Rare earths are used in the magnets of electric cars, wind turbines and missiles."]
+};
+(PS_TOURS.geopol.steps||[]).forEach(S=>{const c=CUT[S.title];if(!c||S._gfCut)return;S._gfCut=1;S.body=c[0];S.more=c[1]+(S.more?" "+S.more:"")});
+})();
