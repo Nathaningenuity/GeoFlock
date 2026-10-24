@@ -1,7 +1,9 @@
 /* GeoFlock: continental drift from 750 million years ago to today, drawn on the GPU.
    Plate motions: C. R. Scotese, PALEOMAP Project plate model (rotations sampled every 5 million years and blended in between).
    The relief texture is cut into 0.5° cells; each cell rides on its tectonic plate, so the landscape moves smoothly as the slider moves.
-   Landscapes are today's, carried back in time; ancient coastlines and mountains differed. */
+   Landscapes, 540 million years ago to today: C. R. Scotese and N. Wright (2018), PALEOMAP Paleodigital Elevation Models, 1° grids every
+   5 million years (CC BY 4.0). Between two of their maps each point is carried along by its plate, so the land glides instead of fading.
+   Before 540 million years ago, today's landscape is carried back on the plates. */
 (function(){
 const DEG=Math.PI/180;
 let G=null,loading=null;
@@ -42,6 +44,51 @@ void main(){
  vec2 px=vec2(uK.y+uK.x*x,uK.z-uK.x*y);
  gl_Position=vec4(px.x/uSize.x*2.0-1.0,1.0-px.y/uSize.y*2.0,0.0,1.0);
 }`;
+/* the PaleoDEM pass: every screen pixel is turned back into a latitude and longitude (inverse Equal Earth), then looked up in the
+   two neighbouring PaleoDEM maps, each moved by its plate to the exact time, and blended */
+const VS2=`#version 300 es
+void main(){vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(p*2.0-1.0,0.0,1.0);}`;
+const FS2=`#version 300 es
+precision highp float;
+uniform highp sampler2D uA,uR;
+uniform vec3 uK;
+uniform vec2 uSize;
+uniform float uLon0,uU,uAlpha,uCols;
+uniform ivec2 uS;
+out vec4 o;
+const float PI=3.14159265359,M=0.8660254,A1=1.340264,A2=-0.081106,A3=0.000893,A4=0.003796;
+vec3 qr(vec4 q,vec3 v){vec3 t=2.0*cross(q.yzw,v);return v+q.x*t+cross(q.yzw,t);}
+ivec2 org(int s){int c=int(uCols+0.5);return ivec2((s-(s/c)*c)*360,(s/c)*181);}
+float el(ivec2 O,int i,int j){i=i-int(floor(float(i)/360.0))*360;vec4 c=texelFetch(uA,O+ivec2(i,clamp(j,0,180)),0);return c.r*65280.0+c.g*255.0-11000.0;}
+vec2 ll(vec3 v){return vec2(degrees(atan(v.y,v.x)),degrees(asin(clamp(v.z,-1.0,1.0))));}
+float elev(ivec2 O,vec3 v){vec2 g=ll(v);float fx=g.x+180.0,fy=90.0-g.y;int i=int(floor(fx)),j=int(floor(fy));float a=fx-float(i),b=fy-float(j);
+ return mix(mix(el(O,i,j),el(O,i+1,j),a),mix(el(O,i,j+1),el(O,i+1,j+1),a),b);}
+/* the turn that carries this point from now (time t) to the time of map O: that of the plate under it in map O */
+vec4 turn(ivec2 O,vec3 v,int row){vec2 g=ll(v);int i=int(floor(g.x+180.5));i=i-int(floor(float(i)/360.0))*360;float p=texelFetch(uA,O+ivec2(i,clamp(int(floor(90.5-g.y)),0,180)),0).b*255.0;
+ if(p>254.5)return vec4(1.0,0.0,0.0,0.0);return texelFetch(uR,ivec2(int(p+0.5),row),0);}
+vec3 land(float z){vec3 c=mix(vec3(.36,.55,.31),vec3(.56,.64,.38),smoothstep(0.,450.,z));c=mix(c,vec3(.76,.69,.49),smoothstep(350.,1300.,z));
+ c=mix(c,vec3(.62,.48,.34),smoothstep(1100.,2700.,z));c=mix(c,vec3(.49,.38,.30),smoothstep(2500.,4000.,z));return mix(c,vec3(.93,.91,.89),smoothstep(4300.,5800.,z));}
+vec3 sea(float z){float d=-z;vec3 c=mix(vec3(.56,.82,.85),vec3(.32,.64,.79),smoothstep(0.,160.,d));c=mix(c,vec3(.16,.43,.68),smoothstep(140.,1600.,d));return mix(c,vec3(.08,.24,.46),smoothstep(1600.,5200.,d));}
+void main(){
+ vec2 px=vec2(gl_FragCoord.x,uSize.y-gl_FragCoord.y);
+ float x=(px.x-uK.y)/uK.x,y=(uK.z-px.y)/uK.x,l=y;
+ for(int k=0;k<10;k++){float l2=l*l,l6=l2*l2*l2,f=l*(A1+A2*l2+l6*(A3+A4*l2))-y,fp=A1+3.0*A2*l2+l6*(7.0*A3+9.0*A4*l2);l-=f/fp;}
+ if(abs(l)>1.0472)discard;
+ float l2=l*l,l6=l2*l2*l2,lam=M*x*(A1+3.0*A2*l2+l6*(7.0*A3+9.0*A4*l2))/cos(l);
+ if(abs(lam)>PI)discard;
+ float phi=asin(clamp(sin(l)/M,-1.0,1.0)),lon=lam-uLon0;
+ vec3 v=vec3(cos(phi)*cos(lon),cos(phi)*sin(lon),sin(phi)),E=vec3(-sin(lon),cos(lon),0.0),N=vec3(-sin(phi)*cos(lon),-sin(phi)*sin(lon),cos(phi));
+ ivec2 Oa=org(uS.x),Ob=org(uS.y);vec4 ra=turn(Oa,v,0),rb=turn(Ob,v,1);
+ float d=radians(0.7);vec3 ve=normalize(v+E*d),vw=normalize(v-E*d),vn=normalize(v+N*d),vs=normalize(v-N*d);
+ #define Z(w) mix(elev(Oa,qr(ra,w)),elev(Ob,qr(rb,w)),uU)
+ float z=Z(v),gx=(Z(ve)-Z(vw))/(2.0*d*6.371e6),gy=(Z(vn)-Z(vs))/(2.0*d*6.371e6);
+ /* hillshade, lit from the north-west */
+ vec3 n=normalize(vec3(-gx*28.0,-gy*28.0,1.0)),L=normalize(vec3(-1.0,1.0,1.3));float sh=dot(n,L)/L.z;
+ float fw=max(1.0,fwidth(z)*0.8),w=smoothstep(-fw,fw,z);
+ vec3 col=mix(sea(z)*mix(1.0,sh,0.3),land(z)*mix(1.0,sh,0.85),w);
+ col*=1.0-0.28*(1.0-smoothstep(0.0,fw*1.6,abs(z)));
+ o=vec4(col*uAlpha,uAlpha);
+}`;
 const FS=`#version 300 es
 precision mediump float;
 in vec2 vUV; in float vL; in float vFade; in float vLat;
@@ -70,16 +117,26 @@ function sh(gl,type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl
 function tex(gl,img,mip){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);
  if(mip){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR)}else gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t}
+/* fetch with progress; onp(bytes so far, total) */
+function fetchBlob(url,onp){return fetch(url).then(async r=>{if(!r.ok)throw new Error(url+" "+r.status);const n=+r.headers.get("content-length")||0;
+ if(!r.body||!r.body.getReader){const b=await r.blob();onp(b.size,b.size);return b}
+ const rd=r.body.getReader(),parts=[];let got=0;for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onp(got,n)}return new Blob(parts)})}
+const DEM_URL="textures/PALEODEM_ATLAS.png",DEM_BYTES=4286581,DEM_COLS=11,DEM_MAX=540,FADE=35;
+const secs=n=>{n=Math.max(1,Math.ceil(n));return n===1?"about 1 second":"about "+n+" seconds"};
 function load(progress){if(G)return Promise.resolve(G);if(loading)return loading;
  const say=s=>{try{progress&&progress(s)}catch(e){}};
  loading=(async()=>{
   const cv=document.createElement("canvas"),gl=cv.getContext("webgl2",{premultipliedAlpha:true,alpha:true,antialias:true});
   if(!gl)throw new Error("nogl");
-  say("Loading plate motions…");
-  const [meta,bin,cells]=await Promise.all([fetch("geoflock-drift.json").then(r=>r.json()),fetch("geoflock-drift.bin").then(r=>r.arrayBuffer()),bitmap("geoflock-drift.png",true)]);
-  say("Loading the relief map…");
-  const [tw,te]=await Promise.all([bitmap("textures/GLOBE_RELIEF_W.webp"),bitmap("textures/GLOBE_RELIEF_E.webp")]);
-  say("Preparing the plates…");await frame();
+  /* a first guess from the connection speed (where the browser reports it), then from how fast the bytes really arrive */
+  const mbps=(navigator.connection&&navigator.connection.downlink)||8,t0=performance.now(),MB=(DEM_BYTES/1e6).toFixed(1);
+  say("Loading Scotese’s maps of ancient landscapes ("+MB+" MB). This may take "+secs(DEM_BYTES*8/(mbps*1e6)+1)+".");
+  const old=Promise.all([bitmap("textures/GLOBE_RELIEF_W.webp"),bitmap("textures/GLOBE_RELIEF_E.webp")]);old.catch(()=>{});
+  const [meta,bin,cells,demBlob]=await Promise.all([fetch("geoflock-drift.json").then(r=>r.json()),fetch("geoflock-drift.bin").then(r=>r.arrayBuffer()),bitmap("geoflock-drift.png",true),
+   fetchBlob(DEM_URL,(got,n)=>{n=n||DEM_BYTES;const el=(performance.now()-t0)/1000;if(el<.6||got<n*.03)return;const left=(n-got)/(got/el);
+    say("Loading Scotese’s maps of ancient landscapes… "+Math.min(99,Math.round(got/n*100))+"% · "+secs(left+.5)+" left")})]);
+  say("Preparing the maps…");await frame();
+  const dem=await createImageBitmap(demBlob,{premultiplyAlpha:"none",colorSpaceConversion:"none"});
   const c2=document.createElement("canvas");c2.width=cells.width;c2.height=cells.height;const x2=c2.getContext("2d",{willReadFrequently:true});x2.drawImage(cells,0,0);const px=x2.getImageData(0,0,cells.width,cells.height).data;
   const NX=cells.width,NY=cells.height,res=meta.res,inst=[];
   for(let j=0;j<NY;j++)for(let i=0;i<NX;i++){const k=(j*NX+i)*4,p=px[k];if(p===255)continue;const b=px[k+1];inst.push(-180+i*res,90-j*res,p,b>=255?1e5:b*5)}
@@ -91,11 +148,21 @@ function load(progress){if(G)return Promise.resolve(G);if(loading)return loading
   const ib=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,ib);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(inst),gl.STATIC_DRAW);gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,4,gl.FLOAT,false,0,0);gl.vertexAttribDivisor(1,1);
   const eb=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,eb);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array([0,1,2,0,2,3]),gl.STATIC_DRAW);
   gl.bindVertexArray(null);
-  await frame();const TW=tex(gl,tw,true);await frame();const TE=tex(gl,te,true);await frame();
+  await frame();
+  const prog2=gl.createProgram();gl.attachShader(prog2,sh(gl,gl.VERTEX_SHADER,VS2));gl.attachShader(prog2,sh(gl,gl.FRAGMENT_SHADER,FS2));gl.linkProgram(prog2);if(!gl.getProgramParameter(prog2,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(prog2));
+  const nearest=t=>{gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE)};
+  const DT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,DT);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,gl.NONE);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,gl.RGBA,gl.UNSIGNED_BYTE,dem);nearest();try{dem.close()}catch(e){}
+  const RT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,RT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,meta.plates,2,0,gl.RGBA,gl.FLOAT,null);nearest();
+  const vao2=gl.createVertexArray();
+  const U2={};["uA","uR","uK","uSize","uLon0","uU","uAlpha","uCols","uS"].forEach(n=>U2[n]=gl.getUniformLocation(prog2,n));
+  await frame();
   const P=meta.plates,QT=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,QT);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA32F,P,1,0,gl.RGBA,gl.FLOAT,null);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
   const U={};["uQ","uRes","uT","uLon0","uOff","uK","uSize","uW","uE"].forEach(n=>U[n]=gl.getUniformLocation(prog,n));
-  G={cv,gl,prog,vao,n:inst.length/4,meta,AB,NX,NY,PX:px.filter((_,k)=>k%4<2),Q:new Int16Array(bin),P,QT,TW,TE,U,qf:new Float32Array(P*4)};
+  G={cv,gl,prog,vao,n:inst.length/4,meta,AB,NX,NY,PX:px.filter((_,k)=>k%4<2),Q:new Int16Array(bin),P,QT,TW:null,TE:null,U,qf:new Float32Array(P*4),prog2,vao2,U2,DT,RT,rf:new Float32Array(P*8)};
+  /* today's relief, for the time before the PaleoDEMs begin; the map is usable without it */
+  old.then(([tw,te])=>{G.TW=tex(gl,tw,true);G.TE=tex(gl,te,true);document.dispatchEvent(new Event("gfdrift-more"))}).catch(e=>console.error(e));
   return G})();
  loading.catch(()=>{loading=null});return loading}
 /* plate p's rotation at t million years ago, blended between the stored 5-million-year steps */
@@ -116,14 +183,18 @@ function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,w
  const gl=G.gl,U=G.U;if(G.cv.width!==W)G.cv.width=W;if(G.cv.height!==H)G.cv.height=H;
  for(let i=0;i<G.P;i++)quat(i,t,G.qf,i*4);
  gl.viewport(0,0,W,H);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+ /* how much of the PaleoDEM map shows: all of it up to 540 Ma, fading out over the next 35 million years (if today's relief has loaded) */
+ const dA=t<=DEM_MAX||!G.TW?1:Math.max(0,1-(t-DEM_MAX)/FADE);
+ if(dA<1){
  gl.useProgram(G.prog);gl.bindVertexArray(G.vao);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,G.QT);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,G.P,1,gl.RGBA,gl.FLOAT,G.qf);gl.uniform1i(U.uQ,0);
  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,G.TW);gl.uniform1i(U.uW,1);
  gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,G.TE);gl.uniform1i(U.uE,2);
  gl.uniform1f(U.uRes,G.meta.res);gl.uniform1f(U.uT,t);gl.uniform1f(U.uLon0,lon0*DEG);gl.uniform3f(U.uK,k,tr[0],tr[1]);gl.uniform2f(U.uSize,W,H);
  for(const off of [0,2*Math.PI,-2*Math.PI]){gl.uniform1f(U.uOff,off);gl.drawElementsInstanced(gl.TRIANGLES,6,gl.UNSIGNED_SHORT,0,G.n)}
- gl.bindVertexArray(null);
- ctx.save();if(!o.noShadow&&!G.noShadow)ctx.filter="drop-shadow(0 0 "+(1.2*dpr).toFixed(1)+"px rgba(8,22,40,.85)) drop-shadow(0 "+(1.5*dpr).toFixed(1)+"px "+(3*dpr).toFixed(1)+"px rgba(0,0,0,.25))";ctx.drawImage(G.cv,0,0);ctx.restore();
+ gl.bindVertexArray(null)}
+ if(dA>0)demPass(t,lon0,k,tr,W,H,dA);
+ ctx.save();if(dA<1&&!o.noShadow&&!G.noShadow)ctx.filter="drop-shadow(0 0 "+(1.2*dpr).toFixed(1)+"px rgba(8,22,40,.85)) drop-shadow(0 "+(1.5*dpr).toFixed(1)+"px "+(3*dpr).toFixed(1)+"px rgba(0,0,0,.25))";ctx.drawImage(G.cv,0,0);ctx.restore();
  ctx.beginPath();path({type:"Sphere"});ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=dpr;ctx.stroke();
  if(o.labels!==false){const fs=Math.round((o.fs||Math.max(10,Math.min(15,W/dpr/70)))*dpr);ctx.font="800 "+fs+"px system-ui,-apple-system,'Segoe UI',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
   /* where each of today's continents is at time t, as unit vectors */
@@ -161,6 +232,17 @@ function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,w
     ctx.fillStyle="rgba(12,22,40,.88)";ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,w+pad*2,f*1.6,6*dpr):ctx.rect(bx,by,w+pad*2,f*1.6);ctx.fill();ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(M.label,bx+pad,xy[1]);ctx.textAlign="center"}});
   if(old&&o.legend!==false){ctx.font="600 "+Math.round(fs*.72)+"px system-ui,sans-serif";ctx.textAlign="left";ctx.fillStyle="rgba(220,235,255,.75)";ctx.fillText("* the land that becomes today’s continent",m+4*dpr,H-m-6*dpr);ctx.textAlign="center"}}
  return true}
+/* the two PaleoDEM maps either side of t, and for each plate the turn from t to each map's time */
+function demPass(t,lon0,k,tr,W,H,alpha){const gl=G.gl,U=G.U2,tc=Math.max(0,Math.min(DEM_MAX,t)),a=Math.min(DEM_MAX,Math.floor(tc/5)*5),b=Math.min(DEM_MAX,a+5),u=b>a?(tc-a)/5:0;
+ const qt=[0,0,0,0],qa=[0,0,0,0],qb=[0,0,0,0],R=G.rf,P=G.P;
+ const mul=(A,B,o)=>{/* A times the inverse of B */const w=A[0],x=A[1],y=A[2],z=A[3],bw=B[0],bx=-B[1],by=-B[2],bz=-B[3];
+  R[o]=w*bw-x*bx-y*by-z*bz;R[o+1]=w*bx+x*bw+y*bz-z*by;R[o+2]=w*by-x*bz+y*bw+z*bx;R[o+3]=w*bz+x*by-y*bx+z*bw};
+ for(let i=0;i<P;i++){quat(i,t,qt,0);quat(i,a,qa,0);quat(i,b,qb,0);mul(qa,qt,i*4);mul(qb,qt,(P+i)*4)}
+ gl.useProgram(G.prog2);gl.bindVertexArray(G.vao2);
+ gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,G.DT);gl.uniform1i(U.uA,3);
+ gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,G.RT);gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,P,2,gl.RGBA,gl.FLOAT,R);gl.uniform1i(U.uR,4);
+ gl.uniform3f(U.uK,k,tr[0],tr[1]);gl.uniform2f(U.uSize,W,H);gl.uniform1f(U.uLon0,lon0*DEG);gl.uniform1f(U.uU,u);gl.uniform1f(U.uAlpha,alpha);gl.uniform1f(U.uCols,DEM_COLS);gl.uniform2i(U.uS,a/5,b/5);
+ gl.drawArrays(gl.TRIANGLES,0,3);gl.bindVertexArray(null)}
 /* where a present-day place was at time t: the plate under it, turned back; null if that land didn't exist yet */
 function placeAt(lon,lat,t){if(!G)return null;const r=G.meta.res,i=Math.max(0,Math.min(G.NX-1,Math.floor((lon+180)/r))),j=Math.max(0,Math.min(G.NY-1,Math.floor((90-lat)/r))),k=(j*G.NX+i)*2,pl=G.PX[k],b=G.PX[k+1];
  if(pl===255)return null;if(b<255&&t>b*5)return null;const q=[0,0,0,0];quat(pl,t,q,0);return turnPt(q,lon,lat)}
@@ -170,7 +252,7 @@ let LL=null;function landLon(t){if(!G)return 0;if(!LL){LL=new Float32Array(751);
   let L=Math.atan2(yy,x)/DEG;if(prev!=null){while(L-prev>180)L-=360;while(L-prev<-180)L+=360}LL[y]=prev=L}
  /* a 60-million-year running mean, so the view turns gently */const S=new Float32Array(751);for(let y=0;y<=750;y++){let a=0,n=0;for(let k=Math.max(0,y-30);k<=Math.min(750,y+30);k++){a+=LL[k];n++}S[y]=a/n}LL=S}
  t=Math.max(0,Math.min(750,t));const a=Math.floor(t),b=Math.min(750,a+1);return LL[a]+(LL[b]-LL[a])*(t-a)}
-window.gfDrift={load:load,draw:draw,landLon:landLon,placeAt:placeAt,stage:stage,MAX:750,ready:()=>!!G,credit:"Plate motions: C. R. Scotese, PALEOMAP Project"};
+window.gfDrift={load:load,draw:draw,landLon:landLon,placeAt:placeAt,stage:stage,MAX:750,ready:()=>!!G,credit:"Landscapes: C. R. Scotese & N. Wright (2018), PALEOMAP Paleodigital Elevation Models, CC BY 4.0. Plate motions: C. R. Scotese, PALEOMAP Project"};
 
 /* All Maps: a "Deep Time" chip that opens a full-size drift map with a smooth time slider */
 if(typeof renderAllMapsView!=="function")return;
@@ -187,6 +269,9 @@ const css=document.createElement("style");css.textContent=`
 #gfDeep .gfd-ticks{display:flex;justify-content:space-between;font-size:10.5px;opacity:.65;padding:0 calc(10.5em + 12px) 0 46px}
 #gfDeep .gfd-credit{font-size:10.5px;opacity:.6}
 #gfDeep .gfd-x{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer;z-index:2}
+body:has(#allMapsView:not([style*="none"]) #gfDeep:not([hidden])) #flKey{display:none !important}
+#allMapsWrap:has(> #gfDeep:not([hidden])){min-height:min(600px,86vh)}
+@media (max-width:760px){#allMapsWrap:has(> #gfDeep:not([hidden])){min-height:min(500px,80vh)}#gfDeep .gfd-credit{max-height:4.2em;overflow:auto}#gfDeep .gfd-time{min-width:0;font-size:13px}#gfDeep .gfd-ticks{padding:0 0 0 46px}}
 #gfDeep .gfd-load{position:absolute;inset:0 0 120px;display:grid;place-items:center;font-weight:700;opacity:.85;pointer-events:none}
 `;document.head.appendChild(css);
 const st={t:250,lon:-10,playing:false,raf:0,pend:0,marks:null};
@@ -198,7 +283,7 @@ function paint(){if(st.pend)return;st.pend=requestAnimationFrame(()=>{st.pend=0;
  const r=b.querySelector("input[type=range]"),v=gfDrift.MAX-st.t;if(Math.abs(+r.value-v)>.05)r.value=v})}
 function open(){const wrap=document.getElementById("allMapsWrap");if(!wrap)return;let b=box();
  if(!b){if(getComputedStyle(wrap).position==="static")wrap.style.position="relative";b=document.createElement("div");b.id="gfDeep";
-  b.innerHTML='<canvas aria-label="The continents through time"></canvas><div class="gfd-load">Loading…</div><button type="button" class="gfd-x" aria-label="Close deep time">×</button><div class="gfd-bar"><div class="gfd-stage"></div><div class="gfd-row"><button type="button" class="gfd-play" aria-label="Play">▶</button><input type="range" min="0" max="'+gfDrift.MAX+'" step="0.1" aria-label="Time"><span class="gfd-time"></span></div><div class="gfd-ticks"><span>750 Ma</span><span>500 Ma</span><span>250 Ma</span><span>Today</span></div><div class="gfd-credit">'+gfDrift.credit+'. Positions from a published plate model; the landscapes are today’s, carried back in time. Before about 500 million years ago positions are less certain. Drag the map to turn the world.</div></div>';
+  b.innerHTML='<canvas aria-label="The continents through time"></canvas><div class="gfd-load">Loading…</div><button type="button" class="gfd-x" aria-label="Close deep time">×</button><div class="gfd-bar"><div class="gfd-stage"></div><div class="gfd-row"><button type="button" class="gfd-play" aria-label="Play">▶</button><input type="range" min="0" max="'+gfDrift.MAX+'" step="0.1" aria-label="Time"><span class="gfd-time"></span></div><div class="gfd-ticks"><span>750 Ma</span><span>500 Ma</span><span>250 Ma</span><span>Today</span></div><div class="gfd-credit">'+gfDrift.credit+'. From 540 million years ago to today the land, mountains and seas are Scotese’s reconstructions, one map every 5 million years; in between, each piece is carried along by its plate. Before that, today’s landscape is carried back, and positions are less certain. Drag the map to turn the world.</div></div>';
   wrap.appendChild(b);
   const r=b.querySelector("input[type=range]");r.oninput=()=>{stop();st.t=gfDrift.MAX-(+r.value);paint()};
   b.querySelector(".gfd-play").onclick=()=>{st.playing?stop():play()};
@@ -220,6 +305,7 @@ function ensure(){const row=document.getElementById("allMapsToggleRow");if(!row|
  const c=document.createElement("button");c.type="button";c.className="chip";c.id="gfDeepChip";c.textContent="Deep Time";c.title="Watch the continents drift over 750 million years";c.onclick=open;row.appendChild(c);
  row.addEventListener("click",e=>{if(e.target.closest("[data-allmaps-mode]"))close()},true)}
 const _r=renderAllMapsView;renderAllMapsView=function(){const r=_r.apply(this,arguments);try{ensure()}catch(e){console.error(e)}return r};
+document.addEventListener("gfdrift-more",()=>{const b=box();if(b&&!b.hidden)paint()});
 window.gfDeepTimeOpen=open;
 window.gfDeepUI={st:st,paint:paint,open:open,stop:stop,close:close,box:box};
 })();
