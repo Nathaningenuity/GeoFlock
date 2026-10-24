@@ -26,9 +26,19 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  try{const P=d3.geoRobinson().scale(318.31).translate([1e3,500.5]),dl=typeof SPIN!=="undefined"?SPIN.A.dl:0;
   (ALLMAPS_CITIES||[]).forEach(r=>{const k="cities|"+norm(r[0]);if(seen.has(k))return;let ll=P.invert([r[3],r[4]]);if(!ll)return;ll=[((ll[0]-dl+540)%360)-180,ll[1]];seen.add(k);IDX.push({n:r[0],alt:[],cat:"cities",g:{type:"Point",coordinates:ll},ll,fame:r[2]||3})})}catch(e){console.error(e)}
  {const isl=new Set(IDX.filter(e=>e.cat==="islands").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="groups"&&isl.has(norm(e.n))))}
+ /* a name that is both a lake and a sea (the Caspian, Aral and Dead Seas) is kept once, as a lake */
+ {const lk=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="seas"&&lk.has(norm(e.n))))}
  IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
-function find(q){q=norm(q);if(q.length<2)return[];const out=[];build().forEach(e=>{let best=9;e.keys.forEach(k=>{if(k===q)best=Math.min(best,0);else if(k.startsWith(q))best=Math.min(best,1);else if(k.split(/[ -]/).some(w=>w.startsWith(q)))best=Math.min(best,2);else if(q.length>=4&&k.includes(q))best=Math.min(best,3)});if(best<9)out.push([best,e.fame||3,e])});
- return out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2].n.length-b[2].n.length).slice(0,7).map(x=>x[2])}
+/* typo tolerance: "misisipi" finds Mississippi. Letters doubled by mistake or not are ignored, and a few slips are allowed
+   depending on length, compared with the whole name and with its beginning (for names still being typed) */
+const squash=s=>s.replace(/(.)\1+/g,"$1").replace(/ph/g,"f").replace(/y/g,"i").replace(/ou/g,"u").replace(/ck/g,"k");
+function lev(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let p=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const c=[i];let lo=i;for(let j=1;j<=b.length;j++){c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));lo=Math.min(lo,c[j])}if(lo>max)return max+1;p=c}return p[b.length]}
+function score(q,keys){let best=9;const sq=squash(q),max=q.length>=8?2:q.length>=4?1:0;
+ for(const k of keys){if(k===q)return 0;if(k.startsWith(q))best=Math.min(best,1);else if(k.split(/[ -]/).some(w=>w.startsWith(q)))best=Math.min(best,2);else if(q.length>=4&&k.includes(q))best=Math.min(best,3);
+  if(best>3&&max){const sk=squash(k);if(sk===sq||sk.startsWith(sq))best=Math.min(best,4);else{const d=Math.min(lev(sq,sk,max),lev(sq,sk.slice(0,sq.length),max));if(d<=max)best=Math.min(best,4+d)}}}
+ return best}
+function find(q,all){q=norm(q);if(q.length<2)return[];const out=[];build().forEach(e=>{const best=score(q,e.keys);if(best<9)out.push([best,e.fame||3,e])});
+ out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2].n.length-b[2].n.length);return all?out.slice(0,8):out.slice(0,7).map(x=>x[2])}
 const active=()=>typeof appMode!=="undefined"&&appMode==="allmaps"&&!(typeof proj!=="undefined"&&proj.on)&&!(()=>{const d=document.getElementById("gfDeep");return d&&!d.hidden})();
 const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof amGlobe!=="undefined"&&!!amGlobe}catch(e){return false}};
 /* ---------- the current result ---------- */
@@ -82,9 +92,16 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
  if(!CUR){if(b)b.remove();return}if(!b){b=document.createElement("button");b.type="button";b.id="gfsX";b.setAttribute("aria-label","Clear the search");b.onclick=e=>{e.stopPropagation();const i=document.getElementById("globalSearchInput");if(i)i.value="";clear()};wrap.appendChild(b)}
  b.innerHTML='<span>'+EMO[CUR.cat]+' '+esc(CUR.n)+'</span><b>×</b>'}
 function wire(){const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
- input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;const R=find(q);if(!R.length)return;
-  box.insertAdjacentHTML("beforeend",R.map((e,i)=>'<div class="global-search-result gfs-res" data-i="'+i+'"><span class="gfs-emo">'+EMO[e.cat]+'</span><span>'+esc(e.n)+'</span><span class="gsr-cap">'+TYPE[e.cat]+'</span></div>').join(""));
-  box.querySelectorAll(".gfs-res").forEach(el=>el.onclick=()=>{const e=R[+el.dataset.i];input.value="";box.innerHTML="";show(e)})});
+ input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
+  /* the site's own country suggestions are kept, but scored the same way as places, and weak guesses are dropped */
+  const nq=norm(q),ctry=[...box.querySelectorAll(".global-search-result[data-code]")].map(el=>{const c=(COUNTRY_BY_CODE||{})[el.dataset.code];const keys=c?[c.n].concat((typeof COUNTRY_ALIASES!=="undefined"&&COUNTRY_ALIASES[c.c])||[]).map(norm):[];return{el,s:score(nq,keys),f:1}});
+  const R=find(q,true);const best=Math.min(9,...ctry.map(x=>x.s),...R.map(x=>x[0]));
+  const items=ctry.filter(x=>x.s<9||best>=9).map(x=>({s:x.s<9?x.s:8.5,f:0,el:x.el})).concat(R.map(([sc,f,e],i)=>({s:sc,f:f,e})));
+  /* drop fuzzy guesses once anything matches properly */
+  const keep=items.filter(x=>best<=3?x.s<=3:true).sort((a,b)=>a.s-b.s||a.f-b.f).slice(0,8);
+  box.innerHTML="";const shown=[];keep.forEach(x=>{if(x.el){box.appendChild(x.el);return}const k=shown.push(x.e)-1;box.insertAdjacentHTML("beforeend",'<div class="global-search-result gfs-res" data-i="'+k+'"><span class="gfs-emo">'+EMO[x.e.cat]+'</span><span>'+esc(x.e.n)+'</span><span class="gsr-cap">'+TYPE[x.e.cat]+'</span></div>')});
+  if(best>=4&&keep.length)box.insertAdjacentHTML("afterbegin",'<div class="gfs-did">Did you mean…</div>');
+  box.querySelectorAll(".gfs-res").forEach(el=>el.onclick=()=>{const e=shown[+el.dataset.i];input.value="";box.innerHTML="";show(e)})});
  input.addEventListener("keydown",e=>{if(e.key==="Escape"&&CUR)clear()})}
 wire();document.addEventListener("DOMContentLoaded",wire);setTimeout(wire,1500);
 if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{wire();const i=document.getElementById("globalSearchInput");if(i&&active())i.placeholder="Search a country, city, river, mountain…";else if(i&&i.placeholder.startsWith("Search a country, city"))i.placeholder="Search for a country…";xBtn()}catch(e){}return r}}
@@ -107,6 +124,7 @@ const css=document.createElement("style");css.textContent=`
 #gfsX{ position:absolute; left:0; top:calc(100% + 6px); display:flex; gap:8px; align-items:center; border:0; border-radius:999px; padding:5px 6px 5px 12px; background:rgba(16,28,48,.88); color:#fff; font:600 12.5px/1 system-ui,sans-serif; cursor:pointer; z-index:30; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.25); }
 #gfsX b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.18); align-items:center; justify-content:center; font-size:15px; }
 #gfsX:hover b{ background:#e8701a; }
+.gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
 .gfs-res .gfs-emo{ width:28px; text-align:center; font-size:18px; }`;
 document.head.appendChild(css);
 window.gfSearch={find,show,clear,build};

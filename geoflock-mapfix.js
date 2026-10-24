@@ -45,3 +45,9 @@ document.addEventListener("click",e=>{try{if(e.target.closest&&e.target.closest(
  if(typeof psLaunchTour==="function"){const _p=psLaunchTour;psLaunchTour=function(){const r=_p.apply(this,arguments);re();return r}}
  if(typeof psEnd==="function"){const _e=psEnd;psEnd=function(){const r=_e.apply(this,arguments);re();return r}}
 }catch(e){console.error(e)}})();
+/* 6. A hovered lake stays blue: a clear, slightly deeper blue with its outline, instead of the near-clear tint that let the
+      land picture underneath show through */
+(function(){const st=document.createElement("style");st.textContent=`
+html:root body :is(#allMapsWrap,#atlasStudyMapWrap,#worldMapWrap,#gfNoSuchId,.map-wrap) svg path:is(.map-lake,.map-lake-minor):is(.lake-hover,:hover){ fill:rgba(88,158,222,.72) !important; fill-opacity:1 !important; filter:none !important; stroke:#0f4f86 !important; stroke-width:1.4px !important; vector-effect:non-scaling-stroke; }
+html:root body :is(#allMapsWrap,#atlasStudyMapWrap,#worldMapWrap,#gfNoSuchId,.map-wrap).sat-mode svg path:is(.map-lake,.map-lake-minor):is(.lake-hover,:hover){ fill:rgba(40,96,170,.82) !important; stroke:#cfe9ff !important; stroke-width:1.6px !important; }
+html:root body #allMapsWrap.sat-mode svg path.water-casing{ stroke:rgba(10,30,60,.55) !important; stroke-width:2.5px !important; }`;document.head.appendChild(st)})();
