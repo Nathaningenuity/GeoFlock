@@ -18,3 +18,8 @@ function padEdges(im){const W=im.naturalWidth||im.width,H=im.naturalHeight||im.h
   x.putImageData(D,x0,0)});
  c.naturalWidth=W;c.naturalHeight=H;return c}
 })();
+/* 2. Places region frames: Europe, Asia and Africa use the standard frame cut at the antimeridian; the Americas sit in the
+      middle (cut through Asia, at 100°E); Oceania keeps its own Pacific-centred frame. The zoom box follows the frame. */
+(function(){function hook(){if(window._gfSpinRegions||typeof spinRegionDl!=="function")return;window._gfSpinRegions=1;const _s=spinRegionDl;
+ spinRegionDl=function(){try{const r=typeof activeRegion==="undefined"?"All":activeRegion;if(r==="Europe"||r==="Asia"||r==="Africa")return 0;if(r==="Americas"||r==="North America"||r==="South America")return 80}catch(e){}return _s.apply(this,arguments)}}
+ hook();document.addEventListener("DOMContentLoaded",hook);setTimeout(hook,1000)})();
