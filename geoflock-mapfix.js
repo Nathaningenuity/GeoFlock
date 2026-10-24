@@ -18,11 +18,15 @@ function padEdges(im){const W=im.naturalWidth||im.width,H=im.naturalHeight||im.h
   x.putImageData(D,x0,0)});
  c.naturalWidth=W;c.naturalHeight=H;return c}
 })();
-/* 2. Places region frames: Europe, Asia and Africa use the standard frame cut at the antimeridian; the Americas sit in the
-      middle (cut through Asia, at 100°E); Oceania keeps its own Pacific-centred frame. The zoom box follows the frame. */
+/* 2. Places region frames: the world, Europe, Asia and Africa use the standard frame (0° in the middle, cut at the 180° meridian);
+      the Americas sit in the middle (cut through Asia, at 100°E); Oceania keeps its own Pacific-centred frame. */
 (function(){function hook(){if(window._gfSpinRegions||typeof spinRegionDl!=="function")return;window._gfSpinRegions=1;const _s=spinRegionDl;
- spinRegionDl=function(){try{const r=typeof activeRegion==="undefined"?"All":activeRegion;if(r==="Europe"||r==="Asia"||r==="Africa")return 0;if(r==="Americas"||r==="North America"||r==="South America")return 80}catch(e){}return _s.apply(this,arguments)}}
+ spinRegionDl=function(){try{const r=typeof activeRegion==="undefined"?"All":activeRegion;if(r==="Americas"||r==="North America"||r==="South America")return 80;if(r==="Oceania")return _s.apply(this,arguments);return 0}catch(e){}return _s.apply(this,arguments)}}
  hook();document.addEventListener("DOMContentLoaded",hook);setTimeout(hook,1000)})();
 /* 3. Tour stops that are about clouds show them even if the Clouds switch was turned off earlier */
 (function(){if(typeof cloudsOn!=="function")return;const _c=cloudsOn;
  cloudsOn=function(){try{if(typeof ps!=="undefined"&&ps&&(psSteps()[ps.i]||{}).clouds){if(typeof cloudsLoad==="function")cloudsLoad();return true}}catch(e){}return _c.apply(this,arguments)}})();
+/* 4. Picking a region (in Places or Capitals) gives that region's frame again, even if the map was dragged sideways earlier */
+(function(){if(typeof bboxForActiveSelection!=="function")return;let last=null;const _b=bboxForActiveSelection;
+ bboxForActiveSelection=function(){try{const r=(typeof activeRegion==="undefined"?"All":activeRegion)+"|"+(typeof activeSub==="undefined"?"":activeSub);if(r!==last){last=r;if(typeof spinUser!=="undefined"&&spinUser.W&&!(typeof spinQuizOn==="function"&&spinQuizOn())){spinUser.W=false;const want=spinRegionDl();if(Math.abs(SPIN.W.dl-want)>1e-6)spinTo("W",want);try{spinHomeSync()}catch(e){}}}}catch(e){console.error(e)}return _b.apply(this,arguments)}})();
+document.addEventListener("click",e=>{try{if(e.target.closest&&e.target.closest("#regionRow .chip")&&typeof spinUser!=="undefined")spinUser.W=false}catch(_){}},true);
