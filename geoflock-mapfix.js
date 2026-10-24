@@ -23,3 +23,6 @@ function padEdges(im){const W=im.naturalWidth||im.width,H=im.naturalHeight||im.h
 (function(){function hook(){if(window._gfSpinRegions||typeof spinRegionDl!=="function")return;window._gfSpinRegions=1;const _s=spinRegionDl;
  spinRegionDl=function(){try{const r=typeof activeRegion==="undefined"?"All":activeRegion;if(r==="Europe"||r==="Asia"||r==="Africa")return 0;if(r==="Americas"||r==="North America"||r==="South America")return 80}catch(e){}return _s.apply(this,arguments)}}
  hook();document.addEventListener("DOMContentLoaded",hook);setTimeout(hook,1000)})();
+/* 3. Tour stops that are about clouds show them even if the Clouds switch was turned off earlier */
+(function(){if(typeof cloudsOn!=="function")return;const _c=cloudsOn;
+ cloudsOn=function(){try{if(typeof ps!=="undefined"&&ps&&(psSteps()[ps.i]||{}).clouds){if(typeof cloudsLoad==="function")cloudsLoad();return true}}catch(e){}return _c.apply(this,arguments)}})();
