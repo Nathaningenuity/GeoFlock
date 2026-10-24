@@ -276,6 +276,9 @@ window.gfDrift={load:load,draw:draw,landLon:landLon,placeAt:placeAt,stage:stage,
 if(typeof renderAllMapsView!=="function")return;
 const css=document.createElement("style");css.textContent=`
 #gfDeep{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:#0e2238;border-radius:inherit;overflow:hidden;color:#fff;font-family:inherit}
+#gfDeep[hidden]{display:none !important}
+/* Deep Time is its own mode: the other maps' layer switches, keys and tour buttons are hidden while it is open */
+#allMapsView:has(#gfDeep:not([hidden])) :is(.all-maps-controls,#populationLegend,.ps-launcher,.am-tools,#amLabPill,#gfLearn,.map-zoom-controls){display:none !important}
 #gfDeep canvas{flex:1;min-height:0;width:100%;cursor:grab;touch-action:none;display:block}
 #gfDeep canvas.drag{cursor:grabbing}
 #gfDeep .gfd-bar{display:flex;flex-direction:column;gap:6px;padding:10px 16px 12px;background:rgba(8,20,36,.92)}
