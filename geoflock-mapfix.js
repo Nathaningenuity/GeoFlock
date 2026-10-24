@@ -30,3 +30,18 @@ function padEdges(im){const W=im.naturalWidth||im.width,H=im.naturalHeight||im.h
 (function(){if(typeof bboxForActiveSelection!=="function")return;let last=null;const _b=bboxForActiveSelection;
  bboxForActiveSelection=function(){try{const r=(typeof activeRegion==="undefined"?"All":activeRegion)+"|"+(typeof activeSub==="undefined"?"":activeSub);if(r!==last){last=r;if(typeof spinUser!=="undefined"&&spinUser.W&&!(typeof spinQuizOn==="function"&&spinQuizOn())){spinUser.W=false;const want=spinRegionDl();if(Math.abs(SPIN.W.dl-want)>1e-6)spinTo("W",want);try{spinHomeSync()}catch(e){}}}}catch(e){console.error(e)}return _b.apply(this,arguments)}})();
 document.addEventListener("click",e=>{try{if(e.target.closest&&e.target.closest("#regionRow .chip")&&typeof spinUser!=="undefined")spinUser.W=false}catch(_){}},true);
+/* 5. Satellite: rivers and lakes can be switched on (hover names them) but start off, and stay off in tours,
+      since they can't be seen from space */
+(function(){try{
+ if(typeof ALLMAPS_MODE_DEFAULTS!=="undefined"&&ALLMAPS_MODE_DEFAULTS.satellite)ALLMAPS_MODE_DEFAULTS.satellite.rivers=false;
+ if(typeof allMapsRiversByMode!=="undefined")allMapsRiversByMode.satellite=false;
+ if(typeof ALLMAPS_LAKES_DEFAULT!=="undefined")ALLMAPS_LAKES_DEFAULT.satellite=false;
+ if(typeof ALLMAPS_RIVER_HOVER_MODES!=="undefined")ALLMAPS_RIVER_HOVER_MODES.add("satellite");
+ const inSatTour=()=>typeof ps!=="undefined"&&ps&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite";
+ if(typeof allMapsRiversOn==="function"){const _r=allMapsRiversOn;allMapsRiversOn=function(){return inSatTour()?false:_r.apply(this,arguments)}}
+ if(typeof allMapsLakesOn==="function"){const _l=allMapsLakesOn;allMapsLakesOn=function(){return inSatTour()?false:_l.apply(this,arguments)}}
+ /* re-apply when a tour starts or ends */
+ const re=()=>setTimeout(()=>{try{const w=document.getElementById("allMapsWrap");if(typeof applyAllMapsLakesBorders==="function")applyAllMapsLakesBorders(w);if(w)w.classList.toggle("rivers-hidden",!allMapsRiversOn());const t=document.getElementById("allMapsRiversToggle");if(t)t.checked=allMapsRiversOn();if(typeof amGlobe!=="undefined"&&amGlobe)(amGlobe.request||amGlobe.render).call(amGlobe)}catch(e){}},60);
+ if(typeof psLaunchTour==="function"){const _p=psLaunchTour;psLaunchTour=function(){const r=_p.apply(this,arguments);re();return r}}
+ if(typeof psEnd==="function"){const _e=psEnd;psEnd=function(){const r=_e.apply(this,arguments);re();return r}}
+}catch(e){console.error(e)}})();
