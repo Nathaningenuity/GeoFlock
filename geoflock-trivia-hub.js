@@ -9,7 +9,7 @@
 if(typeof renderTriviaHome!=="function"||typeof TRIVIA_TOPICS==="undefined")return;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ORDER=["geo","nature","history","culture","politics","economy","words","classic","identify"];
-const PLAY=[["quiz","Quiz"],["speed","Speed round · 60 s"],["flash","Flashcards"]];
+const PLAY=[["quiz","Quiz"],["speed","Speed round<span class=\"tvh-long\"> · 60 s</span>"],["flash","Flashcards"]];
 const hub=()=>{const t=triviaState();if(!t.hub||typeof t.hub!=="object")t.hub={play:"quiz"};return t.hub};
 try{const N=TRIVIA_TOPICS.find(t=>t.id==="nature");if(N)N.name="Landforms & Nature"}catch(e){}
 const speedOK=id=>id!=="classic"&&id!=="identify";
@@ -27,7 +27,7 @@ function renderHub(){const st=triviaState(),H=hub(),v=document.getElementById("t
  const tile=c=>{const off=play==="speed"&&!speedOK(c.id),n=triviaPool(c.id).length;
   const meta=play==="speed"?(off?"Not in speed rounds":"Best "+(((tsState().best)||{})[c.id]||0)+" in 60 s"):play==="flash"?n+" cards":(c.blocks.length?"Score <b>"+tvTopicScore(c.id).toFixed(2)+"</b> · ":"")+n+" questions · "+tvDoneIn(triviaPool(c.id).map(q=>q.id))+" done";
   const parts=play!=="speed"&&c.blocks.length?'<div class="tvh-parts">'+c.blocks.map(b=>'<button type="button" class="tvh-part" data-cat="'+c.id+'" data-block="'+b.id+'" title="Just '+esc(b.name)+'">'+tvIcon(c.id+":"+b.id)+'<span>'+esc(b.name)+'</span></button>').join("")+'</div>':'';
-  return'<div class="tvh-tile'+(off?" off":"")+'" style="'+tvTopicColorVars(c.id)+'"><button type="button" class="tvh-go" data-cat="'+c.id+'"'+(off?" disabled":"")+'><span class="tv-icon-wrap">'+tvIcon(c.id)+'</span><span class="tvh-t"><b>'+esc(c.name)+'</b><small>'+esc(c.blurb)+'</small><em>'+meta+'</em></span><span class="tvh-arrow" aria-hidden="true">›</span></button>'+parts+'</div>'};
+  return'<div class="tvh-tile'+(off?" off":"")+'" style="'+tvTopicColorVars(c.id)+'"><button type="button" class="tvh-go" data-cat="'+c.id+'"'+(off?" disabled":"")+'><span class="tv-icon-wrap">'+tvIcon(c.id)+'</span><span class="tvh-t"><b>'+esc(c.name)+'</b><small>'+esc(c.blurb)+'</small><em>'+meta+'</em></span><span class="tvh-arrow" aria-hidden="true">›</span></button>'+(parts?'<button type="button" class="tvh-more" aria-expanded="false">Parts ▾</button>':'')+parts+'</div>'};
  const topics=ORDER.map(id=>TRIVIA_TOPICS.find(t=>t.id===id)).filter(Boolean).concat(TRIVIA_TOPICS.filter(t=>!ORDER.includes(t.id)));
  const D=window.gfDrills,S=D?D.st():{};
  const facts=D?D.list().map(x=>{const b=play==="quiz"?D.best(x.id):0;return'<button type="button" class="tvh-fact" data-fact="'+x.id+'"><span class="tvh-fi" aria-hidden="true">'+x.icon+'</span><span class="tvh-t"><b>'+esc(x.name)+'</b><small>'+esc(D.DIRNAME(x,D.dirOf(x)))+'</small>'+(b?'<em>best '+b+'</em>':'')+'</span></button>'}).join("")+(play==="quiz"&&window.gfProvinces?'<button type="button" class="tvh-fact" data-pv="1"><span class="tvh-fi" aria-hidden="true">🗺️</span><span class="tvh-t"><b>States & provinces</b><small>Learn the map inside a country</small></span></button>':''):'';
@@ -42,6 +42,8 @@ function renderHub(){const st=triviaState(),H=hub(),v=document.getElementById("t
  v.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>{H.play=b.dataset.play;saveStats();renderHub()});
  v.querySelectorAll(".tvh-bar [data-n]").forEach(b=>b.onclick=()=>{st.count=+b.dataset.n;saveStats();renderHub()});
  v.querySelectorAll(".tvh-go").forEach(b=>b.onclick=()=>go(b.dataset.cat));
+ /* phones: a topic's parts fold away behind a small button */
+ v.querySelectorAll(".tvh-more").forEach(b=>b.onclick=()=>{const t=b.closest(".tvh-tile"),o=!t.classList.contains("open");t.classList.toggle("open",o);b.setAttribute("aria-expanded",o);b.textContent=o?"Parts ▴":"Parts ▾"});
  v.querySelectorAll(".tvh-part").forEach(b=>b.onclick=()=>go(b.dataset.cat,b.dataset.block));
  v.querySelectorAll("[data-fact]").forEach(b=>b.onclick=()=>goFact(b.dataset.fact));
  v.querySelectorAll("[data-sty]").forEach(b=>b.onclick=()=>{S.style=b.dataset.sty;saveStats();renderHub()});
@@ -88,6 +90,31 @@ const css=document.createElement("style");css.textContent=`
 .tvh-back{ margin:4px 0 8px; }
 body.sky-night .tvh .tvh-bar, body.dark-theme .tvh .tvh-bar, body.sky-night .tvh-fact, body.dark-theme .tvh-fact{ background:rgba(30,34,60,.85); }
 body.sky-night .tvh-tile, body.dark-theme .tvh-tile{ background:color-mix(in srgb, var(--tf,#444) 16%, rgba(30,34,60,.9)); } body.sky-night .tvh-part, body.dark-theme .tvh-part{ background:rgba(255,255,255,.06); }
-@media (max-width:640px){ .tvh-grid{ grid-template-columns:1fr; } .tvh-facts{ grid-template-columns:1fr 1fr; } .tvh-fact{ padding:10px; gap:8px; } .tvh-fi{ font-size:22px; } .tv-mode-btn{ font-size:13px; padding:6px 10px; } }`;
+.tvh-more{ display:none; }
+/* phones: everything compact, two topics a row, parts folded away */
+@media (max-width:640px){
+ .tvh.tv-wrap{ padding-left:10px; padding-right:10px; }
+ .tvh .tv-nerd{ padding:12px 14px; } .tvh .tv-nerd-num{ font-size:34px !important; } .tvh .tv-nerd-main{ gap:12px; } .tvh .tv-nerd-foot{ font-size:11px; } .tvh .tv-nerd-foot .tv-muted, .tvh .tv-nerd-foot small{ display:none; }
+ .tvh .tv-startlv{ display:flex; flex-wrap:nowrap; justify-content:flex-start !important; overflow-x:auto; gap:6px; padding:10px 12px; align-items:center; scrollbar-width:none; } .tvh .tv-startlv::-webkit-scrollbar{ display:none; }
+ .tvh .tv-startlv > span{ flex:none; font-size:13px; } .tvh .tv-startlv .chip{ flex:none; } .tvh .tv-startlv em{ display:none; }
+ .tvh .tvh-bar{ padding:10px; gap:8px; margin-top:10px; } .tvh-row{ width:100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; } .tvh-row::-webkit-scrollbar{ display:none; }
+ .tvh-row > .tv-lab{ flex:none; } .tvh-row .chip{ flex:none; padding:6px 12px; } .tvh .tv-mode{ flex:1; display:flex; } .tvh .tv-mode-btn{ flex:1; font-size:13px; padding:7px 6px; white-space:nowrap; } .tvh-note{ font-size:12px; }
+ .tvh-h{ font-size:17px; margin:16px 2px 8px; } .tvh-ans{ width:100%; } .tvh-ans .chip{ padding:5px 10px; font-size:12px; }
+ .tvh-grid{ grid-template-columns:1fr 1fr; gap:8px; }
+ .tvh-tile{ border-radius:18px; padding:4px; } .tvh-go{ grid-template-columns:1fr; gap:6px; padding:8px; align-items:start; }
+ .tvh-go .tv-icon-wrap{ width:36px; height:36px; border-radius:11px; } .tvh-t b{ font-size:15px; line-height:1.2; } .tvh-t small{ display:none; } .tvh-t em{ font-size:11px; } .tvh-arrow{ display:none; }
+ .tvh-more{ display:block; align-self:flex-start; margin:0 8px 6px; border:0; background:none; padding:2px 0; font:700 12px inherit; color:var(--td,#555); cursor:pointer; }
+ .tvh-tile:not(.open) .tvh-parts{ display:none; } .tvh-parts{ padding:0 6px 6px; gap:5px; } .tvh-part{ font-size:12px; padding:4px 8px; }
+ .tvh-long{ display:none; }
+ /* the Jeopardy score keeper floats over the menu on a phone; it is only needed in Jeopardy */
+ body:has(#triviaView:not(.tv-jp-on)) #skGadget{ display:none !important; }
+ .tvh{ padding-bottom:70px; }
+ /* fact quizzes: the top line wraps, the switch gets its own row */
+ .dr-wrap{ padding:0 8px; } .dr-card{ padding:12px; border-radius:18px; } .dr-top{ flex-wrap:wrap; row-gap:6px; font-size:12px; }
+ .dr-top > span:first-child{ flex:1 1 100%; text-align:left; } .dr-swap{ order:5; } .dr-flag{ height:72px; } .dr-card h3{ font-size:19px; margin:8px 0 4px; } .dr-o{ padding:10px 12px; font-size:15px; } .dr-opts4{ gap:6px; margin:8px 0; }
+ .tvh-custom{ padding:12px; } .tvh-custom b{ font-size:15px; } .tvh-custom small{ font-size:12px; }
+ .tvh-facts{ grid-template-columns:repeat(3,1fr); gap:8px; }
+ .tvh-fact{ flex-direction:column; align-items:center; text-align:center; gap:4px; padding:10px 6px; border-radius:16px; } .tvh-fi{ font-size:26px; } .tvh-fact .tvh-t{ align-items:center; } .tvh-fact .tvh-t b{ font-size:13.5px; } .tvh-fact .tvh-t small{ display:block; font-size:10.5px; } .tvh-fact .tvh-t em{ font-size:10.5px; }
+}}`;
 document.head.appendChild(css);
 })();
