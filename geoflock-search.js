@@ -18,30 +18,15 @@ const SHOW={cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",island
 let IDX=null;
 /* which seas belong to which (roughly following the International Hydrographic Organization's limits). Only used by search:
    searching a sea also lights up its bays, gulfs and smaller seas. Everywhere else they stay separate. */
-const SEA_PARENT={
- "Aegean Sea":"Mediterranean Sea","Ionian Sea":"Mediterranean Sea","Adriatic Sea":"Mediterranean Sea","Tyrrhenian Sea":"Mediterranean Sea","Balearic Sea":"Mediterranean Sea","Gulf of Lion":"Mediterranean Sea",
- "Sea of Azov":"Black Sea","Gulf of Suez":"Red Sea","Gulf of Oman":"Arabian Sea","Persian Gulf":"Gulf of Oman","Gulf of Aden":"Arabian Sea","Gulf of Kutch":"Arabian Sea","Gulf of Mannar":"Laccadive Sea",
- "Gulf of Honduras":"Caribbean Sea","Bay of Campeche":"Gulf of Mexico","Gulf of Bothnia":"Baltic Sea","Gulf of Finland":"Baltic Sea","Skagerrak and Kattegat":"North Sea","James Bay":"Hudson Bay",
- "Melville Bay":"Baffin Bay","Disko Bay":"Baffin Bay","Scoresby Sund":"Greenland Sea","Ungava Bay":"Hudson Strait","Gulf of Ob":"Kara Sea","Yenisey Gulf":"Kara Sea","Khatanga Gulf":"Laptev Sea",
- "Bristol Bay":"Bering Sea","Cook Inlet":"Gulf of Alaska","Shelikhov Gulf":"Sea of Okhotsk","Bohai Sea":"Yellow Sea","Gulf of Thailand":"South China Sea","Gulf of Tonkin":"South China Sea","Strait of Singapore":"South China Sea","Gulf of Carpentaria":"Arafura Sea","Bay of Fundy":"Gulf of Maine",
- "Caribbean Sea":"North Atlantic Ocean","Gulf of Mexico":"North Atlantic Ocean","Sargasso Sea":"North Atlantic Ocean","Labrador Sea":"North Atlantic Ocean","Bay of Biscay":"North Atlantic Ocean","North Sea":"North Atlantic Ocean","English Channel":"North Atlantic Ocean","Irish Sea":"North Atlantic Ocean","Inner Seas (Scotland)":"North Atlantic Ocean","Bristol Channel":"North Atlantic Ocean","Gulf of Saint Lawrence":"North Atlantic Ocean","Gulf of Maine":"North Atlantic Ocean","Chesapeake Bay":"North Atlantic Ocean","Straits of Florida":"North Atlantic Ocean","Mediterranean Sea":"North Atlantic Ocean","Baltic Sea":"North Atlantic Ocean","Black Sea":"North Atlantic Ocean","Sea of Marmara":"North Atlantic Ocean","Strait of Gibraltar":"North Atlantic Ocean","Davis Strait":"North Atlantic Ocean",
- "Gulf of Guinea":"South Atlantic Ocean","Río de la Plata":"South Atlantic Ocean","San Jorge Gulf":"South Atlantic Ocean","Marajó Bay":"South Atlantic Ocean",
- "Baffin Bay":"Arctic Ocean","Hudson Bay":"Arctic Ocean","Hudson Strait":"Arctic Ocean","Greenland Sea":"Arctic Ocean","Norwegian Sea":"Arctic Ocean","Barents Sea":"Arctic Ocean","White Sea":"Arctic Ocean","Kara Sea":"Arctic Ocean","Laptev Sea":"Arctic Ocean","Chukchi Sea":"Arctic Ocean","Beaufort Sea":"Arctic Ocean","Northwest Passage":"Arctic Ocean","Viscount Melville Sound":"Arctic Ocean","Amundsen Gulf":"Arctic Ocean",
- "Bering Sea":"North Pacific Ocean","Gulf of Alaska":"North Pacific Ocean","Sea of Okhotsk":"North Pacific Ocean","Sea of Japan":"North Pacific Ocean","Yellow Sea":"North Pacific Ocean","East China Sea":"North Pacific Ocean","South China Sea":"North Pacific Ocean","Philippine Sea":"North Pacific Ocean","Sulu Sea":"North Pacific Ocean","Celebes Sea":"North Pacific Ocean","Gulf of California":"North Pacific Ocean","Gulf of Panama":"North Pacific Ocean","Strait of Georgia":"North Pacific Ocean","Seto Inland Sea":"North Pacific Ocean","Korea Strait":"North Pacific Ocean","Taiwan Strait":"North Pacific Ocean",
- "Coral Sea":"South Pacific Ocean","Tasman Sea":"South Pacific Ocean","Solomon Sea":"South Pacific Ocean","Bismarck Sea":"South Pacific Ocean","Arafura Sea":"South Pacific Ocean","Banda Sea":"South Pacific Ocean","Molucca Sea":"South Pacific Ocean","Ceram Sea":"South Pacific Ocean","Java Sea":"South Pacific Ocean","Makassar Strait":"South Pacific Ocean","Bay of Plenty":"South Pacific Ocean","Gulf of Corcovado":"South Pacific Ocean",
- "Arabian Sea":"Indian Ocean","Bay of Bengal":"Indian Ocean","Andaman Sea":"Indian Ocean","Laccadive Sea":"Indian Ocean","Red Sea":"Indian Ocean","Mozambique Channel":"Indian Ocean","Timor Sea":"Indian Ocean","Great Australian Bight":"Indian Ocean","Strait of Malacca":"Indian Ocean",
- "Weddell Sea":"Southern Ocean","Ross Sea":"Southern Ocean","Amundsen Sea":"Southern Ocean","Bellingshausen Sea":"Southern Ocean","Scotia Sea":"Southern Ocean","Drake Passage":"Southern Ocean",
- "North Pacific Ocean":"Pacific Ocean","South Pacific Ocean":"Pacific Ocean","North Atlantic Ocean":"Atlantic Ocean","South Atlantic Ocean":"Atlantic Ocean"};
+const SEA_PARENT=window.GF_SEA_PARENT||{};
 /* a sea with everything inside it */
 function withParts(e){if(e.cat!=="seas")return e;const kids=n=>Object.keys(SEA_PARENT).filter(k=>SEA_PARENT[k]===n),seen=new Set(),all=[];const walk=n=>{if(seen.has(n))return;seen.add(n);all.push(n);kids(n).forEach(walk)};walk(e.n);
  if(all.length<2)return e;const polys=[];all.forEach(n=>{const x=IDX.find(y=>y.cat==="seas"&&y.n===n&&y.g);if(x&&x.g.type==="MultiPolygon")x.g.coordinates.forEach(c=>polys.push(c))});
  return Object.assign({},e,{g:{type:"MultiPolygon",coordinates:polys},parts:all.length})}
 function geomOf(g){if(!g)return null;if(g.t==="pt")return{type:"Point",coordinates:g.c};if(g.t==="line")return{type:"MultiLineString",coordinates:g.c};if(g.t==="poly"){/* either a list of rings or (seas) a list of polygons */const deep=Array.isArray(g.c[0]&&g.c[0][0]&&g.c[0][0][0]);return{type:"MultiPolygon",coordinates:deep?g.c:g.c.map(r=>[r])}}return null}
 function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
- LANDFORMS.items.forEach(o=>{const cat=o.kind==="waterfall"||o.wf?"waterfalls":o.cat;if(!SHOW[cat])return;const g=geomOf(o.geom);if(!g)return;
+ LANDFORMS.items.forEach(o=>{if(/__L\d$/.test(o.id||""))return;const cat=o.kind==="waterfall"||o.wf?"waterfalls":o.cat;if(!SHOW[cat])return;const g=geomOf(o.geom);if(!g)return;
   const e={n:o.name,alt:o.alt||[],cat,g,ll:g.type==="Point"?g.coordinates:d3.geoCentroid(g),h:o.size&&o.size.height_m,fame:o.fame||3};IDX.push(e);seen.add(cat+"|"+norm(o.name))});
- /* whole oceans: Pacific and Atlantic are stored as north and south halves */
- [["Pacific Ocean",["Pacific"]],["Atlantic Ocean",["Atlantic"]]].forEach(([n,alt])=>IDX.push({n,alt,cat:"seas",g:{type:"MultiPolygon",coordinates:[]},ll:n[0]==="P"?[-160,0]:[-30,0],fame:0,whole:1}));
  /* more peaks from the map's own peak list (positions stored on the flat map: turn them back into longitude and latitude) */
  try{const P=d3.geoRobinson().scale(318.31).translate([1e3,500.5]),dl=typeof SPIN!=="undefined"?SPIN.A.dl:0;
   const pts=IDX.filter(e=>e.cat==="peaks"||e.cat==="volcanoes");(LANDFORM_DATA.peaks||[]).forEach(r=>{const k="peaks|"+norm(r[0]);if(seen.has(k)||seen.has("volcanoes|"+norm(r[0])))return;let ll=P.invert([r[2],r[3]]);if(!ll)return;ll=[((ll[0]-dl+540)%360)-180,ll[1]];if(pts.some(e=>d3.geoDistance(e.ll,ll)<.006))return;seen.add(k);IDX.push({n:r[0],alt:[],cat:"peaks",g:{type:"Point",coordinates:ll},ll,h:r[1],fame:r[4]||3})})}catch(e){console.error(e)}
@@ -66,7 +51,7 @@ const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof
 /* ---------- the current result ---------- */
 let CUR=null,t0=0,raf=0;
 function clear(){CUR=null;cancelAnimationFrame(raf);const l=document.querySelector("#allMapsWrap svg #gfSearchLayer");if(l)l.remove();document.querySelectorAll(".gfs-pin").forEach(x=>x.remove());try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
-function show(e){clear();if(!active())return;e=withParts(e);if(e.whole)e.ll=e.n[0]==="P"?[-160,0]:[-30,0];CUR=e;t0=performance.now();fly(e);draw();xBtn();
+function show(e){clear();if(!active())return;e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];CUR=e;t0=performance.now();fly(e);draw();xBtn();
  const tick=()=>{if(!CUR)return;draw();if(performance.now()-t0<2600)raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
 /* flash: three pulses, then settle to a steady level */
 function alpha(){const t=(performance.now()-t0)/1000;if(t>2.4)return 1;return .45+.55*Math.abs(Math.sin(t*Math.PI*1.25))}
