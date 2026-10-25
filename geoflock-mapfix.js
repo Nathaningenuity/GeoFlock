@@ -201,4 +201,40 @@ html body .flag-zoom-close:focus-visible, html body #flagZoomClose:focus-visible
 html body .flag-zoom-close:hover, html body #flagZoomClose:hover{ color:var(--coral,#e0603f) !important; background:rgba(22,50,79,.06) !important; }
 html body .flag-zoom-close svg, html body #flagZoomClose svg{ width:14px !important; height:14px !important; }
 body.dark-theme .flag-zoom-close, body.sky-night .flag-zoom-close{ color:rgba(230,237,247,.6) !important; }`;document.head.appendChild(st)}
+/* 11. */
+if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
+ const NAMES=["N","NE","E","SE","S","SW","W","NW"];const dirName=a=>NAMES[Math.round(((a%360)+360)%360/45)%8];
+ const val=()=>{try{return Math.round((typeof gfShadeV==="function"?gfShadeV():gfMS().shadeB)*100)}catch(e){return 30}};
+ function sync(row){const M=gfMS(),sun=row.querySelector(".gf-sh-sun"),a=M.sun*Math.PI/180;sun.setAttribute("cx",(20+13*Math.sin(a)).toFixed(1));sun.setAttribute("cy",(20-13*Math.cos(a)).toFixed(1));
+  row.querySelector(".gf-sh-dir").textContent=dirName(M.sun);const r=row.querySelector("input");if(document.activeElement!==r)r.value=val()}
+ function apply(){try{gfMSsave()}catch(e){}try{gfMsRefresh()}catch(e){}try{if(typeof gfMsPanelSync==="function")gfMsPanelSync()}catch(e){}try{gfGlobeDirty()}catch(e){}}
+ function make(){const row=document.createElement("div");row.id="gfShadeRow";
+  row.innerHTML='<svg class="gf-sh-dial" viewBox="0 0 40 40" aria-label="Sun direction: drag round"><circle cx="20" cy="20" r="13" class="gf-sh-ring"/><text x="20" y="5.5" text-anchor="middle">N</text><circle class="gf-sh-sun" r="4.2"/></svg>'+
+   '<div class="gf-sh-ctl"><span class="gf-sh-h">Terrain shading <small>light from <b class="gf-sh-dir"></b></small></span><input type="range" min="0" max="100" aria-label="Shading strength"><span class="gf-sh-ends"><small>none</small><small>dramatic</small></span></div>';
+  const dial=row.querySelector("svg"),r=row.querySelector("input");
+  const ang=ev=>{const b=dial.getBoundingClientRect(),dx=ev.clientX-(b.left+b.width/2),dy=ev.clientY-(b.top+b.height/2);gfMS().sun=Math.round((Math.atan2(dx,-dy)*180/Math.PI+360)%360/5)*5;sync(row)};
+  dial.onpointerdown=ev=>{dial.setPointerCapture(ev.pointerId);ang(ev);dial.onpointermove=ang};dial.onpointerup=()=>{dial.onpointermove=null;apply()};
+  r.oninput=()=>{};r.onchange=()=>{const M=gfMS();if(typeof GF_STYLES!=="undefined"&&GF_STYLES[M.style])M.shadeG=r.value/100;else M.shadeB=r.value/100;apply()};
+  ["pointerdown","mousedown","click","wheel","touchstart"].forEach(t=>row.addEventListener(t,e=>e.stopPropagation(),{passive:t==="wheel"||t==="touchstart"}));
+  return row}
+ let row=null;
+ const place=()=>{const pill=document.getElementById("amLabPill");const want=pill&&pill.offsetParent&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="relief"&&appMode==="allmaps";
+  if(!want){if(row)row.remove();return}if(!row)row=make();if(row.nextElementSibling!==pill||row.parentNode!==pill.parentNode)pill.parentNode.insertBefore(row,pill);
+  row.classList.toggle("in-key",pill.classList.contains("in-key"));sync(row)};
+ setInterval(()=>{try{place()}catch(e){}},600);
+ const st=document.createElement("style");st.textContent=`
+ #gfShadeRow{ display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:16px; background:rgba(255,255,255,.92); box-shadow:0 2px 10px rgba(20,40,70,.14); color:#1d3550; font-size:12px; }
+ #allMapsWrap > #gfShadeRow{ position:absolute; right:12px; bottom:62px; z-index:6; width:250px; }
+ #gfShadeRow.in-key{ background:rgba(127,140,180,.08); box-shadow:none; margin:8px 0 6px; }
+ #gfShadeRow .gf-sh-dial{ width:42px; height:42px; flex:none; cursor:grab; touch-action:none; }
+ #gfShadeRow .gf-sh-ring{ fill:#f3f6fa; stroke:rgba(29,53,80,.25); stroke-width:1.2; }
+ #gfShadeRow .gf-sh-dial text{ font-size:6px; font-weight:700; fill:rgba(29,53,80,.55); }
+ #gfShadeRow .gf-sh-sun{ fill:#f6b52c; stroke:#fff; stroke-width:1.2; }
+ #gfShadeRow .gf-sh-ctl{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+ #gfShadeRow .gf-sh-h{ font-weight:700; white-space:nowrap; } #gfShadeRow .gf-sh-h small{ font-weight:500; opacity:.7; margin-left:4px; }
+ #gfShadeRow input[type=range]{ width:100%; margin:2px 0 0; accent-color:#3a7fc0; }
+ #gfShadeRow .gf-sh-ends{ display:flex; justify-content:space-between; opacity:.6; font-size:10.5px; }
+ body.dark-theme #gfShadeRow:not(.in-key), body.sky-night #gfShadeRow:not(.in-key){ background:rgba(22,30,46,.92); color:#e6edf7; }
+ body.dark-theme #gfShadeRow, body.sky-night #gfShadeRow{ color:#e6edf7; }
+ @media (max-width:640px){ #allMapsWrap > #gfShadeRow{ display:none; } }`;document.head.appendChild(st)}
 })();
