@@ -191,4 +191,14 @@ if(typeof elevationLegendHTML==="function"){const _el=elevationLegendHTML;
  .legend-scale.gf-el-scale .legend-ticks{ margin-top:4px; }
  .legend-scale.gf-el-scale .legend-ticks-at i:first-child{ transform:none !important; }
  .legend-scale.gf-el-scale .legend-ticks-at i:last-child{ transform:translateX(-100%) !important; }`;document.head.appendChild(st)}
+/* 10. */
+{const st=document.createElement("style");st.textContent=`
+html body .flag-zoom-close, html body #flagZoomClose{ min-width:24px !important; min-height:24px !important; width:24px !important; height:24px !important; padding:0 !important;
+ position:absolute !important; top:8px !important; right:10px !important; left:auto !important; margin:0 !important; outline:none !important; background:transparent !important; border:0 !important; box-shadow:none !important; border-radius:50% !important;
+ color:rgba(22,50,79,.45) !important; font-size:20px !important; line-height:1 !important; backdrop-filter:none !important; }
+html body .flag-zoom-close:focus-visible, html body #flagZoomClose:focus-visible{ background:rgba(22,50,79,.1) !important; }
+#flagZoomOverlay .flag-zoom-panel{ position:relative; }
+html body .flag-zoom-close:hover, html body #flagZoomClose:hover{ color:var(--coral,#e0603f) !important; background:rgba(22,50,79,.06) !important; }
+html body .flag-zoom-close svg, html body #flagZoomClose svg{ width:14px !important; height:14px !important; }
+body.dark-theme .flag-zoom-close, body.sky-night .flag-zoom-close{ color:rgba(230,237,247,.6) !important; }`;document.head.appendChild(st)}
 })();
