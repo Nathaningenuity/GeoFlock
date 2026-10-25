@@ -1,7 +1,9 @@
 /* GeoFlock: map fixes.
    1. Spun flat maps: the raster is redrawn in strips, and where a strip meets the old 180° edge it samples the rim of the
       source picture, which fades to transparent, leaving a dotted line. Before a picture is used for spinning, each row's
-      edge colour is carried a few pixels out past the rim, so the edge is solid wherever it is sampled. */
+      edge colour is carried a few pixels out past the rim, so the edge is solid wherever it is sampled.
+   2. Zoomed-in outlines: Åland's detailed outline has every skerry (about 6,000 points, more than all of Sweden), so next to the
+      Swedish and Finnish coasts it looked far sharper than its neighbours. It is thinned to the same level of detail. */
 (function(){
 if(typeof spinImg==="function"){const _si=spinImg,done=new Map();
  spinImg=function(href){if(done.has(href))return done.get(href);const p=_si.apply(this,arguments).then(im=>{try{return padEdges(im)}catch(e){console.error(e);return im}});done.set(href,p);return p}}
@@ -50,4 +52,18 @@ document.addEventListener("click",e=>{try{if(e.target.closest&&e.target.closest(
 (function(){const st=document.createElement("style");st.textContent=`
 html:root body :is(#allMapsWrap,#atlasStudyMapWrap,#worldMapWrap,#gfNoSuchId,.map-wrap) svg path:is(.map-lake,.map-lake-minor):is(.lake-hover,:hover){ fill:rgba(88,158,222,.72) !important; fill-opacity:1 !important; filter:none !important; stroke:#0f4f86 !important; stroke-width:1.4px !important; vector-effect:non-scaling-stroke; }
 html:root body :is(#allMapsWrap,#atlasStudyMapWrap,#worldMapWrap,#gfNoSuchId,.map-wrap).sat-mode svg path:is(.map-lake,.map-lake-minor):is(.lake-hover,:hover){ fill:rgba(40,96,170,.82) !important; stroke:#cfe9ff !important; stroke-width:1.6px !important; }
-html:root body #allMapsWrap.sat-mode svg path.water-casing{ stroke:rgba(10,30,60,.55) !important; stroke-width:2.5px !important; }`;document.head.appendChild(st)})();
+html:root body #allMapsWrap.sat-mode svg path.water-casing{ stroke:rgba(10,30,60,.55) !important; stroke-width:2.5px !important; }`;document.head.appendChild(st)/* 2. */
+const THIN={"Åland":{tol:.0045,minKm2:.4}};
+function dp(R,tol){/* Douglas–Peucker on a closed ring, in degrees with longitude scaled by cos(latitude) */
+ if(R.length<=4)return R;const c=Math.cos(R[0][1]*Math.PI/180),keep=new Uint8Array(R.length);keep[0]=keep[R.length-1]=1;
+ const st=[[0,R.length-1]];while(st.length){const[a,b]=st.pop();let m=-1,md=0;const ax=R[a][0]*c,ay=R[a][1],bx=R[b][0]*c,by=R[b][1],dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy;
+  for(let i=a+1;i<b;i++){const px=R[i][0]*c,py=R[i][1];let t=L?((px-ax)*dx+(py-ay)*dy)/L:0;t=Math.max(0,Math.min(1,t));const ex=ax+t*dx-px,ey=ay+t*dy-py,d=ex*ex+ey*ey;if(d>md){md=d;m=i}}
+  if(m>0&&md>tol*tol){keep[m]=1;st.push([a,m],[m,b])}}
+ const out=R.filter((_,i)=>keep[i]);return out.length>=4?out:null}
+function thin(G,o){const sr=o.minKm2/(6371*6371);G.coordinates=G.coordinates.map(P=>{if(d3.geoArea({type:"Polygon",coordinates:[P[0]]})<sr)return null;const Q=P.map(R=>dp(R,o.tol)).filter(Boolean);return Q.length?Q:null}).filter(Boolean)}
+if(typeof hi10Load==="function"){const _hl=hi10Load;
+ hi10Load=function(){return _hl.apply(this,arguments).then(H=>{if(H&&!H._thin){H._thin=1;try{let n=0;
+  Object.entries(THIN).forEach(([name,o])=>{const f=H.byN.get(name);if(f){thin(f.geometry,o);n++;H.d&&H.d.delete&&H.d.delete(name);H.box&&H.box.delete&&H.box.delete(name)}});
+  if(n){if(H.d&&H.d.clear)H.d.clear();HI10_GLOBES.forEach(g=>{try{if(g.host&&g.host.isConnected)g.render()}catch(e){}});hiWatched.forEach(w=>{try{if(w.isConnected)hi10Flat(w)}catch(e){}})}
+ }catch(e){console.error(e)}}return H})}}
+})();
