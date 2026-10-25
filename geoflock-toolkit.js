@@ -267,7 +267,7 @@ function pinArm(on){S.pinArm=on;const h=host();if(h)h.classList.toggle("gfk-pinn
   /* the map's own click (country card) should not also fire */
   const stop=c=>{c.stopPropagation();c.stopImmediatePropagation();c.preventDefault();removeEventListener("click",stop,true)};addEventListener("click",stop,true);setTimeout(()=>removeEventListener("click",stop,true),80)},true)}
 function pinMenu(){const P=K().pins;const p=panel("gfkPins",'<b class="gfk-ph">Your pins</b><button type="button" class="gfk-big'+(S.pinArm?" on":"")+'" data-arm>'+(S.pinArm?'<span class="gfk-dot"></span>Dropping pins… click the map · <u>Stop</u>':'📍 Start dropping pins')+'</button>'+
- (P.length?'<ul class="gfk-pinlist">'+P.map((q,i)=>`<li><i style="background:${(PINKIND[q.k]||PINKIND.note)[1]}"></i><button type="button" data-go="${i}">${esc(q.n||"Unnamed pin")}<small>${esc((PINKIND[q.k]||PINKIND.note)[0])}${q.note?" · "+esc(q.note.slice(0,40)):""}</small></button><button type="button" class="gfk-del" data-del="${i}" aria-label="Remove">×</button></li>`).join("")+"</ul>":'<p class="gfk-hint">No pins yet. Drag a pin out of the tin onto the map, or press the button above and click the map.</p>')+
+ (P.length?'<ul class="gfk-pinlist">'+P.map((q,i)=>`<li><i style="background:${(PINKIND[q.k]||PINKIND.note)[1]}"></i><button type="button" data-go="${i}">${esc(q.n||"Unnamed pin")}<small>${esc((PINKIND[q.k]||PINKIND.note)[0])} · ${llTxt(q.ll)}${q.note?" · "+esc(q.note.slice(0,40)):""}</small></button><button type="button" class="gfk-del" data-del="${i}" aria-label="Remove">×</button></li>`).join("")+"</ul>":'<p class="gfk-hint">No pins yet. Drag a pin out of the tin onto the map, or press the button above and click the map.</p>')+
  '<p class="gfk-hint">Drag a pin on the map to move it, or back into the tin to remove it.</p>');if(!p)return;
  p.querySelector("[data-arm]").onclick=()=>{pinArm(!S.pinArm);pinMenu()};
  p.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const q=P[+b.dataset.go];closePanels();try{if(onGlobe())amGlobe.lookAt(q.ll[0],q.ll[1],Math.max(2.5,amGlobe.zoom));}catch(e){}setTimeout(()=>{const s=toScreen(q.ll);if(s)editPin(+b.dataset.go,s[0],s[1])},onGlobe()?900:50)});
@@ -292,9 +292,10 @@ function bearing(a,b){const R=Math.PI/180,y=Math.sin((b[0]-a[0])*R)*Math.cos(b[1
 function sameNames(base){const P=K().pins.filter(p=>p.b===base&&p.auto&&p.n.indexOf(base)===0);if(!P.length)return;
  if(P.length===1){P[0].n=base;return}
  P.sort((a,b)=>a.t-b.t).forEach((p,i)=>p.n=base+" "+(i+1))}
+const llTxt=ll=>{const f=(v,p,n)=>{const a=Math.abs(v),d=Math.floor(a),m=Math.round((a-d)*60);return(m===60?d+1:d)+"°"+String(m===60?0:m).padStart(2,"0")+"′"+(v>=0?p:n)};return f(ll[1],"N","S")+" "+f(ll[0],"E","W")};
 function newPin(ll,cx,cy){if(!ll){toast("Drop the pin on the map");return}const f=countryAt(cx,cy);const P=K().pins;const base=placeName(ll,cx,cy,f);P.push({ll:ll.map(v=>+v.toFixed(3)),n:base,b:base,auto:1,k:"been",note:"",t:Date.now()});sameNames(base);save();render();
  if(!newPin._told){newPin._told=1;toast("Pin dropped. Click a pin to name it or add a note.")}}
-function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin",'<b class="gfk-ph">Pin</b><label class="gfk-f">Name<input type="text" maxlength="40" value="'+esc(q.n)+'"></label>'+
+function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin",'<b class="gfk-ph">Pin</b><label class="gfk-f">Name<input type="text" maxlength="40" value="'+esc(q.n)+'"></label><div class="gfk-ll" title="Latitude, longitude">'+llTxt(q.ll)+'<small>'+q.ll[1].toFixed(4)+', '+q.ll[0].toFixed(4)+'</small></div>'+
  '<div class="gfk-kinds">'+Object.entries(PINKIND).map(([k,[n,c]])=>`<button type="button" data-k="${k}" class="${q.k===k?"on":""}"><i style="background:${c}"></i>${n}</button>`).join("")+'</div>'+
  '<label class="gfk-f">Note<textarea rows="2" maxlength="300">'+esc(q.note)+'</textarea></label><div class="gfk-acts"><button type="button" data-act="del">Remove pin</button><button type="button" data-act="ok" class="pri">Done</button></div>');if(!p)return;
  if(!PPOS.gfkPin){p.style.left=Math.max(8,Math.min(innerWidth-280,cx+18))+"px";p.style.top=Math.max(8,Math.min(innerHeight-300,cy-40))+"px";clampPanel(p)}
@@ -493,6 +494,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-pinlist [data-go]{ flex:1; text-align:left; border:0; background:none; font:700 13px system-ui; color:#22324a; cursor:pointer; padding:0; } .gfk-pinlist small{ display:block; font-weight:500; font-size:11px; opacity:.65; }
 .gfk-del{ border:0; background:none; font-size:18px; color:rgba(22,50,79,.4); cursor:pointer; }
 .gfk-f{ display:block; font-size:11.5px; font-weight:700; color:#56677a; margin:6px 0; } .gfk-f input, .gfk-f textarea{ display:block; width:100%; box-sizing:border-box; margin-top:3px; border:1px solid rgba(22,50,79,.2); border-radius:8px; padding:6px 8px; font:500 13px system-ui; color:#22324a; resize:vertical; }
+.gfk-ll{ font:700 12.5px "JetBrains Mono",ui-monospace,monospace; color:#3a5068; margin:-2px 0 8px; display:flex; gap:8px; align-items:baseline; } .gfk-ll small{ font-weight:500; opacity:.6; font-size:11px; }
 .gfk-kinds{ display:flex; gap:5px; flex-wrap:wrap; } .gfk-kinds button{ border:1px solid rgba(22,50,79,.18); background:#fff; border-radius:999px; padding:5px 10px 5px 7px; font:700 11.5px system-ui; color:#22324a; cursor:pointer; display:flex; align-items:center; gap:5px; }
 .gfk-kinds i{ width:10px; height:10px; border-radius:50%; } .gfk-kinds button.on{ background:#eaf3f8; box-shadow:inset 0 0 0 1.5px #2f6f8f; }
 .gfk-sea{ display:flex; gap:14px; align-items:stretch; }
