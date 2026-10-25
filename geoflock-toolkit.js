@@ -166,7 +166,10 @@ const TOOLS=[["compass","Compass","Drop it on the map: the needle points to nort
 function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):ART.sea(u)}
 function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.className="gfk-tray";
  tr.innerHTML='<button type="button" class="gfk-tab" aria-expanded="true" title="Show or hide the toolkit"><span>Toolkit</span><i>▾</i></button><div class="gfk-felt">'+
-  TOOLS.map(([id,n,t])=>`<button type="button" class="gfk-slot gfk-${id}" data-tool="${id}" title="${esc(n)}: ${esc(t)}" aria-label="${esc(n)}">${artFor(id)}<span>${esc(n.replace("Country dragger","Dragger").replace("Sea level changer","Sea level"))}</span></button>`).join("")+"</div>";
+  TOOLS.map(([id,n,t])=>`<button type="button" class="gfk-slot gfk-${id}" data-tool="${id}" title="${esc(t)}" aria-label="${esc(n)}">${artFor(id)}<span>${esc(n.replace("Country dragger","Dragger").replace("Sea level changer","Sea level"))}</span></button>`).join("")+"</div>";
+ /* the map's hover label must not show through the tray */
+ const hideTip=()=>document.querySelectorAll(".map-territory-tooltip, .map-tooltip, .globe-tip").forEach(x=>{x.classList.remove("show");x.style.opacity="0"});
+ ["mousemove","mouseover","pointermove"].forEach(ev=>tr.addEventListener(ev,e=>{e.stopPropagation();hideTip()}));tr.addEventListener("mouseleave",()=>document.querySelectorAll(".map-territory-tooltip, .map-tooltip, .globe-tip").forEach(x=>x.style.opacity=""));
  tr.querySelector(".gfk-tab").onclick=()=>{S.open=!S.open;try{K().closed=!S.open;save()}catch(e){}sync()};
  tr.querySelectorAll(".gfk-slot").forEach(b=>wireDrag(b,b.dataset.tool,"tray"));
  ["pointerdown","mousedown","click","wheel","dblclick"].forEach(t=>tr.addEventListener(t,e=>e.stopPropagation()));
@@ -432,11 +435,11 @@ window.gfToolkit={cursorFor,S,K,render,toLL,toScreen,putAway,dropTool,openPalett
 
 /* ================= look ================= */
 const css=document.createElement("style");css.textContent=`
-.gfk-tray{ position:absolute; left:12px; bottom:12px; z-index:7; display:flex; flex-direction:column; align-items:flex-start; user-select:none; -webkit-user-select:none; }
-.gfk-tab{ border:0; cursor:pointer; margin:0 0 -2px 14px; padding:4px 12px 6px; border-radius:9px 9px 0 0; font:800 11px/1 system-ui,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#fbefd8;
+.gfk-tray{ position:absolute; left:12px; bottom:0; z-index:7; display:flex; flex-direction:column; align-items:flex-start; user-select:none; -webkit-user-select:none; }
+.gfk-tab{ border:0; cursor:pointer; margin:0 0 -2px 14px; position:relative; z-index:1; padding:4px 12px 6px; border-radius:9px 9px 0 0; font:800 11px/1 system-ui,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#fbefd8;
  background:linear-gradient(#8a5a30,#6a4020); box-shadow:inset 0 1px 0 rgba(255,255,255,.25); display:flex; gap:6px; align-items:center; }
 .gfk-tab i{ font-style:normal; transition:transform .2s; } .gfk-tray.closed .gfk-tab i{ transform:rotate(180deg); }
-.gfk-felt{ display:flex; gap:4px; align-items:flex-end; padding:8px 10px 8px; border-radius:14px; max-width:min(560px,calc(100vw - 48px)); overflow-x:auto; scrollbar-width:none;
+.gfk-felt{ display:flex; gap:4px; align-items:flex-end; padding:8px 10px 8px; border-radius:14px 14px 0 0; max-width:min(560px,calc(100vw - 48px)); overflow-x:auto; scrollbar-width:none;
  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.08),transparent 60%),linear-gradient(#1f4a3a,#173a2d); border:5px solid transparent;
  border-image:repeating-linear-gradient(90deg,#a06a38 0 14px,#8c5a2c 14px 22px,#b07a44 22px 34px) 6; box-shadow:0 8px 22px rgba(30,20,10,.35), inset 0 3px 8px rgba(0,0,0,.45); }
 .gfk-felt::-webkit-scrollbar{ display:none; }
@@ -517,7 +520,8 @@ const css=document.createElement("style");css.textContent=`
 /* the old buttons these tools replace */
 #allMapsWrap .am-tools [data-amt="dice"], #allMapsWrap .am-tools [data-amt="measure"], #amDiceTop, #gfMsBtn, .globe-host [data-g="measure"], .globe-host [data-g="dice"]{ display:none !important; }
 /* the "click a country" hint moves up out of the tray's way */
-#allMapsWrap:has(> .gfk-tray:not(.closed)) > #gfLearn, .globe-host:has(> .gfk-tray:not(.closed)) #gfLearn{ bottom:132px !important; }
+#allMapsWrap:has(> .gfk-tray:not(.closed)) > #gfLearn, .globe-host:has(> .gfk-tray:not(.closed)) #gfLearn{ bottom:118px !important; }
+#allMapsWrap:has(> .gfk-tray.closed) > #gfLearn, .globe-host:has(> .gfk-tray.closed) #gfLearn{ bottom:36px !important; }
 #allMapsWrap:has(> .gfk-tray) > .am-measure{ top:14px !important; bottom:auto !important; }
 body.dark-theme .gfk-panel, body.sky-night .gfk-panel{ background:#1d2638; color:#e6edf7; }
 @media (max-width:640px){ #allMapsWrap > .gfk-tray, .globe-host > .gfk-tray{ position:relative; left:auto; bottom:auto; margin:8px 0 4px; width:100%; } .gfk-felt{ max-width:100%; } .gfk-slot{ width:48px; height:56px; } .gfk-slot.gfk-ruler{ width:78px; } .gfk-panel, .gfk-panel.gfk-wide{ width:calc(100vw - 24px); } .gfk-obj{ width:84px; height:84px; } .gfk-obj.gfk-o-ruler{ width:190px; height:38px; } }

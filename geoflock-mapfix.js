@@ -204,7 +204,7 @@ if(typeof elevationLegendHTML==="function"){const _el=elevationLegendHTML;
  .legend-scale.gf-el-scale .legend-ticks-at i:last-child{ transform:translateX(-100%) !important; }`;document.head.appendChild(st)}
 /* 10. */
 {const st=document.createElement("style");st.textContent=`
-html body .flag-zoom-close, html body #flagZoomClose{ min-width:24px !important; min-height:24px !important; width:24px !important; height:24px !important; padding:0 !important;
+html body #flagZoomOverlay #flagZoomClose, html body #flagZoomOverlay .flag-zoom-panel > .flag-zoom-close, html body .flag-zoom-close, html body #flagZoomClose{ min-width:24px !important; min-height:24px !important; width:24px !important; height:24px !important; padding:0 !important;
  position:absolute !important; top:8px !important; right:10px !important; left:auto !important; margin:0 !important; outline:none !important; background:transparent !important; border:0 !important; box-shadow:none !important; border-radius:50% !important;
  color:rgba(22,50,79,.45) !important; font-size:20px !important; line-height:1 !important; backdrop-filter:none !important; }
 html body .flag-zoom-close:focus-visible, html body #flagZoomClose:focus-visible{ background:rgba(22,50,79,.1) !important; }
