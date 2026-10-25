@@ -270,4 +270,27 @@ document.addEventListener("wheel",e=>{if(e.ctrlKey&&e.target.closest&&e.target.c
 {let last=1;["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>{const host=e.target.closest&&e.target.closest("#allMapsWrap,.globe-host,#atlasStudyMapWrap,.map-wrap");if(!host)return;e.preventDefault();
  if(t==="gesturestart"){last=1;return}const sc=e.scale||1,d=sc/last;last=sc;if(t==="gestureend"||Math.abs(d-1)<.01)return;
  const tgt=host.querySelector("svg,canvas")||host;tgt.dispatchEvent(new WheelEvent("wheel",{deltaY:-Math.log(d)*400,clientX:e.clientX,clientY:e.clientY,bubbles:true,cancelable:true}))},{passive:false,capture:true}))}
+/* 15. */
+if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
+ const commonSet=()=>new Set(poolFor("Common").map(c=>c.c));
+ /* a bit less common: the most populous countries outside the common set */
+ function harder(r,n){try{const cs=commonSet(),inQ=new Set(r.queue.map(c=>c.c));let L=COUNTRIES.filter(c=>!cs.has(c.c)&&!inQ.has(c.c)&&(typeof COUNTRY_POPULATION==="undefined"||COUNTRY_POPULATION[c.c]));
+   if(appMode==="map")L=L.filter(c=>!isMapAtlasUnavailable(c.c));if(appMode==="capital")L=L.filter(c=>c.caps&&c.caps.length);
+   L.sort((a,b)=>((COUNTRY_POPULATION||{})[b.c]||0)-((COUNTRY_POPULATION||{})[a.c]||0));L=L.slice(0,55);const out=[];while(out.length<n&&L.length)out.push(L.splice(Math.floor(Math.random()*L.length),1)[0]);return out}catch(e){return[]}}
+ /* swap three of the next part's questions for less common countries */
+ function mixIn(r){const pp=r.pp;if(!pp||r._mixFor===pp.part+1||pp.part>=pp.n)return;r._mixFor=pp.part+1;const H=harder(r,3);if(!H.length)return;
+  const end=Math.min(r.queue.length,r.idx+PARTS.size),slots=[];for(let i=r.idx;i<end;i++)slots.push(i);slots.sort(()=>Math.random()-.5);
+  r._harder=r._harder||new Set();H.forEach((c,k)=>{const i=slots[k];if(i==null)return;r.queue[i]=c;r._harder.add(c.c)});r._harderPart=pp.part+1;r._typedFrom=r._typedFrom||pp.part+1}
+ const _pb=partsBreakHTML;partsBreakHTML=function(r){let h=_pb.apply(this,arguments);try{const pp=r.pp;if(!pp||r.region!=="Common")return h;
+  const k=pp.part,sz=partSize(pp,k),good=pp.partScore>=Math.ceil(sz*.8),what=appMode==="capital"?"capitals":appMode==="map"?(mapQuizSubMode==="silhouette"?"outlines":"countries"):"flags";
+  const inJ=typeof gfEasyJourney==="function"&&gfEasyJourney();
+  if(quizMode==="type"&&r._typedFrom==null)r._typedFrom=1;
+  const typedAll=quizMode==="type"&&r._typedFrom<=k,hadHarder=r._harderPart===k;
+  let box="";
+  if(good&&quizMode!=="type"){box='<div class="gf-easy"><div class="gf-easy-h">🌟 '+pp.partScore+' of '+sz+'! Ready to type them?</div><p>Spell the answers yourself from the next question. A few slightly less common '+what+' will join in, and typed answers turn stamps gold.</p><div class="gf-easy-row"><button type="button" class="gf-easy-b" id="gfLadType"><b>⌨️ Switch to typing</b><small>From the next question</small></button></div></div>'}
+  else if(good&&typedAll&&hadHarder){box='<div class="gf-easy"><div class="gf-easy-h">🏆 '+pp.partScore+' of '+sz+' typed, even the harder ones!</div><p>You know the common '+what+'. Time for the whole world'+(inJ?" once this step is done":"")+'.</p><div class="gf-easy-row">'+(inJ?"":'<button type="button" class="gf-easy-b" id="gfEasyAll"><b>🌍 All '+what+'</b><small>Move on to all 196</small></button>')+"</div></div>";mixIn(r)}
+  else if(typedAll){mixIn(r);if(good)box='<div class="gf-easy"><div class="gf-easy-h">⌨️ Nicely typed</div><p>The next part mixes in three slightly less common '+what+'. Get 8 of 10 and you are ready for all of them.</p></div>'}
+  /* replace the older "Too easy?" box with this one */
+  h=h.replace(/<div class="gf-easy">[\s\S]*?(?=<div class="round-actions">)/,"");if(box)h=h.replace('<div class="round-actions">',box+'<div class="round-actions">')}catch(e){console.error(e)}return h};
+ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#gfLadType");if(!t)return;quizMode="type";try{renderChrome()}catch(err){}try{if(round&&round.pp){round._typedFrom=round.pp.part+1;mixIn(round)}}catch(err){}t.classList.add("on");t.innerHTML="<b>⌨️ Typing is on ✓</b><small>From the next question, with three harder ones</small>"})}
 })();
