@@ -282,15 +282,22 @@ function placeName(ll,cx,cy,f){try{const cn=c=>(COUNTRY_BY_CODE[c]||{}).n||"",ct
  const isl=inP("islands");if(isl)return isl.name+(ctry||isl.countries?" ("+(ctry||cn(isl.countries[0]))+")":"");
  const grp=inP("groups");if(grp)return grp.name+(ctry||grp.countries?" ("+(ctry||cn(grp.countries[0]))+")":"");
  return ctry||seaAt(ll)}catch(e){return f?nameOf(f):seaAt(ll)}}
-function newPin(ll,cx,cy){if(!ll){toast("Drop the pin on the map");return}const f=countryAt(cx,cy);const P=K().pins;P.push({ll:ll.map(v=>+v.toFixed(3)),n:placeName(ll,cx,cy,f),k:"been",note:"",t:Date.now()});save();render();
+/* pins with the same automatic name are numbered 1, 2, 3… in the order they were dropped.
+   A name you have typed yourself is never changed. */
+const DIR8=["north","north-east","east","south-east","south","south-west","west","north-west"];
+function bearing(a,b){const R=Math.PI/180,y=Math.sin((b[0]-a[0])*R)*Math.cos(b[1]*R),x=Math.cos(a[1]*R)*Math.sin(b[1]*R)-Math.sin(a[1]*R)*Math.cos(b[1]*R)*Math.cos((b[0]-a[0])*R);return(Math.atan2(y,x)/R+360)%360}
+function sameNames(base){const P=K().pins.filter(p=>p.b===base&&p.auto&&p.n.indexOf(base)===0);if(!P.length)return;
+ if(P.length===1){P[0].n=base;return}
+ P.sort((a,b)=>a.t-b.t).forEach((p,i)=>p.n=base+" "+(i+1))}
+function newPin(ll,cx,cy){if(!ll){toast("Drop the pin on the map");return}const f=countryAt(cx,cy);const P=K().pins;const base=placeName(ll,cx,cy,f);P.push({ll:ll.map(v=>+v.toFixed(3)),n:base,b:base,auto:1,k:"been",note:"",t:Date.now()});sameNames(base);save();render();
  if(!newPin._told){newPin._told=1;toast("Pin dropped. Click a pin to name it or add a note.")}}
 function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin",'<b class="gfk-ph">Pin</b><label class="gfk-f">Name<input type="text" maxlength="40" value="'+esc(q.n)+'"></label>'+
  '<div class="gfk-kinds">'+Object.entries(PINKIND).map(([k,[n,c]])=>`<button type="button" data-k="${k}" class="${q.k===k?"on":""}"><i style="background:${c}"></i>${n}</button>`).join("")+'</div>'+
  '<label class="gfk-f">Note<textarea rows="2" maxlength="300">'+esc(q.note)+'</textarea></label><div class="gfk-acts"><button type="button" data-act="del">Remove pin</button><button type="button" data-act="ok" class="pri">Done</button></div>');if(!p)return;
  if(!PPOS.gfkPin){p.style.left=Math.max(8,Math.min(innerWidth-280,cx+18))+"px";p.style.top=Math.max(8,Math.min(innerHeight-300,cy-40))+"px";clampPanel(p)}
- const nm=p.querySelector("input"),nt=p.querySelector("textarea");nm.oninput=()=>{q.n=nm.value;save();render()};nt.oninput=()=>{q.note=nt.value;save()};
+ const nm=p.querySelector("input"),nt=p.querySelector("textarea");nm.oninput=()=>{q.n=nm.value;q.auto=0;save();render()};nt.oninput=()=>{q.note=nt.value;save()};
  p.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{q.k=b.dataset.k;p.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("on",x===b));save();render()});
- p.querySelector('[data-act="del"]').onclick=()=>{K().pins.splice(i,1);save();render();closePanels()};p.querySelector('[data-act="ok"]').onclick=closePanels;setTimeout(()=>nm.focus(),30)}
+ p.querySelector('[data-act="del"]').onclick=()=>{const b=q.b;K().pins.splice(i,1);if(b)sameNames(b);save();render();closePanels()};p.querySelector('[data-act="ok"]').onclick=closePanels;setTimeout(()=>nm.focus(),30)}
 /* pins on the map: click to edit, drag to move, drag into the tray to remove */
 function pinAt(cx,cy){const P=K().pins;let best=-1,bd=10;P.forEach((q,i)=>{const s=toScreen(q.ll);if(!s)return;const d=Math.min(Math.hypot(s[0]-cx,s[1]-20-cy),Math.hypot(s[0]-cx,s[1]-10-cy)*1.3);if(d<bd){bd=d;best=i}});return best}
 function ghostAt(cx,cy){const ll=toLL(cx,cy);if(!ll)return-1;for(let i=S.ghosts.length-1;i>=0;i--){try{if(d3.geoContains(ghostGeom(S.ghosts[i]),ll))return i}catch(e){}}return-1}
