@@ -174,4 +174,6 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  #allMapsSubModes.gf-sub-inrow .chip{ font-size:11.5px; padding:4px 11px; min-height:0; line-height:1.2; border:none; box-shadow:none; white-space:nowrap; margin:0; }
  #allMapsSubModes.gf-sub-inrow .chip:not(.active){ background:transparent; }
  body.dark-theme #allMapsSubModes.gf-sub-inrow{ background:rgba(20,28,44,.6); }`;document.head.appendChild(st)}
+/* 8. */
+try{if(typeof PS_ICONS!=="undefined"&&PS_ICONS.waterfall&&!/^<g transform="matrix\(-1/.test(PS_ICONS.waterfall))PS_ICONS.waterfall='<g transform="matrix(-1 0 0 1 24 0)">'+PS_ICONS.waterfall+"</g>"}catch(e){}
 })();
