@@ -13,39 +13,42 @@ if(typeof d3==="undefined"||typeof topojson==="undefined"||typeof PROJ_WORLD==="
 
 /* ---------- the legs ---------- */
 const LEGS=[
- {t:"port",name:"Lisbon",cont:"Europe",at:[-9.14,38.71],land:"eu-tour",req:["eu-find","eu-flag","eu-cap","eu-tv"],tre:["sp-proj","eu-fp","eu-shape","tour:heurope"],
+ {t:"port",id:"start",name:"The famous world",cont:"Start",at:[-9.14,38.71],mark:[-29,48],land:"c-tour",req:["c-find","c-flag","c-cap","c-tv"],tre:["c-fp","sp-proj"],
+  blurb:"Before you sail: a guided tour of the whole world, then the countries everyone knows. Every chart begins here."},
+ {t:"port",name:"Lisbon",cont:"Europe",at:[-9.14,38.71],land:"eu-tour",req:["eu-find","eu-flag","eu-cap","eu-tv"],tre:["eu-fp","eu-shape","tour:heurope"],
   blurb:"The voyage begins where the great age of sail began: the Tagus, Lisbon. Chart Europe before you put out to sea."},
- {t:"sea",name:"Down the coast of Africa",tour:"sp-explorers",path:[[-9.14,38.71],[-12,32],[-19,22],[-20,12],[-12,2],[0,-6],[6,-16],[12,-28],[18.42,-33.92]],
-  blurb:"Follow the explorers who crept down this coast for most of a century before rounding the Cape."},
+ {t:"sea",id:"s-suez",name:"Through the Mediterranean and Suez",tour:"tour:hancient",path:[[-9.14,38.71],[-9,36.6],[-5.6,35.95],[-2,36.3],[4,37.8],[11.6,37.3],[16,36],[26,34],[32.3,31.4],[32.55,29.9],[34.4,26.5],[38.5,19],[43.4,12.6],[50,12.4],[55,13],[64,15],[72.6,18.6]],
+  blurb:"East along the Mediterranean, through the canal and down the Red Sea: the shores of the first civilisations."},
+ {t:"port",name:"Mumbai",cont:"Asia",at:[72.88,19.08],land:"as-tour",req:["as-find","as-flag","as-cap","as-tv"],tre:["as-fp","sp-globle","sp-plates","t-eurasia","tour:hasia"],
+  blurb:"The harbour of Mumbai. Chart Asia, the largest continent of all."},
+ {t:"sea",id:"s-monsoon",name:"Across the Indian Ocean on the monsoon",tour:"tour:transport",path:[[72.6,18.6],[66,9],[58,-3],[55,-15],[50,-28],[38,-36],[26,-36],[18.42,-33.92]],
+  blurb:"South-west with the monsoon winds that traders have used for two thousand years, past Madagascar to the tip of Africa."},
  {t:"port",name:"Cape Town",cont:"Africa",at:[18.42,-33.92],land:"af-tour",req:["af-find","af-flag","af-cap","af-tv"],tre:["af-fp","sp-animals","tour:hafrica"],
-  blurb:"The Cape of Good Hope, where the Atlantic meets the Indian Ocean. Chart Africa, the second largest continent."},
- {t:"sea",name:"Across the South Atlantic",tour:"tour:seas",path:[[18.42,-33.92],[10,-37],[-10,-33],[-30,-27],[-43.17,-22.91]],
+  blurb:"The Cape of Good Hope, where the Indian Ocean meets the Atlantic. Chart Africa, the second largest continent."},
+ {t:"sea",id:"s-atlantic",name:"Across the South Atlantic",tour:"tour:seas",path:[[18.42,-33.92],[10,-37],[-10,-33],[-30,-27],[-43.17,-22.91]],
   blurb:"The westerlies carry you across the widest open water you have seen so far. Learn the world's seas on the way."},
  {t:"port",name:"Rio de Janeiro",cont:"South America",at:[-43.17,-22.91],land:"sa-tour",req:["sa-find","am-flag"],tre:["tour:hsamerica"],
   blurb:"Guanabara Bay, under Sugarloaf Mountain. Chart South America, from the Andes to the Amazon."},
- {t:"sea",name:"Through the Caribbean and up the Gulf Stream",tour:"tour:islands",path:[[-43.17,-22.91],[-37,-14],[-34,-6],[-40,2],[-50,8],[-60,13],[-68,15.5],[-74,19.6],[-75,24],[-73,30],[-71,36],[-74,40.5]],
+ {t:"sea",id:"s-caribbean",name:"Through the Caribbean and up the Gulf Stream",tour:"tour:islands",path:[[-43.17,-22.91],[-37,-14],[-34,-6],[-40,2],[-50,8],[-60,13],[-68,15.5],[-74,19.6],[-75,24],[-73,30],[-71,36],[-74,40.5]],
   blurb:"Island-hop through the Antilles, then ride the warm Gulf Stream north. A passage for learning islands."},
  {t:"port",name:"New York",cont:"North America",at:[-74,40.7],land:"na-tour",req:["na-find","am-cap","am-tv"],tre:["am-fp","t-atlantic","sp-food","tour:hnamerica"],
   blurb:"The harbour of New York. Chart North America, from the Arctic islands to Panama."},
- {t:"sea",name:"Through Panama and across the Pacific",tour:"sp-time",path:[[-74,40.5],[-71,34],[-72,24],[-74,19.6],[-78,14],[-79.6,9.3],[-80,6],[-95,-2],[-120,-12],[-149.5,-17.5],[-175,-21],[170,-27],[158,-31],[151.21,-33.87]],
+ {t:"sea",id:"s-pacific",name:"Through Panama and across the Pacific",tour:"sp-time",path:[[-74,40.5],[-71,34],[-72,24],[-74,19.6],[-78,14],[-79.6,9.3],[-80,6],[-95,-2],[-120,-12],[-149.5,-17.5],[-175,-21],[170,-27],[158,-31],[151.21,-33.87]],
   blurb:"Through the canal and into the largest ocean on Earth, crossing a date line and a dozen time zones."},
- {t:"port",name:"Sydney",cont:"Oceania",at:[151.21,-33.87],land:"oc-tour",req:["oc-find","oc-flag","oc-cap","oc-tv"],tre:["oc-fp","sp-time","tour:hoceania"],
+ {t:"port",name:"Sydney",cont:"Oceania",at:[151.21,-33.87],land:"oc-tour",req:["oc-find","oc-flag","oc-cap","oc-tv"],tre:["oc-fp","tour:hoceania"],
   blurb:"Port Jackson. Chart Australia and the islands of the Pacific."},
- {t:"sea",name:"Into the Southern Ocean",tour:"tour:climate",path:[[151.21,-33.87],[156,-42],[165,-52],[172,-64],[170,-72],[166.67,-77.6]],
+ {t:"sea",id:"s-southern",name:"Into the Southern Ocean",tour:"tour:climate",path:[[151.21,-33.87],[156,-42],[165,-52],[172,-64],[170,-72],[166.67,-77.6]],
   blurb:"South into the Roaring Forties and the Furious Fifties, where climate is not an abstract idea."},
  {t:"port",name:"McMurdo Sound",cont:"Antarctica",at:[166.67,-77.6],land:"tour:antarctica",req:[],tre:["tour:hantarctica"],
   blurb:"The edge of the ice. Chart the one continent with no countries."},
- {t:"sea",name:"Across the Indian Ocean on the monsoon",tour:"tour:transport",path:[[166.67,-77.6],[160,-66],[130,-55],[100,-44],[84,-28],[76,-10],[70,5],[72.6,18.6]],
-  blurb:"North with the monsoon winds that traders have used for two thousand years."},
- {t:"port",name:"Mumbai",cont:"Asia",at:[72.88,19.08],land:"as-tour",req:["as-find","as-flag","as-cap","as-tv"],tre:["as-fp","sp-globle","sp-plates","t-eurasia","tour:hasia"],
-  blurb:"The harbour of Mumbai. Chart Asia, the largest continent of all."},
- {t:"sea",name:"Home by the Red Sea and Suez",tour:"tour:hancient",path:[[72.6,18.6],[64,15],[55,13],[50,12.4],[43.4,12.6],[38.5,19],[34.4,26.5],[32.55,29.9],[32.3,31.4],[26,34],[16,36],[11.6,37.3],[4,37.8],[-2,36.3],[-5.6,35.95],[-9,36.6],[-9.14,38.71]],
-  blurb:"Up the Red Sea, through the canal and along the Mediterranean: the shores of the first civilisations."},
- {t:"port",name:"Lisbon again: the whole world",cont:"World",at:[-9.14,38.71],mark:[-19,41.5],land:"c-tour",req:["t-world"],tre:["w-tour","w-find","w-flag","w-cap","w-shape","w-tv","w-fp","c-find","c-flag","c-cap","c-tv","c-fp","sp-flags"],
+ {t:"sea",id:"s-horn",name:"Home round Cape Horn",tour:"sp-explorers",path:[[166.67,-77.6],[175,-71],[-160,-64],[-120,-61],[-85,-59],[-67,-57],[-55,-50],[-40,-35],[-30,-15],[-28,5],[-25,20],[-20,33],[-9.14,38.71]],
+  blurb:"East along the ice, round the Horn and all the way up the Atlantic, in the wake of the explorers who first sailed round the world."},
+ {t:"port",name:"Lisbon again: the whole world",cont:"World",at:[-9.14,38.71],mark:[-21,35.5],land:"w-tour",req:["t-world"],tre:["w-find","w-flag","w-cap","w-shape","w-tv","w-fp","sp-flags"],
   blurb:"Home, with the whole world charted. One last test puts your name on the chart."}
 ];
 const CONTS=["Europe","Africa","South America","North America","Oceania","Antarctica","Asia"];
-const CONT_LEG={};LEGS.forEach((L,i)=>{if(L.t==="port"&&L.cont!=="World")CONT_LEG[L.cont]=i});
+const CONT_LEG={};LEGS.forEach((L,i)=>{if(L.t==="port"&&L.cont!=="World"&&L.cont!=="Start")CONT_LEG[L.cont]=i});
+const lid=L=>L.id||L.name;const special=L=>L.cont==="World"||L.cont==="Start";
 const WASH={"Europe":"#d48b6e","Africa":"#d6ae52","Asia":"#93ad6d","North America":"#bd8fb0","South America":"#86ad94","Oceania":"#cf9a62","Antarctica":"#9fb6c8"};
 const CLABEL={"Europe":[16,53],"Africa":[20,6],"Asia":[92,46],"North America":[-102,47],"South America":[-60,-13],"Oceania":[134,-25],"Antarctica":[40,-80]};
 
@@ -256,16 +259,16 @@ function draw(cv,opt){
  const pts=[];
  LEGS.forEach((L,i)=>{if(L.t!=="port")return;const p=proj(L.mark||L.at);if(!p)return;pts.push([i,p[0],p[1]]);const done=legDone(i),open=isOpen(i),r=(opt.mini?5:7.5)*scl;
   if(opt.sel===i){ctx.fillStyle="rgba(214,170,60,.45)";ctx.beginPath();ctx.arc(p[0],p[1],r*2.1,0,7);ctx.fill()}
-  if(L.cont==="World"){ctx.save();ctx.translate(p[0],p[1]);ctx.fillStyle=done?"#c9a23a":open?"#f3e7c6":"rgba(243,231,198,.6)";ctx.strokeStyle=done?"#6b4a12":open?INK:PENCIL+".6)";ctx.lineWidth=1;
+  if(special(L)){ctx.save();ctx.translate(p[0],p[1]);ctx.fillStyle=done?(L.cont==="Start"?"#4f7fa8":"#c9a23a"):open?"#f3e7c6":"rgba(243,231,198,.6)";ctx.strokeStyle=done?"#6b4a12":open?INK:PENCIL+".6)";ctx.lineWidth=1;
    ctx.beginPath();for(let j=0;j<16;j++){const a=-Math.PI/2+j*Math.PI/8,rr=j%2?r*.5:r*1.25;j?ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr)}ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
   else if(done)seal(ctx,p[0],p[1],r*1.15);
   else{ctx.fillStyle=open?"#f6edd6":"rgba(243,231,198,.7)";ctx.strokeStyle=open?INK:PENCIL+".6)";ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();ctx.stroke();
    ctx.beginPath();ctx.arc(p[0],p[1],r*.55,0,7);ctx.lineWidth=.7;ctx.stroke();
    ctx.fillStyle=open?RED:PENCIL+".7)";ctx.beginPath();ctx.arc(p[0],p[1],r*.22,0,7);ctx.fill()}
-  if(!opt.mini){const[tf,tn]=treasures(i);if(tn&&open&&L.cont!=="World"){const x=p[0]+r*1.9,y=p[1]-r*1.5,s=r*.62;ctx.strokeStyle=tf===tn?"#b58a1a":RED;ctx.lineWidth=2*scl;ctx.lineCap="round";
+  if(!opt.mini){const[tf,tn]=treasures(i);if(tn&&open&&!special(L)){const x=p[0]+r*1.9,y=p[1]-r*1.5,s=r*.62;ctx.strokeStyle=tf===tn?"#b58a1a":RED;ctx.lineWidth=2*scl;ctx.lineCap="round";
     ctx.beginPath();ctx.moveTo(x-s,y-s);ctx.lineTo(x+s,y+s);ctx.moveTo(x+s,y-s);ctx.lineTo(x-s,y+s);ctx.stroke()}
    ctx.font="italic "+Math.round(12.5*scl)+"px "+FONT;ctx.fillStyle=open?INK:PENCIL+".75)";ctx.textAlign="center";ctx.textBaseline="top";
-   const nm=L.cont==="World"?"Home":L.name;if(!narrow||open||k>1.6)ctx.fillText(nm,p[0],p[1]+r+3)}});
+   const nm=L.cont==="World"?"Home":L.cont==="Start"?"Chart room":L.name;if(!narrow||open||k>1.6)ctx.fillText(nm,p[0],p[1]+r+3)}});
  /* the ship sits at the first unfinished leg */
  if(fo<LEGS.length){const L=LEGS[fo];let a,b;
   if(L.t==="port"){a=proj(L.mark||L.at);b=null}else{a=proj(L.path[0]);b=proj(L.path[1])}
@@ -314,7 +317,10 @@ function open(sel){
  const cv=o.querySelector("canvas"),wrap=o.querySelector(".vy-chart");
  V={o,cv,wrap,tr:{k:1,x:0,y:0},sel:null,fast:false,raf:0,idle:0};
  /* newly finished legs since the chart was last opened */
- const S=st(),now=LEGS.map((_,i)=>legDone(i)?i:-1).filter(i=>i>=0),fresh=now.filter(i=>S.seen.indexOf(i)<0);
+ const S=st(),now=LEGS.map((L,i)=>legDone(i)?lid(L):null).filter(Boolean);
+ /* older saves listed legs by number; start the id list from what is done now, without announcing it */
+ if(S.v!==2){S.seen=now.slice();S.v=2}
+ const fresh=LEGS.map((L,i)=>legDone(i)&&S.seen.indexOf(lid(L))<0?i:-1).filter(i=>i>=0);
  S.seen=now;save();
  V.sel=sel!=null?sel:Math.min(firstOpen(),LEGS.length-1);V.fresh=fresh;
  const resize=()=>{const r=wrap.getBoundingClientRect();sizeCanvas(cv,Math.max(200,r.width),Math.max(160,r.height));paint()};
@@ -356,9 +362,9 @@ function qRow(q,locked){const d=qDone(q),k=qKind(q);
 function log(){if(!V)return;const b=V.o.querySelector(".vy-log-b"),i=V.sel,L=LEGS[i],done=legDone(i),op=isOpen(i),fo=firstOpen();
  const dn=LEGS.filter((_,j)=>legDone(j)).length;
  let h="";
- if(V.fresh&&V.fresh.length){const f=V.fresh[V.fresh.length-1],F=LEGS[f];h+='<div class="vy-news">'+(F.t==="port"?(F.cont==="World"?"The voyage is complete. Your name goes on the chart.":"Landfall at "+esc(F.name)+" is complete: "+esc(F.cont)+" is charted and sealed."):"Passage complete: "+esc(F.name)+". The route is inked in red.")+"</div>";V.fresh=null}
+ if(V.fresh&&V.fresh.length){const f=V.fresh[V.fresh.length-1],F=LEGS[f];h+='<div class="vy-news">'+(F.t==="port"?(F.cont==="Start"?"The chart room is done: you know the famous world. Time to sail.":F.cont==="World"?"The voyage is complete. Your name goes on the chart.":"Landfall at "+esc(F.name)+" is complete: "+esc(F.cont)+" is charted and sealed."):"Passage complete: "+esc(F.name)+". The route is inked in red.")+"</div>";V.fresh=null}
  h+='<div class="vy-prog"><div class="vy-bar"><i style="width:'+(dn/LEGS.length*100)+'%"></i></div><span>'+dn+" of "+LEGS.length+" legs</span></div>";
- h+='<div class="vy-leg'+(op?"":" locked")+'"><div class="vy-leg-h"><span class="vy-n">'+(i+1)+'</span><div><small>'+(L.t==="port"?(L.cont==="World"?"Home port":"Port · "+esc(L.cont)):"Ocean passage")+"</small><h3>"+esc(L.name)+"</h3></div>"+(done?'<span class="vy-badge">✓ Done</span>':"")+"</div>";
+ h+='<div class="vy-leg'+(op?"":" locked")+'"><div class="vy-leg-h"><span class="vy-n">'+(i+1)+'</span><div><small>'+(L.t==="port"?(L.cont==="World"?"Home port":L.cont==="Start"?"Before you sail":"Port · "+esc(L.cont)):"Ocean passage")+"</small><h3>"+esc(L.name)+"</h3></div>"+(done?'<span class="vy-badge">✓ Done</span>':"")+"</div>";
  h+="<p>"+esc(L.blurb)+"</p>";
  if(!op)h+='<p class="vy-lockmsg">🔒 Opens once leg '+(i)+" is done. Leg "+(fo+1)+" and the one after it are open now.</p>";
  if(L.t==="sea"){h+='<h4>The passage</h4><ul class="vy-qs">'+qRow(L.tour,!op)+"</ul>"}
@@ -395,7 +401,7 @@ function homeCard(sec){
  [...sec.children].forEach(c=>{if(c!==h)c.remove()});
  const d=document.createElement("div");d.className="vy-home";
  d.innerHTML='<button type="button" class="vy-home-map" aria-label="Open the chart"><canvas></canvas><span class="vy-home-open">Open the chart →</span></button>'+
-  '<div class="vy-home-side"><p>Sail from Lisbon round the world: a port on every continent and an ocean passage between each. Your chart fills in as you go.</p>'+
+  '<div class="vy-home-side"><p>Start with a tour of the whole world, then sail from Lisbon round it: a port on every continent and an ocean passage between each. Your chart fills in as you go.</p>'+
   (nq?'<div class="vy-home-next"><small>Leg '+(nq[0]+1)+" · "+esc(LEGS[nq[0]].name)+"</small><b>"+esc(qLabel(nq[1]))+'</b><button type="button" class="hi-btn main vy-home-go">Start →</button></div>':"")+
   '<button type="button" class="hx-link vy-home-log">Read the ship’s log →</button></div>';
  sec.appendChild(d);sec.dataset.vy="1";
@@ -406,11 +412,18 @@ function homeCard(sec){
  requestAnimationFrame(pr);loadPaper(pr);whenFonts(pr);
 }
 function refreshHome(){const s=document.getElementById("hxRoute");if(s){delete s.dataset.vy;try{homeCard(s)}catch(e){console.error(e)}}}
+/* the old route's buttons (top bar route pill, XP pill) open and name the voyage */
+function pills(){try{ const dn=LEGS.filter((_,i)=>legDone(i)).length;
+ [["twPill","The Voyage: "+dn+" of "+LEGS.length+" legs"],["xpNumPill",null]].forEach(([id,t])=>{const e=document.getElementById(id);if(!e)return;
+  ["title","aria-label"].forEach(k=>{const v=e.getAttribute(k);if(!v)return;const n=t&&id==="twPill"&&k==="title"?t:v.replace(/Travelling the World — \d+ of \d+ stops/,t||"The Voyage").replace(/Travelling the World/g,"the Voyage").replace(/^the Voyage/,"The Voyage");if(n!==v)e.setAttribute(k,n)})});
+}catch(e){}}
+setInterval(pills,1000);
 let hq=0;new MutationObserver(()=>{if(hq)return;hq=requestAnimationFrame(()=>{hq=0;
  /* the current Home page: a chart card under "Today" */
  const td=document.querySelector("section.hi-today");if(td&&!document.getElementById("hxRoute")){const v=document.createElement("section");v.id="hxRoute";v.className="hi-voyage";v.innerHTML='<h2 class="hi-h2">Your voyage</h2>';td.after(v)}
  const s=document.getElementById("hxRoute");if(s&&!s.dataset.vy)try{homeCard(s)}catch(e){console.error(e)}
  const c=document.getElementById("hiCont");if(c&&!c.dataset.vy){c.dataset.vy="1";c.innerHTML=(firstOpen()?"Continue your voyage":"Start your voyage")+" <span>→</span>"}
+ pills();
  const r=document.getElementById("hiRoute");if(r&&!r.dataset.vy){r.dataset.vy="1";const fo=firstOpen(),b=r.querySelector("b"),sm=r.querySelector("small");if(b)b.textContent="Your voyage";if(sm)sm.textContent=fo>=LEGS.length?"The whole world is charted":"Leg "+(fo+1)+" of "+LEGS.length+": "+LEGS[fo].name}})}).observe(document.documentElement,{childList:true,subtree:true});
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#hiCont,#hxRouteAll,#hiRoute");if(!t)return;e.preventDefault();e.stopImmediatePropagation();open()},true);
 

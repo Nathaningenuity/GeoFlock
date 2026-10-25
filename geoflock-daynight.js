@@ -10,7 +10,8 @@ function subsolar(t){const d=(t/864e5)+2440587.5-2451545.0,g=(357.529+0.98560028
  const ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)),dec=Math.asin(Math.sin(e)*Math.sin(L));
  const gmst=((18.697374558+24.06570982441908*d)%24+24)%24;let lon=(ra/R-gmst*15)%360;if(lon>180)lon-=360;if(lon<-180)lon+=360;return[lon,dec/R]}
 let on=false,timer=null;
-function prefsOn(){try{return!!(stats.dayNight)}catch(e){return false}}
+/* off whenever the page opens; the switch turns it on for this visit */
+function prefsOn(){return false}
 function setPref(v){try{stats.dayNight=v;saveStats()}catch(e){}}
 function proj(){return typeof GLOBE_ROBINSON!=="undefined"?GLOBE_ROBINSON:d3.geoRobinson().scale(318.31).translate([1e3,500.5])}
 function draw(){globe();const wrap=document.getElementById("allMapsWrap"),svg=wrap&&wrap.querySelector("svg");if(wrap)wrap.classList.toggle("gf-dn-on",on);if(!svg){clock();return}let g=svg.querySelector("g.gf-night");
