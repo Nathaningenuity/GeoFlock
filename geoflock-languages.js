@@ -9,13 +9,13 @@
 if(typeof TH_THEMES==="undefined"||!TH_THEMES.lang)return;
 const T=TH_THEMES.lang;
 T.note="The family of the language most people grow up speaking. Stripes show a second family spoken by many people; hover a country for all of them.";
-T.cats=[["ger","Germanic (English, German, Dutch…)","#7fa7dc"],["rom","Romance (Spanish, Portuguese, French…)","#e8a07a"],["sla","Slavic (Russian, Polish, Serbian…)","#5b6fb8"],
- ["ieo","Other Indo-European (Greek, Albanian, Armenian, Latvian…)","#b7a6dc"],["iir","Indo-Iranian (Hindi, Bengali, Persian, Kurdish…)","#f2cf86"],["dra","Dravidian (Telugu, Tamil, Kannada, Malayalam)","#b4561f"],
- ["sem","Afro-Asiatic (Arabic, Amharic, Hausa, Somali, Hebrew…)","#d9b26b"],["nc","Niger-Congo (Swahili, Yoruba, Igbo, Zulu…)","#8fcf9e"],["ns","Nilo-Saharan (Dinka, Luo, Kanuri, Songhay…)","#5ea77a"],
- ["st","Sino-Tibetan (Chinese, Burmese, Tibetan…)","#e07b6f"],["tur","Turkic (Turkish, Azerbaijani, Kazakh, Uzbek…)","#6fc0c0"],["ura","Uralic (Finnish, Estonian, Hungarian, Sámi)","#a6d8e8"],
- ["an","Austronesian (Malay, Indonesian, Tagalog, Malagasy…)","#d58fb8"],["aa","Austroasiatic (Vietnamese, Khmer, Santali…)","#c3a27c"],["kd","Kra-Dai (Thai, Lao, Shan, Zhuang)","#efb7a0"],
- ["jpn","Japonic (Japanese, Ryukyuan)","#c96f8f"],["kor","Koreanic (Korean, Jeju)","#9b5fa8"],["ame","Indigenous American families (Quechua, Guaraní, Maya…)","#7fb8a8"],
- ["oth","Other families (Kartvelian, Mongolic, Papuan, Khoe…)","#bdb6a6"],["cre","Creoles (Haitian, Jamaican, Cape Verdean…)","#f0d9a8"]];
+T.cats=[["ger","Germanic (English, German…)","#7fa7dc"],["rom","Romance (Spanish, French…)","#e8a07a"],["sla","Slavic (Russian, Polish…)","#5b6fb8"],
+ ["ieo","Other Indo-European (Greek…)","#b7a6dc"],["iir","Indo-Iranian (Hindi, Persian…)","#f2cf86"],["dra","Dravidian (Tamil, Telugu…)","#b4561f"],
+ ["sem","Afro-Asiatic (Arabic, Hausa…)","#d9b26b"],["nc","Niger-Congo (Swahili, Yoruba…)","#8fcf9e"],["ns","Nilo-Saharan (Dinka, Luo…)","#5ea77a"],
+ ["st","Sino-Tibetan (Chinese, Burmese…)","#e07b6f"],["tur","Turkic (Turkish, Kazakh…)","#6fc0c0"],["ura","Uralic (Finnish, Hungarian…)","#a6d8e8"],
+ ["an","Austronesian (Malay, Tagalog…)","#d58fb8"],["aa","Austroasiatic (Vietnamese, Khmer…)","#c3a27c"],["kd","Kra-Dai (Thai, Lao…)","#efb7a0"],
+ ["jpn","Japonic (Japanese)","#c96f8f"],["kor","Koreanic (Korean)","#9b5fa8"],["ame","Indigenous American (Quechua, Maya…)","#7fb8a8"],
+ ["oth","Other families","#bdb6a6"],["cre","Creoles (Haitian, Tok Pisin…)","#f0d9a8"]];
 /* main family changes: Japan and Korea apart; Guyana's home language is Guyanese Creole; most Paraguayans grow up speaking Guaraní */
 const D=T.data;["jp"].forEach(c=>D[c]="jpn");["kr","kp"].forEach(c=>D[c]="kor");D.gy="cre";D.py="ame";
 /* other families: [family, its languages there, big?] */
@@ -73,5 +73,5 @@ document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[da
 /* longer hover text wraps */
 const st=document.createElement("style");st.textContent="#allMapsWrap .map-territory-tooltip{ white-space:normal !important; max-width:340px; }";document.head.appendChild(st);
 /* the key: a line about the stripes */
-if(typeof thLegendHTML==="function"){const _l=thLegendHTML;thLegendHTML=function(){const h=_l.apply(this,arguments);try{if(allMapsSubMode.culture==="lang"&&allMapsColorMode==="culture")return h+'<div class="legend-note gf-lang-note">Stripes: a second language family spoken by many people. Hover a country to see all of them.</div>'}catch(e){}return h}}
+if(typeof thLegendHTML==="function"){const _l=thLegendHTML;thLegendHTML=function(){const h=_l.apply(this,arguments);try{if(allMapsSubMode.culture==="lang"&&allMapsColorMode==="culture")return h+'<div class="legend-note gf-lang-note">Stripes: a second big family. Hover a country for all of them.</div>'}catch(e){}return h}}
 })();
