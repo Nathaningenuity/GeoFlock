@@ -81,8 +81,24 @@ if(typeof globeOverlays==="function"){const _go=globeOverlays;
  globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.lakes&&!O._lakeHoles){O._lakeHoles=1;O.lakes.forEach(holes)}}catch(e){console.error(e)}return O}}
 const lk=document.createElement("style");lk.textContent="svg path:is(.map-lake,.map-lake-minor,.map-lake-hit){ fill-rule:evenodd; }";document.head.appendChild(lk);
 /* 4. */
-if(typeof gfGlobeWanted==="function"){const _gw=gfGlobeWanted;
- gfGlobeWanted=function(){try{const M=gfMS();if(allMapsColorMode==="relief"&&!gfStyleGen()&&M.style!=="classic"&&!gfSeaLevel()&&Math.abs(M.shadeB-.3)<.01)return false}catch(e){}return _gw.apply(this,arguments)}}
+if(typeof gfGlobeKey==="function"){const VG={key:null,sig:null,busy:false,n:0};const _gk=gfGlobeKey;
+ const mk=(w,h)=>{const c=document.createElement("canvas");c.width=w;c.height=h;return c};
+ /* the shading layers are in the flat map's frame; re-sample them once onto a longitude/latitude grid */
+ const toEq=src=>{const W=GFG.W,H=GFG.H,lut=gfGlobeLut(),S=src.getContext("2d").getImageData(0,0,src.width,src.height).data,c=mk(W,H),x=c.getContext("2d"),D=x.createImageData(W,H),d=D.data;
+  for(let i=0,j=0;i<W*H;i++,j+=4){const k=lut[i]*4;if(k<0)continue;d[j]=S[k];d[j+1]=S[k+1];d[j+2]=S[k+2];d[j+3]=S[k+3]}x.putImageData(D,0,0);return c};
+ function build(sig){const imgs=globeImages("relief",()=>gfGlobeDirty());if(!imgs||imgs.length!==2){VG.busy=false;return}
+  const eqS=toEq(GFL.canv.shade),eqL=GFL.canv.light?toEq(GFL.canv.light):null,W=GFG.W,H=GFG.H;
+  const out=imgs.map((im,h)=>{const iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height,c=mk(iw,ih),x=c.getContext("2d");x.drawImage(im,0,0,iw,ih);x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
+   x.globalCompositeOperation="multiply";x.drawImage(eqS,h*W/2,0,W/2,H,0,0,iw,ih);if(eqL){x.globalCompositeOperation="screen";x.drawImage(eqL,h*W/2,0,W/2,H,0,0,iw,ih)}x.globalCompositeOperation="source-over";return c});
+  out._seam=true;const old=VG.key,key="gfRelShade"+ ++VG.n;GLOBE_TEX[key]={kind:"halves",src:[]};_globeImgs[key]={cbs:[],ready:true,imgs:out};VG.key=key;VG.sig=sig;VG.busy=false;
+  if(old){try{const g=amGlobe&&amGlobe.gl;if(g&&g.tex[old]){(g.tex[old].list||[g.tex[old]]).forEach(t=>{try{g.gl.deleteTexture(t)}catch(e){}});delete g.tex[old]}}catch(e){}delete _globeImgs[old];delete GLOBE_TEX[old]}
+  try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}}
+ gfGlobeKey=function(){try{const M=gfMS();
+  /* the plain relief with hill shading: the full-resolution texture with the shading laid smoothly over it */
+  if(allMapsColorMode==="relief"&&!gfStyleGen()&&M.style!=="classic"&&!gfSeaLevel()&&M.shadeB>.02){const sk=M.sun+"|"+M.shadeB;
+   if(!(GFL.canv.shade&&GFL.shadeKey===sk)){try{gfMsRefresh()}catch(e){}clearTimeout(VG.t);VG.t=setTimeout(gfGlobeDirty,700);return VG.key}
+   if(VG.sig===sk&&VG.key)return VG.key;if(!VG.busy){VG.busy=true;setTimeout(()=>{try{gfElev(()=>{try{build(sk)}catch(e){console.error(e);VG.busy=false}})}catch(e){VG.busy=false}},30)}return VG.key}}catch(e){}
+  return _gk.apply(this,arguments)}}
 /* 5. */
 if(typeof flatLabelsLikeGlobe==="function"&&window.SVGGraphicsElement){const BB=new WeakMap();let on=0;const _gb=SVGGraphicsElement.prototype.getBBox;
  SVGGraphicsElement.prototype.getBBox=function(){if(!on||this.tagName!=="path")return _gb.apply(this,arguments);const d=this.getAttribute("d"),c=BB.get(this);if(c&&c.d===d)return c.b;const b=_gb.apply(this,arguments);BB.set(this,{d,b});return b};
