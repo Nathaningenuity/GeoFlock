@@ -80,4 +80,7 @@ function holes(L){if(!L||L._holes||L.type!=="MultiPolygon")return;L._holes=1;
 if(typeof globeOverlays==="function"){const _go=globeOverlays;
  globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.lakes&&!O._lakeHoles){O._lakeHoles=1;O.lakes.forEach(holes)}}catch(e){console.error(e)}return O}}
 const lk=document.createElement("style");lk.textContent="svg path:is(.map-lake,.map-lake-minor,.map-lake-hit){ fill-rule:evenodd; }";document.head.appendChild(lk);
+/* 4. */
+if(typeof gfGlobeWanted==="function"){const _gw=gfGlobeWanted;
+ gfGlobeWanted=function(){try{const M=gfMS();if(allMapsColorMode==="relief"&&!gfStyleGen()&&M.style!=="classic"&&!gfSeaLevel()&&Math.abs(M.shadeB-.3)<.01)return false}catch(e){}return _gw.apply(this,arguments)}}
 })();
