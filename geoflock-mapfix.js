@@ -237,4 +237,9 @@ if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
  body.dark-theme #gfShadeRow:not(.in-key), body.sky-night #gfShadeRow:not(.in-key){ background:rgba(22,30,46,.92); color:#e6edf7; }
  body.dark-theme #gfShadeRow, body.sky-night #gfShadeRow{ color:#e6edf7; }
  @media (max-width:640px){ #allMapsWrap > #gfShadeRow{ display:none; } }`;document.head.appendChild(st)}
+/* 12. */
+{const st=document.createElement("style");st.textContent=".ps-launcher:has(.ps-menu){ z-index:12 !important; }";document.head.appendChild(st)}
+/* 13. */
+if(typeof psSqPhoto==="function"&&typeof PS_PHOTO_DATA!=="undefined"){const LEO=PS_PHOTO_DATA.findIndex(p=>/King Leopold 2, and Congo Free State/.test(p.f||""));
+ if(LEO>=0){const _sq=psSqPhoto;psSqPhoto=function(q){if(q&&/Leopold/.test(q.label||"")){const P=PS_PHOTO_DATA[LEO];if(P&&P.d)return P}return _sq.apply(this,arguments)}}}
 })();
