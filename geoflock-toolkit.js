@@ -140,6 +140,9 @@ function renderFlat(){const svg=svgEl();if(!svg)return;let g=svg.querySelector("
   h+=`<g class="gfk-pin" data-pi="${i}" transform="translate(${q[0]} ${q[1]}) scale(${k})" style="cursor:pointer"><ellipse cx="4" cy="0" rx="5" ry="1.6" fill="#000" opacity=".28"/><line x1="0" y1="-14" x2="1.5" y2="0" stroke="#aeb6bf" stroke-width="1.8"/><circle cx="0" cy="-20" r="7.5" fill="${col}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><circle cx="-2.4" cy="-22.6" r="2.4" fill="#fff" opacity=".7"/>`+(p.n?`<text x="10" y="-17" font-size="11" font-weight="800" fill="#1d2a3a" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(p.n)}</text>`:"")+`</g>`});
  g.innerHTML=h}
 function renderGlobe(ctx,p){const path=d3.geoPath(p,ctx);ctx.save();
+ /* lakes take the shallowest sea colour of the chosen map style (the globe paints them a fixed blue) */
+ try{const M=gfMS(),Sx=GF_STYLES[M.style],ov=amGlobe.cfg.overlays?amGlobe.cfg.overlays():{};if(Sx&&allMapsColorMode==="relief"&&ov.lakes){const O=globeOverlays(),c=[-amGlobe.rot[0],-amGlobe.rot[1]];
+  ctx.fillStyle=Sx.sea[0][1];ctx.strokeStyle="rgba(0,0,0,.18)";ctx.lineWidth=.4;(O.lakes||[]).forEach(L=>{if(L.minor&&!ov.minorLakes&&!window._gfMinorOn)return;if(L.c&&d3.geoDistance(L.c,c)-(L.r||0)>Math.PI/2)return;ctx.beginPath();path(L);ctx.fill();ctx.stroke()})}}catch(e){}
  const strokes=K().ink.concat(S.stroke&&S.stroke.p.length>1?[S.stroke]:[]);
  strokes.forEach(s=>{const P=penStyle(s.t);ctx.globalAlpha=P[3];ctx.strokeStyle=s.c;ctx.lineWidth=P[2];ctx.lineCap=P[4];ctx.lineJoin="round";ctx.globalCompositeOperation=s.t==="highlighter"?"multiply":"source-over";ctx.beginPath();path({type:"LineString",coordinates:s.p});ctx.stroke()});
  ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";
@@ -519,6 +522,7 @@ const css=document.createElement("style");css.textContent=`
 .gf-ms-panel.gfk-free .gf-ms-h{ cursor:grab; touch-action:none; } .gf-ms-panel.gfk-free .gf-ms-h::before{ content:""; position:absolute; left:50%; top:5px; width:38px; height:4px; margin-left:-19px; border-radius:2px; background:rgba(22,50,79,.18); }
 .gf-ms-panel.gfk-free{ padding-top:16px !important; } .gf-ms-panel.gfk-free .gf-ms-h{ position:relative; }
 #flKey .flk-h{ cursor:grab; touch-action:none; } .gfk-moving, .gfk-moving *{ cursor:grabbing !important; user-select:none; }
+:is(#allMapsWrap,.map-wrap)[data-gf-style]:not([data-gf-style=""]):not([data-gf-style="bright"]):not([data-gf-style="classic"]) #worldMapSvgAllMaps :is(path.map-lake, path.map-lake-minor):not(:hover):not(.lake-hover){ fill:var(--gf-lake) !important; fill-opacity:1 !important; }
 /* the old buttons these tools replace */
 #allMapsWrap .am-tools [data-amt="dice"], #allMapsWrap .am-tools [data-amt="measure"], #amDiceTop, #gfMsBtn, .globe-host [data-g="measure"], .globe-host [data-g="dice"]{ display:none !important; }
 /* the "click a country" hint moves up out of the tray's way */
