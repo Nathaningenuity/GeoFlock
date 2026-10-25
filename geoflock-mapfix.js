@@ -121,6 +121,9 @@ if(typeof climComposite==="function"){const _cc=climComposite;climComposite=func
   const commit=()=>{clearTimeout(t);t=0;if(!pend)return;const v=pend;pend=null;svg._gfPend=false;rect=null;measure();rule.transform="";rule.willChange="";SA.call(svg,"viewBox",v.join(" "));cur=v;const h=svg._gfHeld;svg._gfHeld=null;if(h)try{h[0].apply(h[1],h[2])}catch(e){console.error(e)}};
   svg.setAttribute=function(n,v){if(n!=="viewBox")return SA.apply(this,arguments);const b=parse(v);if(!b){commit();return SA.apply(this,arguments)}
    if(!cur)cur=parse(GA.call(svg,"viewBox"));if(!cur||!svg.isConnected||!svg.getClientRects().length){pend=null;cur=b;return SA.apply(this,arguments)}
+   /* only a zoom-in can be shown by stretching what is already drawn; a pan or zoom-out would uncover blank map, so it is drawn for real */
+   const base=pend?cur:cur,inside=b[0]>=base[0]-1e-6&&b[1]>=base[1]-1e-6&&b[0]+b[2]<=base[0]+base[2]+1e-6&&b[1]+b[3]<=base[1]+base[3]+1e-6;
+   if(!inside){if(pend){pend=null;svg._gfPend=false;rect=null;rule.transform="";rule.willChange="";clearTimeout(t);t=0;const h=svg._gfHeld;svg._gfHeld=null;cur=b;const r=SA.apply(this,arguments);measure();if(h)try{h[0].apply(h[1],h[2])}catch(e){}return r}cur=b;return SA.apply(this,arguments)}
    const now=performance.now();if(!pend){first=now;rect=box0}if(!rect||!rect.width){pend=null;cur=b;return SA.apply(this,arguments)}pend=b;svg._gfPend=true;
    const ppu=rect.width/cur[2],s=cur[2]/b[2];
    rule.transformOrigin="0 0";rule.willChange="transform";rule.transform="translate("+(-(b[0]-cur[0])*ppu*s)+"px,"+(-(b[1]-cur[1])*ppu*s)+"px) scale("+s+")";
@@ -139,11 +142,13 @@ if(typeof climComposite==="function"){const _cc=climComposite;climComposite=func
 if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  gfSubFlat=function(){try{const host=document.getElementById("allMapsSubModes"),view=document.getElementById("allMapsView");if(!host||!view)return;
   const row=view.querySelector(".all-maps-label-controls"),srch=row&&row.querySelector(":scope > .global-search-wrap");
-  const flat=appMode==="allmaps"&&!(typeof amGlobeOn==="function"&&amGlobeOn())&&window.innerWidth>760;
-  if(flat&&row&&host.children.length&&!host.closest(".am-globe-side")){
-   if(host.parentNode!==row||(srch&&host.nextElementSibling!==srch))row.insertBefore(host,srch||null);
+  /* flat map and globe alike (on wide screens) */
+  const flat=appMode==="allmaps"&&window.innerWidth>760&&!document.querySelector("#gfDeep:not([hidden])");
+  if(flat&&row&&host.children.length){
+   /* its own line under the switches, in the gap above the map */
+   if(host.parentNode!==row||host.nextElementSibling)row.appendChild(host);
    host.classList.add("gf-sub-inrow");["gf-sub-top","gf-sub-flat","am-sub-top","am-sub-globe","am-sub-row","am-sub-left","map-submode-overlay"].forEach(c=>host.classList.remove(c));
-   if(host.style.left)host.style.left="";if(host.style.top)host.style.top="";if(host.style.visibility)host.style.visibility="";fit(host,row,srch);return}
+   if(host.style.left)host.style.left="";if(host.style.top)host.style.top="";if(host.style.visibility)host.style.visibility="";host.classList.remove("gf-sub-dd");return}
   host.classList.remove("gf-sub-inrow");if(host.parentNode===row){const wrap=document.getElementById("allMapsWrap");if(wrap)wrap.parentNode.insertBefore(host,wrap)}}catch(e){console.error(e)}return _sf.apply(this,arguments)};
  /* chips if they fit on the search box's line, else one pill with a menu */
  const NW=new Map();
@@ -163,6 +168,9 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
    document.body.appendChild(menu);const r=c.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(innerWidth-menu.offsetWidth-8,r.left))+scrollX+"px";menu.style.top=r.bottom+6+scrollY+"px";return}
   if(menu&&!e.target.closest(".gf-sub-menu"))closeMenu()},true);
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});addEventListener("resize",closeMenu);
+ /* the globe used to move the choices into a column at its left: on wide screens they stay in the row */
+ if(typeof amSubOffGlobe==="function"){const _so=amSubOffGlobe;amSubOffGlobe=function(){if(appMode==="allmaps"&&window.innerWidth>760)return;return _so.apply(this,arguments)}}
+ if(typeof amPlaceSubModes==="function"){const _pm=amPlaceSubModes;amPlaceSubModes=function(){if(appMode==="allmaps"&&window.innerWidth>760){try{gfSubFlat()}catch(e){}return}return _pm.apply(this,arguments)}}
  const st=document.createElement("style");st.textContent=`
  #allMapsSubModes.gf-sub-dd > .chip:not(.active){ display:none !important; }
  #allMapsSubModes.gf-sub-dd > .chip.active::after{ content:" ▾"; font-size:.85em; opacity:.85; }
@@ -170,9 +178,12 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  .gf-sub-menu button{ text-align:left; border:0; background:none; padding:8px 12px; border-radius:9px; font:600 13px inherit; color:#1d3550; cursor:pointer; }
  .gf-sub-menu button:hover{ background:#eef4f8; } .gf-sub-menu button.on{ background:#3f9c96; color:#fff; }
  body.dark-theme .gf-sub-menu{ background:#1d2638; } body.dark-theme .gf-sub-menu button{ color:#e6edf7; } body.dark-theme .gf-sub-menu button:hover{ background:#2a3550; }
- #allMapsSubModes.gf-sub-inrow{ position:static !important; display:inline-flex !important; flex-direction:row; flex-wrap:nowrap; align-items:center; gap:2px; margin:0 0 0 4px !important; padding:3px; width:auto; max-width:none; border-radius:999px; background:rgba(255,255,255,.6); box-shadow:0 1px 5px rgba(20,40,70,.12); transform:none !important; }
+ .all-maps-label-controls:has(> #allMapsSubModes.gf-sub-inrow){ position:relative; }
+ #allMapsSubModes.gf-sub-inrow{ position:absolute !important; left:0; right:0; top:calc(100% + 6px); display:flex !important; flex-direction:row; flex-wrap:nowrap; justify-content:center; align-items:center; gap:8px; margin:0 !important; padding:0; width:auto; max-width:none; background:none; box-shadow:none; transform:none !important; z-index:4; }
+ @media (min-width:761px){ #amGlobeSubs{ display:none !important; } #allMapsView.globe-on:has(#allMapsSubModes.gf-sub-inrow) .globe-wrap-rel{ margin-top:34px !important; } }
+ #allMapsSubModes.gf-sub-inrow .chip{ background:rgba(255,255,255,.7) !important; box-shadow:0 1px 4px rgba(20,40,70,.1) !important; }
+ #allMapsSubModes.gf-sub-inrow .chip.active{ background:#3f9c96 !important; color:#fff !important; }
  #allMapsSubModes.gf-sub-inrow .chip{ font-size:11.5px; padding:4px 11px; min-height:0; line-height:1.2; border:none; box-shadow:none; white-space:nowrap; margin:0; }
- #allMapsSubModes.gf-sub-inrow .chip:not(.active){ background:transparent; }
  body.dark-theme #allMapsSubModes.gf-sub-inrow{ background:rgba(20,28,44,.6); }`;document.head.appendChild(st)}
 /* 8. */
 try{if(typeof PS_ICONS!=="undefined"&&PS_ICONS.waterfall&&!/^<g transform="matrix\(-1/.test(PS_ICONS.waterfall))PS_ICONS.waterfall='<g transform="matrix(-1 0 0 1 24 0)">'+PS_ICONS.waterfall+"</g>"}catch(e){}
@@ -253,4 +264,10 @@ if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
 /* 13. */
 if(typeof psSqPhoto==="function"&&typeof PS_PHOTO_DATA!=="undefined"){const LEO=PS_PHOTO_DATA.findIndex(p=>/King Leopold 2, and Congo Free State/.test(p.f||""));
  if(LEO>=0){const _sq=psSqPhoto;psSqPhoto=function(q){if(q&&/Leopold/.test(q.label||"")){const P=PS_PHOTO_DATA[LEO];if(P&&P.d)return P}return _sq.apply(this,arguments)}}}
+/* 14. A trackpad pinch (ctrl + wheel) or Safari gesture over a map zooms the map, never the whole page */
+document.addEventListener("wheel",e=>{if(e.ctrlKey&&e.target.closest&&e.target.closest("#allMapsWrap,.globe-host,#atlasStudyMapWrap,.map-wrap"))e.preventDefault()},{passive:false,capture:true});
+/* Safari sends gesture events for a pinch instead: turn them into the map's own wheel zoom */
+{let last=1;["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>{const host=e.target.closest&&e.target.closest("#allMapsWrap,.globe-host,#atlasStudyMapWrap,.map-wrap");if(!host)return;e.preventDefault();
+ if(t==="gesturestart"){last=1;return}const sc=e.scale||1,d=sc/last;last=sc;if(t==="gestureend"||Math.abs(d-1)<.01)return;
+ const tgt=host.querySelector("svg,canvas")||host;tgt.dispatchEvent(new WheelEvent("wheel",{deltaY:-Math.log(d)*400,clientX:e.clientX,clientY:e.clientY,bubbles:true,cancelable:true}))},{passive:false,capture:true}))}
 })();
