@@ -218,13 +218,24 @@ if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
   ["pointerdown","mousedown","click","wheel","touchstart"].forEach(t=>row.addEventListener(t,e=>e.stopPropagation(),{passive:t==="wheel"||t==="touchstart"}));
   return row}
  let row=null;
- const place=()=>{const pill=document.getElementById("amLabPill");const want=pill&&pill.offsetParent&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="relief"&&appMode==="allmaps";
-  if(!want){if(row)row.remove();return}if(!row)row=make();if(row.nextElementSibling!==pill||row.parentNode!==pill.parentNode)pill.parentNode.insertBefore(row,pill);
-  row.classList.toggle("in-key",pill.classList.contains("in-key"));sync(row)};
+ /* it lives inside the key panel (bottom right), so it folds away with the key */
+ const place=()=>{const key=document.getElementById("flKey");const relief=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="relief"&&appMode==="allmaps";
+  if(!relief){if(row)row.remove();return}if(!row)row=make();
+  /* when the folding key isn't shown (wide flat map), the key sits under the map: go there */
+  if(!key||!key.getClientRects().length){const lg=document.getElementById("populationLegend");if(!lg){row.remove();return}if(row.parentNode!==lg||row.nextElementSibling)lg.appendChild(row);row.classList.add("in-key","in-legend");sync(row);return}
+  row.classList.remove("in-legend");
+  /* folded into its pill: the shading folds away with it */
+  if(key.querySelector(".flk-pill")){row.remove();return}
+  const pill=document.getElementById("amLabPill"),body=key.querySelector(".flk-body");
+  if(pill&&pill.parentNode===key){if(row.nextElementSibling!==pill||row.parentNode!==key)key.insertBefore(row,pill)}else if(body){if(row.previousElementSibling!==body||row.parentNode!==key)body.after(row)}else if(row.parentNode!==key)key.appendChild(row);
+  row.classList.add("in-key");sync(row)};
  setInterval(()=>{try{place()}catch(e){}},600);
+ /* the floating key is a copy of the key under the map: drop the copied (dead) shading row, then put the real one in */
+ if(typeof flkSync==="function"){const _fs=flkSync;flkSync=function(){const r=_fs.apply(this,arguments);try{const k=document.getElementById("flKey");if(k)k.querySelectorAll("#gfShadeRow").forEach(x=>{if(x!==row)x.remove()});place()}catch(e){}return r}}
  const st=document.createElement("style");st.textContent=`
  #gfShadeRow{ display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:16px; background:rgba(255,255,255,.92); box-shadow:0 2px 10px rgba(20,40,70,.14); color:#1d3550; font-size:12px; }
- #allMapsWrap > #gfShadeRow{ position:absolute; right:12px; bottom:62px; z-index:6; width:250px; }
+ 
+ #gfShadeRow.in-legend{ display:inline-flex; width:260px; margin:6px 0 0; vertical-align:middle; }
  #gfShadeRow.in-key{ background:rgba(127,140,180,.08); box-shadow:none; margin:8px 0 6px; }
  #gfShadeRow .gf-sh-dial{ width:42px; height:42px; flex:none; cursor:grab; touch-action:none; }
  #gfShadeRow .gf-sh-ring{ fill:#f3f6fa; stroke:rgba(29,53,80,.25); stroke-width:1.2; }
