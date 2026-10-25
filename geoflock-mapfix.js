@@ -176,4 +176,19 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  body.dark-theme #allMapsSubModes.gf-sub-inrow{ background:rgba(20,28,44,.6); }`;document.head.appendChild(st)}
 /* 8. */
 try{if(typeof PS_ICONS!=="undefined"&&PS_ICONS.waterfall&&!/^<g transform="matrix\(-1/.test(PS_ICONS.waterfall))PS_ICONS.waterfall='<g transform="matrix(-1 0 0 1 24 0)">'+PS_ICONS.waterfall+"</g>"}catch(e){}
+/* 9. */
+if(typeof elevationLegendHTML==="function"){const _el=elevationLegendHTML;
+ elevationLegendHTML=function(){let h=_el.apply(this,arguments);try{
+  const at=i=>(i/(ELEV_LAND_STOPS.length-1)*100).toFixed(1);
+  h=h.replace(/<span class="legend-ticks legend-ticks-at">[\s\S]*?<\/span>/,'<span class="legend-ticks legend-ticks-at"><i style="left:0%">0 m</i><i style="left:'+at(5)+'%">1,200</i><i style="left:100%">7,000 m</i></span>');
+  h=h.replace(/<span class="legend-ticks"><i>&minus;11,000 m<\/i>[\s\S]*?<\/span>/,'<span class="legend-ticks"><i>&minus;11,000 m</i><i>&minus;4,000</i><i>0</i></span>');
+  let n=0;h=h.replace(/<span class="legend-scale">/g,m=>'<span class="gf-el-sub">'+(n++?"Sea depth":"Land height")+"</span>"+m.replace('class="legend-scale"','class="legend-scale gf-el-scale"'));
+ }catch(e){}return h}
+ const st=document.createElement("style");st.textContent=`
+ .gf-el-sub{ display:block; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; opacity:.62; margin:10px 0 4px; }
+ .gf-el-sub:first-of-type{ margin-top:6px; }
+ .legend-scale.gf-el-scale{ display:block; margin-bottom:4px; }
+ .legend-scale.gf-el-scale .legend-ticks{ margin-top:4px; }
+ .legend-scale.gf-el-scale .legend-ticks-at i:first-child{ transform:none !important; }
+ .legend-scale.gf-el-scale .legend-ticks-at i:last-child{ transform:translateX(-100%) !important; }`;document.head.appendChild(st)}
 })();
