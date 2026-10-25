@@ -1,0 +1,64 @@
+/* GeoFlock: "Which language is this?" A line of text in one of 96 languages, shown as an image (black on white), and four
+   languages to choose from. The text is a sentence from the Universal Declaration of Human Rights, the most translated
+   document in the world (translations collected by the Unicode UDHR project), drawn with Google's Noto fonts.
+   Used three ways: a quiz in Trivia (with the country-fact quizzes), a game in Games, and a rare bonus question in mixed trivia.
+   gfLangId.one(box, done) asks one question; gfLangId.round(box, {n, back, title}) plays a round. */
+(function(){
+const LANGS=[["eng","English","latn","Britain, the US, Australia…",1],["spa","Spanish","latn","Spain and Latin America",1],["fra","French","latn","France, West Africa, Quebec…",1],["por_PT","Portuguese","latn","Portugal, Brazil, Angola…",1],["ita","Italian","latn","Italy",1],["deu","German","latn","Germany, Austria, Switzerland",1],["nld","Dutch","latn","the Netherlands, Belgium",1],["swe","Swedish","latn","Sweden",1],["nob","Norwegian","latn","Norway",0],["dan","Danish","latn","Denmark",0],["isl","Icelandic","latn","Iceland",1],["fin","Finnish","latn","Finland",1],["est","Estonian","latn","Estonia",0],["hun","Hungarian","latn","Hungary",1],["pol","Polish","latn","Poland",1],["ces","Czech","latn","Czechia",0],["slk","Slovak","latn","Slovakia",0],["slv","Slovene","latn","Slovenia",0],["hrv","Croatian","latn","Croatia",0],["lit","Lithuanian","latn","Lithuania",0],["lav","Latvian","latn","Latvia",0],["ron","Romanian","latn","Romania, Moldova",0],["tur","Turkish","latn","Turkey",1],["azj_latn","Azerbaijani","latn","Azerbaijan",0],["uzn_latn","Uzbek","latn","Uzbekistan",0],["tuk_latn","Turkmen","latn","Turkmenistan",0],["als","Albanian","latn","Albania, Kosovo",0],["mlt","Maltese","latn","Malta",0],["cym","Welsh","latn","Wales",1],["gle","Irish","latn","Ireland",0],["eus","Basque","latn","the Basque Country",0],["cat","Catalan","latn","Catalonia, Andorra",0],["glg","Galician","latn","Galicia, Spain",0],["afr","Afrikaans","latn","South Africa, Namibia",0],["vie","Vietnamese","latn","Vietnam",1],["ind","Indonesian","latn","Indonesia",1],["tgl","Tagalog","latn","the Philippines",0],["swh","Swahili","latn","East Africa",1],["yor","Yoruba","latn","Nigeria, Benin",0],["zul","Zulu","latn","South Africa",0],["xho","Xhosa","latn","South Africa",0],["hau_NG","Hausa","latn","Nigeria, Niger",0],["som","Somali","latn","Somalia",0],["ibo","Igbo","latn","Nigeria",0],["sna","Shona","latn","Zimbabwe",0],["kin","Kinyarwanda","latn","Rwanda",0],["plt","Malagasy","latn","Madagascar",0],["mri","Māori","latn","New Zealand",0],["haw","Hawaiian","latn","Hawaii",0],["smo","Samoan","latn","Samoa",0],["ton","Tongan","latn","Tonga",0],["fij","Fijian","latn","Fiji",0],["quz","Quechua","latn","Peru, Bolivia",0],["hat_kreyol","Haitian Creole","latn","Haiti",0],["epo","Esperanto","latn","an invented language, 1887",0],["lat","Latin","latn","ancient Rome; the Vatican",1],["wol","Wolof","latn","Senegal",0],["lin","Lingala","latn","DR Congo, Congo",0],["rus","Russian","cyrl","Russia",1],["ukr","Ukrainian","cyrl","Ukraine",1],["bel","Belarusian","cyrl","Belarus",0],["bul","Bulgarian","cyrl","Bulgaria",0],["srp_cyrl","Serbian","cyrl","Serbia",0],["mkd","Macedonian","cyrl","North Macedonia",0],["kaz","Kazakh","cyrl","Kazakhstan",0],["kir","Kyrgyz","cyrl","Kyrgyzstan",0],["tgk","Tajik","cyrl","Tajikistan",0],["khk","Mongolian","cyrl","Mongolia",1],["tat","Tatar","cyrl","Tatarstan, Russia",0],["ell_monotonic","Greek","grek","Greece, Cyprus",1],["arb","Arabic","arab","the Arab world",1],["pes_1","Persian","arab","Iran, Afghanistan",1],["urd","Urdu","arab","Pakistan",0],["uig_arab","Uyghur","arab","Xinjiang, China",0],["heb","Hebrew","hebr","Israel",1],["hin","Hindi","deva","India",1],["mar","Marathi","deva","India (Maharashtra)",0],["nep","Nepali","deva","Nepal",0],["ben","Bengali","beng","Bangladesh, India",1],["pan","Punjabi","guru","India (Punjab)",0],["guj","Gujarati","gujr","India (Gujarat)",0],["tam","Tamil","taml","India, Sri Lanka",1],["kan","Kannada","knda","India (Karnataka)",0],["mal","Malayalam","mlym","India (Kerala)",0],["tha","Thai","thai","Thailand",1],["lao","Lao","laoo","Laos",0],["khm","Khmer","khmr","Cambodia",1],["mya","Burmese","mymr","Myanmar",1],["bod","Tibetan","tibt","Tibet",1],["cmn_hans","Chinese","hani","China, Taiwan, Singapore",1],["jpn","Japanese","jpan","Japan",1],["kor","Korean","kore","Korea",1],["kat","Georgian","geor","Georgia",1],["hye","Armenian","armn","Armenia",1],["amh","Amharic","ethi","Ethiopia",1],["tir","Tigrinya","ethi","Eritrea, Ethiopia",0]];
+/* file, name, script, where it is spoken, 1 = widely known */
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const SCRIPT={latn:"Latin letters",cyrl:"Cyrillic",grek:"Greek letters",arab:"Arabic script",hebr:"Hebrew script",deva:"Devanagari",beng:"Bengali script",guru:"Gurmukhi",gujr:"Gujarati script",taml:"Tamil script",knda:"Kannada script",mlym:"Malayalam script",thai:"Thai script",laoo:"Lao script",khmr:"Khmer script",mymr:"Burmese script",tibt:"Tibetan script",hani:"Chinese characters",jpan:"kanji and kana",kore:"Hangul",geor:"Georgian script",armn:"Armenian script",ethi:"Ge'ez (Ethiopic) script"};
+const img=L=>"lang/"+L[0]+".webp";
+/* hard: any of the 96; easy: the 38 widely known ones. Wrong answers: mostly languages in the same script, so it can't be guessed from the letters alone */
+function question(level){const pool=level==="easy"?LANGS.filter(l=>l[4]):LANGS;const L=pool[Math.floor(Math.random()*pool.length)];
+ const same=shuffle(LANGS.filter(x=>x!==L&&x[2]===L[2]&&(level!=="easy"||x[4]))),other=shuffle(LANGS.filter(x=>x!==L&&x[2]!==L[2]&&(level!=="easy"||x[4])));
+ const opts=[L];for(const x of same.slice(0,2).concat(other)){if(opts.length>=4)break;if(!opts.includes(x))opts.push(x)}
+ return{L,opts:shuffle(opts)}}
+function cardHTML(Q,answered,pick){return'<div class="li-card"><div class="li-q">Which language is this?</div><figure class="li-img"><img src="'+img(Q.L)+'" alt="A line of text in an unnamed language"></figure>'+
+ '<div class="li-opts">'+Q.opts.map((o,i)=>{let c="";if(answered){if(o===Q.L)c=" ok";else if(o===pick)c=" no"}return'<button type="button" class="li-o'+c+'" data-i="'+i+'"'+(answered?" disabled":"")+'><kbd>'+(i+1)+'</kbd>'+esc(o[1])+'</button>'}).join("")+'</div>'+
+ (answered?'<div class="li-fb '+(pick===Q.L?"ok":"no")+'"><b>'+(pick===Q.L?"Right!":"It’s "+esc(Q.L[1])+".")+'</b> '+esc(Q.L[1])+' is written in '+esc(SCRIPT[Q.L[2]]||Q.L[2])+' and spoken in '+esc(Q.L[3])+'.</div>':'')+'</div>'}
+/* one question; done(points) */
+function one(box,done,level){const Q=question(level||"easy");let answered=false,pick=null;
+ const draw=()=>{box.innerHTML=cardHTML(Q,answered,pick)+(answered?'<div class="li-acts"><button type="button" class="chip tut-go" id="liNext">Continue →</button></div>':'');
+  box.querySelectorAll(".li-o").forEach(b=>b.onclick=()=>{if(answered)return;answered=true;pick=Q.opts[+b.dataset.i];draw()});
+  const n=box.querySelector("#liNext");if(n){n.focus({preventScroll:true});n.onclick=()=>done(pick===Q.L?1:0,Q)}};draw();
+ return{key:k=>{if(!answered&&/^[1-4]$/.test(k)){const b=box.querySelectorAll(".li-o")[+k-1];if(b)b.click();return true}if(answered&&k==="Enter"){const n=box.querySelector("#liNext");if(n)n.click();return true}return false}}}
+/* a round of n questions, with a score and a list of the ones missed */
+let cur=null;
+function round(box,o){o=o||{};const n=o.n||10,R={k:0,ok:0,miss:[],level:o.level||"easy"};cur=R;
+ const head=()=>'<div class="li-top">'+(o.back?'<button type="button" class="chip li-back" id="liBack">← '+esc(o.backLabel||"Back")+'</button>':'')+'<span>'+esc(o.title||"Which language?")+' · '+Math.min(R.k+1,n)+' of '+n+'</span><span>score <b>'+R.ok+'</b></span>'+
+  '<span class="li-lv">'+[["easy","Well known"],["all","All 96"]].map(([k,l])=>'<button type="button" class="'+(R.level===k?"on":"")+'" data-lv="'+k+'">'+l+'</button>').join("")+'</span></div>';
+ const wire=()=>{const b=box.querySelector("#liBack");if(b)b.onclick=()=>{cur=null;o.back()};box.querySelectorAll("[data-lv]").forEach(x=>x.onclick=()=>{R.level=x.dataset.lv;R.k=0;R.ok=0;R.miss=[];next()})};
+ function next(){if(R.k>=n)return end();const inner=document.createElement("div");box.innerHTML=head();box.appendChild(inner);wire();
+  R.q=one(inner,(pts,Q)=>{R.ok+=pts;if(!pts)R.miss.push(Q.L);R.k++;try{if(pts&&typeof xpGain==="function")xpGain(1,"langid")}catch(e){}next()},R.level)}
+ function end(){R.q=null;const best=bestOf(R.level),nb=R.ok>best;if(nb)setBest(R.level,R.ok);
+  box.innerHTML='<div class="li-top">'+(o.back?'<button type="button" class="chip li-back" id="liBack">← '+esc(o.backLabel||"Back")+'</button>':'')+'</div><div class="li-card li-end"><small>'+esc(o.title||"Which language?")+'</small><h2>'+R.ok+' / '+n+'</h2><p>'+(R.ok===n?"Perfect!":nb?"New best!":"Best: "+best)+'</p>'+
+   (R.miss.length?'<div class="li-miss"><small>Worth another look</small>'+R.miss.map(L=>'<div><img src="'+img(L)+'" alt=""><b>'+esc(L[1])+'</b></div>').join("")+'</div>':'')+
+   '<div class="li-acts"><button type="button" class="chip tut-go" id="liAgain">Again →</button></div></div>';wire();
+  const a=box.querySelector("#liAgain");a.onclick=()=>{R.k=0;R.ok=0;R.miss=[];next()};a.focus({preventScroll:true})}
+ next();return R}
+function st(){try{const s=stats.langId=stats.langId||{};s.best=s.best||{};return s}catch(e){return{best:{}}}}
+function bestOf(l){return st().best[l]||0}function setBest(l,v){st().best[l]=v;try{saveStats()}catch(e){}}
+document.addEventListener("keydown",e=>{if(!cur||!cur.q)return;if(e.target&&/input|textarea/i.test(e.target.tagName))return;if(!document.querySelector(".li-card"))return;if(cur.q.key(e.key))e.preventDefault()});
+window.gfLangId={LANGS,one,round,question,count:LANGS.length};
+/* Games: "Which language?" */
+if(typeof NEW_GAMES!=="undefined"){
+ NEW_GAMES.push(["langid","Which Language?",function(){const v=document.getElementById("gamesView");if(!v)return;if(v.querySelector(".li-game"))return;v.innerHTML='<div class="li-wrap li-game"></div>';round(v.querySelector(".li-game"),{n:15,title:"Which language?"})}]);
+ try{GH_INFO.langid=["brain","Name the language from a line of text","#8a5cc7"]}catch(e){}}
+const css=document.createElement("style");css.textContent=`
+.li-wrap{ max-width:760px; margin:8px auto 30px; padding:0 12px; }
+.li-top{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; font-size:13px; margin-bottom:8px; } .li-top > span:nth-of-type(2){ margin-left:auto; }
+.li-lv{ display:inline-flex; gap:0; border:1px solid rgba(0,0,0,.14); border-radius:999px; overflow:hidden; } .li-lv button{ border:0; background:#fff; padding:4px 10px; font:600 12px inherit; cursor:pointer; color:inherit; } .li-lv button.on{ background:var(--mc,#8a5cc7); color:#fff; }
+.li-card{ background:rgba(255,255,255,.92); border-radius:22px; box-shadow:0 6px 22px rgba(20,40,70,.1); padding:16px; text-align:center; }
+.li-q{ font-weight:800; font-size:20px; margin:2px 0 10px; }
+.li-img{ margin:0 auto 12px; max-width:640px; border-radius:10px; overflow:hidden; box-shadow:0 1px 0 rgba(0,0,0,.08), 0 3px 12px rgba(0,0,0,.12); background:#fff; } .li-img img{ display:block; width:100%; height:auto; }
+.li-opts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; } .li-o{ display:flex; align-items:center; gap:8px; border:1.5px solid rgba(0,0,0,.12); background:#fff; border-radius:14px; padding:12px; font:600 15px inherit; cursor:pointer; color:inherit; text-align:left; }
+.li-o kbd{ font-size:11px; opacity:.5; } .li-o.ok{ background:#dff3df; border-color:#3fae4a; } .li-o.no{ background:#fbe1e1; border-color:#d0453f; }
+.li-fb{ margin:10px auto 0; max-width:560px; padding:10px 12px; border-radius:12px; text-align:left; } .li-fb.ok{ background:#e6f5e6; } .li-fb.no{ background:#fbe8e8; }
+.li-acts{ display:flex; justify-content:center; gap:8px; margin-top:10px; } .li-end h2{ font-size:42px; margin:6px 0; }
+.li-miss{ text-align:left; display:grid; gap:8px; margin:10px auto; max-width:560px; } .li-miss > div{ display:grid; grid-template-columns:120px 1fr; gap:10px; align-items:center; } .li-miss img{ width:120px; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+body.sky-night .li-card, body.dark-theme .li-card{ background:rgba(30,34,60,.9); } body.sky-night .li-o, body.dark-theme .li-o, body.sky-night .li-lv button, body.dark-theme .li-lv button{ background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.15); }
+@media (max-width:560px){ .li-opts{ grid-template-columns:1fr; } .li-q{ font-size:18px; } }`;
+document.head.appendChild(css);
+})();
