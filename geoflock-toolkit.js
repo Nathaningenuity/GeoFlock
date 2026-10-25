@@ -255,7 +255,14 @@ function erase(e){const k=K();const before=k.ink.length;k.ink=k.ink.filter(s=>!s
 function penStop(){S.pen=null;S.stroke=null;capture(false);sync()}
 
 /* --- pins --- */
-function pinArm(on){S.pinArm=on;if(on){S.pen=null;S.dragging=false;capture(true,'url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 30 44"><line x1="15" y1="16" x2="15" y2="42" stroke="#9aa2ab" stroke-width="2"/><circle cx="15" cy="11" r="9" fill="#d8322a"/><circle cx="12" cy="8" r="3" fill="#fff" opacity=".7"/></svg>')+'") 11 31, crosshair',{up:e=>{const ll=toLL(e.clientX,e.clientY);if(ll)newPin(ll,e.clientX,e.clientY)}})}else if(!S.pen)capture(false);sync()}
+function pinArm(on){S.pinArm=on;const h=host();if(h)h.classList.toggle("gfk-pinning",!!on);if(on){S.pen=null;S.dragging=false;capture(false)}sync()}
+/* while dropping pins the map still drags and zooms: only a plain click (no movement) puts a pin down */
+{let dn=null;const inMap=e=>{const h=host();return h&&h.contains(e.target)&&!(e.target.closest&&e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj,.gfk-gx,.gfk-gall,.map-zoom-controls,.am-tools,button,input,label,.ps-launcher,.flk"))};
+ document.addEventListener("pointerdown",e=>{dn=S.pinArm&&!e.button&&inMap(e)?{x:e.clientX,y:e.clientY,t:Date.now()}:null},true);
+ document.addEventListener("pointerup",e=>{if(!dn||!S.pinArm)return;const d=dn;dn=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5||Date.now()-d.t>600||!inMap(e))return;if(pinAt(e.clientX,e.clientY)>=0)return;
+  const ll=toLL(e.clientX,e.clientY);if(!ll)return;newPin(ll,e.clientX,e.clientY);
+  /* the map's own click (country card) should not also fire */
+  const stop=c=>{c.stopPropagation();c.stopImmediatePropagation();c.preventDefault();removeEventListener("click",stop,true)};addEventListener("click",stop,true);setTimeout(()=>removeEventListener("click",stop,true),80)},true)}
 function pinMenu(){const P=K().pins;const p=panel("gfkPins",'<b class="gfk-ph">Your pins</b><button type="button" class="gfk-big'+(S.pinArm?" on":"")+'" data-arm>'+(S.pinArm?'<span class="gfk-dot"></span>Dropping pins… click the map · <u>Stop</u>':'📍 Start dropping pins')+'</button>'+
  (P.length?'<ul class="gfk-pinlist">'+P.map((q,i)=>`<li><i style="background:${(PINKIND[q.k]||PINKIND.note)[1]}"></i><button type="button" data-go="${i}">${esc(q.n||"Unnamed pin")}<small>${esc((PINKIND[q.k]||PINKIND.note)[0])}${q.note?" · "+esc(q.note.slice(0,40)):""}</small></button><button type="button" class="gfk-del" data-del="${i}" aria-label="Remove">×</button></li>`).join("")+"</ul>":'<p class="gfk-hint">No pins yet. Drag a pin out of the tin onto the map, or press the button above and click the map.</p>')+
  '<p class="gfk-hint">Drag a pin on the map to move it, or back into the tin to remove it.</p>');if(!p)return;
@@ -285,7 +292,7 @@ function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin
  p.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{q.k=b.dataset.k;p.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("on",x===b));save();render()});
  p.querySelector('[data-act="del"]').onclick=()=>{K().pins.splice(i,1);save();render();closePanels()};p.querySelector('[data-act="ok"]').onclick=closePanels;setTimeout(()=>nm.focus(),30)}
 /* pins on the map: click to edit, drag to move, drag into the tray to remove */
-function pinAt(cx,cy){const P=K().pins;let best=-1,bd=16;P.forEach((q,i)=>{const s=toScreen(q.ll);if(!s)return;const d=Math.min(Math.hypot(s[0]-cx,s[1]-20-cy),Math.hypot(s[0]-cx,s[1]-cy));if(d<bd){bd=d;best=i}});return best}
+function pinAt(cx,cy){const P=K().pins;let best=-1,bd=10;P.forEach((q,i)=>{const s=toScreen(q.ll);if(!s)return;const d=Math.min(Math.hypot(s[0]-cx,s[1]-20-cy),Math.hypot(s[0]-cx,s[1]-10-cy)*1.3);if(d<bd){bd=d;best=i}});return best}
 function ghostAt(cx,cy){const ll=toLL(cx,cy);if(!ll)return-1;for(let i=S.ghosts.length-1;i>=0;i--){try{if(d3.geoContains(ghostGeom(S.ghosts[i]),ll))return i}catch(e){}}return-1}
 document.addEventListener("pointerdown",e=>{if(e.button||!host()||S.pen||S.dragging)return;const h=host();if(!h.contains(e.target)||e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj,.map-zoom-controls,button,input,label"))return;
  const pi=pinAt(e.clientX,e.clientY),gi=pi<0?ghostAt(e.clientX,e.clientY):-1;if(pi<0&&gi<0)return;
@@ -295,7 +302,7 @@ document.addEventListener("pointerdown",e=>{if(e.button||!host()||S.pen||S.dragg
   if(S.tray)S.tray.classList.toggle("gfk-drop",overTray(ev.clientX,ev.clientY));render()};
  const up=ev=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true);if(S.tray)S.tray.classList.remove("gfk-drop");
   if(moved&&overTray(ev.clientX,ev.clientY)){if(pi>=0)K().pins.splice(pi,1);else S.ghosts.splice(gi,1);save();render();return}
-  if(pi>=0){save();if(!moved)editPin(pi,ev.clientX,ev.clientY)}else if(!moved&&ev.detail===2){S.ghosts.splice(gi,1);render()}};
+  if(pi>=0){save();if(!moved&&!S.pinArm)editPin(pi,ev.clientX,ev.clientY)}else if(!moved&&ev.detail===2){S.ghosts.splice(gi,1);render()}};
  addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true)},true);
 ["click","mouseup"].forEach(t=>document.addEventListener(t,e=>{const h=host();if(!h||!h.contains(e.target)||S.pen)return;if(e.target.closest&&e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj"))return;if(pinAt(e.clientX,e.clientY)>=0||ghostAt(e.clientX,e.clientY)>=0){e.stopPropagation();e.stopImmediatePropagation()}},true));
 
@@ -395,7 +402,7 @@ function sync(){const h=host();const show=h&&appMode==="allmaps"&&!(typeof ps!==
  S.tray.classList.toggle("closed",!S.open);S.tray.querySelector(".gfk-tab").setAttribute("aria-expanded",S.open);
  ["compass","ruler"].forEach(t=>{const sl=S.tray.querySelector(".gfk-"+t);if(sl)sl.classList.toggle("gfk-out",!!S.place[t])});
  const pen=S.tray.querySelector(".gfk-pens");if(pen)pen.classList.toggle("gfk-active",!!S.pen);const pin=S.tray.querySelector(".gfk-pins");if(pin)pin.classList.toggle("gfk-active",!!S.pinArm);const dg=S.tray.querySelector(".gfk-dragger");if(dg)dg.classList.toggle("gfk-active",!!S.dragging);
- if(cap&&cap.parentNode!==h)h.appendChild(cap);coordSwitch();placeObjects()}
+ if(cap&&cap.parentNode!==h)h.appendChild(cap);h.classList.toggle("gfk-pinning",!!S.pinArm);coordSwitch();placeObjects()}
 try{S.open=!K().closed&&innerWidth>640}catch(e){}
 let lastKey="";setInterval(()=>{try{sync();const svg=svgEl();const key=(onGlobe()?"g":"f")+"|"+(typeof SPIN!=="undefined"?SPIN.A.dl+"|"+SPIN.A.f.s+"|"+SPIN.A.f.bx:"")+"|"+(svg&&svg.getAttribute("viewBox"))+"|"+(svg&&!svg.querySelector(":scope > g#gfKitLayer"));if(key!==lastKey){lastKey=key;render()}}catch(e){}},400);
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.querySelector(".gfk-panel")){if(document.getElementById("gfkPins")&&S.pinArm)pinArm(false);closePanels();return}if(S.pen){penStop();return}if(S.pinArm){pinArm(false);return}if(S.dragging){dragOn(false);return}if(cap){capture(false)}});
@@ -448,6 +455,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-thrown{ position:absolute; z-index:8; width:64px; height:64px; transform:translate(-50%,-50%); pointer-events:none; animation:gfkThrow 1.05s ease-out forwards; }
 .gfk-thrown .gfk-art{ width:100%; height:100%; } @keyframes gfkThrow{ 0%{transform:translate(-50%,-160%) rotate(-140deg) scale(1.3)} 45%{transform:translate(-50%,-50%) rotate(30deg) scale(1)} 65%{transform:translate(-50%,-75%) rotate(80deg)} 85%{transform:translate(-50%,-50%) rotate(90deg); opacity:1} 100%{transform:translate(-50%,-50%) rotate(90deg); opacity:0} }
 .gfk-cap{ position:absolute; inset:0; z-index:5; touch-action:none; }
+.gfk-pinning, .gfk-pinning svg, .gfk-pinning canvas, .gfk-pinning path{ cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='32' viewBox='0 0 30 44'%3E%3Cline x1='15' y1='16' x2='15' y2='42' stroke='%239aa2ab' stroke-width='2'/%3E%3Ccircle cx='15' cy='11' r='9' fill='%23d8322a'/%3E%3Ccircle cx='12' cy='8' r='3' fill='%23fff' opacity='.7'/%3E%3C/svg%3E") 11 31, crosshair !important; }
 .gfk-panel{ position:fixed; z-index:9500; width:300px; max-height:calc(100vh - 24px); overflow:auto; padding:6px 14px 12px; border-radius:16px; background:#fffdf8; color:#22324a; box-shadow:0 12px 32px rgba(20,30,50,.28); font:500 13px/1.35 system-ui,sans-serif; }
 .gfk-panel.gfk-wide{ width:360px; }
 .gfk-grip{ display:flex; justify-content:center; padding:2px 0 6px; cursor:grab; touch-action:none; } .gfk-grip i{ width:38px; height:4px; border-radius:2px; background:rgba(22,50,79,.18); }
