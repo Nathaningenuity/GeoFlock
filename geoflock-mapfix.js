@@ -66,4 +66,18 @@ if(typeof hi10Load==="function"){const _hl=hi10Load;
   Object.entries(THIN).forEach(([name,o])=>{const f=H.byN.get(name);if(f){thin(f.geometry,o);n++;H.d&&H.d.delete&&H.d.delete(name);H.box&&H.box.delete&&H.box.delete(name)}});
   if(n){if(H.d&&H.d.clear)H.d.clear();HI10_GLOBES.forEach(g=>{try{if(g.host&&g.host.isConnected)g.render()}catch(e){}});hiWatched.forEach(w=>{try{if(w.isConnected)hi10Flat(w)}catch(e){}})}
  }catch(e){console.error(e)}}return H})}}
+/* 3. */
+function holes(L){if(!L||L._holes||L.type!=="MultiPolygon")return;L._holes=1;
+ const rings=L.coordinates.map(p=>p[0]).filter(r=>r&&r.length>3);if(rings.length<2)return;
+ const poly=r=>globeOrientPoly([r]);const P=rings.map(poly);
+ /* depth = how many other rings contain this one; even depth = shore, odd = island */
+ const inside=(i,j)=>{try{return d3.geoContains(P[j],rings[i][0])&&d3.geoArea(P[j])>d3.geoArea(P[i])}catch(e){return false}};
+ const par=rings.map((_,i)=>{let best=-1,ba=Infinity;rings.forEach((_,j)=>{if(i!==j&&inside(i,j)){const a=d3.geoArea(P[j]);if(a<ba){ba=a;best=j}}});return best});
+ const depth=i=>{let d=0,k=par[i];while(k>=0&&d<9){d++;k=par[k]}return d};
+ const out=[];rings.forEach((r,i)=>{if(depth(i)%2)return;const hs=rings.map((h,j)=>par[j]===i&&depth(j)%2?P[j].coordinates[0].slice().reverse():null).filter(Boolean);
+  const g={type:"Polygon",coordinates:[P[i].coordinates[0]].concat(hs)};if(d3.geoArea(g)>2*Math.PI)g.coordinates=g.coordinates.map(x=>x.slice().reverse());out.push(g.coordinates)});
+ if(out.length)L.coordinates=out}
+if(typeof globeOverlays==="function"){const _go=globeOverlays;
+ globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.lakes&&!O._lakeHoles){O._lakeHoles=1;O.lakes.forEach(holes)}}catch(e){console.error(e)}return O}}
+const lk=document.createElement("style");lk.textContent="svg path:is(.map-lake,.map-lake-minor,.map-lake-hit){ fill-rule:evenodd; }";document.head.appendChild(lk);
 })();
