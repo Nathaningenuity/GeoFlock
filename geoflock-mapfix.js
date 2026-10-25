@@ -135,4 +135,43 @@ if(typeof climComposite==="function"){const _cc=climComposite;climComposite=func
   const held=function(){const svg=wrapEl.querySelector("svg");if(svg&&svg._gfPend){svg._gfHeld=[cb,this,arguments];return}return cb.apply(this,arguments)};return _ap.call(this,wrapEl,box,held,...[].slice.call(arguments,3))}}
  const scan=()=>document.querySelectorAll("#allMapsWrap > svg, #atlasStudyMapWrap > svg").forEach(fast);
  let q=0;new MutationObserver(()=>{if(!q)q=setTimeout(()=>{q=0;scan()},300)}).observe(document.documentElement,{childList:true,subtree:true});scan()})();
+/* 7. */
+if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
+ gfSubFlat=function(){try{const host=document.getElementById("allMapsSubModes"),view=document.getElementById("allMapsView");if(!host||!view)return;
+  const row=view.querySelector(".all-maps-label-controls"),srch=row&&row.querySelector(":scope > .global-search-wrap");
+  const flat=appMode==="allmaps"&&!(typeof amGlobeOn==="function"&&amGlobeOn())&&window.innerWidth>760;
+  if(flat&&row&&host.children.length&&!host.closest(".am-globe-side")){
+   if(host.parentNode!==row||(srch&&host.nextElementSibling!==srch))row.insertBefore(host,srch||null);
+   host.classList.add("gf-sub-inrow");["gf-sub-top","gf-sub-flat","am-sub-top","am-sub-globe","am-sub-row","am-sub-left","map-submode-overlay"].forEach(c=>host.classList.remove(c));
+   if(host.style.left)host.style.left="";if(host.style.top)host.style.top="";if(host.style.visibility)host.style.visibility="";fit(host,row,srch);return}
+  host.classList.remove("gf-sub-inrow");if(host.parentNode===row){const wrap=document.getElementById("allMapsWrap");if(wrap)wrap.parentNode.insertBefore(host,wrap)}}catch(e){console.error(e)}return _sf.apply(this,arguments)};
+ /* chips if they fit on the search box's line, else one pill with a menu */
+ const NW=new Map();
+ function fit(host,row,srch){const chips=[...host.querySelectorAll(":scope > .chip")];if(!chips.length)return;const key=chips.map(c=>c.textContent).join("|");
+  if(!host.classList.contains("gf-sub-dd")){NW.set(key,host.scrollWidth)}
+  const nat=NW.get(key);const sr=srch?srch.getBoundingClientRect():null;if(!sr||!sr.width)return;
+  let prev=host.previousElementSibling;while(prev&&!prev.getClientRects().length)prev=prev.previousElementSibling;
+  const pr=prev?prev.getBoundingClientRect():null,rr=row.getBoundingClientRect();
+  /* room left on the last toggle's line once the search box is there too */
+  const avail=rr.right-(pr?pr.right:rr.left)-sr.width-30;
+  const dd=!nat||nat>avail;host.classList.toggle("gf-sub-dd",dd);if(!dd)closeMenu()}
+ let menu=null;const closeMenu=()=>{if(menu){menu.remove();menu=null}};
+ document.addEventListener("click",e=>{const host=document.getElementById("allMapsSubModes");const c=e.target.closest&&e.target.closest("#allMapsSubModes.gf-sub-dd > .chip.active");
+  if(c){e.preventDefault();e.stopPropagation();if(menu){closeMenu();return}
+   menu=document.createElement("div");menu.className="gf-sub-menu";menu.setAttribute("role","menu");
+   [...host.querySelectorAll(":scope > .chip")].forEach(ch=>{const b=document.createElement("button");b.type="button";b.setAttribute("role","menuitem");b.textContent=ch.textContent;if(ch.classList.contains("active"))b.className="on";b.onclick=ev=>{ev.stopPropagation();closeMenu();ch.click()};menu.appendChild(b)});
+   document.body.appendChild(menu);const r=c.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(innerWidth-menu.offsetWidth-8,r.left))+scrollX+"px";menu.style.top=r.bottom+6+scrollY+"px";return}
+  if(menu&&!e.target.closest(".gf-sub-menu"))closeMenu()},true);
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu()});addEventListener("resize",closeMenu);
+ const st=document.createElement("style");st.textContent=`
+ #allMapsSubModes.gf-sub-dd > .chip:not(.active){ display:none !important; }
+ #allMapsSubModes.gf-sub-dd > .chip.active::after{ content:" ▾"; font-size:.85em; opacity:.85; }
+ .gf-sub-menu{ position:absolute; z-index:9500; display:flex; flex-direction:column; gap:2px; padding:5px; border-radius:14px; background:#fff; box-shadow:0 8px 28px rgba(20,40,70,.22); min-width:180px; }
+ .gf-sub-menu button{ text-align:left; border:0; background:none; padding:8px 12px; border-radius:9px; font:600 13px inherit; color:#1d3550; cursor:pointer; }
+ .gf-sub-menu button:hover{ background:#eef4f8; } .gf-sub-menu button.on{ background:#3f9c96; color:#fff; }
+ body.dark-theme .gf-sub-menu{ background:#1d2638; } body.dark-theme .gf-sub-menu button{ color:#e6edf7; } body.dark-theme .gf-sub-menu button:hover{ background:#2a3550; }
+ #allMapsSubModes.gf-sub-inrow{ position:static !important; display:inline-flex !important; flex-direction:row; flex-wrap:nowrap; align-items:center; gap:2px; margin:0 0 0 4px !important; padding:3px; width:auto; max-width:none; border-radius:999px; background:rgba(255,255,255,.6); box-shadow:0 1px 5px rgba(20,40,70,.12); transform:none !important; }
+ #allMapsSubModes.gf-sub-inrow .chip{ font-size:11.5px; padding:4px 11px; min-height:0; line-height:1.2; border:none; box-shadow:none; white-space:nowrap; margin:0; }
+ #allMapsSubModes.gf-sub-inrow .chip:not(.active){ background:transparent; }
+ body.dark-theme #allMapsSubModes.gf-sub-inrow{ background:rgba(20,28,44,.6); }`;document.head.appendChild(st)}
 })();
