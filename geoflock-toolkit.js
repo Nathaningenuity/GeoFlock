@@ -256,7 +256,7 @@ function penStop(){S.pen=null;S.stroke=null;capture(false);sync()}
 
 /* --- pins --- */
 function pinArm(on){S.pinArm=on;if(on){S.pen=null;S.dragging=false;capture(true,'url("data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="22" height="32" viewBox="0 0 30 44"><line x1="15" y1="16" x2="15" y2="42" stroke="#9aa2ab" stroke-width="2"/><circle cx="15" cy="11" r="9" fill="#d8322a"/><circle cx="12" cy="8" r="3" fill="#fff" opacity=".7"/></svg>')+'") 11 31, crosshair',{up:e=>{const ll=toLL(e.clientX,e.clientY);if(ll)newPin(ll,e.clientX,e.clientY)}})}else if(!S.pen)capture(false);sync()}
-function pinMenu(){const P=K().pins;const p=panel("gfkPins",'<b class="gfk-ph">Your pins</b><button type="button" class="gfk-big'+(S.pinArm?" on":"")+'" data-arm>'+(S.pinArm?"Stop dropping pins":"Drop pins: click the map")+'</button>'+
+function pinMenu(){const P=K().pins;const p=panel("gfkPins",'<b class="gfk-ph">Your pins</b><button type="button" class="gfk-big'+(S.pinArm?" on":"")+'" data-arm>'+(S.pinArm?'<span class="gfk-dot"></span>Dropping pins… click the map · <u>Stop</u>':'📍 Start dropping pins')+'</button>'+
  (P.length?'<ul class="gfk-pinlist">'+P.map((q,i)=>`<li><i style="background:${(PINKIND[q.k]||PINKIND.note)[1]}"></i><button type="button" data-go="${i}">${esc(q.n||"Unnamed pin")}<small>${esc((PINKIND[q.k]||PINKIND.note)[0])}${q.note?" · "+esc(q.note.slice(0,40)):""}</small></button><button type="button" class="gfk-del" data-del="${i}" aria-label="Remove">×</button></li>`).join("")+"</ul>":'<p class="gfk-hint">No pins yet. Drag a pin out of the tin onto the map, or press the button above and click the map.</p>')+
  '<p class="gfk-hint">Drag a pin on the map to move it, or back into the tin to remove it.</p>');if(!p)return;
  p.querySelector("[data-arm]").onclick=()=>{pinArm(!S.pinArm);pinMenu()};
@@ -463,7 +463,11 @@ const css=document.createElement("style");css.textContent=`
 .gfk-own{ width:22px; height:22px; border-radius:50%; overflow:hidden; background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red); box-shadow:0 0 0 1px rgba(0,0,0,.2); cursor:pointer; } .gfk-own input{ opacity:0; width:100%; height:100%; cursor:pointer; }
 .gfk-acts{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
 .gfk-acts button, .gfk-big, .gfk-link{ border:1px solid rgba(22,50,79,.18); background:#fff; border-radius:999px; padding:6px 12px; font:700 12px/1.1 system-ui; color:#22324a; cursor:pointer; }
-.gfk-acts button.pri, .gfk-big.on{ background:#2f6f8f; color:#fff; border-color:#2f6f8f; } .gfk-big{ width:100%; padding:9px; margin-bottom:6px; }
+.gfk-acts button.pri{ background:#2f6f8f; color:#fff; border-color:#2f6f8f; }
+.gfk-big{ width:100%; padding:11px; margin-bottom:6px; background:#d8322a; color:#fff; border-color:#b8261f; font-size:13.5px; box-shadow:0 3px 10px rgba(216,50,42,.3); }
+.gfk-big:hover{ background:#c42b24; } .gfk-big.on{ background:#fff3f2; color:#b8261f; border:1.5px solid #d8322a; box-shadow:none; }
+.gfk-big u{ margin-left:4px; } .gfk-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#d8322a; margin-right:7px; vertical-align:1px; animation:gfkPulse 1s ease-in-out infinite; }
+@keyframes gfkPulse{ 50%{ opacity:.25 } }
 .gfk-link{ padding:3px 9px; }
 .gfk-pinlist{ list-style:none; margin:4px 0 0; padding:0; max-height:220px; overflow:auto; }
 .gfk-pinlist li{ display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid rgba(0,0,0,.06); }
