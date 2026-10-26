@@ -260,8 +260,8 @@ swap("animals","The dodo",{title:"Snow leopards",view:[60,25,115,52],globe:[88,3
  stat:"Snow leopards live in 12 countries, but about 60% of their mountains are in China",
  body:"These ‘ghosts of the mountains’ live high in the Himalayas, the Tibetan Plateau, the Pamirs and the Altai, up to about 5,500 m. Perhaps 4,000 to 6,500 are left in the wild.",
  more:"A snow leopard’s tail is almost as long as its body: it helps with balance on steep rock and wraps round its face like a scarf in the cold. Mongolia has the second-most."});
-swap("islands","Lemur island",{title:"An island in a lake on an island",view:[95,-4,103,6],globe:[98.8,2.6,6],hi:["id"],
- pins:[[[98.8,2.6],"Samosir, in Lake Toba, on Sumatra","point"],[[-110.6,70.4],"Victoria Island, Canada: an island in a lake on an island in a lake on an island","point"]],
+swap("islands","Lemur island",{title:"An island in a lake on an island",view:[97.6,1.9,99.9,3.4],globe:[98.8,2.6,9],
+ pins:[[[98.8,2.6],"Samosir, in Lake Toba, on Sumatra","point"]],
  phPins:[{at:[98.65,2.75],label:"Samosir in Lake Toba",col:"#2f6ea8",icon:"photo"}],
  stat:"Samosir, an island in Lake Toba on Sumatra, is nearly as big as Singapore",
  body:"Lake Toba fills the crater left by one of the biggest volcanic eruptions of the last two million years, about 74,000 years ago. The ground has since risen in the middle, making an island inside the lake.",
