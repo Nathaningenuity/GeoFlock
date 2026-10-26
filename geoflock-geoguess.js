@@ -13,6 +13,7 @@ let POOL=null;
 function pool(){if(POOL)return POOL;const out=[],seen=new Set();const add=(at,i,label,src)=>{const P=PS_PHOTO_DATA[i];if(!P||!P.d||seen.has(i)||!at||!isFinite(at[0])||!isFinite(at[1]))return;if(SKIP_WORDS.test((label||"")+" "+(P.f||"")))return;seen.add(i);out.push({at:at.slice(),i,label:String(label||"").replace(/​/g,""),src})};
  try{(window.PS_SQ_LIB||[]).forEach(e=>add(e.at,e.img,(e.names||[])[0],"lib"))}catch(e){}
  try{for(const t in PS_TOURS){if(SKIP_TOURS.has(t)||/^hg/.test(t))continue;(PS_TOURS[t].steps||[]).forEach(S=>(S.phPins||[]).forEach(q=>{const i=(window.PS_SQ_IMG||{})[q.label];if(i!=null)add(q.at,i,q.label,t)}))}}catch(e){}
+ try{const W=window.GF_WALL;if(W&&W.gameIdx)W.gameIdx.forEach(x=>add(x.at,x.i,x.label,"wall"))}catch(e){}
  POOL=out;return out}
 function seeded(seed){let s=seed>>>0;return()=>{s=s+1831565813>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 function countryAt(ll){try{const F=projFeatures();for(const f of F){if(f.geometry&&d3.geoContains(f,ll))return f.properties.c}}catch(e){}return null}
