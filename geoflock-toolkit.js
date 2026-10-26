@@ -121,6 +121,9 @@ function redrawGlobe(){try{if(typeof amGlobe!=="undefined"&&amGlobe)amGlobe.requ
 /* ================= state ================= */
 const S={tray:null,open:true,place:{},pen:null,penCol:"#c8281c",pinArm:false,ghosts:[],stroke:null,drag:null};
 const PINKIND={been:["Been there","#d8322a"],note:["Note","#e8b828"],want:["Want to go","#2f6fd0"],fav:["Favourite","#2e9e5b"],study:["To study","#e0782a"],home:["Home","#7a4fd0"],idea:["Idea","#e0569f"],dark:["Other","#3a3f47"]};
+/* each colour's meaning can be retyped; names are saved with the kit */
+const PIN_DEF=Object.fromEntries(Object.entries(PINKIND).map(([k,v])=>[k,v[0]]));
+function pinNamesLoad(){try{const N=K().pinNames||{};for(const k in PINKIND)PINKIND[k][0]=N[k]||PIN_DEF[k]}catch(e){}}
 
 /* ================= rendering on the map ================= */
 function moveGeom(geom,from,to){const r1=d3.geoRotation([-from[0],-from[1]]),r2=d3.geoRotation([-to[0],-to[1]]);const f=p=>r2.invert(r1(p));
@@ -276,8 +279,8 @@ function pinArm(on){S.pinArm=on;const h=host();if(h)h.classList.toggle("gfk-pinn
   const stop=c=>{c.stopPropagation();c.stopImmediatePropagation();c.preventDefault();removeEventListener("click",stop,true)};addEventListener("click",stop,true);setTimeout(()=>removeEventListener("click",stop,true),80)},true)}
 /* the pin box: one pin of each colour up front. Click one to start dropping that colour, another to switch, the same one to stop */
 const pinSVG=c=>'<svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 31c0 0-9-11.2-9-18a9 9 0 0 1 18 0c0 6.8-9 18-9 18z" fill="'+c+'" stroke="rgba(0,0,0,.35)" stroke-width="1"/><circle cx="12" cy="12.5" r="3.6" fill="#fff" fill-opacity=".85"/></svg>';
-function pinMenu(){const P=K().pins,kit=K();const slots=(kit.pinSlots&&kit.pinSlots.length===3?kit.pinSlots:["been","note","want"]).map(k=>PINKIND[k]?k:"been");const cur=S.pinKind||slots[0];
- const p=panel("gfkPins",'<b class="gfk-ph">Your pins</b><div class="gfk-pickpins" role="group" aria-label="Pin colours">'+slots.map((k,si)=>{const[n,c]=PINKIND[k];const on=S.pinArm&&cur===k;return'<div class="gfk-slot'+(on?" on":"")+'"><button type="button" data-pk="'+k+'" title="'+(on?"Stop dropping":"Drop "+n.toLowerCase()+" pins")+'">'+pinSVG(c)+"<span>"+n+'</span></button><button type="button" class="gfk-swap" data-swap="'+si+'" title="Swap this pin for another colour" aria-label="Swap colour">⇄</button></div>'}).join("")+'</div><div class="gfk-swaprow" hidden></div>'+'<button type="button" class="gfk-big'+(S.pinArm?" on":"")+'" data-arm>'+(S.pinArm?'<span class="gfk-dot" style="background:'+PINKIND[cur][1]+'"></span>Dropping “'+PINKIND[cur][0]+'” pins… click the map · <u>Stop</u>':'📍 Pick a pin above, or start dropping')+'</button>'+
+function pinMenu(){pinNamesLoad();const P=K().pins,kit=K();const slots=(kit.pinSlots&&kit.pinSlots.length===3?kit.pinSlots:["been","note","want"]).map(k=>PINKIND[k]?k:"been");const cur=S.pinKind||slots[0];
+ const p=panel("gfkPins",'<b class="gfk-ph">Your pins</b><div class="gfk-pickpins" role="group" aria-label="Pin colours">'+slots.map((k,si)=>{const[n,c]=PINKIND[k];const on=S.pinArm&&cur===k;return'<div class="gfk-slot'+(on?" on":"")+'"><button type="button" data-pk="'+k+'" title="'+(on?"Stop dropping":"Drop "+n.toLowerCase()+" pins")+'">'+pinSVG(c)+'</button><input class="gfk-kname" data-kn="'+k+'" value="'+esc(n)+'" maxlength="22" aria-label="What '+esc(n)+' pins mean" title="Type what this colour means"><button type="button" class="gfk-swap" data-swap="'+si+'" title="Swap this pin for another colour" aria-label="Swap colour">⇄</button></div>'}).join("")+'</div><div class="gfk-swaprow" hidden></div>'+'<button type="button" class="gfk-big'+(S.pinArm?" on":"")+'" data-arm>'+(S.pinArm?'<span class="gfk-dot" style="background:'+PINKIND[cur][1]+'"></span>Dropping “'+PINKIND[cur][0]+'” pins… click the map · <u>Stop</u>':'📍 Pick a pin above, or start dropping')+'</button>'+
  (P.length?'<ul class="gfk-pinlist">'+P.map((q,i)=>`<li><i style="background:${(PINKIND[q.k]||PINKIND.note)[1]}"></i><button type="button" data-go="${i}">${esc(q.n||"Unnamed pin")}<small>${esc((PINKIND[q.k]||PINKIND.note)[0])} · ${llTxt(q.ll)}${q.note?" · "+esc(q.note.slice(0,40)):""}</small></button><button type="button" class="gfk-del" data-del="${i}" aria-label="Remove">×</button></li>`).join("")+"</ul>":'<p class="gfk-hint">No pins yet. Drag a pin out of the tin onto the map, or press the button above and click the map.</p>')+
  '<p class="gfk-hint">Drag a pin on the map to move it, or back into the tin to remove it.</p>');if(!p)return;
  p.querySelector("[data-arm]").onclick=()=>{pinArm(!S.pinArm);pinMenu()};
@@ -321,13 +324,16 @@ function pinProvince(q,f){try{const cc=f&&f.properties&&f.properties.c;if(!cc||!
 function newPin(ll,cx,cy){if(!ll){toast("Drop the pin on the map");return}const f=countryAt(cx,cy);const P=K().pins;let base=placeName(ll,cx,cy,f);const po=pinOptions(ll,cx,cy,f,base);if(po.lmk)base=po.lmk;
  const q={ll:ll.map(v=>+v.toFixed(3)),n:base,b:base,auto:1,k:S.pinKind||"been",note:"",t:Date.now(),opts:po.opts};P.push(q);sameNames(base);save();render();pinProvince(q,f);
  if(!newPin._told){newPin._told=1;toast("Pin dropped. Click a pin to name it or add a note.")}}
+/* the country a pin stands in (checked against the map's country shapes) */
+function pinCountry(q){try{const F=projFeatures();for(const f of F){if(f.geometry&&d3.geoContains(f,q.ll)){const c=COUNTRY_BY_CODE[String(f.properties.c).toLowerCase()];if(c)return c}}}catch(e){}return null}
 function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin",'<b class="gfk-ph">Pin</b><label class="gfk-f">Name<input type="text" maxlength="40" value="'+esc(q.n)+'"></label>'+((q.opts||[]).length>1?'<div class="gfk-names">'+q.opts.map(n=>'<button type="button" data-nm="'+esc(n)+'" class="'+(n===q.n?"on":"")+'">'+esc(n)+"</button>").join("")+"</div>":"")+'<div class="gfk-ll" title="Latitude, longitude">'+llTxt(q.ll)+'<small>'+q.ll[1].toFixed(4)+', '+q.ll[0].toFixed(4)+'</small></div>'+
  '<div class="gfk-kinds">'+Object.entries(PINKIND).map(([k,[n,c]])=>`<button type="button" data-k="${k}" class="${q.k===k?"on":""}"><i style="background:${c}"></i>${n}</button>`).join("")+'</div>'+
- '<label class="gfk-f">Note<textarea rows="2" maxlength="300">'+esc(q.note)+'</textarea></label><div class="gfk-acts"><button type="button" data-act="del">Remove pin</button><button type="button" data-act="ok" class="pri">Done</button></div>');if(!p)return;
+ '<label class="gfk-f">Note<textarea rows="2" maxlength="300">'+esc(q.note)+'</textarea></label><div class="gfk-acts">'+(pinCountry(q)?'<button type="button" data-act="cty">Open '+esc(pinCountry(q).n)+' →</button>':'')+'<button type="button" data-act="del">Remove pin</button><button type="button" data-act="ok" class="pri">Done</button></div>');if(!p)return;
  if(!PPOS.gfkPin){p.style.left=Math.max(8,Math.min(innerWidth-280,cx+18))+"px";p.style.top=Math.max(8,Math.min(innerHeight-300,cy-40))+"px";clampPanel(p)}
  const nm=p.querySelector("input"),nt=p.querySelector("textarea");nm.oninput=()=>{q.n=nm.value;q.auto=0;save();render()};nt.oninput=()=>{q.note=nt.value;save()};
  p.querySelectorAll("[data-nm]").forEach(b=>b.onclick=()=>{q.n=b.dataset.nm;q.auto=0;nm.value=q.n;p.querySelectorAll("[data-nm]").forEach(x=>x.classList.toggle("on",x===b));save();render()});
  p.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{q.k=b.dataset.k;p.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("on",x===b));save();render()});
+ {const cb=p.querySelector('[data-act="cty"]');if(cb)cb.onclick=()=>{const c=pinCountry(q);closePanels();if(c)try{openFlagZoom(c)}catch(e){}}}
  p.querySelector('[data-act="del"]').onclick=()=>{const b=q.b;K().pins.splice(i,1);if(b)sameNames(b);save();render();closePanels()};p.querySelector('[data-act="ok"]').onclick=closePanels;setTimeout(()=>nm.focus(),30)}
 /* pins on the map: click to edit, drag to move, drag into the tray to remove */
 function pinAt(cx,cy){const P=K().pins;let best=-1,bd=10;P.forEach((q,i)=>{const s=toScreen(q.ll);if(!s)return;const d=Math.min(Math.hypot(s[0]-cx,s[1]-20-cy),Math.hypot(s[0]-cx,s[1]-10-cy)*1.3);if(d<bd){bd=d;best=i}});return best}
@@ -591,4 +597,12 @@ const css=document.createElement("style");css.textContent=`
 body.dark-theme .gfk-panel, body.sky-night .gfk-panel{ background:#1d2638; color:#e6edf7; }
 @media (max-width:640px){ #allMapsWrap > .gfk-tray, .globe-host > .gfk-tray{ position:relative; left:auto; bottom:auto; margin:8px 0 4px; width:100%; } .gfk-felt{ max-width:100%; } .gfk-slot{ width:48px; height:56px; } .gfk-slot.gfk-ruler{ width:78px; } .gfk-panel, .gfk-panel.gfk-wide{ width:calc(100vw - 24px); } .gfk-obj{ width:84px; height:84px; } .gfk-obj.gfk-o-ruler{ width:190px; height:38px; } }
 `;document.head.appendChild(css);
+/* typing a new meaning under a pin colour */
+document.addEventListener("input",e=>{const t=e.target;if(!t.classList||!t.classList.contains("gfk-kname"))return;try{const kit=K(),k=t.dataset.kn,v=t.value.trim();kit.pinNames=kit.pinNames||{};if(v&&v!==PIN_DEF[k])kit.pinNames[k]=v;else delete kit.pinNames[k];PINKIND[k][0]=v||PIN_DEF[k];save();
+ document.querySelectorAll('.gfk-pinlist li').forEach(li=>{});clearTimeout(t._r);t._r=setTimeout(()=>{if(document.activeElement!==t){try{pinMenu()}catch(err){}}},800)}catch(err){console.error(err)}},true);
+document.addEventListener("change",e=>{const t=e.target;if(t.classList&&t.classList.contains("gfk-kname")){try{pinMenu()}catch(err){}}},true);
+document.addEventListener("keydown",e=>{const t=e.target;if(t.classList&&t.classList.contains("gfk-kname")){e.stopPropagation();if(e.key==="Enter")t.blur()}},true);
+{const st=document.createElement("style");st.textContent=".gfk-kname{display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px dashed transparent;background:transparent;border-radius:6px;text-align:center;font:700 12px/1.3 inherit;color:inherit;padding:2px 4px}.gfk-kname:hover{border-color:#c9c2ae}.gfk-kname:focus{outline:none;border-color:#8a7a5a;background:#fff}";document.head.appendChild(st)}
+setTimeout(()=>{try{pinNamesLoad()}catch(e){}},500);
+
 })();
