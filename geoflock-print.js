@@ -28,6 +28,9 @@ function build(o){/* o: {kind:"region"|"prov", id, style:"blank"|"numbered"|"lab
  if(o.grat)h+='<path d="'+path(d3.geoGraticule().step([30,30])())+'" class="grat"/>';
  o.feats.forEach(f=>{const d=path(f);if(d)h+='<path d="'+d+'" class="'+(o.lit(f)?"lit":"other")+'"/>'});
  if(o.sphere)h+='<path d="'+path({type:"Sphere"})+'" class="edge"/>';
+ /* countries too small to see at this scale (Andorra, Tuvalu, most of the Caribbean on a world page) get a ring around them */
+ const ringR=Math.max(W,H)/160;o.feats.forEach(f=>{const b=path.bounds(f);if(!b||!isFinite(b[0][0]))return;const w=b[1][0]-b[0][0],hh=b[1][1]-b[0][1];if(Math.max(w,hh)>=ringR*.9)return;const m=mid(path,f);if(!m||!isFinite(m[0])||m[0]<0||m[0]>W||m[1]<0||m[1]>H)return;
+  h+='<circle cx="'+m[0].toFixed(1)+'" cy="'+m[1].toFixed(1)+'" r="'+ringR.toFixed(1)+'" class="'+(o.lit(f)?"micro":"micro-o")+'"/>'});
  const lab=[];if(o.style!=="blank"){o.feats.filter(o.lit).forEach(f=>{const m=mid(path,f);if(!m||!isFinite(m[0])||m[0]<0||m[0]>W||m[1]<0||m[1]>H)return;lab.push({x:m[0],y:m[1],n:o.name(f),small:path.area(f)<60})})}
  lab.sort((a,b)=>Math.floor(a.y/70)-Math.floor(b.y/70)||a.x-b.x);
  lab.forEach((L,i)=>{L.k=i+1;L.t=o.style==="numbered"?String(i+1):L.n});
@@ -46,7 +49,7 @@ function build(o){/* o: {kind:"region"|"prov", id, style:"blank"|"numbered"|"lab
  '.who{font-size:13px;white-space:nowrap}.who span{display:inline-block;border-bottom:1px solid #111;width:160px;margin:0 12px 0 4px}'+
  'svg{width:100%;height:auto;max-height:'+(land?"150mm":"215mm")+';display:block}svg path.sea{fill:#fff;stroke:none}svg path.grat{fill:none;stroke:#ccc;stroke-width:.4}svg path.edge{fill:none;stroke:#111;stroke-width:.8}'+
  'svg path.lit{fill:#fff;stroke:#111;stroke-width:.55;stroke-linejoin:round}svg path.other{fill:#e6e6e6;stroke:#999;stroke-width:.4}'+
- 'svg text{font-family:system-ui,sans-serif;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:#fff;stroke-width:2.6px;stroke-linejoin:round}svg text.num{font-size:'+(fs*1.35).toFixed(1)+'px;font-weight:800}svg text.lab{font-size:'+fs+'px;font-weight:600}svg .dot{fill:#111}svg .lead{stroke:#111;stroke-width:.4}'+
+ 'svg text{font-family:system-ui,sans-serif;text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:#fff;stroke-width:2.6px;stroke-linejoin:round}svg text.num{font-size:'+(fs*1.35).toFixed(1)+'px;font-weight:800}svg text.lab{font-size:'+fs+'px;font-weight:600}svg .dot{fill:#111}svg circle.micro{fill:none;stroke:#111;stroke-width:1.2}svg circle.micro-o{fill:none;stroke:#aaa;stroke-width:.6}svg .lead{stroke:#111;stroke-width:.4}'+
  '.lines{columns:4;column-gap:18px;margin-top:10px;font-size:12px}.lines span{display:flex;gap:6px;align-items:flex-end;break-inside:avoid;margin:0 0 7px}.lines b{min-width:20px;text-align:right}.lines i{flex:1;border-bottom:1px solid #999;height:14px}'+
  '.key{break-before:page;padding-top:8px}.key h2{font-size:18px;margin:0 0 8px}.key ol{columns:4;column-gap:20px;font-size:12.5px;margin:0;padding-left:26px}.key li{margin:0 0 3px;break-inside:avoid}'+
  'footer{margin-top:8px;font-size:10px;color:#666;display:flex;justify-content:space-between}@media print{.bar{display:none}body{padding:0}}'+
