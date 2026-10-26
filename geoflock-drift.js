@@ -2,9 +2,10 @@
    Plate motions: C. R. Scotese, PALEOMAP Project plate model (rotations sampled every 5 million years and blended in between).
    Landscapes, 540 million years ago to today: C. R. Scotese and N. Wright (2018), PALEOMAP Paleodigital Elevation Models, 1° grids every
    5 million years (CC BY 4.0). Between two of their maps each point is carried along by its plate, so the land glides instead of fading.
-   Before 540 million years ago: plate positions from A. S. Merdith et al. (2021), a full-plate model for 1000 Ma to today (CC BY 4.0),
-   laid over Scotese's frame with one fitted rotation; between 540 and 600 Ma each piece glides from Scotese's position to Merdith's.
-   The land keeps the look it has in Scotese's 540 Ma map. */
+   Before 540 million years ago: reconstructed coastlines every 5 million years from A. S. Merdith et al. (2021), a full-plate model
+   for 1000 Ma to today (CC BY 4.0), fetched from the GPlates Web Service and turned onto Scotese's frame with one fitted rotation.
+   Their land and seas are given heights from the distance to the coast (shelves, lowlands, a few uplands) and drawn the same way
+   as Scotese's maps, so the two halves look alike. */
 (function(){
 const DEG=Math.PI/180;
 let G=null,loading=null;
@@ -142,7 +143,7 @@ function tex(gl,img,mip){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D
 function fetchBlob(url,onp){return fetch(url).then(async r=>{if(!r.ok)throw new Error(url+" "+r.status);const n=+r.headers.get("content-length")||0;
  if(!r.body||!r.body.getReader){const b=await r.blob();onp(b.size,b.size);return b}
  const rd=r.body.getReader(),parts=[];let got=0;for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onp(got,n)}return new Blob(parts)})}
-const DEM_URL="textures/PALEODEM_ATLAS.png",DEM_BYTES=4286581,DEM_COLS=11,DEM_MAX=540,FADE=8;
+const DEM_URL="textures/PALEODEM_ATLAS.png?v=5",DEM_BYTES=6317376,DEM_COLS=11,DEM_MAX=750,FADE=8;
 const secs=n=>{n=Math.max(1,Math.ceil(n));return n===1?"about 1 second":"about "+n+" seconds"};
 function load(progress){if(G)return Promise.resolve(G);if(loading)return loading;
  const say=s=>{try{progress&&progress(s)}catch(e){}};
@@ -313,7 +314,7 @@ function paint(){if(st.pend)return;st.pend=requestAnimationFrame(()=>{st.pend=0;
  const r=b.querySelector("input[type=range]"),v=gfDrift.MAX-st.t;if(Math.abs(+r.value-v)>.05)r.value=v})}
 function open(){const wrap=document.getElementById("allMapsWrap");if(!wrap)return;let b=box();
  if(!b){if(getComputedStyle(wrap).position==="static")wrap.style.position="relative";b=document.createElement("div");b.id="gfDeep";
-  b.innerHTML='<canvas aria-label="The continents through time"></canvas><div class="gfd-load">Loading…</div><button type="button" class="gfd-x" aria-label="Close deep time">×</button><div class="gfd-bar"><div class="gfd-stage"></div><div class="gfd-row"><button type="button" class="gfd-play" aria-label="Play">▶</button><input type="range" min="0" max="'+gfDrift.MAX+'" step="0.1" aria-label="Time"><span class="gfd-time"></span></div><div class="gfd-ticks"><span>750 Ma</span><span>500 Ma</span><span>250 Ma</span><span>Today</span></div><div class="gfd-credit">'+gfDrift.credit+'. From 540 million years ago to today the land, mountains and seas are Scotese’s reconstructions, one map every 5 million years; in between, each piece is carried along by its plate. Before that, the pieces follow Merdith and others’ 1-billion-year plate model, keeping their 540-million-year look: a rough picture, and positions are less certain. Drag the map to turn the world.</div></div>';
+  b.innerHTML='<canvas aria-label="The continents through time"></canvas><div class="gfd-load">Loading…</div><button type="button" class="gfd-x" aria-label="Close deep time">×</button><div class="gfd-bar"><div class="gfd-stage"></div><div class="gfd-row"><button type="button" class="gfd-play" aria-label="Play">▶</button><input type="range" min="0" max="'+gfDrift.MAX+'" step="0.1" aria-label="Time"><span class="gfd-time"></span></div><div class="gfd-ticks"><span>750 Ma</span><span>500 Ma</span><span>250 Ma</span><span>Today</span></div><div class="gfd-credit">'+gfDrift.credit+'. From 540 million years ago to today the land, mountains and seas are Scotese’s reconstructions, one map every 5 million years; in between, each piece is carried along by its plate. Before that, coastlines come from A. S. Merdith and others’ (2021) 1-billion-year plate model (via the GPlates Web Service), lined up with Scotese’s 540-million-year map; the hills and seas there are drawn from distance to the coast, so they are a rough picture, and positions are less certain. Drag the map to turn the world.</div></div>';
   wrap.appendChild(b);
   const r=b.querySelector("input[type=range]");r.oninput=()=>{stop();st.t=gfDrift.MAX-(+r.value);paint()};
   b.querySelector(".gfd-play").onclick=()=>{st.playing?stop():play()};

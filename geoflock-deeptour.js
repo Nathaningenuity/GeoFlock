@@ -1,6 +1,8 @@
 /* GeoFlock: a guided tour on the Deep Time map — 750 million years in 15 stops. The map glides between ages;
    red pins mark where present-day places were, carried with their plates. */
 (function(){
+/* hidden for now, while the map before Gondwana is being redone */
+if(true)return;
 if(!window.gfDeepUI||!window.gfDrift)return;
 const UI=gfDeepUI,esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const STOPS=[
