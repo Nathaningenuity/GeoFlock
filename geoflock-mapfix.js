@@ -192,7 +192,7 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  .gf-sub-menu button:hover{ background:#eef4f8; } .gf-sub-menu button.on{ background:#3f9c96; color:#fff; }
  body.dark-theme .gf-sub-menu{ background:#1d2638; } body.dark-theme .gf-sub-menu button{ color:#e6edf7; } body.dark-theme .gf-sub-menu button:hover{ background:#2a3550; }
  .all-maps-label-controls:has(> #allMapsSubModes.gf-sub-inrow){ position:relative; }
- #allMapsSubModes.gf-sub-inrow{ position:absolute !important; left:0; right:0; top:calc(100% + 6px); display:flex !important; flex-direction:row; flex-wrap:nowrap; justify-content:center; align-items:center; gap:8px; margin:0 !important; padding:0; width:auto; max-width:none; background:none; box-shadow:none; transform:none !important; z-index:4; }
+ #allMapsSubModes.gf-sub-inrow{ position:absolute !important; left:0; right:0; top:calc(100% - 6px); display:flex !important; flex-direction:row; flex-wrap:nowrap; justify-content:center; align-items:center; gap:8px; margin:0 !important; padding:0; width:auto; max-width:none; background:none; box-shadow:none; transform:none !important; z-index:4; }
  @media (min-width:761px){ #amGlobeSubs{ display:none !important; } #allMapsView.globe-on:has(#allMapsSubModes.gf-sub-inrow) .globe-wrap-rel{ margin-top:34px !important; } }
  #allMapsSubModes.gf-sub-inrow .chip{ background:rgba(255,255,255,.7) !important; box-shadow:0 1px 4px rgba(20,40,70,.1) !important; }
  #allMapsSubModes.gf-sub-inrow .chip.active{ background:#3f9c96 !important; color:#fff !important; }
