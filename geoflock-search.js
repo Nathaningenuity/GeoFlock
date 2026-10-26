@@ -36,7 +36,7 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  try{const P=d3.geoRobinson().scale(318.31).translate([1e3,500.5]),dl=typeof SPIN!=="undefined"?SPIN.A.dl:0;
   (ALLMAPS_CITIES||[]).forEach(r=>{const k="cities|"+norm(r[0]);if(seen.has(k))return;let ll=P.invert([r[3],r[4]]);if(!ll)return;ll=[((ll[0]-dl+540)%360)-180,ll[1]];seen.add(k);IDX.push({n:r[0],alt:[],cat:"cities",g:{type:"Point",coordinates:ll},ll,fame:r[2]||3})})}catch(e){console.error(e)}
  /* landmarks (a landmark that is also a waterfall or a peak replaces that entry, keeping its photo and icon) */
- (window.GF_LANDMARKS||[]).forEach(r=>{const ll=[r[1],r[2]],k=norm(r[0]);IDX=IDX.filter(e=>!(norm(e.n)===k&&e.cat!=="landmarks"&&(e.g.type==="Point")));IDX.push({n:r[0],alt:r[6]||[],cat:"landmarks",g:{type:"Point",coordinates:ll},ll,fame:1,icon:r[4],phf:r[5],cc:r[3]})});
+ (window.GF_LANDMARKS||[]).forEach(r=>{const ll=[r[1],r[2]],k=norm(r[0]);IDX=IDX.filter(e=>!(norm(e.n)===k&&e.cat!=="landmarks"&&(e.g.type==="Point")));const LN=(window.GF_LM_LINES||{})[r[0]];IDX.push({n:r[0],alt:r[6]||[],cat:"landmarks",g:LN||{type:"Point",coordinates:ll},ll,fame:1,icon:r[4],phf:r[5],cc:r[3],line:!!LN})});
  /* states and provinces (names and centres; the shape is loaded when one is chosen) */
  (PROV||[]).forEach(r=>{IDX.push({n:r[0],alt:[],cat:"provinces",cc:r[1],g:{type:"Point",coordinates:[r[2],r[3]]},ll:[r[2],r[3]],fame:2,typ:provKind(r[1])})});
  {const isl=new Set(IDX.filter(e=>e.cat==="islands").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="groups"&&isl.has(norm(e.n))))}
@@ -93,13 +93,13 @@ function fly(e){const pt=e.g.type==="Point";
 function draw(){if(!CUR)return;const e=CUR,mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha();
  if(mode==="icon"||mode==="city"||mode==="photo"||phFor(e))pin(e);
  if(onGlobe()){try{amGlobe.request()}catch(err){}return}
- const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||mode==="photo"){return}
+ const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
  let g=svg.querySelector("#gfSearchLayer");if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=document.createElementNS("http://www.w3.org/2000/svg","g");g.id="gfSearchLayer";g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
  const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=(a<1?a*.8:keep);
  if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
-function globeDraw(ctx,p){if(!CUR||!active())return;const e=CUR,mode=SHOW[e.cat];if(mode==="icon"||mode==="city")return pin(e);if(mode==="photo")return pin(e);const col=COL[e.cat],a=alpha(),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
+function globeDraw(ctx,p){if(!CUR||!active())return;const e=CUR,mode=SHOW[e.cat];if(mode==="icon"||mode==="city")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(e.g);if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
  else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
