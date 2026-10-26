@@ -26,6 +26,13 @@ if(typeof poolFor==="function"){const _p=poolFor;poolFor=function(region){if(reg
 if(typeof regionChipsFor==="function"){const _rc=regionChipsFor;regionChipsFor=function(mode,tab){const l=_rc.apply(this,arguments).slice();if(["flag","capital"].includes(mode)&&!l.includes(R))l.push(R);return l}}
 /* wrong answers for a region's flag come from the other regions (the usual picker only knows the 196 countries) */
 if(typeof buildFlagDistractors==="function"){const _bd=buildFlagDistractors;buildFlagDistractors=function(t,pool){if(t&&t._sp||(pool||[]).some(c=>c&&c._sp)){const others=(pool||[]).filter(c=>c&&c.c!==t.c);for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]]}return others.slice(0,3)}return _bd.apply(this,arguments)}}
+/* typed answers: while the special regions are chosen, the suggestions include them (an answer counts only when picked from them) */
+if(typeof getSuggestions==="function"&&typeof bestNameScore==="function"){const _gs=getSuggestions;getSuggestions=function(query){const base=_gs.apply(this,arguments);if(typeof activeRegion==="undefined"||activeRegion!==R)return base;const q=String(query||"").trim().toLowerCase();if(!q)return base;
+ const regs=GF_REG.map(r=>COUNTRY_BY_CODE[r.c]).filter(Boolean).map(c=>({c,score:bestNameScore(q,c)})).filter(x=>x.score!==Infinity);
+ const all=regs.concat(base.map((c,i)=>({c,score:bestNameScore(q,c)})));const seen=new Set();return all.sort((a,b)=>a.score-b.score).filter(x=>!seen.has(x.c.c)&&seen.add(x.c.c)).slice(0,6).map(x=>x.c)}}
+if(typeof renderSuggestions==="function"){const _rs=renderSuggestions;renderSuggestions=function(){if(typeof activeRegion==="undefined"||activeRegion!==R)return _rs.apply(this,arguments);
+ /* the answer list is built from the country list: the regions join it just while the suggestions are drawn */
+ const have=new Set(COUNTRIES.map(c=>c.c)),add=GF_REG.map(r=>COUNTRY_BY_CODE[r.c]).filter(c=>c&&!have.has(c.c));COUNTRIES.push(...add);try{return _rs.apply(this,arguments)}finally{COUNTRIES.splice(COUNTRIES.length-add.length,add.length)}}}
 /* the note under the chips while the special regions are chosen */
 const noteSync=()=>{try{const row=document.getElementById("regionRow");if(!row)return;let n=document.getElementById("gfRegNote");const on=typeof activeRegion!=="undefined"&&activeRegion===R&&row.style.display!=="none";if(!on){if(n)n.remove();return}if(!n){n=document.createElement("p");n.id="gfRegNote";n.className="gf-reg-note";row.insertAdjacentElement("afterend",n)}n.textContent=NOTE}catch(e){}};
 if(typeof renderChrome==="function"){const _r=renderChrome;renderChrome=function(){const x=_r.apply(this,arguments);noteSync();return x}}
