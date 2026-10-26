@@ -163,10 +163,10 @@ const st3=document.createElement("style");st3.textContent=`
 .gf-pq-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 10px}.gf-pq-q{font-weight:800;font-size:19px}.gf-pq-n,.gf-pq-s{font-weight:700;opacity:.75;min-width:70px}
 .gf-pq-map{width:100%;height:auto;aspect-ratio:2/1;max-height:54vh;border-radius:16px;box-shadow:0 4px 18px rgba(20,40,70,.12);display:block;background:#cfe3f1}
 .gf-pq-map .pq-sea{fill:#cfe3f1}.gf-pq-map path{fill:#f3f1ea;stroke:#a9b6c2;stroke-width:.6;vector-effect:non-scaling-stroke}
-.gf-pq-map path.pq-over{fill:none;stroke:#5a4a86;stroke-dasharray:4 3}.gf-pq-map path.pq-reg{fill:#ece5f7}
-.gf-pq-find path.pq-reg,.gf-pq-find path.pq-over,.gf-pq-find .pq-hit{cursor:pointer}.gf-pq-find path.pq-reg:hover,.gf-pq-find path.pq-over:hover{fill:#d6c8f2}
+.gf-pq-map path.pq-over{fill:none;stroke:#2f5f99;stroke-dasharray:4 3}.gf-pq-map path.pq-reg{fill:#dbe8f7}
+.gf-pq-find path.pq-reg,.gf-pq-find path.pq-over,.gf-pq-find .pq-hit{cursor:pointer}.gf-pq-find path.pq-reg:hover,.gf-pq-find path.pq-over:hover{fill:#b7d0ef}
 .gf-pq-map path.pq-target{fill:#f08a3c !important;stroke:#b5501a !important;stroke-width:1.4}.gf-pq-map path.pq-wrong{fill:#e6625a !important}
-.gf-pq-map .pq-ring{fill:none;stroke:#e8701a;stroke-width:2.2;vector-effect:non-scaling-stroke}.gf-pq-map .pq-hit{fill:rgba(106,79,176,.12);stroke:#6a4fb0;stroke-width:1;vector-effect:non-scaling-stroke}
+.gf-pq-map .pq-ring{fill:none;stroke:#e8701a;stroke-width:2.2;vector-effect:non-scaling-stroke}.gf-pq-map .pq-hit{fill:rgba(74,134,207,.14);stroke:#2f6db8;stroke-width:1;vector-effect:non-scaling-stroke}
 .gf-pq-outline{height:340px;display:flex;align-items:center;justify-content:center;color:#3b4b5c}.gf-pq-outline svg{height:100%;width:auto;max-width:100%}
 .gf-pq-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin:14px auto 0}.gf-pq-opts .opt-btn{min-height:46px;font-size:15px}
 .gf-pq-opts .opt-btn.correct{background:#2c9a5a !important;color:#fff !important}.gf-pq-opts .opt-btn.wrong{background:#c94b3b !important;color:#fff !important}
@@ -194,9 +194,9 @@ function markStudy(){try{if(typeof activeRegion==="undefined"||activeRegion!==R)
   const b=regionBox(r.c);if(b&&Math.max(b[2],b[3])<6)h+='<circle class="gf-rs-ring" data-c="'+r.c+'" cx="'+(b[0]+b[2]/2).toFixed(2)+'" cy="'+(b[1]+b[3]/2).toFixed(2)+'" r="8"><title>'+esc(r.n)+"</title></circle>"});
  g.innerHTML=h;svg.appendChild(g);g.addEventListener("click",e=>{const t=e.target.closest("[data-c]");if(!t)return;e.stopPropagation();openFlagZoom(COUNTRY_BY_CODE[t.dataset.c])},true)}catch(e){console.error(e)}}
 const st4=document.createElement("style");st4.textContent=`@media (min-width:1000px){#regionRow:has([data-r="Special regions"]){gap:6px;max-width:none;width:max-content;max-width:calc(100vw - 40px);position:relative;left:50%;transform:translateX(-50%);flex-wrap:wrap;justify-content:center}#regionRow:has([data-r="Special regions"]) .chip{padding-left:13px;padding-right:13px}}
-#gfRegStudy .gf-rs{fill:#9b7fe0 !important;fill-opacity:.75 !important;stroke:#4b2f96 !important;stroke-width:1px !important;vector-effect:non-scaling-stroke;cursor:pointer}
+#gfRegStudy .gf-rs{fill:#4a86cf !important;fill-opacity:.75 !important;stroke:#1f4f8f !important;stroke-width:1px !important;vector-effect:non-scaling-stroke;cursor:pointer}
 #gfRegStudy .gf-rs-over{fill-opacity:.45 !important;stroke-dasharray:4 3}#gfRegStudy .gf-rs:hover{fill:#e8701a !important}
-#gfRegStudy .gf-rs-ring{fill:rgba(155,127,224,.12) !important;stroke:#6a4fb0 !important;stroke-width:1.6px !important;vector-effect:non-scaling-stroke;cursor:pointer}#gfRegStudy .gf-rs-ring:hover{stroke:#e8701a !important}
+#gfRegStudy .gf-rs-ring{fill:rgba(74,134,207,.14) !important;stroke:#2f6db8 !important;stroke-width:1.6px !important;vector-effect:non-scaling-stroke;cursor:pointer}#gfRegStudy .gf-rs-ring:hover{stroke:#e8701a !important}
 .gf-pq-outline svg path{fill:#3b4b5c}`;document.head.appendChild(st4);
 
 /* ---------- a guided tour of the special regions ---------- */
