@@ -47,7 +47,7 @@ S({title:"The apes of Asia",view:[90,-10,130,32],globe:[110,8,2.4],hi:["id","my"
  phPins:[ph([114,1],"Bornean orangutan")],
  stat:"Gigantopithecus, a giant ape related to orangutans, may have stood up to 3 m tall",
  body:"It lived in the forests of southern China until roughly 250,000 years ago, and is known only from teeth and jaws, so its size is a careful guess. Today the only great apes outside Africa are orangutans, on Borneo and Sumatra.",
- more:"Gigantopithecus probably died out as its forests turned more open and seasonal and the fruit it relied on became harder to find. Orangutans are critically endangered, mainly because their forests are being cleared."}),
+ more:"Gigantopithecus probably died out as its forests turned more open and seasonal and the fruit it relied on became harder to find. There are three kinds of orangutan: Bornean, Sumatran and the Tapanuli orangutan, only recognised in 2017, with fewer than 800 left in one patch of Sumatran forest. All three are critically endangered, mainly because their forests are being cleared."}),
 S({title:"Africa’s great apes",view:[-20,-15,40,15],globe:[15,0,2.2],
  G:[{t:"Gorillas",c:"#3a6ea5",codes:["ng","cm","gq","ga","cg","ao","cf","ug","rw"]},{t:"Chimpanzees",c:"#d9822b",codes:["sn","gn","ml","sl","lr","ci","gh","ng","cm","gq","ga","cg","cf","ss","ug","rw","bi","tz"]},{t:"Bonobos (and gorillas and chimps too)",c:"#8a4fd1",codes:["cd"]}],
  rivHi:["Congo"],
@@ -73,6 +73,11 @@ S({title:"The first to leave Africa",view:[0,-20,130,55],globe:[70,20,1.2],
  stat:"By 1.8 million years ago early humans had reached Dmanisi, in Georgia",
  body:"Homo erectus was built much like us from the neck down. It spread from Africa across Asia to China and Java, and lasted far longer than our species has so far.",
  more:"On Java, Homo erectus survived until roughly 110,000 years ago. Some sites in China have stone tools said to be over 2 million years old, which would mean an even earlier exit from Africa; not all scientists accept them."}),
+S({title:"Sundaland",view:[90,-14,140,20],globe:[112,0,2],gfSea:-120,
+ pins:[[[111.35,-7.37],"Trinil, Java: ‘Java Man’, found 1891","point"],[[107,4],"Sundaland: dry land in the ice ages","point"],[[119.5,-2],"Sulawesi: always an island","point"]],
+ stat:"In the ice ages the sea was up to 120 m lower, and Sumatra, Java and Borneo were part of mainland Asia",
+ body:"The map shows the sea 120 m lower. Homo erectus simply walked to Java across a great lowland called Sundaland. When the ice melted, the sea rose again and cut the lowland into islands, stranding the people and animals on them.",
+ more:"East of Bali and Borneo the sea is deep, and even in the ice ages Sulawesi, Flores and the Philippines stayed islands. Any human who reached them had to cross open water, by swimming, drifting or on rafts."}),
 S({title:"The hobbits",view:[95,-15,130,22],globe:[115,2,2.4],
  pins:[[[120.45,-8.53],"Flores: Homo floresiensis","point"],[[121.8,17.7],"Luzon: Homo luzonensis","point"]],
  phPins:[ph([120.6,-8.7],"Homo floresiensis skull")],
@@ -110,6 +115,21 @@ S({title:"Now explore",view:W,globe:[20,10,1],
  body:"Look for the barriers in this tour: seas that monkeys rafted across, a river that apes could not swim, and a land bridge that opened the way to Asia. The Animals tour has more of the same story."})];
 const fix=s=>{if(s.G){s._hsMerged=1;s.legend=null;s.hi=s.hi||[...new Set(s.G.flatMap(g=>g.codes))];s.hiSoft=s.hiSoft||[]}
  if(s.dg){if(typeof PS_DIAG!=="undefined"&&typeof DG!=="undefined"&&DG[s.dg.split(":")[0]])PS_DIAG[ID+"|"+s.title]=s.dg;delete s.dg}return s};
+/* card simulation: which kinds of human were alive when (dates in thousands of years, rounded; several are debated) */
+if(typeof DG!=="undefined"&&typeof dgT==="function"){const T=dgT,tip=typeof dgTip==="function"?dgTip:()=>"";
+ const HUM=[["Lucy’s kind (Australopithecus afarensis)",3900,2900,"#b08a5a"],["Robust ‘nutcracker’ hominins (Paranthropus)",2700,1200,"#b08a5a"],["Homo habilis",2400,1600,"#8a6fb0"],["Homo erectus",1900,110,"#d9682b"],["Homo antecessor (Spain)",1200,800,"#8a6fb0"],["Homo heidelbergensis",700,300,"#8a6fb0"],["Flores ‘hobbits’ and their ancestors",700,50,"#3a8f8a"],["Neanderthals",400,40,"#3a6ea5"],["Homo naledi (South Africa)",335,236,"#8a6fb0"],["Denisovans",300,50,"#3a6ea5"],["Homo sapiens: us",300,0,"#c0392b"],["Homo luzonensis (Philippines)",134,50,"#3a8f8a"]];
+ const X=t=>38+252*(1-Math.sqrt(t/4000));
+ DG.humtime={title:"Who was alive when?",src:"Approximate date ranges from fossils (thousands of years ago); the ends of several are uncertain, and the Denisovans are known mostly from DNA. Time axis squeezed so the recent past is wider.",_t:100,
+  svg:()=>'<svg viewBox="0 0 300 200"><g class="dg-dyn"></g><g class="dg-handle" data-drag="t"><rect x="34" y="176" width="260" height="18" fill="transparent"/><line x1="38" x2="290" y1="186" y2="186" stroke="#c9d3dc" stroke-width="3" stroke-linecap="round"/><circle class="dg-ht-k" cy="186" r="6.5" fill="#c0392b" stroke="#fff" stroke-width="1.4"/></g></svg>',
+  init:svg=>{const D=DG.humtime;if(!D._played){D._played=1;D._t=3500;const t0=performance.now()+500,go=n=>{if(!svg.isConnected)return;const f=Math.max(0,Math.min(1,(n-t0)/3200));D._t=3500*Math.pow(1-f,2)+100*f;D._set(svg);if(f<1)requestAnimationFrame(go)};requestAnimationFrame(go)}D._set(svg)},
+  drag:(svg,n,x)=>{const D=DG.humtime,f=Math.max(0,Math.min(1,(x-38)/252));D._t=4000*Math.pow(1-f,2);D._set(svg)},
+  _set:svg=>{const D=DG.humtime,t=D._t;let g="",alive=0;[3000,2000,1000,500,200,50,0].forEach(v=>{const x=X(v);g+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="10" y2="160" stroke="#e3e9ee"/>'+T(x.toFixed(1),168,v?(v>=1000?(v/1000)+" million":v+",000"):"now",'text-anchor="middle" font-size="5.8" opacity=".7"')});
+   HUM.forEach(([n,a,b,c],i)=>{const y=14+i*12.2,on=t<=a&&t>=b;if(on)alive++;g+='<rect x="'+X(a).toFixed(1)+'" y="'+y+'" width="'+Math.max(2,X(b)-X(a)).toFixed(1)+'" height="8" rx="3" fill="'+c+'" opacity="'+(on?1:.28)+'"'+tip(n+": about "+a.toLocaleString("en-US")+",000 to "+(b?b.toLocaleString("en-US")+",000 years ago":"today"))+'/>';
+    g+=T(X(a)-3>60?(X(a)-3).toFixed(1):(X(b)+3).toFixed(1),y+7,n,'font-size="5.9" font-weight="'+(on?800:500)+'"'+(X(a)-3>60?' text-anchor="end"':"")+' opacity="'+(on?1:.55)+'"')});
+   const x=X(t);g+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="10" y2="160" stroke="#1d3047" stroke-width="1.2"/>';
+   const when=t<1?"today":t>=1000?(t/1000).toFixed(1)+" million years ago":Math.round(t/5)*5+",000 years ago";g+=T(150,180-2,when+": "+alive+(alive===1?" kind":" kinds")+" of human (and near-human) alive",'text-anchor="middle" font-size="7.4" font-weight="800" fill="#7a2a1a"');
+   dgDyn(svg,g.replace(/y="178"/,'y="176"'));const k=svg.querySelector(".dg-ht-k");if(k)k.setAttribute("cx",x.toFixed(1))}};
+ if(typeof PS_DIAG!=="undefined")PS_DIAG[ID+"|Many kinds of human"]="humtime";try{if(!DG_ORDER.includes("humtime"))DG_ORDER.push("humtime");if(!SIM_KEYS.includes("humtime"))SIM_KEYS.push("humtime")}catch(e){}}
 PS_TOURS[ID]={name:"Guided tour on human origins",short:"Human origins",
  hint:"Why Australia has no monkeys, how monkeys crossed an ocean, and the other humans we met",
  map:{mode:"relief"},group:"nature",col:"#a0522d",steps:steps.map(fix)};
