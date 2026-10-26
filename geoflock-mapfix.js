@@ -112,27 +112,40 @@ if(typeof flatLabelsLikeGlobe==="function"&&window.SVGGraphicsElement){const BB=
    wrapEl._gfLblW=w;wrapEl._gfLblT=now;clearTimeout(wrapEl._gfLblTo);wrapEl._gfLblTo=setTimeout(()=>{full(wrapEl)},320);return}
   wrapEl._gfLblW=w;wrapEl._gfLblT=now;return full.apply(this,arguments)}}
 if(typeof climComposite==="function"){const _cc=climComposite;climComposite=function(){try{if(typeof allMapsColorMode!=="undefined"&&allMapsColorMode!=="climate")return null}catch(e){}return _cc.apply(this,arguments)}}
-/* 6. */
+/* 6b. Flat-map gestures move a finished picture instead of redrawing every shape each step: a zoom-in stretches what is drawn,
+      and a pan or zoom-out draws the map once with half a screen of margin all round and slides it. The live map is redrawn
+      when the button or finger is let go. */
 (function(){const SA=Element.prototype.setAttribute,GA=Element.prototype.getAttribute,GR=Element.prototype.getBoundingClientRect;
  const parse=v=>{const a=String(v||"").split(/[ ,]+/).map(Number);return a.length===4&&a.every(isFinite)&&a[2]>0?a:null};
- function fast(svg){if(svg._gfFast)return;svg._gfFast=1;let pend=null,cur=null,rect=null,t=0,first=0;
+ function fast(svg){if(svg._gfFast)return;svg._gfFast=1;let pend=null,cur=null,rect=null,t=0,first=0,ex=0;const M=.5;
   /* the transform lives in a stylesheet rule, so no attribute changes (other code watches the map's attributes) */
-  const id=svg.parentNode.id,st=document.createElement("style");st.textContent="#"+id+" > svg{}";document.head.appendChild(st);const rule=st.sheet.cssRules[0].style;
-  const commit=()=>{clearTimeout(t);t=0;if(!pend)return;const v=pend;pend=null;svg._gfPend=false;rect=null;measure();rule.transform="";rule.willChange="";SA.call(svg,"viewBox",v.join(" "));cur=v;const h=svg._gfHeld;svg._gfHeld=null;if(h)try{h[0].apply(h[1],h[2])}catch(e){console.error(e)}};
+  const wrap=svg.parentNode,id=wrap.id,st=document.createElement("style");st.textContent="#"+id+" > svg{}#"+id+"{}";document.head.appendChild(st);const rule=st.sheet.cssRules[0].style,wrule=st.sheet.cssRules[1].style;
+  const unexpand=()=>{if(!ex)return;ex=0;["position","left","top","width","height","max-width","max-height"].forEach(k=>rule.removeProperty(k));["height","box-sizing"].forEach(k=>wrule.removeProperty(k))};
+  const reset=()=>{pend=null;svg._gfPend=false;rect=null;rule.transform="";rule.willChange="";unexpand();clearTimeout(t);t=0};
+  const commit=()=>{clearTimeout(t);t=0;if(!pend)return;const v=pend;reset();measure();SA.call(svg,"viewBox",v.join(" "));cur=v;const h=svg._gfHeld;svg._gfHeld=null;if(h)try{h[0].apply(h[1],h[2])}catch(e){console.error(e)}};
+  /* shows box b by sliding/stretching what is drawn (the drawn box is cur plus a margin of ex on every side) */
+  const place=b=>{const W=rect.width,H=rect.height,u=W/cur[2],s=cur[2]/b[2];
+   rule.transformOrigin="0 0";rule.willChange="transform";rule.transform="translate("+(ex*W-s*((b[0]-cur[0])*u+ex*W))+"px,"+(ex*H-s*((b[1]-cur[1])*u+ex*H))+"px) scale("+s+")"};
+  /* a pan or zoom-out would uncover blank map, so the map is drawn once with a wide margin around b, then slid */
+  const expand=b=>{const W=rect.width,H=rect.height,k=1+2*M,imp=(k2,v)=>rule.setProperty(k2,v,"important");ex=M;cur=b;
+   wrule.setProperty("box-sizing","border-box","important");wrule.setProperty("height",rect._ph+"px","important");
+   imp("position","absolute");imp("left",(rect.left-rect._pl-rect._bl-M*W)+"px");imp("top",(rect.top-rect._pt-rect._bt-M*H)+"px");imp("width",k*W+"px");imp("height",k*H+"px");imp("max-width","none");imp("max-height","none");
+   SA.call(svg,"viewBox",[b[0]-M*b[2],b[1]-M*b[3],k*b[2],k*b[3]].join(" "));place(b)};
   svg.setAttribute=function(n,v){if(n!=="viewBox")return SA.apply(this,arguments);const b=parse(v);if(!b){commit();return SA.apply(this,arguments)}
-   if(!cur)cur=parse(GA.call(svg,"viewBox"));if(!cur||!svg.isConnected||!svg.getClientRects().length){pend=null;cur=b;return SA.apply(this,arguments)}
-   /* only a zoom-in can be shown by stretching what is already drawn; a pan or zoom-out would uncover blank map, so it is drawn for real */
-   const base=pend?cur:cur,inside=b[0]>=base[0]-1e-6&&b[1]>=base[1]-1e-6&&b[0]+b[2]<=base[0]+base[2]+1e-6&&b[1]+b[3]<=base[1]+base[3]+1e-6;
-   if(!inside){if(pend){pend=null;svg._gfPend=false;rect=null;rule.transform="";rule.willChange="";clearTimeout(t);t=0;const h=svg._gfHeld;svg._gfHeld=null;cur=b;const r=SA.apply(this,arguments);measure();if(h)try{h[0].apply(h[1],h[2])}catch(e){}return r}cur=b;return SA.apply(this,arguments)}
-   const now=performance.now();if(!pend){first=now;rect=box0}if(!rect||!rect.width){pend=null;cur=b;return SA.apply(this,arguments)}pend=b;svg._gfPend=true;
-   const ppu=rect.width/cur[2],s=cur[2]/b[2];
-   rule.transformOrigin="0 0";rule.willChange="transform";rule.transform="translate("+(-(b[0]-cur[0])*ppu*s)+"px,"+(-(b[1]-cur[1])*ppu*s)+"px) scale("+s+")";
-   clearTimeout(t);if(now-first>600)commit();else t=setTimeout(commit,170)};
-  let box0=null;const measure=()=>requestAnimationFrame(()=>{if(pend)return;const r=GR.call(svg),p=GR.call(svg.parentNode);box0={left:r.left,top:r.top,width:r.width,height:r.height,_pl:p.left,_pt:p.top}});
+   if(!cur)cur=parse(GA.call(svg,"viewBox"));if(!cur||!svg.isConnected||!svg.getClientRects().length){reset();cur=b;return SA.apply(this,arguments)}
+   const now=performance.now();if(!pend){first=now;rect=box0}if(!rect||!rect.width){reset();cur=b;return SA.apply(this,arguments)}
+   const e=1e-6,dx=ex*cur[2],dy=ex*cur[3],inside=b[0]>=cur[0]-dx-e&&b[1]>=cur[1]-dy-e&&b[0]+b[2]<=cur[0]+cur[2]+dx+e&&b[1]+b[3]<=cur[1]+cur[3]+dy+e;
+   pend=b;svg._gfPend=true;if(inside)place(b);else expand(b);
+   clearTimeout(t);if(now-first>600&&cur[2]/b[2]>1.25)commit();else t=setTimeout(later,170)};
+  /* while a finger or button is still down the picture keeps sliding; the live map returns once it is let go */
+  let down=0;const later=()=>{if(down)t=setTimeout(later,120);else commit()};
+  wrap.addEventListener("pointerdown",()=>{down=1},true);["pointerup","pointercancel"].forEach(n=>addEventListener(n,()=>{if(!down)return;down=0;if(pend){clearTimeout(t);t=setTimeout(commit,90)}},true));
+  let box0=null;const measure=()=>requestAnimationFrame(()=>{if(pend)return;const r=GR.call(svg),p=GR.call(wrap);box0={left:r.left,top:r.top,width:r.width,height:r.height,_pl:p.left,_pt:p.top,_bl:wrap.clientLeft,_bt:wrap.clientTop,_ph:wrap.offsetHeight}});
   try{new ResizeObserver(measure).observe(svg)}catch(e){}measure();
   svg.getAttribute=function(n){if(n==="viewBox"&&pend)return pend.join(" ");return GA.apply(this,arguments)};
   /* while transformed, the map keeps reporting its untransformed box, so pointer maths stays right */
-  svg.getBoundingClientRect=function(){if(pend&&rect){const r=GR.call(svg.parentNode);return new DOMRect(rect.left+(r.left-rect._pl),rect.top+(r.top-rect._pt),rect.width,rect.height)}return GR.call(this)}}
+  const CTM=svg.getScreenCTM;svg.getScreenCTM=function(){if(pend&&rect){const r=this.getBoundingClientRect(),k=r.width/pend[2];return new DOMMatrix([k,0,0,k,r.left-pend[0]*k,r.top-pend[1]*k])}return CTM.call(this)};
+  svg.getBoundingClientRect=function(){if(pend&&rect){const r=GR.call(wrap);return new DOMRect(rect.left+(r.left-rect._pl),rect.top+(r.top-rect._pt),rect.width,rect.height)}return GR.call(this)}}
  /* zoom callbacks (border widths, label sizes, detailed coasts) change the drawing, so they wait for the commit */
  if(typeof attachMapPanZoom==="function"){const _ap=attachMapPanZoom;attachMapPanZoom=function(wrapEl,box,cb){if(typeof cb!=="function"||!wrapEl||!/^(allMapsWrap|atlasStudyMapWrap)$/.test(wrapEl.id))return _ap.apply(this,arguments);
   const held=function(){const svg=wrapEl.querySelector("svg");if(svg&&svg._gfPend){svg._gfHeld=[cb,this,arguments];return}return cb.apply(this,arguments)};return _ap.call(this,wrapEl,box,held,...[].slice.call(arguments,3))}}
