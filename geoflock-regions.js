@@ -21,9 +21,9 @@ GF_REG.forEach(r=>{if(!COUNTRY_BY_CODE[r.c])COUNTRY_BY_CODE[r.c]={c:r.c,n:r.n,r:
 const NOFLAG=new Set(["eh","re","sj"]);/* Western Sahara: the flag belongs to one side of the dispute; Réunion and Svalbard fly their country's flag */
 const NOCAP=new Set(["hk","mo","gi","eh"]);/* city-territories, and a disputed capital */
 let ONMAP=null;const onMap=()=>{if(ONMAP)return ONMAP;try{const ids=new Set((typeof projFeatures==="function"?projFeatures():[]).map(f=>f.id));ONMAP=new Set(GF_REG.map(r=>r.c).filter(c=>ids.has(c)))}catch(e){return new Set()}return ONMAP};
-const poolHere=()=>{const m=typeof appMode!=="undefined"?appMode:"";return GF_REG.filter(r=>m==="map"?onMap().has(r.c):m==="capital"?!NOCAP.has(r.c):!NOFLAG.has(r.c)).map(r=>COUNTRY_BY_CODE[r.c])};
+const poolHere=()=>{const m=typeof appMode!=="undefined"?appMode:"";if(m==="map"&&typeof MAPOK==="function")return MAPOK();return GF_REG.filter(r=>m==="map"?onMap().has(r.c):m==="capital"?!NOCAP.has(r.c):!NOFLAG.has(r.c)).map(r=>COUNTRY_BY_CODE[r.c])};
 if(typeof poolFor==="function"){const _p=poolFor;poolFor=function(region){if(region===R)return poolHere();return _p.apply(this,arguments)}}
-if(typeof regionChipsFor==="function"){const _rc=regionChipsFor;regionChipsFor=function(mode,tab){const l=_rc.apply(this,arguments).slice();if(["flag","capital"].includes(mode)&&!l.includes(R))l.push(R);return l}}
+if(typeof regionChipsFor==="function"){const _rc=regionChipsFor;regionChipsFor=function(mode,tab){const l=_rc.apply(this,arguments).slice();if((["flag","capital"].includes(mode)||(mode==="map"&&tab!=="study"))&&!l.includes(R))l.push(R);return l}}
 /* wrong answers for a region's flag come from the other regions (the usual picker only knows the 196 countries) */
 if(typeof buildFlagDistractors==="function"){const _bd=buildFlagDistractors;buildFlagDistractors=function(t,pool){if(t&&t._sp||(pool||[]).some(c=>c&&c._sp)){const others=(pool||[]).filter(c=>c&&c.c!==t.c);for(let i=others.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[others[i],others[j]]=[others[j],others[i]]}return others.slice(0,3)}return _bd.apply(this,arguments)}}
 /* typed answers: while the special regions are chosen, the suggestions include them (an answer counts only when picked from them) */
@@ -37,14 +37,14 @@ if(typeof renderSuggestions==="function"){const _rs=renderSuggestions;renderSugg
 const noteSync=()=>{try{const row=document.getElementById("regionRow");if(!row)return;let n=document.getElementById("gfRegNote");const on=typeof activeRegion!=="undefined"&&activeRegion===R&&row.style.display!=="none";if(!on){if(n)n.remove();return}if(!n){n=document.createElement("p");n.id="gfRegNote";n.className="gf-reg-note";row.insertAdjacentElement("afterend",n)}n.textContent=NOTE}catch(e){}};
 if(typeof renderChrome==="function"){const _r=renderChrome;renderChrome=function(){const x=_r.apply(this,arguments);noteSync();return x}}
 /* a region's card: its own facts, not a country profile */
-function regionCard(c){const r=BY[c];if(!r)return false;document.querySelectorAll(".gf-reg-back").forEach(x=>x.remove());const o=document.createElement("div");o.className="game-modal-backdrop gf-reg-back";
+function regionCard(c){if(typeof openFlagZoom==="function"&&COUNTRY_BY_CODE[c]){openFlagZoom(COUNTRY_BY_CODE[c]);return true}const r=BY[c];if(!r)return false;document.querySelectorAll(".gf-reg-back").forEach(x=>x.remove());const o=document.createElement("div");o.className="game-modal-backdrop gf-reg-back";
  const fmt=n=>Number(n).toLocaleString("en-US"),adm=r.adm&&COUNTRY_BY_CODE[r.adm.toLowerCase()];
  o.innerHTML='<div class="game-modal gf-reg-card" role="dialog" aria-label="'+esc(r.n)+'"><button class="modal-x" type="button" aria-label="Close">×</button>'+(NOFLAG.has(r.c)?"":'<img class="gf-reg-flag" src="'+flag(r.c)+'" alt="">')+'<small>'+esc(KIND1[r.k])+"</small><h3>"+esc(r.n)+"</h3>"+(r.o&&r.o!==r.n?'<p class="gf-reg-off">'+esc(r.o)+"</p>":"")+'<p class="gf-reg-st">'+esc(r.st)+"</p>"+
   '<dl><dt>Capital</dt><dd>'+esc(r.capNote||r.cap)+"</dd><dt>Currency</dt><dd>"+esc(r.cur)+"</dd><dt>People</dt><dd>about "+fmt(r.pop)+"</dd><dt>Area</dt><dd>about "+fmt(r.area)+" km²</dd><dt>Languages</dt><dd>"+esc((r.lang||[]).join(", "))+"</dd>"+(adm?"<dt>Linked to</dt><dd>"+esc(adm.n)+"</dd>":"")+"</dl>"+
   '<p class="gf-reg-fact"><b>Did you know?</b> '+esc(r.fact)+'</p><p class="gf-reg-disc">'+esc(NOTE)+"</p></div>";
  document.body.appendChild(o);const close=()=>o.remove();o.querySelector(".modal-x").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()});return true}
 window.gfRegionCard=regionCard;
-if(typeof openFlagZoom==="function"){const _oz=openFlagZoom;openFlagZoom=function(country){const c=country&&(country.c||country);if(c&&BY[c]&&COUNTRY_BY_CODE[c]&&COUNTRY_BY_CODE[c]._sp){regionCard(c);return}return _oz.apply(this,arguments)}}
+
 /* Study: the special regions grouped by kind, each card opening the region's card */
 if(typeof renderStudyReference==="function"){const _sr=renderStudyReference;renderStudyReference=function(){if(typeof activeRegion==="undefined"||activeRegion!==R||!["flag","capital"].includes(appMode))return _sr.apply(this,arguments);
  const view=document.getElementById("studyView");if(!view)return;const cap=appMode==="capital",pool=poolHere();let html='<div class="study-toolbar"><div class="study-hint">'+(cap?"region → capital or main town · click for the region’s card":"click any flag for the region’s card")+"</div></div>";
@@ -105,6 +105,78 @@ let drawn="";function outline(){try{const svg=typeof amtSvg==="function"&&amtSvg
 setInterval(outline,600);
 const st2=document.createElement("style");st2.textContent=`#gfRegLayer path.gf-reg-line{fill:none;stroke:#3b2a5c;stroke-width:1.1;stroke-dasharray:4 3;vector-effect:non-scaling-stroke;pointer-events:stroke;cursor:pointer;opacity:.8}
 #gfRegLayer path.gf-reg-line:hover{stroke:#6a4fb0;stroke-width:2.4;opacity:1}`;document.head.appendChild(st2);
+/* ---------- region shapes on the Places map, and outlines for the profiles ----------
+   The Places map is the tour projection shifted left by an amount that depends only on latitude
+   (54.1 + 168.9 × (1 − Robinson row length); fitted on 169 countries to within half a pixel). */
+const ROBT=[[0,1],[5,.9986],[10,.9954],[15,.99],[20,.9822],[25,.973],[30,.96],[35,.9427],[40,.9216],[45,.8962],[50,.8679],[55,.835],[60,.7986],[65,.7597],[70,.7186],[75,.6732],[80,.6213],[85,.5722],[90,.5322]];
+const robA=l=>{l=Math.min(90,Math.abs(l));const i=Math.min(ROBT.length-2,Math.floor(l/5)),a=ROBT[i],b=ROBT[i+1];return a[1]+(b[1]-a[1])*(l-a[0])/5};
+const atlasXY=ll=>{try{const p=PS_PROJ_W.pt(ll);return p?[p[0]-(54.1+168.885*(1-robA(ll[1]))),p[1]]:null}catch(e){return null}};
+let HOLD=null;const hold=()=>{if(HOLD&&HOLD.isConnected)return HOLD.querySelector("svg");HOLD=document.createElement("div");HOLD.setAttribute("aria-hidden","true");HOLD.style.cssText="position:absolute;left:-20000px;top:0;width:50px;height:50px;overflow:hidden;visibility:hidden;pointer-events:none";HOLD.innerHTML=WORLD_MAP_SVG;document.body.appendChild(HOLD);return HOLD.querySelector("svg")};
+const ATLAS_ID={sj:"svalbard"};
+const DCACHE={};function regionD(c){if(c in DCACHE)return DCACHE[c];let d="";try{const id=ATLAS_ID[c]||c,svg=hold();svg.querySelectorAll("path[id]").forEach(p=>{if(p.id.toLowerCase()===id&&!p.classList.contains("tiny-hit-overlay"))d+=p.getAttribute("d")||""});
+ if(!d&&SHAPES[c]){const g=SHAPES[c],polys=g.type==="Polygon"?[g.coordinates]:g.coordinates;polys.forEach(poly=>poly.forEach(ring=>{ring.forEach((ll,i)=>{const q=atlasXY(ll);if(q)d+=(i?"L":"M")+q[0].toFixed(2)+","+q[1].toFixed(2)});d+="Z"}))}}catch(e){}return DCACHE[c]=d}
+const BBC={};function regionBox(c){if(BBC[c])return BBC[c];const d=regionD(c);if(!d)return null;const svg=hold(),p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);svg.appendChild(p);const b=p.getBBox();p.remove();return BBC[c]=[b.x,b.y,b.width,b.height]}
+function regionOutlineSVG(c,cls,fill){const d=regionD(c),b=regionBox(c);if(!d||!b)return"";const pad=Math.max(b[2],b[3])*.06+.5;
+ return'<svg class="country-outline '+(cls||"")+'" viewBox="'+[b[0]-pad,b[1]-pad,b[2]+2*pad,b[3]+2*pad].map(v=>v.toFixed(2)).join(" ")+'" preserveAspectRatio="xMidYMid meet"><path d="'+d+'" fill="'+(fill||"currentColor")+'" fill-rule="evenodd"/></svg>'}
+if(typeof countryOutlineSVG==="function"){const _co=countryOutlineSVG;countryOutlineSVG=function(code,cls,fill){const c=String(code||"").toLowerCase();if(BY[c]&&COUNTRY_BY_CODE[c]&&COUNTRY_BY_CODE[c]._sp){const h=regionOutlineSVG(c,cls,fill);if(h)return h}return _co.apply(this,arguments)}}
+/* profiles: the same window as every country, with the region's status first */
+const fmtN=n=>Number(n).toLocaleString("en-US");
+try{GF_REG.forEach(r=>{const C=COUNTRY_BY_CODE[r.c];if(!C||!C._sp||COUNTRY_PROFILES[r.c])return;COUNTRY_PROFILES[r.c]={official_name:r.o,capital:r.capNote||r.cap,continent:"Special region",subregion:KIND1[r.k],population:"about "+fmtN(r.pop),currency:r.cur,language:(r.lang||[]).join(", "),land_area_km2:fmtN(r.area),trivia:[r.fact]}})}catch(e){}
+if(typeof profileBlockHTML==="function"){const _pb=profileBlockHTML;profileBlockHTML=function(country){const h=_pb.apply(this,arguments);try{const r=country&&BY[country.c];if(r&&COUNTRY_BY_CODE[r.c]._sp)return'<div class="gf-reg-st-prof"><b>'+esc(KIND1[r.k])+".</b> "+esc(r.st)+"</div>"+h+'<p class="gf-reg-disc">'+esc(NOTE)+"</p>"}catch(e){}return h}}
+/* Western Sahara: no single flag is agreed, so its profile shows a plain card instead of one side's flag */
+try{FLAG_OVERRIDES.eh="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"><rect width="300" height="200" fill="#efe9dc"/><rect x="6" y="6" width="288" height="188" fill="none" stroke="#c9bfa8" stroke-width="4" stroke-dasharray="14 8"/><text x="150" y="96" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#8a7a5a">No agreed flag</text><text x="150" y="126" text-anchor="middle" font-family="sans-serif" font-size="15" fill="#8a7a5a">Western Sahara is disputed</text></svg>')}catch(e){}
+/* ---------- Places: the special regions quiz (Identify, Outline and Find, like the countries) ---------- */
+const MAPOK=()=>GF_REG.filter(r=>COUNTRY_BY_CODE[r.c]&&regionD(r.c)).map(r=>COUNTRY_BY_CODE[r.c]);
+const TINY=new Set(["hk","mo","gi","bm","je","im","aw","cw","ky","as","gu","ax","ncy"]);
+const PQ={};let MAPSVG=null;
+function mapMarkup(){if(MAPSVG)return MAPSVG;const svg=hold();let h="";const seen=new Set(GF_REG.map(r=>ATLAS_ID[r.c]||r.c));
+ svg.querySelectorAll("path[id]").forEach(p=>{if(p.classList.contains("tiny-hit-overlay"))return;const id=p.id.toLowerCase(),d=p.getAttribute("d");if(!d)return;const reg=GF_REG.find(r=>(ATLAS_ID[r.c]||r.c)===id);h+='<path class="'+(reg?"pq-reg":"pq-land")+'" data-c="'+(reg?reg.c:id)+'" d="'+d+'"/>'});
+ GF_REG.forEach(r=>{if(SHAPES[r.c]&&!svg.querySelector('path[id="'+r.c+'" i]'))h+='<path class="pq-reg pq-over" data-c="'+r.c+'" d="'+regionD(r.c)+'"/>'});return MAPSVG=h}
+const OUTLINE_OK=new Set(["pr","tw","eh","krd","sml","abk","sos","ncy","tdr","xk","ps","gl","nc","fo","fk","re","sj","im","je","hk","cw","aw","gu"]);
+function placesQuiz(){const view=document.getElementById("quizView");if(!view)return;let pool=MAPOK();if(typeof mapQuizSubMode!=="undefined"&&mapQuizSubMode==="silhouette")pool=pool.filter(c=>OUTLINE_OK.has(c.c));Object.assign(PQ,{sub:typeof mapQuizSubMode!=="undefined"?mapQuizSubMode:"located",codes:shuffle(pool.map(c=>c.c)).slice(0,10),i:0,right:0,pool});pqRender()}
+function pqOpts(c){const o=shuffle(PQ.pool.filter(x=>x.c!==c)).slice(0,3).concat([COUNTRY_BY_CODE[c]]);return shuffle(o)}
+function pqRender(){const view=document.getElementById("quizView");if(!view)return;if(PQ.i>=PQ.codes.length){view.innerHTML='<div class="gf-pq"><div class="gf-pq-end"><small>Special regions · Places</small><h3>'+PQ.right+" of "+PQ.codes.length+' right</h3><p>Right answers stamp each region’s '+(PQ.sub==="silhouette"?"Outline":"Location")+' in your passport.</p><button type="button" class="chip" id="pqAgain">Play again</button></div><p class="gf-reg-disc">'+esc(NOTE)+"</p></div>";view.querySelector("#pqAgain").onclick=placesQuiz;return}
+ const c=PQ.codes[PQ.i],C=COUNTRY_BY_CODE[c],sub=PQ.sub,find=sub==="shown",outline=sub==="silhouette";
+ const head='<div class="gf-pq-head"><span class="gf-pq-n"><b>'+(PQ.i+1)+"</b> / "+PQ.codes.length+'</span><span class="gf-pq-q">'+(find?"Find "+esc(C.n)+" on the map":outline?"Which special region is this?":"Which special region is highlighted?")+'</span><span class="gf-pq-s">✓ '+PQ.right+"</span></div>";
+ let stage;if(outline)stage='<div class="gf-pq-outline">'+regionOutlineSVG(c,"gf-pq-ol")+"</div>";
+ else{const b=regionBox(c)||[0,0,10,10],cx=b[0]+b[2]/2,cy=b[1]+b[3]/2;let w=Math.max(b[2]*(find?9:5),b[3]*(find?14:8),find?150:46);const ox=find?(Math.random()-.5)*w*.45:0,oy=find?(Math.random()-.5)*w*.25:0,hgt=w*.5;
+  stage='<svg class="gf-pq-map'+(find?" gf-pq-find":"")+'" viewBox="'+[cx-w/2+ox,cy-hgt/2+oy,w,hgt].map(v=>v.toFixed(2)).join(" ")+'" preserveAspectRatio="xMidYMid meet"><rect x="-500" y="-500" width="3000" height="2000" class="pq-sea"/>'+mapMarkup()+(!find&&TINY.has(c)?'<circle class="pq-ring" cx="'+cx.toFixed(2)+'" cy="'+cy.toFixed(2)+'" r="'+(w*.045).toFixed(2)+'"/>':"")+(find?GF_REG.filter(r=>TINY.has(r.c)&&regionBox(r.c)).map(r=>{const q=regionBox(r.c);return'<circle class="pq-hit" data-c="'+r.c+'" cx="'+(q[0]+q[2]/2).toFixed(2)+'" cy="'+(q[1]+q[3]/2).toFixed(2)+'" r="'+(w*.022).toFixed(2)+'"/>'}).join(""):"")+"</svg>"}
+ const opts=find?"":'<div class="gf-pq-opts">'+pqOpts(c).map(o=>'<button type="button" class="chip opt-btn" data-c="'+o.c+'">'+esc(o.n)+"</button>").join("")+"</div>";
+ view.innerHTML='<div class="gf-pq">'+head+stage+opts+'<p class="gf-pq-fb"></p></div>';
+ const map=view.querySelector(".gf-pq-map");if(map&&!find)map.querySelectorAll('[data-c="'+c+'"]').forEach(p=>p.classList.add("pq-target"));
+ const done=(ok,picked)=>{if(PQ.answered)return;PQ.answered=true;if(ok)PQ.right++;try{ppCredit(c,outline?"outline":"loc")}catch(e){}if(!ok)try{ppNote&&ppNote(c,outline?"outline":"loc",false)}catch(e){}
+  if(map){map.querySelectorAll('[data-c="'+c+'"]').forEach(p=>p.classList.add("pq-target"));if(picked&&picked!==c)map.querySelectorAll('[data-c="'+picked+'"]').forEach(p=>p.classList.add("pq-wrong"))}
+  view.querySelectorAll(".gf-pq-opts .opt-btn").forEach(b=>{b.disabled=true;if(b.dataset.c===c)b.classList.add("correct");else if(b.dataset.c===picked)b.classList.add("wrong")});
+  const fb=view.querySelector(".gf-pq-fb");fb.innerHTML=(ok?"<b>Right!</b> ":"<b>Not quite:</b> that was "+esc(C.n)+". ")+esc(BY[c].st)+' <button type="button" class="chip" id="pqNext">Next →</button>';fb.querySelector("#pqNext").onclick=()=>{PQ.i++;PQ.answered=false;pqRender()}};
+ PQ.answered=false;view.querySelectorAll(".gf-pq-opts .opt-btn").forEach(b=>b.onclick=()=>done(b.dataset.c===c,b.dataset.c));
+ if(find&&map)map.addEventListener("click",e=>{const t=e.target.closest("[data-c]");if(!t)return;const k=t.dataset.c;done(k===c,k)})}
+if(typeof startRound==="function"){const _sr2=startRound;startRound=function(customPool){if(typeof appMode!=="undefined"&&appMode==="map"&&typeof activeRegion!=="undefined"&&activeRegion===R&&!customPool){placesQuiz();return}return _sr2.apply(this,arguments)}}
+if(typeof renderQuizCard==="function"){const _rq=renderQuizCard;renderQuizCard=function(){if(typeof appMode!=="undefined"&&appMode==="map"&&typeof activeRegion!=="undefined"&&activeRegion===R){if(!document.querySelector("#quizView .gf-pq"))placesQuiz();return}return _rq.apply(this,arguments)}}
+const st3=document.createElement("style");st3.textContent=`
+.gf-reg-st-prof{background:rgba(106,79,176,.09);border-radius:10px;padding:8px 10px;margin:6px 0 10px;font-size:14px;text-align:left}
+.gf-pq{max-width:900px;margin:0 auto;text-align:center}
+.gf-pq-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 10px}.gf-pq-q{font-weight:800;font-size:19px}.gf-pq-n,.gf-pq-s{font-weight:700;opacity:.75;min-width:70px}
+.gf-pq-map{width:100%;height:auto;aspect-ratio:2/1;max-height:54vh;border-radius:16px;box-shadow:0 4px 18px rgba(20,40,70,.12);display:block;background:#cfe3f1}
+.gf-pq-map .pq-sea{fill:#cfe3f1}.gf-pq-map path{fill:#f3f1ea;stroke:#a9b6c2;stroke-width:.6;vector-effect:non-scaling-stroke}
+.gf-pq-map path.pq-over{fill:none;stroke:#5a4a86;stroke-dasharray:4 3}.gf-pq-map path.pq-reg{fill:#ece5f7}
+.gf-pq-find path.pq-reg,.gf-pq-find path.pq-over,.gf-pq-find .pq-hit{cursor:pointer}.gf-pq-find path.pq-reg:hover,.gf-pq-find path.pq-over:hover{fill:#d6c8f2}
+.gf-pq-map path.pq-target{fill:#f08a3c !important;stroke:#b5501a !important;stroke-width:1.4}.gf-pq-map path.pq-wrong{fill:#e6625a !important}
+.gf-pq-map .pq-ring{fill:none;stroke:#e8701a;stroke-width:2.2;vector-effect:non-scaling-stroke}.gf-pq-map .pq-hit{fill:rgba(106,79,176,.12);stroke:#6a4fb0;stroke-width:1;vector-effect:non-scaling-stroke}
+.gf-pq-outline{height:340px;display:flex;align-items:center;justify-content:center;color:#3b4b5c}.gf-pq-outline svg{height:100%;width:auto;max-width:100%}
+.gf-pq-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin:14px auto 0}.gf-pq-opts .opt-btn{min-height:46px;font-size:15px}
+.gf-pq-opts .opt-btn.correct{background:#2c9a5a !important;color:#fff !important}.gf-pq-opts .opt-btn.wrong{background:#c94b3b !important;color:#fff !important}
+.gf-pq-fb{min-height:24px;margin:12px auto 0;max-width:640px;font-size:14px}.gf-pq-end{padding:40px 0}.gf-pq-end h3{font-size:28px;margin:6px 0}
+@media (max-width:600px){.gf-pq-q{font-size:16px}.gf-pq-outline{height:240px}}
+`;document.head.appendChild(st3);
+/* "Show on map" from a region's profile: zoom the Maps page to it (from its outline, or around its capital) and flash it */
+try{const R0=GLOBE_ROBINSON0,feats=typeof projFeatures==="function"?projFeatures():[];GF_REG.forEach(r=>{if(COUNTRY_BBOX_ALLMAPS[r.c])return;let b=null;
+ const f=feats.find(x=>x.properties&&x.properties.c===r.c&&x.geometry);if(f){const g=d3.geoPath(R0).bounds(f);b=[g[0][0],g[0][1],g[1][0],g[1][1]]}
+ else if(SHAPES[r.c]){const g=d3.geoPath(R0).bounds({type:"Feature",geometry:SHAPES[r.c]});b=[g[0][0],g[0][1],g[1][0],g[1][1]]}
+ else{const a=R0([r.ll[0]-3,r.ll[1]+2]),z=R0([r.ll[0]+3,r.ll[1]-2]);if(a&&z)b=[a[0],a[1],z[0],z[1]]}if(b&&b.every(isFinite))COUNTRY_BBOX_ALLMAPS[r.c]=b})}catch(e){}
+if(typeof pfmGoToMap==="function"){const _pg=pfmGoToMap;pfmGoToMap=function(code){const x=_pg.apply(this,arguments);/* when the map is turned (spun east or west), the zoom box must be turned too: re-centre on the place itself */
+ setTimeout(()=>{try{const w=document.getElementById("allMapsWrap");if(!w||!w._panZoom||!SPIN.A.dl)return;let ll=null;const f=projFeatures().find(q=>q.properties&&q.properties.c===code&&q.geometry);
+  if(f)ll=d3.geoCentroid(typeof pfmCore==="function"?pfmCore(f):f);else if(SHAPES[code])ll=d3.geoCentroid({type:"Feature",geometry:SHAPES[code]});else if(BY[code])ll=BY[code].ll;const q=ll&&amtFromLL(ll);if(!q)return;
+  const b=COUNTRY_BBOX_ALLMAPS[code];if(!b)return;const bw=Math.max(b[2]-b[0],8)*2.2,bh=Math.max(b[3]-b[1],8)*2.2;w._panZoom.setBox({x:q[0]-bw/2,y:q[1]-bh/2,w:bw,h:bh})}catch(e){}},780);if(BY[code]&&SHAPES[code])setTimeout(()=>{const p=document.querySelector('#gfRegLayer path[data-c="'+code+'"]');if(!p)return;let n=0;const t=setInterval(()=>{p.style.setProperty("stroke-width",(n%2?1.3:3.6)+"px","important");p.style.setProperty("stroke",n%2?"#2b1d4a":"#e8701a","important");if(++n>7){clearInterval(t);p.style.setProperty("stroke-width","1.3px","important");p.style.setProperty("stroke","#2b1d4a","important")}},350)},1500);return x}}
 /* ---------- a guided tour of the special regions ---------- */
 if(typeof PS_TOURS!=="undefined"&&typeof PS_TOUR_ORDER!=="undefined"){
 const TID="regions",C="#6a4fb0",St=o=>Object.assign({_autoSpin:1,_ctx:1,_lg:1,_ky:1,_enr:1},o);
