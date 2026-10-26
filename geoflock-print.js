@@ -74,7 +74,9 @@ function dialog(){let d=document.getElementById("gfPrintDlg");if(d){d.hidden=fal
  document.body.appendChild(d);d.onclick=e=>{if(e.target===d||e.target.closest(".gpd-x"))d.hidden=true};
  d.querySelector("#gpdGo").onclick=()=>{const v=d.querySelector("#gpdWhat").value,st=d.querySelector('input[name="gpdSt"]:checked').value;openPage(v.startsWith("p:")?provPage(v.slice(2),st):regionPage(v.slice(2),st))}}
 /* entry point: a chip at the end of the Places study region row */
-if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{if(appMode==="map"&&activeTab==="study"){const row=document.getElementById("regionRow");if(row&&!row.querySelector("#gfPrintChip")){const b=document.createElement("button");b.className="chip";b.id="gfPrintChip";b.textContent="🖨 Printable maps";b.title="Blank maps and worksheets to print";b.onclick=e=>{e.stopPropagation();dialog()};row.appendChild(b)}}}catch(e){console.error(e)}return r}}
+/* the button lives on the Maps page, after Deep Time (it used to push the Places region chips onto a second row) */
+const addPrint=()=>{try{const deep=document.getElementById("gfDeepChip");if(!deep||document.getElementById("gfPrintChip"))return;const b=document.createElement("button");b.type="button";b.className="chip";b.id="gfPrintChip";b.textContent="🖨 Printable maps";b.title="Blank maps and worksheets to print";b.onclick=e=>{e.stopPropagation();dialog()};deep.insertAdjacentElement("afterend",b)}catch(e){console.error(e)}};
+let pq=0;new MutationObserver(()=>{if(!pq)pq=setTimeout(()=>{pq=0;addPrint()},200)}).observe(document.body,{childList:true,subtree:true});addPrint();
 const css=document.createElement("style");css.textContent=`
 #gfPrintDlg{ position:fixed; inset:0; z-index:1000; background:rgba(10,20,40,.45); display:flex; align-items:center; justify-content:center; padding:16px; }
 #gfPrintDlg[hidden]{ display:none; }
