@@ -182,3 +182,20 @@ const o=PS_TOUR_ORDER,old=o.indexOf(ID);if(old>=0)o.splice(old,1);const a=o.inde
 })();
 /* Madagascar's profile: use the sharper ring-tailed lemur photo (Mathias Appel, CC0) */
 (function(){let n=0;const go=()=>{try{if(typeof gfMergeExtra==="function")gfMergeExtra();const L=window.PS_CPHOTO&&PS_CPHOTO.mg,k=PS_PHOTO_DATA.findIndex(p=>p&&p.by==="Mathias Appel"&&/tailed lemur/i.test(p.f));if(L&&k>=0){const e=L.find(x=>/lemur/i.test(x[1]));if(e){e[0]=k;return}}}catch(e){}if(++n<40)setTimeout(go,500)};setTimeout(go,300)})();
+/* walkers: cut-out heads of each kind of human travel along the migration routes of a stop, bobbing as they walk */
+(function(){if(typeof PS_TOURS==="undefined"||typeof psGo!=="function")return;const ID="humans";
+ const W={"The first to leave Africa":{img:"photos/cut-erectus.webp",name:"Homo erectus"},"Out of Africa again":{img:"photos/cut-sapiens.webp",name:"Homo sapiens"},"Standing up":{img:"photos/cut-lucy.webp",name:"Lucy’s kind",pts:[[40.5,11.1],[37.5,4],[35.35,-3.2]]}};
+ let lay=null,raf=0,cur=null;const st=document.createElement("style");st.textContent=".hw-lay{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}.hw-w{position:absolute;width:46px;height:46px;margin:-46px 0 0 -23px;will-change:transform,opacity;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}.hw-w img{width:100%;height:100%;object-fit:contain;display:block}";document.head.appendChild(st);
+ const stop=()=>{cancelAnimationFrame(raf);raf=0;if(lay)lay.remove();lay=null;cur=null};
+ function path(c){const seg=[];let L=0;for(let i=1;i<c.length;i++){const d=Math.hypot(c[i][0]-c[i-1][0],c[i][1]-c[i-1][1]);seg.push(d);L+=d}return{c,seg,L}}
+ function at(P,t){let d=t*P.L;for(let i=0;i<P.seg.length;i++){if(d<=P.seg[i]){const f=P.seg[i]?d/P.seg[i]:0,a=P.c[i],b=P.c[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]}d-=P.seg[i]}return P.c[P.c.length-1]}
+ function start(S){const w=W[S.title];if(!w)return;const box=psContainer&&psContainer();if(!box)return;const lines=w.pts?[w.pts]:(S.lines||[]).filter(l=>l.kind==="flow"&&l.coords).map(l=>l.coords);if(!lines.length)return;
+  const ok=new Image();ok.onload=()=>{if(cur!==S)return;lay=document.createElement("div");lay.className="hw-lay";box.appendChild(lay);
+   const walkers=[];lines.forEach((c,i)=>{const P=path(c),dur=Math.max(5000,Math.min(14000,P.L*90));for(let k=0;k<2;k++){const el=document.createElement("div");el.className="hw-w";el.title=w.name;el.innerHTML='<img src="'+w.img+'" alt="">';lay.appendChild(el);walkers.push({el,P,dur,off:(k/2+i*.17)%1})}});
+   const t0=performance.now();const tick=n=>{if(!lay||!lay.isConnected||cur!==S||ps.tour!==ID){stop();return}
+    walkers.forEach(v=>{const t=((n-t0)/v.dur+v.off)%1,ll=at(v.P,t),s=psScreen(ll);if(!s){v.el.style.opacity=0;return}
+     const fade=Math.min(1,t*8,(1-t)*8),bob=Math.abs(Math.sin((n-t0)/170+v.off*9))*-5,tilt=Math.sin((n-t0)/170+v.off*9)*5;
+     v.el.style.opacity=fade.toFixed(2);v.el.style.transform="translate("+s[0].toFixed(1)+"px,"+(s[1]+bob).toFixed(1)+"px) rotate("+tilt.toFixed(1)+"deg)"});raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)};
+  ok.onerror=()=>{};ok.src=w.img}
+ const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{stop();if(ps&&ps.tour===ID){const S=psSteps()[ps.i];cur=S;setTimeout(()=>{if(cur===S)start(S)},900)}}catch(e){console.error(e)}return r};
+ const _c=typeof psClose==="function"?psClose:null;if(_c)window.psClose=function(){stop();return _c.apply(this,arguments)}})();
