@@ -121,7 +121,7 @@ if(typeof climComposite==="function"){const _cc=climComposite;climComposite=func
   /* the transform lives in a stylesheet rule, so no attribute changes (other code watches the map's attributes) */
   const wrap=svg.parentNode,id=wrap.id,st=document.createElement("style");st.textContent="#"+id+" > svg{}#"+id+"{}";document.head.appendChild(st);const rule=st.sheet.cssRules[0].style,wrule=st.sheet.cssRules[1].style;
   const unexpand=()=>{if(!ex)return;ex=0;["position","left","top","width","height","max-width","max-height"].forEach(k=>rule.removeProperty(k));["height","box-sizing"].forEach(k=>wrule.removeProperty(k))};
-  const reset=()=>{pend=null;svg._gfPend=false;rect=null;rule.transform="";rule.willChange="";unexpand();clearTimeout(t);t=0};
+  const reset=()=>{pend=null;svg._gfPend=false;rect=null;rule.transform="";rule.willChange="";unexpand();clearTimeout(t);t=0;if(window.gfSnapHide)gfSnapHide(svg)};
   const commit=()=>{clearTimeout(t);t=0;if(!pend)return;const v=pend;reset();measure();SA.call(svg,"viewBox",v.join(" "));cur=v;const h=svg._gfHeld;svg._gfHeld=null;if(h)try{h[0].apply(h[1],h[2])}catch(e){console.error(e)}};
   /* shows box b by sliding/stretching what is drawn (the drawn box is cur plus a margin of ex on every side) */
   const place=b=>{const W=rect.width,H=rect.height,u=W/cur[2],s=cur[2]/b[2];
@@ -135,7 +135,7 @@ if(typeof climComposite==="function"){const _cc=climComposite;climComposite=func
    if(!cur)cur=parse(GA.call(svg,"viewBox"));if(!cur||!svg.isConnected||!svg.getClientRects().length){reset();cur=b;return SA.apply(this,arguments)}
    const now=performance.now();if(!pend){first=now;rect=box0}if(!rect||!rect.width){reset();cur=b;return SA.apply(this,arguments)}
    const e=1e-6,dx=ex*cur[2],dy=ex*cur[3],inside=b[0]>=cur[0]-dx-e&&b[1]>=cur[1]-dy-e&&b[0]+b[2]<=cur[0]+cur[2]+dx+e&&b[1]+b[3]<=cur[1]+cur[3]+dy+e;
-   pend=b;svg._gfPend=true;if(inside)place(b);else expand(b);
+   pend=b;svg._gfPend=true;if(!(window.gfSnapDraw&&gfSnapDraw(svg,b,rect)))if(inside)place(b);else expand(b);
    clearTimeout(t);if(now-first>600&&cur[2]/b[2]>1.25)commit();else t=setTimeout(later,170)};
   /* while a finger or button is still down the picture keeps sliding; the live map returns once it is let go */
   let down=0;const later=()=>{if(down)t=setTimeout(later,120);else commit()};
@@ -368,8 +368,6 @@ if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
    sit on the left in globe mode, and switches fold into groups: "Labels" (country and ocean labels) and "Plates"
    (plate boundaries and plate motion). A group's switch turns all of its switches on or off; its ▾ shows them one by one. */
 (function(){const st=document.createElement("style");st.textContent=`
-#allMapsView.globe-on .all-maps-controls{ margin-bottom:26px !important; }
-#allMapsView.globe-on .globe-wrap-rel{ margin-top:var(--gf-gtop,0px) !important; }
 #allMapsView.globe-on #allMapsSubModes.gf-sub-inrow{ justify-content:flex-start; }
 .gf-fold{ position:relative; display:inline-flex; align-items:center; }
 .gf-fold > .gf-fcaret{ border:0; background:none; cursor:pointer; font-size:10px; padding:0 2px; margin-left:2px; color:inherit; opacity:.75; }
@@ -392,7 +390,7 @@ body.dark-theme .gf-fold-pop, body.sky-night .gf-fold-pop{ background:#1f2b3a; }
  /* the globe's top lines up with where the flat map starts */
  function level(){const v=document.getElementById("allMapsView");if(!v||!v.classList.contains("globe-on"))return;const c=v.querySelector(".all-maps-controls"),g=v.querySelector(".globe-wrap-rel");if(!c||!g)return;
   const cur=parseFloat(getComputedStyle(v).getPropertyValue("--gf-gtop"))||0,want=c.getBoundingClientRect().bottom+26,now=g.getBoundingClientRect().top,d=Math.round(cur+want-now);if(Math.abs(d-cur)>1)v.style.setProperty("--gf-gtop",d+"px")}
- setInterval(()=>{try{fold();level()}catch(e){}},400)})();
+ setInterval(()=>{try{fold()}catch(e){}},400)})();
 /* 22. Globe mode: the map's measure tabs (Nominal GDP / GDP per capita, Children per woman…) are a vertical list on the
    left, under the guided-tour button; the row version above the map is hidden there */
 (function(){const st=document.createElement("style");st.textContent=`
@@ -402,3 +400,57 @@ body.dark-theme .gf-fold-pop, body.sky-night .gf-fold-pop{ background:#1f2b3a; }
 #allMapsView.globe-on #amGlobeSubs .chip{ white-space:nowrap; background:rgba(255,255,255,.88); box-shadow:0 1px 4px rgba(20,40,70,.12); }
 #allMapsView.globe-on #amGlobeSubs .chip.active{ background:var(--accent,#2f8a7a); color:#fff; }
 @media (max-width:760px){ #allMapsView.globe-on #amGlobeSubs.globe-subs{ position:static !important; flex-direction:row; flex-wrap:wrap; justify-content:center; } }`;document.head.appendChild(st)})();
+/* 23. Letting go after turning the flat map: the drawn picture stays on screen while the real map is moved to the new
+   position in small pieces between frames, so the page never freezes; grabbing the map again meanwhile just carries on. */
+(function(){if(typeof spinPreviewEnd!=="function"||typeof spinApplySvg!=="function")return;
+ const QSA=Element.prototype.querySelectorAll;
+ spinPreviewEnd=function(svg){const D=svg._spinDrag;if(!D)return;if(D.raf){cancelAnimationFrame(D.raf);D.raf=0}const k=spinKindOf(svg),S=SPIN[k],target=spinNorm(D.dl),job={};svg._gfJob=job;
+  if(k==="W")try{spinUser.W=true}catch(e){}
+  const from=svg._spin?svg._spin.dl:S.dl;S.dl=target;try{spinTables(k);spinSetProj()}catch(e){}
+  const all=[...QSA.call(svg,"*")].filter(el=>!el.closest(".spin-preview"));let i=0;const N=700;
+  const step=()=>{if(svg._gfJob!==job)return;/* a newer let-go has taken over */
+   if(window._gfHeld&&_gfHeld()){requestAnimationFrame(step);return}const t0=performance.now();
+   while(i<all.length&&performance.now()-t0<12){const part=all.slice(i,i+N);i+=N;svg.querySelectorAll=function(sel){return sel==="*"?part:QSA.call(this,sel)};try{spinApplySvg(svg,target,S.f0,S.f,from)}catch(e){console.error(e)}finally{delete svg.querySelectorAll}}
+   if(i<all.length){requestAnimationFrame(step);return}
+   svg._spin={dl:target,f:S.f,clipUrl:svg._spin&&svg._spin.clipUrl};try{spinRefresh(svg)}catch(e){}
+   const d=svg._spinDrag;if(d&&d.f)d.f.remove();svg.classList.remove("spin-dragging");const w=svg.closest(".map-wrap");if(w)w.classList.remove("spin-dragging");svg._spinDrag=null;svg._gfJob=null;
+   try{document.querySelectorAll(".spin-btn").forEach(b=>spinBtnSync(b))}catch(e){}};
+  requestAnimationFrame(step)};
+ /* while the map is held again, the move waits (the next let-go replaces it with a fresh one) */
+ let held=false;document.addEventListener("pointerdown",e=>{held=!!(e.target.closest&&e.target.closest(".map-wrap"))},true);["pointerup","pointercancel"].forEach(n=>document.addEventListener(n,()=>{held=false},true));window._gfHeld=()=>held})();
+/* 24. "Drag turns the world" is off unless you turn it on, it switches itself off when you change map, and while it is on a
+   small note on the map says so, with a button to turn it off */
+(function(){if(typeof SPIN_DRAG_ON==="undefined")return;
+ const off=()=>{if(!SPIN_DRAG_ON)return;SPIN_DRAG_ON=false;try{document.querySelectorAll(".spin-btn").forEach(b=>spinBtnSync(b))}catch(e){}note()};
+ function note(){document.querySelectorAll(".map-wrap").forEach(w=>{let n=w.querySelector(":scope > .gf-spin-note");const show=SPIN_DRAG_ON&&w.querySelector("svg#worldMapSvg, svg#worldMapSvgAllMaps")&&w.offsetParent;
+  if(!show){if(n)n.remove();return}if(!n){n=document.createElement("div");n.className="gf-spin-note";n.innerHTML='Dragging turns the world east–west <button type="button">Turn off</button>';n.querySelector("button").onclick=e=>{e.stopPropagation();off()};["pointerdown","mousedown","click"].forEach(t=>n.addEventListener(t,e=>e.stopPropagation()));w.appendChild(n)}})}
+ let lastMode=null;setInterval(()=>{try{const m=typeof allMapsColorMode!=="undefined"?allMapsColorMode+"|"+(typeof appMode!=="undefined"?appMode:""):"";if(lastMode!==null&&m!==lastMode)off();lastMode=m;note()}catch(e){}},400);
+ const st=document.createElement("style");st.textContent=".gf-spin-note{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;background:rgba(16,28,48,.88);color:#fff;font:600 12.5px/1.2 inherit;padding:6px 6px 6px 14px;border-radius:999px;box-shadow:0 3px 12px rgba(0,0,0,.25);white-space:nowrap}.gf-spin-note button{border:0;border-radius:999px;background:#e8701a;color:#fff;font:700 12px/1 inherit;padding:6px 11px;cursor:pointer}";document.head.appendChild(st)})();
+/* 25. Projections: its switches on one row, with the tour button first on the left */
+(function(){const st=document.createElement("style");st.textContent="#ptBar{display:flex !important;flex-wrap:nowrap !important;align-items:center;justify-content:center;gap:14px;white-space:nowrap}#ptBar > *{flex:none;margin:0 !important}#ptBar #ptStartBtn{order:-1;font-size:13px;padding:7px 14px}@media (max-width:900px){#ptBar{flex-wrap:wrap !important}}";document.head.appendChild(st)})();
+setInterval(()=>{const b=document.getElementById("ptStartBtn"),bar=document.getElementById("ptBar");if(b&&bar&&b.parentNode===bar&&bar.firstElementChild!==b)bar.insertBefore(b,bar.firstElementChild)},500);
+setInterval(()=>{const bar=document.getElementById("ptBar"),p=bar&&bar.parentElement;if(p&&p.firstElementChild!==bar)p.insertBefore(bar,p.firstElementChild)},500);
+{const st=document.createElement("style");st.textContent=".proj-switches:has(#ptBar){display:flex !important;flex-wrap:nowrap;align-items:center;justify-content:center;gap:14px}";document.head.appendChild(st)}
+/* 26. The flat map moves like the globe: while it is dragged or zoomed, a ready-made picture of the whole world is drawn in
+   its place, moved and scaled every frame (no redrawing of thousands of shapes); the real map comes back when it stops.
+   The picture is made in spare moments while the map is still, and remade after the map changes. */
+(function(){if(typeof spinSnapshot!=="function")return;
+ const ov=new WeakMap;
+ /* the last picture is used even if small things (label sizes, line widths) changed since; it is remade in the background */
+ function cache(svg){const c=svg._gfWorld,k=spinKindOf(svg);return c&&c.dl===(k?SPIN[k].dl:0)?c.s:null}
+ function fresh(svg){const c=svg._gfWorld;return c&&c.mut===(svg._gfMut2||0)&&cache(svg)}
+ window.gfSnapDraw=function(svg,b,rect){try{const s=cache(svg);if(!s||!rect||!rect.width)return false;const wrap=svg.parentNode;let cv=ov.get(svg);
+   if(!cv){cv=document.createElement("canvas");cv.className="gf-world-pic";cv.style.cssText="position:absolute;pointer-events:none;z-index:1";wrap.appendChild(cv);ov.set(svg,cv)}
+   const dpr=Math.min(2,devicePixelRatio||1),W=rect.width,H=rect.height;if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+   cv.style.left=(rect.left-rect._pl-rect._bl)+"px";cv.style.top=(rect.top-rect._pt-rect._bt)+"px";cv.style.width=W+"px";cv.style.height=H+"px";cv.style.display="";
+   const ctx=cv.getContext("2d"),k=W/b[2];ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);ctx.imageSmoothingQuality="high";
+   ctx.setTransform(dpr*k/s.sc,0,0,dpr*k/s.sc,dpr*(s.vb0.x-b[0])*k,dpr*(s.vb0.y-b[1])*k);ctx.drawImage(s.cv,0,0);
+   svg.style.visibility="hidden";return true}catch(e){console.error(e);return false}};
+ window.gfSnapHide=function(svg){const cv=ov.get(svg);if(!cv||cv.style.display==="none")return;
+   /* keep the picture until the real map has been drawn at its new place */
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{svg.style.visibility="";cv.style.display="none"}))};
+ function warm(svg){if(svg._gfWarmT)return;svg._gfWarmT=setTimeout(()=>{svg._gfWarmT=0;if(!svg.isConnected||svg._gfPend||fresh(svg)||!svg.getClientRects().length)return;
+   const go=()=>{try{if(svg._gfPend||fresh(svg))return;const mut=svg._gfMut2||0,k=spinKindOf(svg),dl=k?SPIN[k].dl:0;const s=spinSnapshot(svg);if(s)svg._gfWorld={s,mut,dl}}catch(e){}};
+   (window.requestIdleCallback||setTimeout)(go,{timeout:1500})},900)}
+ const watch=svg=>{if(svg._gfWW)return;svg._gfWW=1;new MutationObserver(ms=>{if(svg._gfPend)return;if(ms.every(m=>m.attributeName==="viewBox"||m.attributeName==="style"||m.attributeName==="class"||(m.target.closest&&m.target.closest(".spin-preview,[style*='display:none'],[style*='display: none']"))))return;svg._gfMut2=(svg._gfMut2||0)+1;warm(svg)}).observe(svg,{subtree:true,childList:true,attributes:true});warm(svg)};
+ setInterval(()=>document.querySelectorAll("#allMapsWrap > svg, #atlasStudyMapWrap > svg").forEach(s=>{watch(s);if(!fresh(s))warm(s)}),1000)})();

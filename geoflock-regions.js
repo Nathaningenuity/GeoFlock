@@ -308,7 +308,7 @@ const g=(PS_TOURS.geopol&&PS_TOURS.geopol.group)||"world";
   if(tags.length&&!S._ft){S._ft=1;S.flagTags=tags;S.pins=keep}});
  steps.forEach(S=>{if(A[S.title])S.hi=(S.hi||[]).concat(A[S.title]);if(B[S.title])S.holes=(S.holes||[]).concat(B[S.title].map(c=>HG[c]||SHAPES[c]).filter(Boolean).map(g=>({geo:g})))})}
 PS_TOURS[TID]={name:"Guided tour on special regions",short:"Special regions",hint:"Territories, special administrative regions and places with limited recognition: Puerto Rico to Somaliland",map:{mode:"relief"},group:g,col:C,steps};
-try{if(typeof TOURQ!=="undefined")TOURQ[TID]={mid:[],recap:["hk","sml","gl"].map(c=>{const r=BY[c];return Object.assign({},r.q,{st:steps.find(s=>s.pins&&s.pins.some(p=>p[1]===r.n||p[0]===r.ll)).title,kc:c})})}}catch(e){console.error(e)}
+try{if(typeof TOURQ!=="undefined")TOURQ[TID]={mid:[],recap:["hk","sml","gl"].map(c=>{const r=BY[c];return Object.assign({},r.q,{st:(steps.find(s=>(s.pins||[]).some(p=>p[1]===r.n||p[0]===r.ll)||(s.flagTags||[]).some(q=>q.code===c)||(s.hi||[]).includes(c))||steps[0]).title,kc:c})})}}catch(e){console.error(e)}
 const o=PS_TOUR_ORDER,old=o.indexOf(TID);if(old>=0)o.splice(old,1);const a=o.indexOf("geopol");o.splice(a>=0?a+1:o.length,0,TID);
 }
 })();
