@@ -29,7 +29,7 @@ S({title:"One finch, many finches",view:[-92.3,-1.8,-88.9,0.9],globe:[-90.5,-0.6
  stat:"About 18 kinds of Darwin’s finches all come from one kind of bird that arrived about 2 million years ago",
  body:"Their beaks fit their food: big nutcrackers, thin tweezers for insects, long probes for cactus flowers. The woodpecker finch even uses a cactus spine as a tool to winkle grubs out of wood, and on remote Wolf Island the ‘vampire finch’ sips seabird blood.",
  more:"Peter and Rosemary Grant measured the finches of tiny Daphne Major for over 40 years. In the 1977 drought only big, hard seeds were left, and the survivors’ chicks had deeper beaks: evolution you could see in a single year. Try the drought on the card."}),
-S({title:"Christmas Island’s red crabs",view:[105.4,-10.65,105.85,-10.35],globe:[105.65,-10.5,40],
+S({title:"Christmas Island’s red crabs",view:[101.5,-12.6,110.5,-6.4],globe:[105.65,-9.5,5],
  phPins:[ph([105.68,-10.42],"Red crabs on the march"),ph([105.6,-10.5],"Robber crab"),ph([105.72,-10.57],"Crab bridge")],
  stat:"Every year tens of millions of red crabs march from the forest to the sea to lay their eggs",
  body:"When the first rains come, the island turns red. Roads are closed, and special bridges and tunnels help the crabs cross. Each female releases around 100,000 eggs into the sea at the turn of the tide, at dawn, near the last quarter of the Moon.",
