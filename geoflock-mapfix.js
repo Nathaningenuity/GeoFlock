@@ -338,3 +338,18 @@ if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
    else if(onGlobe&&amGlobe&&amGlobe.projection){const r=amGlobe.host.getBoundingClientRect(),pr=amGlobe.projection();ll=pr.invert&&pr.invert([last[0]-r.left,last[1]-r.top])}
    const hit=ll&&histAtLL(ll);if(hit&&hit[1]&&hit[1].properties&&hit[1].properties.n!=="No humans yet"){card(hit[1]);return}}}catch(e){console.error(e)}return _oz.apply(this,arguments)};
  const st=document.createElement("style");st.textContent=`.gf-hist-card{max-width:440px;text-align:left}.gf-hist-card small{text-transform:uppercase;letter-spacing:.06em;font-weight:800;opacity:.6;font-size:11px}.gf-hist-card h3{margin:2px 0 4px;font-size:23px}.gf-hist-sub{margin:0 0 10px;opacity:.75}.gf-hist-wiki img{float:right;max-width:120px;max-height:110px;margin:0 0 8px 12px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)}.gf-hist-wiki p{margin:0 0 6px;font-size:14px}.gf-hist-wiki a{font-weight:700;font-size:13px}.gf-hist-wait{opacity:.6}.gf-hist-cap{clear:both;font-size:13px;opacity:.85;background:rgba(232,112,26,.08);border-radius:10px;padding:8px 10px;margin:12px 0 0}`;document.head.appendChild(st)})();
+/* 18. Sideways drags turn the flat map like the globe. The picture used while dragging only includes images that have
+   already been loaded, so every image on the maps (relief, shading, sea level) is loaded as soon as it appears. */
+(function(){if(typeof spinImg!=="function")return;const seen=new Set;
+ const pre=()=>{document.querySelectorAll("#allMapsWrap svg image, #atlasStudyMapWrap svg image, #mapWrap svg image").forEach(el=>{const h=el.getAttribute("href")||el.getAttribute("xlink:href");if(!h||seen.has(h))return;seen.add(h);try{const p=spinImg(h);if(p&&p.catch)p.catch(()=>{})}catch(e){}})};
+ setInterval(pre,700);pre()})();
+/* the picture used while dragging is made ahead of time, when the map has been still for a moment, and reused until
+   the map changes, so a drag starts at once */
+(function(){if(typeof spinSnapshot!=="function")return;const _ss=spinSnapshot;
+ const key=svg=>{try{const k=spinKindOf(svg);return (k&&SPIN[k].dl)+"|"+svg.getAttribute("viewBox")+"|"+(svg._gfMut||0)+"|"+svg.getBoundingClientRect().width.toFixed(0)}catch(e){return Math.random()}};
+ spinSnapshot=function(svg){const k=key(svg),c=svg._gfSnap;if(c&&c.k===k&&c.s)return c.s;const s=_ss.apply(this,arguments);svg._gfSnap={k,s};return s};
+ const watch=svg=>{if(svg._gfSnapW)return;svg._gfSnapW=1;let t=0;
+  const warm=()=>{t=0;if(!svg.isConnected||!SPIN_DRAG_ON||svg._spinDrag||!svg.getClientRects().length)return;const go=()=>{try{if(!svg._spinDrag)spinSnapshot(svg)}catch(e){}};(window.requestIdleCallback||setTimeout)(go,{timeout:2000})};
+  new MutationObserver(ms=>{if(ms.every(m=>{const n=m.target;return n.closest&&n.closest(".spin-preview")||[...m.addedNodes,...m.removedNodes].every(x=>x.classList&&x.classList.contains("spin-preview"))||m.attributeName==="class"||(m.type==="attributes"&&n.closest&&n.closest('[style*="display:none"],[style*="display: none"]'))}))return;svg._gfMut=(svg._gfMut||0)+1;clearTimeout(t);t=setTimeout(warm,1200)}).observe(svg,{subtree:true,childList:true,attributes:true,characterData:false});
+  t=setTimeout(warm,1500)};
+ setInterval(()=>document.querySelectorAll("svg#worldMapSvg, svg#worldMapSvgAllMaps").forEach(watch),1000)})();
