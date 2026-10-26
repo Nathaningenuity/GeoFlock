@@ -296,6 +296,7 @@ const css=document.createElement("style");css.textContent=`
 #gfDeep .gfd-credit{font-size:10.5px;opacity:.6}
 #gfDeep .gfd-x{position:absolute;top:10px;right:12px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer;z-index:2}
 body:has(#allMapsView:not([style*="none"]) #gfDeep:not([hidden])) #flKey{display:none !important}
+body:has(#allMapsView:not([style*="none"]) #gfDeep:not([hidden])) #globalSearchWrap{display:none !important}
 #allMapsView.globe-on:has(#gfDeep:not([hidden])) #allMapsWrap{display:block !important}
 #allMapsView:has(#gfDeep:not([hidden])) .globe-wrap-rel{display:none !important}
 #allMapsWrap:has(> #gfDeep:not([hidden])){min-height:min(600px,86vh)}
