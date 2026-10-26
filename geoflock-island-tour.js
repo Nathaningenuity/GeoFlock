@@ -230,8 +230,8 @@ const CARD={"Islands of life":"Galapagos giant tortoise, head (Chelonoidis niger
 const PIN={"Anak Krakatau, the ‘child of Krakatoa’":"Anak Krakatau (Anak Krakatoa), Indonesia - 12 May 2023 (52891922902).jpg","Komodo dragon: the biggest lizard alive":"Komodo dragon (Varanus komodoensis).jpg","The dodo":"Dronte dodo Raphus cucullatus.jpg","Mount Roraima, a tepui":"Monte Roraima, ponto mais alto.jpg","Fishing on Lake Victoria":"A Fisherman on Lake Victoria, Uganda.jpg","Forest cut into patches":"Aerial view of the Amazon Rainforest.jpg"};
 const PHOTOS=window.GF_ISL_PHOTOS||[];
 try{if(window._gfExtraDone&&typeof PS_PHOTO_DATA!=="undefined"){const have=new Set(PS_PHOTO_DATA.map(p=>p.f));PHOTOS.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}else if(typeof GF_EXTRA_PHOTOS!=="undefined")PHOTOS.forEach(p=>GF_EXTRA_PHOTOS.push(p))}catch(e){}
-PHOTOS.forEach(p=>{if(p.card)CARD[p.card]=p.f;(p.pins||[]).forEach(l=>PIN[l]=p.f)});
-if(typeof psPhotoFor==="function"){const _pf=psPhotoFor;psPhotoFor=function(St){try{if(typeof ps!=="undefined"&&ps&&ps.tour===ID&&St&&CARD[St.title]){if(typeof gfMergeExtra==="function")gfMergeExtra();const p=PS_PHOTO_DATA.find(x=>x&&x.f===CARD[St.title]&&x.d);if(p)return p}}catch(e){}return _pf.apply(this,arguments)}}
+const OTHER={};PHOTOS.forEach(p=>{if(p.card){if(!p.tour||p.tour===ID)CARD[p.card]=p.f;else OTHER[p.tour+"|"+p.card]=p.f}(p.pins||[]).forEach(l=>PIN[l]=p.f)});
+if(typeof psPhotoFor==="function"){const _pf=psPhotoFor;psPhotoFor=function(St){try{const want=typeof ps!=="undefined"&&ps&&St&&(ps.tour===ID?CARD[St.title]:OTHER[ps.tour+"|"+St.title]);if(want){if(typeof gfMergeExtra==="function")gfMergeExtra();const p=PS_PHOTO_DATA.find(x=>x&&x.f===want&&x.d);if(p)return p}}catch(e){}return _pf.apply(this,arguments)}}
 try{Object.assign(GF_SQ_FILE,PIN)}catch(e){}
 /* photo pins still without a photo show as ordinary labelled points */
 PS_TOURS[ID].steps.forEach(St=>{if(!St.phPins)return;const keep=[],pts=[];St.phPins.forEach(q=>PIN[q.label]?keep.push(q):pts.push([q.at,q.label,"point"]));St.phPins=keep;if(pts.length)St.pins=(St.pins||[]).concat(pts)});
