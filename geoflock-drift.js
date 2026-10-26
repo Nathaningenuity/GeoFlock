@@ -143,7 +143,7 @@ function tex(gl,img,mip){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D
 function fetchBlob(url,onp){return fetch(url).then(async r=>{if(!r.ok)throw new Error(url+" "+r.status);const n=+r.headers.get("content-length")||0;
  if(!r.body||!r.body.getReader){const b=await r.blob();onp(b.size,b.size);return b}
  const rd=r.body.getReader(),parts=[];let got=0;for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onp(got,n)}return new Blob(parts)})}
-const DEM_URL="textures/PALEODEM_ATLAS.png?v=5",DEM_BYTES=6317376,DEM_COLS=11,DEM_MAX=750,FADE=8;
+const DEM_URL="textures/PALEODEM_ATLAS.png?v=6",DEM_BYTES=6349061,DEM_COLS=11,DEM_MAX=750,FADE=8;
 const secs=n=>{n=Math.max(1,Math.ceil(n));return n===1?"about 1 second":"about "+n+" seconds"};
 function load(progress){if(G)return Promise.resolve(G);if(loading)return loading;
  const say=s=>{try{progress&&progress(s)}catch(e){}};
