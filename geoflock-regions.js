@@ -110,11 +110,22 @@ const st2=document.createElement("style");st2.textContent=`#gfRegLayer path.gf-r
    (54.1 + 168.9 × (1 − Robinson row length); fitted on 169 countries to within half a pixel). */
 const ROBT=[[0,1],[5,.9986],[10,.9954],[15,.99],[20,.9822],[25,.973],[30,.96],[35,.9427],[40,.9216],[45,.8962],[50,.8679],[55,.835],[60,.7986],[65,.7597],[70,.7186],[75,.6732],[80,.6213],[85,.5722],[90,.5322]];
 const robA=l=>{l=Math.min(90,Math.abs(l));const i=Math.min(ROBT.length-2,Math.floor(l/5)),a=ROBT[i],b=ROBT[i+1];return a[1]+(b[1]-a[1])*(l-a[0])/5};
-const atlasXY=ll=>{try{const p=PS_PROJ_W.pt(ll);return p?[p[0]-(54.1+168.885*(1-robA(ll[1]))),p[1]]:null}catch(e){return null}};
+/* lon/lat → Places-map units, fitted locally from the four nearest countries (their real outlines on that map),
+   so it follows the map's own projection wherever the region is */
+let REFS=null;const LFIT={};
+function refs(){if(REFS)return REFS;REFS=[];try{const svg=hold(),F=projFeatures();const by={};svg.querySelectorAll("path[id]").forEach(p=>{if(p.classList.contains("tiny-hit-overlay"))return;const k=p.id.toLowerCase();(by[k]=by[k]||[]).push(p)});
+ F.forEach(f=>{const c=f.properties&&f.properties.c;if(!c||!f.geometry||!by[c])return;const g=d3.geoBounds(f);if(!(g[1][0]>g[0][0])||g[1][0]-g[0][0]>30||g[1][1]-g[0][1]>30)return;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;by[c].forEach(p=>{const b=p.getBBox();if(!b.width)return;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height)});
+  if(!(x1>x0))return;const sx=(x1-x0)/(g[1][0]-g[0][0]),sy=(y1-y0)/(g[1][1]-g[0][1]);if(!(sx>1&&sx<12&&sy>1&&sy<12))return;REFS.push({c,g,a:[x0,y0,x1,y1],m:[(g[0][0]+g[1][0])/2,(g[0][1]+g[1][1])/2]})})}catch(e){console.error(e)}return REFS}
+const lsq=P=>{let n=0,sx=0,sy=0,sxx=0,sxy=0;P.forEach(([X,Y])=>{n++;sx+=X;sy+=Y;sxx+=X*X;sxy+=X*Y});const k=(n*sxy-sx*sy)/(n*sxx-sx*sx);return[k,(sy-k*sx)/n]};
+function lfit(ll){const key=Math.round(ll[0]/3)+","+Math.round(ll[1]/3);if(LFIT[key])return LFIT[key];const R=refs();if(!R.length)return null;
+ const near=R.map(r=>[Math.hypot(((r.m[0]-ll[0]+540)%360)-180,r.m[1]-ll[1]),r]).sort((a,b)=>a[0]-b[0]).slice(0,4).map(x=>x[1]);
+ const fx=lsq(near.flatMap(r=>[[r.g[0][0],r.a[0]],[r.g[1][0],r.a[2]]])),fy=lsq(near.flatMap(r=>[[r.g[1][1],r.a[1]],[r.g[0][1],r.a[3]]]));return LFIT[key]=[fx,fy]}
+const atlasXY=ll=>{try{const F=lfit(ll);return F?[F[0][0]*ll[0]+F[0][1],F[1][0]*ll[1]+F[1][1]]:null}catch(e){return null}};
 let HOLD=null;const hold=()=>{if(HOLD&&HOLD.isConnected)return HOLD.querySelector("svg");HOLD=document.createElement("div");HOLD.setAttribute("aria-hidden","true");HOLD.style.cssText="position:absolute;left:-20000px;top:0;width:50px;height:50px;overflow:hidden;visibility:hidden;pointer-events:none";HOLD.innerHTML=WORLD_MAP_SVG;document.body.appendChild(HOLD);return HOLD.querySelector("svg")};
 const ATLAS_ID={sj:"svalbard"};
 const DCACHE={};function regionD(c){if(c in DCACHE)return DCACHE[c];let d="";try{const id=ATLAS_ID[c]||c,svg=hold();svg.querySelectorAll("path[id]").forEach(p=>{if(p.id.toLowerCase()===id&&!p.classList.contains("tiny-hit-overlay"))d+=p.getAttribute("d")||""});
- if(!d&&SHAPES[c]){const g=SHAPES[c],polys=g.type==="Polygon"?[g.coordinates]:g.coordinates;polys.forEach(poly=>poly.forEach(ring=>{ring.forEach((ll,i)=>{const q=atlasXY(ll);if(q)d+=(i?"L":"M")+q[0].toFixed(2)+","+q[1].toFixed(2)});d+="Z"}))}}catch(e){}return DCACHE[c]=d}
+ if(!d&&SHAPES[c]){const g=SHAPES[c],polys=g.type==="Polygon"?[g.coordinates]:g.coordinates;const ctr=d3.geoCentroid(g),F=lfit(ctr),xy=ll=>F?[F[0][0]*ll[0]+F[0][1],F[1][0]*ll[1]+F[1][1]]:null;polys.forEach(poly=>poly.forEach(ring=>{ring.forEach((ll,i)=>{const q=xy(ll);if(q)d+=(i?"L":"M")+q[0].toFixed(2)+","+q[1].toFixed(2)});d+="Z"}))}}catch(e){}return DCACHE[c]=d}
 const BBC={};function regionBox(c){if(BBC[c])return BBC[c];const d=regionD(c);if(!d)return null;const svg=hold(),p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);svg.appendChild(p);const b=p.getBBox();p.remove();return BBC[c]=[b.x,b.y,b.width,b.height]}
 /* outlines drawn the way country outlines are: about 1,100 units wide, thin stroke, the outline CSS colours */
 const OLC={};function regionOutlineSVG(c,cls,fill){let d=OLC[c];const W=1120,H=630;
@@ -190,9 +201,14 @@ function markStudy(){try{if(typeof activeRegion==="undefined"||activeRegion!==R)
  let g=svg.querySelector("#gfRegStudy");if(g)g.remove();g=document.createElementNS("http://www.w3.org/2000/svg","g");g.id="gfRegStudy";let h="";
  GF_REG.forEach(r=>{if(!COUNTRY_BY_CODE[r.c])return;const id=ATLAS_ID[r.c]||r.c,own=[...svg.querySelectorAll("path[id]")].filter(p=>p.id.toLowerCase()===id&&!p.classList.contains("tiny-hit-overlay"));
   const d=own.length?own.map(p=>p.getAttribute("d")).join(""):regionD(r.c);if(!d)return;
-  h+='<path class="gf-rs'+(own.length?"":" gf-rs-over")+'" data-c="'+r.c+'" d="'+d+'"><title>'+esc(r.n)+"</title></path>";
-  const b=regionBox(r.c);if(b&&Math.max(b[2],b[3])<6)h+='<circle class="gf-rs-ring" data-c="'+r.c+'" cx="'+(b[0]+b[2]/2).toFixed(2)+'" cy="'+(b[1]+b[3]/2).toFixed(2)+'" r="8"><title>'+esc(r.n)+"</title></circle>"});
- g.innerHTML=h;svg.appendChild(g);g.addEventListener("click",e=>{const t=e.target.closest("[data-c]");if(!t)return;e.stopPropagation();openFlagZoom(COUNTRY_BY_CODE[t.dataset.c])},true)}catch(e){console.error(e)}}
+  h+='<path class="gf-rs'+(own.length?"":" gf-rs-over")+'" data-c="'+r.c+'" d="'+d+'"><title>'+esc(r.n)+"</title></path>"});
+ g.innerHTML=h;svg.appendChild(g);
+ /* shapes drawn from coordinates follow the shown map (it can be spun sideways): shift each by how far its nearest country moved */
+ const hs=hold(),shift=ll=>{try{const R=refs();if(!R.length)return[0,0];const r=R.map(q=>[Math.hypot(((q.m[0]-ll[0]+540)%360)-180,q.m[1]-ll[1]),q]).sort((a,b)=>a[0]-b[0])[0][1];
+   const on=[...svg.querySelectorAll("path[id]")].filter(p=>p.id.toLowerCase()===r.c&&!p.closest("#gfRegStudy")&&!p.classList.contains("tiny-hit-overlay"));if(!on.length)return[0,0];let x=1e9,y=1e9;on.forEach(p=>{const bb=p.getBBox();if(bb.width){x=Math.min(x,bb.x);y=Math.min(y,bb.y)}});return[x-r.a[0],y-r.a[1]]}catch(e){return[0,0]}};
+ let rings="";g.querySelectorAll(".gf-rs").forEach(p=>{const c=p.dataset.c;let dx=0,dy=0;if(p.classList.contains("gf-rs-over")&&SHAPES[c]){[dx,dy]=shift(d3.geoCentroid(SHAPES[c]));if(dx||dy)p.setAttribute("transform","translate("+dx.toFixed(2)+","+dy.toFixed(2)+")")}
+  const b=p.getBBox();if(b.width+b.height>0&&Math.max(b.width,b.height)<6){const r=GF_REG.find(q=>q.c===c);rings+='<circle class="gf-rs-ring" data-c="'+c+'" cx="'+(b.x+dx+b.width/2).toFixed(2)+'" cy="'+(b.y+dy+b.height/2).toFixed(2)+'" r="8"><title>'+esc(r?r.n:c)+"</title></circle>"}});
+ g.insertAdjacentHTML("beforeend",rings);g.addEventListener("click",e=>{const t=e.target.closest("[data-c]");if(!t)return;e.stopPropagation();openFlagZoom(COUNTRY_BY_CODE[t.dataset.c])},true)}catch(e){console.error(e)}}
 const st4=document.createElement("style");st4.textContent=`@media (min-width:1000px){#regionRow:has([data-r="Special regions"]){gap:6px;max-width:none;width:max-content;max-width:calc(100vw - 40px);position:relative;left:50%;transform:translateX(-50%);flex-wrap:wrap;justify-content:center}#regionRow:has([data-r="Special regions"]) .chip{padding-left:13px;padding-right:13px}}
 #gfRegStudy .gf-rs{fill:#4a86cf !important;fill-opacity:.75 !important;stroke:#1f4f8f !important;stroke-width:1px !important;vector-effect:non-scaling-stroke;cursor:pointer}
 #gfRegStudy .gf-rs-over{fill-opacity:.45 !important;stroke-dasharray:4 3}#gfRegStudy .gf-rs:hover{fill:#e8701a !important}
