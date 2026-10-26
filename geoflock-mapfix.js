@@ -307,3 +307,8 @@ if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
   h=h.replace(/<div class="gf-easy">[\s\S]*?(?=<div class="round-actions">)/,"");if(box)h=h.replace('<div class="round-actions">',box+'<div class="round-actions">')}catch(e){console.error(e)}return h};
  document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#gfLadType");if(!t)return;quizMode="type";try{renderChrome()}catch(err){}try{if(round&&round.pp){round._typedFrom=round.pp.part+1;mixIn(round)}}catch(err){}t.classList.add("on");t.innerHTML="<b>⌨️ Typing is on ✓</b><small>From the next question, with three harder ones</small>"})}
 })();
+/* 16. Pin photos that were shared with a pin they did not fit: France's mainland pin gets the Eiffel Tower, and pins whose only
+       photo showed somewhere else (Khouribga had a tagine, Saint Martin had Saint Kitts) show the plain photo icon instead. */
+(function(){const NONE=new Set(["Khouribga: Morocco’s phosphate mines","Saint Martin: French north, Dutch south"]);
+ try{GF_SQ_FILE["Metropolitan France"]="Tour Eiffel Wikimedia Commons.jpg"}catch(e){}
+ if(typeof psSqPhoto==="function"){const _p=psSqPhoto;psSqPhoto=function(q){if(q&&NONE.has(String(q.label).replace(/​/g,"")))return null;return _p.apply(this,arguments)}}})();
