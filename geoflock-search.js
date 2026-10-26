@@ -4,7 +4,7 @@
    - peaks, volcanoes, waterfalls: the map icon and its name
    - mountain ranges, deserts, forests: flash, then keep that one landform drawn in its Landforms colour
    - landmarks (the Pyramids, the Eiffel Tower…): fly there and show the landmark's photo on the map, like the tours' photo
-     pins, with its map icon; cities, peaks, waterfalls and others with a photo in the library show theirs too
+     pins; cities, peaks, waterfalls and others with a photo in the library show theirs too
    - states and provinces (for the countries in States & provinces): flash the shape
    An × in the search box (or Esc) clears whatever the search added. Works on the flat map and the globe, in every
    Maps mode except Deep Time and Projections. */
@@ -42,10 +42,17 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  {const isl=new Set(IDX.filter(e=>e.cat==="islands").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="groups"&&isl.has(norm(e.n))))}
  /* a name that is both a lake and a sea (the Caspian, Aral and Dead Seas) is kept once, as a lake */
  {const lk=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="seas"&&lk.has(norm(e.n))))}
- IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")));if(!e.phf){const NP=window.GF_NAMEPH||{};for(const k of e.keys){if(NP[k]){e.phf=NP[k];break}}}});return IDX}
+ IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
 /* states and provinces: the name list is small and loaded once; each shape comes with its country's file */
 let PROV=null;function loadProv(){if(PROV)return;PROV=[];fetch("provinces/names.json").then(r=>r.ok?r.json():[]).then(d=>{PROV=d;if(IDX){IDX=null}}).catch(()=>{})}
 function provKind(cc){try{const L=(window.gfProvinces&&gfProvinces.LIST||[]).find(x=>x[0]===cc);const k=L?L[2]:"province";return(k.includes(" or ")?k.split(" or ")[0]:k)+" of "+((COUNTRY_BY_CODE||{})[cc]||{n:cc.toUpperCase()}).n}catch(e){return"province"}}
+/* a place's photo: its landmark photo; else a library photo whose file is named after it ("Amazon River - 2018.jpg",
+   "Lake Baikal…"); else a country-profile photo captioned with its name. Looked up when the place is shown. */
+let FN=null;function phFor(e){if(e.phf!==undefined)return e.phf;e.phf=null;if(e.cat==="seas"&&/Ocean$/.test(e.n))return null;try{if(typeof gfMergeExtra==="function")gfMergeExtra();
+ if(!FN)FN=PS_PHOTO_DATA.filter(x=>x&&x.d&&x.f).map(x=>[norm(x.f.replace(/\.[a-z]+$/i,"")),x.f]);const n=norm(e.n);
+ const tries={rivers:[n+" river","river "+n,"rio "+n,n],lakes:[n,"lake "+n],islands:[n+" island",n],groups:[n+" islands",n],peaks:[n,"mount "+n],volcanoes:[n,"mount "+n],deserts:[n+" desert",n],ranges:[n+" mountains",n],forests:[n],waterfalls:[n],seas:[n],peninsulas:[n+" peninsula",n],cities:[]}[e.cat]||[];
+ for(const t of tries){if(t.length<4)continue;const hit=FN.find(([k])=>k===t||k.startsWith(t+" ")||k.startsWith(t+",")||k.startsWith(t+"-"));if(hit){e.phf=hit[1];return e.phf}}
+ const NP=window.GF_NAMEPH||{};for(const k of e.keys){if(NP[k]){e.phf=NP[k];return e.phf}}}catch(err){}return e.phf}
 /* a photo from the site's library, by its Commons file name */
 function photoOf(f){if(!f)return null;try{if(typeof gfMergeExtra==="function")gfMergeExtra();const P=PS_PHOTO_DATA.find(x=>x&&x.f===f&&x.d);return P||null}catch(e){return null}}
 /* typo tolerance: "misisipi" finds Mississippi. Letters doubled by mistake or not are ignored, and a few slips are allowed
@@ -62,7 +69,7 @@ const active=()=>typeof appMode!=="undefined"&&appMode==="allmaps"&&!(typeof pro
 const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof amGlobe!=="undefined"&&!!amGlobe}catch(e){return false}};
 /* ---------- the current result ---------- */
 let CUR=null,t0=0,raf=0;
-function clear(){CUR=null;cancelAnimationFrame(raf);const l=document.querySelector("#allMapsWrap svg #gfSearchLayer");if(l)l.remove();document.querySelectorAll(".gfs-pin").forEach(x=>x.remove());try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
+function clear(){CUR=null;cancelAnimationFrame(raf);document.querySelectorAll(".gfs-leash").forEach(x=>x.remove());const l=document.querySelector("#allMapsWrap svg #gfSearchLayer");if(l)l.remove();document.querySelectorAll(".gfs-pin").forEach(x=>x.remove());try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
 function show(e){clear();if(!active())return;
  if(e.cat==="provinces"&&!e.shape){const c=e;if(window.gfProvinces)gfProvinces.load(c.cc).then(d=>{const it=d.items.find(x=>x.n===c.n);if(it){c.g=it.g;c.ll=it.c||c.ll;c.shape=1}show(c)}).catch(()=>{c.shape=1;show(c)});return}
  e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];CUR=e;t0=performance.now();fly(e);draw();xBtn();
@@ -75,6 +82,8 @@ function fly(e){const pt=e.g.type==="Point";
   const step=n=>{const k=Math.min(1,(n-st)/D),s=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,c=ip(s);G.rot=[-c[0],-c[1]];G.zoom=Math.exp(Math.log(z0)+(Math.log(zTo)-Math.log(z0))*s);G.render();if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step);return}
  /* the Pacific is cut by the map's edge: turn the flat map to put it in the middle */
  if(/Pacific/.test(e.n)&&e.cat==="seas"&&typeof spinTo==="function"){try{spinTo("A",160)}catch(err){}}
+ /* anything else cut by the map's edge (the Bering Sea, Fiji's seas): turn the map so it sits in the middle, then fly */
+ else if(!pt&&typeof spinTo==="function"&&!e._spun){try{const bw=d3.geoPath(GLOBE_ROBINSON).bounds(e.g);if(bw[1][0]-bw[0][0]>1500&&d3.geoArea(e.g)<1){e._spun=1;spinTo("A",-Math.round(e.ll[0]));setTimeout(()=>{fly(e);e._spun=0},80);return}}catch(err){}}
  const w=document.getElementById("allMapsWrap");if(!w||!w._panZoom)return;const P=GLOBE_ROBINSON,path=d3.geoPath(P);let x0,y0,x1,y1;
  if(pt){const p=P(e.ll);if(!p)return;const W=e.cat==="cities"?230:200;x0=p[0]-W/2;x1=p[0]+W/2;y0=p[1]-W/4;y1=p[1]+W/4}
  else{const bb=path.bounds(e.g);x0=bb[0][0];y0=bb[0][1];x1=bb[1][0];y1=bb[1][1];if(x1-x0>1500){const p=P(e.ll);x0=p[0]-300;x1=p[0]+300;y0=p[1]-150;y1=p[1]+150}
@@ -82,33 +91,43 @@ function fly(e){const pt=e.g.type==="Point";
  const box={x:x0,y:y0,w:x1-x0,h:y1-y0};try{typeof pzFly==="function"?pzFly(w,box):w._panZoom.setBox(box)}catch(err){w._panZoom.setBox(box)}}
 /* ---------- drawing ---------- */
 function draw(){if(!CUR)return;const e=CUR,mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha();
- if(mode==="icon"||mode==="city"||mode==="photo"||e.phf)pin(e);
+ if(mode==="icon"||mode==="city"||mode==="photo"||phFor(e))pin(e);
  if(onGlobe()){try{amGlobe.request()}catch(err){}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||mode==="photo"){return}
- let g=svg.querySelector("#gfSearchLayer");if(!g){g=document.createElementNS("http://www.w3.org/2000/svg","g");g.id="gfSearchLayer";g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
- const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.28,fo=(a<1?a*.8:keep);
+ let g=svg.querySelector("#gfSearchLayer");if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=document.createElementNS("http://www.w3.org/2000/svg","g");g.id="gfSearchLayer";g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
+ const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=(a<1?a*.8:keep);
  if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
- g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",e.parts?"0":(a<1?a:.95).toFixed(3))}
+ g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!CUR||!active())return;const e=CUR,mode=SHOW[e.cat];if(mode==="icon"||mode==="city")return pin(e);if(mode==="photo")return pin(e);const col=COL[e.cat],a=alpha(),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(e.g);if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
- else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();if(!e.parts){ctx.globalAlpha=a<1?a:.95;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
+ else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p)return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg)return null;const p=GLOBE_ROBINSON(ll);if(!p)return null;const m=svg.getScreenCTM();if(!m)return null;return[p[0]*m.a+m.e,p[1]*m.d+m.f]}
 function pin(e,labelOnly){const wrap=document.getElementById("allMapsWrap")&&document.getElementById("allMapsView")||document.body;const host=document.getElementById("allMapsView")||document.body;
- const mode=SHOW[e.cat];if(labelOnly&&mode!=="icon"&&mode!=="city"&&mode!=="photo"&&!e.phf)return;let el=document.querySelector(".gfs-pin");
- const P=photoOf(e.phf);
- if(!el&&P){/* the photo card, like the tours' photo pins: photo, the landmark's icon, its name; click for the big photo */
-  el=document.createElement("div");el.className="gfs-pin gfs-photo";const ic=e.icon&&typeof psIconSVG==="function"?'<span class="gfs-pic" style="--ipc:'+(COL[e.cat]||"#b5651d")+'">'+psIconSVG(e.icon)+"</span>":"";
+ const mode=SHOW[e.cat];if(labelOnly&&mode!=="icon"&&mode!=="city"&&mode!=="photo"&&!phFor(e))return;let el=document.querySelector(".gfs-pin");
+ const P=photoOf(phFor(e));
+ if(!el&&P){/* the photo card, like the tours' photo pins: photo and name; click for the big photo */
+  el=document.createElement("div");el.className="gfs-pin gfs-photo";const ic="";
   el.innerHTML='<button type="button" class="gfs-card" aria-label="Photo of '+esc(e.n)+'"><img src="'+esc(typeof gfSrc==="function"?gfSrc(P.d):P.d)+'" alt="">'+ic+'</button><span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span><span class="gfs-tip"></span>';
-  el.querySelector(".gfs-card").onclick=ev=>{ev.stopPropagation();try{psPhotoOpen(P,e.n)}catch(err){}};document.body.appendChild(el)}
+  /* drag the card anywhere (a line keeps it tied to the place); a click without dragging opens the big photo */
+  const card=el.querySelector(".gfs-card");card.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._off||[0,0],x0=ev.clientX,y0=ev.clientY;let moved=false;try{card.setPointerCapture(ev.pointerId)}catch(err){}
+   const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;e._off=[o[0]+dx,o[1]+dy];pin(e)};
+   const up=()=>{card.removeEventListener("pointermove",mv);card.removeEventListener("pointerup",up);card.removeEventListener("pointercancel",up);if(!moved){try{psPhotoOpen(P,e.n)}catch(err){}}};
+   card.addEventListener("pointermove",mv);card.addEventListener("pointerup",up);card.addEventListener("pointercancel",up)});
+  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el)}
  if(!el){el=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
   el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>')+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el)}
  const s=screenOf(e.ll);if(!s){el.style.display="none";return}const wr=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();
- if(s[0]<wr.left||s[0]>wr.right||s[1]<wr.top||s[1]>wr.bottom){el.style.display="none";return}el.style.display="";el.style.left=(s[0]+scrollX)+"px";el.style.top=(s[1]+scrollY)+"px"}
+ if(s[0]<wr.left||s[0]>wr.right||s[1]<wr.top||s[1]>wr.bottom){el.style.display="none";return}el.style.display="";const off=el.classList.contains("gfs-photo")&&e._off||[0,0];el.style.left=(s[0]+scrollX+off[0])+"px";el.style.top=(s[1]+scrollY+off[1])+"px";
+ /* the line from a moved card back to its place */
+ if(el.classList.contains("gfs-photo")){let ln=document.querySelector(".gfs-leash");const far=Math.hypot(off[0],off[1])>8;if(!far){if(ln)ln.remove();el.classList.remove("gfs-moved")}else{if(!ln){ln=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln)}el.classList.add("gfs-moved");
+  const x1=s[0]+scrollX,y1=s[1]+scrollY,x2=x1+off[0],y2=y1+off[1]-4,len=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
+/* the map adds its own layers after a search is drawn; keep the search highlight on top of them */
+setInterval(()=>{if(!CUR)return;const svg=document.querySelector("#allMapsWrap svg"),g=svg&&svg.querySelector("#gfSearchLayer");if(g&&g!==svg.lastElementChild)svg.appendChild(g)},400);
 /* keep things in place as the map moves */
-function follow(){if(!CUR)return;try{if(!active()){clear();return}const m=SHOW[CUR.cat];if(m==="icon"||m==="city"||m==="photo"||CUR.phf)pin(CUR);if(m!=="icon"&&m!=="city"&&m!=="photo"&&!onGlobe())draw()}catch(e){}}
+function follow(){if(!CUR)return;try{if(!active()){clear();return}const m=SHOW[CUR.cat];if(m==="icon"||m==="city"||m==="photo"||phFor(CUR))pin(CUR);if(m!=="icon"&&m!=="city"&&m!=="photo"&&!onGlobe())draw()}catch(e){}}
 new MutationObserver(follow).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:["viewBox"]});
 addEventListener("scroll",follow,{passive:true});addEventListener("resize",follow);
 if(typeof GlobeView!=="undefined"){const _r=GlobeView.prototype.render;GlobeView.prototype.render=function(){const cfg=this.cfg;if(typeof amGlobe!=="undefined"&&this===amGlobe&&cfg&&!cfg._gfs){cfg._gfs=1;const d0=cfg.drawExtra;cfg.drawExtra=(ctx,p,g)=>{if(d0)d0(ctx,p,g);globeDraw(ctx,p)}}return _r.apply(this,arguments)}}
@@ -136,7 +155,7 @@ if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=functio
 const css=document.createElement("style");css.textContent=`
 #gfSearchLayer path{ vector-effect:non-scaling-stroke; }
 #gfSearchLayer .gfs-fill{ fill:var(--gfs) !important; fill-opacity:var(--gfa,.3) !important; stroke:none !important; }
-#gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:2px !important; stroke-linejoin:round; }
+#gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3px !important; stroke-linejoin:round; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
 #gfSearchLayer .gfs-case{ fill:none !important; stroke:#fff !important; stroke-opacity:.9; stroke-width:6px !important; stroke-linecap:round; stroke-linejoin:round; }
 #gfSearchLayer .gfs-line{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3.4px !important; stroke-linecap:round; stroke-linejoin:round; }
 .gfs-pin{ position:absolute; z-index:40; pointer-events:none; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; animation:gfsIn .4s cubic-bezier(.2,1.4,.4,1); }
@@ -155,6 +174,10 @@ const css=document.createElement("style");css.textContent=`
 .gfs-pic{ position:absolute; right:-12px; top:-12px; width:30px; height:30px; padding:5px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.3); color:var(--ipc); }
 .gfs-pic svg{ width:100%; height:100%; display:block; } .gfs-pic svg *{ fill:var(--ipc); }
 .gfs-photo .gfs-lab{ margin-top:6px; }
+.gfs-card{ cursor:grab; touch-action:none; } .gfs-card:active{ cursor:grabbing; }
+.gfs-leash{ position:absolute; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
+.gfs-leash::before{ content:""; position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:#c0392b; border:2px solid #fff; }
+.gfs-photo.gfs-moved .gfs-tip{ visibility:hidden; }
 .gfs-tip{ width:0; height:0; border:7px solid transparent; border-top-color:rgba(16,28,48,.9); margin-top:-1px; }
 @media (max-width:600px){ .gfs-card{ width:72px; height:72px; } }
 #gfsX{ position:absolute; left:0; top:calc(100% + 6px); display:flex; gap:8px; align-items:center; border:0; border-radius:999px; padding:5px 6px 5px 12px; background:rgba(16,28,48,.88); color:#fff; font:600 12.5px/1 system-ui,sans-serif; cursor:pointer; z-index:30; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.25); }
