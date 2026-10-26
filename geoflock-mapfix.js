@@ -193,7 +193,7 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  body.dark-theme .gf-sub-menu{ background:#1d2638; } body.dark-theme .gf-sub-menu button{ color:#e6edf7; } body.dark-theme .gf-sub-menu button:hover{ background:#2a3550; }
  .all-maps-label-controls:has(> #allMapsSubModes.gf-sub-inrow){ position:relative; }
  #allMapsSubModes.gf-sub-inrow{ position:absolute !important; left:0; right:0; top:calc(100% - 6px); display:flex !important; flex-direction:row; flex-wrap:nowrap; justify-content:center; align-items:center; gap:8px; margin:0 !important; padding:0; width:auto; max-width:none; background:none; box-shadow:none; transform:none !important; z-index:4; }
- @media (min-width:761px){ #amGlobeSubs{ display:none !important; } }
+ @media (min-width:761px){ }
  #allMapsSubModes.gf-sub-inrow .chip{ background:rgba(255,255,255,.7) !important; box-shadow:0 1px 4px rgba(20,40,70,.1) !important; }
  #allMapsSubModes.gf-sub-inrow .chip.active{ background:#3f9c96 !important; color:#fff !important; }
  #allMapsSubModes.gf-sub-inrow .chip{ font-size:11.5px; padding:4px 11px; min-height:0; line-height:1.2; border:none; box-shadow:none; white-space:nowrap; margin:0; }
@@ -393,3 +393,12 @@ body.dark-theme .gf-fold-pop, body.sky-night .gf-fold-pop{ background:#1f2b3a; }
  function level(){const v=document.getElementById("allMapsView");if(!v||!v.classList.contains("globe-on"))return;const c=v.querySelector(".all-maps-controls"),g=v.querySelector(".globe-wrap-rel");if(!c||!g)return;
   const cur=parseFloat(getComputedStyle(v).getPropertyValue("--gf-gtop"))||0,want=c.getBoundingClientRect().bottom+26,now=g.getBoundingClientRect().top,d=Math.round(cur+want-now);if(Math.abs(d-cur)>1)v.style.setProperty("--gf-gtop",d+"px")}
  setInterval(()=>{try{fold();level()}catch(e){}},400)})();
+/* 22. Globe mode: the map's measure tabs (Nominal GDP / GDP per capita, Children per woman…) are a vertical list on the
+   left, under the guided-tour button; the row version above the map is hidden there */
+(function(){const st=document.createElement("style");st.textContent=`
+#allMapsView.globe-on #allMapsSubModes{ display:none !important; }
+#allMapsView.globe-on #amGlobeSubs.globe-subs{ position:absolute !important; left:10px; top:62px; z-index:5; display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin:0 !important; justify-content:flex-start; }
+#allMapsView.globe-on #amGlobeSubs.globe-subs:empty{ display:none !important; }
+#allMapsView.globe-on #amGlobeSubs .chip{ white-space:nowrap; background:rgba(255,255,255,.88); box-shadow:0 1px 4px rgba(20,40,70,.12); }
+#allMapsView.globe-on #amGlobeSubs .chip.active{ background:var(--accent,#2f8a7a); color:#fff; }
+@media (max-width:760px){ #allMapsView.globe-on #amGlobeSubs.globe-subs{ position:static !important; flex-direction:row; flex-wrap:wrap; justify-content:center; } }`;document.head.appendChild(st)})();
