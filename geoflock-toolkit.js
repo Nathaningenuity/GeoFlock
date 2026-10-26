@@ -157,12 +157,9 @@ function renderGlobe(ctx,p){const path=d3.geoPath(p,ctx);ctx.save();
  ctx.restore()}
 if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){try{if(typeof amGlobe!=="undefined"&&this===amGlobe)renderGlobe(ctx,p)}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
 let rq=0;function render(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{if(onGlobe())redrawGlobe();else renderFlat()}catch(e){console.error(e)}placeObjects();ghostButtons()})}
-/* each lifted country gets a little × to put it back, and there is one button to put them all back */
+/* one button puts all the lifted countries back */
 function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forEach(x=>{if(!h||x.parentNode!==h||+x.dataset.gi>=S.ghosts.length)x.remove()});let all=h&&h.querySelector(":scope > .gfk-gall");
- if(!h||!S.ghosts.length){if(all)all.remove();return}const hr=h.getBoundingClientRect();
- S.ghosts.forEach((G,i)=>{let b=h.querySelector(':scope > .gfk-gx[data-gi="'+i+'"]');if(!b){b=document.createElement("button");b.type="button";b.className="gfk-gx";b.dataset.gi=i;b.title="Put it back";b.textContent="×";
-   b.addEventListener("pointerdown",e=>e.stopPropagation(),true);b.onclick=e=>{e.stopPropagation();const G=S.ghosts[+b.dataset.gi];if(G)putBack(G,false);document.querySelectorAll(".gfk-gx").forEach(x=>x.remove());render()};h.appendChild(b)}
-  const q=toScreen(G.at);if(!q){b.style.display="none";return}b.style.display="";b.style.left=q[0]-hr.left+"px";b.style.top=q[1]-hr.top-22+"px";b.style.borderColor=G.col;b.style.color=G.col});
+ if(!h||!S.ghosts.length){if(all)all.remove();return}
  if(!all){all=document.createElement("button");all.type="button";all.className="gfk-gall";all.textContent="Put all countries back";all.addEventListener("pointerdown",e=>e.stopPropagation(),true);all.onclick=e=>{e.stopPropagation();S.ghosts.length=0;render()};h.appendChild(all)}}
 
 /* ================= the tray ================= */
@@ -207,6 +204,11 @@ function wireObj(o,tool){o.el.addEventListener("pointerdown",e=>{if(e.button)ret
 function updCompass(o){const h=host();if(!h)return;const hr=h.getBoundingClientRect(),cx=hr.left+o.x,cy=hr.top+o.y,ll=toLL(cx,cy),pos=o.el.querySelector(".gfk-cpos");let deg=0;
  if(ll){const a=toScreen(ll),b=toScreen([ll[0],Math.min(89.9,ll[1]+.6)]);if(a&&b)deg=Math.atan2(b[0]-a[0],-(b[1]-a[1]))*180/Math.PI;
   pos.textContent=Math.abs(ll[1]).toFixed(1)+"°"+(ll[1]>=0?"N":"S")+" "+Math.abs(ll[0]).toFixed(1)+"°"+(ll[0]>=0?"E":"W")}else pos.textContent="off the map";
+ /* a surprise: a real compass goes wild near the magnetic poles and is pulled off course over the Kursk anomaly */
+ let odd=null;if(ll){const km=(p,q)=>{const r=Math.PI/180,x=Math.sin((q[1]-p[1])*r/2)**2+Math.cos(p[1]*r)*Math.cos(q[1]*r)*Math.sin((q[0]-p[0])*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
+  const M=[[[139.3,85.8],700,"spin","Magnetic north pole! A real compass spins here, since magnetic north is right under you"],[[135.9,-63.9],700,"spin","Magnetic south pole! A real compass spins here"],[[36.5,51.5],250,"pull","Kursk Magnetic Anomaly: huge iron ore beds pull a real compass off north"]];
+  for(const [at,r,k,t] of M)if(km(ll,at)<r){odd=[k,t];break}}
+ o.el.classList.toggle("gfk-odd",!!odd);if(odd){pos.textContent=odd[1];if(odd[0]==="spin")deg=(o.deg||0)+47+Math.random()*30;else deg+=55+Math.sin(performance.now()/300)*25}
  const n=o.el.querySelector(".gfk-needle");if(n){o.deg=o.deg==null?deg:o.deg+((((deg-o.deg)%360)+540)%360-180)*.35;n.setAttribute("transform","rotate("+o.deg.toFixed(1)+" 50 50)")}}
 setInterval(()=>{const o=S.place.compass;if(o&&o.el.isConnected)updCompass(o)},60);
 
@@ -568,6 +570,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-mine label{ display:flex; align-items:center; gap:7px; font:600 12px system-ui; cursor:pointer; min-width:0; } .gfk-mine span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .gfk-mine input{ width:30px; height:24px; padding:0; border:1px solid rgba(0,0,0,.15); border-radius:6px; background:none; cursor:pointer; flex:none; }
 .gfk-gx{ position:absolute; z-index:7; width:22px; height:22px; margin-left:-11px; border-radius:50%; border:2px solid; background:#fff; font:800 15px/1 system-ui; padding:0; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.25); transform:translateX(38px); }
+.gfk-o-compass.gfk-odd .gfk-cpos{ white-space:normal; width:170px; line-height:1.3; text-align:center; background:#7a2a1a; color:#fff; }
 .gfk-gall{ position:absolute; z-index:7; left:50%; top:14px; transform:translateX(-50%); border:0; border-radius:999px; padding:7px 14px; background:rgba(255,255,255,.95); color:#22324a; font:700 12.5px system-ui; cursor:pointer; box-shadow:0 2px 10px rgba(20,40,70,.18); }
 .gfk-toast{ position:absolute; left:50%; top:52px; transform:translate(-50%,-8px); z-index:9; background:rgba(20,30,46,.88); color:#fff; padding:7px 14px; border-radius:999px; font:600 13px system-ui; opacity:0; transition:.2s; pointer-events:none; white-space:nowrap; }
 .gfk-toast.on{ opacity:1; transform:translate(-50%,0); }
