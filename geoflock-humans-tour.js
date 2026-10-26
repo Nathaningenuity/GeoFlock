@@ -163,6 +163,10 @@ const PIN={"Howler monkeys: descendants of the rafters":"Red howler monkey.jpg",
 if(typeof psPhotoFor==="function"){const _pf=psPhotoFor;psPhotoFor=function(S){try{if(typeof ps!=="undefined"&&ps&&ps.tour===ID&&S&&CARD[S.title]){if(typeof gfMergeExtra==="function")gfMergeExtra();const p=PS_PHOTO_DATA.find(x=>x&&x.f===CARD[S.title]&&x.d);if(p)return p}}catch(e){}return _pf.apply(this,arguments)}}
 try{Object.assign(GF_SQ_FILE,PIN)}catch(e){}
 /* photo pins still waiting for a photo show as ordinary labelled points */
+/* photo pins from geoflock-tour-photos.js: up to 7 a stop (10 on the first), never the same photo twice in a stop */
+{const TP=window.GF_TOUR_PH;if(TP){try{const lib=TP.photos||[];if(window._gfExtraDone&&typeof PS_PHOTO_DATA!=="undefined"){const have=new Set(PS_PHOTO_DATA.map(p=>p.f));lib.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}else if(typeof GF_EXTRA_PHOTOS!=="undefined")lib.forEach(p=>GF_EXTRA_PHOTOS.push(p))}catch(e){}
+ const T=(TP.pins||{})[ID]||{},first=PS_TOURS[ID].steps[0];PS_TOURS[ID].steps.forEach(St=>{const L=T[St.title];if(!L)return;if(!CARD[St.title]&&L[0])CARD[St.title]=L[0][3];St.phPins=(St.phPins||[]).filter(q=>PIN[q.label]);const ex=new Set(St.phPins.map(q=>PIN[q.label]).filter(Boolean)),labs=new Set(St.phPins.map(q=>q.label)),cap=St===first?10:7;
+  L.forEach(([lo,la,lab,f])=>{if(St.phPins.length>=cap||ex.has(f)||labs.has(lab))return;PIN[lab]=f;ex.add(f);labs.add(lab);St.phPins.push(ph([lo,la],lab))})});try{Object.assign(GF_SQ_FILE,PIN)}catch(e){}}}
 PS_TOURS[ID].steps.forEach(St=>{if(St.phPins)St.phPins=St.phPins.filter(q=>PIN[q.label])});
 const KEEP=new Map(PS_TOURS[ID].steps.map(St=>[St,(St.phPins||[]).map(q=>Object.assign({},q))]));
 function prep(St){try{const K=St&&KEEP.get(St);if(!K||!K.length)return;if(typeof gfMergeExtra==="function")gfMergeExtra();window.PS_SQ_IMG=window.PS_SQ_IMG||{};
