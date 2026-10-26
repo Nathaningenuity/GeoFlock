@@ -353,3 +353,10 @@ if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
   new MutationObserver(ms=>{if(ms.every(m=>{const n=m.target;return n.closest&&n.closest(".spin-preview")||[...m.addedNodes,...m.removedNodes].every(x=>x.classList&&x.classList.contains("spin-preview"))||m.attributeName==="class"||(m.type==="attributes"&&n.closest&&n.closest('[style*="display:none"],[style*="display: none"]'))}))return;svg._gfMut=(svg._gfMut||0)+1;clearTimeout(t);t=setTimeout(warm,1200)}).observe(svg,{subtree:true,childList:true,attributes:true,characterData:false});
   t=setTimeout(warm,1500)};
  setInterval(()=>document.querySelectorAll("svg#worldMapSvg, svg#worldMapSvgAllMaps").forEach(watch),1000)})();
+/* 19. The Caspian Sea's lake shape stays invisible on maps whose picture already shows the water (relief, satellite,
+   elevation), and appears while the pointer is over it. */
+(function(){const st=document.createElement("style");st.textContent='#allMapsWrap.gf-own-water path.map-lake[data-name="Caspian Sea"]{fill-opacity:0 !important;stroke-opacity:0 !important;transition:fill-opacity .2s,stroke-opacity .2s}#allMapsWrap.gf-own-water path.map-lake[data-name="Caspian Sea"].gf-show{fill-opacity:1 !important;stroke-opacity:1 !important}';document.head.appendChild(st);
+ const sync=()=>{const w=document.getElementById("allMapsWrap");if(!w)return;let m="";try{m=allMapsColorMode}catch(e){}w.classList.toggle("gf-own-water",/^(relief|satellite|elevation)$/.test(m))};setInterval(sync,500);sync();
+ const lake=t=>{const w=t.closest&&t.closest("#allMapsWrap");return w&&w.querySelector('path.map-lake[data-name="Caspian Sea"]')};
+ document.addEventListener("pointerover",e=>{const t=e.target;if(t&&t.getAttribute&&t.getAttribute("data-name")==="Caspian Sea"){const l=lake(t);if(l)l.classList.add("gf-show")}},true);
+ document.addEventListener("pointerout",e=>{const t=e.target;if(t&&t.getAttribute&&t.getAttribute("data-name")==="Caspian Sea"){const l=lake(t);if(l)l.classList.remove("gf-show")}},true)})();
