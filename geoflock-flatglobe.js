@@ -23,8 +23,8 @@ P._flatBase=function(){const{w}=this.size(),S=w/(2*Math.PI)*this.zoom;/* d3's Ro
 {const _proj=P.projection;P.projection=function(){if(!this._flat)return _proj.apply(this,arguments);
  const{w,h}=this.size(),b=this._flatBase(),c=[-this.rot[0],-this.rot[1]];let q=b(c)||[0,0];
  /* the view never leaves the map: the centre is kept inside */
- const hx=Math.max(0,w/2*this.zoom-w/2),hy=Math.max(0,h/2*this.zoom-h/2);q=[Math.max(-hx,Math.min(hx,q[0])),Math.max(-hy,Math.min(hy,q[1]))];
- const ll=b.invert(q);if(ll&&isFinite(ll[0]))this.rot=[-ll[0],-ll[1]];
+ const hx=Math.max(0,w/2*this.zoom-w/2),hy=Math.max(0,h/2*this.zoom-h/2);if(!this._noClamp)q=[Math.max(-hx,Math.min(hx,q[0])),Math.max(-hy,Math.min(hy,q[1]))];
+ if(!this._noClamp){const ll=b.invert(q);if(ll&&isFinite(ll[0]))this.rot=[-ll[0],-ll[1]]}
  const p=b.translate([w/2-q[0],h/2-q[1]]);const inv=p.invert.bind(p);p.invert=pt=>{const v=inv(pt);return v&&isFinite(v[0])&&Math.abs(v[0])<=180.0001&&Math.abs(v[1])<=90?v:null};return p}}
 {const _roll=P.roll;P.roll=function(){return this._flat?0:_roll.apply(this,arguments)}}
 {const _va=P.visibleAngle;P.visibleAngle=function(){return this._flat?Math.PI:_va.apply(this,arguments)}}
@@ -43,8 +43,18 @@ function pictures(){const now=performance.now();if(PIC&&now-picT<400)return PIC;
   if(!ok||op<=.01)return;const h=el.getAttribute("href")||el.getAttribute("xlink:href");if(!h)return;
   const n=k=>parseFloat(el.getAttribute(k))||0;let tf=null;try{const m=el.transform&&el.transform.baseVal&&el.transform.baseVal.consolidate();if(m)tf=m.matrix}catch(er){}
   PIC.push({h,x:n("x"),y:n("y"),w:n("width"),hh:n("height"),op,blend,tf,pr:el.getAttribute("preserveAspectRatio")})});return PIC}
-P._flatPictures=function(ctx,dpr){const{w,h}=this.size(),p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,list=pictures();let drew=0;
- ctx.save();ctx.setTransform(dpr*k,0,0,dpr*k,dpr*(t[0]-1e3*k),dpr*(t[1]-500.5*k));ctx.imageSmoothingQuality="high";
+/* the flat map's pictures are merged once into a single 4000-px picture (blend modes and all), then drawn with one call */
+let COMP=null;
+function composite(list){const key=list.map(o=>o.h.slice(-40)+o.op+o.blend+(o.tf?[o.tf.a,o.tf.e,o.tf.f].join():"")+o.x+o.y+o.w).join("|");
+ if(COMP&&COMP.key===key)return COMP;if(!list.every(o=>{const im=img(o.h);return im.complete&&im.naturalWidth}))return COMP&&COMP.part?null:null;
+ const F=2,cv=COMP&&COMP.cv||document.createElement("canvas");cv.width=2000*F;cv.height=Math.round(1001*F);const x=cv.getContext("2d");x.setTransform(F,0,0,F,0,0);x.imageSmoothingQuality="high";
+ list.forEach(o=>{const im=img(o.h);x.globalAlpha=o.op;x.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;x.save();if(o.tf)x.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);x.drawImage(im,o.x,o.y,o.w||im.naturalWidth,o.hh||im.naturalHeight);x.restore()});
+ x.globalAlpha=1;x.globalCompositeOperation="source-over";COMP={cv,key,F};return COMP}
+P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,list=pictures();if(!list.length)return 0;
+ const C=composite(list);ctx.save();
+ if(C){ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(t[0]-1e3*k),dpr*(t[1]-500.5*k));ctx.imageSmoothingQuality=k>3?"high":"medium";ctx.drawImage(C.cv,0,0);ctx.restore();return 1}
+ /* pictures still loading: draw them one by one */
+ ctx.setTransform(dpr*k,0,0,dpr*k,dpr*(t[0]-1e3*k),dpr*(t[1]-500.5*k));let drew=0;
  list.forEach(o=>{const im=img(o.h);if(!im.complete||!im.naturalWidth)return;ctx.globalAlpha=o.op;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;
   ctx.save();if(o.tf)ctx.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);ctx.drawImage(im,o.x,o.y,o.w||im.naturalWidth,o.hh||im.naturalHeight);ctx.restore();drew++});
  ctx.restore();return drew};
@@ -124,7 +134,7 @@ const st=document.createElement("style");st.textContent=`
 setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);const want=flatWanted();if(want!==!!amGlobe._flat)amGlobe.request()}else if(flatWanted()&&typeof amGlobeSync==="function")amGlobeSync()}catch(e){}},400);
 })();
 /* labels on the flat map read at the size the old flat map used */
-(function(){const P=GlobeView.prototype,_ls=P.ls;if(_ls)P.ls=function(){const v=_ls.apply(this,arguments);return this._flat?v*1.35:v}})();
+(function(){const P=GlobeView.prototype,_ls=P.ls;if(_ls)P.ls=function(){const v=_ls.apply(this,arguments);return this._flat?v*1.12:v}})();
 /* labels: territories (Western Sahara, Gibraltar, Greenland…) are named only on hover, not with a printed label; on the
    flat map the label rules check room against the whole rectangle (not the ball's outline) */
 (function(){const P=GlobeView.prototype,_l=P._labels;if(!_l)return;
@@ -161,3 +171,26 @@ setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);con
   const s=(this._flat?this.projection().scale():this.size().r*this.zoom),deg=10*180/(Math.PI*Math.max(1,s)),rr=deg*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
   for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=deg&&d<bd){bd=d;best=q}}
   if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}return{code:best.code,f:best.f,ll,boosted:true}}catch(e){return h}}})();
+/* While the flat map is moving (dragging, wheel or pinch zoom, + and −), the last finished picture is slid and scaled like
+   an image over the map's own background pictures, and the full map (every border, label and icon) is drawn once it
+   stops. The finished picture is simply a copy of the screen, so making it costs nothing. */
+(function(){const P=GlobeView.prototype,_r=P._render;
+ P._render=function(){const g=this;
+  if(g._flat&&g._fastMove&&g._snap&&g._snap.ok){const sn=g._snap,{w,h}=g.size(),dpr=Math.min(2,window.devicePixelRatio||1),c=g.canvas,ctx=g.ctx;
+   if(c.width===Math.round(w*dpr)&&c.height===Math.round(h*dpr)&&sn.dpr===dpr){const p=g.projection(),S=p.scale(),t=p.translate(),k=S/sn.S;
+    ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";ctx.fillStyle=g.cfg.ocean?g.cfg.ocean():"#5797cf";ctx.fillRect(0,0,c.width,c.height);
+    try{g._flatR={w,h,r:g.size().r,s:0,p,skip:false};g._flatPictures(ctx,dpr)}catch(e){}
+    ctx.setTransform(dpr*k,0,0,dpr*k,dpr*(t[0]-k*sn.t[0]),dpr*(t[1]-k*sn.t[1]));ctx.imageSmoothingQuality="low";ctx.drawImage(sn.cv,0,0,w,h);ctx.setTransform(1,0,0,1,0,0);return}}
+  const r=_r.apply(this,arguments);
+  if(g._flat){try{const sn=g._snap||(g._snap={cv:document.createElement("canvas")}),c=g.canvas;if(sn.cv.width!==c.width||sn.cv.height!==c.height){sn.cv.width=c.width;sn.cv.height=c.height}
+   const x=sn.cv.getContext("2d");x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.drawImage(c,0,0);const p=g.projection();sn.S=p.scale();sn.t=p.translate().slice();sn.dpr=Math.min(2,window.devicePixelRatio||1);sn.ok=true}catch(e){}}
+  return r};
+ const _req=P.request;P.request=function(){if(this._flat&&this._gfMoving){this._fastMove=!!(this._snap&&this._snap.ok);clearTimeout(this._fmT);this._fmT=setTimeout(()=>{this._fastMove=false;this._gfMoving=false;this.render()},160)}return _req.apply(this,arguments)};
+ const _sz=P.setZoom;P.setZoom=function(){if(this._flat)this._gfMoving=true;return _sz.apply(this,arguments)};
+ document.addEventListener("pointermove",e=>{try{const g=amGlobe;if(g&&g._flat&&e.buttons&&g.host.contains(e.target))g._gfMoving=true}catch(er){}},true);
+})();
+/* borders and labels as fine as the old flat map: thinner lines, slightly smaller text */
+(function(){const P=GlobeView.prototype,_ls=P.ls;
+ {const _r=P._render;P._render=function(){const ctx=this.ctx;if(this._flat&&ctx&&!ctx._gfThin){ctx._gfThin=1;const g=this,ST=ctx.stroke;ctx.stroke=function(){if(g._flat&&!g._fastMove&&/^rgba\((25, 25, 25|20, 30, 20)/.test(String(this.strokeStyle).replace(/rgba\((\d+),(\d+),(\d+)/,"rgba($1, $2, $3"))){const lw=this.lineWidth;this.lineWidth=lw*.55;const r=ST.apply(this,arguments);this.lineWidth=lw;return r}return ST.apply(this,arguments)}}return _r.apply(this,arguments)}}
+})();
+

@@ -205,7 +205,7 @@ const st=document.createElement("style");st.textContent=`
 #allMapsView #amCloudsSw{ display:none !important; }
 /* switch menus above the floating map key; switch names stay readable over the globe's dark space background */
 body.gf-menu-open .flk{ opacity:0 !important; pointer-events:none !important; transition:opacity .15s; }
-#allMapsView.globe-on .all-maps-label-controls{ background:rgba(255,255,255,.55); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); border-radius:16px; }
+
 #allMapsView.globe-on .all-maps-label-controls .switch-label{ text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px rgba(255,255,255,.9); }
 .globe-btns [data-g="gfclouds"]{ display:inline-flex; align-items:center; justify-content:center; background:#fff4d6 !important; color:#b07a10 !important; border:1.5px solid #f0c860 !important; }
 .globe-btns [data-g="gfclouds"].on{ background:#f2b632 !important; color:#fff !important; border-color:#f2b632 !important; }
@@ -226,7 +226,7 @@ function cloudBtn(){const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g.host
  if(!b){b=document.createElement("button");b.type="button";b.dataset.g="gfclouds";b.title="Clouds: NASA’s real cloud cover";b.setAttribute("aria-label","Show or hide clouds");
   b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 18h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.6 9.1 4.5 4.5 0 0 0 7 18z"/></svg>';
   b.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();const v=!cloudsOn();const i=document.getElementById("amCloudsToggle");if(i){i.checked=v;i.dispatchEvent(new Event("change",{bubbles:true}))}else{globePrefs().clouds=v;saveStats();if(v)cloudsLoad();try{cloudFlatSync()}catch(er){}try{g.request()}catch(er){}}PIC_RESET();sync2()},true);bar.appendChild(b)}
- const sat=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite";b.style.display=sat?"":"none";b.classList.toggle("on",!!(typeof cloudsOn==="function"&&cloudsOn()))}
+ const sat=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite";b.style.display=sat?"":"none";if(!g._gfCloudCfg){g._gfCloudCfg=1;g.cfg.clouds=()=>typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite"&&cloudsOn()?1:0}if(sat&&cloudsOn()&&!g._gfCloudLoad){g._gfCloudLoad=1;try{const pr=cloudsLoad();if(pr&&pr.then)pr.then(()=>{try{g.request()}catch(e){}})}catch(e){}}b.classList.toggle("on",!!(typeof cloudsOn==="function"&&cloudsOn()))}
 function PIC_RESET(){setTimeout(()=>{try{amGlobe.request()}catch(e){}},120)}
 function sync2(){try{cloudBtn()}catch(e){}}
 setInterval(()=>{try{document.body.classList.toggle("gf-menu-open",[...document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop")].some(p=>!p.hidden&&p.offsetParent));document.querySelectorAll("#allMapsView .all-maps-label-controls .gf-ly-fold, #allMapsView .all-maps-label-controls .gf-fold, #gfEimCtl").forEach(hoverMenu);sync2()}catch(e){}},250);

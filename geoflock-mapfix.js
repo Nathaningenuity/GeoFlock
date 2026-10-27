@@ -515,3 +515,10 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
   /* the atlas map is the same projection at another scale: map one onto the other using Lagoa Mirim's first point */
   if(m&&a){const p0=a[1].match(/^M([\d.-]+),([\d.-]+)/),q0=m[1].match(/^M([\d.-]+),([\d.-]+)/),k=1.0125;if(p0&&q0){const sx=k,ox=+q0[1]-sx*+p0[1],oy=+q0[2]-sx*+p0[2];
    ATLAS_LAKES_MINOR.push(["Lagoa dos Patos",d.replace(/([\d.-]+),([\d.-]+)/g,(_,x,y)=>(sx*+x+ox).toFixed(2)+","+(sx*+y+oy).toFixed(2))])}}}}catch(e){console.error(e)}})();
+/* 33. Globe relief: the picture is built from a western and an eastern half; a small brightness step where they meet (0°
+   longitude, e.g. through eastern Spain and Ghana) is smoothed away over a few dozen pixels. */
+(function(){if(typeof gfGlobeBuild!=="function")return;const _b=gfGlobeBuild;
+ gfGlobeBuild=function(){const c=_b.apply(this,arguments);try{if(c&&c.getContext&&!c._gfMid){c._gfMid=1;const W=c.width,H=c.height,m=Math.round(W/2),S=Math.max(8,Math.round(W/700)),k=3,x0=m-S-k,w=2*(S+k),g=c.getContext("2d"),D=g.getImageData(x0,0,w,H),d=D.data;
+   for(let y=0;y<H;y++){const row=y*w*4;for(let ch=0;ch<3;ch++){let L=0,R=0;for(let i=0;i<k;i++){L+=d[row+(S-1-i+k)*4+ch];R+=d[row+(S+i+k)*4+ch]}const delta=(R-L)/k;
+     for(let x=0;x<w;x++){const dist=x-(S+k-.5),t=Math.max(0,1-Math.abs(dist)/(S+k));if(!t)continue;const o=row+x*4+ch;d[o]=Math.max(0,Math.min(255,d[o]+(dist<0?1:-1)*delta*.5*t))}}}
+   g.putImageData(D,x0,0)}}catch(e){console.error(e)}return c}})();
