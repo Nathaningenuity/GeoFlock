@@ -37,12 +37,21 @@ function addButton(){const row=document.getElementById("allMapsToggleRow");if(!r
 /* the globe shows the relief picture under the drawn tabs */
 function patchGlobe(){try{if(typeof amGlobe==="undefined"||!amGlobe||amGlobe._gfNat)return;for(const k of Object.keys(amGlobe)){const o=amGlobe[k];if(o&&typeof o==="object"&&typeof o.raster==="function"){const _r=o.raster;o.raster=function(){return vecOn()?"relief":_r.apply(this,arguments)};const _f=o.fill;if(_f)o.fill=function(){return vecOn()?null:_f.apply(this,arguments)};amGlobe._gfNat=1;break}}}catch(e){}}
 
+/* ---------- all 846 ecoregions (RESOLVE 2017), loaded when the Ecoregions tab is first opened ---------- */
+let ECO=null,ECOI=null,ecoLoading=false;
+function ecoLoad(){if(ECO||ecoLoading)return;ecoLoading=true;Promise.all([fetch("nature/ecoregions.topo.json").then(r=>r.json()),fetch("nature/eco_info.json").then(r=>r.json())]).then(([t,info])=>{
+  ECO=topojson.feature(t,t.objects.eco).features;ECOI=info;const notable={};(N.eco||[]).forEach(e=>notable[e.id]=e);
+  ECO.forEach(f=>{const p=f.properties,i=ECOI[p.i]||{},n=notable[p.i];f._d=Object.assign({id:p.i,n:p.n,b:p.b,r:p.r,nnh:p.nnh,km2:p.km2},i,n?{blurb:n.blurb,animals:n.animals,plants:n.plants,photo:n.photo||i.photo}:{});
+   /* neighbours in the same biome get slightly different shades so their borders read */
+   const h=((p.i*2654435761)>>>0)%1000/1000;f._col=shade(colB(p.b),(h-.5)*.36)});
+  ecoLoading=false;drawFlat(true);globe();try{applyAllMapsColorMode(wrapEl())}catch(e){}}).catch(e=>{ecoLoading=false;console.error(e)})}
+function shade(hex,k){const c=hex.replace("#","").match(/../g).map(x=>parseInt(x,16));return"#"+c.map(v=>Math.round(k>0?v+(255-v)*k:v*(1+k)).toString(16).padStart(2,"0")).join("")}
 /* ---------- what is drawn ---------- */
 let focus=null;/* a biome or footprint class picked in the legend */
 function feats(){const t=allMapsSubMode.nature;
  if(t==="biomes")return(N.biomes.features||[]).map(f=>({f,col:colB(f.properties.b),op:focus==null||focus===f.properties.b?.72:.12,kind:"biome",id:f.properties.b}));
- if(t==="eco"){const base=(N.biomes.features||[]).map(f=>({f,col:colB(f.properties.b),op:.16,kind:"biome",id:f.properties.b,faint:1}));
-  return base.concat((N.eco||[]).map(e=>({f:{type:"Feature",geometry:e.geom,properties:{}},col:colB(e.b),op:.85,kind:"eco",id:e.id,line:1})))}
+ if(t==="eco"){if(!ECO){ecoLoad();return(N.biomes.features||[]).map(f=>({f,col:colB(f.properties.b),op:.3,kind:"biome",id:f.properties.b,faint:1}))}
+  return ECO.map(f=>({f,col:f._col,op:.78,kind:"eco",id:f.properties.i,line:1,thin:1}))}
  if(t==="realms")return(N.realms.features||[]).map(f=>({f,col:REALM_COL[f.properties.r]||"#7fb3d5",op:focus==null||focus===f.properties.r?.62:.12,kind:"realm",id:f.properties.r}));
  if(t==="footprint")return(N.footprint.features||[]).map(f=>({f,col:(FOOT.find(c=>c[0]===f.properties.k)||[0,0,"#999"])[2],op:focus==null||focus===f.properties.k?.86:.1,kind:"foot",id:f.properties.k}));
  return[]}
@@ -55,18 +64,18 @@ function drawFlat(force){const w=wrapEl(),svg=w&&w.querySelector(":scope > svg")
  /* just above the relief picture, under borders and labels */
  const relief=svg.querySelector("#allMapsReliefLayer");if(relief){if(relief.nextSibling!==g)relief.after(g)}else if(g.parentNode!==svg)svg.insertBefore(g,svg.firstChild);
  const path=d3.geoPath(P());let h="";
- feats().forEach(x=>{const d=path(x.f);if(!d)return;h+='<path d="'+d+'" style="fill:'+(x.line?x.col:x.col)+';fill-opacity:'+x.op+(x.line?";stroke:#fff;stroke-width:1.6;stroke-opacity:1;paint-order:stroke":";stroke:none")+'"/>'});
+ feats().forEach(x=>{const d=path(x.f);if(!d)return;h+='<path d="'+d+'" style="fill:'+x.col+';fill-opacity:'+x.op+(x.thin?";stroke:#fff;stroke-width:.35;stroke-opacity:.8":x.line?";stroke:#fff;stroke-width:1.6;stroke-opacity:1;paint-order:stroke":";stroke:none")+'"/>'});
  g.innerHTML=h}
 function globe(){try{if(typeof amGlobe!=="undefined"&&amGlobe)amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}}
 if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){
  try{if(vecOn()&&typeof amGlobe!=="undefined"&&this===amGlobe){const path=d3.geoPath(p,ctx);ctx.save();
-  feats().forEach(x=>{ctx.beginPath();path(x.f);ctx.globalAlpha=Math.min(.8,x.op*.95);ctx.fillStyle=x.col;ctx.fill();if(x.line){ctx.globalAlpha=.9;ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.stroke()}});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
+  feats().forEach(x=>{ctx.beginPath();path(x.f);ctx.globalAlpha=Math.min(.8,x.op*.95);ctx.fillStyle=x.col;ctx.fill();if(x.line){ctx.globalAlpha=x.thin?.55:.9;ctx.strokeStyle="#fff";ctx.lineWidth=x.thin?.5:1;ctx.stroke()}});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
 
 /* ---------- what is under the pointer ---------- */
 const boxes=new WeakMap;
 function inside(f,ll){let b=boxes.get(f);if(!b){b=d3.geoBounds(f);boxes.set(f,b)}const[[x0,y0],[x1,y1]]=b;if(ll[1]<y0-.01||ll[1]>y1+.01)return false;if(x0<=x1&&(ll[0]<x0-.01||ll[0]>x1+.01))return false;return d3.geoContains(f,ll)}
 function hit(ll){if(!ll)return null;const t=allMapsSubMode.nature;
- if(t==="eco"){const e=(N.eco||[]).find(e=>{e._f=e._f||{type:"Feature",geometry:e.geom};return inside(e._f,ll)});if(e)return{kind:"eco",d:e}}
+ if(t==="eco"&&ECO){const f=ECO.find(f=>inside(f,ll));if(f)return{kind:"eco",d:f._d};return null}
  if(t==="biomes"||t==="eco"){const f=(N.biomes.features||[]).find(f=>inside(f,ll));return f?{kind:"biome",d:CARD[f.properties.b]||{n:f.properties.n,b:f.properties.b}}:null}
  if(t==="realms"){const f=(N.realms.features||[]).find(f=>inside(f,ll));return f?{kind:"realm",d:Object.assign({n:f.properties.r},(N.realmCards||{})[f.properties.r]||{})}:null}
  if(t==="footprint"){const f=(N.footprint.features||[]).find(f=>inside(f,ll));if(!f)return null;const c=FOOT.find(c=>c[0]===f.properties.k);return{kind:"foot",d:{n:c?c[1]:""}}}
@@ -98,7 +107,9 @@ function card(h){tipHide();document.querySelectorAll(".gf-nat-back").forEach(x=>
   body='<small>Biome</small><h3>'+esc(d.n)+"</h3>"+(d.full&&d.full!==d.n?'<p class="gf-nat-sub">'+esc(d.full)+"</p>":"")+photo(d.photo)+chips(stats)+"<p>"+esc(d.blurb||"")+"</p>"+(d.intact?'<p class="gf-nat-intact">'+esc(d.intact)+"</p>":"")+
    (d.animals&&d.animals.length?"<h4>Famous animals</h4>"+chips(d.animals):"")+(d.plants&&d.plants.length?"<h4>Famous plants</h4>"+chips(d.plants):"")+(d.where?'<p class="gf-nat-where"><b>Where:</b> '+esc(d.where)+"</p>":"")}
  else if(h.kind==="eco"){const B=CARD[d.b]||{},stats=[];if(d.km2)stats.push(Math.round(d.km2).toLocaleString()+" km²");if(B.n)stats.push(B.n);const NNH={1:"Half or more is protected",2:"Nature could still recover to half",3:"Needs restoring to recover",4:"Nature imperiled: little natural land left"};if(NNH[d.nnh])stats.push(NNH[d.nnh]);
-  body='<small>Ecoregion</small><h3>'+esc(d.n)+"</h3>"+photo(d.photo)+chips(stats)+"<p>"+esc(d.blurb||"")+"</p>"+(d.animals&&d.animals.length?"<h4>Famous animals</h4>"+chips(d.animals):"")+(d.plants&&d.plants.length?"<h4>Famous plants</h4>"+chips(d.plants):"")}
+  const cn=(d.c||[]).map(c=>(COUNTRY_BY_CODE[c]||{}).n||(typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[c]&&TERRITORY_INFO[c].name)||"").filter(Boolean);
+  const wk=d.w?'<p class="gf-nat-wiki">'+(d.ex?esc(d.ex)+" ":"")+'<a href="https://en.wikipedia.org/wiki/'+encodeURIComponent(d.w.replace(/ /g,"_"))+'" target="_blank" rel="noopener">Read more on Wikipedia →</a><small> Text: Wikipedia, CC BY-SA 4.0</small></p>':"";
+  body='<small>Ecoregion · '+esc(d.r||"")+'</small><h3>'+esc(d.n)+"</h3>"+photo(d.photo)+chips(stats)+(cn.length?'<p class="gf-nat-where"><b>Countries:</b> '+esc(cn.join(", "))+"</p>":"")+(d.blurb?"<p>"+esc(d.blurb)+"</p>":"")+wk+(d.animals&&d.animals.length?"<h4>Famous animals</h4>"+chips(d.animals):"")+(d.plants&&d.plants.length?"<h4>Famous plants</h4>"+chips(d.plants):"")}
  else if(h.kind==="realm"){body='<small>Ocean realm</small><h3>'+esc(d.n)+"</h3>"+photo(d.photo)+"<p>"+esc(d.blurb||"")+"</p>"+(d.animals&&d.animals.length?"<h4>Famous animals</h4>"+chips(d.animals):"")}
  const o=document.createElement("div");o.className="game-modal-backdrop gf-nat-back";o.innerHTML='<div class="game-modal gf-nat-card" role="dialog"><button class="modal-x" type="button" aria-label="Close">×</button>'+body+'<p class="gf-nat-credit">'+esc(N.credit||"")+"</p></div>";
  document.body.appendChild(o);const close=()=>o.remove();o.querySelector(".modal-x").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()});document.addEventListener("keydown",function k(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",k)}})}
@@ -112,7 +123,7 @@ function legend(){const t=allMapsSubMode.nature;
   if(rank){const key=rank==="intact"?(c=>-(c.intactPct!=null?c.intactPct:100-(c.convertedPct||0))):(c=>-(c.convertedPct!=null?c.convertedPct:0));rows=list.filter(c=>c.convertedPct!=null||c.intactPct!=null).sort((a,b)=>key(a)-key(b)).map((c,i)=>'<span class="legend-swatch gf-nat-sw" data-nb="'+c.b+'"><i style="background:'+c.col+'"></i>'+(i+1)+". "+esc(c.n)+"<em>"+(rank==="intact"?(c.intactPct!=null?c.intactPct:100-c.convertedPct)+"% natural":c.convertedPct+"% converted")+"</em></span>").join("")}
   else rows=list.map(c=>'<span class="legend-swatch gf-nat-sw'+(focus===c.b?" is-on":"")+'" data-nb="'+c.b+'" role="button" tabindex="0"><i style="background:'+c.col+'"></i>'+esc(c.n)+(c.share!=null?"<em>"+c.share+"%</em>":"")+"</span>").join("");
   return'<span class="legend-title">Biomes</span><span class="gf-nat-rank"><button type="button" data-rank=""'+(rank?"":' class="on"')+'>All biomes</button><button type="button" data-rank="intact"'+(rank==="intact"?' class="on"':"")+'>Most intact</button><button type="button" data-rank="converted"'+(rank==="converted"?' class="on"':"")+'>Most converted</button></span><span class="legend-swatches th-swatches">'+rows+'</span><span class="legend-note">A biome is a big kind of natural home, shaped by climate: rainforest, desert, tundra… Numbers show each biome’s share of Earth’s land. Click a colour to show only that biome, or click the map for its card.'+(focus!=null?' <a href="#" class="gf-nat-clear">Show all</a>':"")+" "+esc(N.credit||"")+"</span>"}
- if(t==="eco")return'<span class="legend-title">Famous ecoregions</span><span class="legend-note">'+(N.eco||[]).length+" of the world’s 846 ecoregions — areas with their own mix of plants and animals — outlined in white and coloured by biome. Hover or click one to learn about it. "+esc(N.credit||"")+"</span>";
+ if(t==="eco")return'<span class="legend-title">Ecoregions</span><span class="legend-note">'+(ECO?ECO.length:846)+" ecoregions: areas with their own mix of plants and animals, coloured by their biome (each a slightly different shade). Hover or click one for its card; famous ones have photos and more. "+esc(N.credit||"")+" Descriptions: Wikipedia, CC BY-SA 4.0."+(ECO?"":" Loading…")+"</span>";
  if(t==="realms"){const R=Object.keys(REALM_COL);return'<span class="legend-title">Ocean realms</span><span class="legend-swatches th-swatches">'+R.map(r=>'<span class="legend-swatch gf-nat-sw'+(focus===r?" is-on":"")+'" data-nr="'+esc(r)+'" role="button" tabindex="0"><i style="background:'+REALM_COL[r]+'"></i>'+esc(r)+"</span>").join("")+'</span><span class="legend-note">The coastal seas split into twelve big realms, each with its own sea life. Click the sea for a realm’s card. '+esc(N.realmCredit||"")+"</span>"}
  if(t==="footprint")return'<span class="legend-title">Human footprint</span><span class="legend-swatches th-swatches">'+FOOT.map(c=>'<span class="legend-swatch gf-nat-sw'+(focus===c[0]?" is-on":"")+'" data-nf="'+c[0]+'" role="button" tabindex="0"><i style="background:'+c[2]+'"></i>'+esc(c[1])+"</span>").join("")+'</span><span class="legend-note">How much people have changed the land: cities, farms, roads, mines and power lines. Green areas are still wild. '+esc(N.footCredit||"")+"</span>";
  return""}
@@ -143,6 +154,9 @@ const st=document.createElement("style");st.textContent=`
 .gf-nat-chips span{ background:rgba(47,138,122,.12); border-radius:999px; padding:4px 10px; font-size:12.5px; font-weight:600; }
 .gf-nat-intact{ background:rgba(232,112,26,.09); border-radius:10px; padding:8px 10px; font-size:13px; }
 .gf-nat-where{ font-size:13px; }
+.gf-nat-wiki{ font-size:13.5px; }
+.gf-nat-wiki a{ font-weight:700; white-space:nowrap; }
+.gf-nat-wiki small{ display:block; opacity:.55; font-size:10.5px; margin-top:2px; text-transform:none; letter-spacing:0; font-weight:400; }
 .gf-nat-credit{ font-size:11px; opacity:.55; margin:12px 0 0; }
 .gf-nat-rank{ display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 6px; }
 .gf-nat-rank button{ border:1px solid rgba(0,0,0,.12); background:#fff; border-radius:999px; padding:4px 10px; font:600 12px/1 inherit; cursor:pointer; color:inherit; }
