@@ -10,8 +10,13 @@ if(typeof GlobeView==="undefined"||typeof amGlobeOn!=="function"||typeof d3==="u
 const RX=.8487,RY=1.3523;/* Robinson's width and height factors */
 const tour=()=>typeof ps!=="undefined"&&!!ps;
 function flatWanted(){try{return typeof appMode!=="undefined"&&appMode==="allmaps"&&FEATURES.globe&&!globePrefs().allmaps&&ALLMAPS_GLOBE_MODES.has(allMapsColorMode)&&!(typeof proj!=="undefined"&&proj.on)&&!tour()&&!(window.gfCartoOn&&gfCartoOn())}catch(e){return false}}
+/* which globes can turn flat: the Maps page's, and the Places and Capitals study map's */
+const stWanted=()=>{try{return typeof stGlobe!=="undefined"&&FEATURES.globe&&!globePrefs().study&&typeof activeTab!=="undefined"&&activeTab==="study"&&(appMode==="map"||appMode==="capital"&&window._gfCapMap)&&!tour()}catch(e){return false}};
+function defOf(g){try{if(typeof amGlobe!=="undefined"&&g===amGlobe)return{wanted:flatWanted,svg:"#allMapsWrap > svg",view:"allMapsView",f:()=>SPIN.A.f,key:"am"};if(typeof stGlobe!=="undefined"&&g===stGlobe)return{wanted:stWanted,view:"studyView",f:()=>({s:1,bx:0,by:0}),key:"st",fixed:()=>stats.mapColorMode?[]:[{h:"textures/reliefAllMaps.webp",x:0,y:-6.688,w:2000,hh:1014.376,op:1,blend:"normal",tf:null,pr:"none"}]}}catch(e){}return null}
+window.gfStWanted=stWanted;
 window.gfFlatOn=()=>{try{return typeof amGlobe!=="undefined"&&!!amGlobe&&!!amGlobe._flat&&flatWanted()}catch(e){return false}};
 {const _on=amGlobeOn;amGlobeOn=function(){return _on.apply(this,arguments)||flatWanted()}}
+if(typeof stGlobeOn==="function"){const _o=stGlobeOn;stGlobeOn=function(){return _o.apply(this,arguments)||stWanted()}}
 
 /* ---------- geometry ---------- */
 const P=GlobeView.prototype;
@@ -29,34 +34,38 @@ P._flatBase=function(){const{w}=this.size(),S=w/(2*Math.PI)*this.zoom;/* d3's Ro
 {const _roll=P.roll;P.roll=function(){return this._flat?0:_roll.apply(this,arguments)}}
 {const _va=P.visibleAngle;P.visibleAngle=function(){return this._flat?Math.PI:_va.apply(this,arguments)}}
 /* "is it on the visible side of the ball?" is always yes on the flat map (distance to the view centre counts as 0) */
-{const _gd=d3.geoDistance;d3.geoDistance=function(a,b){const g=typeof amGlobe!=="undefined"&&amGlobe;if(g&&g._flat&&a&&b){const c0=-g.rot[0],c1=-g.rot[1];if((b[0]===c0&&b[1]===c1)||(a[0]===c0&&a[1]===c1))return 0}return _gd(a,b)}}
+{const _gd=d3.geoDistance;d3.geoDistance=function(a,b){if(a&&b)for(const g of [window._gfFlatNow,typeof amGlobe!=="undefined"&&amGlobe,typeof stGlobe!=="undefined"&&stGlobe]){if(g&&g._flat){const c0=-g.rot[0],c1=-g.rot[1];if((b[0]===c0&&b[1]===c1)||(a[0]===c0&&a[1]===c1))return 0}}return _gd(a,b)}}
 /* hit tests use the ball's outline; on the flat map the whole rectangle counts */
 ["hit","_hover","waterAt"].forEach(k=>{const f=P[k];if(!f)return;P[k]=function(){if(!this._flat)return f.apply(this,arguments);this._bigR=true;try{return f.apply(this,arguments)}finally{this._bigR=false}}});
 try{if(typeof gfSpinWanted==="function"){const _s=gfSpinWanted;gfSpinWanted=function(g){if(g&&g._flat)return false;return _s.apply(this,arguments)}}}catch(e){}
 
 /* ---------- drawing ---------- */
 /* the flat map's own pictures (relief, shading, sea depth, satellite, climate…), as they are layered in the old map */
-let PIC=null,picT=0;const IMG=new Map;
-function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&amGlobe.request()}catch(e){}};i.src=h;IMG.set(h,i)}return i}
-function pictures(){const now=performance.now();if(PIC&&now-picT<400)return PIC;picT=now;const svg=document.querySelector("#allMapsWrap > svg");PIC=[];if(!svg)return PIC;
+const PICS={};const IMG=new Map;
+function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&amGlobe.request()}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};i.src=h;IMG.set(h,i)}return i}
+function pictures(D){if(D.fixed)return D.fixed();const now=performance.now(),C=PICS[D.key]||(PICS[D.key]={t:0,L:null});if(C.L&&now-C.t<400)return C.L;C.t=now;const svg=document.querySelector(D.svg);const PIC=C.L=[];if(!svg)return PIC;
  svg.querySelectorAll("image").forEach(el=>{let e=el,op=1,ok=true,blend="normal";while(e&&e!==svg){const cs=getComputedStyle(e);if(cs.display==="none"||cs.visibility==="hidden"){ok=false;break}op*=+cs.opacity;if(blend==="normal"&&cs.mixBlendMode&&cs.mixBlendMode!=="normal")blend=cs.mixBlendMode;e=e.parentNode}
   if(!ok||op<=.01)return;const h=el.getAttribute("href")||el.getAttribute("xlink:href");if(!h)return;
   const n=k=>parseFloat(el.getAttribute(k))||0;let tf=null;try{const m=el.transform&&el.transform.baseVal&&el.transform.baseVal.consolidate();if(m)tf=m.matrix}catch(er){}
   PIC.push({h,x:n("x"),y:n("y"),w:n("width"),hh:n("height"),op,blend,tf,pr:el.getAttribute("preserveAspectRatio")})});return PIC}
 /* the flat map's pictures are merged once into a single 4000-px picture (blend modes and all), then drawn with one call */
-let COMP=null;
-function composite(list){const key=list.map(o=>o.h.slice(-40)+o.op+o.blend+(o.tf?[o.tf.a,o.tf.e,o.tf.f].join():"")+o.x+o.y+o.w).join("|");
+const COMPS={};
+/* an SVG <image> keeps its picture's proportions unless told otherwise (preserveAspectRatio, default "xMidYMid meet") */
+function drawFit(c,im,o){const W=o.w||im.naturalWidth,H=o.hh||im.naturalHeight,pr=String(o.pr||"xMidYMid meet");
+ if(/^none/.test(pr)||!im.naturalWidth){c.drawImage(im,o.x,o.y,W,H);return}const sl=/slice/.test(pr),k=sl?Math.max(W/im.naturalWidth,H/im.naturalHeight):Math.min(W/im.naturalWidth,H/im.naturalHeight),dw=im.naturalWidth*k,dh=im.naturalHeight*k;
+ const ax=/xMin/.test(pr)?0:/xMax/.test(pr)?1:.5,ay=/YMin/.test(pr)?0:/YMax/.test(pr)?1:.5;c.drawImage(im,o.x+(W-dw)*ax,o.y+(H-dh)*ay,dw,dh)}
+function composite(list,D){let COMP=COMPS[D.key];const key=list.map(o=>o.h.slice(-40)+o.op+o.blend+(o.tf?[o.tf.a,o.tf.e,o.tf.f].join():"")+o.x+o.y+o.w).join("|");
  if(COMP&&COMP.key===key)return COMP;if(!list.every(o=>{const im=img(o.h);return im.complete&&im.naturalWidth}))return COMP&&COMP.part?null:null;
- const F=2,cv=COMP&&COMP.cv||document.createElement("canvas");cv.width=2000*F;cv.height=Math.round(1001*F);const x=cv.getContext("2d");x.setTransform(F,0,0,F,0,0);x.imageSmoothingQuality="high";
- list.forEach(o=>{const im=img(o.h);x.globalAlpha=o.op;x.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;x.save();if(o.tf)x.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);x.drawImage(im,o.x,o.y,o.w||im.naturalWidth,o.hh||im.naturalHeight);x.restore()});
- x.globalAlpha=1;x.globalCompositeOperation="source-over";COMP={cv,key,F};return COMP}
-P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,list=pictures();if(!list.length)return 0;
- const C=composite(list);ctx.save();
+ const F=2,cv=COMP&&COMP.cv||document.createElement("canvas");cv.width=2000*F;cv.height=Math.round(1001*F);const x=cv.getContext("2d");const ff=D.f();/* the old map's own coordinates → the plain Robinson ones */x.setTransform(F/ff.s,0,0,F/ff.s,-F*ff.bx/ff.s,-F*ff.by/ff.s);x.imageSmoothingQuality="high";
+ list.forEach(o=>{const im=img(o.h);x.globalAlpha=o.op;x.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;x.save();if(o.tf)x.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(x,im,o);x.restore()});
+ x.globalAlpha=1;x.globalCompositeOperation="source-over";COMP=COMPS[D.key]={cv,key,F};return COMP}
+P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,D=defOf(this)||{key:"am",svg:"#allMapsWrap > svg",f:()=>({s:1,bx:0,by:0})},list=pictures(D);if(!list.length)return 0;
+ const C=composite(list,D);ctx.save();
  if(C){ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(t[0]-1e3*k),dpr*(t[1]-500.5*k));ctx.imageSmoothingQuality=k>3?"high":"medium";ctx.drawImage(C.cv,0,0);ctx.restore();return 1}
  /* pictures still loading: draw them one by one */
- ctx.setTransform(dpr*k,0,0,dpr*k,dpr*(t[0]-1e3*k),dpr*(t[1]-500.5*k));let drew=0;
+ {const ff=D.f(),kk=k/ff.s;ctx.setTransform(dpr*kk,0,0,dpr*kk,dpr*(t[0]-1e3*k-ff.bx*kk),dpr*(t[1]-500.5*k-ff.by*kk))}let drew=0;
  list.forEach(o=>{const im=img(o.h);if(!im.complete||!im.naturalWidth)return;ctx.globalAlpha=o.op;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;
-  ctx.save();if(o.tf)ctx.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);ctx.drawImage(im,o.x,o.y,o.w||im.naturalWidth,o.hh||im.naturalHeight);ctx.restore();drew++});
+  ctx.save();if(o.tf)ctx.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(ctx,im,o);ctx.restore();drew++});
  ctx.restore();return drew};
 /* the ball's drawing calls, turned into the flat map's: the round clip and sea become the map's outline; the shading,
    glow and rim of the ball are left out */
@@ -69,9 +78,9 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
  /* a clip to the ball's outline becomes a clip to the whole rectangle */
  ctx.clip=function(){if(g._flat&&this._gfSph&&g._flatR){BP.call(this);this.rect(0,0,g._flatR.w,g._flatR.h);this._gfSph=false}return CL.apply(this,arguments)};
  ctx.createRadialGradient=function(){const gr=RG.apply(this,arguments);if(!g._flat)return gr;const add=gr.addColorStop.bind(gr);gr.addColorStop=(o,c)=>add(o,"rgba(0,0,0,0)");return gr}}
-{const _r=P._render;P._render=function(){if(typeof amGlobe==="undefined"||this!==amGlobe){this._flat=false;return _r.apply(this,arguments)}
- const want=flatWanted();if(want!==!!this._flat){this._flat=want;if(want){this.zoom=Math.max(1,this.zoom);if(this._flatHome!==false){this.zoom=1;this.rot=[0,0]}}else{this.zoom=1;this.rot=this.cfg.rot?this.cfg.rot.slice():[-15,-20]}
-  this.host.classList.toggle("gf-flat",want);const v=document.getElementById("allMapsView");if(v)v.classList.toggle("gf-flatc",want);if(want)setTimeout(()=>{try{gfFlatSave()}catch(e){}},0)}
+{const _r=P._render;P._render=function(){const D=defOf(this);if(!D){this._flat=false;return _r.apply(this,arguments)}
+ window._gfFlatNow=this;const want=D.wanted();if(want!==!!this._flat){this._flat=want;if(want){this.zoom=Math.max(1,this.zoom);if(this._flatHome!==false){this.zoom=1;this.rot=[0,0]}}else{this.zoom=1;this.rot=this.cfg.rot?this.cfg.rot.slice():[-15,-20]}
+  this.host.classList.toggle("gf-flat",want);const v=document.getElementById(D.view);if(v)v.classList.toggle("gf-flatc",want);if(want)setTimeout(()=>{try{wire(this);this.request()}catch(e){}},0)}
  this.host.style.removeProperty("margin-top");
  if(!this._flat)return _r.apply(this,arguments);
  this.host.style.setProperty("margin-top","10px","important");
@@ -123,15 +132,15 @@ window.gfFlatSave=function(){try{if(amGlobe){wire(amGlobe);amGlobe.request()}}ca
 const st=document.createElement("style");st.textContent=`
 #allMapsView.globe-on.gf-flatc #allMapsSubModes{ display:flex !important; }
 #allMapsView.globe-on.gf-flatc #amGlobeSubs{ display:none !important; }
-#amGlobeHost.gf-flat{ margin-top:10px !important; }
-#amGlobeHost.gf-flat .globe-stage{ margin:0 auto; }
-#amGlobeHost.gf-flat .globe-btns [data-g="spin"]{ display:none !important; }
-#amGlobeHost.gf-flat canvas.globe-gl{ visibility:hidden; }
-#amGlobeHost.gf-flat canvas.globe-canvas{ cursor:grab; }
-#amGlobeHost.gf-flat canvas.globe-canvas:active{ cursor:grabbing; }
+.globe-host.gf-flat{ margin-top:10px !important; }
+.globe-host.gf-flat .globe-stage{ margin:0 auto; }
+.globe-host.gf-flat .globe-btns [data-g="spin"]{ display:none !important; }
+.globe-host.gf-flat canvas.globe-gl{ visibility:hidden; }
+.globe-host.gf-flat canvas.globe-canvas{ cursor:grab; }
+.globe-host.gf-flat canvas.globe-canvas:active{ cursor:grabbing; }
 `;document.head.appendChild(st);
 /* the switch: choosing Flat map on a map the globe can show brings up the flat view right away */
-setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);const want=flatWanted();if(want!==!!amGlobe._flat)amGlobe.request()}else if(flatWanted()&&typeof amGlobeSync==="function")amGlobeSync()}catch(e){}},400);
+setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(stWanted()!==!!stGlobe._flat)stGlobe.request()}else if(stWanted()&&typeof stGlobeSync==="function")stGlobeSync()}catch(e){}try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);const want=flatWanted();if(want!==!!amGlobe._flat)amGlobe.request()}else if(flatWanted()&&typeof amGlobeSync==="function")amGlobeSync()}catch(e){}},400);
 })();
 /* labels on the flat map read at the size the old flat map used */
 (function(){const P=GlobeView.prototype,_ls=P.ls;if(_ls)P.ls=function(){const v=_ls.apply(this,arguments);return this._flat?v*1.12:v}})();
@@ -187,7 +196,7 @@ setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);con
   return r};
  const _req=P.request;P.request=function(){if(this._flat&&this._gfMoving){this._fastMove=!!(this._snap&&this._snap.ok);clearTimeout(this._fmT);this._fmT=setTimeout(()=>{this._fastMove=false;this._gfMoving=false;this.render()},160)}return _req.apply(this,arguments)};
  const _sz=P.setZoom;P.setZoom=function(){if(this._flat)this._gfMoving=true;return _sz.apply(this,arguments)};
- document.addEventListener("pointermove",e=>{try{const g=amGlobe;if(g&&g._flat&&e.buttons&&g.host.contains(e.target))g._gfMoving=true}catch(er){}},true);
+ document.addEventListener("pointermove",e=>{try{[typeof amGlobe!=="undefined"&&amGlobe,typeof stGlobe!=="undefined"&&stGlobe].forEach(g=>{if(g&&g._flat&&e.buttons&&g.host.contains(e.target))g._gfMoving=true})}catch(er){}},true);
 })();
 /* borders and labels as fine as the old flat map: thinner lines, slightly smaller text */
 (function(){const P=GlobeView.prototype,_ls=P.ls;
