@@ -133,7 +133,8 @@ body.dark-theme #allMapsWrap > .gf-carto{ background:#16212e; }
 body.dark-theme .gf-carto g.gf-cn text{ fill:#eef; stroke:rgba(0,0,0,.4); }
 `;document.head.appendChild(ccss);
 let shown=false;
-function cartoSync(){cartoChips();const on=curMode()==="population"&&carto&&typeof appMode!=="undefined"&&appMode==="allmaps"&&!(typeof amGlobeOn==="function"&&amGlobeOn());
+window.gfCartoOn=()=>curMode()==="population"&&carto;
+function cartoSync(){cartoChips();const on=curMode()==="population"&&carto&&typeof appMode!=="undefined"&&appMode==="allmaps"&&!(typeof globePrefs==="function"&&globePrefs().allmaps);
  const wrap=document.getElementById("allMapsWrap");if(!wrap)return;let box=wrap.querySelector(":scope > .gf-carto");
  if(on&&!shown){box=build();box.hidden=false;draw(false);shown=true}else if(!on&&shown){if(box)box.hidden=true;shown=false}
  const leg=document.getElementById("populationLegend");if(leg)leg.classList.toggle("gf-carto-hide",on)}
