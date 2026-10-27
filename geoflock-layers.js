@@ -78,7 +78,7 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
  try{if((L.res.on||L.con.on||L.haz.on)&&typeof amGlobe!=="undefined"&&this===amGlobe){const its=items(),path=d3.geoPath(p,ctx),c=[-this.rot[0],-this.rot[1]],pts=[];ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
   its.forEach(it=>{if(it.t!=="line")return;ctx.beginPath();path({type:"LineString",coordinates:it.line});ctx.strokeStyle=it.col;ctx.globalAlpha=it.op||1;ctx.lineWidth=it.w*1.1;ctx.setLineDash(it.dash?it.dash.split(" ").map(Number):[]);ctx.stroke()});
   ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
-  const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),vis=[];its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(q)vis.push({it,q,x:q[0],y:q[1],r:7.5*zk*(it.sz||1)})});spread(vis,1.02);
+  const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),vis=[];its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(q)vis.push({it,q,x:q[0],y:q[1],r:7.5*zk*(it.sz||1)})});spread(vis,.72);/* small icons may overlap a little */vis.forEach(o=>{if(this._gfLayHot===o.it)o.r*=1.3});
   vis.forEach(o=>{const it=o.it,q=[o.x,o.y];if(Math.hypot(o.x-o.q[0],o.y-o.q[1])>2){ctx.strokeStyle="rgba(20,30,50,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.q[0],o.q[1]);ctx.lineTo(o.x,o.y);ctx.stroke();ctx.fillStyle="rgba(20,30,50,.75)";ctx.beginPath();ctx.arc(o.q[0],o.q[1],1.8,0,7);ctx.fill()}
    if(it.tri){const r=o.r;ctx.save();ctx.translate(q[0],q[1]);ctx.scale(r/9,r/9);ctx.fillStyle="#d63a2a";ctx.strokeStyle="#fff";ctx.lineWidth=1.4*9/r;ctx.lineJoin="round";const P2=new Path2D(VOLC_D);ctx.fill(P2);ctx.stroke(P2);ctx.restore()}
    else if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
@@ -93,8 +93,8 @@ function showTip(it,x,y){if(!tip){tip=document.createElement("div");tip.classNam
 function hideTip(){if(tip)tip.style.display="none";document.body.classList.remove("gf-ly-tipping")}
 document.addEventListener("pointermove",e=>{const t=e.target;
  if(t&&t.closest){const el=t.closest(".gf-layers .gf-ly-pt, .gf-layers .gf-ly-hit");if(el){const g=el.closest("g.gf-layers"),it=g&&g._items&&g._items[+el.dataset.i];if(it){showTip(it,e.clientX,e.clientY);return}}
-  if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayPts&&amGlobe.host&&amGlobe.host.contains(t)){const cv=amGlobe.host.querySelector("canvas.globe-canvas")||amGlobe.host,r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;amGlobe._gfLayPts.forEach(([x,y,it])=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=it}});if(best){showTip(best,e.clientX,e.clientY);return}}}
- hideTip()},{passive:true});
+  if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayPts&&amGlobe.host&&amGlobe.host.contains(t)){const cv=amGlobe.host.querySelector("canvas.globe-canvas")||amGlobe.host,r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;amGlobe._gfLayPts.forEach(([x,y,it])=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=it}});if(amGlobe._gfLayHot!==best){amGlobe._gfLayHot=best;globe()}if(best){showTip(best,e.clientX,e.clientY);return}}}
+ try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayHot){amGlobe._gfLayHot=null;globe()}}catch(er){}hideTip()},{passive:true});
 /* a tap on an icon shows its note instead of opening the country under it */
 document.addEventListener("click",e=>{const el=e.target.closest&&e.target.closest(".gf-layers .gf-ly-pt");if(el){e.stopPropagation();e.preventDefault();const g=el.closest("g.gf-layers"),it=g._items[+el.dataset.i];if(it)showTip(it,e.clientX,e.clientY)}},true);
 
@@ -189,10 +189,10 @@ function legendSync(){const lg=document.getElementById("populationLegend");if(!l
 .gf-lk-row{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
 .gf-lk-row svg{ flex:none; }
 `;document.head.appendChild(st)}
-/* Resources come on by themselves on the Economy map (and go again when leaving it, unless you turned them on) */
+/* Resources come on by themselves on the Economy map's Main export (and go again when leaving it, unless you turned them on) */
 let lastMode=null;
-function modeWatch(){let m="";try{m=appMode==="allmaps"?allMapsColorMode:""}catch(e){}if(m===lastMode)return;const prev=lastMode;lastMode=m;
- if(m==="gdp"&&!L.res.on){L.res.on=true;L.res.auto=true;redraw()}else if(prev==="gdp"&&L.res.auto){L.res.on=false;L.res.auto=false;redraw()}}
+function modeWatch(){let m="";try{m=appMode==="allmaps"?allMapsColorMode+(allMapsColorMode==="gdp"?":"+allMapsSubMode.gdp:""):""}catch(e){}if(m===lastMode)return;const prev=lastMode;lastMode=m;
+ if(m==="gdp:export"&&!L.res.on){L.res.on=true;L.res.auto=true;redraw()}else if(prev==="gdp:export"&&L.res.auto){L.res.on=false;L.res.auto=false;redraw()}}
 setInterval(()=>{try{mount();modeWatch();watch();drawFlat(false);legendSync()}catch(e){console.error(e)}},500);
 })();
 /* Switch rows: slimmer ▾ buttons so one more switch fits on the first row; every ▾ menu (Labels, Plates, Resources,

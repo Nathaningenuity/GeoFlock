@@ -98,6 +98,8 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
 /* the sea under the pictures when the map has no pictures of its own (colour maps): drawn by the ball code, as the outline */
 
 /* ---------- moving the flat map: drag slides, wheel and pinch zoom around the pointer, smoothly ---------- */
+/* the map's own hover runs once per pointer move, whichever listener hears it first */
+{const _hv=GlobeView.prototype._hover;GlobeView.prototype._hover=function(e){if(e&&typeof e==="object"){if(e._gfHov===this)return;try{e._gfHov=this}catch(er){}}return _hv.apply(this,arguments)}}
 function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g.canvas,pts=new Map;let drag=null,pinch=null,target=null,raf=0;
  const inMap=e=>{const rc=c.getBoundingClientRect();return e.clientX>=rc.left&&e.clientX<=rc.right&&e.clientY>=rc.top&&e.clientY<=rc.bottom&&!(e.target.closest&&e.target.closest(".globe-btns,.globe-tip,.gfk-coord,button,a,input"))};
  const stop=e=>{e.stopPropagation();e.stopImmediatePropagation()};
@@ -114,7 +116,7 @@ function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g
     const rc=c.getBoundingClientRect(),p=g.projection(),before=p.invert([drag.last[0]-rc.left,drag.last[1]-rc.top]),after=p.invert([e.clientX-rc.left,e.clientY-rc.top]);
     if(before&&after){const q=g._flatBase()([-g.rot[0],-g.rot[1]]);const dq=[e.clientX-drag.last[0],e.clientY-drag.last[1]],ll=g._flatBase().invert([q[0]-dq[0],q[1]-dq[1]]);if(ll&&isFinite(ll[0]))g.rot=[-ll[0],-ll[1]]}
     drag.last=[e.clientX,e.clientY];g.tip.hidden=true;g.hot=null;g.hotWater=null;g._moving=true;g.request()}return}
-  if(e.pointerType==="mouse"&&inMap(e)){stop(e);g._hover(e)}},true);
+  if(e.pointerType==="mouse"&&inMap(e)){g._hover(e)/* the event goes on, so the theme notes (nature, layers, history…) hear it too */}},true);
  const up=e=>{if(!g._flat)return;const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!had)return;stop(e);g._moving=false;
   if(drag&&!drag.moved&&e.type==="pointerup"){const x=e.clientX,y=e.clientY;drag=null;
    if(g._measure){g._measureClick(x,y);return}
@@ -263,3 +265,8 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    ctx.save();ctx.globalAlpha=fs>10?.85:1;try{ctx.letterSpacing=sp.toFixed(1)+"px"}catch(e){}this._text(ctx,txt,xy[0]+(ctx.letterSpacing?sp/2:0),xy[1],COL[cat]||"#5a4630","rgba(255,255,255,0.62)",font,ang);ctx.restore()})}catch(e){console.error(e)}
   /* peaks as before */
   return _lf.call(this,ctx,p,Object.assign({},O,{landforms:{peaks:(O.landforms||{}).peaks||[]}}),show,cats)}})();
+/* hovers and clicks that ask the old flat map where the pointer is (nature, layers, history, toolkit…) get the answer
+   from the flat map now on screen */
+(function(){const fix=()=>{if(typeof amtToLL!=="function"||amtToLL._gfFlat)return false;const _a=amtToLL;
+  amtToLL=function(cx,cy){try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(g&&g._flat&&g.host&&g.host.isConnected&&g.host.offsetParent){const r=g.canvas.getBoundingClientRect();if(cx<r.left||cx>r.right||cy<r.top||cy>r.bottom)return null;const p=g.projection(),ll=p.invert([cx-r.left,cy-r.top]);return ll&&isFinite(ll[0])?ll:null}}catch(e){}return _a.apply(this,arguments)};amtToLL._gfFlat=1;return true};
+ if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();

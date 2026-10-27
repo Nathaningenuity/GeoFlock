@@ -556,3 +556,12 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 
 /* 36: flashcards swap two cards on drop, so the card under the pointer is outlined (not a line between cards) */
 (function(){const st=document.createElement("style");st.textContent=".flash.drag-line-before::before,.flash.drag-line-after::before{display:none !important}.flash.drag-line-before{outline:3px dashed rgba(110,90,200,.75);outline-offset:3px}";document.head.appendChild(st)})();
+
+/* 37: a pin's leader line ends on the visible card (photo and name), not on the padded box around it, so they touch */
+(function(){if(typeof psLeaders!=="function")return;const _pl=psLeaders;psLeaders=function(pinsEl,rects){try{const labs=[...pinsEl.querySelectorAll(".ps-lab")];
+  if(labs.length===rects.length){const o=pinsEl.getBoundingClientRect();rects.forEach((r,k)=>{if(!r)return;const el=labs[k];let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+   [...el.querySelectorAll("*")].concat([el]).forEach(c=>{if(c!==el&&c.children.length)return;const b=c.getBoundingClientRect();if(!b.width||!b.height)return;if(getComputedStyle(c).visibility==="hidden")return;x0=Math.min(x0,b.left);y0=Math.min(y0,b.top);x1=Math.max(x1,b.right);y1=Math.max(y1,b.bottom)});
+   if(!isFinite(x0))return;const L=x0-o.left,T=y0-o.top,R=x1-o.left,B=y1-o.top,ex=Math.max(L,Math.min(R,r.ax)),ey=Math.max(T,Math.min(B,r.ay));r.ex=ex;r.ey=ey})}}catch(e){}return _pl.apply(this,arguments)}})();
+
+/* 38: "Relief underneath" sits in the map key again (with its colours), not in the switch rows over the map */
+(function(){const st=document.createElement("style");st.textContent="#amReliefUnderSw{display:none !important} #populationLegend label.hist-relief-sw,#flKey label.hist-relief-sw{display:inline-flex !important}";document.head.appendChild(st)})();
