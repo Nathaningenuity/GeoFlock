@@ -123,3 +123,9 @@ setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);con
 })();
 /* labels on the flat map read at the size the old flat map used */
 (function(){const P=GlobeView.prototype,_ls=P.ls;if(_ls)P.ls=function(){const v=_ls.apply(this,arguments);return this._flat?v*1.35:v}})();
+/* labels: territories (Western Sahara, Gibraltar, Greenland…) are named only on hover, not with a printed label; on the
+   flat map the label rules check room against the whole rectangle (not the ball's outline) */
+(function(){const P=GlobeView.prototype,_l=P._labels;if(!_l)return;
+ const sov=f=>{const c=f&&f.properties&&f.properties.c;return!(c&&typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[c])};
+ P._labels=function(ctx,p,s,base,big){const B=(base||[]).filter(sov),G=(big||[]).filter(sov);if(!this._flat)return _l.call(this,ctx,p,s,B,G);this._bigR=true;try{return _l.call(this,ctx,p,s,B,G)}finally{this._bigR=false}};
+ ["_seaLabels","_landforms","_cities","_simpleLabels"].forEach(k=>{const f=P[k];if(!f)return;P[k]=function(){if(!this._flat)return f.apply(this,arguments);this._bigR=true;try{return f.apply(this,arguments)}finally{this._bigR=false}}})})();
