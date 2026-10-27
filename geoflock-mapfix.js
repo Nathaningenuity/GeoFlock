@@ -90,6 +90,11 @@ if(typeof gfGlobeKey==="function"){const VG={key:null,sig:null,busy:false,n:0};c
   const eqS=toEq(GFL.canv.shade),eqL=GFL.canv.light?toEq(GFL.canv.light):null,W=GFG.W,H=GFG.H;
   const out=imgs.map((im,h)=>{const iw=im.naturalWidth||im.width,ih=im.naturalHeight||im.height,c=mk(iw,ih),x=c.getContext("2d");x.drawImage(im,0,0,iw,ih);x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
    x.globalCompositeOperation="multiply";x.drawImage(eqS,h*W/2,0,W/2,H,0,0,iw,ih);if(eqL){x.globalCompositeOperation="screen";x.drawImage(eqL,h*W/2,0,W/2,H,0,0,iw,ih)}x.globalCompositeOperation="source-over";return c});
+  /* the two halves meet at 0° and 180°: ease each edge toward the other so no seam line shows */
+  const join=(L,R,S)=>{const H=L.height,cl=L.getContext("2d"),cr=R.getContext("2d"),A=cl.getImageData(L.width-S,0,S,H),B=cr.getImageData(0,0,S,H),a=A.data,b=B.data,d=new Float32Array(H*3);
+   for(let y=0;y<H;y++)for(let c=0;c<3;c++){let s=0,k=0;for(let yy=Math.max(0,y-2);yy<=Math.min(H-1,y+2);yy++)for(let x=0;x<3;x++){s+=a[(yy*S+S-1-x)*4+c]-b[(yy*S+x)*4+c];k++}d[y*3+c]=s/k/2}
+   for(let y=0;y<H;y++)for(let x=0;x<S;x++){const w=1-x/S;for(let c=0;c<3;c++){a[(y*S+S-1-x)*4+c]-=d[y*3+c]*w;b[(y*S+x)*4+c]+=d[y*3+c]*w}}cl.putImageData(A,L.width-S,0);cr.putImageData(B,0,0)};
+  try{join(out[0],out[1],24);join(out[1],out[0],24)}catch(e){}
   out._seam=true;const old=VG.key,key="gfRelShade"+ ++VG.n;GLOBE_TEX[key]={kind:"halves",src:[]};_globeImgs[key]={cbs:[],ready:true,imgs:out};VG.key=key;VG.sig=sig;VG.busy=false;
   if(old){try{const g=amGlobe&&amGlobe.gl;if(g&&g.tex[old]){(g.tex[old].list||[g.tex[old]]).forEach(t=>{try{g.gl.deleteTexture(t)}catch(e){}});delete g.tex[old]}}catch(e){}delete _globeImgs[old];delete GLOBE_TEX[old]}
   try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}}
