@@ -1,0 +1,137 @@
+/* GeoFlock: map layers on the Maps page — Resources (mines, fields, farms, power plants), Connections (shipping lanes,
+   chokepoints, ports, undersea cables, pipelines, busiest flights) and Hazards (volcanoes, great earthquakes, cyclone
+   paths, tsunamis). Each is a folded switch: the switch turns the layer on, its ▾ picks what to show. Day & night and
+   Currents fold together as "Sun & sea".
+   Drawn on the flat map as an SVG layer (icons keep the same size on screen when zooming) and on the globe's overlay.
+   Data: geoflock-layers-data.js (GF_LAYER_DATA). */
+(function(){
+if(typeof renderAllMapsView!=="function"||typeof d3==="undefined")return;
+const D=window.GF_LAYER_DATA||{resources:[],connections:{},hazards:{}};
+const NS="http://www.w3.org/2000/svg";
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- what each layer holds ---------- */
+const RES_KIND={oil:["🛢️","Oil"],gas:["🔥","Natural gas"],coal:["⚫","Coal"],iron:["🔩","Iron ore"],copper:["🟠","Copper"],gold:["🪙","Gold"],silver:["🥈","Silver"],diamond:["💎","Diamonds"],lithium:["🔋","Lithium"],uranium:["☢️","Uranium"],aluminium:["🥫","Bauxite (aluminium)"],rare:["🧲","Rare earths"],nickel:["⚙️","Nickel"],cobalt:["🔵","Cobalt"],potash:["🌱","Potash (fertiliser)"],
+ coffee:["☕","Coffee"],cocoa:["🍫","Cocoa"],tea:["🍵","Tea"],rice:["🍚","Rice"],wheat:["🌾","Wheat"],soy:["🫘","Soybeans"],palm:["🌴","Palm oil"],sugar:["🍬","Sugar cane"],cotton:["🧶","Cotton"],rubber:["🛞","Rubber"],fish:["🐟","Fishing"],
+ nuclear:["⚛️","Nuclear power"],hydro:["💧","Hydropower dam"],solar:["☀️","Solar farm"],wind:["💨","Wind farm"],geothermal:["♨️","Geothermal power"]};
+const RES_GROUPS=[["fuel","Oil, gas & coal","#7a4b2a",["oil","gas","coal"]],["metal","Metals & minerals","#6d7f95",["iron","copper","aluminium","nickel","cobalt","lithium","uranium","rare","potash","silver"]],["gem","Gold & diamonds","#d4a514",["gold","diamond"]],["farm","Farms & fishing","#4f9a3f",["coffee","cocoa","tea","rice","wheat","soy","palm","sugar","cotton","rubber","fish"]],["power","Power plants","#2f86c9",["nuclear","hydro","solar","wind","geothermal"]]];
+const groupOf=k=>RES_GROUPS.find(g=>g[3].includes(k));
+const CON_PARTS=[["lanes","Shipping lanes"],["choke","Chokepoints"],["ports","Big ports"],["cables","Undersea internet cables"],["pipes","Pipelines"],["flights","Busiest flights"]];
+const HAZ_PARTS=[["volc","Volcanoes"],["quakes","Great earthquakes"],["cyc","Cyclone paths"],["tsu","Tsunamis"]];
+const L={res:{on:false,parts:new Set(RES_GROUPS.map(g=>g[0]))},con:{on:false,parts:new Set(CON_PARTS.map(p=>p[0]))},haz:{on:false,parts:new Set(HAZ_PARTS.map(p=>p[0]))}};
+window.GF_LAYERS=L;
+
+/* every drawable thing: {t:"pt"|"line", ll|line, icon, col, n, f, sz} */
+function items(){const out=[];
+ if(L.res.on)(D.resources||[]).forEach(r=>{const g=groupOf(r.k);if(!g||!L.res.parts.has(g[0]))return;const K=RES_KIND[r.k]||["•",r.k];out.push({t:"pt",ll:r.ll,icon:K[0],col:g[2],n:r.n,f:(K[1]+(r.c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[r.c]?" · "+COUNTRY_BY_CODE[r.c].n:""))+(r.f?". "+r.f:""),lay:"res"})});
+ if(L.con.on){const C=D.connections||{},P=L.con.parts;
+  if(P.has("lanes"))(C.lanes||[]).forEach(x=>out.push({t:"line",line:x.line,col:"#1f6fb8",w:1+(x.w||1)*.8,dash:"",n:x.n,f:"Shipping lane",op:.75,lay:"con"}));
+  if(P.has("cables"))(C.cables||[]).forEach(x=>out.push({t:"line",line:x.line,col:"#8a4fc7",w:1.2,dash:"",n:x.n,f:"Undersea internet cable"+(x.f?". "+x.f:"")+". Route: © TeleGeography, CC BY-SA 4.0",op:.8,lay:"con"}));
+  if(P.has("pipes"))(C.pipelines||[]).forEach(x=>out.push({t:"line",line:x.line,col:x.k==="gas"?"#e07b1a":"#5a3a22",w:2,dash:"6 3",n:x.n,f:(x.k==="gas"?"Gas pipeline":"Oil pipeline")+(x.f?". "+x.f:""),op:.95,lay:"con"}));
+  if(P.has("flights"))(C.flights||[]).forEach(x=>out.push({t:"line",line:[x.a,x.b],geo:true,col:"#d63b6a",w:1.4,dash:"2 4",n:"✈ "+x.n,f:x.f||"One of the world’s busiest flight routes",op:.9,lay:"con"}));
+  if(P.has("choke"))(C.chokepoints||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"⚠️",col:"#d9534f",n:x.n,f:"Chokepoint. "+(x.f||""),lay:"con"}));
+  if(P.has("ports"))(C.ports||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"⚓",col:"#1f6fb8",n:"Port of "+x.n,f:x.f||"",lay:"con",sz:.9}))}
+ if(L.haz.on){const H=D.hazards||{},P=L.haz.parts;
+  if(P.has("cyc"))(H.cyclones||[]).forEach(x=>{out.push({t:"line",line:x.line,col:"#3a7bd5",w:2.4,dash:"",n:x.n,f:"Typical cyclone path"+(x.f?". "+x.f:""),op:.8,arrow:true,lay:"haz"});if(x.line&&x.line[0])out.push({t:"pt",ll:x.line[0],icon:"🌀",col:"#3a7bd5",n:x.n,f:x.f||"Where these storms often begin",lay:"haz",sz:.9})});
+  if(P.has("volc"))(H.volcanoes||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"🌋",col:"#c0392b",n:x.n,f:"Volcano"+(x.c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[x.c]?" · "+COUNTRY_BY_CODE[x.c].n:"")+(x.f?". "+x.f:""),lay:"haz",sz:.85}));
+  if(P.has("quakes"))(H.quakes||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"",ring:true,mag:x.m||8,col:"#e0482f",n:x.n,f:x.f||"",lay:"haz"}));
+  if(P.has("tsu"))(H.tsunami||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"🌊",col:"#1c8fb0",n:x.n,f:"Tsunami"+(x.f?". "+x.f:""),lay:"haz",sz:.9}))}
+ return out}
+
+/* ---------- flat map ---------- */
+const proj=()=>typeof GLOBE_ROBINSON!=="undefined"?GLOBE_ROBINSON:d3.geoRobinson().scale(318.31).translate([1e3,500.5]);
+let sig="";
+function svgEl(){const w=document.getElementById("allMapsWrap");return w&&w.querySelector(":scope > svg")}
+function drawFlat(force){const svg=svgEl();if(!svg)return;let g=svg.querySelector(":scope > g.gf-layers");const any=L.res.on||L.con.on||L.haz.on;
+ if(!any){if(g)g.remove();sig="";return}
+ const s=JSON.stringify([L.res.on,[...L.res.parts],L.con.on,[...L.con.parts],L.haz.on,[...L.haz.parts]]);
+ if(g&&!force&&s===sig)return;sig=s;
+ if(!g){g=document.createElementNS(NS,"g");g.setAttribute("class","gf-layers");g.setAttribute("data-spin","no")}
+ const lab=svg.querySelector(":scope > g.map-labels");if(lab){if(g.nextElementSibling!==lab)svg.insertBefore(g,lab)}else if(g.parentNode!==svg)svg.appendChild(g);
+ const P=proj(),path=d3.geoPath(P),its=items();let lines="",pts="";
+ its.forEach((it,i)=>{if(it.t==="line"){const geo=it.geo?{type:"LineString",coordinates:it.line}:{type:"LineString",coordinates:it.line};const d=path(geo);if(!d)return;
+   lines+='<path class="gf-ly-hit" data-i="'+i+'" d="'+d+'"/><path class="gf-ly-line" d="'+d+'" style="stroke:'+it.col+';stroke-width:'+it.w+';stroke-opacity:'+(it.op||1)+(it.dash?";stroke-dasharray:"+it.dash:"")+'"/>'}
+  else{const p=P(it.ll);if(!p)return;const x=p[0].toFixed(1),y=p[1].toFixed(1);
+   if(it.ring){const r=Math.max(4,(it.mag-6.5)*4);pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'"><circle r="'+r+'" style="fill:'+it.col+';fill-opacity:.28;stroke:'+it.col+';stroke-width:1.6"/><circle r="2.2" style="fill:'+it.col+'"/></g>'}
+   else pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle r="9" style="fill:#fff;stroke:'+it.col+';stroke-width:1.8"/><text text-anchor="middle" dy=".36em" font-size="10.5">'+it.icon+"</text></g>"}});
+ g._items=its;g.innerHTML='<g class="gf-ly-lines">'+lines+'</g><g class="gf-ly-pts">'+pts+"</g>";scale(svg)}
+/* icons keep their size on screen */
+function scale(svg){const g=svg&&svg.querySelector(":scope > g.gf-layers");if(!g)return;const vb=svg.viewBox&&svg.viewBox.baseVal,w=svg.getBoundingClientRect().width;if(!vb||!w)return;
+ const z=2000/vb.width,k=Math.max(.05,vb.width/w)*(w<600?.85:1)*(z<1.6?.68:z<3?.82:1);if(g._k===k)return;g._k=k;
+ g.querySelectorAll(".gf-ly-pt").forEach(e=>{const s=k*(+e.dataset.sz||1);e.setAttribute("transform","translate("+e.dataset.x+","+e.dataset.y+") scale("+s.toFixed(3)+")")})}
+const watched=new WeakSet;
+function watch(){const svg=svgEl();if(!svg||watched.has(svg))return;watched.add(svg);let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;scale(svg)})}).observe(svg,{attributes:true,attributeFilter:["viewBox"]})}
+
+/* ---------- globe ---------- */
+function globe(){try{if(typeof amGlobe!=="undefined"&&amGlobe)amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}}
+if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){
+ try{if((L.res.on||L.con.on||L.haz.on)&&typeof amGlobe!=="undefined"&&this===amGlobe){const its=items(),path=d3.geoPath(p,ctx),c=[-this.rot[0],-this.rot[1]],pts=[];ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+  its.forEach(it=>{if(it.t!=="line")return;ctx.beginPath();path({type:"LineString",coordinates:it.line});ctx.strokeStyle=it.col;ctx.globalAlpha=it.op||1;ctx.lineWidth=it.w*1.1;ctx.setLineDash(it.dash?it.dash.split(" ").map(Number):[]);ctx.stroke()});
+  ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
+  its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(!q)return;
+   if(it.ring){const r=Math.max(4,(it.mag-6.5)*4);ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
+   else{const r=7.5*(it.sz||1);ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
+   pts.push([q[0],q[1],it])});
+  this._gfLayPts=pts;ctx.restore()}else if(this._gfLayPts)this._gfLayPts=null}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
+
+/* ---------- tooltip (flat and globe) ---------- */
+let tip=null;
+function showTip(it,x,y){if(!tip){tip=document.createElement("div");tip.className="gf-ly-tip";document.body.appendChild(tip)}tip.innerHTML="<b>"+esc(it.n)+"</b>"+(it.f?"<span>"+esc(it.f)+"</span>":"");tip.style.display="block";
+ const w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.min(innerWidth-w-8,x+14)+"px";tip.style.top=Math.max(8,y+16+h>innerHeight?y-h-10:y+16)+"px"}
+function hideTip(){if(tip)tip.style.display="none"}
+document.addEventListener("pointermove",e=>{const t=e.target;
+ if(t&&t.closest){const el=t.closest(".gf-layers .gf-ly-pt, .gf-layers .gf-ly-hit");if(el){const g=el.closest("g.gf-layers"),it=g&&g._items&&g._items[+el.dataset.i];if(it){showTip(it,e.clientX,e.clientY);return}}
+  if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayPts&&amGlobe.host&&amGlobe.host.contains(t)){const r=amGlobe.host.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;amGlobe._gfLayPts.forEach(([x,y,it])=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=it}});if(best){showTip(best,e.clientX,e.clientY);return}}}
+ hideTip()},{passive:true});
+/* a tap on an icon shows its note instead of opening the country under it */
+document.addEventListener("click",e=>{const el=e.target.closest&&e.target.closest(".gf-layers .gf-ly-pt");if(el){e.stopPropagation();e.preventDefault();const g=el.closest("g.gf-layers"),it=g._items[+el.dataset.i];if(it)showTip(it,e.clientX,e.clientY)}},true);
+
+/* ---------- switches: folded groups ---------- */
+const st=document.createElement("style");st.textContent=`
+g.gf-layers .gf-ly-line{ fill:none; vector-effect:non-scaling-stroke; pointer-events:none; }
+g.gf-layers .gf-ly-hit{ fill:none; stroke:transparent; stroke-width:9; vector-effect:non-scaling-stroke; pointer-events:stroke; }
+g.gf-layers .gf-ly-pt{ cursor:pointer; }
+g.gf-layers .gf-ly-pt circle{ vector-effect:non-scaling-stroke; }
+g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
+.gf-ly-tip{ position:fixed; z-index:9999; pointer-events:none; max-width:280px; background:rgba(16,28,48,.94); color:#fff; font-size:12.5px; line-height:1.35; padding:7px 10px; border-radius:9px; box-shadow:0 4px 14px rgba(0,0,0,.25); display:none; }
+.gf-ly-tip b{ display:block; font-size:13px; }
+.gf-ly-tip span{ display:block; opacity:.88; margin-top:2px; }
+#allMapsView .all-maps-label-controls{ position:relative; z-index:30; }
+.gf-ss-line{ display:flex; align-items:center; gap:4px; }
+.gf-fold-pop .gf-ly-chk{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; cursor:pointer; }
+.gf-fold-pop .gf-ly-chk i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+.gf-fold-pop .gf-ly-chk em{ font-style:normal; opacity:.75; }
+`;document.head.appendChild(st);
+const DEF=[["res","Resources",RES_GROUPS.map(g=>[g[0],g[1],g[2]])],["con","Connections",CON_PARTS.map(p=>[p[0],p[1],{lanes:"#1f6fb8",choke:"#d9534f",ports:"#1f6fb8",cables:"#8a4fc7",pipes:"#5a3a22",flights:"#d63b6a"}[p[0]]])],["haz","Hazards",HAZ_PARTS.map(p=>[p[0],p[1],{volc:"#c0392b",quakes:"#e0482f",cyc:"#3a7bd5",tsu:"#1c8fb0"}[p[0]]])]];
+function makeFold(id,name,parts){const g=document.createElement("span");g.className="gf-fold gf-ly-fold";g.dataset.g=name;g.dataset.ly=id;
+ g.innerHTML='<label class="switch gf-fsw"><input type="checkbox"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">'+name+'</span></label><button type="button" class="gf-fcaret" aria-haspopup="true" aria-expanded="false" title="Choose what to show">▾</button><div class="gf-fold-pop" hidden>'+
+  parts.map(([k,l,c])=>'<label class="gf-ly-chk"><input type="checkbox" data-p="'+k+'" checked><i style="background:'+c+'"></i>'+l+"</label>").join("")+"</div>";
+ const pop=g.querySelector(".gf-fold-pop"),car=g.querySelector(".gf-fcaret"),main=g.querySelector(".gf-fsw input");
+ car.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;car.setAttribute("aria-expanded",String(!pop.hidden))};
+ document.addEventListener("click",e=>{if(!g.contains(e.target))pop.hidden=true});
+ main.onchange=()=>{L[id].on=main.checked;L[id].auto=false;if(main.checked&&!L[id].parts.size)parts.forEach(p=>L[id].parts.add(p[0]));redraw()};
+ pop.querySelectorAll("[data-p]").forEach(c=>c.onchange=()=>{c.checked?L[id].parts.add(c.dataset.p):L[id].parts.delete(c.dataset.p);L[id].on=L[id].parts.size>0;L[id].auto=false;redraw()});
+ return g}
+function sync(){document.querySelectorAll(".gf-ly-fold").forEach(g=>{const S=L[g.dataset.ly],m=g.querySelector(".gf-fsw input");if(m.checked!==S.on)m.checked=S.on;g.querySelectorAll("[data-p]").forEach(c=>{const v=S.parts.has(c.dataset.p);if(c.checked!==v)c.checked=v})})}
+function redraw(){sync();drawFlat(true);globe()}
+const labOf=sw=>{const l=sw.querySelector(".switch-label");return l?l.textContent.trim():""};
+function mount(){const row=document.querySelector("#allMapsView .all-maps-label-controls");if(!row)return;
+ /* Sun & sea: Day & night and Currents */
+ let ss=row.querySelector('.gf-fold[data-g="Sun & sea"]');const sws=["Day & night","Currents"].map(m=>[...document.querySelectorAll("#allMapsView label.switch")].find(sw=>!sw.closest(".gf-fold-pop")&&labOf(sw)===m||sw.closest('.gf-fold[data-g="Sun & sea"]')&&labOf(sw)===m)).filter(Boolean);
+ if(sws.length){if(!ss){ss=document.createElement("span");ss.className="gf-fold";ss.dataset.g="Sun & sea";ss.innerHTML='<label class="switch gf-fsw"><input type="checkbox"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">Sun &amp; sea</span></label><button type="button" class="gf-fcaret" aria-haspopup="true" aria-expanded="false" title="Day and night, ocean currents">▾</button><div class="gf-fold-pop" hidden></div>';
+   sws[0].parentNode.insertBefore(ss,sws[0]);const pop=ss.querySelector(".gf-fold-pop"),car=ss.querySelector(".gf-fcaret"),main=ss.querySelector("input");
+   car.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden};document.addEventListener("click",e=>{if(!ss.contains(e.target))pop.hidden=true});
+   main.onchange=()=>{const want=main.checked;ss._sws.forEach(sw=>{const i=sw.querySelector("input");if(i&&i.checked!==want){i.checked=want;i.dispatchEvent(new Event("change",{bubbles:true}))}})}}
+  const pop=ss.querySelector(".gf-fold-pop");sws.forEach(sw=>{if(sw.parentNode!==pop)pop.appendChild(sw)});
+  /* the currents' own ▾ (which currents to show) sits next to its switch inside the fold */
+  const eim=row.querySelector(":scope > .gf-eim"),cur=sws.find(sw=>labOf(sw)==="Currents");if(eim&&cur){const line=document.createElement("span");line.className="gf-ss-line";cur.after(line);line.append(cur,eim)}ss._sws=sws;const m=ss.querySelector("input"),any=sws.some(sw=>sw.querySelector("input").checked);if(m.checked!==any)m.checked=any}
+ /* Resources, Connections, Hazards after it */
+ let after=ss||row.lastElementChild;DEF.forEach(([id,name,parts])=>{let g=row.querySelector('.gf-ly-fold[data-ly="'+id+'"]');if(!g){g=makeFold(id,name,parts);after.after(g)}after=g});
+ sync()}
+
+/* Resources come on by themselves on the Economy map (and go again when leaving it, unless you turned them on) */
+let lastMode=null;
+function modeWatch(){let m="";try{m=appMode==="allmaps"?allMapsColorMode:""}catch(e){}if(m===lastMode)return;const prev=lastMode;lastMode=m;
+ if(m==="gdp"&&!L.res.on){L.res.on=true;L.res.auto=true;redraw()}else if(prev==="gdp"&&L.res.auto){L.res.on=false;L.res.auto=false;redraw()}}
+setInterval(()=>{try{mount();modeWatch();watch();drawFlat(false)}catch(e){console.error(e)}},500);
+})();
