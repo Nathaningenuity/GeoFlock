@@ -93,16 +93,15 @@ function showTip(it,x,y){if(!tip){tip=document.createElement("div");tip.classNam
 function hideTip(){if(tip)tip.style.display="none";document.body.classList.remove("gf-ly-tipping")}
 document.addEventListener("pointermove",e=>{const t=e.target;
  if(t&&t.closest){const el=t.closest(".gf-layers .gf-ly-pt, .gf-layers .gf-ly-hit");if(el){const g=el.closest("g.gf-layers"),it=g&&g._items&&g._items[+el.dataset.i];if(it){showTip(it,e.clientX,e.clientY);return}}
-  if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayPts&&amGlobe.host&&amGlobe.host.contains(t)){const r=amGlobe.host.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;amGlobe._gfLayPts.forEach(([x,y,it])=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=it}});if(best){showTip(best,e.clientX,e.clientY);return}}}
+  if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayPts&&amGlobe.host&&amGlobe.host.contains(t)){const cv=amGlobe.host.querySelector("canvas.globe-canvas")||amGlobe.host,r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;amGlobe._gfLayPts.forEach(([x,y,it])=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=it}});if(best){showTip(best,e.clientX,e.clientY);return}}}
  hideTip()},{passive:true});
 /* a tap on an icon shows its note instead of opening the country under it */
 document.addEventListener("click",e=>{const el=e.target.closest&&e.target.closest(".gf-layers .gf-ly-pt");if(el){e.stopPropagation();e.preventDefault();const g=el.closest("g.gf-layers"),it=g._items[+el.dataset.i];if(it)showTip(it,e.clientX,e.clientY)}},true);
 
-/* ---------- Currents ▾: ocean currents, winds, jet streams, storm tracks (Day and night hidden for now) ---------- */
-try{if(typeof GF_EIM_ITEMS!=="undefined"){const keep=GF_EIM_ITEMS.filter(x=>x[0]!=="daynight"&&x[0]!=="air");GF_EIM_ITEMS.length=0;
-  keep.forEach(x=>{GF_EIM_ITEMS.push(x);if(x[0]==="currents"){GF_EIM_ITEMS.push(["winds","Winds","Winds near the ground: trade winds, westerlies and polar easterlies"]);GF_EIM_ITEMS.push(["jets","Jet streams","Fast rivers of air about 10 km up"])}})}
- if(typeof gfEIM==="function"){const E=gfEIM();if(E.sel.winds==null)E.sel.winds=E.sel.air?1:0;if(E.sel.jets==null)E.sel.jets=E.sel.air?1:0;E.sel.daynight=0}
- if(typeof gfEimOn==="function"){const _on=gfEimOn;gfEimOn=function(k){if(k==="daynight")return false;if(k==="winds"||k==="jets"||k==="air"){if(typeof appMode!=="undefined"&&appMode!=="allmaps")return false;const E=gfEIM();const user=k==="air"?!!(E.sel.winds||E.sel.jets):!!E.sel[k];if(E.on&&user)return true;if(typeof ps!=="undefined"&&ps){const S=gfTourStop(),C=S&&S.gfCur;return!!(C&&C.air)}return false}return _on.apply(this,arguments)}}}catch(e){console.error(e)}
+/* ---------- Currents ▾: ocean currents, air currents, storm tracks (Day and night hidden for now) ---------- */
+try{if(typeof GF_EIM_ITEMS!=="undefined"){for(let k=GF_EIM_ITEMS.length-1;k>=0;k--)if(GF_EIM_ITEMS[k][0]==="daynight")GF_EIM_ITEMS.splice(k,1)}
+ if(typeof gfEIM==="function")gfEIM().sel.daynight=0;
+ if(typeof gfEimOn==="function"){const _on=gfEimOn;gfEimOn=function(k){if(k==="daynight")return false;return _on.apply(this,arguments)}}}catch(e){console.error(e)}
 
 /* ---------- switches: folded groups ---------- */
 const st=document.createElement("style");st.textContent=`
