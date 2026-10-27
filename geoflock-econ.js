@@ -140,3 +140,59 @@ function cartoSync(){cartoChips();const on=curMode()==="population"&&carto&&type
 setInterval(cartoSync,300);
 {const s=document.createElement("style");s.textContent="#populationLegend.gf-carto-hide{display:none !important}";document.head.appendChild(s)}
 })();
+/* GeoFlock: number measures use smooth colour gradients instead of a few colour bands (Economy, Nature and People
+   measures), the map key always stays on the right (also for gradient keys like GDP), and the floating key always has
+   a "Show all" button where a colour can be picked out. */
+(function(){
+if(typeof TH_THEMES==="undefined")return;
+const hex=c=>{c=c.replace("#","");return[0,2,4].map(i=>parseInt(c.slice(i,i+2),16))};
+const mix=(a,b,t)=>"#"+a.map((v,i)=>Math.round(v+(b[i]-v)*t).toString(16).padStart(2,"0")).join("");
+/* People measures: the numbers are in each country's note ("1.61 children per woman (2024)"); the band edges in the
+   band names ("1.5 to 2.1") */
+["fert","age","life","urban","mig","farm"].forEach(k=>{const T=TH_THEMES[k];if(!T||T.grad||!T.info)return;try{
+ const ed=T.cats.slice(1).map(c=>parseFloat(String(c[1]).match(/-?[\d.]+/)));if(ed.some(isNaN)||ed.some((v,i)=>i&&v<=ed[i-1]))return;
+ const vals={};Object.entries(T.info).forEach(([c,s])=>{const m=String(s).match(/-?[\d.]+/);if(m)vals[c]=parseFloat(m[0])});
+ const v=Object.values(vals).sort((a,b)=>a-b);if(v.length<50)return;const lo=Math.min(v[Math.floor(v.length*.02)],ed[0]),hi=Math.max(v[Math.floor(v.length*.98)-1],ed[ed.length-1]);
+ const unit=/%/.test(T.cats[0][1])?"%":"";const f=x=>(Math.abs(x)<10?+x.toFixed(1):Math.round(x))+unit;
+ T.grad={vals,edges:[Math.max(0,lo)].concat(ed,[hi]),labels:[Math.max(0,lo)].concat(ed,[hi]).map(f)}}catch(e){}});
+function gradT(){try{const T=thTheme();return T&&T.grad?T:null}catch(e){return null}}
+function gradColor(T,v){const E=T.grad.edges,P=T.cats.map(c=>hex(c[2])),n=E.length-1;let i=0;while(i<n-1&&v>=E[i+1])i++;
+ let f=(v-E[i])/((E[i+1]-E[i])||1);f=Math.max(0,Math.min(1,f));const t=Math.max(0,Math.min(1,(i+f)/n))*(P.length-1),j=Math.min(P.length-2,Math.floor(t));return mix(P[j],P[j+1],t-j)}
+{const _c=thColor;thColor=function(code){const T=gradT();if(T&&code!=="aq"){const info=typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[code],dc=info&&info.countsAs||code,v=T.grad.vals[code]!=null?T.grad.vals[code]:T.grad.vals[dc];if(v!=null)return gradColor(T,v)}return _c.apply(this,arguments)}}
+{const _l=thLegendHTML;thLegendHTML=function(){const T=gradT();if(!T)return _l.apply(this,arguments);
+ return legendBarHTML(T.title+(T.grad.unit?' <small style="font-weight:600;opacity:.65">('+T.grad.unit+")</small>":""),T.cats.map(c=>c[2]),T.grad.labels)+'<span class="legend-note">'+T.note+" Grey: no data.</span>"}}
+
+/* the map key on the right: always there on the Maps page (also for gradient keys), and with "Show all" */
+/* flkSync shows the key only for some kinds of key and only once the key under the map has scrolled away; here it is
+   asked with the key reported as off screen, and gradient keys count too */
+if(typeof flkSync==="function"){const _f=flkSync;flkSync=function(){const lg=document.getElementById("populationLegend");let undo=null;
+ if(lg){if(lg.querySelector(".legend-gradient-bar")&&!lg.querySelector(":scope > .gf-lg-mark")){const m=document.createElement("span");m.className="legend-gradient gf-lg-mark";m.style.display="none";lg.appendChild(m)}
+  lg.getBoundingClientRect=()=>({top:-9999,bottom:-9998,height:1,left:0,right:0,width:0,x:0,y:-9999});undo=()=>{delete lg.getBoundingClientRect}}
+ let r;try{r=_f.apply(this,arguments)}finally{if(undo)undo()}try{showAll();layersPage()}catch(e){}return r}}
+/* the floating key follows the Map key / Layers pages of the key under the map */
+function layersPage(){const el=typeof flkEl==="function"&&flkEl(),lg=document.getElementById("populationLegend");if(!el||!lg)return;const body=el.querySelector(".flk-body"),h=el.querySelector(".flk-h");if(!body||!h)return;
+ const p2=body.querySelector(".gf-lk-p2"),has=!!lg.querySelector(":scope > .gf-lk-p2"),two=lg.classList.contains("gf-lk-on2");let t=h.querySelector(".flk-lk");
+ if(!has){if(t)t.remove();if(p2)p2.remove();return}
+ if(!t){t=document.createElement("button");t.type="button";t.className="flk-all flk-lk";t.onclick=e=>{e.stopPropagation();const b=lg.querySelector('[data-lkp="'+(lg.classList.contains("gf-lk-on2")?1:2)+'"]');if(b)b.click();setTimeout(()=>flkSync(true),40)};h.insertBefore(t,h.querySelector(".flk-fold"))}
+ t.textContent=two?"Map key":"Layers";
+ [...body.children].forEach(c=>{if(c.classList.contains("gf-lk-tabs"))c.style.display="none";else c.style.display=two===c.classList.contains("gf-lk-p2")?"":"none"});
+ if(p2){p2.style.flexDirection="column";p2.style.gap="8px"}}
+
+function picked(){let m="";try{m=allMapsColorMode}catch(e){}
+ if(m==="climate")return typeof climateSelection!=="undefined";
+ try{if(TH_MODES.has(m)&&!gradT())return true}catch(e){}
+ return !!(window.gfNatureFocusable&&gfNatureFocusable())}
+function showAll(){const el=typeof flkEl==="function"&&flkEl();if(!el||el.style.display==="none")return;const h=el.querySelector(".flk-h");if(!h)return;let b=h.querySelector(".flk-all");
+ if(!picked()){if(b)b.remove();return}
+ if(!b){b=document.createElement("button");b.type="button";b.className="flk-all";b.textContent="Show all";b.title="Show every colour again";
+  b.onclick=e=>{e.stopPropagation();let m="";try{m=allMapsColorMode}catch(er){}const w=document.getElementById("allMapsWrap");
+   try{if(m==="climate"){climateSelection.clear();applyClimateSelection()}else if(window.gfNatureFocusable&&gfNatureFocusable())gfNatureShowAll();else{thFocus=null;applyAllMapsColorMode(w)}}catch(er){console.error(er)}
+   try{amGlobe&&amGlobe.render()}catch(er){}setTimeout(()=>flkSync(true),40)};
+  const fold=h.querySelector(".flk-fold");h.insertBefore(b,fold||null)}
+ let on=false;try{const m=allMapsColorMode;on=m==="climate"?climateSelection.size>0:window.gfNatureFocusable&&gfNatureFocusable()?gfNatureFocused():!!thFocus}catch(e){}b.classList.toggle("on",on)}
+const st=document.createElement("style");st.textContent=`
+.flk-h .flk-all{ margin-left:auto; margin-right:6px; border:1px solid var(--line,rgba(0,0,0,.12)); background:var(--surface,#fff); color:inherit; border-radius:999px; padding:4px 10px; font:700 11.5px/1 inherit; cursor:pointer; opacity:.7; }
+.flk-body .legend-river i, .legend-river i{ height:0 !important; background:none !important; border:none !important; border-top:2px solid #2f7ab8 !important; border-radius:0 !important; width:18px; }
+.flk-h .flk-all.on{ background:var(--accent,#2f8a7a); color:#fff; border-color:transparent; opacity:1; }
+`;document.head.appendChild(st);
+})();

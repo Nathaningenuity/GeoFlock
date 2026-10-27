@@ -100,6 +100,7 @@ function card(h){tipHide();document.querySelectorAll(".gf-nat-back").forEach(x=>
  const o=document.createElement("div");o.className="game-modal-backdrop gf-nat-back";o.innerHTML='<div class="game-modal gf-nat-card" role="dialog"><button class="modal-x" type="button" aria-label="Close">×</button>'+body+'<p class="gf-nat-credit">'+esc(N.credit||"")+"</p></div>";
  document.body.appendChild(o);const close=()=>o.remove();o.querySelector(".modal-x").onclick=close;o.addEventListener("click",e=>{if(e.target===o)close()});document.addEventListener("keydown",function k(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",k)}})}
 window.gfNatureCard=card;
+window.gfNatureFocusable=()=>vecOn()&&allMapsSubMode.nature!=="eco";window.gfNatureFocused=()=>focus!=null;window.gfNatureShowAll=()=>{focus=null;rank=null;refresh()};
 
 /* ---------- legend ---------- */
 let rank=null;/* "intact" | "converted" */

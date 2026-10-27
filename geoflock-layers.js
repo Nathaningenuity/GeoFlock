@@ -170,7 +170,7 @@ function layersKey(){const row=(ic,t)=>'<span class="gf-lk-row">'+ic+"<span>"+t+
 function legendSync(){const lg=document.getElementById("populationLegend");if(!lg)return;const body=layersKey();let tabs=lg.querySelector(":scope > .gf-lk-tabs"),p2=lg.querySelector(":scope > .gf-lk-p2");
  if(!body){if(tabs)tabs.remove();if(p2)p2.remove();lg.classList.remove("gf-lk-on2","gf-lk-has");lgPage=1;lgSig="";return}
  lg.classList.add("gf-lk-has");
- if(!tabs){tabs=document.createElement("div");tabs.className="gf-lk-tabs";tabs.innerHTML='<button type="button" data-lkp="1">Map key</button><button type="button" data-lkp="2">Layers</button>';tabs.onclick=e=>{const b=e.target.closest("[data-lkp]");if(!b)return;e.stopPropagation();lgPage=+b.dataset.lkp;legendSync()};lg.insertBefore(tabs,lg.firstChild)}
+ if(!tabs){tabs=document.createElement("div");tabs.className="gf-lk-tabs";tabs.innerHTML='<button type="button" data-lkp="1">Map key</button><button type="button" data-lkp="2">Layers</button>';tabs.onclick=e=>{const b=e.target.closest("[data-lkp]");if(!b)return;e.stopPropagation();lgPage=+b.dataset.lkp;legendSync();try{flkSync(true)}catch(er){}};lg.insertBefore(tabs,lg.firstChild)}
  else if(lg.firstChild!==tabs)lg.insertBefore(tabs,lg.firstChild);
  if(!p2){p2=document.createElement("div");p2.className="gf-lk-p2";lg.appendChild(p2);lgSig=""}
  if(lgSig!==body){lgSig=body;p2.innerHTML=body}
