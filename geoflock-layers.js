@@ -88,9 +88,9 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
 
 /* ---------- tooltip (flat and globe) ---------- */
 let tip=null;
-function showTip(it,x,y){if(!tip){tip=document.createElement("div");tip.className="gf-ly-tip";document.body.appendChild(tip)}tip.innerHTML="<b>"+esc(it.n)+"</b>"+(it.f?"<span>"+esc(it.f)+"</span>":"");tip.style.display="block";
+function showTip(it,x,y){if(!tip){tip=document.createElement("div");tip.className="gf-ly-tip";document.body.appendChild(tip)}document.body.classList.add("gf-ly-tipping");tip.innerHTML="<b>"+esc(it.n)+"</b>"+(it.f?"<span>"+esc(it.f)+"</span>":"");tip.style.display="block";
  const w=tip.offsetWidth,h=tip.offsetHeight;tip.style.left=Math.min(innerWidth-w-8,x+14)+"px";tip.style.top=Math.max(8,y+16+h>innerHeight?y-h-10:y+16)+"px"}
-function hideTip(){if(tip)tip.style.display="none"}
+function hideTip(){if(tip)tip.style.display="none";document.body.classList.remove("gf-ly-tipping")}
 document.addEventListener("pointermove",e=>{const t=e.target;
  if(t&&t.closest){const el=t.closest(".gf-layers .gf-ly-pt, .gf-layers .gf-ly-hit");if(el){const g=el.closest("g.gf-layers"),it=g&&g._items&&g._items[+el.dataset.i];if(it){showTip(it,e.clientX,e.clientY);return}}
   if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._gfLayPts&&amGlobe.host&&amGlobe.host.contains(t)){const r=amGlobe.host.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;let best=null,bd=12;amGlobe._gfLayPts.forEach(([x,y,it])=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=it}});if(best){showTip(best,e.clientX,e.clientY);return}}}
@@ -114,6 +114,8 @@ g.gf-layers .gf-ly-true{ stroke:rgba(20,30,50,.6); stroke-width:1; vector-effect
 g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
 .gf-ly-tip{ position:fixed; z-index:9999; pointer-events:none; max-width:280px; background:rgba(16,28,48,.94); color:#fff; font-size:12.5px; line-height:1.35; padding:7px 10px; border-radius:9px; box-shadow:0 4px 14px rgba(0,0,0,.25); display:none; }
 .gf-ly-tip b{ display:block; font-size:13px; }
+/* while an icon's note is showing, the country tooltip under it steps aside */
+body.gf-ly-tipping .map-territory-tooltip, body.gf-ly-tipping .globe-tip{ visibility:hidden !important; }
 .gf-ly-tip span{ display:block; opacity:.88; margin-top:2px; }
 #allMapsView .all-maps-label-controls{ position:relative; z-index:80; }
 /* the switch rows (and their ▾ menus) sit above the tour button and map controls */
