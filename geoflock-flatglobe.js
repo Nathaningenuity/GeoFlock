@@ -232,6 +232,8 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    big enough on screen to hold its name (the Pyrenees, the Carpathians…), biggest first so they win the space. */
 (function(){const P=GlobeView.prototype,_lf=P._landforms;if(!_lf||typeof LANDFORM_DATA==="undefined")return;
  const EXT={};Object.values(LANDFORM_DATA).forEach(L=>(L||[]).forEach(r=>{if(Array.isArray(r)&&typeof r[0]==="string")EXT[r[0].toUpperCase()]=+r[4]||0}));
+ /* the stored tilts are clockwise-negative (the Appalachians rise to the north-east); two of them point the other way */
+ const AFIX={"CASCADE RANGE":74,"Antarctic Peninsula":-55.9};
  const COL={mountains:"#6b4423",plateaus:"#7a5a2e",deserts:"#9a5b16",plains:"#3f6b2a",basins:"#2f5f6b",peninsulas:"#4a4a6a"};
  P._landforms=function(ctx,p,O,show,cats){try{const list=[];Object.keys(O.landforms||{}).forEach(cat=>{if(cat==="peaks"||!cats.has(cat))return;O.landforms[cat].forEach(L=>list.push([cat,L]))});
   const S=this._flat?p.scale():this.size().r*this.zoom,k=S/318.31,ls=this.ls();
@@ -241,7 +243,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    const fs=Math.max(5.6*ls,Math.min(12.5,5*ls+Math.pow(ext,.5)*.18));const font="italic 700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
    const glyph=ctx.measureText(txt).width;if(glyph>ext*1.35&&ext<120)return;/* not yet room for it */
    let sp=n>1?(ext*.4-glyph)/(n-1):0;sp=Math.max(fs*.04,Math.min(sp,fs*.55));const tw=glyph+sp*(n-1);
-   const ang=Math.abs(L.ang||0)>30?-(L.ang)*Math.PI/180:0;const box=ang?[xy[0]-fs,xy[1]-tw/2,xy[0]+fs,xy[1]+tw/2]:[xy[0]-tw/2,xy[1]-fs/2,xy[0]+tw/2,xy[1]+fs/2];if(!fits(box))return;
+   const a0=L.n in AFIX?AFIX[L.n]:(L.ang||0),ang=Math.abs(a0)>30?a0*Math.PI/180:0;const box=ang?[xy[0]-fs,xy[1]-tw/2,xy[0]+fs,xy[1]+tw/2]:[xy[0]-tw/2,xy[1]-fs/2,xy[0]+tw/2,xy[1]+fs/2];if(!fits(box))return;
    ctx.save();ctx.globalAlpha=fs>10?.85:1;try{ctx.letterSpacing=sp.toFixed(1)+"px"}catch(e){}this._text(ctx,txt,xy[0]+(ctx.letterSpacing?sp/2:0),xy[1],COL[cat]||"#5a4630","rgba(255,255,255,0.62)",font,ang);ctx.restore()})}catch(e){console.error(e)}
   /* peaks as before */
   return _lf.call(this,ctx,p,Object.assign({},O,{landforms:{peaks:(O.landforms||{}).peaks||[]}}),show,cats)}})();

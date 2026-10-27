@@ -470,8 +470,8 @@ function coordSwitch(){const old=document.getElementById("gfCoordToggle");if(old
  if(!c){document.querySelectorAll(".gfk-coord").forEach(x=>x.remove());c=document.createElement("button");c.type="button";c.className="gfk-coord";c.title="GPS: where the pointer is. Click to hide or show";
   ["pointerdown","mousedown","touchstart","dblclick","wheel"].forEach(t=>c.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
   c.onclick=e=>{e.stopPropagation();coordOn=!coordOn;try{localStorage.setItem("gfGpsOff",coordOn?"0":"1")}catch(er){}gpsPaint(c,null)};h.appendChild(c);gpsPaint(c,null)}}
-/* the GPS sits just below the switch rows (on the globe the picture starts higher up, under the switches) */
-function gpsPlace(c,h){try{const row=document.querySelector("#allMapsView .all-maps-label-controls"),hr=h.getBoundingClientRect();let top=10;if(row&&row.offsetParent){const rb=row.getBoundingClientRect().bottom;if(rb>hr.top-4)top=Math.max(top,Math.round(rb-hr.top+10))}c.style.top=top+"px"}catch(e){}}
+/* the GPS sits in the map's bottom-right corner */
+function gpsPlace(c,h){}
 function gpsPaint(c,ll){c.classList.toggle("off",!coordOn);if(!coordOn){c.innerHTML=GPS_ICO;return}
  c.innerHTML=GPS_ICO+(ll?"<b>"+dms(ll[1],"N","S")+"</b><b>"+dms(ll[0],"E","W")+"</b><small>"+ll[1].toFixed(3)+", "+ll[0].toFixed(3)+"</small>":"<small>Point at the map</small>")}
 const dms=(v,p,n)=>{const a=Math.abs(v),d=Math.floor(a),m=Math.round((a-d)*60);return d+"°"+String(m===60?0:m).padStart(2,"0")+"′"+(v>=0?p:n)};
@@ -592,7 +592,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-gall{ position:absolute; z-index:7; left:50%; top:14px; transform:translateX(-50%); border:0; border-radius:999px; padding:7px 14px; background:rgba(255,255,255,.95); color:#22324a; font:700 12.5px system-ui; cursor:pointer; box-shadow:0 2px 10px rgba(20,40,70,.18); }
 .gfk-toast{ position:absolute; left:50%; top:52px; transform:translate(-50%,-8px); z-index:9; background:rgba(20,30,46,.88); color:#fff; padding:7px 14px; border-radius:999px; font:600 13px system-ui; opacity:0; transition:.2s; pointer-events:none; white-space:nowrap; }
 .gfk-toast.on{ opacity:1; transform:translate(-50%,0); }
-.gfk-coord{ position:absolute; left:50%; top:10px; transform:translateX(-50%); z-index:6; display:flex; align-items:center; gap:9px; border:0; cursor:pointer; background:rgba(255,255,255,.92); color:#1d3550; border-radius:999px; padding:5px 12px 5px 9px; font:600 12px system-ui; box-shadow:0 2px 10px rgba(20,40,70,.15); white-space:nowrap; min-height:28px; }
+.gfk-coord{ position:absolute; right:12px; bottom:12px; left:auto; top:auto !important; transform:none; z-index:6; display:flex; align-items:center; gap:9px; border:0; cursor:pointer; background:rgba(255,255,255,.92); color:#1d3550; border-radius:999px; padding:5px 12px 5px 9px; font:600 12px system-ui; box-shadow:0 2px 10px rgba(20,40,70,.15); white-space:nowrap; min-height:28px; }
 #allMapsWrap > .gfk-coord svg, .globe-host > .gfk-coord svg, .gfk-coord svg{ flex:none; color:#2f8a7a; width:15px !important; height:15px !important; min-width:0 !important; max-width:15px !important; position:static !important; display:block !important; transform:none !important; margin:0 !important; pointer-events:none; }
 #allMapsWrap > .gfk-coord, .globe-host > .gfk-coord{ width:auto !important; height:auto !important; }
 .gfk-coord b{ font:800 12.5px "JetBrains Mono",ui-monospace,monospace; min-width:5.8em; } .gfk-coord small{ opacity:.6; font-size:10.5px; }

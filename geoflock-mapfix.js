@@ -527,3 +527,29 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
    for(let y=0;y<H;y++){const row=y*w*4;for(let ch=0;ch<3;ch++){let L=0,R=0;for(let i=0;i<k;i++){L+=d[row+(S-1-i+k)*4+ch];R+=d[row+(S+i+k)*4+ch]}const delta=(R-L)/k;
      for(let x=0;x<w;x++){const dist=x-(S+k-.5),t=Math.max(0,1-Math.abs(dist)/(S+k));if(!t)continue;const o=row+x*4+ch;d[o]=Math.max(0,Math.min(255,d[o]+(dist<0?1:-1)*delta*.5*t))}}}
    g.putImageData(D,x0,0)}}catch(e){console.error(e)}return c}})();
+
+/* 34: the home page's flock flaps its wings by script rather than SVG <animate> tags, which some browsers (Safari above
+   all) leave frozen. Each bird keeps its own beat and phase; the loop only runs while the flock is on screen. */
+(function(){const NUM=/-?\d*\.?\d+/g,sh=s=>s.match(NUM).map(Number);
+ const ease=t=>t*t*(3-2*t);
+ function lerpD(A,B,t,tpl){let i=0;return tpl.replace(NUM,()=>{const v=A[i]+(B[i]-A[i])*t;i++;return v.toFixed(2)})}
+ function prep(svg){svg._gfB=[];svg.querySelectorAll("path").forEach(p=>{const a=p.querySelector("animate"),g=p.parentNode,at=g.querySelector("animateTransform");if(!a)return;
+   const vals=a.getAttribute("values").split(";"),kt=(a.getAttribute("keyTimes")||"").split(";").map(Number),dur=parseFloat(a.getAttribute("dur"))||.7,beg=parseFloat(a.getAttribute("begin"))||0;
+   if(sh(vals[0]).length!==sh(vals[2]).length)return;a.remove();if(at)at.remove();
+   svg._gfB.push({p,g,K:vals.map(sh),kt:kt.length===vals.length?kt:vals.map((v,i)=>i/(vals.length-1)),tpl:vals[1],dur,beg})})}
+ function tick(now){const svg=document.querySelector(".hi-birds");if(svg&&svg.isConnected&&svg.getBoundingClientRect().width){if(!svg._gfB)prep(svg);const t=now/1000;
+   svg._gfB.forEach(b=>{const f=(((t-b.beg)/b.dur)%1+1)%1;let k=0;while(k<b.kt.length-2&&f>b.kt[k+1])k++;const u=ease((f-b.kt[k])/(b.kt[k+1]-b.kt[k]||1));
+    b.p.setAttribute("d",lerpD(b.K[k],b.K[k+1],u,b.tpl));const y=Math.sin(f*2*Math.PI)*-1.3;b.g.setAttribute("transform","translate(0 "+y.toFixed(2)+")")})}
+  requestAnimationFrame(tick)}
+ if(!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches))requestAnimationFrame(tick)})();
+
+/* 35: the label size buttons live in the Labels switch's drop-down (with the other label choices), not in the map key */
+(function(){const st=document.createElement("style");st.textContent=`
+ #amLabPill{ display:none !important; }
+ .gf-lsize{ display:flex; align-items:center; gap:6px; margin-top:6px; padding-top:7px; border-top:1px solid rgba(29,53,80,.12); font:600 12px system-ui; color:#33475b; }
+ .gf-lsize span{ flex:1; } .gf-lsize button{ border:1px solid rgba(29,53,80,.18); background:#fff; color:#1d3550; border-radius:999px; min-width:34px; height:26px; font:700 13px system-ui; cursor:pointer; }
+ .gf-lsize button:hover{ background:#eef4f8; } body.dark-theme .gf-lsize{ color:#dbe6f2; } body.dark-theme .gf-lsize button{ background:#22324a; color:#dbe6f2; }`;document.head.appendChild(st);
+ const add=()=>{document.querySelectorAll('.gf-fold[data-g="Labels"] .gf-fold-pop').forEach(pop=>{if(pop.querySelector(".gf-lsize"))return;const r=document.createElement("div");r.className="gf-lsize";
+  r.innerHTML='<span>Label size</span><button type="button" data-lab="-" title="Smaller labels">A<sup>−</sup></button><button type="button" data-lab="+" title="Bigger labels">A<sup>+</sup></button>';
+  r.addEventListener("click",e=>{const b=e.target.closest("[data-lab]");if(!b)return;e.stopPropagation();e.preventDefault();try{amcLabel(b.dataset.lab==="+")}catch(er){}});pop.appendChild(r)})};
+ setInterval(()=>{try{add()}catch(e){}},700)})();
