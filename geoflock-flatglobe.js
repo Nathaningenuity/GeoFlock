@@ -211,11 +211,37 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
  const P=GlobeView.prototype,_dm=P._drawMeasure;P._drawMeasure=function(ctx,p){try{if(this._flat&&typeof stGlobe!=="undefined"&&this===stGlobe&&window._gfCapMap){const S=stars(),z=Math.min(1.6,Math.pow(Math.max(1,this.zoom),.4)),r=5.2*z;
    ctx.save();ctx.lineJoin="round";S.forEach(s=>{const q=p(s.ll);if(!q)return;ctx.save();ctx.translate(q[0],q[1]);ctx.scale(r/9,r/9);ctx.beginPath();ctx.moveTo(0,-9);[[2.6,-3.2],[8.6,-2.8],[4,1.2],[5.4,7.4],[0,4],[-5.4,7.4],[-4,1.2],[-8.6,-2.8],[-2.6,-3.2]].forEach(([x,y])=>ctx.lineTo(x,y));ctx.closePath();ctx.fillStyle="#f5c518";ctx.strokeStyle="rgba(90,60,0,.85)";ctx.lineWidth=1.4;ctx.fill();ctx.stroke();ctx.restore();s._q=q});
    const fs=Math.max(8,9*this.ls());ctx.font="700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.textBaseline="middle";const placed=[];
-   S.forEach(s=>{if(!s._q||!s.cap)return;const w=ctx.measureText(s.cap).width,x=s._q[0]+r+2,y=s._q[1],b=[x,y-fs/2,x+w,y+fs/2];if(placed.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]))return;placed.push(b);
+   S.forEach(s=>{s._lb=null;if(!s._q||!s.cap)return;const w=ctx.measureText(s.cap).width,x=s._q[0]+r+2,y=s._q[1],b=[x,y-fs/2,x+w,y+fs/2];if(placed.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]))return;placed.push(b);s._lb=b;
     ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=3;ctx.strokeText(s.cap,x,y);ctx.fillStyle="#3a2a00";ctx.fillText(s.cap,x,y)});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)};
- /* a click on (or next to) a star opens that country */
- document.addEventListener("pointerup",e=>{try{if(!window._gfCapMap||typeof stGlobe==="undefined"||!stGlobe||!stGlobe._flat)return;const cv=stGlobe.canvas,r=cv.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
-  const x=e.clientX-r.left,y=e.clientY-r.top;let best=null,bd=14;stars().forEach(s=>{if(!s._q)return;const d=Math.hypot(s._q[0]-x,s._q[1]-y);if(d<bd){bd=d;best=s}});if(best){const C=COUNTRY_BY_CODE[best.c];if(C){e.stopPropagation();setTimeout(()=>openFlagZoom(C),0)}}}catch(er){}},true);
+ /* a click on a star or on a capital's name opens a card about the capital: its photo, name and a short description,
+    with a link to the country (a drag of the map is not a click) */
+ let down=null;document.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY]},true);
+ const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+ function closeCard(){const c=document.getElementById("gfCapCard");if(c)c.remove()}
+ function openCard(s,x,y){closeCard();const C=COUNTRY_BY_CODE[s.c]||{},W=(window.GF_CAPWIKI||{})[s.c],ph=typeof window.gfCapPhoto==="function"?window.gfCapPhoto(s.c):null,host=stGlobe.host;
+  const d=document.createElement("div");d.id="gfCapCard";d.className="gf-capcard";
+  d.innerHTML='<button type="button" class="gf-cc-x" aria-label="Close">×</button>'+(ph?'<img src="'+ph.src+'" alt="'+esc(s.cap)+'">':"")+
+   '<div class="gf-cc-b"><b>'+esc(s.cap)+'</b><small>Capital of '+esc(C.n||"")+'</small>'+(W?'<p>'+esc(W.x)+'</p>':"")+
+   '<div class="gf-cc-f">'+(ph&&ph.by?'Photo: '+esc(ph.by)+(ph.lic?" · "+esc(ph.lic):"")+'<br>':"")+(W?'Text: <a href="https://en.wikipedia.org/wiki/'+encodeURIComponent(W.t.replace(/ /g,"_"))+'" target="_blank" rel="noopener">Wikipedia</a> · CC BY-SA':"")+'</div>'+
+   '<button type="button" class="gf-cc-go">About '+esc(C.n||"the country")+' →</button></div>';
+  if(getComputedStyle(host).position==="static")host.style.position="relative";host.appendChild(d);
+  const hw=host.clientWidth,hh=host.clientHeight,cw=d.offsetWidth,ch=d.offsetHeight;let L=x+16,T=y-ch/2;if(L+cw>hw-8)L=x-16-cw;L=Math.max(8,L);T=Math.max(8,Math.min(hh-ch-8,T));d.style.left=L+"px";d.style.top=T+"px";
+  d.querySelector(".gf-cc-x").onclick=closeCard;d.querySelector(".gf-cc-go").onclick=()=>{closeCard();if(C.c)openFlagZoom(C)};
+  d.addEventListener("pointerdown",e=>e.stopPropagation());d.addEventListener("pointerup",e=>e.stopPropagation())}
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCard()});
+ document.addEventListener("pointerup",e=>{try{if(!window._gfCapMap||typeof stGlobe==="undefined"||!stGlobe||!stGlobe._flat){closeCard();return}const cv=stGlobe.canvas,r=cv.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
+  if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;
+  const x=e.clientX-r.left,y=e.clientY-r.top;let best=null,bd=14;stars().forEach(s=>{if(!s._q)return;const d=Math.hypot(s._q[0]-x,s._q[1]-y);if(d<bd){bd=d;best=s}});
+  if(!best)best=stars().find(s=>s._lb&&x>=s._lb[0]-2&&x<=s._lb[2]+2&&y>=s._lb[1]-3&&y<=s._lb[3]+3)||null;
+  if(best){e.stopPropagation();const hr=stGlobe.host.getBoundingClientRect();openCard(best,e.clientX-hr.left,e.clientY-hr.top)}else closeCard()}catch(er){}},true);
+ const st=document.createElement("style");st.textContent=`
+ .gf-capcard{ position:absolute; z-index:30; width:270px; background:rgba(255,255,255,.98); border-radius:16px; box-shadow:0 10px 32px rgba(20,40,80,.25); overflow:hidden; color:#1d3550; font:13px/1.45 Inter,system-ui,sans-serif; }
+ .gf-capcard img{ display:block; width:100%; height:150px; object-fit:cover; }
+ .gf-cc-b{ padding:10px 14px 12px; } .gf-cc-b b{ display:block; font-size:17px; } .gf-cc-b small{ display:block; color:#5d6f82; font-size:12px; margin-bottom:6px; }
+ .gf-cc-b p{ margin:0 0 8px; } .gf-cc-f{ font-size:10.5px; color:#7a8a99; margin-bottom:8px; } .gf-cc-f a{ color:inherit; }
+ .gf-cc-go{ border:0; border-radius:999px; background:#2f8a7a; color:#fff; font:600 12.5px system-ui; padding:7px 13px; cursor:pointer; }
+ .gf-cc-x{ position:absolute; top:6px; right:6px; width:26px; height:26px; border:0; border-radius:50%; background:rgba(255,255,255,.9); color:#1d3550; font:700 16px/1 system-ui; cursor:pointer; box-shadow:0 1px 5px rgba(0,0,0,.2); }
+ body.dark-theme .gf-capcard{ background:rgba(28,38,56,.98); color:#e6eef7; } body.dark-theme .gf-cc-b small, body.dark-theme .gf-cc-f{ color:#9fb0c2; }`;document.head.appendChild(st);
 })();
 /* Landform names on the flat map and the globe: sized by how large the landform is on screen — huge regions (Sahara,
    Andes, Siberia) get big, widely spaced letters, small ranges small, tight ones — and every landform appears once it is

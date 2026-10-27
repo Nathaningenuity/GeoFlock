@@ -553,3 +553,6 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
   r.innerHTML='<span>Label size</span><button type="button" data-lab="-" title="Smaller labels">A<sup>−</sup></button><button type="button" data-lab="+" title="Bigger labels">A<sup>+</sup></button>';
   r.addEventListener("click",e=>{const b=e.target.closest("[data-lab]");if(!b)return;e.stopPropagation();e.preventDefault();try{amcLabel(b.dataset.lab==="+")}catch(er){}});pop.appendChild(r)})};
  setInterval(()=>{try{add()}catch(e){}},700)})();
+
+/* 36: flashcards swap two cards on drop, so the card under the pointer is outlined (not a line between cards) */
+(function(){const st=document.createElement("style");st.textContent=".flash.drag-line-before::before,.flash.drag-line-after::before{display:none !important}.flash.drag-line-before{outline:3px dashed rgba(110,90,200,.75);outline-offset:3px}";document.head.appendChild(st)})();

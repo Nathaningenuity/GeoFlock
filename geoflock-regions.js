@@ -12,7 +12,7 @@ const KIND1={territory:"Territory",sar:"Special administrative region",limited:"
 const BY={};GF_REG.forEach(r=>BY[r.c]=r);window.GF_REGIONS=GF_REG;
 const R="Special regions";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const LOCAL={krd:"flags-extra/krd.png",sml:"flags-extra/sml.png",abk:"flags-extra/abk.png",sos:"flags-extra/sos.png",ncy:"flags-extra/ncy.png",tdr:"flags-extra/tdr.png"};
+const LOCAL={krd:"flags-extra/krd.png",sml:"flags-extra/sml.png",abk:"flags-extra/abk.png",sos:"flags-extra/sos.png",ncy:"flags-extra/ncy.png",tdr:"flags-extra/tdr.png",xd:"https://flagcdn.com/w320/gb.png"};/* Akrotiri and Dhekelia fly the Union flag */
 try{Object.assign(FLAG_OVERRIDES,LOCAL)}catch(e){}
 const flag=c=>LOCAL[c]||("https://flagcdn.com/w320/"+c+".png");
 /* regions join the lookup table (never the 196-country list, so "All" and the totals stay as they were) */
