@@ -62,6 +62,7 @@ function other(host){if(!host)return;const mode=curMode(),main=MAIN[mode];let bo
 /* ---------- 3. Globe mode: the measure tabs start just under the tour button, wherever that ends ---------- */
 function place(){const v=document.getElementById("allMapsView");if(!v||!v.classList.contains("globe-on"))return;const subs=document.getElementById("amGlobeSubs"),rel=subs&&subs.parentElement;if(!rel)return;
  const r=rel.getBoundingClientRect();let top=10;
+ {const row=document.querySelector("#allMapsView .all-maps-label-controls");if(row&&row.offsetParent){const rb=row.getBoundingClientRect();if(rb.bottom>r.top-4)top=Math.max(top,Math.round(rb.bottom-r.top+10))}}
  document.querySelectorAll("#allMapsView .ps-launcher").forEach(l=>{if(!l.offsetParent)return;const b=l.getBoundingClientRect();if(b.bottom>r.top-4&&b.left<r.left+subs.offsetWidth+40)top=Math.max(top,Math.round(b.bottom-r.top+8))});
  const want=top+"px";if(v.style.getPropertyValue("--gf-subs-top")!==want)v.style.setProperty("--gf-subs-top",want)}
 
