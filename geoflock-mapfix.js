@@ -472,3 +472,37 @@ setInterval(()=>{const bar=document.getElementById("ptBar"),p=bar&&bar.parentEle
    an empty first slide in the profile) */
 (function(){try{if(typeof FLAG_OVERRIDES==="undefined")return;"ai aq as aw ax bl bm bv cc ck cw cx fk fo gf gg gi gl gp gs gu hk hm im io je ky mf mo mp mq ms nc nf nu pf pm pn pr re sh sj sx tc tf tk tw vg vi wf yt".split(" ").forEach(c=>{
  if(!FLAG_OVERRIDES[c]&&!(typeof FLAG_LOCAL!=="undefined"&&FLAG_LOCAL[c])&&!(typeof FLAG_WEBP!=="undefined"&&FLAG_WEBP[c]))FLAG_OVERRIDES[c]="flags-extra/t-"+c+".webp"})}catch(e){console.error(e)}})();
+/* 30. Landform names (ranges, deserts, plains…) and peak names grow at about half the zoom rate, like the icons: each
+   label keeps its whole-world size and is scaled by the square root of the zoom. Volcanic summits get a red triangle
+   with a notch for the crater; other peaks keep the brown triangle. */
+const GF_VOLC_PEAKS=new Set(["kilimanjaro","elbrus","ojos del salado","chimborazo","cotopaxi","popocatepetl","popocatépetl","pico de orizaba","citlaltepetl","rainier","fuji","ararat","damavand","teide","etna","vesuvius","erebus","st. helens","saint helens","shasta","hood","baker","mauna kea","mauna loa","kilauea","llullaillaco","sajama","nevado del ruiz","tolima","misti","el misti","villarrica","osorno","lanin","klyuchevskaya sopka","kliuchevskoi","kerinci","rinjani","semeru","merapi","agung","mayon","pinatubo","taal","cameroon","mount cameroon","nyiragongo","karisimbi","meru","kenya","stromboli","hekla","pico","tambora","krakatoa","takahe","sidley","aconcagua"]);
+function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mount|mt\.?|volcán|volcan|nevado|gora|cerro|gunung)\s+/,"").replace(/\s*\(.*$/,"").trim();if(n==="aconcagua"||n==="kenya")return false;if(GF_VOLC_PEAKS.has(n))return true;
+ try{return(GF_LAYER_DATA.hazards.volcanoes||[]).some(v=>String(v.n).toLowerCase().replace(/^(mount|mt\.?)\s+/,"").replace(/\s*\(.*$/,"").trim()===n)}catch(e){return false}}
+(function(){if(typeof rescaleLandforms!=="function")return;const _r=rescaleLandforms;
+ rescaleLandforms=function(svg,zoomRatio,sizeScale){const out=_r.apply(this,arguments);try{
+  let z=zoomRatio,s=sizeScale;if(z===undefined&&typeof lastLandformZoom!=="undefined"&&lastLandformZoom){z=lastLandformZoom.z;s=lastLandformZoom.s}
+  const g=svg&&svg.querySelector("g.map-landforms");if(!g||!z)return out;const zr=Math.min(1,z),q=Math.sqrt(zr),es1=(s||1)*labelZoomMult(1),RW=[1.26,1.16,1.04,.92,.84];
+  g.querySelectorAll("g.landform-item").forEach(item=>{if(item.style.display==="none")return;const t=item.querySelector("text");if(!t)return;const old=parseFloat(t.getAttribute("font-size"))||0;if(!old)return;
+   if(item.dataset.cat==="peaks"){const tier=CITY_TIERS[Math.min(+item.dataset.tier,CITY_TIERS.length-1)];const want=Math.max(.5,Math.min(9*es1,tier.font*es1))*q,f=want/old,pr=Math.max(.12,tier.dot*es1)*q;
+     const px=+item.dataset.x,py=+item.dataset.y,tx=parseFloat(t.getAttribute("x")),ty=parseFloat(t.getAttribute("y"));t.setAttribute("font-size",want.toFixed(2));t.setAttribute("stroke-width",(want*.3).toFixed(2));t.setAttribute("x",(px+(tx-px)*f).toFixed(2));t.setAttribute("y",(py+(ty-py)*f).toFixed(2));
+     const m=item.querySelector(".peak-mark");if(m){const v=item.dataset.volc!=null?item.dataset.volc==="1":(item.dataset.volc=gfIsVolcano(t.textContent.replace(/\s[\d,.]+\s*m$/,""))?"1":"0")==="1";
+      m.classList.toggle("is-volcano",v);m.setAttribute("d",v?"M"+(px-pr*1.15)+","+(py+pr*.85)+"L"+(px-pr*.32)+","+(py-pr*1.05)+"L"+(px-pr*.12)+","+(py-pr*.8)+"L"+(px+pr*.12)+","+(py-pr*.8)+"L"+(px+pr*.32)+","+(py-pr*1.05)+"L"+(px+pr*1.15)+","+(py+pr*.85)+"Z":"M"+px+","+(py-pr*1.25)+"L"+(px+pr*1.05)+","+(py+pr*.85)+"L"+(px-pr*1.05)+","+(py+pr*.85)+"Z")}
+     return}
+   const ext=parseFloat(item.dataset.ext)||0,rank=Math.min(Math.max(+item.dataset.rank||4,1),5),scr=5.2*es1,mapSize=ext*.05*RW[rank-1];
+   const want=Math.max(scr*.45,Math.min(Math.sqrt(mapSize*scr)*1.2,34))*q,f=want/old;if(Math.abs(f-1)<.01)return;
+   t.setAttribute("font-size",want.toFixed(2));t.setAttribute("stroke-width",(want*.26).toFixed(2));const ls=parseFloat(t.getAttribute("letter-spacing"))||0;if(ls)t.setAttribute("letter-spacing",(ls*f).toFixed(2))})}catch(e){console.error(e)}return out}
+ const st=document.createElement("style");st.textContent=".map-wrap svg path.peak-mark.is-volcano, .map-wrap.relief-mode svg path.peak-mark.is-volcano{ fill:#d63a2a !important; stroke:#fff; stroke-width:.25; }";document.head.appendChild(st)})();
+/* 31. The Labels and Plates ▾ menus look and work like the Landforms one: a "Show" checklist floating over the page */
+(function(){const st=document.createElement("style");st.textContent=`
+.gf-fold > .gf-fcaret{ background:none; border:1px solid transparent; border-radius:6px; cursor:pointer; color:rgba(var(--text-rgb),0.7); font-size:12px; line-height:1; padding:4px 5px; margin-left:0; opacity:1; }
+.gf-fold > .gf-fcaret:hover, .gf-fold > .gf-fcaret[aria-expanded="true"]{ border-color:var(--line); color:rgb(var(--text-rgb)); background:var(--raised); }
+.gf-fold-pop{ top:calc(100% + 8px) !important; min-width:200px; gap:2px !important; padding:8px !important; background:var(--surface) !important; border:1px solid var(--line); border-radius:10px !important; box-shadow:0 10px 28px rgba(0,0,0,0.22) !important; }
+.gf-fold-pop::before{ content:"Show"; display:block; padding:2px 6px 6px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:rgba(var(--text-rgb),0.55); border-bottom:1px solid var(--line); margin-bottom:4px; }
+.gf-fold-pop label.switch{ display:flex; align-items:center; gap:9px; width:100%; cursor:pointer; border-radius:6px; padding:7px 8px; margin:0; }
+.gf-fold-pop label.switch:hover{ background:var(--raised); }
+.gf-fold-pop label.switch .switch-track{ display:none !important; }
+.gf-fold-pop label.switch input{ position:absolute; opacity:0; pointer-events:none; }
+.gf-fold-pop label.switch .switch-label{ font-family:'Inter',sans-serif !important; font-size:13px !important; text-transform:none !important; letter-spacing:0 !important; color:rgb(var(--text-rgb)) !important; display:flex; align-items:center; gap:9px; font-weight:400; }
+.gf-fold-pop label.switch .switch-label::before{ content:""; width:15px; height:15px; border-radius:4px; border:1.5px solid rgba(var(--text-rgb),0.35); box-sizing:border-box; flex-shrink:0; }
+.gf-fold-pop label.switch:has(input:checked) .switch-label::before{ background:var(--gold); border-color:var(--gold); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.6 2.6L12 5.6' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-size:100%; }
+`;document.head.appendChild(st)})();

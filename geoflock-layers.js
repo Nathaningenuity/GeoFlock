@@ -21,6 +21,9 @@ const HAZ_PARTS=[["volc","Volcanoes"],["quakes","Great earthquakes"],["cyc","Cyc
 const L={res:{on:false,parts:new Set(RES_GROUPS.map(g=>g[0]))},con:{on:false,parts:new Set(CON_PARTS.map(p=>p[0]))},haz:{on:false,parts:new Set(HAZ_PARTS.map(p=>p[0]))}};
 window.GF_LAYERS=L;
 
+/* volcano: a red triangle with a notch for the crater (peaks are brown triangles); centred on 0,0, about 18 units across */
+const VOLC_D="M-9,7L-2.6,-8.4L-1,-6.4L1,-6.4L2.6,-8.4L9,7Z",PEAK_D="M0,-9.5L8.5,7L-8.5,7Z";
+try{if(typeof SPOT_SVG!=="undefined"){SPOT_SVG.volcano='<svg viewBox="-11 -11 22 22"><path d="'+VOLC_D+'" fill="#d63a2a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>';SPOT_SVG.mountain='<svg viewBox="-11 -11 22 22"><path d="'+PEAK_D+'" fill="#6d4b2f" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'}}catch(e){}
 /* every drawable thing: {t:"pt"|"line", ll|line, icon, col, n, f, sz} */
 function items(){const out=[];
  if(L.res.on)(D.resources||[]).forEach(r=>{const g=groupOf(r.k);if(!g||!L.res.parts.has(g[0]))return;const K=RES_KIND[r.k]||["•",r.k];out.push({t:"pt",ll:r.ll,icon:K[0],col:g[2],n:r.n,f:(K[1]+(r.c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[r.c]?" · "+COUNTRY_BY_CODE[r.c].n:""))+(r.f?". "+r.f:""),lay:"res"})});
@@ -33,7 +36,7 @@ function items(){const out=[];
   if(P.has("ports"))(C.ports||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"⚓",col:"#1f6fb8",n:"Port of "+x.n,f:x.f||"",lay:"con",sz:.9}))}
  if(L.haz.on){const H=D.hazards||{},P=L.haz.parts;
   if(P.has("cyc"))(H.cyclones||[]).forEach(x=>{out.push({t:"line",line:x.line,col:"#3a7bd5",w:2.4,dash:"",n:x.n,f:"Typical cyclone path"+(x.f?". "+x.f:""),op:.8,arrow:true,lay:"haz"});if(x.line&&x.line[0])out.push({t:"pt",ll:x.line[0],icon:"🌀",col:"#3a7bd5",n:x.n,f:x.f||"Where these storms often begin",lay:"haz",sz:.9})});
-  if(P.has("volc"))(H.volcanoes||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"🌋",col:"#c0392b",n:x.n,f:"Volcano"+(x.c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[x.c]?" · "+COUNTRY_BY_CODE[x.c].n:"")+(x.f?". "+x.f:""),lay:"haz",sz:.85}));
+  if(P.has("volc"))(H.volcanoes||[]).forEach(x=>out.push({t:"pt",tri:"volc",ll:x.ll,icon:"",col:"#c0392b",n:x.n,f:"Volcano"+(x.c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[x.c]?" · "+COUNTRY_BY_CODE[x.c].n:"")+(x.f?". "+x.f:""),lay:"haz",sz:.85}));
   if(P.has("quakes"))(H.quakes||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"",ring:true,mag:x.m||8,col:"#e0482f",n:x.n,f:x.f||"",lay:"haz"}));
   if(P.has("tsu"))(H.tsunami||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"🌊",col:"#1c8fb0",n:x.n,f:"Tsunami"+(x.f?". "+x.f:""),lay:"haz",sz:.9}))}
  return out}
@@ -56,6 +59,7 @@ function drawFlat(force){const svg=svgEl();if(!svg)return;let g=svg.querySelecto
    lines+='<path class="gf-ly-hit" data-i="'+i+'" d="'+d+'"/><path class="gf-ly-line" d="'+d+'" style="stroke:'+it.col+';stroke-width:'+it.w+';stroke-opacity:'+(it.op||1)+(it.dash?";stroke-dasharray:"+it.dash:"")+'"/>'}
   else{const p=P(it.ll);if(!p)return;const x=p[0].toFixed(1),y=p[1].toFixed(1);
    if(it.ring){const r=Math.max(4,(it.mag-6.5)*4);pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'"><circle r="'+r+'" style="fill:'+it.col+';fill-opacity:.28;stroke:'+it.col+';stroke-width:1.6"/><circle r="2.2" style="fill:'+it.col+'"/></g>'}
+   else if(it.tri)pts+='<g class="gf-ly-pt gf-ly-tri" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><path d="'+VOLC_D+'" style="fill:#d63a2a;stroke:#fff;stroke-width:1.4;stroke-linejoin:round"/></g>'
    else pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle r="9" style="fill:#fff;stroke:'+it.col+';stroke-width:1.8"/><text text-anchor="middle" dy=".36em" font-size="10.5">'+it.icon+"</text></g>"}});
  g._items=its;g.innerHTML='<g class="gf-ly-lines">'+lines+'</g><g class="gf-ly-pts">'+pts+"</g>";scale(svg)}
 /* icons keep their size on screen */
@@ -76,7 +80,8 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
   ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
   const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),vis=[];its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(q)vis.push({it,q,x:q[0],y:q[1],r:7.5*zk*(it.sz||1)})});spread(vis,1.02);
   vis.forEach(o=>{const it=o.it,q=[o.x,o.y];if(Math.hypot(o.x-o.q[0],o.y-o.q[1])>2){ctx.strokeStyle="rgba(20,30,50,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.q[0],o.q[1]);ctx.lineTo(o.x,o.y);ctx.stroke();ctx.fillStyle="rgba(20,30,50,.75)";ctx.beginPath();ctx.arc(o.q[0],o.q[1],1.8,0,7);ctx.fill()}
-   if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
+   if(it.tri){const r=o.r;ctx.save();ctx.translate(q[0],q[1]);ctx.scale(r/9,r/9);ctx.fillStyle="#d63a2a";ctx.strokeStyle="#fff";ctx.lineWidth=1.4*9/r;ctx.lineJoin="round";const P2=new Path2D(VOLC_D);ctx.fill(P2);ctx.stroke(P2);ctx.restore()}
+   else if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
    else{const r=o.r;ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*zk*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
    pts.push([q[0],q[1],it])});
   this._gfLayPts=pts;ctx.restore()}else if(this._gfLayPts)this._gfLayPts=null}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
@@ -115,22 +120,26 @@ g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
 #allMapsView .controls-row.all-maps-controls{ z-index:30 !important; }
 .gf-eim-pop [data-eim="daynight"]{ display:none !important; }
 .gf-ss-line{ display:flex; align-items:center; gap:4px; }
+.lf-item .gf-ly-dot{ width:9px; height:9px; border-radius:50%; margin-left:auto; flex:none; }
 .gf-fold-pop .gf-ly-chk{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; cursor:pointer; }
 .gf-fold-pop .gf-ly-chk i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
 .gf-fold-pop .gf-ly-chk em{ font-style:normal; opacity:.75; }
 `;document.head.appendChild(st);
 const DEF=[["res","Resources",RES_GROUPS.map(g=>[g[0],g[1],g[2]])],["con","Connections",CON_PARTS.map(p=>[p[0],p[1],{lanes:"#1f6fb8",choke:"#d9534f",ports:"#1f6fb8",cables:"#8a4fc7",pipes:"#5a3a22",flights:"#d63b6a"}[p[0]]])],["haz","Hazards",HAZ_PARTS.map(p=>[p[0],p[1],{volc:"#c0392b",quakes:"#e0482f",cyc:"#3a7bd5",tsu:"#1c8fb0"}[p[0]]])]];
-function makeFold(id,name,parts){const g=document.createElement("span");g.className="gf-fold gf-ly-fold";g.dataset.g=name;g.dataset.ly=id;
- g.innerHTML='<label class="switch gf-fsw"><input type="checkbox"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">'+name+'</span></label><button type="button" class="gf-fcaret" aria-haspopup="true" aria-expanded="false" title="Choose what to show">▾</button><div class="gf-fold-pop" hidden>'+
-  parts.map(([k,l,c])=>'<label class="gf-ly-chk"><input type="checkbox" data-p="'+k+'" checked><i style="background:'+c+'"></i>'+l+"</label>").join("")+"</div>";
- const pop=g.querySelector(".gf-fold-pop"),car=g.querySelector(".gf-fcaret"),main=g.querySelector(".gf-fsw input");
+/* built like the Landforms switch: switch, ▾, and a "Show — All · None" checklist floating over the page */
+function makeFold(id,name,parts){const g=document.createElement("span");g.className="lf-control gf-ly-fold";g.dataset.g=name;g.dataset.ly=id;
+ g.innerHTML='<label class="switch"><input type="checkbox"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">'+name+'</span></label><button type="button" class="lf-caret" aria-haspopup="true" aria-expanded="false" title="Choose what to show">▾</button><div class="lf-pop" role="menu" hidden><div class="lf-pop-head"><span>Show</span><span><button type="button" class="lf-all">All</button> · <button type="button" class="lf-none">None</button></span></div>'+
+  parts.map(([k,l,c])=>'<button type="button" class="lf-item on" role="menuitemcheckbox" aria-checked="true" data-p="'+k+'"><i aria-hidden="true"></i>'+l+'<b class="gf-ly-dot" style="background:'+c+'"></b></button>').join("")+"</div>";
+ const pop=g.querySelector(".lf-pop"),car=g.querySelector(".lf-caret"),main=g.querySelector("label.switch input");
  car.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;car.setAttribute("aria-expanded",String(!pop.hidden))};
- document.addEventListener("click",e=>{if(!g.contains(e.target))pop.hidden=true});
+ document.addEventListener("click",e=>{if(!g.contains(e.target)){pop.hidden=true;car.setAttribute("aria-expanded","false")}});
  main.onchange=()=>{L[id].on=main.checked;L[id].auto=false;if(main.checked&&!L[id].parts.size)parts.forEach(p=>L[id].parts.add(p[0]));redraw()};
- pop.querySelectorAll("[data-p]").forEach(c=>c.onchange=()=>{c.checked?L[id].parts.add(c.dataset.p):L[id].parts.delete(c.dataset.p);L[id].on=L[id].parts.size>0;L[id].auto=false;redraw()});
+ pop.querySelectorAll("[data-p]").forEach(c=>c.onclick=e=>{e.stopPropagation();const k=c.dataset.p;L[id].parts.has(k)?L[id].parts.delete(k):L[id].parts.add(k);L[id].on=L[id].parts.size>0;L[id].auto=false;redraw()});
+ pop.querySelector(".lf-all").onclick=e=>{e.stopPropagation();parts.forEach(p=>L[id].parts.add(p[0]));L[id].on=true;L[id].auto=false;redraw()};
+ pop.querySelector(".lf-none").onclick=e=>{e.stopPropagation();L[id].parts.clear();L[id].on=false;L[id].auto=false;redraw()};
  return g}
-function sync(){document.querySelectorAll(".gf-ly-fold").forEach(g=>{const S=L[g.dataset.ly],m=g.querySelector(".gf-fsw input");if(m.checked!==S.on)m.checked=S.on;g.querySelectorAll("[data-p]").forEach(c=>{const v=S.parts.has(c.dataset.p);if(c.checked!==v)c.checked=v})})}
-function redraw(){sync();drawFlat(true);globe()}
+function sync(){document.querySelectorAll(".gf-ly-fold").forEach(g=>{const S=L[g.dataset.ly],m=g.querySelector("label.switch input");if(m.checked!==S.on)m.checked=S.on;g.querySelectorAll("[data-p]").forEach(c=>{const v=S.parts.has(c.dataset.p);c.classList.toggle("on",v);c.setAttribute("aria-checked",String(v))})})}
+function redraw(){sync();drawFlat(true);globe();try{legendSync()}catch(e){}}
 const labOf=sw=>{const l=sw.querySelector(".switch-label");return l?l.textContent.trim():""};
 function mount(){const row=document.querySelector("#allMapsView .all-maps-label-controls");if(!row)return;
  /* Currents stays its own switch (with its ▾); Day & night is hidden for now (and kept off) */
@@ -142,9 +151,44 @@ function mount(){const row=document.querySelector("#allMapsView .all-maps-label-
  DEF.forEach(([id,name,parts])=>{let g=row.querySelector('.gf-ly-fold[data-ly="'+id+'"]');if(!g)g=makeFold(id,name,parts);if(ctl&&ctl.parentNode===row){if(g.nextElementSibling!==ctl&&!(g.nextElementSibling&&g.nextElementSibling.classList.contains("gf-ly-fold")&&g.compareDocumentPosition(ctl)&Node.DOCUMENT_POSITION_FOLLOWING))row.insertBefore(g,ctl)}else if(!g.parentNode)(eim||cur||row.lastElementChild).after(g)});
  sync()}
 
+/* ---------- the map key gets a second page, "Layers", explaining the symbols of the layers that are on ---------- */
+let lgPage=1,lgSig="";
+function dotIcon(icon,col){return'<svg viewBox="-11 -11 22 22" width="20" height="20"><circle r="9" fill="#fff" stroke="'+col+'" stroke-width="1.8"/><text text-anchor="middle" dy=".36em" font-size="10.5">'+icon+"</text></svg>"}
+function lineIcon(col,w,dash){return'<svg viewBox="0 0 26 12" width="26" height="12"><path d="M1 6 Q8 1 13 6 T25 6" fill="none" stroke="'+col+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="'+dash+'"':"")+' stroke-linecap="round"/></svg>'}
+function layersKey(){const row=(ic,t)=>'<span class="gf-lk-row">'+ic+"<span>"+t+"</span></span>";let h="";
+ if(L.res.on){const have=new Set((D.resources||[]).map(r=>r.k));RES_GROUPS.forEach(([gk,gl,col,kinds])=>{if(!L.res.parts.has(gk))return;const ks=kinds.filter(k=>have.has(k));if(!ks.length)return;
+   h+='<div class="gf-lk-sec"><b>'+gl+"</b>"+ks.map(k=>row(dotIcon(RES_KIND[k][0],col),RES_KIND[k][1])).join("")+"</div>"})}
+ if(L.con.on){const P=L.con.parts,r=[];if(P.has("lanes"))r.push(row(lineIcon("#1f6fb8",3),"Shipping lane (thicker = busier)"));if(P.has("choke"))r.push(row(dotIcon("⚠️","#d9534f"),"Chokepoint: a narrow sea passage"));if(P.has("ports"))r.push(row(dotIcon("⚓","#1f6fb8"),"Big port"));
+  if(P.has("cables"))r.push(row(lineIcon("#8a4fc7",1.4),"Undersea internet cable"));if(P.has("pipes")){r.push(row(lineIcon("#5a3a22",2,"6 3"),"Oil pipeline"));r.push(row(lineIcon("#e07b1a",2,"6 3"),"Gas pipeline"))}if(P.has("flights"))r.push(row(lineIcon("#d63b6a",1.6,"2 4"),"Busy flight route"));
+  if(r.length)h+='<div class="gf-lk-sec"><b>Connections</b>'+r.join("")+"</div>"}
+ if(L.haz.on){const P=L.haz.parts,r=[];if(P.has("volc"))r.push(row('<svg viewBox="-11 -11 22 22" width="20" height="20"><path d="'+VOLC_D+'" fill="#d63a2a" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>',"Volcano"));
+  if(P.has("quakes"))r.push(row('<svg viewBox="-11 -11 22 22" width="20" height="20"><circle r="8" fill="#e0482f" fill-opacity=".28" stroke="#e0482f" stroke-width="1.6"/><circle r="2.2" fill="#e0482f"/></svg>',"Great earthquake (bigger ring = stronger)"));
+  if(P.has("cyc"))r.push(row(lineIcon("#3a7bd5",2.4),"Usual cyclone path, starting at 🌀"));if(P.has("tsu"))r.push(row(dotIcon("🌊","#1c8fb0"),"Big tsunami"));
+  if(r.length)h+='<div class="gf-lk-sec"><b>Hazards</b>'+r.join("")+"</div>"}
+ return h}
+function legendSync(){const lg=document.getElementById("populationLegend");if(!lg)return;const body=layersKey();let tabs=lg.querySelector(":scope > .gf-lk-tabs"),p2=lg.querySelector(":scope > .gf-lk-p2");
+ if(!body){if(tabs)tabs.remove();if(p2)p2.remove();lg.classList.remove("gf-lk-on2","gf-lk-has");lgPage=1;lgSig="";return}
+ lg.classList.add("gf-lk-has");
+ if(!tabs){tabs=document.createElement("div");tabs.className="gf-lk-tabs";tabs.innerHTML='<button type="button" data-lkp="1">Map key</button><button type="button" data-lkp="2">Layers</button>';tabs.onclick=e=>{const b=e.target.closest("[data-lkp]");if(!b)return;e.stopPropagation();lgPage=+b.dataset.lkp;legendSync()};lg.insertBefore(tabs,lg.firstChild)}
+ else if(lg.firstChild!==tabs)lg.insertBefore(tabs,lg.firstChild);
+ if(!p2){p2=document.createElement("div");p2.className="gf-lk-p2";lg.appendChild(p2);lgSig=""}
+ if(lgSig!==body){lgSig=body;p2.innerHTML=body}
+ tabs.querySelectorAll("[data-lkp]").forEach(b=>b.classList.toggle("on",+b.dataset.lkp===lgPage));lg.classList.toggle("gf-lk-on2",lgPage===2)}
+{const st=document.createElement("style");st.textContent=`
+#populationLegend > .gf-lk-tabs{ display:flex; gap:4px; width:100%; flex-basis:100%; margin:0 0 6px; }
+#populationLegend > .gf-lk-tabs button{ border:1px solid var(--line,rgba(0,0,0,.12)); background:var(--surface,#fff); color:inherit; border-radius:999px; padding:4px 11px; font:700 12px/1 inherit; cursor:pointer; }
+#populationLegend > .gf-lk-tabs button.on{ background:var(--accent,#2f8a7a); border-color:transparent; color:#fff; }
+#populationLegend.gf-lk-on2 > :not(.gf-lk-tabs):not(.gf-lk-p2){ display:none !important; }
+#populationLegend:not(.gf-lk-on2) > .gf-lk-p2{ display:none !important; }
+#populationLegend > .gf-lk-p2{ display:flex; flex-wrap:wrap; gap:10px 22px; width:100%; flex-basis:100%; }
+.gf-lk-sec{ display:flex; flex-direction:column; gap:3px; min-width:170px; }
+.gf-lk-sec > b{ font-size:12px; text-transform:uppercase; letter-spacing:.06em; opacity:.7; margin-bottom:2px; }
+.gf-lk-row{ display:flex; align-items:center; gap:8px; font-size:12.5px; }
+.gf-lk-row svg{ flex:none; }
+`;document.head.appendChild(st)}
 /* Resources come on by themselves on the Economy map (and go again when leaving it, unless you turned them on) */
 let lastMode=null;
 function modeWatch(){let m="";try{m=appMode==="allmaps"?allMapsColorMode:""}catch(e){}if(m===lastMode)return;const prev=lastMode;lastMode=m;
  if(m==="gdp"&&!L.res.on){L.res.on=true;L.res.auto=true;redraw()}else if(prev==="gdp"&&L.res.auto){L.res.on=false;L.res.auto=false;redraw()}}
-setInterval(()=>{try{mount();modeWatch();watch();drawFlat(false)}catch(e){console.error(e)}},500);
+setInterval(()=>{try{mount();modeWatch();watch();drawFlat(false);legendSync()}catch(e){console.error(e)}},500);
 })();
