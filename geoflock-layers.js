@@ -57,7 +57,8 @@ function drawFlat(force){const svg=svgEl();if(!svg)return;let g=svg.querySelecto
  g._items=its;g.innerHTML='<g class="gf-ly-lines">'+lines+'</g><g class="gf-ly-pts">'+pts+"</g>";scale(svg)}
 /* icons keep their size on screen */
 function scale(svg){const g=svg&&svg.querySelector(":scope > g.gf-layers");if(!g)return;const vb=svg.viewBox&&svg.viewBox.baseVal,w=svg.getBoundingClientRect().width;if(!vb||!w)return;
- const z=2000/vb.width,k=Math.max(.05,vb.width/w)*(w<600?.85:1)*(z<1.6?.68:z<3?.82:1);if(g._k===k)return;g._k=k;
+ /* icons grow at about half the zoom rate (like the capitals and landform icons) */
+ const z=Math.max(1,2000/vb.width),k=Math.max(.05,vb.width/w)*(w<600?.85:1)*Math.min(2.2,.66*Math.pow(z,.5));if(g._k===k)return;g._k=k;
  g.querySelectorAll(".gf-ly-pt").forEach(e=>{const s=k*(+e.dataset.sz||1);e.setAttribute("transform","translate("+e.dataset.x+","+e.dataset.y+") scale("+s.toFixed(3)+")")})}
 const watched=new WeakSet;
 function watch(){const svg=svgEl();if(!svg||watched.has(svg))return;watched.add(svg);let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;scale(svg)})}).observe(svg,{attributes:true,attributeFilter:["viewBox"]})}
@@ -69,8 +70,8 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
   its.forEach(it=>{if(it.t!=="line")return;ctx.beginPath();path({type:"LineString",coordinates:it.line});ctx.strokeStyle=it.col;ctx.globalAlpha=it.op||1;ctx.lineWidth=it.w*1.1;ctx.setLineDash(it.dash?it.dash.split(" ").map(Number):[]);ctx.stroke()});
   ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
   its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(!q)return;
-   if(it.ring){const r=Math.max(4,(it.mag-6.5)*4);ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
-   else{const r=7.5*(it.sz||1);ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
+   if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
+   else{const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),r=7.5*zk*(it.sz||1);ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*zk*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
    pts.push([q[0],q[1],it])});
   this._gfLayPts=pts;ctx.restore()}else if(this._gfLayPts)this._gfLayPts=null}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
 
