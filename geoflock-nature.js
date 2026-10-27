@@ -72,13 +72,16 @@ function hit(ll){if(!ll)return null;const t=allMapsSubMode.nature;
  if(t==="footprint"){const f=(N.footprint.features||[]).find(f=>inside(f,ll));if(!f)return null;const c=FOOT.find(c=>c[0]===f.properties.k);return{kind:"foot",d:{n:c?c[1]:""}}}
  return null}
 function llAt(cx,cy){try{const onGlobe=typeof amGlobeOn==="function"&&amGlobeOn();if(!onGlobe)return typeof amtToLL==="function"?amtToLL(cx,cy):null;
-  const r=amGlobe.host.getBoundingClientRect(),pr=amGlobe.projection();const ll=pr.invert&&pr.invert([cx-r.left,cy-r.top]);if(!ll)return null;const c=[-amGlobe.rot[0],-amGlobe.rot[1]];return d3.geoDistance(ll,c)<Math.PI/2?ll:null}catch(e){return null}}
+  const cv=amGlobe.host.querySelector("canvas.globe-canvas")||amGlobe.host,r=cv.getBoundingClientRect(),pr=amGlobe.projection();const ll=pr.invert&&pr.invert([cx-r.left,cy-r.top]);if(!ll)return null;const c=[-amGlobe.rot[0],-amGlobe.rot[1]];return d3.geoDistance(ll,c)<Math.PI/2?ll:null}catch(e){return null}}
+/* the country under the pointer, for the note ("South Sudan · Tropical savanna") */
+let CF=null;function countryAt(ll){try{if(!CF)CF=projFeatures().filter(f=>f.geometry).map(f=>({f,b:d3.geoBounds(f)}));
+ for(const x of CF){const[[x0,y0],[x1,y1]]=x.b;if(ll[1]<y0||ll[1]>y1)continue;if(x0<=x1&&(ll[0]<x0||ll[0]>x1))continue;if(d3.geoContains(x.f,ll)){const c=String(x.f.properties.c||"");return(typeof projName==="function"?projName(c,""):"")||(COUNTRY_BY_CODE[c]||{}).n||""}}}catch(e){}return""}
 let tip=null,lastXY=null,raf=0;
 function tipShow(h,x,y){if(!tip){tip=document.createElement("div");tip.className="gf-nat-tip";document.body.appendChild(tip)}document.body.classList.add("gf-ly-tipping");tip.innerHTML=h;tip.style.display="block";const w=tip.offsetWidth;tip.style.left=Math.min(innerWidth-w-8,x+14)+"px";tip.style.top=(y+16)+"px"}
 function tipHide(){if(tip)tip.style.display="none";document.body.classList.remove("gf-ly-tipping")}
 document.addEventListener("pointermove",e=>{if(!vecOn()||document.querySelector(".gf-nat-back")){if(tip&&tip.style.display!=="none")tipHide();return}const t=e.target;const over=t&&t.closest&&t.closest("#allMapsWrap, #amGlobeHost");if(!over||t.closest(".gf-ly-pt,.am-tools,#gfKit,.ps-launcher,button")){tipHide();return}
- lastXY=[e.clientX,e.clientY];if(raf)return;raf=requestAnimationFrame(()=>{raf=0;if(!lastXY)return;const h=hit(llAt(lastXY[0],lastXY[1]));if(!h){tipHide();return}
-  const d=h.d,sub=h.kind==="biome"?"Biome":h.kind==="eco"?"Ecoregion · "+((CARD[d.b]||{}).n||""):h.kind==="realm"?"Ocean realm":"Human footprint";tipShow("<small>"+esc(sub)+"</small><b>"+esc(d.n)+"</b>"+(h.kind!=="foot"?"<em>Click to learn more</em>":""),lastXY[0],lastXY[1])})},{passive:true});
+ lastXY=[e.clientX,e.clientY];if(raf)return;raf=requestAnimationFrame(()=>{raf=0;if(!lastXY)return;const LL=llAt(lastXY[0],lastXY[1]),h=hit(LL);if(!h){tipHide();return}const cn=LL&&h.kind!=="realm"?countryAt(LL):"";
+  const d=h.d,sub=(cn?cn+" · ":"")+(h.kind==="biome"?"Biome":h.kind==="eco"?"Ecoregion · "+((CARD[d.b]||{}).n||""):h.kind==="realm"?"Ocean realm":"Human footprint");tipShow("<small>"+esc(sub)+"</small><b>"+esc(d.n)+"</b>"+(h.kind!=="foot"?"<em>Click to learn more</em>":""),lastXY[0],lastXY[1])})},{passive:true});
 document.addEventListener("pointerleave",tipHide);
 let down=null;document.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY]},true);
 /* clicking opens the card for what is there (instead of the country) */
