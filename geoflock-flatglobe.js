@@ -18,8 +18,8 @@ const P=GlobeView.prototype;
 {const _size=P.size;P.size=function(){if(!this._flat)return _size.apply(this,arguments);
  const avail=Math.max(320,this.host.clientWidth||this.host.parentNode&&this.host.parentNode.clientWidth||900),capH=Math.max(260,innerHeight*.82);
  let w=Math.round(Math.min(avail,capH/.5072));const h=Math.round(w*.5072);/* r: the size the label and detail rules see; matched to the flat map's real scale */
- const r=this._bigR?1e6:w/(2*Math.PI*RX)*1.07;return{w,h,r}}}
-P._flatBase=function(){const{w}=this.size(),S=w/(2*Math.PI*RX)*this.zoom;return d3.geoRobinson().scale(S).translate([0,0])};
+ const r=this._bigR?1e6:w/(2*Math.PI)*1.07;return{w,h,r}}}
+P._flatBase=function(){const{w}=this.size(),S=w/(2*Math.PI)*this.zoom;/* d3's Robinson is π·scale wide on each side */return d3.geoRobinson().scale(S).translate([0,0])};
 {const _proj=P.projection;P.projection=function(){if(!this._flat)return _proj.apply(this,arguments);
  const{w,h}=this.size(),b=this._flatBase(),c=[-this.rot[0],-this.rot[1]];let q=b(c)||[0,0];
  /* the view never leaves the map: the centre is kept inside */
@@ -129,3 +129,33 @@ setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);con
  const sov=f=>{const c=f&&f.properties&&f.properties.c;return!(c&&typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[c])};
  P._labels=function(ctx,p,s,base,big){const B=(base||[]).filter(sov),G=(big||[]).filter(sov);if(!this._flat)return _l.call(this,ctx,p,s,B,G);this._bigR=true;try{return _l.call(this,ctx,p,s,B,G)}finally{this._bigR=false}};
  ["_seaLabels","_landforms","_cities","_simpleLabels"].forEach(k=>{const f=P[k];if(!f)return;P[k]=function(){if(!this._flat)return f.apply(this,arguments);this._bigR=true;try{return f.apply(this,arguments)}finally{this._bigR=false}}})})();
+/* hover boosts for every small piece of land: an offshore island, an islet or a tiny exclave is picked out when the
+   pointer is within about 10 screen pixels of its coast, on the globe and the flat map. Over the sea of the Elevation and
+   Climate maps the country is highlighted but the note still names the sea and its depth (the hover note already does
+   that when the point is outside the country's shape). */
+(function(){const P=GlobeView.prototype,_hit=P.hit;if(!_hit||typeof globeDistToRings!=="function")return;
+ const AMAX=3e-4;/* about 12,000 km² */
+ function parts(g){if(g._gfParts)return g._gfParts;const out=[];(g.features||[]).forEach(f=>{const c=f.properties&&f.properties.c,G=f.geometry;if(!c||!G)return;
+  const polys=G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:[];
+  polys.forEach(P=>{let a;try{a=d3.geoArea({type:"Polygon",coordinates:P})}catch(e){return}if(!(a>0)||a>AMAX)return;const ring=P[0];let x=0,y=0,z=0;const R=Math.PI/180;
+   for(const[lo,la]of ring){const cl=Math.cos(la*R);x+=cl*Math.cos(lo*R);y+=cl*Math.sin(lo*R);z+=Math.sin(la*R)}const cc=[Math.atan2(y,x)/R,Math.atan2(z,Math.hypot(x,y))/R];let rad=0;for(const p of ring)rad=Math.max(rad,d3.geoDistance(p,cc));
+   out.push({code:c,f,ring,c:cc,rad})})});return g._gfParts=out}
+ P.hit=function(clientX,clientY){const h=_hit.apply(this,arguments);try{if(!h||h.code||!h.ll||(this._boostOff&&this._boostOff()))return h;
+  const s=this.size().r*this.zoom,px=10,deg=px*180/(Math.PI*Math.max(1,s)),rr=deg*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
+  for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=deg&&d<bd){bd=d;best=q}}
+  if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}return{code:best.code,f:best.f,ll,boosted:true}}catch(e){return h}}})();
+/* hover boosts for every small piece of land: an offshore island, an islet or a tiny exclave is picked out when the
+   pointer is within about 10 screen pixels of its coast, on the globe and the flat map. Over the sea of the Elevation and
+   Climate maps the country is highlighted but the note still names the sea and its depth (the hover note does that
+   whenever the point is outside the country's shape). */
+(function(){const P=GlobeView.prototype,_hit=P.hit;if(!_hit||typeof globeDistToRings!=="function")return;
+ const AMAX=3e-4;/* about 12,000 km² */
+ function parts(g){if(g._gfParts)return g._gfParts;const out=[];(g.features||[]).forEach(f=>{const c=f.properties&&f.properties.c,G=f.geometry;if(!c||!G)return;
+  const polys=G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:[];
+  polys.forEach(Q=>{let a;try{a=d3.geoArea({type:"Polygon",coordinates:Q})}catch(e){return}if(!(a>0)||a>AMAX)return;const ring=Q[0];let x=0,y=0,z=0;const R=Math.PI/180;
+   for(const[lo,la]of ring){const cl=Math.cos(la*R);x+=cl*Math.cos(lo*R);y+=cl*Math.sin(lo*R);z+=Math.sin(la*R)}const cc=[Math.atan2(y,x)/R,Math.atan2(z,Math.hypot(x,y))/R];let rad=0;for(const p of ring)rad=Math.max(rad,d3.geoDistance(p,cc));
+   out.push({code:c,f,ring,c:cc,rad})})});return g._gfParts=out}
+ P.hit=function(clientX,clientY){const h=_hit.apply(this,arguments);try{if(!h||h.code||!h.ll||(this._boostOff&&this._boostOff()))return h;
+  const s=(this._flat?this.projection().scale():this.size().r*this.zoom),deg=10*180/(Math.PI*Math.max(1,s)),rr=deg*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
+  for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=deg&&d<bd){bd=d;best=q}}
+  if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}return{code:best.code,f:best.f,ll,boosted:true}}catch(e){return h}}})();
