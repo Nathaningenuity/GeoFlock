@@ -180,24 +180,23 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   const s=(this._flat?this.projection().scale():this.size().r*this.zoom),deg=10*180/(Math.PI*Math.max(1,s)),rr=deg*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
   for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=deg&&d<bd){bd=d;best=q}}
   if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}return{code:best.code,f:best.f,ll,boosted:true}}catch(e){return h}}})();
-/* While the flat map is moving (dragging, wheel or pinch zoom, + and −), the last finished picture is slid and scaled like
-   an image over the map's own background pictures, and the full map (every border, label and icon) is drawn once it
-   stops. The finished picture is simply a copy of the screen, so making it costs nothing. */
-(function(){const P=GlobeView.prototype,_r=P._render;
- P._render=function(){const g=this;
-  if(g._flat&&g._fastMove&&g._snap&&g._snap.ok){const sn=g._snap,{w,h}=g.size(),dpr=Math.min(2,window.devicePixelRatio||1),c=g.canvas,ctx=g.ctx;
-   if(c.width===Math.round(w*dpr)&&c.height===Math.round(h*dpr)&&sn.dpr===dpr){const p=g.projection(),S=p.scale(),t=p.translate(),k=S/sn.S;
-    ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";ctx.fillStyle=g.cfg.ocean?g.cfg.ocean():"#5797cf";ctx.fillRect(0,0,c.width,c.height);
-    try{g._flatR={w,h,r:g.size().r,s:0,p,skip:false};g._flatPictures(ctx,dpr)}catch(e){}
-    ctx.setTransform(dpr*k,0,0,dpr*k,dpr*(t[0]-k*sn.t[0]),dpr*(t[1]-k*sn.t[1]));ctx.imageSmoothingQuality="low";ctx.drawImage(sn.cv,0,0,w,h);ctx.setTransform(1,0,0,1,0,0);return}}
-  const r=_r.apply(this,arguments);
-  if(g._flat){try{const sn=g._snap||(g._snap={cv:document.createElement("canvas")}),c=g.canvas;if(sn.cv.width!==c.width||sn.cv.height!==c.height){sn.cv.width=c.width;sn.cv.height=c.height}
-   const x=sn.cv.getContext("2d");x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,c.width,c.height);x.drawImage(c,0,0);const p=g.projection();sn.S=p.scale();sn.t=p.translate().slice();sn.dpr=Math.min(2,window.devicePixelRatio||1);sn.ok=true}catch(e){}}
-  return r};
- const _req=P.request;P.request=function(){if(this._flat&&this._gfMoving){this._fastMove=!!(this._snap&&this._snap.ok);clearTimeout(this._fmT);this._fmT=setTimeout(()=>{this._fastMove=false;this._gfMoving=false;this.render()},160)}return _req.apply(this,arguments)};
- const _sz=P.setZoom;P.setZoom=function(){if(this._flat)this._gfMoving=true;return _sz.apply(this,arguments)};
- document.addEventListener("pointermove",e=>{try{[typeof amGlobe!=="undefined"&&amGlobe,typeof stGlobe!=="undefined"&&stGlobe].forEach(g=>{if(g&&g._flat&&e.buttons&&g.host.contains(e.target))g._gfMoving=true})}catch(er){}},true);
-})();
+/* The flat map is only ever scaled and shifted (never turned), so every shape is projected once, at scale 1, into a
+   cached Path2D, and each frame just draws those with the frame's scale and offset. Every frame is then a full, sharp
+   map (borders, rivers, lakes, labels) — while dragging and zooming too, like the globe — at a fraction of the cost. */
+(function(){const P=GlobeView.prototype,_r=P._render,_gp=d3.geoPath;
+ const unit=d3.geoRobinson().scale(1).translate([0,0]).precision(.0003),CACHE=new WeakMap;
+ function cached(o){if(!o||typeof o!=="object")return null;let pa=CACHE.get(o);if(!pa){pa=new Path2D();try{_gp(unit,pa)(o)}catch(e){}CACHE.set(o,pa)}return pa}
+ function hook(ctx){if(ctx._gfP2)return;ctx._gfP2=1;const BP=ctx.beginPath,F=ctx.fill,S=ctx.stroke,CL=ctx.clip;
+  const one=()=>{const L=ctx._gfPend;if(L.length===1)return L[0];const q=new Path2D();L.forEach(x=>q.addPath(x));return ctx._gfPend=[q],q};
+  ctx.beginPath=function(){this._gfPend=null;return BP.apply(this,arguments)};
+  ctx.fill=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length&&typeof arguments[0]!=="string")return F.apply(this,arguments);const q=one();this.save();this.transform(T.S,0,0,T.S,T.t[0],T.t[1]);F.call(this,q,arguments[0]||"nonzero");this.restore()};
+  ctx.stroke=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length)return S.apply(this,arguments);const q=one();this.save();const lw=this.lineWidth,d=this.getLineDash();this.transform(T.S,0,0,T.S,T.t[0],T.t[1]);this.lineWidth=lw/T.S;if(d.length)this.setLineDash(d.map(v=>v/T.S));S.call(this,q);this.restore()};
+  ctx.clip=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length&&typeof arguments[0]!=="string")return CL.apply(this,arguments);const q=new Path2D(),m=new DOMMatrix([T.S,0,0,T.S,T.t[0],T.t[1]]);q.addPath(one(),m);return CL.call(this,q,arguments[0]||"nonzero")}}
+ d3.geoPath=function(proj,ctx){const T=ctx&&ctx._gfT;if(T&&proj&&proj._gfFlatP){return function(o){if(o==null)return;const pa=cached(o);if(pa)(ctx._gfPend||(ctx._gfPend=[])).push(pa)}}return _gp.apply(this,arguments)};
+ Object.keys(_gp).forEach(k=>{try{d3.geoPath[k]=_gp[k]}catch(e){}});
+ const _proj=P.projection;P.projection=function(){const p=_proj.apply(this,arguments);if(this._flat&&p)p._gfFlatP=1;return p};
+ P._render=function(){if(!this._flat||!this.ctx)return _r.apply(this,arguments);const ctx=this.ctx;hook(ctx);const p=this.projection();ctx._gfT={S:p.scale(),t:p.translate()};ctx._gfPend=null;
+  try{return _r.apply(this,arguments)}finally{ctx._gfT=null;ctx._gfPend=null}}})();
 /* borders and labels as fine as the old flat map: thinner lines, slightly smaller text */
 (function(){const P=GlobeView.prototype,_ls=P.ls;
  {const _r=P._render;P._render=function(){const ctx=this.ctx;if(this._flat&&ctx&&!ctx._gfThin){ctx._gfThin=1;const g=this,ST=ctx.stroke;ctx.stroke=function(){if(g._flat&&!g._fastMove&&/^rgba\((25, 25, 25|20, 30, 20)/.test(String(this.strokeStyle).replace(/rgba\((\d+),(\d+),(\d+)/,"rgba($1, $2, $3"))){const lw=this.lineWidth;this.lineWidth=lw*.55;const r=ST.apply(this,arguments);this.lineWidth=lw;return r}return ST.apply(this,arguments)}}return _r.apply(this,arguments)}}
@@ -238,11 +237,11 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   const S=this._flat?p.scale():this.size().r*this.zoom,k=S/318.31,ls=this.ls();
   list.sort((a,b)=>(EXT[b[1].n]||0)-(EXT[a[1].n]||0));const placed=[],fits=b=>{if(placed.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]))return false;placed.push(b);return true};
   list.forEach(([cat,L])=>{const ext=(EXT[L.n]||40)*k;if(ext<26||!show(L.ll,1.25))return;const xy=p(L.ll);if(!xy)return;const txt=L.n.toUpperCase(),n=txt.length;
-   /* letter size grows with the landform, from small to about three times a country name */
-   const fs=Math.max(5.6*ls,Math.min(30,4.2*ls+Math.pow(ext,.62)*.42));const font="italic 700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
+   /* letter size grows gently with the landform, from small to a little above a country name */
+   const fs=Math.max(5.6*ls,Math.min(12.5,5*ls+Math.pow(ext,.5)*.18));const font="italic 700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
    const glyph=ctx.measureText(txt).width;if(glyph>ext*1.35&&ext<120)return;/* not yet room for it */
-   let sp=n>1?(ext*.62-glyph)/(n-1):0;sp=Math.max(fs*.04,Math.min(sp,fs*1.6));const tw=glyph+sp*(n-1);
+   let sp=n>1?(ext*.4-glyph)/(n-1):0;sp=Math.max(fs*.04,Math.min(sp,fs*.55));const tw=glyph+sp*(n-1);
    const ang=Math.abs(L.ang||0)>30?-(L.ang)*Math.PI/180:0;const box=ang?[xy[0]-fs,xy[1]-tw/2,xy[0]+fs,xy[1]+tw/2]:[xy[0]-tw/2,xy[1]-fs/2,xy[0]+tw/2,xy[1]+fs/2];if(!fits(box))return;
-   ctx.save();ctx.globalAlpha=fs>14?.72:fs>9?.85:1;try{ctx.letterSpacing=sp.toFixed(1)+"px"}catch(e){}this._text(ctx,txt,xy[0]+(ctx.letterSpacing?sp/2:0),xy[1],COL[cat]||"#5a4630","rgba(255,255,255,0.62)",font,ang);ctx.restore()})}catch(e){console.error(e)}
+   ctx.save();ctx.globalAlpha=fs>10?.85:1;try{ctx.letterSpacing=sp.toFixed(1)+"px"}catch(e){}this._text(ctx,txt,xy[0]+(ctx.letterSpacing?sp/2:0),xy[1],COL[cat]||"#5a4630","rgba(255,255,255,0.62)",font,ang);ctx.restore()})}catch(e){console.error(e)}
   /* peaks as before */
   return _lf.call(this,ctx,p,Object.assign({},O,{landforms:{peaks:(O.landforms||{}).peaks||[]}}),show,cats)}})();
