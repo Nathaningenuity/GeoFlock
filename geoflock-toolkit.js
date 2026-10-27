@@ -209,7 +209,7 @@ function updCompass(o){const h=host();if(!h)return;const hr=h.getBoundingClientR
   pos.textContent=Math.abs(ll[1]).toFixed(1)+"°"+(ll[1]>=0?"N":"S")+" "+Math.abs(ll[0]).toFixed(1)+"°"+(ll[0]>=0?"E":"W")}else pos.textContent="off the map";
  /* a surprise: a real compass goes wild near the magnetic poles and is pulled off course over the Kursk anomaly */
  let odd=null;if(ll){const km=(p,q)=>{const r=Math.PI/180,x=Math.sin((q[1]-p[1])*r/2)**2+Math.cos(p[1]*r)*Math.cos(q[1]*r)*Math.sin((q[0]-p[0])*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
-  const M=[[[139.3,85.8],700,"spin","Magnetic north pole! A real compass spins here, since magnetic north is right under you"],[[135.9,-63.9],700,"spin","Magnetic south pole! A real compass spins here"],[[36.5,51.5],250,"pull","Kursk Magnetic Anomaly: huge iron ore beds pull a real compass off north"]];
+  const M=[[[139.3,85.8],700,"spin","You’re on the magnetic north pole! Magnetic north is straight below, so the needle has no direction to point and swings around"],[[135.9,-63.9],700,"spin","You’re on the magnetic south pole! The needle has no direction to point here, so it swings around"],[[36.5,51.5],250,"pull","Kursk Magnetic Anomaly: huge iron ore beds underground pull the needle away from north"]];
   for(const [at,r,k,t] of M)if(km(ll,at)<r){odd=[k,t];break}}
  o.el.classList.toggle("gfk-odd",!!odd);if(odd){pos.textContent=odd[1];if(odd[0]==="spin")deg=(o.deg||0)+47+Math.random()*30;else deg+=55+Math.sin(performance.now()/300)*25}
  const n=o.el.querySelector(".gfk-needle");if(n){o.deg=o.deg==null?deg:o.deg+((((deg-o.deg)%360)+540)%360-180)*.35;n.setAttribute("transform","rotate("+o.deg.toFixed(1)+" 50 50)")}}
@@ -461,14 +461,21 @@ function openPalette(){let M;try{M=gfMS()}catch(e){return}const mode=typeof allM
  const rs=p.querySelector("[data-reset]");if(rs)rs.onclick=()=>{delete K().recolor[modeKey()];save();recolor();redrawGlobe();setTimeout(openPalette,50)}}
 function swBg(k){const s=GF_STYLES[k];if(!s)return"";const c=[s.sea[Math.min(1,s.sea.length-1)][1],s.land[0][1],s.land[Math.min(2,s.land.length-1)][1],s.land[s.land.length-1][1]];return"background:linear-gradient(115deg,"+c[0]+" 0 30%,"+c[1]+" 30% 55%,"+c[2]+" 55% 80%,"+c[3]+" 80%)"}
 
-/* ================= coordinates switch ================= */
-let coordOn=false;
-function coordSwitch(){if(document.getElementById("gfCoordToggle"))return;const g=[...document.querySelectorAll("#allMapsView label.switch")].find(l=>/grid/i.test(l.textContent));if(!g)return;
- g.insertAdjacentHTML("afterend",'<label class="switch" title="Latitude and longitude under the pointer"><input type="checkbox" id="gfCoordToggle"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">Coordinates</span></label>');
- const i=document.getElementById("gfCoordToggle");i.onchange=()=>{coordOn=i.checked;if(!coordOn)document.querySelectorAll(".gfk-coord").forEach(x=>x.remove())}}
+/* ================= GPS: latitude and longitude under the pointer ================= */
+/* always there on the map (top centre, clear of the tabs and buttons); a click folds it to a small GPS button and back */
+let coordOn=true;try{coordOn=localStorage.getItem("gfGpsOff")!=="1"}catch(e){}
+const GPS_ICO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+function coordSwitch(){const old=document.getElementById("gfCoordToggle");if(old){const l=old.closest("label");if(l)l.remove()}
+ const h=host();if(!h)return;let c=h.querySelector(":scope > .gfk-coord");
+ if(!c){document.querySelectorAll(".gfk-coord").forEach(x=>x.remove());c=document.createElement("button");c.type="button";c.className="gfk-coord";c.title="GPS: where the pointer is. Click to hide or show";
+  ["pointerdown","mousedown","touchstart","dblclick","wheel"].forEach(t=>c.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+  c.onclick=e=>{e.stopPropagation();coordOn=!coordOn;try{localStorage.setItem("gfGpsOff",coordOn?"0":"1")}catch(er){}gpsPaint(c,null)};h.appendChild(c);gpsPaint(c,null)}}
+function gpsPaint(c,ll){c.classList.toggle("off",!coordOn);if(!coordOn){c.innerHTML=GPS_ICO;return}
+ c.innerHTML=GPS_ICO+(ll?"<b>"+dms(ll[1],"N","S")+"</b><b>"+dms(ll[0],"E","W")+"</b><small>"+ll[1].toFixed(3)+", "+ll[0].toFixed(3)+"</small>":"<small>Point at the map</small>")}
 const dms=(v,p,n)=>{const a=Math.abs(v),d=Math.floor(a),m=Math.round((a-d)*60);return d+"°"+String(m===60?0:m).padStart(2,"0")+"′"+(v>=0?p:n)};
-document.addEventListener("mousemove",e=>{if(!coordOn)return;const h=host();if(!h)return;let c=h.querySelector(":scope > .gfk-coord");if(!h.contains(e.target)){if(c)c.style.opacity="0";return}
- const ll=toLL(e.clientX,e.clientY);if(!c){c=document.createElement("div");c.className="gfk-coord";h.appendChild(c)}c.style.opacity=ll?"1":"0";if(ll)c.innerHTML="<b>"+dms(ll[1],"N","S")+"</b> <b>"+dms(ll[0],"E","W")+"</b><small>"+ll[1].toFixed(3)+", "+ll[0].toFixed(3)+"</small>"},{passive:true});
+let gpsRaf=0,gpsXY=null;
+document.addEventListener("mousemove",e=>{if(!coordOn)return;gpsXY=[e.clientX,e.clientY,e.target];if(gpsRaf)return;gpsRaf=requestAnimationFrame(()=>{gpsRaf=0;const h=host();if(!h||!gpsXY)return;const c=h.querySelector(":scope > .gfk-coord");if(!c)return;
+ const inside=h.contains(gpsXY[2])&&gpsXY[2]!==c&&!c.contains(gpsXY[2]);gpsPaint(c,inside?toLL(gpsXY[0],gpsXY[1]):null)})},{passive:true});
 
 /* ================= keep it all in place ================= */
 function sync(){const h=host();const show=h&&appMode==="allmaps"&&!(typeof ps!=="undefined"&&ps)&&!document.querySelector("#gfDeep:not([hidden])")&&!(typeof proj!=="undefined"&&proj.on);
@@ -583,9 +590,14 @@ const css=document.createElement("style");css.textContent=`
 .gfk-gall{ position:absolute; z-index:7; left:50%; top:14px; transform:translateX(-50%); border:0; border-radius:999px; padding:7px 14px; background:rgba(255,255,255,.95); color:#22324a; font:700 12.5px system-ui; cursor:pointer; box-shadow:0 2px 10px rgba(20,40,70,.18); }
 .gfk-toast{ position:absolute; left:50%; top:52px; transform:translate(-50%,-8px); z-index:9; background:rgba(20,30,46,.88); color:#fff; padding:7px 14px; border-radius:999px; font:600 13px system-ui; opacity:0; transition:.2s; pointer-events:none; white-space:nowrap; }
 .gfk-toast.on{ opacity:1; transform:translate(-50%,0); }
-.gfk-coord{ position:absolute; right:12px; top:12px; z-index:6; background:rgba(255,255,255,.92); color:#1d3550; border-radius:12px; padding:6px 11px; font:600 12px system-ui; box-shadow:0 2px 10px rgba(20,40,70,.15); pointer-events:none; display:flex; flex-direction:column; gap:1px; transition:opacity .15s; }
-.gfk-coord b{ font:800 13px "JetBrains Mono",ui-monospace,monospace; } .gfk-coord small{ opacity:.6; font-size:10.5px; }
-.globe-host > .gfk-coord{ right:auto; left:12px; }
+.gfk-coord{ position:absolute; left:50%; top:10px; transform:translateX(-50%); z-index:6; display:flex; align-items:center; gap:9px; border:0; cursor:pointer; background:rgba(255,255,255,.92); color:#1d3550; border-radius:999px; padding:5px 12px 5px 9px; font:600 12px system-ui; box-shadow:0 2px 10px rgba(20,40,70,.15); white-space:nowrap; min-height:28px; }
+#allMapsWrap > .gfk-coord svg, .globe-host > .gfk-coord svg, .gfk-coord svg{ flex:none; color:#2f8a7a; width:15px !important; height:15px !important; min-width:0 !important; max-width:15px !important; position:static !important; display:block !important; transform:none !important; margin:0 !important; pointer-events:none; }
+#allMapsWrap > .gfk-coord, .globe-host > .gfk-coord{ width:auto !important; height:auto !important; }
+.gfk-coord b{ font:800 12.5px "JetBrains Mono",ui-monospace,monospace; min-width:5.8em; } .gfk-coord small{ opacity:.6; font-size:10.5px; }
+.gfk-coord.off{ padding:5px; min-width:28px; justify-content:center; opacity:.8; }
+.gfk-coord:hover{ box-shadow:0 2px 12px rgba(20,40,70,.25); }
+body.dark-theme .gfk-coord{ background:rgba(28,38,56,.92); color:#dbe6f2; }
+@media (max-width:760px){ .gfk-coord small{ display:none; } .gfk-coord b{ min-width:0; } }
 .gf-ms-panel.gfk-free{ position:fixed !important; right:auto; bottom:auto; z-index:9400; max-height:calc(100vh - 24px) !important; }
 .gf-ms-panel.gfk-free .gf-ms-h{ cursor:grab; touch-action:none; } .gf-ms-panel.gfk-free .gf-ms-h::before{ content:""; position:absolute; left:50%; top:5px; width:38px; height:4px; margin-left:-19px; border-radius:2px; background:rgba(22,50,79,.18); }
 .gf-ms-panel.gfk-free{ padding-top:16px !important; } .gf-ms-panel.gfk-free .gf-ms-h{ position:relative; }

@@ -1,7 +1,7 @@
 /* GeoFlock: map layers on the Maps page — Resources (mines, fields, farms, power plants), Connections (shipping lanes,
    chokepoints, ports, undersea cables, pipelines, busiest flights) and Hazards (volcanoes, great earthquakes, cyclone
-   paths, tsunamis). Each is a folded switch: the switch turns the layer on, its ▾ picks what to show. Day & night and
-   Currents fold together as "Sun & sea".
+   paths, tsunamis). Each is a folded switch: the switch turns the layer on, its ▾ picks what to show. Currents keeps its own
+   switch; Day & night is hidden for now.
    Drawn on the flat map as an SVG layer (icons keep the same size on screen when zooming) and on the globe's overlay.
    Data: geoflock-layers-data.js (GF_LAYER_DATA). */
 (function(){
@@ -38,6 +38,9 @@ function items(){const out=[];
   if(P.has("tsu"))(H.tsunami||[]).forEach(x=>out.push({t:"pt",ll:x.ll,icon:"🌊",col:"#1c8fb0",n:x.n,f:"Tsunami"+(x.f?". "+x.f:""),lay:"haz",sz:.9}))}
  return out}
 
+/* icons that would sit on top of each other are nudged apart (their true spot stays marked by a small dot) */
+function spread(P,minD){for(let it=0;it<6;it++){let moved=false;for(let i=0;i<P.length;i++){const A=P[i];for(let j=i+1;j<P.length;j++){const B=P[j],md=(A.r+B.r)*minD,dx=B.x-A.x,dy=B.y-A.y;if(Math.abs(dx)>=md||Math.abs(dy)>=md)continue;let d=Math.hypot(dx,dy);if(d>=md)continue;moved=true;
+  let ux,uy;if(d<1e-3){const a=(i*2.4+j)%6.283;ux=Math.cos(a);uy=Math.sin(a);d=0}else{ux=dx/d;uy=dy/d}const push=(md-d)/2;A.x-=ux*push;A.y-=uy*push;B.x+=ux*push;B.y+=uy*push}}if(!moved)break}return P}
 /* ---------- flat map ---------- */
 const proj=()=>typeof GLOBE_ROBINSON!=="undefined"?GLOBE_ROBINSON:d3.geoRobinson().scale(318.31).translate([1e3,500.5]);
 let sig="";
@@ -59,7 +62,9 @@ function drawFlat(force){const svg=svgEl();if(!svg)return;let g=svg.querySelecto
 function scale(svg){const g=svg&&svg.querySelector(":scope > g.gf-layers");if(!g)return;const vb=svg.viewBox&&svg.viewBox.baseVal,w=svg.getBoundingClientRect().width;if(!vb||!w)return;
  /* icons grow at about half the zoom rate (like the capitals and landform icons) */
  const z=Math.max(1,2000/vb.width),k=Math.max(.05,vb.width/w)*(w<600?.85:1)*Math.min(2.2,.66*Math.pow(z,.5));if(g._k===k)return;g._k=k;
- g.querySelectorAll(".gf-ly-pt").forEach(e=>{const s=k*(+e.dataset.sz||1);e.setAttribute("transform","translate("+e.dataset.x+","+e.dataset.y+") scale("+s.toFixed(3)+")")})}
+ const els=[...g.querySelectorAll(".gf-ly-pt")],P=els.map(e=>({e,x:+e.dataset.x,y:+e.dataset.y,r:(e.dataset.sz?9:Math.max(4,9))*k*(+e.dataset.sz||1)}));spread(P,1.02);
+ P.forEach(o=>{const e=o.e,s=k*(+e.dataset.sz||1),dx=o.x-e.dataset.x,dy=o.y-e.dataset.y;e.setAttribute("transform","translate("+o.x.toFixed(2)+","+o.y.toFixed(2)+") scale("+s.toFixed(3)+")");
+  let t=e.querySelector(".gf-ly-true");if(Math.hypot(dx,dy)>o.r*.3){if(!t){t=document.createElementNS(NS,"path");t.setAttribute("class","gf-ly-true");e.insertBefore(t,e.firstChild)}t.setAttribute("d","M0,0L"+(-dx/s).toFixed(2)+","+(-dy/s).toFixed(2));}else if(t)t.remove()})}
 const watched=new WeakSet;
 function watch(){const svg=svgEl();if(!svg||watched.has(svg))return;watched.add(svg);let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;scale(svg)})}).observe(svg,{attributes:true,attributeFilter:["viewBox"]})}
 
@@ -69,9 +74,10 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
  try{if((L.res.on||L.con.on||L.haz.on)&&typeof amGlobe!=="undefined"&&this===amGlobe){const its=items(),path=d3.geoPath(p,ctx),c=[-this.rot[0],-this.rot[1]],pts=[];ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
   its.forEach(it=>{if(it.t!=="line")return;ctx.beginPath();path({type:"LineString",coordinates:it.line});ctx.strokeStyle=it.col;ctx.globalAlpha=it.op||1;ctx.lineWidth=it.w*1.1;ctx.setLineDash(it.dash?it.dash.split(" ").map(Number):[]);ctx.stroke()});
   ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
-  its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(!q)return;
+  const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),vis=[];its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(q)vis.push({it,q,x:q[0],y:q[1],r:7.5*zk*(it.sz||1)})});spread(vis,1.02);
+  vis.forEach(o=>{const it=o.it,q=[o.x,o.y];if(Math.hypot(o.x-o.q[0],o.y-o.q[1])>2){ctx.strokeStyle="rgba(20,30,50,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.q[0],o.q[1]);ctx.lineTo(o.x,o.y);ctx.stroke();ctx.fillStyle="rgba(20,30,50,.75)";ctx.beginPath();ctx.arc(o.q[0],o.q[1],1.8,0,7);ctx.fill()}
    if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
-   else{const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),r=7.5*zk*(it.sz||1);ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*zk*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
+   else{const r=o.r;ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*zk*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
    pts.push([q[0],q[1],it])});
   this._gfLayPts=pts;ctx.restore()}else if(this._gfLayPts)this._gfLayPts=null}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
 
@@ -87,17 +93,27 @@ document.addEventListener("pointermove",e=>{const t=e.target;
 /* a tap on an icon shows its note instead of opening the country under it */
 document.addEventListener("click",e=>{const el=e.target.closest&&e.target.closest(".gf-layers .gf-ly-pt");if(el){e.stopPropagation();e.preventDefault();const g=el.closest("g.gf-layers"),it=g._items[+el.dataset.i];if(it)showTip(it,e.clientX,e.clientY)}},true);
 
+/* ---------- Currents ▾: ocean currents, winds, jet streams, storm tracks (Day and night hidden for now) ---------- */
+try{if(typeof GF_EIM_ITEMS!=="undefined"){const keep=GF_EIM_ITEMS.filter(x=>x[0]!=="daynight"&&x[0]!=="air");GF_EIM_ITEMS.length=0;
+  keep.forEach(x=>{GF_EIM_ITEMS.push(x);if(x[0]==="currents"){GF_EIM_ITEMS.push(["winds","Winds","Winds near the ground: trade winds, westerlies and polar easterlies"]);GF_EIM_ITEMS.push(["jets","Jet streams","Fast rivers of air about 10 km up"])}})}
+ if(typeof gfEIM==="function"){const E=gfEIM();if(E.sel.winds==null)E.sel.winds=E.sel.air?1:0;if(E.sel.jets==null)E.sel.jets=E.sel.air?1:0;E.sel.daynight=0}
+ if(typeof gfEimOn==="function"){const _on=gfEimOn;gfEimOn=function(k){if(k==="daynight")return false;if(k==="winds"||k==="jets"||k==="air"){if(typeof appMode!=="undefined"&&appMode!=="allmaps")return false;const E=gfEIM();const user=k==="air"?!!(E.sel.winds||E.sel.jets):!!E.sel[k];if(E.on&&user)return true;if(typeof ps!=="undefined"&&ps){const S=gfTourStop(),C=S&&S.gfCur;return!!(C&&C.air)}return false}return _on.apply(this,arguments)}}}catch(e){console.error(e)}
+
 /* ---------- switches: folded groups ---------- */
 const st=document.createElement("style");st.textContent=`
 g.gf-layers .gf-ly-line{ fill:none; vector-effect:non-scaling-stroke; pointer-events:none; }
 g.gf-layers .gf-ly-hit{ fill:none; stroke:transparent; stroke-width:9; vector-effect:non-scaling-stroke; pointer-events:stroke; }
 g.gf-layers .gf-ly-pt{ cursor:pointer; }
 g.gf-layers .gf-ly-pt circle{ vector-effect:non-scaling-stroke; }
+g.gf-layers .gf-ly-true{ stroke:rgba(20,30,50,.6); stroke-width:1; vector-effect:non-scaling-stroke; fill:none; }
 g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
 .gf-ly-tip{ position:fixed; z-index:9999; pointer-events:none; max-width:280px; background:rgba(16,28,48,.94); color:#fff; font-size:12.5px; line-height:1.35; padding:7px 10px; border-radius:9px; box-shadow:0 4px 14px rgba(0,0,0,.25); display:none; }
 .gf-ly-tip b{ display:block; font-size:13px; }
 .gf-ly-tip span{ display:block; opacity:.88; margin-top:2px; }
-#allMapsView .all-maps-label-controls{ position:relative; z-index:30; }
+#allMapsView .all-maps-label-controls{ position:relative; z-index:80; }
+/* the switch rows (and their ▾ menus) sit above the tour button and map controls */
+#allMapsView .controls-row.all-maps-controls{ z-index:30 !important; }
+.gf-eim-pop [data-eim="daynight"]{ display:none !important; }
 .gf-ss-line{ display:flex; align-items:center; gap:4px; }
 .gf-fold-pop .gf-ly-chk{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; cursor:pointer; }
 .gf-fold-pop .gf-ly-chk i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
@@ -117,17 +133,13 @@ function sync(){document.querySelectorAll(".gf-ly-fold").forEach(g=>{const S=L[g
 function redraw(){sync();drawFlat(true);globe()}
 const labOf=sw=>{const l=sw.querySelector(".switch-label");return l?l.textContent.trim():""};
 function mount(){const row=document.querySelector("#allMapsView .all-maps-label-controls");if(!row)return;
- /* Sun & sea: Day & night and Currents */
- let ss=row.querySelector('.gf-fold[data-g="Sun & sea"]');const sws=["Day & night","Currents"].map(m=>[...document.querySelectorAll("#allMapsView label.switch")].find(sw=>!sw.closest(".gf-fold-pop")&&labOf(sw)===m||sw.closest('.gf-fold[data-g="Sun & sea"]')&&labOf(sw)===m)).filter(Boolean);
- if(sws.length){if(!ss){ss=document.createElement("span");ss.className="gf-fold";ss.dataset.g="Sun & sea";ss.innerHTML='<label class="switch gf-fsw"><input type="checkbox"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">Sun &amp; sea</span></label><button type="button" class="gf-fcaret" aria-haspopup="true" aria-expanded="false" title="Day and night, ocean currents">▾</button><div class="gf-fold-pop" hidden></div>';
-   sws[0].parentNode.insertBefore(ss,sws[0]);const pop=ss.querySelector(".gf-fold-pop"),car=ss.querySelector(".gf-fcaret"),main=ss.querySelector("input");
-   car.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden};document.addEventListener("click",e=>{if(!ss.contains(e.target))pop.hidden=true});
-   main.onchange=()=>{const want=main.checked;ss._sws.forEach(sw=>{const i=sw.querySelector("input");if(i&&i.checked!==want){i.checked=want;i.dispatchEvent(new Event("change",{bubbles:true}))}})}}
-  const pop=ss.querySelector(".gf-fold-pop");sws.forEach(sw=>{if(sw.parentNode!==pop)pop.appendChild(sw)});
-  /* the currents' own ▾ (which currents to show) sits next to its switch inside the fold */
-  const eim=row.querySelector(":scope > .gf-eim"),cur=sws.find(sw=>labOf(sw)==="Currents");if(eim&&cur){const line=document.createElement("span");line.className="gf-ss-line";cur.after(line);line.append(cur,eim)}ss._sws=sws;const m=ss.querySelector("input"),any=sws.some(sw=>sw.querySelector("input").checked);if(m.checked!==any)m.checked=any}
- /* Resources, Connections, Hazards after it */
- let after=ss||row.lastElementChild;DEF.forEach(([id,name,parts])=>{let g=row.querySelector('.gf-ly-fold[data-ly="'+id+'"]');if(!g){g=makeFold(id,name,parts);after.after(g)}after=g});
+ /* Currents stays its own switch (with its ▾); Day & night is hidden for now (and kept off) */
+ const sw=n=>[...document.querySelectorAll("#allMapsView label.switch")].find(s=>labOf(s)===n);
+ const dn=sw("Day & night");if(dn){if(dn.style.display!=="none")dn.style.display="none";const i=dn.querySelector("input");if(i&&i.checked){i.checked=false;i.dispatchEvent(new Event("change",{bubbles:true}))}}
+ const cur=sw("Currents"),eim=row.querySelector(":scope > .gf-eim");
+ /* Resources, Connections, Hazards sit just before Currents (which sits before the search box) */
+ const ctl=document.getElementById("gfEimCtl");
+ DEF.forEach(([id,name,parts])=>{let g=row.querySelector('.gf-ly-fold[data-ly="'+id+'"]');if(!g)g=makeFold(id,name,parts);if(ctl&&ctl.parentNode===row){if(g.nextElementSibling!==ctl&&!(g.nextElementSibling&&g.nextElementSibling.classList.contains("gf-ly-fold")&&g.compareDocumentPosition(ctl)&Node.DOCUMENT_POSITION_FOLLOWING))row.insertBefore(g,ctl)}else if(!g.parentNode)(eim||cur||row.lastElementChild).after(g)});
  sync()}
 
 /* Resources come on by themselves on the Economy map (and go again when leaving it, unless you turned them on) */

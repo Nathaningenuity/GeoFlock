@@ -454,3 +454,21 @@ setInterval(()=>{const bar=document.getElementById("ptBar"),p=bar&&bar.parentEle
    (window.requestIdleCallback||setTimeout)(go,{timeout:1500})},900)}
  const watch=svg=>{if(svg._gfWW)return;svg._gfWW=1;new MutationObserver(ms=>{if(svg._gfPend)return;if(ms.every(m=>m.attributeName==="viewBox"||m.attributeName==="style"||m.attributeName==="class"||(m.target.closest&&m.target.closest(".spin-preview,[style*='display:none'],[style*='display: none']"))))return;svg._gfMut2=(svg._gfMut2||0)+1;warm(svg)}).observe(svg,{subtree:true,childList:true,attributes:true});warm(svg)};
  setInterval(()=>document.querySelectorAll("#allMapsWrap > svg, #atlasStudyMapWrap > svg").forEach(s=>{watch(s);if(!fresh(s))warm(s)}),1000)})();
+/* 27. City dots grow at about half the zoom rate (like the capitals, landform and layer icons): after the city labels are
+   placed, each dot and capital ring is resized to its world-view size times the square root of the zoom. */
+(function(){if(typeof rescaleCityLabels!=="function"||typeof CITY_TIERS==="undefined")return;const _r=rescaleCityLabels;
+ rescaleCityLabels=function(svg,zoomRatio,sizeScale){const out=_r.apply(this,arguments);try{const g=svg&&svg.querySelector("g.map-cities");if(!g||!zoomRatio)return out;
+  const base=(sizeScale||1)*(typeof labelZoomMult==="function"?labelZoomMult(1):1),k=Math.pow(Math.min(1,zoomRatio),.5);
+  g.querySelectorAll("g.map-city").forEach(item=>{if(item.style.display==="none")return;const tier=CITY_TIERS[Math.min(+item.dataset.tier,CITY_TIERS.length-1)];const dot=item.querySelector(".city-dot"),ring=item.querySelector(".city-ring");if(!dot)return;
+   const old=parseFloat(dot.getAttribute("r"))||0,r=Math.max(.12,tier.dot*base*k);dot.setAttribute("r",r.toFixed(3));if(ring&&old){const ro=parseFloat(ring.getAttribute("r"))||0;if(ro)ring.setAttribute("r",(ro*r/old).toFixed(3))}})}catch(e){console.error(e)}return out}})();
+/* 28. Profile photos: the same picture never shows twice in one country's photos (two copies of one Commons image were
+   added under different names), and no "No Official Capital" capital slide */
+(function(){const DROP={br:["Brasília, the capital"],so:["Mogadishu, the capital"],nr:["No Official Capital, the capital"]};let n=0;
+ const go=()=>{try{if(!window.PS_CPHOTO||typeof PS_PHOTO_DATA==="undefined")throw 0;
+  Object.entries(PS_CPHOTO).forEach(([c,L])=>{if(!Array.isArray(L))return;const seen=new Set,drop=DROP[c]||[];
+   PS_CPHOTO[c]=L.filter(x=>{const p=PS_PHOTO_DATA[x[0]],k=p&&(p.d||p.f);if(drop.includes(x[1])||/^No Official Capital/i.test(x[1]||""))return false;if(k&&seen.has(k))return false;if(k)seen.add(k);return true})})}catch(e){}
+  if(++n<30)setTimeout(go,700)};setTimeout(go,300)})();
+/* 29. Territory flags come from the app itself (they were fetched from flagcdn.com, which can be slow or blocked, leaving
+   an empty first slide in the profile) */
+(function(){try{if(typeof FLAG_OVERRIDES==="undefined")return;"ai aq as aw ax bl bm bv cc ck cw cx fk fo gf gg gi gl gp gs gu hk hm im io je ky mf mo mp mq ms nc nf nu pf pm pn pr re sh sj sx tc tf tk tw vg vi wf yt".split(" ").forEach(c=>{
+ if(!FLAG_OVERRIDES[c]&&!(typeof FLAG_LOCAL!=="undefined"&&FLAG_LOCAL[c])&&!(typeof FLAG_WEBP!=="undefined"&&FLAG_WEBP[c]))FLAG_OVERRIDES[c]="flags-extra/t-"+c+".webp"})}catch(e){console.error(e)}})();

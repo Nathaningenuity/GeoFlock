@@ -29,22 +29,24 @@ setInterval(rename,700);document.addEventListener("DOMContentLoaded",rename);
 const css=document.createElement("style");css.textContent=`
 .gf-other{ position:relative; display:inline-flex; }
 .gf-other > .chip{ white-space:nowrap; }
-.gf-other-pop{ position:absolute; top:calc(100% + 6px); left:0; z-index:70; display:flex; flex-direction:column; align-items:stretch; gap:4px; padding:8px; background:#fff; border-radius:12px; box-shadow:0 6px 22px rgba(20,40,70,.2); min-width:170px; }
+.gf-other-pop{ position:absolute; top:calc(100% + 6px); left:0; z-index:90; display:grid; grid-template-columns:repeat(2,auto); align-items:stretch; gap:2px 4px; padding:6px; background:#fff; border-radius:12px; box-shadow:0 6px 22px rgba(20,40,70,.2); }
 .gf-other-pop[hidden]{ display:none; }
-.gf-other-pop button{ text-align:left; border:0; background:none; border-radius:8px; padding:7px 10px; font:600 13px/1.2 inherit; color:inherit; cursor:pointer; white-space:nowrap; }
+.gf-other-pop button{ text-align:left; border:0; background:none; border-radius:8px; padding:6px 10px; font:600 12.5px/1.2 inherit; color:inherit; cursor:pointer; white-space:nowrap; }
 .gf-other-pop button:hover{ background:rgba(47,138,122,.1); }
 .gf-other-pop button.active{ background:var(--accent,#2f8a7a); color:#fff; }
-#amGlobeSubs .gf-other-pop{ left:calc(100% + 8px); top:0; }
+/* on the globe the menu opens to the right, growing upward from the Other button so it stays clear of the toolkit */
+#amGlobeSubs .gf-other-pop{ left:calc(100% + 8px); top:auto; bottom:0; }
 body.dark-theme .gf-other-pop, body.sky-night .gf-other-pop{ background:#1f2b3a; }
 #allMapsView.globe-on #amGlobeSubs.globe-subs{ top:var(--gf-subs-top,62px) !important; }
 `;document.head.appendChild(css);
 function curMode(){try{return allMapsColorMode}catch(e){return""}}
 function other(host){if(!host)return;const mode=curMode(),main=MAIN[mode];let box=host.querySelector(":scope > .gf-other");
  const chips=[...host.querySelectorAll(":scope > [data-allmaps-sub], :scope > [data-sub]")];
- if(!main||!chips.length){if(box)box.remove();chips.forEach(c=>c.style.display="");return}
+ if(!main||!chips.length){if(box)box.remove();return}
  const idOf=c=>c.dataset.allmapsSub||c.dataset.sub,rest=chips.filter(c=>!main.includes(idOf(c)));
+ /* a single extra measure is just another tab, not an "Other" menu */
+ if(rest.length<2){chips.forEach(c=>{if(c.dataset.sub!=="carto")c.style.display=""});if(box)box.remove();return}
  chips.forEach(c=>c.style.display=main.includes(idOf(c))?"":"none");
- if(!rest.length){if(box)box.remove();return}
  const key=mode+"|"+rest.map(idOf).join(",");
  if(!box||box.dataset.k!==key){if(box)box.remove();box=document.createElement("span");box.className="gf-other";box.dataset.k=key;
   box.innerHTML='<button type="button" class="chip sub-chip gf-other-btn" aria-haspopup="true"></button><div class="gf-other-pop" hidden></div>';
