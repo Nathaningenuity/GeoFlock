@@ -152,21 +152,6 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
  ["_seaLabels","_landforms","_cities","_simpleLabels"].forEach(k=>{const f=P[k];if(!f)return;P[k]=function(){if(!this._flat)return f.apply(this,arguments);this._bigR=true;try{return f.apply(this,arguments)}finally{this._bigR=false}}})})();
 /* hover boosts for every small piece of land: an offshore island, an islet or a tiny exclave is picked out when the
    pointer is within about 10 screen pixels of its coast, on the globe and the flat map. Over the sea of the Elevation and
-   Climate maps the country is highlighted but the note still names the sea and its depth (the hover note already does
-   that when the point is outside the country's shape). */
-(function(){const P=GlobeView.prototype,_hit=P.hit;if(!_hit||typeof globeDistToRings!=="function")return;
- const AMAX=3e-4;/* about 12,000 km² */
- function parts(g){if(g._gfParts)return g._gfParts;const out=[];(g.features||[]).forEach(f=>{const c=f.properties&&f.properties.c,G=f.geometry;if(!c||!G)return;
-  const polys=G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:[];
-  polys.forEach(P=>{let a;try{a=d3.geoArea({type:"Polygon",coordinates:P})}catch(e){return}if(!(a>0)||a>AMAX)return;const ring=P[0];let x=0,y=0,z=0;const R=Math.PI/180;
-   for(const[lo,la]of ring){const cl=Math.cos(la*R);x+=cl*Math.cos(lo*R);y+=cl*Math.sin(lo*R);z+=Math.sin(la*R)}const cc=[Math.atan2(y,x)/R,Math.atan2(z,Math.hypot(x,y))/R];let rad=0;for(const p of ring)rad=Math.max(rad,d3.geoDistance(p,cc));
-   out.push({code:c,f,ring,c:cc,rad})})});return g._gfParts=out}
- P.hit=function(clientX,clientY){const h=_hit.apply(this,arguments);try{if(!h||h.code||!h.ll||(this._boostOff&&this._boostOff()))return h;
-  const s=this.size().r*this.zoom,px=10,deg=px*180/(Math.PI*Math.max(1,s)),rr=deg*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
-  for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=deg&&d<bd){bd=d;best=q}}
-  if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}return{code:best.code,f:best.f,ll,boosted:true}}catch(e){return h}}})();
-/* hover boosts for every small piece of land: an offshore island, an islet or a tiny exclave is picked out when the
-   pointer is within about 10 screen pixels of its coast, on the globe and the flat map. Over the sea of the Elevation and
    Climate maps the country is highlighted but the note still names the sea and its depth (the hover note does that
    whenever the point is outside the country's shape). */
 (function(){const P=GlobeView.prototype,_hit=P.hit;if(!_hit||typeof globeDistToRings!=="function")return;
@@ -175,11 +160,16 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   const polys=G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:[];
   polys.forEach(Q=>{let a;try{a=d3.geoArea({type:"Polygon",coordinates:Q})}catch(e){return}if(!(a>0)||a>AMAX)return;const ring=Q[0];let x=0,y=0,z=0;const R=Math.PI/180;
    for(const[lo,la]of ring){const cl=Math.cos(la*R);x+=cl*Math.cos(lo*R);y+=cl*Math.sin(lo*R);z+=Math.sin(la*R)}const cc=[Math.atan2(y,x)/R,Math.atan2(z,Math.hypot(x,y))/R];let rad=0;for(const p of ring)rad=Math.max(rad,d3.geoDistance(p,cc));
-   out.push({code:c,f,ring,c:cc,rad})})});return g._gfParts=out}
+   out.push({code:c,f,ring,c:cc,rad})})});
+  /* a country that also has a mainland (a piece bigger than the limit) gets a smaller boost for its islands: its mainland is easy to hover */
+  const big=new Set;(g.features||[]).forEach(f=>{const c=f.properties&&f.properties.c,G=f.geometry;if(!c||!G)return;(G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:[]).forEach(Q=>{try{if(d3.geoArea({type:"Polygon",coordinates:Q})>AMAX)big.add(c)}catch(e){}})});
+  out.forEach(q=>q.px=big.has(q.code)?6:10);return g._gfParts=out}
  P.hit=function(clientX,clientY){const h=_hit.apply(this,arguments);try{if(!h||h.code||!h.ll||(this._boostOff&&this._boostOff()))return h;
-  const s=(this._flat?this.projection().scale():this.size().r*this.zoom),deg=10*180/(Math.PI*Math.max(1,s)),rr=deg*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
-  for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=deg&&d<bd){bd=d;best=q}}
-  if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}return{code:best.code,f:best.f,ll,boosted:true}}catch(e){return h}}})();
+  const s=(this._flat?this.projection().scale():this.size().r*this.zoom),u=180/(Math.PI*Math.max(1,s)),rr=10*u*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
+  for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=q.px*u&&d/q.px<bd){bd=d/q.px;best=q}}
+  if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}/* the note names the island itself (Canary Islands, Spain), so it is looked up at a point on the island */
+  let at=best.ring[0];try{const m=[best.c[0],best.c[1]];if(d3.geoContains({type:"Polygon",coordinates:[best.ring]},m))at=m}catch(e){}
+  return{code:best.code,f:best.f,ll:at,boosted:true,pointerLL:ll}}catch(e){return h}}})();
 /* The flat map is only ever scaled and shifted (never turned), so every shape is projected once, at scale 1, into a
    cached Path2D, and each frame just draws those with the frame's scale and offset. Every frame is then a full, sharp
    map (borders, rivers, lakes, labels) — while dragging and zooming too, like the globe — at a fraction of the cost. */

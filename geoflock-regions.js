@@ -344,3 +344,9 @@ if(typeof isBoostedTinyCode==="function"){const _ib=isBoostedTinyCode;isBoostedT
 (function(){const st=document.createElement("style");st.textContent='body:not(.gf-sp-on) :is(path#krd,path#sml,path#abk,path#sos,path#ncy,path#tdr,path#xd){display:none !important}';document.head.appendChild(st);
  const on=()=>{try{document.body.classList.toggle("gf-sp-on",typeof activeRegion!=="undefined"&&activeRegion===R_SP&&appMode!=="allmaps")}catch(e){}};const R_SP="Special regions";
  ["renderChrome","renderActiveView","renderQuizCard"].forEach(n=>{if(typeof window[n]!=="function")return;const f=window[n];window[n]=function(){on();return f.apply(this,arguments)}});on()})();
+
+/* practice order: special regions start with the famous, large ones and get harder (1 easy … 5 hard), like the countries */
+(function(){if(typeof prDiff!=="function")return;const T={};
+ [["gl tw pr hk",1],["ps eh xk mo fk gi nc fo",2],["bm gu ncy krd sml aw cw re pf sj im je ky ax",3],["abk sos tdr gg vi vg tc mp as xd pm mf sx ai ms",4],["cx cc nf pn sh bl tk wf",5]]
+  .forEach(([s,v])=>s.split(" ").forEach(c=>T[c]=v));
+ const _pd=prDiff;prDiff=function(code,kind){const c=String(code||"").toLowerCase();if(c in T&&!(typeof COUNTRIES!=="undefined"&&COUNTRIES.some(x=>x.c===c)))return T[c];return _pd.apply(this,arguments)}})();
