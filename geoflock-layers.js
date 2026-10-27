@@ -117,6 +117,7 @@ g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
 body.gf-ly-tipping .map-territory-tooltip, body.gf-ly-tipping .globe-tip{ visibility:hidden !important; }
 .gf-ly-tip span{ display:block; opacity:.88; margin-top:2px; }
 #allMapsView .all-maps-label-controls{ position:relative; z-index:80; }
+#allMapsView .all-maps-label-controls > #globalSearchWrap{ margin-left:auto; }
 /* the switch rows (and their ▾ menus) sit above the tour button and map controls */
 #allMapsView .controls-row.all-maps-controls{ z-index:30 !important; }
 .gf-eim-pop [data-eim="daynight"]{ display:none !important; }
@@ -147,9 +148,10 @@ function mount(){const row=document.querySelector("#allMapsView .all-maps-label-
  const sw=n=>[...document.querySelectorAll("#allMapsView label.switch")].find(s=>labOf(s)===n);
  const dn=sw("Day & night");if(dn){if(dn.style.display!=="none")dn.style.display="none";const i=dn.querySelector("input");if(i&&i.checked){i.checked=false;i.dispatchEvent(new Event("change",{bubbles:true}))}}
  const cur=sw("Currents"),eim=row.querySelector(":scope > .gf-eim");
- /* Resources, Connections, Hazards sit just before Currents (which sits before the search box) */
- const ctl=document.getElementById("gfEimCtl");
- DEF.forEach(([id,name,parts])=>{let g=row.querySelector('.gf-ly-fold[data-ly="'+id+'"]');if(!g)g=makeFold(id,name,parts);if(ctl&&ctl.parentNode===row){if(g.nextElementSibling!==ctl&&!(g.nextElementSibling&&g.nextElementSibling.classList.contains("gf-ly-fold")&&g.compareDocumentPosition(ctl)&Node.DOCUMENT_POSITION_FOLLOWING))row.insertBefore(g,ctl)}else if(!g.parentNode)(eim||cur||row.lastElementChild).after(g)});
+ /* order: … Resources, Connections, Hazards, Currents, then the search box on the right */
+ const ctl=document.getElementById("gfEimCtl"),search=row.querySelector(":scope > #globalSearchWrap"),list=DEF.map(([id,name,parts])=>row.querySelector('.gf-ly-fold[data-ly="'+id+'"]')||makeFold(id,name,parts));
+ if(ctl&&ctl.parentNode===row)list.push(ctl);
+ const stop=search||null;list.forEach(el=>{if(el.parentNode!==row||el.nextElementSibling!==(list[list.indexOf(el)+1]||stop))row.insertBefore(el,stop)});
  sync()}
 
 /* ---------- the map key gets a second page, "Layers", explaining the symbols of the layers that are on ---------- */

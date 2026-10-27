@@ -466,10 +466,12 @@ function swBg(k){const s=GF_STYLES[k];if(!s)return"";const c=[s.sea[Math.min(1,s
 let coordOn=true;try{coordOn=localStorage.getItem("gfGpsOff")!=="1"}catch(e){}
 const GPS_ICO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
 function coordSwitch(){const old=document.getElementById("gfCoordToggle");if(old){const l=old.closest("label");if(l)l.remove()}
- const h=host();if(!h)return;let c=h.querySelector(":scope > .gfk-coord");
+ const h=host();if(!h)return;let c=h.querySelector(":scope > .gfk-coord");if(c)gpsPlace(c,h);
  if(!c){document.querySelectorAll(".gfk-coord").forEach(x=>x.remove());c=document.createElement("button");c.type="button";c.className="gfk-coord";c.title="GPS: where the pointer is. Click to hide or show";
   ["pointerdown","mousedown","touchstart","dblclick","wheel"].forEach(t=>c.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
   c.onclick=e=>{e.stopPropagation();coordOn=!coordOn;try{localStorage.setItem("gfGpsOff",coordOn?"0":"1")}catch(er){}gpsPaint(c,null)};h.appendChild(c);gpsPaint(c,null)}}
+/* the GPS sits just below the switch rows (on the globe the picture starts higher up, under the switches) */
+function gpsPlace(c,h){try{const row=document.querySelector("#allMapsView .all-maps-label-controls"),hr=h.getBoundingClientRect();let top=10;if(row&&row.offsetParent){const rb=row.getBoundingClientRect().bottom;if(rb>hr.top-4)top=Math.max(top,Math.round(rb-hr.top+10))}c.style.top=top+"px"}catch(e){}}
 function gpsPaint(c,ll){c.classList.toggle("off",!coordOn);if(!coordOn){c.innerHTML=GPS_ICO;return}
  c.innerHTML=GPS_ICO+(ll?"<b>"+dms(ll[1],"N","S")+"</b><b>"+dms(ll[0],"E","W")+"</b><small>"+ll[1].toFixed(3)+", "+ll[0].toFixed(3)+"</small>":"<small>Point at the map</small>")}
 const dms=(v,p,n)=>{const a=Math.abs(v),d=Math.floor(a),m=Math.round((a-d)*60);return d+"°"+String(m===60?0:m).padStart(2,"0")+"′"+(v>=0?p:n)};
