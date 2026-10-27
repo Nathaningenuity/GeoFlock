@@ -195,3 +195,39 @@ function modeWatch(){let m="";try{m=appMode==="allmaps"?allMapsColorMode:""}catc
  if(m==="gdp"&&!L.res.on){L.res.on=true;L.res.auto=true;redraw()}else if(prev==="gdp"&&L.res.auto){L.res.on=false;L.res.auto=false;redraw()}}
 setInterval(()=>{try{mount();modeWatch();watch();drawFlat(false);legendSync()}catch(e){console.error(e)}},500);
 })();
+/* Switch rows: slimmer ▾ buttons so one more switch fits on the first row; every ▾ menu (Labels, Plates, Resources,
+   Connections, Hazards, Currents) opens when the pointer is over its name, like Landforms, and a click on ▾ pins it.
+   The Satellite map's clouds are a round button with the zoom buttons; Deep Time no longer pushes the page down. */
+(function(){
+const st=document.createElement("style");st.textContent=`
+#allMapsView .all-maps-label-controls .lf-caret, #allMapsView .all-maps-label-controls .gf-fcaret{ padding:2px 1px !important; font-size:9px !important; margin-left:-2px !important; min-width:0 !important; }
+#allMapsView .all-maps-label-controls .lf-control, #allMapsView .all-maps-label-controls .gf-fold{ gap:0 !important; }
+#allMapsView #amCloudsSw{ display:none !important; }
+/* switch menus above the floating map key; switch names stay readable over the globe's dark space background */
+body.gf-menu-open .flk{ opacity:0 !important; pointer-events:none !important; transition:opacity .15s; }
+#allMapsView.globe-on .all-maps-label-controls{ background:rgba(255,255,255,.55); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); border-radius:16px; }
+#allMapsView.globe-on .all-maps-label-controls .switch-label{ text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px rgba(255,255,255,.9); }
+.globe-btns [data-g="gfclouds"]{ display:inline-flex; align-items:center; justify-content:center; background:#fff4d6 !important; color:#b07a10 !important; border:1.5px solid #f0c860 !important; }
+.globe-btns [data-g="gfclouds"].on{ background:#f2b632 !important; color:#fff !important; border-color:#f2b632 !important; }
+.globe-btns [data-g="gfclouds"] svg{ width:18px; height:18px; }
+/* Deep Time: the search row of other pages stays hidden on the Maps page */
+body:has(#allMapsView:not([hidden]):not([style*="display: none"])) #mainContent > .stat-search-row{ display:none !important; }
+`;document.head.appendChild(st);
+const canHover=window.matchMedia&&matchMedia("(hover: hover) and (pointer: fine)").matches;
+/* a menu that would run off the right edge opens leftward instead */
+function fit(pop){pop.style.left="";pop.style.right="";requestAnimationFrame(()=>{const r=pop.getBoundingClientRect();if(r.right>innerWidth-8){pop.style.left="auto";pop.style.right="0"}})}
+document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("#allMapsView .all-maps-label-controls .lf-caret, #allMapsView .all-maps-label-controls .gf-fcaret");if(c){const pop=c.parentNode.querySelector(".lf-pop, .gf-fold-pop");if(pop)setTimeout(()=>fit(pop),0)}},true);
+function hoverMenu(ctrl){if(!canHover||ctrl._gfHov)return;const pop=ctrl.querySelector(":scope > .lf-pop, :scope > .gf-fold-pop"),car=ctrl.querySelector(":scope > .lf-caret, :scope > .gf-fcaret");if(!pop||!car)return;ctrl._gfHov=1;let t=0,pinned=false;
+ const open=()=>{clearTimeout(t);fit(pop);document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop").forEach(o=>{if(o!==pop&&!o.closest("#lfCtl, .lf-control:not(.gf-ly-fold):not(#gfEimCtl)"))o.hidden=true});pop.hidden=false;car.setAttribute("aria-expanded","true")};
+ ctrl.addEventListener("mouseenter",open);ctrl.addEventListener("mouseleave",()=>{clearTimeout(t);if(!pinned)t=setTimeout(()=>{pop.hidden=true;car.setAttribute("aria-expanded","false")},280)});
+ car.addEventListener("click",()=>{pinned=!pop.hidden||!pinned;setTimeout(()=>{pinned=!pop.hidden},0)},true);
+ document.addEventListener("click",e=>{if(!ctrl.contains(e.target))pinned=false})}
+function cloudBtn(){const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g.host)return;const bar=g.host.querySelector(".globe-btns");if(!bar)return;let b=bar.querySelector('[data-g="gfclouds"]');
+ if(!b){b=document.createElement("button");b.type="button";b.dataset.g="gfclouds";b.title="Clouds: NASA’s real cloud cover";b.setAttribute("aria-label","Show or hide clouds");
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M7 18h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.6 9.1 4.5 4.5 0 0 0 7 18z"/></svg>';
+  b.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();const v=!cloudsOn();const i=document.getElementById("amCloudsToggle");if(i){i.checked=v;i.dispatchEvent(new Event("change",{bubbles:true}))}else{globePrefs().clouds=v;saveStats();if(v)cloudsLoad();try{cloudFlatSync()}catch(er){}try{g.request()}catch(er){}}PIC_RESET();sync2()},true);bar.appendChild(b)}
+ const sat=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite";b.style.display=sat?"":"none";b.classList.toggle("on",!!(typeof cloudsOn==="function"&&cloudsOn()))}
+function PIC_RESET(){setTimeout(()=>{try{amGlobe.request()}catch(e){}},120)}
+function sync2(){try{cloudBtn()}catch(e){}}
+setInterval(()=>{try{document.body.classList.toggle("gf-menu-open",[...document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop")].some(p=>!p.hidden&&p.offsetParent));document.querySelectorAll("#allMapsView .all-maps-label-controls .gf-ly-fold, #allMapsView .all-maps-label-controls .gf-fold, #gfEimCtl").forEach(hoverMenu);sync2()}catch(e){}},250);
+})();

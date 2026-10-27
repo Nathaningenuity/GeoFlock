@@ -62,14 +62,16 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
 {const _r=P._render;P._render=function(){if(typeof amGlobe==="undefined"||this!==amGlobe){this._flat=false;return _r.apply(this,arguments)}
  const want=flatWanted();if(want!==!!this._flat){this._flat=want;if(want){this.zoom=Math.max(1,this.zoom);if(this._flatHome!==false){this.zoom=1;this.rot=[0,0]}}else{this.zoom=1;this.rot=this.cfg.rot?this.cfg.rot.slice():[-15,-20]}
   this.host.classList.toggle("gf-flat",want);const v=document.getElementById("allMapsView");if(v)v.classList.toggle("gf-flatc",want);if(want)setTimeout(()=>{try{gfFlatSave()}catch(e){}},0)}
+ this.host.style.removeProperty("margin-top");
  if(!this._flat)return _r.apply(this,arguments);
+ this.host.style.setProperty("margin-top","10px","important");
  flatCtx(this);const{w,h,r}=this.size();this._flatR={w,h,r,s:r*this.zoom,p:this.projection(),skip:false};
  /* the GL ball is not used: the flat pictures go on the 2-D canvas first */
  const gl=this.gl;if(gl&&!gl._gfFlat){gl._gfFlat=1;const D=gl.draw.bind(gl),T=gl.texture.bind(gl),self=this;gl.texture=function(){return self._flat?null:T.apply(gl,arguments)};
   gl.draw=function(o){if(!self._flat)return D(o);D(null);if(!self._inFlat||self._picDone)return;self._picDone=true;const dpr=Math.min(2,window.devicePixelRatio||1);const n=self._flatPictures(self.ctx,dpr);self._flatR.skip=n>0}}
  if(!gl){/* no GL: draw the pictures right after the canvas is cleared */}
  this._inFlat=true;this._picDone=false;let r0;try{r0=_r.apply(this,arguments)}finally{this._inFlat=false}
- this.host.style.setProperty("margin-top","10px","important");
+
  if(!gl){}
  return r0}}
 /* without GL the ball would be drawn by the processor; on the flat map the pictures are drawn instead */
