@@ -203,3 +203,28 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
  {const _r=P._render;P._render=function(){const ctx=this.ctx;if(this._flat&&ctx&&!ctx._gfThin){ctx._gfThin=1;const g=this,ST=ctx.stroke;ctx.stroke=function(){if(g._flat&&!g._fastMove&&/^rgba\((25, 25, 25|20, 30, 20)/.test(String(this.strokeStyle).replace(/rgba\((\d+),(\d+),(\d+)/,"rgba($1, $2, $3"))){const lw=this.lineWidth;this.lineWidth=lw*.55;const r=ST.apply(this,arguments);this.lineWidth=lw;return r}return ST.apply(this,arguments)}}return _r.apply(this,arguments)}}
 })();
 
+/* Capitals study, Map view: the same smooth flat map as Places, with each capital's gold star (from the old map's stars:
+   the ones for the chosen region) and its name; a click near a star opens that country's profile. */
+(function(){if(typeof stGlobeSync!=="function")return;
+ const capMap=()=>{try{const b=document.querySelector('#studyView [data-cv="map"]');return typeof appMode!=="undefined"&&appMode==="capital"&&typeof activeTab!=="undefined"&&activeTab==="study"&&!!b&&b.classList.contains("on")}catch(e){return false}};
+ const _s=stGlobeSync;stGlobeSync=function(){if(typeof appMode!=="undefined"&&appMode==="capital"){if(!capMap())return;const a=appMode;appMode="map";try{return _s.apply(this,arguments)}finally{appMode=a}}return _s.apply(this,arguments)};
+ setInterval(()=>{try{const on=capMap();window._gfCapMap=on;const sw=document.getElementById("stGlobeSwitch");if(sw)sw.style.display=typeof appMode!=="undefined"&&appMode==="capital"?"none":"";
+  if(on){const host=document.getElementById("stGlobeHost");if(!host||host.style.display==="none"||typeof stGlobe==="undefined"||!stGlobe||!stGlobe.host.isConnected)stGlobeSync()}
+  else if(typeof appMode!=="undefined"&&appMode==="capital"){const v=document.getElementById("studyView"),h=document.getElementById("stGlobeHost");if(v&&v.classList.contains("globe-on")&&!(globePrefs().study)){v.classList.remove("globe-on");if(h)h.style.display="none"}}}catch(e){}},400);
+ /* the stars, read from the old map (its coordinates → longitude and latitude) */
+ let SK="",STARS=[];
+ function stars(){const g=document.querySelector("#atlasStudyMapWrap svg g.cap-stars");if(!g)return[];const els=[...g.querySelectorAll(".cap-st")],k=els.map(e=>e.dataset.c).join(",");if(k===SK)return STARS;const first=!SK;SK=k;const f=SPIN.W.f;setTimeout(()=>fit(first),0);
+  STARS=els.map(e=>{const X=+e.dataset.x,Y=+e.dataset.y,ll=GLOBE_ROBINSON0.invert([(X-f.bx)/f.s,(Y-f.by)/f.s]);const c=e.dataset.c,C=COUNTRY_BY_CODE[c]||{};return ll?{c,ll,cap:(C.caps&&C.caps[0])||""}:null}).filter(Boolean);return STARS}
+ /* a new region: frame its capitals */
+ function fit(){try{const g=stGlobe;if(!g||!g._flat||!STARS.length)return;const b=g._flatBase(),{w,h}=g.size();const P2=STARS.map(s=>b(s.ll));if(STARS.length>120){g.zoom=1;g.rot=[0,0];g.request();return}
+  const xs=P2.map(p=>p[0]),ys=P2.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),bw=Math.max(40,x1-x0),bh=Math.max(30,y1-y0);
+  const z=Math.max(1,Math.min(8,Math.min(w/bw,h/bh)*.72));const ll=b.invert([(x0+x1)/2,(y0+y1)/2]);g.zoom=z;if(ll)g.rot=[-ll[0],-ll[1]];g.request()}catch(e){}}
+ const P=GlobeView.prototype,_dm=P._drawMeasure;P._drawMeasure=function(ctx,p){try{if(this._flat&&typeof stGlobe!=="undefined"&&this===stGlobe&&window._gfCapMap){const S=stars(),z=Math.min(1.6,Math.pow(Math.max(1,this.zoom),.4)),r=5.2*z;
+   ctx.save();ctx.lineJoin="round";S.forEach(s=>{const q=p(s.ll);if(!q)return;ctx.save();ctx.translate(q[0],q[1]);ctx.scale(r/9,r/9);ctx.beginPath();ctx.moveTo(0,-9);[[2.6,-3.2],[8.6,-2.8],[4,1.2],[5.4,7.4],[0,4],[-5.4,7.4],[-4,1.2],[-8.6,-2.8],[-2.6,-3.2]].forEach(([x,y])=>ctx.lineTo(x,y));ctx.closePath();ctx.fillStyle="#f5c518";ctx.strokeStyle="rgba(90,60,0,.85)";ctx.lineWidth=1.4;ctx.fill();ctx.stroke();ctx.restore();s._q=q});
+   const fs=Math.max(8,9*this.ls());ctx.font="700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.textBaseline="middle";const placed=[];
+   S.forEach(s=>{if(!s._q||!s.cap)return;const w=ctx.measureText(s.cap).width,x=s._q[0]+r+2,y=s._q[1],b=[x,y-fs/2,x+w,y+fs/2];if(placed.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]))return;placed.push(b);
+    ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=3;ctx.strokeText(s.cap,x,y);ctx.fillStyle="#3a2a00";ctx.fillText(s.cap,x,y)});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)};
+ /* a click on (or next to) a star opens that country */
+ document.addEventListener("pointerup",e=>{try{if(!window._gfCapMap||typeof stGlobe==="undefined"||!stGlobe||!stGlobe._flat)return;const cv=stGlobe.canvas,r=cv.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
+  const x=e.clientX-r.left,y=e.clientY-r.top;let best=null,bd=14;stars().forEach(s=>{if(!s._q)return;const d=Math.hypot(s._q[0]-x,s._q[1]-y);if(d<bd){bd=d;best=s}});if(best){const C=COUNTRY_BY_CODE[best.c];if(C){e.stopPropagation();setTimeout(()=>openFlagZoom(C),0)}}}catch(er){}},true);
+})();
