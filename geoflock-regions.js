@@ -69,7 +69,9 @@ function regionQuiz(){document.querySelectorAll(".gf-rq-back").forEach(x=>x.remo
   box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{if(box.dataset.done==="1")return;box.dataset.done="1";const k=+b.dataset.k,ok=k===q.a;if(ok){right++;try{ppCredit(q.c,"know")}catch(e){}}
    box.querySelectorAll("[data-k]").forEach(x=>{const kk=+x.dataset.k;x.classList.add(kk===q.a?"gf-rq-ok":kk===k?"gf-rq-no":"gf-rq-dim")});const w=box.querySelector(".gf-rq-why");w.innerHTML=(ok?"<b>Right!</b> ":"<b>Not quite.</b> ")+esc(q.why)+' <button type="button" class="chip" data-next>Next →</button>';w.querySelector("[data-next]").onclick=()=>{i++;box.dataset.done="";show()}})};show()}
 window.gfRegionQuiz=regionQuiz;
-{const addCard=()=>{try{const host=document.getElementById("triviaView");if(!host||!host.offsetParent||document.getElementById("gfRegTrivia"))return;const hero=host.querySelector(".tvh-hero");if(!hero)return;const d=document.createElement("div");d.id="gfRegTrivia";d.className="gf-reg-trivia";d.innerHTML='<div><b>Special regions</b><span>Territories, special administrative regions and places with limited recognition: Puerto Rico, Hong Kong, Taiwan, Somaliland, Kurdistan and more. Flags, capitals and surprising facts.</span></div><button type="button" class="chip">Start quiz</button>';d.querySelector("button").onclick=regionQuiz;hero.insertAdjacentElement("afterend",d)}catch(e){console.error(e)}};let q=0;new MutationObserver(()=>{if(!q)q=setTimeout(()=>{q=0;addCard()},150)}).observe(document.body,{childList:true,subtree:true})}
+{const addCard=()=>{try{const host=document.getElementById("triviaView");if(!host||!host.offsetParent)return;const hero=host.querySelector(".tvh-hero");if(!hero)return;
+ /* it sits at the very bottom of the Trivia page */
+ const old=document.getElementById("gfRegTrivia");if(old){if(old.parentNode!==hero.parentNode||old.nextElementSibling)hero.parentNode.appendChild(old);return}const d=document.createElement("div");d.id="gfRegTrivia";d.className="gf-reg-trivia";d.innerHTML='<div><b>Special regions</b><span>Territories, special administrative regions and places with limited recognition: Puerto Rico, Hong Kong, Taiwan, Somaliland, Kurdistan and more. Flags, capitals and surprising facts.</span></div><button type="button" class="chip">Start quiz</button>';d.querySelector("button").onclick=regionQuiz;hero.parentNode.appendChild(d)}catch(e){console.error(e)}};let q=0;new MutationObserver(()=>{if(!q)q=setTimeout(()=>{q=0;addCard()},150)}).observe(document.body,{childList:true,subtree:true})}
 /* ---------- styles ---------- */
 const st=document.createElement("style");st.textContent=`
 .gf-reg-note{ font-size:12px; opacity:.75; max-width:720px; margin:6px auto 0; text-align:center; }
@@ -85,7 +87,8 @@ const st=document.createElement("style");st.textContent=`
 .gf-reg-fact{ background:rgba(232,112,26,.09); border-radius:10px; padding:8px 10px; font-size:14px; }
 .gf-reg-disc{ font-size:11.5px; opacity:.6; margin:10px 0 0; }
 .gf-reg-trivia{ display:flex; align-items:center; gap:14px; justify-content:space-between; max-width:880px; margin:18px auto; padding:14px 18px; border-radius:16px; background:rgba(255,255,255,.75); box-shadow:0 4px 16px rgba(20,40,70,.08); }
-.gf-reg-trivia b{ display:block; font-size:17px; } .gf-reg-trivia span{ font-size:13.5px; opacity:.75; }
+.gf-reg-trivia b{ display:block; font-size:17px; } .gf-reg-trivia .chip{ white-space:nowrap; flex:none; } .gf-reg-trivia span{ font-size:13.5px; opacity:.75; }
+body.dark-theme .gf-reg-trivia, body.sky-night .gf-reg-trivia{ background:rgba(26,32,56,.82); color:#e8ecf6; box-shadow:0 4px 16px rgba(0,0,0,.3); }
 .gf-rq{ max-width:480px; text-align:center; } .gf-rq h3{ font-size:19px; margin:8px 0 12px; }
 .gf-rq-flag{ height:90px; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,.18); margin:10px auto 0; display:block; }
 .gf-rq-opts{ display:grid; grid-template-columns:1fr 1fr; gap:8px; } .gf-rq-opts .chip{ white-space:normal; min-height:42px; }
