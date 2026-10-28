@@ -20,7 +20,12 @@ if(typeof GlobeView!=="undefined"){const P=GlobeView.prototype,_s=P.size;P.size=
  const side=Math.round(Math.min(W,availH));return{w:side,h:side,r:side/2-9}}}catch(e){}return r}}
 /* the least zoom that fills the height of the window */
 function fillZoom(g){try{const {w,h}=g.size();return Math.max(1,h/(w*.5072))}catch(e){return 1}}
-function sync(){let g;try{g=amGlobe}catch(e){return}const show=typeof appMode!=="undefined"&&appMode==="allmaps";if(!show&&on)exit();if(!g||!g.host)return;const btns=g.host.querySelector(".globe-btns");if(!btns)return;
+/* a satellite globe in full screen: the starry sky fills the whole window, not just a box round the globe */
+let SKY=null;function sky(){const v=V();let g;try{g=amGlobe}catch(e){}const st=g&&g.host&&g.host.querySelector(".globe-stage");if(!v||!st)return;
+ const want=on&&v.classList.contains("sat-on")&&!g._flat;
+ if(want){if(!SKY){const b=getComputedStyle(st).backgroundImage;if(b&&b!=="none")SKY=b}if(SKY&&!v.classList.contains("gf-fs-sky")){v.style.setProperty("--gf-fs-sky",SKY);v.classList.add("gf-fs-sky")}}
+ else if(v.classList.contains("gf-fs-sky"))v.classList.remove("gf-fs-sky")}
+function sync(){let g;try{g=amGlobe}catch(e){return}try{sky()}catch(e){}const show=typeof appMode!=="undefined"&&appMode==="allmaps";if(!show&&on)exit();if(!g||!g.host)return;const btns=g.host.querySelector(".globe-btns");if(!btns)return;
  let b=btns.querySelector(".gf-fsb");if(!b){b=document.createElement("button");b.type="button";b.className="gf-fsb";btns.insertBefore(b,btns.firstChild);b.onclick=e=>{e.stopPropagation();on?exit():enter()}}
  if(b._on!==on){b._on=on;b.innerHTML=ICO(on);b.title=on?"Leave full screen (Esc)":"Full screen";b.setAttribute("aria-label",b.title)}
  /* the Layers fold, only in full screen */
@@ -42,6 +47,9 @@ body.gf-fs.gf-fs-layers .all-maps-controls{ display:flex !important; margin:0 0 
 body.gf-fs #populationLegend, body.gf-fs #allMapsView > .am-note, body.gf-fs #allMapsView .gf-below{ display:none !important; }
 body.gf-fs .globe-wrap-rel{ margin-top:0 !important; }
 .gf-fs-lay{ font-weight:700 !important; }
+body.gf-fs #allMapsView.gf-fs-sky{ background:var(--gf-fs-sky) repeat, #03060f !important; }
+body.gf-fs #allMapsView.gf-fs-sky .globe-stage{ background:none !important; }
+body.gf-fs #allMapsView.gf-fs-sky .switch-label{ color:#dfe6f3 !important; text-shadow:none !important; }
 /* the round buttons sit over the map's right edge */
 body.gf-fs .globe-btns{ position:absolute !important; right:12px !important; left:auto !important; top:64px !important; z-index:8; }
 body.gf-fs .globe-wrap-rel, body.gf-fs #amGlobeHost{ width:100% !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; }`;document.head.appendChild(st);
