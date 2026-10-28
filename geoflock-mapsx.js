@@ -79,3 +79,8 @@ setInterval(()=>{try{sync()}catch(e){}},400);
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#gfDeepChip, #projTabChip");if(!t)return;
  try{if(t.id==="gfDeepChip"){if(typeof proj!=="undefined"&&proj.on)projShow(false)}
   else{const d=document.getElementById("gfDeep");if(d&&!d.hidden){d.hidden=true;const c=document.getElementById("gfDeepChip");if(c)c.classList.remove("active")}}}catch(_){}},true);
+/* 5. Tours: the Great Wall is drawn along its real course (the mapped Ming wall), not as a rough line */
+(function(){const fix=()=>{try{const G=window.GF_LM_LINES&&GF_LM_LINES["Great Wall of China"];if(!G||typeof PS_TOURS==="undefined")return false;
+ Object.values(PS_TOURS).forEach(T=>(T.steps||[]).forEach(S=>{if(!S.lines)return;const i=S.lines.findIndex(L=>L.coords&&L.coords[0]&&L.coords[0][0]===98.22&&L.coords[0][1]===39.8);
+  if(i<0)return;const k=S.lines[i].kind;S.lines.splice(i,1,...G.coordinates.filter(c=>c.length>1).map(c=>({coords:c,kind:k==="dash"?"solid":k||"solid",w:2})))}));return true}catch(e){return false}};
+ if(!fix())document.addEventListener("DOMContentLoaded",fix)})();

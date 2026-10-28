@@ -13,11 +13,11 @@ if(typeof LANDFORMS==="undefined"||typeof d3==="undefined")return;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
 const STRIP=/^(the |mount |mt |lake |loch |river |isla |isle of |gulf of |bay of |sea of |strait of |cape )/;
-const COL={landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8"};
-const TYPE={landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall"};
-const EMO={landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦"};
+const COL={regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8"};
+const TYPE={regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall"};
+const EMO={regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦"};
 /* how each type is shown: zoom = fly to a point; flash = flash then soft highlight; icon = map icon; layer = flash then keep it drawn */
-const SHOW={landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer"};
+const SHOW={regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer"};
 let IDX=null;
 /* which seas belong to which (roughly following the International Hydrographic Organization's limits). Only used by search:
    searching a sea also lights up its bays, gulfs and smaller seas. Everywhere else they stay separate. */
@@ -39,11 +39,27 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  (window.GF_LANDMARKS||[]).forEach(r=>{const ll=[r[1],r[2]],k=norm(r[0]);IDX=IDX.filter(e=>!(norm(e.n)===k&&e.cat!=="landmarks"&&(e.g.type==="Point")));const LN=(window.GF_LM_LINES||{})[r[0]];IDX.push({n:r[0],alt:r[6]||[],cat:"landmarks",g:LN||{type:"Point",coordinates:ll},ll,fame:1,icon:r[4],phf:r[5],cc:r[3],line:!!LN})});
  /* states and provinces (names and centres; the shape is loaded when one is chosen) */
  (PROV||[]).forEach(r=>{IDX.push({n:r[0],alt:[],cat:"provinces",cc:r[1],g:{type:"Point",coordinates:[r[2],r[3]]},ll:[r[2],r[3]],fame:2,typ:provKind(r[1])})});
+ /* regions: only those the map doesn't already have (a range, desert or island already listed keeps its own entry) */
+ {const base=n=>norm(n).replace(/\b(mountains|mts|range|ranges|desert|peninsula|pen|islands|island|is|plateau|the)\b/g,"").replace(/\s+/g," ").trim(),have=new Set(IDX.map(e=>base(e.n)));
+  (REGS||[]).forEach(o=>{if(have.has(base(o.n))||(o.alt||[]).some(a=>have.has(base(a))))return;have.add(base(o.n));let g=o.g;try{IDX.push({n:o.n,alt:o.alt||[],cat:"regions",typ:o.t,g,ll:d3.geoCentroid(g),fame:2})}catch(e){}});
+  UNIONS.forEach(([n,cc,alt])=>{if(have.has(base(n)))return;const g=unionOf(cc);if(!g)return;IDX.push({n,alt,cat:"regions",typ:"group of countries",g,ll:d3.geoCentroid(g),fame:2})});
+  IDX.push({n:"Silk Road",alt:["Silk Roads","Silk Route"],cat:"routes",g:SILK,ll:[75,40],fame:1})}
  {const isl=new Set(IDX.filter(e=>e.cat==="islands").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="groups"&&isl.has(norm(e.n))))}
  /* a name that is both a lake and a sea (the Caspian, Aral and Dead Seas) is kept once, as a lake */
  {const lk=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="seas"&&lk.has(norm(e.n))))}
  IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
 /* states and provinces: the name list is small and loaded once; each shape comes with its country's file */
+/* named regions: Natural Earth's geographic regions (public domain: the Sahel, Patagonia, Siberia, plains, plateaus, basins,
+   deltas, coasts…), groups of countries (the Maghreb, the Levant, Central Asia…) and the Silk Road */
+let REGS=null;function loadRegs(){if(REGS)return;REGS=[];fetch("textures/GF_REGIONS.json").then(r=>r.ok?r.json():[]).then(d=>{/* the file's rings run the GeoJSON way round; d3 wants them the other way */d.forEach(o=>{try{if(d3.geoArea(o.g)>2*Math.PI)o.g.coordinates.forEach(P=>P.forEach(r=>r.reverse()))}catch(e){}});REGS=d;IDX=null}).catch(()=>{})}
+const UNIONS=[["Maghreb",["ma","dz","tn","ly","mr","eh"],["Maghrib","Northwest Africa"]],["Levant",["sy","lb","il","ps","jo"],[]],["Middle East",["bh","cy","eg","ir","iq","il","jo","kw","lb","om","ps","qa","sa","sy","tr","ae","ye"],["Near East"]],
+ ["Horn of Africa",["et","er","dj","so"],[]],["Central Asia",["kz","kg","tj","tm","uz"],[]],["Southeast Asia",["bn","kh","id","la","my","mm","ph","sg","th","tl","vn"],[]],["South Caucasus",["am","az","ge"],["Transcaucasia"]],
+ ["Benelux",["be","nl","lu"],["Low Countries"]],["Baltic states",["ee","lv","lt"],["Baltics"]],["Nordic countries",["dk","fi","is","no","se"],["Nordics"]],["Indian subcontinent",["in","pk","bd","np","bt","lk"],["South Asia"]],
+ ["Persian Gulf states",["bh","kw","om","qa","sa","ae"],["Gulf states","GCC"]],["Iberia",["es","pt"],[]],["Southern Cone",["ar","cl","uy"],[]],["Guianas",["gy","sr","gf"],["The Guianas"]],["Great Lakes region (Africa)",["rw","bi","ug","cd","ke","tz"],["African Great Lakes"]]];
+/* the Silk Road's main routes, through the cities it is named by */
+const SILK={type:"MultiLineString",coordinates:[[[108.94,34.34],[103.83,36.06],[102.64,37.93],[100.45,38.93],[98.49,39.73],[94.66,40.14],[93.51,42.83],[89.19,42.95],[82.96,41.72],[80.26,41.17],[75.99,39.47],[72.8,40.53],[69.62,40.28],[66.96,39.65],[64.42,39.77],[61.84,37.66],[58.8,36.21],[51.43,35.59],[48.51,34.8],[44.58,33.09],[38.27,34.55],[36.16,36.2]],
+ [[94.66,40.14],[88.97,39.22],[79.93,37.11],[77.24,38.41],[75.99,39.47]],[[36.16,36.2],[32.85,39.93],[28.98,41.01]]]};
+function unionOf(codes){try{const S=new Set(codes),T=PROJ_WORLD,G=T.objects.countries.geometries.filter(g=>S.has(String((g.properties||{}).c||g.id||"").toLowerCase()));if(!G.length)return null;return topojson.merge(T,G)}catch(e){return null}}
 let PROV=null;function loadProv(){if(PROV)return;PROV=[];fetch("provinces/names.json").then(r=>r.ok?r.json():[]).then(d=>{PROV=d;if(IDX){IDX=null}}).catch(()=>{})}
 function provKind(cc){try{const L=(window.gfProvinces&&gfProvinces.LIST||[]).find(x=>x[0]===cc);const k=L?L[2]:"province";return(k.includes(" or ")?k.split(" or ")[0]:k)+" of "+((COUNTRY_BY_CODE||{})[cc]||{n:cc.toUpperCase()}).n}catch(e){return"province"}}
 /* a place's photo: its landmark photo; else a library photo whose file is named after it ("Amazon River - 2018.jpg",
@@ -149,7 +165,7 @@ if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=func
 function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)return;let b=document.getElementById("gfsX");
  if(!CUR){if(b)b.remove();return}if(!b){b=document.createElement("button");b.type="button";b.id="gfsX";b.setAttribute("aria-label","Clear the search");b.onclick=e=>{e.stopPropagation();const i=document.getElementById("globalSearchInput");if(i)i.value="";clear()};wrap.appendChild(b)}
  b.innerHTML='<span>'+EMO[CUR.cat]+' '+esc(CUR.n)+'</span><b>×</b>'}
-function wire(){loadProv();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
+function wire(){loadProv();loadRegs();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
   /* the site's own country suggestions are kept, but scored the same way as places, and weak guesses are dropped */
   const nq=norm(q),ctry=[...box.querySelectorAll(".global-search-result[data-code]")].map(el=>{const c=(COUNTRY_BY_CODE||{})[el.dataset.code];const keys=c?[c.n].concat((typeof COUNTRY_ALIASES!=="undefined"&&COUNTRY_ALIASES[c.c])||[]).map(norm):[];return{el,s:score(nq,keys),f:1}});
