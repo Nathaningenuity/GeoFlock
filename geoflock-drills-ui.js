@@ -57,11 +57,12 @@ function choices(D,dir,c,P){const reg=(COUNTRY_BY_CODE[c]||{}).r;if(dir==="rev")
 .dr-clue,.dr-reveal{ max-width:340px; margin:6px auto 10px; } .dr-flip .dm{ max-width:340px; margin:4px auto 10px; }
 .dr-flip{ animation:drFlip .38s ease both; transform-origin:50% 0; } @keyframes drFlip{ from{ transform:perspective(700px) rotateX(-75deg); opacity:0 } to{ transform:none; opacity:1 } }
 .dr-aflag{ display:block; width:120px; margin:2px auto 8px; border-radius:4px; box-shadow:0 2px 6px rgba(0,0,0,.2); }
-.dr-fb.fl b{ display:block; font-size:1.25em; margin-bottom:2px; }`;document.head.appendChild(st)}
+.dr-fb.fl b{ display:block; font-size:1.25em; margin-bottom:2px; }
+.dr-flipme{ cursor:pointer; } .dr-fprog{ height:4px; border-radius:2px; background:rgba(127,127,127,.18); margin:-4px 0 8px; overflow:hidden; } .dr-fprog i{ display:block; height:100%; background:#e08a3c; border-radius:2px; transition:width .3s; }`;document.head.appendChild(st)}
 /* mode: "normal", "speed" (60 seconds, four choices, as many as you can) or "flash" (show the answer; nothing is recorded) */
 let lastMode="normal";
-function start(D,mode){mode=mode||lastMode||"normal";lastMode=mode;const S=st(),dir=dirOf(D),P=pool(D,dir);clearInterval(start._t);if(!P.length){R=null;home();return}
- const len=mode==="speed"?Infinity:S.len==="all"?P.length:S.len==="endless"?Infinity:Math.min(+S.len||10,P.length);
+function start(D,mode,only){mode=mode||lastMode||"normal";lastMode=mode;const S=st(),dir=dirOf(D),P=only&&only.length?only.slice():pool(D,dir);clearInterval(start._t);if(!P.length){R=null;home();return}
+ const len=mode==="speed"?Infinity:only&&only.length?P.length:S.len==="all"?P.length:S.len==="endless"?Infinity:Math.min(+S.len||10,P.length);
  R={D,dir,P,queue:shuffle(P.slice()),len,k:0,ok:0,miss:[],log:[],cur:null,answered:false,t0:Date.now(),style:mode==="speed"?"choice":mode==="flash"?"flash":S.style,mode};
  try{const t=triviaState();t.fcMode="drills";saveStats()}catch(e){}
  if(mode==="speed"){R.left=60;const t0=performance.now();start._t=setInterval(()=>{if(!R||R.mode!=="speed"){clearInterval(start._t);return}R.left=Math.max(0,60-(performance.now()-t0)/1000);const c=document.getElementById("drClock");if(c)c.textContent=Math.ceil(R.left);const b=document.getElementById("drBar");if(b)b.style.width=(100*R.left/60)+"%";
@@ -98,7 +99,8 @@ function render(msg){const v=document.getElementById("triviaView");if(!v)return;
   v.querySelectorAll("[data-len]").forEach(b=>b.onclick=()=>{S.len=b.dataset.len;saveStats();render()});return}
  const D=R.D,c=R.cur,side=R.dir==="rev"?D.rev:D.fwd;
  if(R.done){const key=D.id+":"+R.dir+":"+S.region+":"+(R.mode==="speed"?"speed":S.style),pb=S.best[key]||0,nb=R.mode!=="flash"&&R.ok>pb;if(nb&&!R._saved){S.best[key]=R.ok;saveStats()}R._saved=1;const miss=[...new Set(R.miss)];
-  v.innerHTML='<div class="dr-wrap"><div class="dr-card dr-end"><small>'+esc(D.name)+' · '+esc(DIRNAME(D,R.dir))+(R.mode==="speed"?" · speed round":R.mode==="flash"?" · flashcards":"")+'</small><h2>'+(R.mode==="speed"?R.ok+'<small style="font-size:16px"> right in 60 s</small>':R.ok+' / '+R.k)+'</h2><p>'+(R.mode==="flash"?"Practice only: nothing was recorded.":R.k&&R.ok===R.k&&R.mode!=="speed"?"Perfect round.":nb?"New best!":"Best: "+pb)+'</p>'+(miss.length?'<div class="dr-miss"><small>To practise</small>'+miss.map(m=>'<div><img src="'+flagUrl(m,"w40")+'" alt=""><b>'+esc(NAME(m))+'</b><span>'+esc(factLine(m))+'</span></div>').join("")+'</div>':'')+'<div class="dr-acts"><button type="button" class="chip" id="drBack">← Trivia</button><button type="button" class="chip tut-go" id="drAgain">Again →</button></div></div></div>';
+  v.innerHTML='<div class="dr-wrap"><div class="dr-card dr-end"><small>'+esc(D.name)+' · '+esc(DIRNAME(D,R.dir))+(R.mode==="speed"?" · speed round":R.mode==="flash"?" · flashcards":"")+'</small><h2>'+(R.mode==="speed"?R.ok+'<small style="font-size:16px"> right in 60 s</small>':R.ok+' / '+R.k)+'</h2><p>'+(R.mode==="flash"?"Practice only: nothing was recorded.":R.k&&R.ok===R.k&&R.mode!=="speed"?"Perfect round.":nb?"New best!":"Best: "+pb)+'</p>'+(miss.length?'<div class="dr-miss"><small>To practise</small>'+miss.map(m=>'<div><img src="'+flagUrl(m,"w40")+'" alt=""><b>'+esc(NAME(m))+'</b><span>'+esc(factLine(m))+'</span></div>').join("")+'</div>':'')+'<div class="dr-acts"><button type="button" class="chip" id="drBack">← Trivia</button>'+(miss.length&&R.mode!=="speed"?'<button type="button" class="chip" id="drMiss">Go over the '+miss.length+' missed</button>':'')+'<button type="button" class="chip tut-go" id="drAgain">Again →</button></div></div></div>';
+  const dm=document.getElementById("drMiss");if(dm)dm.onclick=()=>start(D,R.mode,miss);
   document.getElementById("drBack").onclick=home;document.getElementById("drAgain").onclick=()=>start(D);document.getElementById("drAgain").focus();return}
  const showFlag=R.dir==="fwd";const prompt=side.ask(c);
  /* the fact's picture: a clue when the question asks for the country (never the flag then), and shown with the answer otherwise */
@@ -115,7 +117,9 @@ function render(msg){const v=document.getElementById("triviaView");if(!v)return;
   (showFlag?'<img class="dr-flag" src="'+flagUrl(c,"w320")+'" alt="">':'')+(clue?'<div class="dr-clue">'+clue+'</div>':'')+'<h3>'+esc(prompt)+'</h3>'+(sub?'<p class="dr-sub">'+esc(sub)+'</p>':'')+body+fb+'</div></div>';
  const q=document.getElementById("drQuit");if(q)q.onclick=()=>{clearInterval(start._t);R.len=R.k;R.done=true;render()};
  const swp=document.getElementById("drSwap");if(swp)swp.onclick=()=>{S.dir[D.id]=R.dir==="rev"?"fwd":"rev";saveStats();start(D,R.mode)};
- const sh=document.getElementById("drShow");if(sh){sh.onclick=()=>{R.shown=true;render()};sh.focus({preventScroll:true})}
+ const sh=document.getElementById("drShow");if(sh){sh.onclick=()=>{R.shown=true;render()};sh.focus({preventScroll:true});
+  /* a flashcard turns over when you click anywhere on it */const card=v.querySelector(".dr-card");if(card){card.classList.add("dr-flipme");card.onclick=e=>{if(e.target.closest("button,a,input"))return;R.shown=true;render()}}}
+ if(R.mode==="flash"&&R.len!==Infinity){const card=v.querySelector(".dr-card");if(card&&!card.querySelector(".dr-fprog"))card.insertAdjacentHTML("afterbegin",'<div class="dr-fprog"><i style="width:'+(100*Math.min(R.k,R.len)/R.len)+'%"></i></div>')}
  const y=document.getElementById("drYes"),n=document.getElementById("drNo");if(y){y.onclick=()=>answer("",true);n.onclick=()=>answer("",false);y.focus({preventScroll:true})}
  v.querySelectorAll(".dr-o").forEach(b=>b.onclick=()=>{const o=R.opts[+b.dataset.i];const ok=R.dir==="rev"?o.v===c:(D.fwd.all?D.fwd.all(c).map(norm).includes(norm(o.v)):norm(o.v)===norm(D.fwd.ans(c)));answer(o.v,ok)});
  const sk=document.getElementById("drSkip");if(sk&&R.style!=="flash"&&R.mode!=="speed")sk.onclick=skip;else if(sk)sk.remove();const nx=document.getElementById("drNext");if(nx){nx.onclick=next;nx.focus({preventScroll:true})}
