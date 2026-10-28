@@ -161,3 +161,28 @@ document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey||!/^[1
 
 if(!addPill()){const t=setInterval(()=>{if(addPill()){clearInterval(t);sync()}},200)}sync();
 })();
+/* Places and Capitals maps: one "Labels ▾" switch (country + ocean labels in its menu), small carets like All Maps,
+   and the search bar on the same row */
+(function(){
+const st=document.createElement("style");st.textContent=`
+#studyView .study-toolbar-actions{ flex-wrap:wrap; align-items:center; column-gap:10px; }
+#studyView .study-toolbar-actions .switch{ gap:6px; }
+#studyView .lf-caret,#studyView .gf-fcaret{ font-size:10px !important; padding:0 1px !important; margin-left:2px !important; width:auto !important; min-width:0 !important; }
+#studyView .lf-control,#studyView .gf-fold{ gap:0 !important; }
+#studyView .global-search-wrap.in-toolbar{ margin-left:auto; }
+#studyView .global-search-wrap.in-toolbar{ flex:0 1 150px; min-width:120px; }
+#studyView .global-search-wrap.in-toolbar .global-search-input{ width:100%; min-width:0; }`;document.head.appendChild(st);
+const labOf=sw=>{const l=sw.querySelector(".switch-label");return l?l.textContent.trim():""};
+function fold(){const row=document.querySelector("#studyView .study-toolbar-actions");if(!row)return;
+ const sws=["Country labels","Ocean labels"].map(m=>[...row.querySelectorAll("label.switch")].find(sw=>labOf(sw)===m)).filter(Boolean);if(sws.length<2)return;
+ let g=row.querySelector('.gf-fold[data-g="Labels"]');
+ if(!g){g=document.createElement("span");g.className="gf-fold";g.dataset.g="Labels";g.innerHTML='<label class="switch gf-fsw"><input type="checkbox"><span class="switch-track"><span class="switch-thumb"></span></span><span class="switch-label">Labels</span></label><button type="button" class="gf-fcaret" aria-haspopup="true" aria-expanded="false" title="Choose which labels to show">▾</button><div class="gf-fold-pop" hidden></div>';
+  sws[0].parentNode.insertBefore(g,sws[0]);const pop=g.querySelector(".gf-fold-pop"),car=g.querySelector(".gf-fcaret"),main=g.querySelector("input");
+  car.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;car.setAttribute("aria-expanded",String(!pop.hidden))};
+  document.addEventListener("click",e=>{if(!g.contains(e.target))pop.hidden=true});
+  main.onchange=()=>{const want=main.checked;g._sws.forEach(sw=>{const i=sw.querySelector("input");if(i&&i.checked!==want){i.checked=want;i.dispatchEvent(new Event("change",{bubbles:true}))}})}}
+ const pop=g.querySelector(".gf-fold-pop");sws.forEach(sw=>{if(sw.parentNode!==pop)pop.appendChild(sw)});g._sws=sws;
+ const main=g.querySelector("input"),any=sws.some(sw=>{const i=sw.querySelector("input");return i&&i.checked});if(main.checked!==any)main.checked=any}
+new MutationObserver(()=>{try{fold()}catch(e){}}).observe(document.getElementById("studyView")||document.body,{childList:true,subtree:true});
+setInterval(()=>{try{fold()}catch(e){}},600);
+})();

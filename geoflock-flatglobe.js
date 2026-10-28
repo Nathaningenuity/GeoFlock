@@ -353,7 +353,14 @@ window.gfTourFrame=gfTourFrame;
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
 /* Places: on the flat map each region opens on the old map's frame for it (its east–west frame, box and per-region tweaks) */
 (function(){
+ /* regions whose opening view is set here directly (west, south, east, north) */
+ const FRAME_LL={"North America|All":[-170,6,-46,63]};
+ function frameLL(g,v){let dl=SPIN.W.dl||0;if(!gfFrameFits(v,dl))dl=nrm(-Math.round((v[0]+v[2])/2/5)*5);g._gfOx=0;g._gfDl=dl;g.zoom=1;
+  const b=g._flatBase(),{w,h}=g.size(),pts=[];for(let i=0;i<=6;i++)for(let j=0;j<=6;j++){const q=b([v[0]+(v[2]-v[0])*i/6,v[1]+(v[3]-v[1])*j/6]);if(q)pts.push(q)}
+  const xs=pts.map(q=>q[0]),ys=pts.map(q=>q[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  g.zoom=Math.max(1,Math.min(24,Math.min(w/(x1-x0),h/(y1-y0))));const c=b.invert([(x0+x1)/2,(y0+y1)/2]);if(c&&isFinite(c[0]))g.rot=[-c[0],-c[1]];g.request();return true}
  function frame(g){try{if(!g||!g._flat||typeof defaultMapAtlasBox!=="function"||typeof SPIN==="undefined")return false;
+  {const v=FRAME_LL[activeRegion+"|"+(activeSub||"All")];if(v)return frameLL(g,v)}
   const B=defaultMapAtlasBox(),f=SPIN.W.f,R=d3.geoRobinson().scale(318.31).translate([1e3,500.5]).rotate([SPIN.W.dl||0,0]);
   /* both maps are the same Robinson projection at different scales, so the box carries over exactly: its centre as longitude/latitude and its size */
   const bw=B.w/f.s,bh=B.h/f.s,cx=(B.x+B.w/2-f.bx)/f.s,cy=(B.y+B.h/2-f.by)/f.s,ROW=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);
