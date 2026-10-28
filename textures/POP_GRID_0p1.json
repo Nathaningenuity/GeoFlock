@@ -1,0 +1,1 @@
+{"w": 3600, "h": 1800, "lon0": -180, "lat0": 90, "step": 0.1, "encode": "v=round(4096*log10(1+count)), R=v>>8,G=v&255", "total": 8191994439, "source": "GHS-POP R2023A, epoch 2025 (European Commission, JRC), CC BY 4.0"}

@@ -1,0 +1,1 @@
+{"w": 3600, "h": 1800, "lon0": -180, "lat0": 90, "step": 0.1, "encode": "elev=(R<<8|G)-32768 metres", "source": "NOAA NCEI ETOPO 2022 (public domain)"}
