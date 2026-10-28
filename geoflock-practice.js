@@ -1,7 +1,7 @@
-/* GeoFlock: Practice. Places, Flags, Capitals and Landforms share one top-bar pill, with coloured subject tabs attached to the
+/* GeoFlock: Study & Quiz (internally "practice"). Places, Flags, Capitals and Landforms share one top-bar pill, with coloured subject tabs attached to the
    top of the page, plus "Other": the country-fact drills (currency, language, demonym…) with Study, Flashcards, Quiz and Speed Round.
    Switching subject keeps the tab (Study / Flashcards / Quiz…) and the region, like turning a dial. The big chooser shows only
-   the first time; after that Practice opens on the subject used last. Keys 1–5 switch subject while studying.
+   the first time; after that it opens on the subject used last. Keys 1–5 switch subject while studying.
    "Other" runs inside the Trivia page's view (that is where the drills live), flagged by window._prOther. */
 (function(){
 if(typeof switchAppMode!=="function")return;
@@ -17,11 +17,15 @@ const curSubj=()=>isOther()?"other":appMode;
 /* ---------- the top-bar pill ---------- */
 const css=document.createElement("style");css.textContent=`
 #appModeMapBtn,#appModeFlagBtn,#appModeCapitalBtn,#appModeLandformsBtn{ display:none !important; }
-#appModePracticeBtn{ --mc:#b8476f; }
+#appModePracticeBtn{ --mc:#b8476f; } #appModePracticeBtn .tb-s{ display:none; }
+@media (max-width:1180px) and (min-width:761px){ #appModePracticeBtn .tb-l{ display:none; } #appModePracticeBtn .tb-s{ display:inline; } }
 body.sky-theme #appModePracticeBtn{ --c:#e7a6bd; }
 body.sky-theme #appModeAllMapsBtn{ --c:#8fd1c4; } #appModeApBtn{ --mc:#2a6fb0 !important; } body.sky-theme #appModeApBtn{ --c:#8fc3ea !important; }
 body.sky-theme #appModeTriviaBtn{ --c:#e9b07a; } body.sky-theme #appModeGamesBtn{ --c:#e3cc63; }
 body.pr-other #triviaModeTabs{ display:none !important; }
+/* the region row's dropdowns (pick sub-regions) open over the quiz below, never under it */
+#regionRow,#subRegionRow{ position:relative; z-index:90; }
+.sub-pop-wrap.open{ z-index:91; }
 /* subject tabs: attached to the top of the page, not floating pills */
 .pr-subj{ display:flex !important; justify-content:center; gap:4px; margin:6px auto 14px; padding:0 8px; border-bottom:2px solid var(--pr-c,#e7a6bd); max-width:980px; }
 .pr-subj button{ font:inherit; font-weight:700; font-size:14px; display:flex; align-items:center; gap:6px; padding:9px 18px 8px; border:2px solid var(--c); border-bottom:none;
@@ -34,16 +38,17 @@ body.dark .pr-subj button{ background:rgba(20,26,38,.5); color:var(--c); } body.
 @media (max-width:760px){ .pr-subj{ gap:2px; padding:0 2px; overflow-x:auto; justify-content:flex-start; scrollbar-width:none; } .pr-subj button{ padding:7px 10px 6px; font-size:12.5px; flex:none; } .pr-subj button kbd,.pr-subj .pr-ic{ display:none; } }
 body[data-mode="landforms"] #mainContent > #prSubj:not(.pr-off){ display:flex !important; }
 .pr-subj.pr-off{ display:none !important; }
-/* the first-time chooser */
-.pr-choose{ position:fixed; inset:0; z-index:9000; background:rgba(20,28,40,.45); display:flex; align-items:center; justify-content:center; padding:16px; }
-.pr-choose-box{ background:var(--card,#fff); border-radius:20px; padding:26px 24px 20px; max-width:760px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.3); max-height:92vh; overflow:auto; }
-body.dark .pr-choose-box{ background:#1c2333; color:#e8ecf3; }
-.pr-choose-box h2{ margin:0 0 4px; font-size:24px; } .pr-choose-box>p{ margin:0 0 18px; opacity:.75; }
-.pr-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
-.pr-grid button{ font:inherit; text-align:left; border:2px solid var(--c); background:color-mix(in srgb,var(--c) 22%,#fff); border-radius:16px; padding:16px; cursor:pointer; color:#1d2433; }
-.pr-grid button:hover{ background:var(--c); transform:translateY(-1px); }
-.pr-grid b{ display:block; font-size:18px; margin:6px 0 2px; } .pr-grid small{ opacity:.8; font-size:13px; line-height:1.35; display:block; } .pr-grid .pr-big{ font-size:26px; }
-.pr-choose-box .pr-note{ font-size:12.5px; opacity:.65; margin:14px 0 0; }
+/* the first-time chooser: a page of its own */
+#prChoose{ display:none; }
+body.pr-choosing #mainContent > :not(#prChoose){ display:none !important; }
+body.pr-choosing #mainContent > #prChoose{ display:block !important; }
+.pr-choose-box{ max-width:820px; margin:18px auto 40px; padding:8px 16px; }
+.pr-choose-box h2{ margin:0 0 6px; font-size:28px; text-align:center; } .pr-choose-box>p{ margin:0 0 22px; opacity:.75; text-align:center; }
+.pr-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+.pr-grid button{ font:inherit; text-align:left; border:2px solid var(--c); background:color-mix(in srgb,var(--c) 22%,#fff); border-radius:18px; padding:18px; cursor:pointer; color:#1d2433; transition:background .15s,transform .15s; }
+.pr-grid button:hover{ background:var(--c); transform:translateY(-2px); }
+.pr-grid b{ display:block; font-size:19px; margin:8px 0 3px; } .pr-grid small{ opacity:.8; font-size:13.5px; line-height:1.4; display:block; } .pr-grid .pr-big{ font-size:30px; }
+.pr-choose-box .pr-note{ font-size:12.5px; opacity:.65; margin:16px 0 0; text-align:center; }
 /* Other */
 .pro{ max-width:980px; margin:0 auto; padding:0 12px 40px; }
 .pro-tabs{ display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
@@ -62,7 +67,7 @@ body.dark .pro-card{ background:rgba(30,38,54,.8); }
 
 const icon='<svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
 function addPill(){if(document.getElementById("appModePracticeBtn"))return true;const after=document.getElementById("appModeApBtn")||document.getElementById("appModeAllMapsBtn");if(!after)return false;
- after.insertAdjacentHTML("afterend",'<button class="tab-btn" id="appModePracticeBtn" type="button" title="Practice — places, flags, capitals, landforms and more: study, flashcards and quizzes">'+icon+'Practice</button>');
+ after.insertAdjacentHTML("afterend",'<button class="tab-btn" id="appModePracticeBtn" type="button" title="Study & Quiz — places, flags, capitals, landforms and more: study, flashcards and quizzes">'+icon+'<span class="tb-l">Study &amp; Quiz</span><span class="tb-s">Study</span></button>');
  document.getElementById("appModePracticeBtn").onclick=()=>{const P=PS();if(!P.seen)chooser();else go(P.last||"map",true)};return true}
 
 /* ---------- moving between subjects, keeping the tab and the region ---------- */
@@ -88,7 +93,7 @@ window.gfPracticeGo=go;
 function tabsEl(){let el=document.getElementById("prSubj");if(!el){el=document.createElement("div");el.id="prSubj";el.className="pr-subj";el.setAttribute("role","tablist");el.setAttribute("aria-label","Practice subject");
   const w=document.querySelector(".wrap");if(!w)return null;w.insertBefore(el,w.firstChild)}return el}
 function sync(){const p=document.getElementById("appModePracticeBtn"),on=inPractice();document.body.classList.toggle("pr-other",isOther());
- if(p)p.classList.toggle("active",on);const tv=document.getElementById("appModeTriviaBtn");if(tv)tv.classList.toggle("active",appMode==="trivia"&&!isOther());
+ if(window._prChoosing){document.querySelectorAll(".app-mode-tabs .tab-btn.active").forEach(b=>b.classList.remove("active"));if(p)p.classList.add("active");const el=tabsEl();if(el)el.classList.add("pr-off");return}if(p)p.classList.toggle("active",on);const tv=document.getElementById("appModeTriviaBtn");if(tv)tv.classList.toggle("active",appMode==="trivia"&&!isOther());
  const el=tabsEl();if(!el)return;el.classList.toggle("pr-off",!on);if(!on)return;const cur=curSubj(),C=SUBJ.find(x=>x.k===cur);el.style.setProperty("--pr-c",C?C.c:"#e7a6bd");
  const html=SUBJ.map((x,i)=>'<button type="button" role="tab" aria-selected="'+(x.k===cur)+'" class="'+(x.k===cur?"on":"")+'" data-prs="'+x.k+'" style="--c:'+x.c+';--d:'+x.d+'" title="'+esc(x.b)+' (key '+(i+1)+')"><span class="pr-ic" aria-hidden="true">'+x.ic+'</span>'+x.n+' <kbd>'+(i+1)+'</kbd></button>').join("");
  if(el._h!==html){el.innerHTML=html;el._h=html;el.querySelectorAll("[data-prs]").forEach(b=>b.onclick=()=>{if(b.dataset.prs!==curSubj())go(b.dataset.prs)})}
@@ -96,12 +101,14 @@ function sync(){const p=document.getElementById("appModePracticeBtn"),on=inPract
 window.gfPracticeSync=sync;
 
 /* ---------- the first-time chooser ---------- */
-function chooser(){if(document.querySelector(".pr-choose"))return;const d=document.createElement("div");d.className="pr-choose";
- d.innerHTML='<div class="pr-choose-box" role="dialog" aria-modal="true" aria-label="What would you like to practise?"><h2>What would you like to practise?</h2><p>Each one has Study, Flashcards and a Quiz. You can switch any time with the coloured tabs at the top of the page.</p><div class="pr-grid">'+
+function chooser(){const w=document.getElementById("mainContent");if(!w)return;/* nothing (a map above all) is left hidden underneath: start from the quiet home page */if(appMode!=="home")switchAppMode("home");let d=document.getElementById("prChoose");
+ if(!d){d=document.createElement("div");d.id="prChoose";w.insertBefore(d,w.firstChild)}
+ d.innerHTML='<div class="pr-choose-box"><h2>What would you like to study first?</h2><p>Each one has Study, Flashcards and a Quiz. You can switch any time with the coloured tabs at the top of the page.</p><div class="pr-grid">'+
   SUBJ.map(x=>'<button type="button" data-prs="'+x.k+'" style="--c:'+x.c+'"><span class="pr-big" aria-hidden="true">'+x.ic+'</span><b>'+x.n+'</b><small>'+esc(x.b)+'</small></button>').join("")+
-  '</div><p class="pr-note">Next time, Practice opens straight on the one you used last.</p></div>';
- document.body.appendChild(d);d.onclick=e=>{const b=e.target.closest("[data-prs]");if(b){d.remove();go(b.dataset.prs,true)}else if(e.target===d)d.remove()};
- const k=e=>{if(e.key==="Escape"){d.remove();document.removeEventListener("keydown",k)}};document.addEventListener("keydown",k)}
+  '</div><p class="pr-note">Next time, Study &amp; Quiz opens straight on the one you used last.</p></div>';
+ d.onclick=e=>{const b=e.target.closest("[data-prs]");if(b){closeChooser();go(b.dataset.prs,true)}};
+ window._prChoosing=true;document.body.classList.add("pr-choosing");sync();scrollTo(0,0)}
+function closeChooser(){if(!window._prChoosing)return;window._prChoosing=false;document.body.classList.remove("pr-choosing");sync()}
 
 /* ---------- Other: the country-fact drills ---------- */
 const REG=["all","Europe","Asia","Africa","Americas","Oceania"];
@@ -138,14 +145,14 @@ function startDrill(id,tab){const t=triviaState();try{_speedEndAt=0}catch(e){}
 new MutationObserver(()=>{if(!isOther())return;document.querySelectorAll("#triviaView button").forEach(b=>{const t=b.textContent;if(/←\s*Trivia/.test(t))b.textContent=t.replace(/Trivia/,"Other")})}).observe(document.getElementById("triviaView")||document.body,{childList:true,subtree:true});
 
 /* ---------- keep everything in step ---------- */
-{const _sm=switchAppMode;switchAppMode=function(m){if(m!=="trivia")window._prOther=false;if(["map","flag","capital","landforms"].includes(m)){const P=PS();P.last=m;P.seen=true}
+{const _sm=switchAppMode;switchAppMode=function(m){closeChooser();if(m!=="trivia")window._prOther=false;if(["map","flag","capital","landforms"].includes(m)){const P=PS();P.last=m;P.seen=true}
   const r=_sm.apply(this,arguments);sync();return r}}
-{const tb=document.getElementById("appModeTriviaBtn");if(tb)tb.onclick=()=>{if(isOther()){window._prOther=false;try{triviaState().fcMode="quiz"}catch(e){}applyAppMode();renderChrome();renderActiveView();sync();scrollTo(0,0)}else switchAppMode("trivia")}}
+{const tb=document.getElementById("appModeTriviaBtn");if(tb)tb.onclick=()=>{closeChooser();if(isOther()){window._prOther=false;try{triviaState().fcMode="quiz"}catch(e){}applyAppMode();renderChrome();renderActiveView();sync();scrollTo(0,0)}else switchAppMode("trivia")}}
 {const _am=applyAppMode;applyAppMode=function(){const r=_am.apply(this,arguments);sync();return r}}
 {const _ra=renderActiveView;renderActiveView=function(){const r=_ra.apply(this,arguments);try{if(isOther()&&triviaState().fcMode!=="drills")renderOther();sync()}catch(e){}return r}}
-/* Trivia keeps its quizzes; the country-fact drills now live in Practice › Other */
+/* Trivia keeps its quizzes; the country-fact drills now live in Study & Quiz › Other */
 {const _rt=renderTriviaView;renderTriviaView=function(){const r=_rt.apply(this,arguments);try{if(!isOther()){const f=document.querySelector("#triviaView .tvh-facts");if(f){const h=f.previousElementSibling;if(h&&h.classList.contains("tvh-h"))h.remove();
-  f.outerHTML='<p class="pr-moved tvh-note">Country facts (currency, language, demonym and more) are now in <a href="#" id="prMoved">Practice › Other</a>.</p>';const a=document.getElementById("prMoved");if(a)a.onclick=e=>{e.preventDefault();go("other",true)}}}}catch(e){}return r}}
+  f.outerHTML='<p class="pr-moved tvh-note">Country facts (currency, language, demonym and more) are now in <a href="#" id="prMoved">Study &amp; Quiz › Other</a>.</p>';const a=document.getElementById("prMoved");if(a)a.onclick=e=>{e.preventDefault();go("other",true)}}}}catch(e){}return r}}
 
 /* keys 1–5 switch subject while studying (quizzes use the number keys for answers) */
 document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey||!/^[1-5]$/.test(e.key)||!inPractice())return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;
