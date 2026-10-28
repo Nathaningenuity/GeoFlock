@@ -1,0 +1,193 @@
+/* GeoFlock: Elevation map › Cross-section. Draw a straight or freehand line on the map (or pick a ready-made one) and see the
+   land and sea floor along it. River profiles follow each river's own course from source to sea, and "Compare rivers" puts
+   several on one chart. Heights: NOAA ETOPO 2022 (public domain), averaged to 0.1° (about 11 km), so the highest summits read
+   several hundred metres low. */
+(function(){
+if(typeof d3==="undefined")return;
+const $=id=>document.getElementById(id),esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mode=()=>{try{return appMode==="allmaps"?allMapsColorMode:null}catch(e){return null}};
+const G=()=>{try{return amGlobe&&amGlobe._flat&&amGlobe.host.isConnected?amGlobe:null}catch(e){return null}};
+const R_KM=6371;
+/* ---------- the height grid ---------- */
+let DEM=null,demP=null;
+function loadDEM(){if(demP)return demP;demP=new Promise((ok,no)=>{const im=new Image();im.onload=()=>{try{const w=im.naturalWidth,h=im.naturalHeight,c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
+  const d=x.getImageData(0,0,w,h).data,a=new Int16Array(w*h);for(let i=0,j=0;i<a.length;i++,j+=4)a[i]=((d[j]<<8)|d[j+1])-32768;DEM={w,h,a};ok(DEM)}catch(e){no(e)}};im.onerror=no;im.src="textures/DEM_0p1.png"});return demP}
+function elevAt(lon,lat){if(!DEM)return 0;const {w,h,a}=DEM;let x=((lon+180)/360*w-.5),y=(90-lat)/180*h-.5;y=Math.max(0,Math.min(h-1.001,y));const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0;
+ const g=(xx,yy)=>a[yy*w+(((xx%w)+w)%w)];return (g(x0,y0)*(1-fx)+g(x0+1,y0)*fx)*(1-fy)+(g(x0,y0+1)*(1-fx)+g(x0+1,y0+1)*fx)*fy}
+/* ---------- ready-made lines ---------- */
+const PRESETS=[
+ {n:"Andes to the Atlantic",a:[-82,-10],b:[-35,-7.5],t:"From the Pacific, over the Andes, then 3,000 km of Amazon lowland barely above sea level."},
+ {n:"Up to the roof of the world",a:[78,22],b:[86,42],t:"The Ganges plain, the Himalaya, then the Tibetan Plateau: a whole region higher than the Alps."},
+ {n:"Africa's high plateau",a:[11,-17],b:[40,-19],t:"Southern Africa is a raised table: the land climbs steeply from the coast and stays high inland."},
+ {n:"East African Rift",a:[26,-1],b:[44,-1],t:"The Rift Valley's twin walls, with lakes and volcanoes in between."},
+ {n:"Across the Atlantic",a:[-76,36],b:[-9,39],t:"The ocean floor rises to the Mid-Atlantic Ridge, where new sea floor is made."},
+ {n:"Into the Mariana Trench",a:[135,11.4],b:[152,11.4],t:"The deepest place on Earth, where one plate dives under another."},
+ {n:"Rockies to the Appalachians",a:[-124.5,39.5],b:[-74,39.5],t:"The young, high west of North America and the old, worn-down east."},
+ {n:"Over the Alps",a:[7,43.6],b:[12,48.5],t:"From the Mediterranean over the Alps to the Danube."},
+ {n:"The Dead Sea rift",a:[33.6,31.5],b:[37.5,31.5],t:"Down to the lowest land on Earth, about 430 m below sea level."},
+ {n:"Iceland on the ridge",a:[-32,64.5],b:[-4,64.5],t:"Iceland is a piece of the Mid-Atlantic Ridge that rises above the sea."}];
+const RIVERS={Amazon:{p:["Amazonas","Ucayali"],src:[-71.8,-15.5],sea:[-50,-0.2],c:"#2e9d5b"},Mississippi:{p:["Mississippi"],src:[-95.2,47.24],sea:[-89.25,29.15],c:"#3b6fd8"},
+ Nile:{p:["Nile","White Nile"],src:[33.2,0.45],sea:[31.2,31.5],c:"#d98a1b"},Congo:{p:["Congo"],src:[26,-11],sea:[12.3,-6],c:"#9c3fb8"},Zambezi:{p:["Zambezi"],src:[24.3,-11.4],sea:[36.3,-18.8],c:"#d6453d"},
+ Niger:{p:["Niger"],src:[-10.7,9.1],sea:[6.1,4.3],c:"#b07a2a"},Yangtze:{p:["Yangtze"],src:[90.9,33.4],sea:[121.8,31.4],c:"#1b9aa8"},Danube:{p:["Danube"],src:[8.2,48],sea:[29.7,45.2],c:"#6a5acd"},
+ Ganges:{p:["Ganges"],src:[79,30.9],sea:[88.1,21.7],c:"#e0559c"},Orange:{p:["Orange"],src:[28.9,-29.2],sea:[16.5,-28.6],c:"#e07b2e"}};
+const COMPARE=["Amazon","Mississippi","Congo","Nile","Zambezi","Orange"];
+/* a river's main stem, source to sea, from its drawn course: join the pieces into a network and take the path from the mouth to the source */
+const PJ=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);
+const STEM={};
+function stem(name){if(STEM[name])return STEM[name];const R=RIVERS[name];if(!R||typeof ALLMAPS_RIVERS==="undefined")return null;
+ const polys=[];ALLMAPS_RIVERS.filter(r=>R.p.includes(r[0])).forEach(r=>{let cur=null,x=0,y=0;const tk=r[1].match(/[MmLl]|-?[\d.]+(?:e-?\d+)?/g)||[];let cmd="M";
+  for(let i=0;i<tk.length;){if(/[MmLl]/.test(tk[i])){cmd=tk[i++];continue}const a=+tk[i++],b=+tk[i++];if(cmd==="M"){x=a;y=b;cur=[[x,y]];polys.push(cur);cmd="L"}else if(cmd==="m"){x+=a;y+=b;cur=[[x,y]];polys.push(cur);cmd="l"}else if(cmd==="L"){x=a;y=b;cur&&cur.push([x,y])}else{x+=a;y+=b;cur&&cur.push([x,y])}}});
+ if(!polys.length)return null;const pts=[],adj=[],key=new Map();const id=p=>{const k=p[0].toFixed(2)+","+p[1].toFixed(2);let i=key.get(k);if(i==null){i=pts.length;key.set(k,i);pts.push(p);adj.push([])}return i};
+ const link=(i,j)=>{const d=Math.hypot(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1]);adj[i].push([j,d]);adj[j].push([i,d])};
+ const ends=[];polys.forEach(P=>{let prev=null;P.forEach(p=>{const i=id(p);if(prev!=null&&prev!==i)link(prev,i);prev=i});if(P.length){ends.push(id(P[0]),id(P[P.length-1]))}});
+ /* gaps between pieces */
+ ends.forEach(i=>{let best=-1,bd=2.5;pts.forEach((q,j)=>{if(j===i)return;const d=Math.hypot(pts[i][0]-q[0],pts[i][1]-q[1]);if(d<bd&&!adj[i].some(e=>e[0]===j)){bd=d;best=j}});if(best>=0)link(i,best)});
+ const near=ll=>{const q=PJ(ll);let b=0,bd=1e9;pts.forEach((p,i)=>{const d=Math.hypot(p[0]-q[0],p[1]-q[1]);if(d<bd){bd=d;b=i}});return b};
+ const s0=near(R.sea),s1=near(R.src),dist=new Float64Array(pts.length).fill(Infinity),prev=new Int32Array(pts.length).fill(-1),done=new Uint8Array(pts.length);dist[s0]=0;
+ for(;;){let u=-1,ud=Infinity;for(let i=0;i<pts.length;i++)if(!done[i]&&dist[i]<ud){ud=dist[i];u=i}if(u<0||u===s1)break;done[u]=1;adj[u].forEach(([v,d])=>{if(dist[u]+d<dist[v]){dist[v]=dist[u]+d;prev[v]=u}})}
+ if(!isFinite(dist[s1]))return null;const path=[];for(let v=s1;v>=0;v=prev[v]){const ll=PJ.invert(pts[v]);if(ll)path.push(ll);if(v===s0)break}
+ return STEM[name]=densify(path,600)}
+/* ---------- geometry helpers ---------- */
+function densify(ll,n){const seg=[];let tot=0;for(let i=1;i<ll.length;i++){const d=d3.geoDistance(ll[i-1],ll[i]);seg.push(d);tot+=d}if(!tot)return ll.slice();const out=[ll[0]];let acc=0,k=1;
+ for(let i=1;i<ll.length;i++){const d=seg[i-1];while(k<n&&(k*tot/n)<=acc+d+1e-12){const t=d?((k*tot/n)-acc)/d:0;out.push(d3.geoInterpolate(ll[i-1],ll[i])(Math.max(0,Math.min(1,t))));k++}acc+=d}if(out.length<n+1)out.push(ll[ll.length-1]);return out}
+function profile(ll,opt){const P=[];let km=0;for(let i=0;i<ll.length;i++){if(i)km+=d3.geoDistance(ll[i-1],ll[i])*R_KM;P.push({km,ll:ll[i],e:elevAt(ll[i][0],ll[i][1])})}
+ if(opt&&opt.river){for(let i=1;i<P.length;i++)P[i].e=Math.min(P[i].e,P[i-1].e);P.forEach(p=>p.e=Math.max(0,p.e))}return P}
+/* ---------- countries along the line ---------- */
+let FB=null;function feats(){if(FB)return FB;try{FB=projFeatures().filter(f=>f.geometry&&f.properties&&f.properties.c).map(f=>({f,b:d3.geoBounds(f),c:String(f.properties.c).toLowerCase()}))}catch(e){FB=[]}return FB}
+function countryAt(ll){for(const o of feats()){const b=o.b;if(b[0][0]<=b[1][0]?(ll[0]<b[0][0]||ll[0]>b[1][0]):(ll[0]<b[0][0]&&ll[0]>b[1][0]))continue;if(ll[1]<b[0][1]||ll[1]>b[1][1])continue;if(d3.geoContains(o.f,ll))return o.c}return null}
+const cname=c=>c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[c]?COUNTRY_BY_CODE[c].n:null;
+/* ---------- state ---------- */
+let on=false,armed=false,shape="line",lines=[],hover=null,panel=null,ov=null,raf=0,drawing=null,title="",note="";
+const css=document.createElement("style");css.textContent=`
+.gf-xs-chip.active{ background:#7a4b1f !important; color:#fff !important; }
+.gf-xs-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#5b3a17; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); flex:none; }
+.gf-xs-ico.on{ background:#8a5a2b; color:#fff; } .gf-xs-ico-top{ margin-right:8px; align-self:center; }
+.gf-xs-top{ cursor:move; } .gf-xs-top button,.gf-xs-top select{ cursor:pointer; }
+.gf-xs-ov{ position:absolute; left:0; top:0; pointer-events:none; z-index:30; }
+.gf-xs{ position:absolute; left:10px; right:58px; bottom:10px; z-index:41; background:rgba(255,255,255,.96); border-radius:14px; box-shadow:0 6px 24px rgba(0,0,0,.25); padding:10px 12px 8px; font:13px/1.35 system-ui,sans-serif; color:#1d2433; }
+body.dark .gf-xs{ background:rgba(28,35,51,.96); color:#e8ecf3; }
+.gf-xs-top{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:6px; }
+.gf-xs-top b{ font-size:14px; margin-right:6px; }
+.gf-xs-seg{ display:inline-flex; background:#efe7dc; border-radius:999px; padding:2px; }
+.gf-xs-seg button{ border:0; background:none; border-radius:999px; padding:4px 10px; font:700 12px system-ui; cursor:pointer; color:#5b3a17; }
+.gf-xs-seg button.on{ background:#8a5a2b; color:#fff; }
+.gf-xs-go{ border:0; border-radius:999px; padding:5px 12px; font:700 12px system-ui; background:#c0392b; color:#fff; cursor:pointer; }
+.gf-xs-go.on{ background:#2e7d32; }
+.gf-xs select{ font:12px system-ui; border-radius:8px; padding:3px 6px; border:1px solid #ccb; max-width:220px; }
+.gf-xs-x{ margin-left:auto; border:0; background:none; font-size:18px; cursor:pointer; color:inherit; opacity:.7; }
+.gf-xs-min{ border:0; background:none; font-size:14px; cursor:pointer; color:inherit; opacity:.7; }
+.gf-xs.mini .gf-xs-body{ display:none; }
+.gf-xs-note{ font-size:12px; opacity:.8; margin:0 0 4px; }
+.gf-xs svg{ display:block; width:100%; height:190px; border-radius:10px; }
+.gf-xs-help{ font-size:12px; opacity:.75; padding:22px 6px; text-align:center; }
+.gf-xs-src{ font-size:10.5px; opacity:.55; margin-top:3px; }`;document.head.appendChild(css);
+/* the chip next to the map's sub-modes */
+const ICO='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20h20"/><path d="M2 17l5-7 4 4 4-8 7 11"/></svg>';
+function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".globe-btns");if(btns)spots.push([btns,"gf-xs-ico gf-xs-ico-col"]);
+ document.querySelectorAll(".gf-xs-ico").forEach(b=>{if(!show)b.remove()});if(!show)return;
+ spots.forEach(([el,cl])=>{let b=cl.includes("col")?el.querySelector(".gf-xs-ico"):el.parentNode.querySelector(":scope > .gf-xs-ico");
+  if(!b){b=document.createElement("button");b.type="button";b.className=cl;b.title="Cross-section: draw a line and see the land and sea floor along it";b.innerHTML=ICO;b.onclick=e=>{e.stopPropagation();on?stop():start()};
+   if(cl.includes("col"))el.appendChild(b);else el.parentNode.insertBefore(b,el)}b.classList.toggle("on",on)})}
+/* the way in: a round button in the map's right-hand column (and the Shovel gadget in the toolkit) */
+function chip(){icons(mode()==="elevation")}
+function start(){const g=G();if(!g)return;on=true;loadDEM().then(()=>{renderPanel()}).catch(()=>{});mount();renderPanel();if(!lines.length)armed=true;renderPanel();loop()}
+function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
+ const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
+ const mv=ev=>{panel.style.left=Math.max(-r.width+80,Math.min(h.width-80,ev.clientX-h.left-dx))+"px";panel.style.top=Math.max(0,Math.min(h.height-40,ev.clientY-h.top-dy))+"px"};
+ const upx=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",upx,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",upx,true)},true)}
+function stop(){on=false;armed=false;lines=[];hover=null;if(panel){panel.remove();panel=null}if(ov){ov.remove();ov=null}cancelAnimationFrame(raf);chip()}
+function mount(){const g=G();if(!g)return;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
+ if(!ov||ov.parentNode!==h){ov=document.createElement("canvas");ov.className="gf-xs-ov";h.appendChild(ov)}
+ if(!panel||panel.parentNode!==h){panel=document.createElement("div");panel.className="gf-xs";h.appendChild(panel)}dragPanel();
+ }
+/* ---------- drawing on the map ---------- */
+const inPanel=e=>e.target.closest&&e.target.closest(".gf-xs,.globe-btns,.gfk-tray,.gfk-panel,button,a,input,select");
+function local(e){const g=G();const r=g.canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
+function down(e){if(!on||!armed||inPanel(e))return;const g=G();if(!g)return;e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}
+ const p=local(e);drawing={pts:[p],id:e.pointerId}}
+function move(e){if(!on)return;const g=G();if(!g)return;
+ if(drawing&&e.pointerId===drawing.id){e.stopImmediatePropagation();e.preventDefault();const p=local(e);if(shape==="line")drawing.pts=[drawing.pts[0],p];else{const l=drawing.pts[drawing.pts.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>3)drawing.pts.push(p)}return}}
+function up(e){if(!drawing||e.pointerId!==drawing.id)return;e.stopImmediatePropagation();const g=G(),pts=drawing.pts;drawing=null;if(!g||pts.length<2)return;
+ /* even steps along what was drawn on screen, turned into places */
+ let tot=0;for(let i=1;i<pts.length;i++)tot+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(tot<8)return;const n=500,inv=g.projection().invert,ll=[];let acc=0,k=0;
+ for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(k<=n&&k*tot/n<=acc+d+1e-9){const t=d?(k*tot/n-acc)/d:0,q=inv([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);if(q&&isFinite(q[0]))ll.push(q);k++}acc+=d}
+ if(ll.length<2)return;armed=false;title=shape==="line"?"Your line":"Your path";note="";lines=[{ll,c:"#c0392b",P:null}];compute();renderPanel()}
+/* ---------- the map overlay ---------- */
+function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov){return}
+ const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
+ if(ov.width!==Math.round(r.width*dpr)||ov.height!==Math.round(r.height*dpr)){ov.width=Math.round(r.width*dpr);ov.height=Math.round(r.height*dpr);ov.style.width=r.width+"px";ov.style.height=r.height+"px"}
+ ov.style.left=(r.left-hr.left)+"px";ov.style.top=(r.top-hr.top)+"px";const x=ov.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);const pr=g.projection();
+ const stroke=(pts,col)=>{x.lineJoin=x.lineCap="round";x.beginPath();let pen=false,last=null;pts.forEach(p=>{if(!p){pen=false;return}if(pen&&last&&Math.abs(p[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);pen=true;last=p});
+  x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=6;x.stroke();x.strokeStyle=col;x.lineWidth=3;x.stroke()};
+ lines.forEach(L=>{const pts=L.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null});stroke(pts,L.c);
+  const lab=(q,t)=>{if(!q)return;x.fillStyle="#fff";x.strokeStyle=L.c;x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],9,0,7);x.fill();x.stroke();x.fillStyle=L.c;x.font="800 11px system-ui";x.textAlign="center";x.textBaseline="middle";x.fillText(t,q[0],q[1]+.5)};
+  if(lines.length===1){lab(pts[0],"A");lab(pts[pts.length-1],"B")}});
+ if(drawing){stroke(drawing.pts,"#c0392b")}
+ if(hover){const q=pr(hover.ll);if(q){x.fillStyle=hover.c||"#c0392b";x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],6,0,7);x.fill();x.stroke()}}}
+/* ---------- profiles and the chart ---------- */
+function compute(){lines.forEach(L=>{L.P=profile(L.ll,{river:L.river});if(lines.length===1){const step=Math.max(1,Math.floor(L.P.length/80));const segs=[];let cur=null;
+ for(let i=0;i<L.P.length;i+=step){const c=countryAt(L.P[i].ll);if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs}})}
+const STOPS=[[-11000,"#0b1d4d"],[-6000,"#123a7a"],[-3000,"#1f63a8"],[-200,"#4ea6d6"],[0,"#8fd3e8"],[1,"#4f9d52"],[300,"#8fbf5a"],[800,"#d8c86d"],[1600,"#c18f4f"],[3000,"#8d5a34"],[4500,"#a7a2a0"],[6000,"#ffffff"]];
+function chartSVG(){const W=900,H=190,ml=46,mr=10,mt=12,mb=lines.length===1?30:22;const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)return"";
+ const comp=lines.length>1,xKey=p=>comp?p.fromSea:p.km;if(comp)Ps.forEach(L=>{const T=L.P[L.P.length-1].km;L.P.forEach(p=>p.fromSea=T-p.km)});
+ let e0=Infinity,e1=-Infinity,kmax=0;Ps.forEach(L=>L.P.forEach(p=>{e0=Math.min(e0,p.e);e1=Math.max(e1,p.e);kmax=Math.max(kmax,xKey(p))}));
+ e0=Math.min(0,e0);e1=Math.max(e1,e0+200);const pad=(e1-e0)*.08;e1+=pad;if(e0<0)e0-=pad*.5;
+ const X=k=>ml+(comp?(1-k/kmax):k/kmax)*(W-ml-mr),Y=e=>mt+(1-(e-e0)/(e1-e0))*(H-mt-mb);
+ const yz=Y(0),grad=STOPS.filter(s=>s[0]>=e0-1&&s[0]<=e1+1).length;let defs='<defs><linearGradient id="gfxsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe8fb"/><stop offset="1" stop-color="#f4fbff"/></linearGradient>';
+ defs+='<linearGradient id="gfxsLand" gradientUnits="userSpaceOnUse" x1="0" y1="'+Y(e1)+'" x2="0" y2="'+Y(e0)+'">'+STOPS.slice().reverse().map(([e,c])=>{const o=(e1-e)/(e1-e0);return o<0||o>1?"":'<stop offset="'+o.toFixed(4)+'" stop-color="'+c+'"/>'}).join("")+'</linearGradient>';
+ defs+='<linearGradient id="gfxsSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4fb3e8"/><stop offset="1" stop-color="#0d3278"/></linearGradient><linearGradient id="gfxsRock" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8916a"/><stop offset=".55" stop-color="#8a6243"/><stop offset="1" stop-color="#4e3424"/></linearGradient></defs>';
+ let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Cross-section">'+defs+'<rect x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'" fill="url(#gfxsSky)"/>';
+ /* grid */
+ const step=niceStep((e1-e0)/4);for(let e=Math.ceil(e0/step)*step;e<=e1;e+=step){s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(e)+'" y2="'+Y(e)+'" stroke="#000" stroke-opacity=".08"/><text x="'+(ml-5)+'" y="'+(Y(e)+4)+'" text-anchor="end" font-size="11" fill="#5b6575">'+fmtE(e)+'</text>'}
+ const kstep=niceStep(kmax/6);for(let k=0;k<=kmax+1;k+=kstep)s+='<text x="'+X(k)+'" y="'+(H-mb+13)+'" text-anchor="middle" font-size="10.5" fill="#5b6575">'+Math.round(k).toLocaleString()+(k===0?(comp?" km to the sea":" km"):"")+'</text>';
+ if(!comp){const L=Ps[0],P=L.P;
+  /* sea water, then the ground */
+  /* sea water down to the sea floor, solid rock below the surface, and the surface itself coloured by its height */
+  if(e0<0){let w="M"+X(0)+","+yz;P.forEach(p=>{w+="L"+X(p.km).toFixed(1)+","+Y(Math.min(0,p.e)).toFixed(1)});w+="L"+X(P[P.length-1].km)+","+yz+"Z";s+='<path d="'+w+'" fill="url(#gfxsSea)"/>'}
+  let top="";P.forEach((p,i)=>{top+=(i?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1)});
+  s+='<path d="'+top+"L"+X(P[P.length-1].km)+","+(H-mb)+"L"+X(0)+","+(H-mb)+'Z" fill="url(#gfxsRock)"/>';
+  s+='<path d="'+top+'" fill="none" stroke="url(#gfxsLand)" stroke-width="4" stroke-linejoin="round"/><path d="'+top+'" fill="none" stroke="#2a1c10" stroke-width=".8" stroke-opacity=".6"/>';
+  if(e0<0)s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+yz+'" y2="'+yz+'" stroke="#1f63a8" stroke-dasharray="4 3" stroke-opacity=".6"/>';
+  let hi=P[0],lo=P[0];P.forEach(p=>{if(p.e>hi.e)hi=p;if(p.e<lo.e)lo=p});
+  s+='<text x="'+X(hi.km)+'" y="'+(Y(hi.e)-5)+'" text-anchor="middle" font-size="11.5" font-weight="800" fill="#3b2a1a" stroke="#fff" stroke-width="3" paint-order="stroke">▲ '+fmtE(hi.e)+'</text>';
+  if(lo.e<-50)s+='<text x="'+X(lo.km)+'" y="'+(Y(lo.e)+14)+'" text-anchor="middle" font-size="11.5" font-weight="800" fill="#fff">▼ '+fmtE(lo.e)+'</text>';
+  s+='<text x="'+(ml+4)+'" y="'+(mt+13)+'" font-size="12" font-weight="800" fill="#c0392b">A</text><text x="'+(W-mr-4)+'" y="'+(mt+13)+'" text-anchor="end" font-size="12" font-weight="800" fill="#c0392b">B</text>';
+  (L.segs||[]).forEach(g=>{if(!g.c)return;const a=X(g.a),b=X(g.b),nm=cname(g.c);if(b-a<26||!nm)return;s+='<line x1="'+a+'" x2="'+b+'" y1="'+(H-3)+'" y2="'+(H-3)+'" stroke="#8a5a2b" stroke-width="3" stroke-opacity=".45"/>';
+   if(b-a>nm.length*5.5)s+='<text x="'+((a+b)/2)+'" y="'+(H-mb+25)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b3a17">'+esc(nm)+'</text>'})}
+ else{Ps.forEach(L=>{let d="";L.P.forEach((p,i)=>{d+=(i?"L":"M")+X(xKey(p)).toFixed(1)+","+Y(p.e).toFixed(1)});s+='<path d="'+d+'" fill="none" stroke="'+L.c+'" stroke-width="2.6"/>';
+  const top=L.P[0];s+='<text x="'+(X(xKey(top))+4)+'" y="'+(Y(top.e)-4)+'" font-size="11" font-weight="800" fill="'+L.c+'" stroke="#fff" stroke-width="3" paint-order="stroke">'+esc(L.name)+'</text>'})}
+ s+='<rect class="gf-xs-hit" x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'" fill="transparent"/><g class="gf-xs-cur"></g></svg>';chartSVG.X=X;chartSVG.Y=Y;chartSVG.comp=comp;chartSVG.W=W;chartSVG.kmax=kmax;chartSVG.ml=ml;chartSVG.mr=mr;return s}
+function niceStep(v){const p=Math.pow(10,Math.floor(Math.log10(Math.max(1e-9,v)))),m=v/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p}
+const fmtE=e=>(e<0?"−":"")+Math.abs(Math.round(e)).toLocaleString()+" m";
+function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready-made lines…</option>'+PRESETS.map((p,i)=>'<option value="p'+i+'">'+esc(p.n)+'</option>').join("")+'<optgroup label="Rivers, source to sea">'+Object.keys(RIVERS).map(k=>'<option value="r'+k+'">'+k+'</option>').join("")+'</optgroup><option value="cmp">Compare rivers: Amazon, Mississippi and Africa\'s rivers</option>';
+ const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chartSVG():'<div class="gf-xs-help">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
+ panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b><span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>'+
+  '<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":"✏ Draw")+'</button><select class="gf-xs-pre">'+presetOpts+'</select><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
+  '<div class="gf-xs-src">Heights: NOAA ETOPO 2022 (public domain), averaged over about 11 km, so the highest peaks read a few hundred metres low. The height is stretched far more than the length.</div></div>';
+ panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
+ panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
+ panel.querySelector(".gf-xs-x").onclick=stop;panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
+ panel.querySelector(".gf-xs-pre").onchange=e=>{pick(e.target.value)};
+ const svg=panel.querySelector("svg");if(svg){const hit=svg.querySelector(".gf-xs-hit"),cur=svg.querySelector(".gf-xs-cur");
+  const mv=e=>{const r=svg.getBoundingClientRect(),vx=(e.clientX-r.left)/r.width*chartSVG.W;let best=null,bd=1e9;
+   lines.forEach(L=>(L.P||[]).forEach(p=>{const d=Math.abs(chartSVG.X(chartSVG.comp?p.fromSea:p.km)-vx);if(d<bd){bd=d;best={p,L}}}));if(!best)return;
+   const p=best.p,xx=chartSVG.X(chartSVG.comp?p.fromSea:p.km),yy=chartSVG.Y(p.e);hover={ll:p.ll,c:best.L.c};const nm=lines.length===1?cname(countryAt(p.ll)):best.L.name;
+   const txt=Math.round(chartSVG.comp?p.fromSea:p.km).toLocaleString()+" km · "+fmtE(p.e)+(nm?" · "+nm:"");
+   cur.innerHTML='<line x1="'+xx+'" x2="'+xx+'" y1="12" y2="168" stroke="#1d2433" stroke-opacity=".35"/><circle cx="'+xx+'" cy="'+yy+'" r="4.5" fill="'+best.L.c+'" stroke="#fff" stroke-width="2"/><text x="'+Math.min(chartSVG.W-150,Math.max(60,xx+8))+'" y="26" font-size="12" font-weight="800" fill="#1d2433" stroke="#fff" stroke-width="3" paint-order="stroke">'+esc(txt)+'</text>'};
+  hit.addEventListener("pointermove",mv);hit.addEventListener("pointerleave",()=>{hover=null;cur.innerHTML=""})}}
+/* fly so the whole line sits in the top half of the map, above the chart */
+function frameTo(llAll){const g=G();if(!g||!llAll.length)return;try{const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom,q=llAll.map(ll=>b(ll)).filter(p=>p&&isFinite(p[0]));if(!q.length)return;
+ const xs=q.map(p=>p[0]/z0),ys=q.map(p=>p[1]/z0),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+ const zt=Math.max(1,Math.min(12,Math.min(w/((x1-x0)*1.25||1),h*.48/((y1-y0)*1.25||1)))),cx=(x0+x1)/2,cy=(y0+y1)/2+(h*.5-h*.27)/zt;
+ const c=b.invert([cx*z0,cy*z0]);if(c&&isFinite(c[0])){g.zoom=zt;g.rot=[-c[0],-c[1]];g.request()}}catch(e){}}
+function pick(v){if(!v)return;armed=false;loadDEM().then(()=>{
+ if(v[0]==="p"){const P=PRESETS[+v.slice(1)];title=P.n;note=P.t;lines=[{ll:densify([P.a,P.b],500),c:"#c0392b"}]}
+ else if(v[0]==="r"){const k=v.slice(1),s=stem(k);if(!s){note="";title=k;lines=[];renderPanel();return}title=k+": source to sea";note="Following the river's own course. Waterfalls and rapids show as steps; the grid is too coarse for single falls.";lines=[{ll:s,c:RIVERS[k].c,river:1,name:k}]}
+ else if(v==="cmp"){title="Rivers compared";note="Height above the sea against distance from the mouth. The Amazon and Mississippi glide down gently; Africa's rivers run across a high plateau and drop near the coast.";
+  lines=COMPARE.map(k=>{const s=stem(k);return s?{ll:s,c:RIVERS[k].c,river:1,name:k}:null}).filter(Boolean)}
+ compute();frameTo([].concat(...lines.map(L=>L.ll)));renderPanel()})}
+/* listen before the map does (it handles presses at the document level) */
+if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G();if(g&&g.host.contains(e.target))down(e)},true);addEventListener("pointermove",move,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true)}
+window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem};
+setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
+})();
