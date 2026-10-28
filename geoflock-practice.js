@@ -58,14 +58,19 @@ body.pr-choosing #mainContent > #prChoose{ display:block !important; }
 .pro-tools input{ font:inherit; padding:7px 12px; border-radius:999px; border:1px solid rgba(0,0,0,.15); min-width:220px; }
 .pro-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
 .pro-card{ display:flex; gap:10px; align-items:center; background:rgba(255,255,255,.75); border-radius:12px; padding:9px 11px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
-body.dark .pro-card{ background:rgba(30,38,54,.8); }
+body.sky-night .pro-card{ background:rgba(30,38,54,.8); }
 .pro-card img{ width:38px; height:26px; object-fit:cover; border-radius:3px; box-shadow:0 0 0 1px rgba(0,0,0,.12); flex:none; }
 .pro-card b{ display:block; font-size:13.5px; } .pro-card span{ display:block; font-size:13px; opacity:.85; }
 .pro-go{ text-align:center; margin:22px 0; } .pro-go p{ opacity:.75; margin:0 0 12px; }
+.pro-mcard{ display:flex !important; flex-direction:column; align-items:stretch !important; padding:8px !important; gap:8px; }
+.pro-mcard .pro-cap{ display:flex; align-items:center; gap:10px; padding:0 4px 2px; } .pro-mcard .pro-cap img{ width:30px !important; height:auto !important; border-radius:3px; flex:none; }
+.pro-or{ margin:12px 0 8px !important; font-size:12px; } .pro-alt{ background:#fff !important; color:#2b3566 !important; border:2px solid #e3b77c !important; } .pro-alt small{ display:block; font-weight:500; font-size:11.5px; opacity:.7; }
+body.sky-night .pro-alt{ background:#253049 !important; color:#e8ecf6 !important; }
 .pro-count{ text-align:center; font-size:12.5px; opacity:.65; margin:0 0 10px; }
 `;document.head.appendChild(css);
 
-const icon='<svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>';
+/* an open book */
+const icon='<svg class="mode-icon gf-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5C4.5 4 8 4 12 6c4-2 7.5-2 10-.5V19c-2.5-1.5-6-1.5-10 .5-4-2-7.5-2-10-.5z"/><path d="M12 6v13.5"/></svg>';
 function addPill(){if(document.getElementById("appModePracticeBtn"))return true;const after=document.getElementById("appModeApBtn")||document.getElementById("appModeAllMapsBtn");if(!after)return false;
  after.insertAdjacentHTML("afterend",'<button class="tab-btn" id="appModePracticeBtn" type="button" title="Study & Quiz — places, flags, capitals, landforms and more: study, flashcards and quizzes">'+icon+'<span class="tb-l">Study &amp; Quiz</span><span class="tb-s">Study</span></button>');
  document.getElementById("appModePracticeBtn").onclick=()=>{const P=PS();if(!P.seen)chooser();else go(P.last||"map",true)};return true}
@@ -114,7 +119,6 @@ function closeChooser(){if(!window._prChoosing)return;window._prChoosing=false;d
 const REG=["all","Europe","Asia","Africa","Americas","Oceania"];
 const OTABS=[["study","Study"],["flashcards","Flashcards"],["quiz","Quiz"],["speed","Speed Round"]];
 function drills(){const D=window.gfDrills;const L=D?D.list().slice():[];L.push({id:"call",name:"Phone code",icon:"📞"});
- if(window.gfLangId)L.splice(2,0,{id:"langid",name:"Which language?",icon:"✍️",noFlash:true,noStudy:true});
  if(window.gfProvinces)L.push({id:"pv",name:"States & provinces",icon:"🗺️",noFlash:true});return L}
 function factText(id,v){if(!v)return null;switch(id){case"cur":return v.cur+(v.sym?" ("+v.sym+")":"");case"lang":return(v.lang||[]).join(", ");case"dem":return v.dem;case"city":return v.city;case"lm":return v.lm;case"an":return v.an;case"call":return v.call?"+"+v.call:null}return null}
 function renderOther(){const v=document.getElementById("triviaView");if(!v||!isOther())return;sync();const P=PS(),L=drills();if(!L.find(x=>x.id===P.dl))P.dl=L[0]?L[0].id:"cur";
@@ -126,15 +130,18 @@ function renderOther(){const v=document.getElementById("triviaView");if(!v||!isO
  else if(tab==="study"){const q=(P.q||"").toLowerCase(),rows=COUNTRIES.filter(c=>(!REG.includes(P.reg)||P.reg==="all"||c.r===P.reg)).map(c=>({c,t:factText(D.id,(typeof DRILL_FACTS!=="undefined"?DRILL_FACTS:{})[c.c])})).filter(o=>o.t&&(!q||o.c.n.toLowerCase().includes(q)||String(o.t).toLowerCase().includes(q))).sort((a,b)=>a.c.n.localeCompare(b.c.n));
   const fl=c=>{try{return flagUrl(c,"w80")}catch(e){return"https://flagcdn.com/w80/"+c+".png"}};
   body='<div class="pro-tools">'+REG.map(r=>'<button type="button" class="chip'+(P.reg===r?" active":"")+'" data-prr="'+r+'">'+(r==="all"?"All":r)+'</button>').join("")+'<input type="search" id="proQ" placeholder="Search a country or a '+esc(D.name.toLowerCase())+'…" value="'+esc(P.q||"")+'"></div>'+
-   '<div class="pro-count">'+rows.length+' countries</div><div class="pro-grid">'+rows.map(o=>'<div class="pro-card"><img src="'+fl(o.c.c)+'" alt="" loading="lazy"><div><b>'+esc(o.c.n)+'</b><span>'+esc(o.t)+'</span></div></div>').join("")+'</div>'}
+   '<div class="pro-count">'+rows.length+' countries</div><div class="pro-grid">'+rows.map(o=>{const M=window.gfDrillMedia&&D.id!=="call"?gfDrillMedia.html(D.id,o.c.c):"";
+   return M?'<div class="pro-card pro-mcard">'+M+'<div class="pro-cap"><img src="'+fl(o.c.c)+'" alt="" loading="lazy"><div><b>'+esc(o.c.n)+'</b><span>'+esc(o.t)+'</span></div></div></div>':'<div class="pro-card"><img src="'+fl(o.c.c)+'" alt="" loading="lazy"><div><b>'+esc(o.c.n)+'</b><span>'+esc(o.t)+'</span></div></div>'}).join("")+'</div>'}
  else{const what={flashcards:"Flashcards are for practice: no stamps and no scores.",quiz:"Ten questions. Choose the answer, or type it.",speed:"Sixty seconds, four choices a question. A wrong answer only costs you time."}[tab];
-  body='<div class="pro-go"><p>'+what+'</p><button type="button" class="tv-go" id="proStart">▶ Start '+esc(D.name)+'</button></div>'}
+  body='<div class="pro-go"><p>'+what+'</p><button type="button" class="tv-go" id="proStart">▶ Start '+esc(D.name)+'</button>'+
+   /* Language also has the "which language is this?" quiz: a line of text to recognise */
+   (D.id==="lang"&&tab==="quiz"&&window.gfLangId?'<p class="pro-or">or</p><button type="button" class="tv-go pro-alt" id="proLangId">✍️ Which language is this? <small>read a line, name the language</small></button>':'')+'</div>'}
  v.innerHTML='<div class="pro">'+tabs+chips+body+'</div>';
  v.querySelectorAll("[data-prt]").forEach(b=>b.onclick=()=>{P.tab=b.dataset.prt;saveStats();renderOther()});
  v.querySelectorAll("[data-prd]").forEach(b=>b.onclick=()=>{P.dl=b.dataset.prd;saveStats();renderOther()});
  v.querySelectorAll("[data-prr]").forEach(b=>b.onclick=()=>{P.reg=b.dataset.prr;saveStats();renderOther()});
  const qi=v.querySelector("#proQ");if(qi)qi.oninput=()=>{P.q=qi.value;clearTimeout(qi._t);qi._t=setTimeout(()=>{const pos=qi.selectionStart;renderOther();const n=document.getElementById("proQ");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}},180)};
- const s=v.querySelector("#proStart");if(s)s.onclick=()=>startDrill(D.id,tab)}
+ const s=v.querySelector("#proStart");if(s)s.onclick=()=>startDrill(D.id,tab);const li=v.querySelector("#proLangId");if(li)li.onclick=()=>startDrill("langid",tab)}
 function startDrill(id,tab){const t=triviaState();try{_speedEndAt=0}catch(e){}
  if(id==="langid"){const v=document.getElementById("triviaView");v.innerHTML='<div class="li-wrap" id="prLang"></div>';gfLangId.round(v.querySelector("#prLang"),{n:10,title:"Which language?",back:()=>renderOther(),backLabel:"Other",level:"all"});scrollTo(0,0);return}
  if(id==="pv"){const S=gfDrills.st();S.pv=true;t.fcMode="drills";saveStats();renderTriviaView();scrollTo(0,0);return}
