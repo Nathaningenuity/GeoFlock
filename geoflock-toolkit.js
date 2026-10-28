@@ -700,7 +700,10 @@ function flyTo(ll){try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host.is
 /* while the shovel is out, a click on the map digs there (and nothing else: no country card) */
 {let dn=null;const inMap=e=>{const h=host();return h&&h.contains(e.target)&&!(e.target.closest&&e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj,button,input,label"))};
  addEventListener("pointerdown",e=>{if(!S.shovelArm||!inMap(e))return;dn=[e.clientX,e.clientY,e.pointerId]},true);
- addEventListener("pointerup",e=>{if(!S.shovelArm||!dn||e.pointerId!==dn[2])return;const moved=Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>6;dn=null;if(moved||!inMap(e))return;const ll=toLL(e.clientX,e.clientY);if(!ll)return;e.stopImmediatePropagation();e.preventDefault();S._shovelEat=Date.now();dig(ll)},true);
+ addEventListener("pointerup",e=>{if(!S.shovelArm||!dn||e.pointerId!==dn[2])return;const moved=Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>6;dn=null;if(moved||!inMap(e))return;const ll=toLL(e.clientX,e.clientY);if(!ll)return;
+  /* the map still gets its pointer-up (so it stops dragging); only its click (the country card) is skipped */
+  try{const g=amGlobe;if(g&&g.cfg&&!g.cfg._gfShovel){const c=g.cfg.click;g.cfg.click=function(){if(S._shovelEat&&Date.now()-S._shovelEat<600)return;return c&&c.apply(this,arguments)};g.cfg._gfShovel=1}}catch(_){}
+  S._shovelEat=Date.now();setTimeout(()=>dig(ll),0)},true);
  addEventListener("click",e=>{if(S._shovelEat&&Date.now()-S._shovelEat<600){e.stopImmediatePropagation();e.preventDefault();S._shovelEat=0}},true)}
 {const st=document.createElement("style");st.textContent=`.gfk-seg{display:inline-flex;background:#efe7dc;border-radius:999px;padding:2px;margin:4px 0 8px}.gfk-seg button{border:0;background:none;border-radius:999px;padding:5px 11px;font:700 12px system-ui;color:#5b3a17;cursor:pointer}.gfk-seg button.on{background:#8a5a2b;color:#fff}
 #gfkShovel{width:min(540px,calc(100vw - 24px))}.gfk-dig{display:flex;gap:14px;align-items:flex-start}.gfk-cut{width:170px;height:170px}.gfk-cut{width:150px;height:150px;flex:none}.gfk-digt p{margin:0 0 6px;font-size:13px;line-height:1.4}.gfk-digt small{opacity:.6}

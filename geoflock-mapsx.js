@@ -61,3 +61,17 @@ addEventListener("pointerdown",e=>{if(e.button)return;const box=e.target.closest
 /* a closed window comes back centred next time */
 setInterval(()=>{document.querySelectorAll(SEL).forEach(b=>{if(b.style.translate&&!b.offsetParent)b.style.translate=""})},500);
 })();
+/* 3. Flat map lock: a padlock in the right-hand buttons (in place of the spin button the globe has). Locked, a sideways drag no
+   longer spins the world round east–west; zoomed in, the map still pans inside its edges. */
+(function(){
+let locked=false;try{locked=localStorage.getItem("gfFlatLock")==="1"}catch(e){}
+const ICO=on=>'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="'+(on?"M8 11V7a4 4 0 0 1 8 0v4":"M8 11V7a4 4 0 0 1 7.8-1.2")+'"/></svg>';
+const st=document.createElement("style");st.textContent=`.globe-btns .gf-lock.on{ background:#2f6fb0 !important; color:#fff !important; }`;document.head.appendChild(st);
+function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const btns=g.host.querySelector(".globe-btns");if(!btns)return;let b=btns.querySelector(".gf-lock");
+ if(!g._flat){if(b)b.remove();g._spinOK=undefined;return}
+ if(!b){b=document.createElement("button");b.type="button";b.className="gf-lock";const after=btns.querySelector('[data-g="reset"]');after?after.after(b):btns.appendChild(b);
+  b.onclick=e=>{e.stopPropagation();locked=!locked;try{localStorage.setItem("gfFlatLock",locked?"1":"0")}catch(_){}sync()}}
+ if(b._on!==locked){b._on=locked;b.innerHTML=ICO(locked);b.classList.toggle("on",locked);b.title=locked?"Map locked: it won't spin east–west. Click to unlock":"Lock the map so it doesn't spin east–west";b.setAttribute("aria-pressed",String(locked))}
+ g._spinOK=locked?false:undefined;if(locked&&g._gfOx){g._gfOx=0;g.request&&g.request()}}
+setInterval(()=>{try{sync()}catch(e){}},400);
+})();
