@@ -143,7 +143,9 @@ const st=document.createElement("style");st.textContent=`
 .globe-host.gf-flat canvas.globe-canvas:active{ cursor:grabbing; }
 `;document.head.appendChild(st);
 /* the switch: choosing Flat map on a map the globe can show brings up the flat view right away */
-setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(stWanted()!==!!stGlobe._flat)stGlobe.request()}else if(stWanted()&&typeof stGlobeSync==="function")stGlobeSync()}catch(e){}try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);const want=flatWanted();if(want!==!!amGlobe._flat)amGlobe.request()}else if(flatWanted()&&typeof amGlobeSync==="function")amGlobeSync()}catch(e){}},400);
+setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(stWanted()!==!!stGlobe._flat)stGlobe.request()}else if(stWanted()&&typeof stGlobeSync==="function")stGlobeSync()}catch(e){}try{if(typeof amGlobe!=="undefined"&&amGlobe){wire(amGlobe);const want=flatWanted();if(want!==!!amGlobe._flat)amGlobe.request();
+ /* a tour (or the cartogram, projections…) turns the flat engine off: hand the view back to the old map, so the tour card is not left inside a hidden map */
+ if(want!==window._gfFlatPrev){const was=window._gfFlatPrev;window._gfFlatPrev=want;if(was!==undefined&&typeof amGlobeSync==="function")amGlobeSync()}}else if(flatWanted()&&typeof amGlobeSync==="function")amGlobeSync()}catch(e){}},400);
 })();
 /* labels on the flat map read at the size the old flat map used */
 (function(){const P=GlobeView.prototype,_ls=P.ls;if(_ls)P.ls=function(){const v=_ls.apply(this,arguments);return this._flat?v*1.12:v}})();
@@ -271,14 +273,14 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
 (function(){const fix=()=>{if(typeof amtToLL!=="function"||amtToLL._gfFlat)return false;const _a=amtToLL;
   amtToLL=function(cx,cy){try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(g&&g._flat&&g.host&&g.host.isConnected&&g.host.offsetParent){const r=g.canvas.getBoundingClientRect();if(cx<r.left||cx>r.right||cy<r.top||cy>r.bottom)return null;const p=g.projection(),ll=p.invert([cx-r.left,cy-r.top]);return ll&&isFinite(ll[0])?ll:null}}catch(e){}return _a.apply(this,arguments)};amtToLL._gfFlat=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
-/* the hovered country's outline is drawn again last, over the city dots and the labels, so small places (Monaco,
-   San Marino) show it too */
+/* a small hovered country's outline (Monaco, San Marino) is drawn again last, over the city dots and the labels */
 (function(){const P=GlobeView.prototype,_r=P._render;P._render=function(){const r=_r.apply(this,arguments);try{const code=this.hot,ctx=this.ctx;if(!code||!ctx)return r;
   const fs=[...(this._base||[]),...(this._big||[])].filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return r;
+  /* only small countries (Monaco, San Marino): bigger ones keep their normal outline under the labels */let pa=0;try{const gp=d3.geoPath(this.projection());fs.forEach(f=>{pa+=gp.area(f)})}catch(e){return r}if(!(pa<900))return r;
   const dpr=Math.min(2,window.devicePixelRatio||1),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
   if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
   const path=d3.geoPath(this.projection(),ctx);ctx.lineJoin="round";
-  fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="rgba(20,30,50,.55)";ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.stroke()});ctx.restore()}catch(e){}return r}})();
+  fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.stroke()});/* the same white line as the normal highlight */ctx.restore()}catch(e){}return r}})();
 /* jumping to a country frames its mainland (with the pieces right next to it); far-off islands that belong to it (the
    Azores, the Canaries, Hawaii…) are simply shown if they fit, not used to centre or size the view */
 (function(){const P=GlobeView.prototype,_fly=P.flyTo;if(!_fly)return;
