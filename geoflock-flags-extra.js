@@ -49,16 +49,21 @@ const HPIC={"Standards before flags":{src:"flags-extra/h-narmer.webp",cap:"Stand
 function histMap(t){const M=HPIC[t];if(!M)return"";return'<figure class="fx-hmap"><img src="'+M.src+'" alt="'+esc(M.cap)+'" loading="lazy"><figcaption>'+esc(M.cap)+' · <a href="'+M.page+'" target="_blank" rel="noopener">'+esc(M.cr)+'</a></figcaption></figure>'}
 function historyHTML(){return'<div class="fx-wrap"><div class="fx-head"><h2>A short history of flags</h2><p>From painted standards to the flags of new countries.</p></div><ol class="fx-tl">'+
  HIST.map(h=>'<li><span class="fx-y">'+esc(h.y)+'</span><div class="fx-tlc"><h3>'+(h.ic?'<span class="fx-ic">'+h.ic+'</span> ':'')+esc(h.t)+'</h3><p>'+esc(h.d)+'</p>'+histMap(h.t)+(h.c?'<div class="fx-flags sm">'+h.c.filter(c=>COUNTRY_BY_CODE[c]).map(c=>'<img src="'+fl(c,"w80")+'" alt="'+esc(COUNTRY_BY_CODE[c].n)+'" title="'+esc(COUNTRY_BY_CODE[c].n)+'" loading="lazy">').join("")+'</div>':'')+'</div></li>').join("")+'</ol></div>'}
-function show(){const v=document.getElementById("studyView");if(!v)return;v.style.display="";v.innerHTML=view==="stories"?storiesHTML():historyHTML();
+/* "Flags tour": the Places study map (as the Capitals map does), with the flags tour running on it */
+function tourView(){window._gfFlagTour=true;try{renderMapAtlasStudy()}catch(e){console.error(e);return}
+ let n=0;const go=()=>{if(view!=="tour"||appMode!=="flag")return;const ok=typeof stGlobe!=="undefined"&&stGlobe&&stGlobe._flat&&stGlobe.host.isConnected;if(!ok&&++n<40){setTimeout(go,250);return}
+  try{if(!(typeof ps!=="undefined"&&ps&&ps.tour==="flags"))psStart("flags")}catch(e){console.error(e)}};setTimeout(go,300)}
+function leaveTour(){if(!window._gfFlagTour)return;window._gfFlagTour=false;try{if(typeof ps!=="undefined"&&ps&&ps.tour==="flags")psEnd(true)}catch(e){}}
+function show(){const v=document.getElementById("studyView");if(!v)return;if(view==="tour"){v.style.display="";tourView();return}leaveTour();v.style.display="";v.innerHTML=view==="stories"?storiesHTML():historyHTML();
  v.querySelectorAll(".fx-map").forEach(b=>b.onclick=()=>{const i=+b.dataset.step;try{switchAppMode("allmaps")}catch(e){}setTimeout(()=>{try{psLaunchTour("flags");setTimeout(()=>{try{psGo(i)}catch(e){}},400)}catch(e){console.error(e)}},350)})}
-{const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{const row=document.getElementById("regionRow");if(appMode!=="flag"||activeTab!=="study"){view=null;return r}
- if(row){[["__stories__","Flag stories","stories"],["__history__","Flag history","history"]].forEach(([k,lab,id])=>{let b=row.querySelector('[data-r="'+k+'"]');if(!b){b=document.createElement("button");b.className="chip";b.dataset.r=k;b.textContent=lab;b.onclick=()=>{view=id;try{ffInStudy=false}catch(e){}renderChrome();renderActiveView()};row.appendChild(b)}b.classList.toggle("active",view===id)});
+{const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{const row=document.getElementById("regionRow");if(appMode!=="flag"||activeTab!=="study"){view=null;leaveTour();return r}
+ if(row){[["__tour__","Flags tour","tour"],["__stories__","Flag stories","stories"],["__history__","Flag history","history"]].forEach(([k,lab,id])=>{let b=row.querySelector('[data-r="'+k+'"]');if(!b){b=document.createElement("button");b.className="chip";b.dataset.r=k;b.textContent=lab;b.onclick=()=>{view=id;try{ffInStudy=false}catch(e){}renderChrome();renderActiveView()};row.appendChild(b)}b.classList.toggle("active",view===id)});
   /* the three Flags extras sit on their own row below the regions */
-  const fam=row.querySelector('[data-r="__families__"]')||row.querySelector('[data-r="__stories__"]');if(fam&&!row.querySelector(".fx-break")){const br=document.createElement("span");br.className="fx-break";br.style.cssText="flex-basis:100%;width:100%;height:0";row.insertBefore(br,fam)}
-  ["__families__","__stories__","__history__"].forEach(k=>{const b=row.querySelector('[data-r="'+k+'"]');if(b)row.appendChild(b)});
-  if(view)row.querySelectorAll('.chip.active:not([data-r="__stories__"]):not([data-r="__history__"])').forEach(x=>x.classList.remove("active"));
-  row.querySelectorAll('.chip:not([data-r="__stories__"]):not([data-r="__history__"])').forEach(x=>{if(!x._fx){x._fx=1;x.addEventListener("click",()=>{view=null},true)}})}}catch(e){console.error(e)}return r}}
-{const _rav=renderActiveView;renderActiveView=function(){const r=_rav.apply(this,arguments);try{if(view&&appMode==="flag"&&activeTab==="study")show()}catch(e){console.error(e)}return r}}
+  const fam=row.querySelector('[data-r="__families__"]')||row.querySelector('[data-r="__tour__"]');if(fam&&!row.querySelector(".fx-break")){const br=document.createElement("span");br.className="fx-break";br.style.cssText="flex-basis:100%;width:100%;height:0";row.insertBefore(br,fam)}
+  ["__families__","__tour__","__stories__","__history__"].forEach(k=>{const b=row.querySelector('[data-r="'+k+'"]');if(b)row.appendChild(b)});
+  if(view)row.querySelectorAll('.chip.active:not([data-r="__stories__"]):not([data-r="__history__"]):not([data-r="__tour__"])').forEach(x=>x.classList.remove("active"));
+  row.querySelectorAll('.chip:not([data-r="__stories__"]):not([data-r="__history__"]):not([data-r="__tour__"])').forEach(x=>{if(!x._fx){x._fx=1;x.addEventListener("click",()=>{view=null},true)}})}}catch(e){console.error(e)}return r}}
+{const _rav=renderActiveView;renderActiveView=function(){const r=_rav.apply(this,arguments);try{if(view&&appMode==="flag"&&activeTab==="study")show();else leaveTour()}catch(e){console.error(e)}return r}}
 const css=document.createElement("style");css.textContent=`
 .fx-wrap{ max-width:900px; margin:6px auto 30px; padding:0 12px; } .fx-head{ text-align:center; margin-bottom:14px; } .fx-head h2{ margin:0 0 4px; } .fx-head p{ margin:0; opacity:.75; }
 .fx-card{ background:rgba(255,255,255,.88); border-radius:20px; box-shadow:0 4px 16px rgba(20,40,70,.08); padding:16px 18px; margin:0 0 14px; }
@@ -71,4 +76,7 @@ const css=document.createElement("style");css.textContent=`
 body.sky-night .fx-card, body.sky-night .fx-tlc, body.dark-theme .fx-card, body.dark-theme .fx-tlc{ background:rgba(30,34,60,.9); }
 @media (max-width:560px){ .fx-tl li{ grid-template-columns:1fr; gap:4px; } }`;
 document.head.appendChild(css);
+
+{const _pc=psCtx;psCtx=function(){try{if(window._gfFlagTour&&appMode==="flag"&&activeTab==="study"){const wrap=document.getElementById("atlasStudyMapWrap");if(!wrap)return null;
+ const g=typeof stGlobe!=="undefined"&&stGlobe&&stGlobe._flat&&stGlobe.host.isConnected?stGlobe:null;return{tour:"flags",tours:["flags"],wrap,g,P:PS_PROJ_W,home:()=>defaultMapAtlasBox()}}}catch(e){}return _pc.apply(this,arguments)}}
 })();

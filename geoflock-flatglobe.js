@@ -11,7 +11,7 @@ const RX=.8487,RY=1.3523;/* Robinson's width and height factors */
 const tour=()=>typeof ps!=="undefined"&&!!ps||!!window._gfPsStarting;
 function flatWanted(){try{return typeof appMode!=="undefined"&&appMode==="allmaps"&&FEATURES.globe&&!globePrefs().allmaps&&ALLMAPS_GLOBE_MODES.has(allMapsColorMode)&&!(typeof proj!=="undefined"&&proj.on)&&!(window.gfCartoOn&&gfCartoOn())/* tours run on the flat map too */}catch(e){return false}}
 /* which globes can turn flat: the Maps page's, and the Places and Capitals study map's */
-const stWanted=()=>{try{return typeof stGlobe!=="undefined"&&FEATURES.globe&&!globePrefs().study&&typeof activeTab!=="undefined"&&activeTab==="study"&&(appMode==="map"||appMode==="capital"&&window._gfCapMap)&&!tour()}catch(e){return false}};
+const stWanted=()=>{try{return typeof stGlobe!=="undefined"&&FEATURES.globe&&!globePrefs().study&&typeof activeTab!=="undefined"&&activeTab==="study"&&(appMode==="map"||appMode==="capital"&&window._gfCapMap||appMode==="flag"&&window._gfFlagTour)/* tours run on the flat map too */}catch(e){return false}};
 function defOf(g){try{if(typeof amGlobe!=="undefined"&&g===amGlobe)return{wanted:flatWanted,svg:"#allMapsWrap > svg",view:"allMapsView",f:()=>SPIN.A.f,key:"am"};if(typeof stGlobe!=="undefined"&&g===stGlobe)return{wanted:stWanted,view:"studyView",f:()=>({s:1,bx:0,by:0}),key:"st",fixed:()=>stats.mapColorMode?[]:[{h:"textures/reliefAllMaps.webp",x:0,y:-6.688,w:2000,hh:1014.376,op:1,blend:"normal",tf:null,pr:"none"}]}}catch(e){}return null}
 window.gfStWanted=stWanted;
 window.gfFlatOn=()=>{try{return typeof amGlobe!=="undefined"&&!!amGlobe&&!!amGlobe._flat&&flatWanted()}catch(e){return false}};
@@ -235,7 +235,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    the ones for the chosen region) and its name; a click near a star opens that country's profile. */
 (function(){if(typeof stGlobeSync!=="function")return;
  const capMap=()=>{try{const b=document.querySelector('#studyView [data-cv="map"]');return typeof appMode!=="undefined"&&appMode==="capital"&&typeof activeTab!=="undefined"&&activeTab==="study"&&!!b&&b.classList.contains("on")}catch(e){return false}};
- const _s=stGlobeSync;stGlobeSync=function(){if(typeof appMode!=="undefined"&&appMode==="capital"){if(!capMap())return;const a=appMode;appMode="map";try{return _s.apply(this,arguments)}finally{appMode=a}}return _s.apply(this,arguments)};
+ const _s=stGlobeSync;stGlobeSync=function(){if(typeof appMode!=="undefined"&&(appMode==="capital"||appMode==="flag")){if(appMode==="capital"?!capMap():!window._gfFlagTour)return;const a=appMode;appMode="map";try{return _s.apply(this,arguments)}finally{appMode=a}}return _s.apply(this,arguments)};
  setInterval(()=>{try{const on=capMap();window._gfCapMap=on;const sw=document.getElementById("stGlobeSwitch");if(sw)sw.style.display=typeof appMode!=="undefined"&&appMode==="capital"?"none":"";
   if(on){const host=document.getElementById("stGlobeHost");if(!host||host.style.display==="none"||typeof stGlobe==="undefined"||!stGlobe||!stGlobe.host.isConnected)stGlobeSync()}
   else if(typeof appMode!=="undefined"&&appMode==="capital"){const v=document.getElementById("studyView"),h=document.getElementById("stGlobeHost");if(v&&v.classList.contains("globe-on")&&!(globePrefs().study)){v.classList.remove("globe-on");if(h)h.style.display="none"}}}catch(e){}},400);
