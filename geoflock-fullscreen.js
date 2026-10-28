@@ -15,11 +15,9 @@ document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&on&&!document.fullscreenElement&&!document.querySelector(".gfk-panel,.game-modal:not([hidden]),.flag-zoom-overlay.show")){exit()}});
 /* full-screen maps: the flat map may use all the height there is */
 if(typeof GlobeView!=="undefined"){const P=GlobeView.prototype,_s=P.size;P.size=function(){const r=_s.apply(this,arguments);try{if(on&&typeof amGlobe!=="undefined"&&this===amGlobe){const top=this.host.getBoundingClientRect().top,availH=Math.max(260,innerHeight-Math.max(0,top)-4),W=this.host.clientWidth||r.w;
- /* the flat map fills the whole window, edge to edge; it is zoomed so the world also fills the height (east–west it wraps) */
- if(this._flat)return{w:W,h:availH,r:this._bigR?1e6:W/(2*Math.PI)*1.07};
+ /* the flat map is as big as the window allows with the whole world in view */
+ if(this._flat){const w=Math.round(Math.min(W-8,availH/.5072));return{w,h:Math.round(w*.5072),r:this._bigR?1e6:w/(2*Math.PI)*1.07}}
  const side=Math.round(Math.min(W,availH));return{w:side,h:side,r:side/2-9}}}catch(e){}return r}}
-/* the least zoom that fills the height of the window */
-function fillZoom(g){try{const {w,h}=g.size();return Math.max(1,h/(w*.5072))}catch(e){return 1}}
 /* a satellite globe in full screen: the starry sky fills the whole window, not just a box round the globe */
 let SKY=null;function sky(){const v=V();let g;try{g=amGlobe}catch(e){}const st=g&&g.host&&g.host.querySelector(".globe-stage");if(!v||!st)return;
  const want=on&&v.classList.contains("sat-on")&&!g._flat;
@@ -31,7 +29,7 @@ function sync(){let g;try{g=amGlobe}catch(e){return}try{sky()}catch(e){}const sh
  /* the Layers fold, only in full screen */
  const row=document.getElementById("allMapsToggleRow");if(row){let L=row.querySelector(".gf-fs-lay");if(on&&!L){L=document.createElement("button");L.type="button";L.className="chip gf-fs-lay";L.onclick=()=>{document.body.classList.toggle("gf-fs-layers");redraw();sync()};row.insertBefore(L,row.firstChild)}
   if(L){if(!on)L.remove();else L.textContent=document.body.classList.contains("gf-fs-layers")?"Layers ▴":"Layers ▾"}}}
-setInterval(()=>{try{sync();const g=amGlobe;if(on&&g&&g._flat){const z=fillZoom(g);if(g.zoom<z-.001){g.zoom=z;g.request?g.request():g.render()}}}catch(e){}},250);
+setInterval(()=>{try{sync()}catch(e){}},400);
 const st=document.createElement("style");st.textContent=`
 body.gf-fs{ overflow:hidden !important; }
 body.gf-fs #topbar, body.gf-fs .masthead, body.gf-fs footer, body.gf-fs .site-foot, body.gf-fs #gfHelpBtn{ display:none !important; }
