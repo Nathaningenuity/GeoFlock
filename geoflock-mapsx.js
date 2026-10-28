@@ -101,3 +101,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   return ll?{ll,ang:a}:null}
  const _go=globeOverlays;globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.landforms&&O.landforms.mountains&&!O._gfRng){O._gfRng=1;const S=shapes();
   O.landforms.mountains.forEach(L=>{const g=S[norm(L.n)];if(!g)return;const p=place(g);if(p){L.ll=p.ll;L.ang=p.ang}})}}catch(e){console.error(e)}return O}})();
+/* 7. The Caspian Sea's hover outline follows its real shore, Garabogaz Bay included (Natural Earth 1:10m coast, public domain) */
+(function(){if(typeof GlobeView==="undefined")return;let C=null;fetch("textures/CASPIAN.json").then(r=>r.json()).then(g=>{try{if(d3.geoArea(g)>2*Math.PI)g.coordinates[0].reverse()}catch(e){}C={type:"Feature",properties:{n:"Caspian Sea"},geometry:g}}).catch(()=>{});
+ const isCasp=W=>{try{if(!W||W===C)return false;const c=d3.geoCentroid(W);return c[0]>46&&c[0]<55&&c[1]>36&&c[1]<48&&d3.geoArea(W)>.004}catch(e){return false}};
+ const P=GlobeView.prototype,_r=P._render;P._render=function(){try{if(C&&this.hotWater&&isCasp(this.hotWater))this.hotWater=C}catch(e){}return _r.apply(this,arguments)}})();
