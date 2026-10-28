@@ -20,7 +20,7 @@ const P=GlobeView.prototype,_dm=P._drawMeasure;P._drawMeasure=function(ctx,p){co
  g.addColorStop(0,"rgba("+c+",0.55)");g.addColorStop(.35,"rgba("+c+",0.22)");g.addColorStop(1,"rgba("+c+",0)");
  ctx.save();ctx.beginPath();ctx.arc(t[0],t[1],R*1.08,0,7);ctx.arc(t[0],t[1],R*.985,0,7,true);ctx.fillStyle=g;ctx.fill("evenodd");ctx.restore()}}catch(e){}return r};
 function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const st=g.host.querySelector(".globe-stage");if(!st)return;
- const v=document.getElementById("allMapsView"),sat=v&&v.classList.contains("sat-on"),full=!!document.fullscreenElement,globe=!g._flat&&appMode==="allmaps";
+ const v=document.getElementById("allMapsView"),sat=v&&v.classList.contains("sat-on"),full=!!document.fullscreenElement||document.body.classList.contains("gf-fs"),globe=!g._flat&&appMode==="allmaps";
  /* where the globe is, for the fade and the shadow */
  try{const p=g.projection(),t=p.translate(),R=p.scale(),cr=g.canvas.getBoundingClientRect(),sr=st.getBoundingClientRect();
   st.style.setProperty("--gf-cx",(cr.left-sr.left+t[0])+"px");st.style.setProperty("--gf-cy",(cr.top-sr.top+t[1])+"px");st.style.setProperty("--gf-r",Math.max(40,R)+"px")}catch(e){}
