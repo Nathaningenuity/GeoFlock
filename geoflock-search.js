@@ -77,8 +77,11 @@ function show(e){clear();if(!active())return;
 /* flash: three pulses, then settle to a steady level */
 function alpha(){const t=(performance.now()-t0)/1000;if(t>2.4)return 1;return .45+.55*Math.abs(Math.sin(t*Math.PI*1.25))}
 function fly(e){const pt=e.g.type==="Point";
- if(onGlobe()){const b=pt?null:d3.geoBounds(e.g);let r=.06;if(b){const c=e.ll;[[b[0][0],b[0][1]],[b[1][0],b[1][1]],[b[0][0],b[1][1]],[b[1][0],b[0][1]]].forEach(p=>{r=Math.max(r,d3.geoDistance(p,c))});if(b[0][0]>b[1][0])r=Math.max(r,.5)}
-  const zTo=pt?(e.cat==="cities"?4.5:4):Math.max(1,Math.min(9,.5/Math.max(.03,r)));const G=amGlobe,from=[-G.rot[0],-G.rot[1]],z0=G.zoom,to=e.ll,st=performance.now(),D=900,ip=d3.geoInterpolate(from,to);
+ if(onGlobe()){/* frame the main body: the biggest piece and the pieces near it (Portugal without the Azores and Madeira) */
+  let gb=e.g;try{if(!pt&&e.g.type==="MultiPolygon"&&e.g.coordinates.length>1){const parts=e.g.coordinates.map(c=>{const g={type:"Polygon",coordinates:c};return{c,a:d3.geoArea(g),m:d3.geoCentroid(g)}}).sort((x,y)=>y.a-x.a),big=parts[0],R=Math.sqrt(big.a/Math.PI);
+   const keep=parts.filter(q=>q===big||d3.geoDistance(q.m,big.m)<Math.max(R*3,.06));if(big.a>parts.reduce((s,q)=>s+q.a,0)*.35)gb={type:"MultiPolygon",coordinates:keep.map(q=>q.c)}}}catch(err){}
+  const b=pt?null:d3.geoBounds(gb);let r=.06;if(b){const c=gb!==e.g?d3.geoCentroid(gb):e.ll;[[b[0][0],b[0][1]],[b[1][0],b[1][1]],[b[0][0],b[1][1]],[b[1][0],b[0][1]]].forEach(p=>{r=Math.max(r,d3.geoDistance(p,c))});if(b[0][0]>b[1][0])r=Math.max(r,.5)}
+  const fl=amGlobe&&amGlobe._flat,zTo=pt?(e.cat==="cities"?(fl?9:4.5):(fl?8:4)):fl?Math.max(1,Math.min(14,Math.PI/(Math.max(.02,r)*5))):Math.max(1,Math.min(9,.5/Math.max(.03,r)));const G=amGlobe,from=[-G.rot[0],-G.rot[1]],z0=G.zoom,to=gb!==e.g?(()=>{try{return d3.geoCentroid(gb)}catch(err){return e.ll}})():e.ll,st=performance.now(),D=900,ip=d3.geoInterpolate(from,to);
   const step=n=>{const k=Math.min(1,(n-st)/D),s=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,c=ip(s);G.rot=[-c[0],-c[1]];G.zoom=Math.exp(Math.log(z0)+(Math.log(zTo)-Math.log(z0))*s);G.render();if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step);return}
  /* the Pacific is cut by the map's edge: turn the flat map to put it in the middle */
  if(/Pacific/.test(e.n)&&e.cat==="seas"&&typeof spinTo==="function"){try{spinTo("A",160)}catch(err){}}

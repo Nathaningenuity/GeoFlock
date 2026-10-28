@@ -279,3 +279,15 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
   const path=d3.geoPath(this.projection(),ctx);ctx.lineJoin="round";
   fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="rgba(20,30,50,.55)";ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.stroke()});ctx.restore()}catch(e){}return r}})();
+/* jumping to a country frames its mainland (with the pieces right next to it); far-off islands that belong to it (the
+   Azores, the Canaries, Hawaii…) are simply shown if they fit, not used to centre or size the view */
+(function(){const P=GlobeView.prototype,_fly=P.flyTo;if(!_fly)return;
+ function mainBody(f){const G=f&&f.geometry;if(!G||G.type!=="MultiPolygon"||G.coordinates.length<2)return G;
+  const parts=G.coordinates.map(c=>{const g={type:"Polygon",coordinates:c};let a=0,m=null;try{a=d3.geoArea(g);m=d3.geoCentroid(g)}catch(e){}return{c,a,m}}).filter(q=>q.m).sort((x,y)=>y.a-x.a);if(!parts.length)return G;
+  const big=parts[0],tot=parts.reduce((s,q)=>s+q.a,0);if(big.a<tot*.3)return G;/* a true archipelago (Indonesia, the Philippines): keep it all */
+  let R=0;try{const b=d3.geoBounds({type:"Polygon",coordinates:big.c});[[b[0][0],b[0][1]],[b[1][0],b[1][1]]].forEach(p=>R=Math.max(R,d3.geoDistance(p,big.m)))}catch(e){}
+  const keep=parts.filter(q=>q===big||d3.geoDistance(q.m,big.m)<R*.9+.03);return{type:"MultiPolygon",coordinates:keep.map(q=>q.c)}}
+ P.flyTo=function(code,opts){try{if(!(opts&&(opts.center||opts.zoom))){const f=projFeatureFor(code,this.features);const g=f&&mainBody(f);
+   if(g&&g!==f.geometry||this._flat&&g){const c=d3.geoCentroid(g);let r=0;/* the farthest coast point from the middle (works across the 180° line, unlike a box) */(g.type==="Polygon"?[g.coordinates]:g.coordinates).forEach(P=>{const ring=P[0],st=Math.max(1,Math.floor(ring.length/400));for(let i=0;i<ring.length;i+=st)r=Math.max(r,d3.geoDistance(ring[i],c))});
+    const zoom=this._flat?Math.max(1.25,Math.min(11,Math.PI/(Math.max(.02,r)*(r>.3?3.4:4.4)))):Math.max(1,Math.min(9,.55/Math.max(.02,r)));
+    return _fly.call(this,code,Object.assign({},opts||{},{center:c,zoom}))}}}catch(e){}return _fly.apply(this,arguments)}})();
