@@ -75,3 +75,7 @@ function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const 
  g._spinOK=locked?false:undefined;if(locked&&g._gfOx){g._gfOx=0;g.request&&g.request()}}
 setInterval(()=>{try{sync()}catch(e){}},400);
 })();
+/* 4. Projections and Deep Time are separate views: opening one closes the other */
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#gfDeepChip, #projTabChip");if(!t)return;
+ try{if(t.id==="gfDeepChip"){if(typeof proj!=="undefined"&&proj.on)projShow(false)}
+  else{const d=document.getElementById("gfDeep");if(d&&!d.hidden){d.hidden=true;const c=document.getElementById("gfDeepChip");if(c)c.classList.remove("active")}}}catch(_){}},true);
