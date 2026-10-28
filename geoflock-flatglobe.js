@@ -307,9 +307,10 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
 (function(){const fix=()=>{if(typeof amtToLL!=="function"||amtToLL._gfFlat)return false;const _a=amtToLL;
   amtToLL=function(cx,cy){try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(g&&g._flat&&g.host&&g.host.isConnected&&g.host.offsetParent){const r=g.canvas.getBoundingClientRect();if(cx<r.left||cx>r.right||cy<r.top||cy>r.bottom)return null;const p=g.projection(),ll=p.invert([cx-r.left,cy-r.top]);return ll&&isFinite(ll[0])?ll:null}}catch(e){}return _a.apply(this,arguments)};amtToLL._gfFlat=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
-/* a small hovered country's outline (Monaco, San Marino) is drawn again last, over the city dots and the labels */
+/* a small hovered country's outline (Monaco, San Marino) is drawn again last, over the city dots and the labels: only its
+   real border, never the enlarged hover area of a tiny place (that showed as a strange ring) */
 (function(){const P=GlobeView.prototype,_r=P._render;P._render=function(){const r=_r.apply(this,arguments);try{const code=this.hot,ctx=this.ctx;if(!code||!ctx)return r;
-  const fs=[...(this._base||[]),...(this._big||[])].filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return r;
+  const fs=(this._base||[]).filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return r;
   /* only small countries (Monaco, San Marino): bigger ones keep their normal outline under the labels */let pa=0;try{const gp=d3.geoPath(this.projection());fs.forEach(f=>{pa+=gp.area(f)})}catch(e){return r}if(!(pa<900))return r;
   const dpr=Math.min(2,window.devicePixelRatio||1),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
   if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
