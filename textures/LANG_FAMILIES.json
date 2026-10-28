@@ -1,0 +1,1076 @@
+[
+{
+"family": "Indo-European",
+"languages": 174,
+"area_km2": 59174054,
+"area_sqdeg": 6987.9
+},
+{
+"family": "Afro-Asiatic",
+"languages": 239,
+"area_km2": 20025503,
+"area_sqdeg": 1765.99
+},
+{
+"family": "Atlantic-Congo",
+"languages": 1013,
+"area_km2": 10778886,
+"area_sqdeg": 896.09
+},
+{
+"family": "Turkic",
+"languages": 27,
+"area_km2": 8412713,
+"area_sqdeg": 1205.93
+},
+{
+"family": "Sino-Tibetan",
+"languages": 251,
+"area_km2": 7150036,
+"area_sqdeg": 697.81
+},
+{
+"family": "Tungusic",
+"languages": 9,
+"area_km2": 3744985,
+"area_sqdeg": 645.61
+},
+{
+"family": "Mongolic-Khitan",
+"languages": 14,
+"area_km2": 3263201,
+"area_sqdeg": 377.5
+},
+{
+"family": "Uralic",
+"languages": 15,
+"area_km2": 2655202,
+"area_sqdeg": 534.03
+},
+{
+"family": "Austronesian",
+"languages": 809,
+"area_km2": 1814935,
+"area_sqdeg": 155.19
+},
+{
+"family": "Saharan",
+"languages": 5,
+"area_km2": 1020541,
+"area_sqdeg": 86.17
+},
+{
+"family": "Dravidian",
+"languages": 14,
+"area_km2": 868548,
+"area_sqdeg": 73.3
+},
+{
+"family": "Tai-Kadai",
+"languages": 33,
+"area_km2": 858850,
+"area_sqdeg": 73.67
+},
+{
+"family": "Chukotko-Kamchatkan",
+"languages": 3,
+"area_km2": 776742,
+"area_sqdeg": 148.94
+},
+{
+"family": "Austroasiatic",
+"languages": 89,
+"area_km2": 746829,
+"area_sqdeg": 62.76
+},
+{
+"family": "Nilotic",
+"languages": 31,
+"area_km2": 726217,
+"area_sqdeg": 58.93
+},
+{
+"family": "Khoe-Kwadi",
+"languages": 11,
+"area_km2": 701273,
+"area_sqdeg": 61.68
+},
+{
+"family": "Mande",
+"languages": 43,
+"area_km2": 571765,
+"area_sqdeg": 47.03
+},
+{
+"family": "Eskimo-Aleut",
+"languages": 10,
+"area_km2": 562986,
+"area_sqdeg": 112.21
+},
+{
+"family": "Tupian",
+"languages": 40,
+"area_km2": 468279,
+"area_sqdeg": 39.62
+},
+{
+"family": "Koreanic",
+"languages": 1,
+"area_km2": 438174,
+"area_sqdeg": 47.41
+},
+{
+"family": "Maban",
+"languages": 5,
+"area_km2": 406454,
+"area_sqdeg": 33.58
+},
+{
+"family": "Central Sudanic",
+"languages": 36,
+"area_km2": 371279,
+"area_sqdeg": 30.14
+},
+{
+"family": "Japonic",
+"languages": 1,
+"area_km2": 367413,
+"area_sqdeg": 37.53
+},
+{
+"family": "Pano-Tacanan",
+"languages": 22,
+"area_km2": 350558,
+"area_sqdeg": 28.66
+},
+{
+"family": "Quechuan",
+"languages": 10,
+"area_km2": 337013,
+"area_sqdeg": 29.44
+},
+{
+"family": "Arawakan",
+"languages": 33,
+"area_km2": 332217,
+"area_sqdeg": 27.18
+},
+{
+"family": "Cariban",
+"languages": 15,
+"area_km2": 330455,
+"area_sqdeg": 26.78
+},
+{
+"family": "Isolate",
+"languages": 95,
+"area_km2": 328923,
+"area_sqdeg": 27.47
+},
+{
+"family": "Dogon",
+"languages": 13,
+"area_km2": 311225,
+"area_sqdeg": 25.93
+},
+{
+"family": "Araucanian",
+"languages": 1,
+"area_km2": 271784,
+"area_sqdeg": 28.16
+},
+{
+"family": "Songhay",
+"languages": 6,
+"area_km2": 251699,
+"area_sqdeg": 21.1
+},
+{
+"family": "Athabaskan-Eyak-Tlingit",
+"languages": 25,
+"area_km2": 212905,
+"area_sqdeg": 32.09
+},
+{
+"family": "Nuclear Trans New Guinea",
+"languages": 247,
+"area_km2": 209866,
+"area_sqdeg": 17.01
+},
+{
+"family": "Guahiboan",
+"languages": 3,
+"area_km2": 191211,
+"area_sqdeg": 15.49
+},
+{
+"family": "Nuclear-Macro-Je",
+"languages": 16,
+"area_km2": 170981,
+"area_sqdeg": 14.44
+},
+{
+"family": "Yanomamic",
+"languages": 2,
+"area_km2": 161653,
+"area_sqdeg": 13.05
+},
+{
+"family": "Uto-Aztecan",
+"languages": 15,
+"area_km2": 147266,
+"area_sqdeg": 14.01
+},
+{
+"family": "Furan",
+"languages": 1,
+"area_km2": 116094,
+"area_sqdeg": 9.59
+},
+{
+"family": "Kru",
+"languages": 25,
+"area_km2": 115917,
+"area_sqdeg": 9.41
+},
+{
+"family": "Zamucoan",
+"languages": 2,
+"area_km2": 100731,
+"area_sqdeg": 8.66
+},
+{
+"family": "Guaicuruan",
+"languages": 4,
+"area_km2": 81839,
+"area_sqdeg": 7.3
+},
+{
+"family": "Unclassified",
+"languages": 35,
+"area_km2": 73716,
+"area_sqdeg": 6.29
+},
+{
+"family": "Kxa",
+"languages": 4,
+"area_km2": 73596,
+"area_sqdeg": 6.28
+},
+{
+"family": "Chocoan",
+"languages": 3,
+"area_km2": 69873,
+"area_sqdeg": 5.68
+},
+{
+"family": "Mayan",
+"languages": 24,
+"area_km2": 69241,
+"area_sqdeg": 5.85
+},
+{
+"family": "Tuu",
+"languages": 1,
+"area_km2": 59926,
+"area_sqdeg": 5.29
+},
+{
+"family": "Ticuna-Yuri",
+"languages": 1,
+"area_km2": 58349,
+"area_sqdeg": 4.72
+},
+{
+"family": "Surmic",
+"languages": 7,
+"area_km2": 58092,
+"area_sqdeg": 4.72
+},
+{
+"family": "Kartvelian",
+"languages": 4,
+"area_km2": 56837,
+"area_sqdeg": 6.18
+},
+{
+"family": "Tamaic",
+"languages": 3,
+"area_km2": 52847,
+"area_sqdeg": 4.37
+},
+{
+"family": "Nakh-Daghestanian",
+"languages": 26,
+"area_km2": 49906,
+"area_sqdeg": 5.5
+},
+{
+"family": "Tucanoan",
+"languages": 12,
+"area_km2": 46847,
+"area_sqdeg": 3.78
+},
+{
+"family": "Arawan",
+"languages": 4,
+"area_km2": 45848,
+"area_sqdeg": 3.72
+},
+{
+"family": "Anim",
+"languages": 11,
+"area_km2": 42270,
+"area_sqdeg": 3.44
+},
+{
+"family": "Huitotoan",
+"languages": 5,
+"area_km2": 41631,
+"area_sqdeg": 3.36
+},
+{
+"family": "Siouan",
+"languages": 6,
+"area_km2": 41465,
+"area_sqdeg": 4.8
+},
+{
+"family": "Katukinan",
+"languages": 1,
+"area_km2": 41029,
+"area_sqdeg": 3.33
+},
+{
+"family": "Algic",
+"languages": 10,
+"area_km2": 40190,
+"area_sqdeg": 5.03
+},
+{
+"family": "Nambiquaran",
+"languages": 2,
+"area_km2": 38973,
+"area_sqdeg": 3.23
+},
+{
+"family": "Yeniseian",
+"languages": 1,
+"area_km2": 38409,
+"area_sqdeg": 7.36
+},
+{
+"family": "Chicham",
+"languages": 1,
+"area_km2": 34626,
+"area_sqdeg": 2.8
+},
+{
+"family": "Ta-Ne-Omotic",
+"languages": 16,
+"area_km2": 33041,
+"area_sqdeg": 2.69
+},
+{
+"family": "Peba-Yagua",
+"languages": 1,
+"area_km2": 30628,
+"area_sqdeg": 2.48
+},
+{
+"family": "Boran",
+"languages": 2,
+"area_km2": 29927,
+"area_sqdeg": 2.42
+},
+{
+"family": "Chonan",
+"languages": 1,
+"area_km2": 28882,
+"area_sqdeg": 3.49
+},
+{
+"family": "Yukaghir",
+"languages": 1,
+"area_km2": 21605,
+"area_sqdeg": 3.99
+},
+{
+"family": "Lengua-Mascoy",
+"languages": 2,
+"area_km2": 20568,
+"area_sqdeg": 1.8
+},
+{
+"family": "Mataguayan",
+"languages": 2,
+"area_km2": 20204,
+"area_sqdeg": 1.77
+},
+{
+"family": "Barbacoan",
+"languages": 3,
+"area_km2": 20173,
+"area_sqdeg": 1.63
+},
+{
+"family": "Otomanguean",
+"languages": 8,
+"area_km2": 18334,
+"area_sqdeg": 1.58
+},
+{
+"family": "Chibchan",
+"languages": 8,
+"area_km2": 18092,
+"area_sqdeg": 1.48
+},
+{
+"family": "Nubian",
+"languages": 5,
+"area_km2": 17682,
+"area_sqdeg": 1.48
+},
+{
+"family": "Caddoan",
+"languages": 2,
+"area_km2": 16915,
+"area_sqdeg": 1.95
+},
+{
+"family": "Salishan",
+"languages": 6,
+"area_km2": 16659,
+"area_sqdeg": 2.06
+},
+{
+"family": "Kakua-Nukak",
+"languages": 2,
+"area_km2": 16396,
+"area_sqdeg": 1.32
+},
+{
+"family": "Yam",
+"languages": 6,
+"area_km2": 15977,
+"area_sqdeg": 1.3
+},
+{
+"family": "Ijoid",
+"languages": 7,
+"area_km2": 14696,
+"area_sqdeg": 1.19
+},
+{
+"family": "Kamula-Elevala",
+"languages": 3,
+"area_km2": 13841,
+"area_sqdeg": 1.12
+},
+{
+"family": "Cahuapanan",
+"languages": 2,
+"area_km2": 13688,
+"area_sqdeg": 1.11
+},
+{
+"family": "North Halmahera",
+"languages": 10,
+"area_km2": 13267,
+"area_sqdeg": 1.07
+},
+{
+"family": "Naduhup",
+"languages": 3,
+"area_km2": 13259,
+"area_sqdeg": 1.07
+},
+{
+"family": "Bororoan",
+"languages": 2,
+"area_km2": 13216,
+"area_sqdeg": 1.11
+},
+{
+"family": "Gumuz",
+"languages": 1,
+"area_km2": 13125,
+"area_sqdeg": 1.09
+},
+{
+"family": "Sepik",
+"languages": 31,
+"area_km2": 12923,
+"area_sqdeg": 1.05
+},
+{
+"family": "Maybratic",
+"languages": 2,
+"area_km2": 12143,
+"area_sqdeg": 0.98
+},
+{
+"family": "Angan",
+"languages": 12,
+"area_km2": 12010,
+"area_sqdeg": 0.98
+},
+{
+"family": "Kolopom",
+"languages": 3,
+"area_km2": 11632,
+"area_sqdeg": 0.95
+},
+{
+"family": "Kresh-Aja",
+"languages": 2,
+"area_km2": 11503,
+"area_sqdeg": 0.94
+},
+{
+"family": "West Bird's Head",
+"languages": 5,
+"area_km2": 10603,
+"area_sqdeg": 0.86
+},
+{
+"family": "South Omotic",
+"languages": 4,
+"area_km2": 10594,
+"area_sqdeg": 0.86
+},
+{
+"family": "Mairasic",
+"languages": 2,
+"area_km2": 10389,
+"area_sqdeg": 0.84
+},
+{
+"family": "Koiarian",
+"languages": 6,
+"area_km2": 10176,
+"area_sqdeg": 0.83
+},
+{
+"family": "Abkhaz-Adyge",
+"languages": 3,
+"area_km2": 10029,
+"area_sqdeg": 1.11
+},
+{
+"family": "Cochimi-Yuman",
+"languages": 5,
+"area_km2": 8371,
+"area_sqdeg": 0.82
+},
+{
+"family": "Heibanic",
+"languages": 1,
+"area_km2": 8005,
+"area_sqdeg": 0.66
+},
+{
+"family": "Nuclear Torricelli",
+"languages": 45,
+"area_km2": 7936,
+"area_sqdeg": 0.64
+},
+{
+"family": "Harakmbut",
+"languages": 2,
+"area_km2": 7823,
+"area_sqdeg": 0.65
+},
+{
+"family": "Suki-Gogodala",
+"languages": 2,
+"area_km2": 7730,
+"area_sqdeg": 0.63
+},
+{
+"family": "Timor-Alor-Pantar",
+"languages": 16,
+"area_km2": 7699,
+"area_sqdeg": 0.63
+},
+{
+"family": "Greater Kwerba",
+"languages": 4,
+"area_km2": 7641,
+"area_sqdeg": 0.62
+},
+{
+"family": "Ramu",
+"languages": 23,
+"area_km2": 7625,
+"area_sqdeg": 0.62
+},
+{
+"family": "Lakes Plain",
+"languages": 10,
+"area_km2": 7277,
+"area_sqdeg": 0.59
+},
+{
+"family": "Dagan",
+"languages": 8,
+"area_km2": 6935,
+"area_sqdeg": 0.57
+},
+{
+"family": "Tor-Orya",
+"languages": 7,
+"area_km2": 6797,
+"area_sqdeg": 0.55
+},
+{
+"family": "Kiwaian",
+"languages": 6,
+"area_km2": 6377,
+"area_sqdeg": 0.52
+},
+{
+"family": "Pahoturi",
+"languages": 2,
+"area_km2": 6305,
+"area_sqdeg": 0.51
+},
+{
+"family": "Geelvink Bay",
+"languages": 4,
+"area_km2": 6296,
+"area_sqdeg": 0.51
+},
+{
+"family": "Koman",
+"languages": 3,
+"area_km2": 6197,
+"area_sqdeg": 0.51
+},
+{
+"family": "Iroquoian",
+"languages": 2,
+"area_km2": 6083,
+"area_sqdeg": 0.66
+},
+{
+"family": "East Bird's Head",
+"languages": 2,
+"area_km2": 5795,
+"area_sqdeg": 0.47
+},
+{
+"family": "Turama-Kikori",
+"languages": 3,
+"area_km2": 5768,
+"area_sqdeg": 0.47
+},
+{
+"family": "Bulaka River",
+"languages": 2,
+"area_km2": 5562,
+"area_sqdeg": 0.45
+},
+{
+"family": "Teberan",
+"languages": 2,
+"area_km2": 5402,
+"area_sqdeg": 0.44
+},
+{
+"family": "Dizoid",
+"languages": 3,
+"area_km2": 5248,
+"area_sqdeg": 0.43
+},
+{
+"family": "Yareban",
+"languages": 5,
+"area_km2": 4704,
+"area_sqdeg": 0.39
+},
+{
+"family": "Border",
+"languages": 11,
+"area_km2": 4298,
+"area_sqdeg": 0.35
+},
+{
+"family": "South Bird's Head",
+"languages": 5,
+"area_km2": 4179,
+"area_sqdeg": 0.34
+},
+{
+"family": "Bosavi",
+"languages": 6,
+"area_km2": 4150,
+"area_sqdeg": 0.34
+},
+{
+"family": "Rashad",
+"languages": 1,
+"area_km2": 3799,
+"area_sqdeg": 0.31
+},
+{
+"family": "Kunimaipan",
+"languages": 3,
+"area_km2": 3654,
+"area_sqdeg": 0.3
+},
+{
+"family": "Kadugli-Krongo",
+"languages": 3,
+"area_km2": 3536,
+"area_sqdeg": 0.29
+},
+{
+"family": "Ndu",
+"languages": 7,
+"area_km2": 3381,
+"area_sqdeg": 0.27
+},
+{
+"family": "Lower Sepik",
+"languages": 6,
+"area_km2": 3325,
+"area_sqdeg": 0.27
+},
+{
+"family": "Mailuan",
+"languages": 6,
+"area_km2": 3290,
+"area_sqdeg": 0.27
+},
+{
+"family": "Kayagaric",
+"languages": 3,
+"area_km2": 3276,
+"area_sqdeg": 0.27
+},
+{
+"family": "Sahaptian",
+"languages": 1,
+"area_km2": 3272,
+"area_sqdeg": 0.38
+},
+{
+"family": "Eastern Trans-Fly",
+"languages": 4,
+"area_km2": 3147,
+"area_sqdeg": 0.26
+},
+{
+"family": "Eleman",
+"languages": 5,
+"area_km2": 3066,
+"area_sqdeg": 0.25
+},
+{
+"family": "North Bougainville",
+"languages": 4,
+"area_km2": 2802,
+"area_sqdeg": 0.23
+},
+{
+"family": "West Bomberai",
+"languages": 3,
+"area_km2": 2746,
+"area_sqdeg": 0.22
+},
+{
+"family": "East Strickland",
+"languages": 3,
+"area_km2": 2720,
+"area_sqdeg": 0.22
+},
+{
+"family": "Kuliak",
+"languages": 2,
+"area_km2": 2651,
+"area_sqdeg": 0.21
+},
+{
+"family": "South Bougainville",
+"languages": 3,
+"area_km2": 2632,
+"area_sqdeg": 0.21
+},
+{
+"family": "Blue Nile Mao",
+"languages": 2,
+"area_km2": 2461,
+"area_sqdeg": 0.2
+},
+{
+"family": "Nivkh",
+"languages": 1,
+"area_km2": 2427,
+"area_sqdeg": 0.33
+},
+{
+"family": "Saliban",
+"languages": 1,
+"area_km2": 2414,
+"area_sqdeg": 0.2
+},
+{
+"family": "Tequistlatecan",
+"languages": 1,
+"area_km2": 2341,
+"area_sqdeg": 0.2
+},
+{
+"family": "Keresan",
+"languages": 2,
+"area_km2": 2154,
+"area_sqdeg": 0.21
+},
+{
+"family": "Tsimshian",
+"languages": 1,
+"area_km2": 2145,
+"area_sqdeg": 0.3
+},
+{
+"family": "Hatam-Mansim",
+"languages": 2,
+"area_km2": 2008,
+"area_sqdeg": 0.16
+},
+{
+"family": "Baibai-Fas",
+"languages": 2,
+"area_km2": 1817,
+"area_sqdeg": 0.15
+},
+{
+"family": "Manubaran",
+"languages": 2,
+"area_km2": 1710,
+"area_sqdeg": 0.14
+},
+{
+"family": "Keram",
+"languages": 5,
+"area_km2": 1704,
+"area_sqdeg": 0.14
+},
+{
+"family": "Left May",
+"languages": 5,
+"area_km2": 1661,
+"area_sqdeg": 0.13
+},
+{
+"family": "Pidgin",
+"languages": 1,
+"area_km2": 1534,
+"area_sqdeg": 0.12
+},
+{
+"family": "Mixe-Zoque",
+"languages": 5,
+"area_km2": 1486,
+"area_sqdeg": 0.13
+},
+{
+"family": "Kawesqar",
+"languages": 1,
+"area_km2": 1439,
+"area_sqdeg": 0.18
+},
+{
+"family": "Senagi",
+"languages": 2,
+"area_km2": 1366,
+"area_sqdeg": 0.11
+},
+{
+"family": "Kaure-Kosare",
+"languages": 1,
+"area_km2": 1356,
+"area_sqdeg": 0.11
+},
+{
+"family": "East Kutubu",
+"languages": 2,
+"area_km2": 1334,
+"area_sqdeg": 0.11
+},
+{
+"family": "Dajuic",
+"languages": 1,
+"area_km2": 1272,
+"area_sqdeg": 0.1
+},
+{
+"family": "Pauwasi",
+"languages": 5,
+"area_km2": 1166,
+"area_sqdeg": 0.09
+},
+{
+"family": "Uru-Chipaya",
+"languages": 2,
+"area_km2": 1149,
+"area_sqdeg": 0.1
+},
+{
+"family": "Konda-Yahadian",
+"languages": 2,
+"area_km2": 1121,
+"area_sqdeg": 0.09
+},
+{
+"family": "Kwomtari-Nai",
+"languages": 2,
+"area_km2": 971,
+"area_sqdeg": 0.08
+},
+{
+"family": "Nimboranic",
+"languages": 3,
+"area_km2": 928,
+"area_sqdeg": 0.07
+},
+{
+"family": "Yawa-Saweru",
+"languages": 1,
+"area_km2": 879,
+"area_sqdeg": 0.07
+},
+{
+"family": "Sentanic",
+"languages": 4,
+"area_km2": 816,
+"area_sqdeg": 0.07
+},
+{
+"family": "Nyimang",
+"languages": 1,
+"area_km2": 810,
+"area_sqdeg": 0.07
+},
+{
+"family": "Sko",
+"languages": 7,
+"area_km2": 782,
+"area_sqdeg": 0.06
+},
+{
+"family": "Chapacuran",
+"languages": 1,
+"area_km2": 728,
+"area_sqdeg": 0.06
+},
+{
+"family": "Mombum-Koneraw",
+"languages": 2,
+"area_km2": 724,
+"area_sqdeg": 0.06
+},
+{
+"family": "Arafundi",
+"languages": 2,
+"area_km2": 704,
+"area_sqdeg": 0.06
+},
+{
+"family": "Yuat",
+"languages": 4,
+"area_km2": 688,
+"area_sqdeg": 0.06
+},
+{
+"family": "Piawi",
+"languages": 2,
+"area_km2": 685,
+"area_sqdeg": 0.06
+},
+{
+"family": "Kwalean",
+"languages": 3,
+"area_km2": 602,
+"area_sqdeg": 0.05
+},
+{
+"family": "Narrow Talodi",
+"languages": 1,
+"area_km2": 572,
+"area_sqdeg": 0.05
+},
+{
+"family": "Temeinic",
+"languages": 2,
+"area_km2": 488,
+"area_sqdeg": 0.04
+},
+{
+"family": "Lencan",
+"languages": 1,
+"area_km2": 443,
+"area_sqdeg": 0.04
+},
+{
+"family": "Walioic",
+"languages": 3,
+"area_km2": 416,
+"area_sqdeg": 0.03
+},
+{
+"family": "Amto-Musan",
+"languages": 2,
+"area_km2": 370,
+"area_sqdeg": 0.03
+},
+{
+"family": "Jicaquean",
+"languages": 1,
+"area_km2": 266,
+"area_sqdeg": 0.02
+},
+{
+"family": "Xincan",
+"languages": 1,
+"area_km2": 262,
+"area_sqdeg": 0.02
+},
+{
+"family": "Speech Register",
+"languages": 1,
+"area_km2": 246,
+"area_sqdeg": 0.02
+},
+{
+"family": "Taulil-Butam",
+"languages": 2,
+"area_km2": 163,
+"area_sqdeg": 0.01
+},
+{
+"family": "Bogia",
+"languages": 2,
+"area_km2": 134,
+"area_sqdeg": 0.01
+},
+{
+"family": "Pama-Nyungan",
+"languages": 1,
+"area_km2": 62,
+"area_sqdeg": 0.01
+},
+{
+"family": "Namla-Tofanma",
+"languages": 1,
+"area_km2": 47,
+"area_sqdeg": 0.0
+},
+{
+"family": "Hmong-Mien",
+"languages": 1,
+"area_km2": 30,
+"area_sqdeg": 0.0
+}
+]

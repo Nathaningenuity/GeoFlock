@@ -5,7 +5,7 @@
 const $=id=>document.getElementById(id);
 const mode=()=>{try{return appMode==="allmaps"?allMapsColorMode:null}catch(e){return null}};
 const css=document.createElement("style");css.textContent=`
-#allMapsSubModes [data-allmaps-sub], #amGlobeSubs [data-sub="carto"]{ display:none !important; }
+#allMapsSubModes.gf-pop [data-allmaps-sub], #amGlobeSubs [data-sub="carto"]{ display:none !important; }
 #allMapsSubModes .gf-popv{ display:inline-flex !important; }
 .gf-owid{ position:absolute; inset:0; z-index:40; background:#2e3a4f; border-radius:14px; overflow:hidden; touch-action:none; cursor:grab; }
 .gf-owid.drag{ cursor:grabbing; }
@@ -16,7 +16,7 @@ const css=document.createElement("style");css.textContent=`
 .gf-owid .gf-ow-cap a{ color:#ffd98a; }`;document.head.appendChild(css);
 let view="dens",box=null,T={s:1,x:0,y:0},W=6985,H=2670;
 function host(){try{return amGlobe&&amGlobe._flat&&amGlobe.host.isConnected?amGlobe.host:null}catch(e){return null}}
-function chips(){const row=$("allMapsSubModes");if(!row)return;let a=row.querySelector('.gf-popv[data-v="dens"]');
+function chips(){const row=$("allMapsSubModes");if(!row)return;row.classList.toggle("gf-pop",mode()==="population");let a=row.querySelector('.gf-popv[data-v="dens"]');
  if(mode()!=="population"){row.querySelectorAll(".gf-popv").forEach(b=>b.remove());return}
  if(!a){row.insertAdjacentHTML("beforeend",'<button type="button" class="chip sub-chip gf-popv" data-v="dens">Density map</button><button type="button" class="chip sub-chip gf-popv" data-v="owid" title="All the people in the world: one square for every 500,000 people (Our World in Data)">Cartogram</button>');
   row.querySelectorAll(".gf-popv").forEach(b=>b.onclick=()=>{view=b.dataset.v;sync()})}

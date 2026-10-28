@@ -28,7 +28,7 @@ function apply(){try{
 }catch(e){console.error(e)}}
 window.gfTourShelves=SHELVES;
 /* ---------- shelf tabs at the top of the Tours page: All, or one shelf at a time (remembered) ---------- */
-const COL={start:"#6ed0c8",physical:"#c9a06a",living:"#7cc77a",culture:"#f2a7bd",ideas:"#b79be6",power:"#8fb6f2",history:"#e9b07a",cont:"#7cd2f0",books:"#d9b98a"};
+const COL={start:"#6ed0c8",physical:"#4f9fdc",living:"#7cc77a",culture:"#f2a7bd",ideas:"#b79be6",power:"#8fb6f2",history:"#e9b07a",cont:"#7cd2f0",books:"#d9b98a"};
 const css=document.createElement("style");css.textContent=`
 .tr-shelf-tabs{ display:flex; flex-wrap:nowrap; justify-content:flex-start; gap:5px; margin:2px 0 10px; overflow-x:auto; scrollbar-width:none; padding:2px; }
 .tr-shelf-tabs::-webkit-scrollbar{ display:none; }

@@ -160,6 +160,8 @@ function renderFlat(){const svg=svgEl();if(!svg)return;let g=svg.querySelector("
  const path=flatPath();if(!path)return;const k=unitsPerPx();let h="";
  K().ink.forEach((s,i)=>{const P=penStyle(s.t);const d=path({type:"LineString",coordinates:s.p});if(!d)return;if(s.f){const df=path({type:"Polygon",coordinates:[s.p]});if(df)h+=`<path d="${df}" pointer-events="none" style="fill:${s.c};fill-opacity:.16;stroke:none"/>`}
   h+=`<path d="${d}" vector-effect="non-scaling-stroke" pointer-events="none" style="${inkCss(s.c,P)}${s.t==="highlighter"?"mix-blend-mode:multiply;":""}"/>`});
+ {const sl=selDraw();if(sl){const d=path({type:"LineString",coordinates:sl.p});if(d)h+=`<path d="${d}" vector-effect="non-scaling-stroke" pointer-events="none" style="fill:none;stroke:#fff;stroke-opacity:.55;stroke-width:8px"/><path d="${d}" vector-effect="non-scaling-stroke" pointer-events="none" style="fill:none;stroke:${sl.c};stroke-width:3px"/>`;
+  handles(sl).forEach(hd=>{const q=amtFromLL(hd.ll);if(q)h+=`<circle cx="${q[0]}" cy="${q[1]}" r="${6.5*k}" pointer-events="none" style="fill:#fff;stroke:${sl.c};stroke-width:${2.5*k}px"/>`})}}
  if(S.stroke&&S.stroke.p.length>1){const P=penStyle(S.stroke.t),d=path({type:"LineString",coordinates:S.stroke.p});if(d)h+=`<path d="${d}" vector-effect="non-scaling-stroke" pointer-events="none" style="${inkCss(S.stroke.c,P)}"/>`}
  S.ghosts.forEach((G,i)=>{const d=path(ghostGeom(G));if(!d)return;const q=amtFromLL(G.at);
   h+=`<g class="gfk-ghost" data-gi="${i}"><path d="${d}" vector-effect="non-scaling-stroke" style="fill:${G.col} !important;fill-opacity:.45 !important;stroke:${G.col} !important;stroke-width:2px !important;stroke-opacity:1 !important;opacity:1 !important;cursor:grab;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25)) !important"/>`+(q&&G.lab!==false?`<text x="${q[0]}" y="${q[1]}" font-size="${12*k}" text-anchor="middle" font-weight="800" fill="#fff" stroke="${G.col}" stroke-width="${3*k}" paint-order="stroke" pointer-events="none">${esc(G.label)}</text>`:"")+`</g>`});
@@ -172,6 +174,8 @@ function renderGlobe(ctx,p){const path=d3.geoPath(p,ctx);ctx.save();
   ctx.fillStyle=Sx.sea[0][1];ctx.strokeStyle="rgba(0,0,0,.18)";ctx.lineWidth=.4;(O.lakes||[]).forEach(L=>{if(L.minor&&!ov.minorLakes&&!window._gfMinorOn)return;if(L.c&&d3.geoDistance(L.c,c)-(L.r||0)>Math.PI/2)return;ctx.beginPath();path(L);ctx.fill();ctx.stroke()})}}catch(e){}
  const strokes=K().ink.concat(S.stroke&&S.stroke.p.length>1?[S.stroke]:[]);
  strokes.forEach(s=>{const P=penStyle(s.t);if(s.f){ctx.globalAlpha=.16;ctx.fillStyle=s.c;ctx.beginPath();path({type:"Polygon",coordinates:[s.p]});ctx.fill()}ctx.globalAlpha=P[3];ctx.strokeStyle=s.c;ctx.lineWidth=P[2];ctx.lineCap=P[4];ctx.lineJoin="round";ctx.setLineDash(s.t==="geoDash"?[6,5]:[]);ctx.globalCompositeOperation=s.t==="highlighter"?"multiply":"source-over";ctx.beginPath();path({type:"LineString",coordinates:s.p});ctx.stroke();ctx.setLineDash([])});
+ {const sl=selDraw();if(sl){ctx.globalAlpha=.55;ctx.strokeStyle="#fff";ctx.lineWidth=8;ctx.lineJoin="round";ctx.beginPath();path({type:"LineString",coordinates:sl.p});ctx.stroke();ctx.globalAlpha=1;ctx.strokeStyle=sl.c;ctx.lineWidth=3;ctx.beginPath();path({type:"LineString",coordinates:sl.p});ctx.stroke();
+  const r0=p.rotate();handles(sl).forEach(h=>{if(!amGlobe._flat&&d3.geoDistance(h.ll,[-r0[0],-r0[1]])>Math.PI/2)return;const q=p(h.ll);if(!q)return;ctx.beginPath();ctx.arc(q[0],q[1],6.5,0,7);ctx.fillStyle="#fff";ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=sl.c;ctx.stroke()})}}
  ctx.globalAlpha=1;strokes.forEach(s=>{if(!s.lab||!s.at)return;const q=p(s.at),r0=p.rotate();if(!q||!isFinite(q[0]))return;if(!amGlobe._flat&&d3.geoDistance(s.at,[-r0[0],-r0[1]])>Math.PI/2)return;ctx.font="800 12px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=3.5;ctx.strokeStyle="#fff";ctx.strokeText(s.lab,q[0],q[1]);ctx.fillStyle=s.c;ctx.fillText(s.lab,q[0],q[1])});
  ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";
  S.ghosts.forEach(G=>{ctx.beginPath();path(ghostGeom(G));ctx.fillStyle=G.col;ctx.globalAlpha=.45;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=G.col;ctx.lineWidth=2;ctx.stroke();const q=p(G.at),r0=p.rotate();if(q&&G.lab!==false&&d3.geoDistance(G.at,[-r0[0],-r0[1]])<Math.PI/2){ctx.font="800 12px system-ui";ctx.textAlign="center";ctx.lineWidth=3;ctx.strokeStyle=G.col;ctx.strokeText(G.label,q[0],q[1]);ctx.fillStyle="#fff";ctx.fillText(G.label,q[0],q[1])}});
@@ -239,7 +243,12 @@ function updCompass(o){const h=host();if(!h)return;const hr=h.getBoundingClientR
 setInterval(()=>{const o=S.place.compass;if(o&&o.el.isConnected)updCompass(o)},60);
 
 /* ================= what each tool does ================= */
+const TOOLPANEL={pens:"gfkPens",pins:"gfkPins",palette:"gfkPal",sea:"gfkSea",shovel:"gfkShovel",geometry:"gfkGeo"};
+/* closing a tool's window (its ×, Esc, or its icon again) also puts down whatever it was doing */
+function allOff(){if(S.pen)penStop();if(S.pinArm)pinArm(false);if(S.dragging)dragOn(false);capture(false);try{GEO.sel=-1}catch(e){}render();sync()}
 function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClientRect();
+ if(TOOLPANEL[t]&&document.getElementById(TOOLPANEL[t])){closePanels();allOff();return}
+ if(t==="dragger"&&S.dragging){dragOn(false);closePanels();return}
  if(t==="compass"||t==="ruler"){if(S.place[t])putAway(t);else dropTool(t,r.left+r.width*(t==="compass"?.18:.5),r.top+r.height*(t==="compass"?.55:.8))}
  else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelPanel();else if(t==="geometry")geoPanel()}
 function dropTool(t,cx,cy){if(t==="compass")placeAt("compass",cx,cy);
@@ -259,7 +268,7 @@ function panel(id,html,wide){closePanels();const p=document.createElement("div")
  p.innerHTML='<div class="gfk-grip" title="Drag to move"><i></i></div><button type="button" class="gfk-px" aria-label="Close">×</button>'+html;document.body.appendChild(p);
  /* where it opens: where it was last left, else just above the toolkit */
  const pos=PPOS[id];if(pos){p.style.left=pos[0]+"px";p.style.top=pos[1]+"px"}else{const t=S.tray&&S.tray.isConnected?S.tray.getBoundingClientRect():null;const left=t?t.left:20,top=(t?t.top:innerHeight-120)-p.offsetHeight-10;p.style.left=Math.max(8,left)+"px";p.style.top=Math.max(8,top)+"px"}
- clampPanel(p);p.querySelector(".gfk-px").onclick=()=>{if(id==="gfkPins"&&S.pinArm)pinArm(false);closePanels()};["pointerdown","mousedown","click","wheel","dblclick","keydown"].forEach(t=>p.addEventListener(t,e=>e.stopPropagation()));
+ clampPanel(p);p.querySelector(".gfk-px").onclick=()=>{closePanels();if(id!=="gfkPin"&&id!=="gfkGhost")allOff()};["pointerdown","mousedown","click","wheel","dblclick","keydown"].forEach(t=>p.addEventListener(t,e=>e.stopPropagation()));
  /* drag it by its header (the title line) anywhere on the page */
  p.addEventListener("pointerdown",e=>{if(!e.target.closest(".gfk-grip,.gfk-ph"))return;e.preventDefault();const r=p.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;p.classList.add("gfk-moving");
   const mv=ev=>{p.style.left=ev.clientX-dx+"px";p.style.top=ev.clientY-dy+"px";clampPanel(p)};const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);p.classList.remove("gfk-moving");PPOS[id]=[parseFloat(p.style.left),parseFloat(p.style.top)]};
@@ -518,7 +527,7 @@ function sync(){const h=host();const show=h&&appMode==="allmaps"&&!(typeof ps!==
  if(cap&&cap.parentNode!==h)h.appendChild(cap);h.classList.toggle("gfk-pinning",!!S.pinArm);h.classList.toggle("gfk-dragmode",!!S.dragging);coordSwitch();placeObjects()}
 try{S.open=!K().closed&&innerWidth>640}catch(e){}
 let lastKey="";setInterval(()=>{try{sync();const svg=svgEl();const key=(onGlobe()?"g":"f")+"|"+(typeof SPIN!=="undefined"?SPIN.A.dl+"|"+SPIN.A.f.s+"|"+SPIN.A.f.bx:"")+"|"+(svg&&svg.getAttribute("viewBox"))+"|"+(svg&&!svg.querySelector(":scope > g#gfKitLayer"));if(key!==lastKey){lastKey=key;render()}}catch(e){}},400);
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.querySelector(".gfk-panel")){if(document.getElementById("gfkPins")&&S.pinArm)pinArm(false);closePanels();return}if(S.pen){penStop();return}if(S.pinArm){pinArm(false);return}if(S.dragging){dragOn(false);return}if(cap){capture(false)}});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.querySelector(".gfk-panel")){const own=document.getElementById("gfkPin")||document.getElementById("gfkGhost");closePanels();if(!own)allOff();return}if(S.pen){penStop();return}if(S.pinArm){pinArm(false);return}if(S.dragging){dragOn(false);return}if(cap){capture(false)}});
 /* ================= the map's other panels move freely too ================= */
 const FPOS={};
 function freeDrag(el,handleSel,key,onDone){if(el._gfkFree)return;el._gfkFree=1;
@@ -576,7 +585,9 @@ const css=document.createElement("style");css.textContent=`
 .gfk-panel.gfk-wide{ width:360px; }
 .gfk-grip{ display:flex; justify-content:center; padding:2px 0 6px; cursor:grab; touch-action:none; } .gfk-grip i{ width:38px; height:4px; border-radius:2px; background:rgba(22,50,79,.18); }
 .gfk-ph{ cursor:grab; touch-action:none; } .gfk-panel.gfk-moving{ cursor:grabbing; box-shadow:0 20px 44px rgba(20,30,50,.35); } .gfk-panel.gfk-moving *{ cursor:grabbing; }
-.gfk-px{ position:absolute; right:8px; top:10px; border:0; background:none; font-size:20px; line-height:1; color:rgba(22,50,79,.45); cursor:pointer; padding:4px; }
+.gfk-px{ position:absolute; right:8px; top:8px; width:28px; height:28px; border:0; border-radius:50%; background:rgba(22,50,79,.08); font:600 20px/28px system-ui; text-align:center; color:#22324a; cursor:pointer; padding:0; z-index:2; }
+.gfk-px:hover{ background:rgba(22,50,79,.18); }
+body.dark-theme .gfk-px, body.sky-night .gfk-px{ background:rgba(255,255,255,.12); color:#e6edf7; } body.dark-theme .gfk-px:hover, body.sky-night .gfk-px:hover{ background:rgba(255,255,255,.24); }
 .gfk-ph{ display:block; font-size:15px; margin:0 0 8px; }
 .gfk-hint{ font-size:11.5px; opacity:.7; margin:8px 0 0; }
 .gfk-penrow{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
@@ -699,7 +710,7 @@ function flyTo(ll){try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host.is
 /* --- geometry set: ruler, drawing compass, range rings, straight lines, rectangles and ovals, and "line up" (a place's latitude and
    longitude drawn around the world). "True to the globe": lines follow the Earth's curve and rings keep a real distance; off, shapes look
    exactly as drawn on the screen. Shapes are kept with the drawings (Pens' Undo and Clear work on them too). --- */
-const GEO={mode:"compass",tru:true,km:1000,col:"#c8281c"};
+const GEO={mode:"compass",tru:true,km:1000,col:"#c8281c",sel:-1};
 try{Object.assign(GEO,K().geo||{})}catch(e){}
 const geoSave=()=>{try{K().geo={mode:GEO.mode,tru:GEO.tru,km:GEO.km,col:GEO.col};save()}catch(e){}};
 const RAD=Math.PI/180,KM=6371;
@@ -725,7 +736,53 @@ function shape(mode,a,b,shift,A,B){/* a,b: screen points; A,B: their places */
   const cx=(x0+x1)/2,cy=(y0+y1)/2,rx=Math.abs(x1-x0)/2,ry=Math.abs(y1-y0)/2;return{p:scr([...Array(73)].map((_,i)=>[cx+rx*Math.cos(i/72*2*Math.PI),cy+ry*Math.sin(i/72*2*Math.PI)])),f:1}}
  return null}
 function ringAt(A){const ring=d3.geoCircle().center(A).radius(GEO.km/KM/RAD).precision(1.5)().coordinates[0];return{p:fix(ring),f:1,lab:kmTxt(GEO.km),at:A}}
-function keep(o){if(!o||!o.p||o.p.length<2)return;const k=K();k.ink.push(Object.assign({t:o.t||"geo",c:GEO.col},o));if(k.ink.length>400)k.ink.shift();save();render()}
+function keep(o){if(!o||!o.p||o.p.length<2)return;const k=K();k.ink.push(Object.assign({t:o.t||"geo",c:GEO.col},o));if(k.ink.length>400)k.ink.shift();save();render();geoList()}
+/* every shape keeps how it was made (g), so it can be rebuilt when it is moved or resized */
+function build(g){const T=GEO.tru,K0=GEO.km;GEO.tru=!!g.tru;try{if(g.m==="ring"){GEO.km=g.km;return ringAt(g.A)}const a=toScreen(g.A),b=toScreen(g.B);if(!g.tru&&(!a||!b))return null;return shape(g.m,a||[0,0],b||[0,0],!!g.sh,g.A,g.B)}finally{GEO.tru=T;GEO.km=K0}}
+function rebuild(s){if(!s||!s.g)return;const o=build(s.g);if(!o||!o.p||o.p.length<2)return;s.p=o.p;if(o.f)s.f=1;else delete s.f;if(o.lab){s.lab=o.lab;s.at=o.at}else{delete s.lab;delete s.at}}
+const hav=(p,q)=>{const a=Math.sin((q[1]-p[1])*RAD/2)**2+Math.cos(p[1]*RAD)*Math.cos(q[1]*RAD)*Math.sin((q[0]-p[0])*RAD/2)**2;return 2*Math.asin(Math.min(1,Math.sqrt(a)))};
+/* the handles of a shape: c = centre (moves it), r = edge (resizes it), a/b = its two ends or corners */
+function handles(s){const g=s&&s.g;if(!g)return[];if(g.m==="ring")return[{k:"c",ll:g.A},{k:"r",ll:dest(g.A,90,g.km/KM)}];if(g.m==="compass")return[{k:"c",ll:g.A},{k:"r",ll:g.B}];return[{k:"a",ll:g.A},{k:"b",ll:g.B}]}
+function segD(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
+/* what is under the pointer: a handle of the chosen shape, else the edge or label of any shape */
+function geoHit(x,y){const ink=K().ink,sel=ink[GEO.sel];if(sel)for(const h of handles(sel)){const q=toScreen(h.ll);if(q&&Math.hypot(q[0]-x,q[1]-y)<12)return{i:GEO.sel,h:h.k}}
+ for(let i=ink.length-1;i>=0;i--){const s=ink[i];if(s.at&&s.lab){const q=toScreen(s.at);if(q&&Math.abs(q[0]-x)<s.lab.length*3.6+4&&Math.abs(q[1]-y)<9)return{i,h:"body"}}
+  let prev=null;for(const ll of s.p){const q=toScreen(ll);if(q&&prev&&Math.hypot(q[0]-prev[0],q[1]-prev[1])<400&&segD([x,y],prev,q)<7)return{i,h:"body"};prev=q}}return null}
+function geoSelect(i){GEO.sel=i;const s=K().ink[i];if(s&&s.c&&GCOLS.includes(s.c)){GEO.col=s.c;document.querySelectorAll("#gfkGeo [data-gc]").forEach(x=>x.classList.toggle("on",x.dataset.gc===s.c))}render();geoList()}
+function geoDelete(i){const k=K();if(i<0||i>=k.ink.length)return;k.ink.splice(i,1);if(GEO.sel===i)GEO.sel=-1;else if(GEO.sel>i)GEO.sel--;save();render();geoList()}
+let geoBusy=false;
+function geoDrag(hit,e){geoSelect(hit.i);const s=K().ink[hit.i];if(!s||!s.g)return;const g=s.g,A0=g.A.slice(),B0=g.B?g.B.slice():null,L0=toLL(e.clientX,e.clientY);if(!L0)return;geoBusy=true;let moved=false;
+ const clampLat=v=>Math.max(-85,Math.min(85,v)),wrap=v=>((v+540)%360)-180;
+ const mv=ev=>{const L=toLL(ev.clientX,ev.clientY);if(!L)return;if(!moved&&Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)<3)return;moved=true;ev.preventDefault();
+  if(hit.h==="r"){if(g.m==="ring")g.km=Math.max(1,Math.round(hav(g.A,L)*KM));else g.B=L}
+  else if(hit.h==="a")g.A=L;else if(hit.h==="b")g.B=L;
+  else{const circ=g.m==="ring"||(g.m==="compass"&&g.tru);if(circ){g.A=[wrap(A0[0]+L[0]-L0[0]),clampLat(A0[1]+L[1]-L0[1])];if(B0)g.B=dest(g.A,bearing(A0,B0),hav(A0,B0))}
+   else{const dx=L[0]-L0[0],dy=L[1]-L0[1];g.A=[wrap(A0[0]+dx),clampLat(A0[1]+dy)];g.B=[wrap(B0[0]+dx),clampLat(B0[1]+dy)]}}
+  rebuild(s);render();geoInfo()};
+ const up=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true);geoBusy=false;if(moved){save();geoList();const k=ev=>{ev.stopPropagation();ev.preventDefault()};addEventListener("click",k,true);setTimeout(()=>removeEventListener("click",k,true),60)}};
+ addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true)}
+/* with no drawing tool picked, the map pans as usual, but pressing a shape picks it */
+document.addEventListener("pointerdown",e=>{if(e.button||cap||!document.getElementById("gfkGeo"))return;const h=host();if(!h||!h.contains(e.target)||(e.target.closest&&e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj,button,input,label,.flk,.globe-btns")))return;
+ const hit=geoHit(e.clientX,e.clientY);if(!hit){if(GEO.sel>=0){GEO.sel=-1;render();geoList()}return}e.preventDefault();e.stopPropagation();geoDrag(hit,e);
+ const k=ev=>{ev.stopPropagation();ev.preventDefault()};addEventListener("click",k,true);setTimeout(()=>removeEventListener("click",k,true),400)},true);
+["mousedown","touchstart"].forEach(t=>document.addEventListener(t,e=>{if(geoBusy)e.stopPropagation()},true));
+document.addEventListener("keydown",e=>{if((e.key==="Delete"||e.key==="Backspace")&&GEO.sel>=0&&document.getElementById("gfkGeo")&&!(e.target.closest&&e.target.closest("input,textarea,[contenteditable]"))){e.preventDefault();geoDelete(GEO.sel)}});
+const KIND={compass:"Circle",ring:"Range ring",line:"Straight line",rect:"Rectangle",oval:"Oval"};
+function kindOf(s){if(s.g)return s.g.m==="compass"&&s.g.sh?"Square":s.g.m==="rect"&&s.g.sh?"Square":s.g.m==="oval"&&s.g.sh?"Circle":KIND[s.g.m]||"Shape";if(s.t==="geoDash")return s.lab?"Latitude line":"Longitude line";if(s.t==="geo")return"Shape";return"Pen drawing"}
+/* the list of shapes: pick one, or remove just that one */
+function geoList(){const box=document.querySelector("#gfkGeo .gfk-shapes");if(!box)return;const ink=K().ink;
+ if(!ink.length){box.innerHTML='<p class="gfk-hint">No shapes yet.</p>';geoInfo();return}
+ box.innerHTML='<p class="gfk-hint">Your shapes ('+ink.length+'): click one to pick it, × removes just that one.</p><ul>'+ink.map((s,i)=>'<li data-si="'+i+'" class="'+(i===GEO.sel?"on":"")+'"><i style="background:'+esc(s.c||"#888")+'"></i><span>'+kindOf(s)+(s.lab?' <small>'+esc(s.lab)+'</small>':'')+'</span><button type="button" data-sx="'+i+'" aria-label="Remove this shape" title="Remove">×</button></li>').reverse().join("")+'</ul>';
+ box.querySelectorAll("[data-si]").forEach(li=>li.onclick=e=>{if(e.target.closest("[data-sx]"))return;const i=+li.dataset.si;geoSelect(GEO.sel===i?-1:i)});
+ box.querySelectorAll("[data-sx]").forEach(b=>b.onclick=()=>geoDelete(+b.dataset.sx));const on=box.querySelector("li.on");if(on)on.scrollIntoView({block:"nearest"});geoInfo()}
+/* the chosen shape: its size can be typed, its colour changed, or it can be removed */
+function geoInfo(){const box=document.querySelector("#gfkGeo .gfk-selbar");if(!box)return;const s=K().ink[GEO.sel];if(!s){box.hidden=true;box.innerHTML="";return}box.hidden=false;const g=s.g;
+ const r=g&&(g.m==="ring"?g.km:g.m==="compass"&&g.tru?Math.round(hav(g.A,g.B)*KM):null);
+ const cur=box.querySelector("input");if(cur&&document.activeElement===cur&&r!=null)return;
+ box.innerHTML='<b>'+kindOf(s)+'</b>'+(r!=null?'<label>'+(g.sh?"half-width":"radius")+' <input type="number" min="1" max="20000" step="10" value="'+r+'"> km</label>':s.lab?' <small>'+esc(s.lab)+'</small>':'')+'<span class="gfk-sp"></span><button type="button" data-sd>Remove</button>'+
+  '<p class="gfk-hint">'+(g?"Drag the white dots to "+(g.m==="ring"||g.m==="compass"?"move it or change its size":"move its ends")+", or drag its edge to move it. ":"")+'Delete key removes it.</p>';
+ box.querySelector("[data-sd]").onclick=()=>geoDelete(GEO.sel);const inp=box.querySelector("input");
+ if(inp)inp.oninput=()=>{const v=Math.max(1,Math.min(20000,+inp.value||0));if(!v)return;if(g.m==="ring")g.km=v;else g.B=dest(g.A,bearing(g.A,g.B),v/KM);rebuild(s);save();render();const li=document.querySelector('#gfkGeo [data-si="'+GEO.sel+'"] small');if(li)li.textContent=s.lab||""}}
 /* line up: a place's latitude all the way round, and its meridian pole to pole */
 let CITYLL=null;function cities(){if(CITYLL)return CITYLL;const PJ=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);CITYLL=[];try{(typeof ALLMAPS_CITIES!=="undefined"?ALLMAPS_CITIES:[]).forEach(r=>{const ll=PJ.invert([r[3],r[4]]);if(ll&&isFinite(ll[0]))CITYLL.push({n:r[0],ll,cap:r[2]===1})})}catch(e){}return CITYLL}
 const fmtLat=v=>Math.abs(v).toFixed(1)+"°"+(v>=0?"N":"S"),fmtLon=v=>Math.abs(v).toFixed(1)+"°"+(v>=0?"E":"W");
@@ -740,33 +797,41 @@ function lineUp(ll,name){const C=cities();if(!name){let best=null,bd=60/KM;C.for
  const li=(c,k)=>'<li><b>'+esc(c.n)+'</b>'+(ctyOf(c.ll)?', '+esc(ctyOf(c.ll)):'')+' <small>'+(k==="lat"?fmtLat(c.ll[1]):fmtLon(c.ll[0]))+'</small></li>';
  const box=document.querySelector("#gfkGeo .gfk-lu");if(box)box.innerHTML='<p><b>'+esc(name||"This place")+'</b> is at '+fmtLat(lat)+', '+fmtLon(lon)+'.</p>'+
   (lv.length?'<p class="gfk-hint">Level with it (the same latitude):</p><ul class="gfk-lul">'+lv.map(c=>li(c,"lat")).join("")+'</ul>':'')+(ln.length?'<p class="gfk-hint">Due north and south (the same longitude):</p><ul class="gfk-lul">'+ln.map(c=>li(c,"lon")).join("")+'</ul>':'')}
-const MODES=[["ruler","📏","Ruler","Measure the distance between two places"],["compass","🧭","Compass","Drag from the centre outwards to draw a circle. Hold Shift for a square"],["ring","◎","Range ring","Click a place: a ring shows everything within that distance"],
+const MODES=[["ruler","📏","Ruler","Measure the distance between two places"],["compass",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.2" r="1.9"/><path d="M11 6 6.2 21M13 6l4.8 15M7.8 15.6c2.6 1.3 5.8 1.3 8.4 0"/></svg>',"Compass","Drag from the centre outwards to draw a circle. Hold Shift for a square"],["ring","◎","Range ring","Click a place: a ring shows everything within that distance"],
  ["line","╱","Straight line","Drag from one place to another"],["rect","▭","Rectangle","Drag a box. Hold Shift for a square"],["oval","⬭","Oval","Drag a box. Hold Shift for a circle"],["lineup","✛","Line up","Click a place (or type a city) to draw its latitude and longitude around the world"]];
 const GCOLS=["#c8281c","#2a3f8f","#1e8c8a","#2f8f3e","#e8762a","#7a3fb0","#1d1b18"];
-function geoPanel(){const M=MODES.find(m=>m[0]===GEO.mode)||MODES[1];
+function geoPanel(){const M=MODES.find(m=>m[0]===GEO.mode);
  const p=panel("gfkGeo",'<b class="gfk-ph">Geometry set</b><div class="gfk-geom">'+MODES.map(m=>'<button type="button" data-gm="'+m[0]+'" class="'+(m[0]===GEO.mode?"on":"")+'" title="'+esc(m[3])+'"><i>'+m[1]+'</i>'+m[2]+'</button>').join("")+'</div>'+
-  '<p class="gfk-hint">'+esc(M[3])+'.</p>'+
+  '<p class="gfk-hint">'+(M?esc(M[3])+'. Click the tool again to put it down.':'Pick a tool to draw. Click any shape on the map to move it, resize it or remove it.')+'</p>'+
   (GEO.mode==="ring"?'<div class="gfk-km"><input type="number" min="1" max="20000" step="50" value="'+GEO.km+'" aria-label="Distance in km"> km '+[100,500,1000,2000,5000].map(k=>'<button type="button" data-km="'+k+'">'+k.toLocaleString()+'</button>').join("")+'</div>':'')+
   (GEO.mode==="lineup"?'<input type="search" class="gfk-lus" placeholder="Type a city, e.g. Rome" list="gfkLuList"><datalist id="gfkLuList">'+cities().slice(0,1200).map(c=>'<option value="'+esc(c.n)+'">').join("")+'</datalist><div class="gfk-lu"></div>':'')+
-  (GEO.mode!=="ruler"&&GEO.mode!=="lineup"?'<label class="gfk-chk"><input type="checkbox" '+(GEO.tru?"checked":"")+' data-tru> True to the globe <small>'+(GEO.tru?"(lines follow the Earth's curve; sizes are real distances)":"(shapes look exactly as you draw them)")+'</small></label>':'')+
+  (M&&GEO.mode!=="ruler"&&GEO.mode!=="lineup"?'<label class="gfk-chk"><input type="checkbox" '+(GEO.tru?"checked":"")+' data-tru> True to the globe <small>'+(GEO.tru?"(lines follow the Earth's curve; sizes are real distances)":"(shapes look exactly as you draw them)")+'</small></label>':'')+
   '<div class="gfk-cols">'+GCOLS.map(c=>'<button type="button" data-gc="'+c+'" style="background:'+c+'" class="'+(c===GEO.col?"on":"")+'" aria-label="Colour"></button>').join("")+'</div>'+
-  '<div class="gfk-acts"><button type="button" data-act="undo">Undo</button><button type="button" data-act="clear">Clear all drawings</button></div>',true);if(!p)return;
- p.querySelectorAll("[data-gm]").forEach(b=>b.onclick=()=>{GEO.mode=b.dataset.gm;geoSave();geoPanel()});
+  '<div class="gfk-selbar" hidden></div><div class="gfk-shapes"></div>'+
+  '<div class="gfk-acts"><button type="button" data-act="undo">Undo</button><button type="button" data-act="clear">Clear all</button></div>',true);if(!p)return;
+ p.querySelectorAll("[data-gm]").forEach(b=>b.onclick=()=>{const m=b.dataset.gm;if(m===GEO.mode){GEO.mode=null;capture(false);if(m==="ruler"&&S.place.ruler)putAway("ruler")}else GEO.mode=m;geoSave();geoPanel()});
+ geoList();
  const tr=p.querySelector("[data-tru]");if(tr)tr.onchange=()=>{GEO.tru=tr.checked;geoSave();geoPanel()};
- p.querySelectorAll("[data-gc]").forEach(b=>b.onclick=()=>{GEO.col=b.dataset.gc;geoSave();p.querySelectorAll("[data-gc]").forEach(x=>x.classList.toggle("on",x===b))});
+ p.querySelectorAll("[data-gc]").forEach(b=>b.onclick=()=>{GEO.col=b.dataset.gc;geoSave();p.querySelectorAll("[data-gc]").forEach(x=>x.classList.toggle("on",x===b));const s=K().ink[GEO.sel];if(s){s.c=GEO.col;save();render();geoList()}});
  const ki=p.querySelector(".gfk-km input");if(ki){ki.onchange=()=>{GEO.km=Math.max(1,Math.min(20000,+ki.value||1000));geoSave()};p.querySelectorAll("[data-km]").forEach(b=>b.onclick=()=>{GEO.km=+b.dataset.km;ki.value=GEO.km;geoSave()})}
  const ls=p.querySelector(".gfk-lus");if(ls)ls.onchange=()=>{const v=ls.value.trim().toLowerCase(),c=cities().find(x=>x.n.toLowerCase()===v)||cities().find(x=>x.n.toLowerCase().startsWith(v));if(c){lineUp(c.ll,c.n);try{amGlobe.rot=[-c.ll[0],-c.ll[1]];amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}}};
- p.querySelector('[data-act="undo"]').onclick=()=>{const k=K();if(k.ink.length){k.ink.pop();save();render()}};
- p.querySelector('[data-act="clear"]').onclick=()=>{if(!K().ink.length)return;if(confirm("Clear all your drawings and shapes?")){K().ink=[];save();render()}};
+ p.querySelector('[data-act="undo"]').onclick=()=>{const k=K();if(k.ink.length)geoDelete(k.ink.length-1)};
+ p.querySelector('[data-act="clear"]').onclick=()=>{if(!K().ink.length)return;if(confirm("Clear all your drawings and shapes?")){K().ink=[];GEO.sel=-1;save();render();geoList()}};
+ if(!M){capture(false);return}
  if(GEO.mode==="ruler"){capture(false);if(!S.place.ruler){const h=host();if(h){const r=h.getBoundingClientRect();dropTool("ruler",r.left+r.width*.5,r.top+r.height*.8)}}else measure(true);return}
  if(S.pen){S.pen=null;sync()}pinArm(false);
  let a=null,A=null;capture(true,"crosshair",{
-  down:e=>{a=[e.clientX,e.clientY];A=toLL(e.clientX,e.clientY);if(!A){a=null;return}if(GEO.mode==="ring"){keep(ringAt(A));a=null}else if(GEO.mode==="lineup"){lineUp(A);a=null}},
+  down:e=>{const hit=geoHit(e.clientX,e.clientY);if(hit){a=null;geoDrag(hit,e);return}if(GEO.sel>=0){GEO.sel=-1;geoList()}
+   a=[e.clientX,e.clientY];A=toLL(e.clientX,e.clientY);if(!A){a=null;return}if(GEO.mode==="ring"){const o=ringAt(A);o.g={m:"ring",A,km:GEO.km};keep(o);geoSelect(K().ink.length-1);a=null}else if(GEO.mode==="lineup"){lineUp(A);a=null}},
   move:e=>{if(!a)return;const B=toLL(e.clientX,e.clientY);if(!B)return;const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);S.stroke=o?{t:"geo",c:GEO.col,p:o.p}:null;render()},
-  up:e=>{if(!a)return;S.stroke=null;const B=toLL(e.clientX,e.clientY);if(B&&Math.hypot(e.clientX-a[0],e.clientY-a[1])>5)keep(shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B));a=null;render()}});
+  up:e=>{if(!a)return;S.stroke=null;const B=toLL(e.clientX,e.clientY);if(B&&Math.hypot(e.clientX-a[0],e.clientY-a[1])>5){const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);if(o){o.g={m:GEO.mode,A,B,sh:e.shiftKey?1:0,tru:GEO.tru?1:0};keep(o);geoSelect(K().ink.length-1)}}a=null;render()}});
  /* closing the set puts the drawing tool away */
- clearInterval(geoPanel._t);geoPanel._t=setInterval(()=>{if(!document.getElementById("gfkGeo")){clearInterval(geoPanel._t);if(!S.pen)capture(false)}},400)}
+ clearInterval(geoPanel._t);geoPanel._t=setInterval(()=>{if(!document.getElementById("gfkGeo")){clearInterval(geoPanel._t);GEO.sel=-1;if(!S.pen)capture(false);render()}},400)}
+/* the chosen shape: a halo and its handles */
+function selDraw(){try{if(GEO.sel<0||!document.getElementById("gfkGeo"))return null;const s=K().ink[GEO.sel];return s||null}catch(e){return null}}
 {const st=document.createElement("style");st.textContent=`#gfkGeo{width:min(400px,calc(100vw - 24px))}.gfk-looks{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.gfk-looks button{width:28px;height:28px;border-radius:8px;border:1px solid #d9cdb8;background:#fffaf0;font-size:14px;cursor:pointer;padding:0;line-height:1}.gfk-looks button.on{background:#2f6fb0;color:#fff;border-color:#2f6fb0}.gfk-stk button{font-size:15px}.gfk-geom{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:6px 0}.gfk-geom button{border:1px solid #d9cdb8;background:#fffaf0;border-radius:10px;padding:6px 2px;font:700 11px system-ui;color:#4a3520;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}.gfk-geom button i{font-style:normal;font-size:16px}.gfk-geom button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}
+.gfk-geom button i svg{display:block}#gfkGeo .gfk-chk{display:block}#gfkGeo .gfk-chk small{display:block;margin-left:22px;opacity:.7}.gfk-selbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 4px;padding:7px 9px;border-radius:10px;background:rgba(47,111,176,.12)}.gfk-selbar[hidden]{display:none}.gfk-selbar input{width:76px;font:inherit;padding:2px 6px;border-radius:7px;border:1px solid #ccb}.gfk-selbar .gfk-sp{flex:1}.gfk-selbar button{border:0;border-radius:999px;padding:3px 11px;background:#c8281c;color:#fff;font:700 12px system-ui;cursor:pointer}.gfk-selbar .gfk-hint{flex-basis:100%;margin:0}
+.gfk-shapes ul{list-style:none;margin:2px 0 6px;padding:0;max-height:132px;overflow:auto}.gfk-shapes li{display:flex;align-items:center;gap:7px;padding:3px 6px;border-radius:8px;cursor:pointer}.gfk-shapes li:hover{background:rgba(127,127,127,.12)}.gfk-shapes li.on{background:rgba(47,111,176,.2)}.gfk-shapes li i{width:11px;height:11px;border-radius:50%;flex:none}.gfk-shapes li span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}.gfk-shapes li small{opacity:.65;font-weight:500}.gfk-shapes li button{border:0;background:none;color:inherit;opacity:.55;font-size:17px;line-height:1;cursor:pointer;padding:0 3px}.gfk-shapes li button:hover{opacity:1;color:#c8281c}
 .gfk-km{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0}.gfk-km input{width:80px;font:inherit;padding:3px 6px;border-radius:8px;border:1px solid #ccb}.gfk-km button{border:1px solid #d9cdb8;background:#fff;border-radius:999px;padding:2px 8px;font:600 11px system-ui;cursor:pointer}
 .gfk-cols{display:flex;gap:6px;margin:8px 0}.gfk-cols button{width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #bbb;cursor:pointer}.gfk-cols button.on{box-shadow:0 0 0 2px #1d1b18}
 .gfk-lus{width:100%;box-sizing:border-box;font:inherit;padding:6px 10px;border-radius:999px;border:1px solid #ccb;margin:4px 0}.gfk-lu p{margin:6px 0 2px;font-size:13px}.gfk-lul{margin:0;padding-left:18px;font-size:12.5px;columns:2}.gfk-lul small{opacity:.6}`;document.head.appendChild(st)}
