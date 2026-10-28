@@ -24,13 +24,18 @@ const P=GlobeView.prototype;
  const avail=Math.max(320,this.host.clientWidth||this.host.parentNode&&this.host.parentNode.clientWidth||900),capH=Math.max(260,innerHeight*.82);
  let w=Math.round(Math.min(avail,capH/.5072));const h=Math.round(w*.5072);/* r: the size the label and detail rules see; matched to the flat map's real scale */
  const r=this._bigR?1e6:w/(2*Math.PI)*1.07;return{w,h,r}}}
-P._flatBase=function(){const{w}=this.size(),S=w/(2*Math.PI)*this.zoom;/* d3's Robinson is π·scale wide on each side */return d3.geoRobinson().scale(S).translate([0,0])};
+P._flatBase=function(){const{w}=this.size(),S=w/(2*Math.PI)*this.zoom;/* d3's Robinson is π·scale wide on each side; this._gfDl is the east–west frame (set by spinning the map at full zoom-out) */return d3.geoRobinson().scale(S).translate([0,0]).rotate([this._gfDl||0,0])};
 {const _proj=P.projection;P.projection=function(){if(!this._flat)return _proj.apply(this,arguments);
  const{w,h}=this.size(),b=this._flatBase(),c=[-this.rot[0],-this.rot[1]];let q=b(c)||[0,0];
  /* the view never leaves the map: the centre is kept inside */
  const hx=Math.max(0,w/2*this.zoom-w/2),hy=Math.max(0,h/2*this.zoom-h/2);if(!this._noClamp)q=[Math.max(-hx,Math.min(hx,q[0])),Math.max(-hy,Math.min(hy,q[1]))];
  if(!this._noClamp){const ll=b.invert(q);if(ll&&isFinite(ll[0]))this.rot=[-ll[0],-ll[1]]}
- const p=b.translate([w/2-q[0],h/2-q[1]]);const inv=p.invert.bind(p);p.invert=pt=>{const v=inv(pt);return v&&isFinite(v[0])&&Math.abs(v[0])<=180.0001&&Math.abs(v[1])<=90?v:null};return p}}
+ /* while the map is being spun east–west it slides sideways (_gfOx) and the next copy of the world comes in */
+ const ox=this._gfOx||0,W=2*Math.PI*b.scale(),raw=b.translate([w/2-q[0]+ox,h/2-q[1]]),rinv=raw.invert.bind(raw);
+ if(!ox){const inv=rinv;raw.invert=pt=>{const v=inv(pt);return v&&isFinite(v[0])&&Math.abs(v[0])<=180.0001&&Math.abs(v[1])<=90?v:null};return raw}
+ const f=function(ll){const v=raw(ll);if(!v)return v;v[0]-=Math.round((v[0]-w/2)/W)*W;return v};
+ ["stream","scale","translate","rotate","center","clipAngle","clipExtent","precision","angle","reflectX","reflectY","preclip","postclip"].forEach(k=>{if(raw[k])f[k]=raw[k].bind(raw)});
+ f.invert=pt=>{for(const dx of [0,-W,W]){const v=rinv([pt[0]+dx,pt[1]]);if(v&&isFinite(v[0])&&Math.abs(v[0])<=180.0001&&Math.abs(v[1])<=90)return v}return null};return f}}
 {const _roll=P.roll;P.roll=function(){return this._flat?0:_roll.apply(this,arguments)}}
 {const _va=P.visibleAngle;P.visibleAngle=function(){return this._flat?Math.PI:_va.apply(this,arguments)}}
 /* "is it on the visible side of the ball?" is always yes on the flat map (distance to the view centre counts as 0) */
@@ -48,6 +53,18 @@ function pictures(D){if(D.fixed)return D.fixed();const now=performance.now(),C=P
   if(!ok||op<=.01)return;const h=el.getAttribute("href")||el.getAttribute("xlink:href");if(!h)return;
   const n=k=>parseFloat(el.getAttribute(k))||0;let tf=null;try{const m=el.transform&&el.transform.baseVal&&el.transform.baseVal.consolidate();if(m)tf=m.matrix}catch(er){}
   PIC.push({h,x:n("x"),y:n("y"),w:n("width"),hh:n("height"),op,blend,tf,pr:el.getAttribute("preserveAspectRatio")})});return PIC}
+/* the picture in another east–west frame: in the Robinson projection a turn east–west only slides each row sideways
+   (by the same share of that row's width), wrapping round, so the picture is re-cut row by row, once per frame */
+const ROB=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);
+function spun(C,dl){dl=((dl%360)+540)%360-180;if(Math.abs(dl)<1e-6)return C.cv;if(C._spun&&C._spun.dl===dl&&C._spun.src===C.cv)return C._spun.cv;
+ const F=C.F,src=C.cv,Wc=src.width,Hc=src.height,cv=C._spun&&C._spun.cv&&C._spun.cv.width===Wc?C._spun.cv:document.createElement("canvas");cv.width=Wc;cv.height=Hc;const x=cv.getContext("2d");x.clearRect(0,0,Wc,Hc);
+ x.imageSmoothingEnabled=false;/* whole pixels only: the soft edge pixels must not be blended in */
+ for(let py=0;py<Hc;py++){const ll=ROB.invert([1e3,(py+.5)/F]);if(!ll||!isFinite(ll[1]))continue;const e=ROB([180,ll[1]]);if(!e)continue;const hw=e[0]-1e3;if(!(hw>0))continue;
+  /* the row's solid pixels (its soft outer pixels left out) */
+  const L=Math.ceil((1e3-hw)*F)+1,R=Math.floor((1e3+hw)*F)-1,Wr=R-L;if(Wr<4)continue;let d=Math.round(dl/180*hw*F)%Wr;if(d<0)d+=Wr;
+  if(!d){x.drawImage(src,L,py,Wr,1,L,py,Wr,1);continue}
+  x.drawImage(src,L,py,Wr-d,1,L+d,py,Wr-d,1);x.drawImage(src,L+Wr-d,py,d,1,L,py,d,1)}
+ C._spun={dl,cv,src};return cv}
 /* the flat map's pictures are merged once into a single 4000-px picture (blend modes and all), then drawn with one call */
 const COMPS={};
 /* an SVG <image> keeps its picture's proportions unless told otherwise (preserveAspectRatio, default "xMidYMid meet") */
@@ -61,8 +78,9 @@ function composite(list,D){let COMP=COMPS[D.key];const key=list.map(o=>o.h.slice
  x.globalAlpha=1;x.globalCompositeOperation="source-over";COMP=COMPS[D.key]={cv,key,F};return COMP}
 P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,D=defOf(this)||{key:"am",svg:"#allMapsWrap > svg",f:()=>({s:1,bx:0,by:0})},list=pictures(D);if(!list.length)return 0;
  const C=composite(list,D);ctx.save();
- if(C){ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(t[0]-1e3*k),dpr*(t[1]-500.5*k));ctx.imageSmoothingQuality=k>3?"high":"medium";ctx.drawImage(C.cv,0,0);ctx.restore();return 1}
- /* pictures still loading: draw them one by one */
+ if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;ctx.imageSmoothingQuality=k>3?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}ctx.restore();return 1}
+ /* pictures still loading: draw them one by one (only in the usual frame) */
+ if(this._gfDl){ctx.restore();return 0}
  {const ff=D.f(),kk=k/ff.s;ctx.setTransform(dpr*kk,0,0,dpr*kk,dpr*(t[0]-1e3*k-ff.bx*kk),dpr*(t[1]-500.5*k-ff.by*kk))}let drew=0;
  list.forEach(o=>{const im=img(o.h);if(!im.complete||!im.naturalWidth)return;ctx.globalAlpha=o.op;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;
   ctx.save();if(o.tf)ctx.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(ctx,im,o);ctx.restore();drew++});
@@ -100,6 +118,9 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
 /* ---------- moving the flat map: drag slides, wheel and pinch zoom around the pointer, smoothly ---------- */
 /* the map's own hover runs once per pointer move, whichever listener hears it first */
 {const _hv=GlobeView.prototype._hover;GlobeView.prototype._hover=function(e){if(e&&typeof e==="object"){if(e._gfHov===this)return;try{e._gfHov=this}catch(er){}}return _hv.apply(this,arguments)}}
+/* the end of a spin: the slide becomes the new east–west frame (the middle of the view keeps its place) */
+function gfSpinCommit(g){const ox=g._gfOx||0;g._gfOx=0;if(!ox)return;const b=g._flatBase(),W=2*Math.PI*b.scale();let dl=(g._gfDl||0)+ox/W*360;dl=Math.round((((dl%360)+540)%360-180)*10)/10;g._gfDl=dl;g.rot=[dl,0];g.request()}
+window.gfSpinCommit=gfSpinCommit;
 function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g.canvas,pts=new Map;let drag=null,pinch=null,target=null,raf=0;
  /* only the map itself: not the tour card, labels, photos or panels that sit over it */
  const onMap=t=>t===c||t===host||!!(t&&t.classList&&(t.classList.contains("globe-stage")||t.classList.contains("gfk-cap-pass")));
@@ -114,7 +135,10 @@ function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g
   if(pts.size===2){const[a,b]=[...pts.values()];pinch={d:Math.max(1,Math.hypot(a[0]-b[0],a[1]-b[1])),z:g.zoom};drag=null}else drag={x:e.clientX,y:e.clientY,last:[e.clientX,e.clientY],moved:false}},true);
  host.addEventListener("pointermove",e=>{if(!g._flat)return;if(pts.has(e.pointerId))pts.set(e.pointerId,[e.clientX,e.clientY]);
   if(pinch&&pts.size===2){stop(e);const[a,b]=[...pts.values()];g.setZoom(Math.max(1,pinch.z*Math.hypot(a[0]-b[0],a[1]-b[1])/pinch.d),[(a[0]+b[0])/2,(a[1]+b[1])/2]);return}
-  if(drag){stop(e);if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>3)drag.moved=true;if(drag.moved){/* the point under the finger stays under it */
+  if(drag){stop(e);if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>3)drag.moved=true;
+   /* fully zoomed out, a sideways drag spins the world east–west; the new frame is set on letting go */
+   if(drag.moved&&g.zoom<=1.02&&g._spinOK!==false){g._gfOx=(g._gfOx||0)+(e.clientX-drag.last[0]);drag.last=[e.clientX,e.clientY];drag.spin=true;g.tip.hidden=true;g.hot=null;g.hotWater=null;g._moving=true;g.request();return}
+   if(drag.moved){/* the point under the finger stays under it */
     const rc=c.getBoundingClientRect(),p=g.projection(),before=p.invert([drag.last[0]-rc.left,drag.last[1]-rc.top]),after=p.invert([e.clientX-rc.left,e.clientY-rc.top]);
     if(before&&after){const q=g._flatBase()([-g.rot[0],-g.rot[1]]);const dq=[e.clientX-drag.last[0],e.clientY-drag.last[1]],ll=g._flatBase().invert([q[0]-dq[0],q[1]-dq[1]]);if(ll&&isFinite(ll[0]))g.rot=[-ll[0],-ll[1]]}
     drag.last=[e.clientX,e.clientY];g.tip.hidden=true;g.hot=null;g.hotWater=null;g._moving=true;g.request()}return}
@@ -125,7 +149,7 @@ function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g
    if(g.cfg.clickLL){const rc=c.getBoundingClientRect(),ll=g.projection().invert([x-rc.left,y-rc.top]);if(ll)g.cfg.clickLL(ll);return}
    if(document.querySelector(".gfk-pinning"))return;/* a click while pins are armed drops a pin (the toolkit does that), not open the country */
    const hh=g.hit(x,y);if(hh&&hh.code&&g.cfg.click)g.cfg.click(hh.code);return}
-  if(drag&&drag.moved)g.request();drag=null};
+  if(drag&&drag.spin){gfSpinCommit(g)}if(drag&&drag.moved)g.request();drag=null};
  host.addEventListener("pointerup",up,true);host.addEventListener("pointercancel",up,true);
  /* the + and − buttons glide too */
  host.addEventListener("click",e=>{if(!g._flat)return;const b=e.target.closest&&e.target.closest('.globe-btns [data-g="in"], .globe-btns [data-g="out"], .globe-btns [data-g="reset"]');if(!b)return;stop(e);e.preventDefault();
@@ -181,18 +205,26 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    cached Path2D, and each frame just draws those with the frame's scale and offset. Every frame is then a full, sharp
    map (borders, rivers, lakes, labels) — while dragging and zooming too, like the globe — at a fraction of the cost. */
 (function(){const P=GlobeView.prototype,_r=P._render,_gp=d3.geoPath;
- const unit=d3.geoRobinson().scale(1).translate([0,0]).precision(.0003),CACHE=new WeakMap;
- function cached(o){if(!o||typeof o!=="object")return null;let pa=CACHE.get(o);if(!pa){pa=new Path2D();try{_gp(unit,pa)(o)}catch(e){}CACHE.set(o,pa)}return pa}
+ /* one cache of shapes per east–west frame (a few are kept) */
+ const CACHES=new Map;function cacheFor(dl){let c=CACHES.get(dl);if(!c){if(CACHES.size>3)CACHES.delete(CACHES.keys().next().value);c={unit:d3.geoRobinson().scale(1).translate([0,0]).rotate([dl,0]).precision(.0003),m:new WeakMap};CACHES.set(dl,c)}return c}
+ /* in another frame the shapes' old cuts along the 180° meridian fall inside the map: outlines leave those edges out */
+ const ED=179.999;function cutRings(rs,out){rs.forEach(r=>{let cur=[];for(let i=0;i<r.length;i++){const a=r[i];if(i){const b=r[i-1];if(Math.abs(a[0])>ED&&Math.abs(b[0])>ED&&Math.sign(a[0])===Math.sign(b[0])){if(cur.length>1)out.push(cur);cur=[]}}cur.push(a)}if(cur.length>1)out.push(cur)})}
+ function cutGeom(g){if(!g)return g;switch(g.type){case"Feature":return{type:"Feature",properties:g.properties,geometry:cutGeom(g.geometry)};case"FeatureCollection":return{type:"FeatureCollection",features:g.features.map(cutGeom)};
+  case"GeometryCollection":return{type:"GeometryCollection",geometries:g.geometries.map(cutGeom)};case"Polygon":{const o=[];cutRings(g.coordinates,o);return{type:"MultiLineString",coordinates:o}}
+  case"MultiPolygon":{const o=[];g.coordinates.forEach(p=>cutRings(p,o));return{type:"MultiLineString",coordinates:o}}default:return g}}
+ function cachedS(o){if(!curDl||!o||typeof o!=="object")return cached(o);const C=cacheFor(curDl);C.s=C.s||new WeakMap;let pa=C.s.get(o);if(!pa){pa=new Path2D();try{_gp(C.unit,pa)(cutGeom(o))}catch(e){}C.s.set(o,pa)}return pa}
+ let curDl=0;function cached(o){if(!o||typeof o!=="object")return null;const C=cacheFor(curDl);let pa=C.m.get(o);if(!pa){pa=new Path2D();try{_gp(C.unit,pa)(o)}catch(e){}C.m.set(o,pa)}return pa}
  function hook(ctx){if(ctx._gfP2)return;ctx._gfP2=1;const BP=ctx.beginPath,F=ctx.fill,S=ctx.stroke,CL=ctx.clip;
   const one=()=>{const L=ctx._gfPend;if(L.length===1)return L[0];const q=new Path2D();L.forEach(x=>q.addPath(x));return ctx._gfPend=[q],q};
-  ctx.beginPath=function(){this._gfPend=null;return BP.apply(this,arguments)};
-  ctx.fill=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length&&typeof arguments[0]!=="string")return F.apply(this,arguments);const q=one();this.save();this.transform(T.S,0,0,T.S,T.t[0],T.t[1]);F.call(this,q,arguments[0]||"nonzero");this.restore()};
-  ctx.stroke=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length)return S.apply(this,arguments);const q=one();this.save();const lw=this.lineWidth,d=this.getLineDash();this.transform(T.S,0,0,T.S,T.t[0],T.t[1]);this.lineWidth=lw/T.S;if(d.length)this.setLineDash(d.map(v=>v/T.S));S.call(this,q);this.restore()};
-  ctx.clip=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length&&typeof arguments[0]!=="string")return CL.apply(this,arguments);const q=new Path2D(),m=new DOMMatrix([T.S,0,0,T.S,T.t[0],T.t[1]]);q.addPath(one(),m);return CL.call(this,q,arguments[0]||"nonzero")}}
- d3.geoPath=function(proj,ctx){const T=ctx&&ctx._gfT;if(T&&proj&&proj._gfFlatP){return function(o){if(o==null)return;const pa=cached(o);if(pa)(ctx._gfPend||(ctx._gfPend=[])).push(pa)}}return _gp.apply(this,arguments)};
+  const oneS=()=>{if(!curDl||!ctx._gfPendO)return one();const q=new Path2D();ctx._gfPendO.forEach(o=>{const pa=cachedS(o);pa&&q.addPath(pa)});return q};
+  ctx.beginPath=function(){this._gfPend=null;this._gfPendO=null;return BP.apply(this,arguments)};
+  ctx.fill=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length&&typeof arguments[0]!=="string")return F.apply(this,arguments);const q=one();T.ks.forEach(dx=>{this.save();this.transform(T.S,0,0,T.S,T.t[0]+dx,T.t[1]);F.call(this,q,arguments[0]||"nonzero");this.restore()})};
+  ctx.stroke=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length)return S.apply(this,arguments);const q=oneS();const lw=this.lineWidth,d=this.getLineDash();T.ks.forEach(dx=>{this.save();this.transform(T.S,0,0,T.S,T.t[0]+dx,T.t[1]);this.lineWidth=lw/T.S;if(d.length)this.setLineDash(d.map(v=>v/T.S));S.call(this,q);this.restore()})};
+  ctx.clip=function(){const T=this._gfT;if(!T||!this._gfPend||arguments.length&&typeof arguments[0]!=="string")return CL.apply(this,arguments);const q=new Path2D(),src=one();T.ks.forEach(dx=>q.addPath(src,new DOMMatrix([T.S,0,0,T.S,T.t[0]+dx,T.t[1]])));return CL.call(this,q,arguments[0]||"nonzero")}}
+ d3.geoPath=function(proj,ctx){const T=ctx&&ctx._gfT;if(T&&proj&&proj._gfFlatP){return function(o){if(o==null)return;const pa=cached(o);if(pa){(ctx._gfPend||(ctx._gfPend=[])).push(pa);(ctx._gfPendO||(ctx._gfPendO=[])).push(o)}}}return _gp.apply(this,arguments)};
  Object.keys(_gp).forEach(k=>{try{d3.geoPath[k]=_gp[k]}catch(e){}});
  const _proj=P.projection;P.projection=function(){const p=_proj.apply(this,arguments);if(this._flat&&p)p._gfFlatP=1;return p};
- P._render=function(){if(!this._flat||!this.ctx)return _r.apply(this,arguments);const ctx=this.ctx;hook(ctx);const p=this.projection();ctx._gfT={S:p.scale(),t:p.translate()};ctx._gfPend=null;
+ P._render=function(){if(!this._flat||!this.ctx)return _r.apply(this,arguments);const ctx=this.ctx;hook(ctx);const p=this.projection(),S0=p.scale(),t0=p.translate(),W0=2*Math.PI*S0,vw=this.size().w,ks=[];if(this._gfOx){for(let n=-2;n<=2;n++){const x0=t0[0]+n*W0;if(!(x0+W0/2<0||x0-W0/2>vw))ks.push(n*W0)}}curDl=this._gfDl||0;ctx._gfT={S:S0,t:t0,ks:ks.length?ks:[0]};ctx._gfPend=null;
   try{return _r.apply(this,arguments)}finally{ctx._gfT=null;ctx._gfPend=null}}})();
 /* borders and labels as fine as the old flat map: thinner lines, slightly smaller text */
 (function(){const P=GlobeView.prototype,_ls=P.ls;
@@ -297,9 +329,16 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
     return _fly.call(this,code,Object.assign({},opts||{},{center:c,zoom}))}}}catch(e){}return _fly.apply(this,arguments)}})();
 /* tours on the flat map: a pin is shown wherever it falls inside the map (not only within a globe's radius of the
    middle), and each stop is framed from its flat-map view box rather than the globe's zoom */
+/* tours set the east–west frame a stop needs: the stop's own frame from the old flat map (S.spin), else the one in use if the stop fits, else the usual one, else one centred on the stop */
+const nrm=a=>((a%360)+540)%360-180;
+function gfFrameFits(v,dl){if(!v)return true;let a=v[0],b=v[2];if(b<a)b+=360;if(b-a>=340)return true;return Math.abs(nrm((a+b)/2+dl))+(b-a)/2<=176}
+function gfTourFrame(g,S){if(ps&&ps._gfDlHome===undefined)ps._gfDlHome=g._gfDl||0;const v=S.flatViewW||S.flatView||S.view,cur=g._gfDl||0;let want;
+ if(S.spin!=null&&!(S.flatViewW&&!gfFrameFits(S.flatViewW,S.spin)))want=nrm(S.spin);else if(gfFrameFits(v,cur))want=cur;else if(gfFrameFits(v,0))want=0;else{let a=v[0],b=v[2];if(b<a)b+=360;want=nrm(-Math.round((a+b)/2/5)*5)}
+ if(Math.abs(nrm(want-cur))>1e-6){g._gfOx=0;g._gfDl=want;g.request()}}
+window.gfTourFrame=gfTourFrame;
 (function(){const fix=()=>{if(typeof psScreen!=="function"||typeof psGlobeTarget!=="function"||psScreen._gfFlat)return false;
   const _sc=psScreen;psScreen=function(ll){try{if(ps&&ps.mode==="globe"&&ps.g&&ps.g._flat){const q=ps.g.projection()(ll);if(!q||!isFinite(q[0]))return null;const z=ps.g.size();if(q[0]<-40||q[1]<-40||q[0]>z.w+40||q[1]>z.h+40)return null;return[q[0],q[1]]}}catch(e){}return _sc.apply(this,arguments)};psScreen._gfFlat=1;
-  const _gt=psGlobeTarget;psGlobeTarget=function(S){try{const g=ps&&ps.g;if(g&&g._flat&&S){const v=S.flatView||S.view;if(v){const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom;
+  const _gt=psGlobeTarget;psGlobeTarget=function(S){try{const g=ps&&ps.g;if(g&&g._flat&&S){gfTourFrame(g,S);const v0=S.flatViewW||S.flatView||S.view,v=v0&&[v0[0],v0[1],v0[2]<v0[0]?v0[2]+360:v0[2],v0[3]];if(v){const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom;
      const pts=[];for(let i=0;i<=6;i++)for(let j=0;j<=6;j++){const q=b([v[0]+(v[2]-v[0])*i/6,v[1]+(v[3]-v[1])*j/6]);if(q)pts.push(q)}
      if(pts.length){const xs=pts.map(q=>q[0]/z0),ys=pts.map(q=>q[1]/z0),bw=Math.max(1e-6,Math.max(...xs)-Math.min(...xs)),bh=Math.max(1e-6,Math.max(...ys)-Math.min(...ys));
       /* the same frame the old flat map used: the view box with an 8% margin (12% top and bottom), at least 5° of longitude wide, over the whole map */
@@ -307,6 +346,25 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
       const zt=Math.max(1,Math.min(24,Math.min(w/fw,h/fh)));const cx=(Math.max(...xs)+Math.min(...xs))/2*z0,cy=(Math.max(...ys)+Math.min(...ys))/2*z0,ll=b.invert([cx,cy]);
       return[ll&&isFinite(ll[0])?ll[0]:(v[0]+v[2])/2,ll&&isFinite(ll[1])?ll[1]:(v[1]+v[3])/2,zt]}}}}catch(e){}return _gt.apply(this,arguments)};
   /* the old flat map did not slide the view aside for the card; neither does this one */
+  /* after a tour the map goes back to the frame it had before */
+  if(typeof psEnd==="function"){const _pe=psEnd;psEnd=function(){let g=null,h;try{g=ps&&ps.g;h=ps&&ps._gfDlHome;if(ps)ps._gfDlHome=undefined}catch(e){}const r=_pe.apply(this,arguments);try{if(g&&h!==undefined&&(g._gfDl||0)!==h){g._gfDl=h;g.rot=[h,0];g.zoom=1;g.request()}}catch(e){}return r}}
   if(typeof psCardOver==="function"){const _co=psCardOver;psCardOver=function(){try{if(ps&&ps.g&&ps.g._flat)return 0}catch(e){}return _co.apply(this,arguments)}}
   return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
+/* Places: on the flat map each region opens on the old map's frame for it (its east–west frame, box and per-region tweaks) */
+(function(){
+ function frame(g){try{if(!g||!g._flat||typeof defaultMapAtlasBox!=="function"||typeof SPIN==="undefined")return false;
+  const B=defaultMapAtlasBox(),f=SPIN.W.f,R=d3.geoRobinson().scale(318.31).translate([1e3,500.5]).rotate([SPIN.W.dl||0,0]);
+  /* both maps are the same Robinson projection at different scales, so the box carries over exactly: its centre as longitude/latitude and its size */
+  const bw=B.w/f.s,bh=B.h/f.s,cx=(B.x+B.w/2-f.bx)/f.s,cy=(B.y+B.h/2-f.by)/f.s,ROW=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);
+  const cl=ROW.invert([1e3,cy]);if(!cl||!isFinite(cl[1]))return false;const lat=Math.max(-85,Math.min(85,cl[1])),hw=ROW([180,lat])[0]-1e3;if(!(hw>0))return false;
+  const c=[nrm(-(SPIN.W.dl||0)+(cx-1e3)/hw*180),lat],half=Math.min(180,bw/2/hw*180);
+  let dl=SPIN.W.dl||0;if(!gfFrameFits([c[0]-half,0,c[0]+half,0],dl))dl=nrm(-Math.round(c[0]/5)*5);
+  g._gfOx=0;g._gfDl=dl;const{w,h}=g.size(),k=w/2e3,z=Math.max(1,Math.min(24,Math.min(w/(bw*k),h/(bh*k))));
+  g.zoom=z;if(c&&isFinite(c[0]))g.rot=[-c[0],-c[1]];g.request();return true}catch(e){return false}}
+ window.gfStFrame=frame;
+ const hook=()=>{if(typeof stFocus!=="function"||stFocus._gfF)return false;const _f=stFocus;stFocus=function(g){const r=_f.apply(this,arguments);try{if(g&&g._flat)frame(g);else if(g)g._gfFrameDue=1}catch(e){}return r};stFocus._gfF=1;return true};
+ if(!hook()){const t=setInterval(()=>{if(hook())clearInterval(t)},300)}
+ /* the flat map can switch on after the region was set: frame it then */
+ setInterval(()=>{try{const g=typeof stGlobe!=="undefined"&&stGlobe;if(!g)return;const k=g._flat?[activeRegion,activeSub].join("|"):"";if(g._flat&&(g._gfFrameDue||g._gfFrameKey!==k)){g._gfFrameDue=0;g._gfFrameKey=k;frame(g)}else if(!g._flat)g._gfFrameKey=""}catch(e){}},250);
+})();
