@@ -203,3 +203,24 @@ const css=document.createElement("style");css.textContent=`
 document.head.appendChild(css);
 window.gfSearch={find,show,clear,build};
 })();
+/* What the Maps search can find: shown under the empty search box when it gets the focus; each example fills it in */
+(function(){
+const CATS=[["🌍","Countries","Japan"],["🏙️","Cities","Rio de Janeiro"],["🌊","Seas, lakes and rivers","Caspian Sea"],["🏝️","Islands and peninsulas","Madagascar"],
+ ["⛰️","Mountains, ranges and volcanoes","Everest"],["🏜️","Deserts and forests","Sahara"],["💧","Waterfalls","Victoria Falls"],["🏛️","Landmarks","Eiffel Tower"]];
+const st=document.createElement("style");st.textContent=`
+.gf-shint{ position:absolute; z-index:80; left:0; top:calc(100% + 6px); width:max(100%,360px); background:#fffdf8; color:#22324a; border-radius:14px; padding:8px; box-shadow:0 12px 30px rgba(20,30,50,.2); font:500 13px/1.3 system-ui,sans-serif; }
+.gf-shint[hidden]{ display:none; } .gf-shint > small{ display:block; padding:2px 6px 6px; opacity:.6; font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:10.5px; }
+.gf-shint button{ display:flex; width:100%; align-items:center; gap:9px; border:0; background:none; padding:6px 8px; border-radius:9px; cursor:pointer; text-align:left; font:inherit; color:inherit; }
+.gf-shint button:hover, .gf-shint button:focus-visible{ background:rgba(47,111,176,.1); outline:none; } .gf-shint i{ font-style:normal; width:20px; text-align:center; } .gf-shint em{ margin-left:auto; white-space:nowrap; font-style:normal; opacity:.55; font-size:12px; }
+body.sky-night .gf-shint{ background:#1d2638; color:#e6edf7; }`;document.head.appendChild(st);
+function wire(){const i=document.getElementById("globalSearchInput");if(!i||i._gfHint)return;i._gfHint=1;const wrap=i.parentNode;if(getComputedStyle(wrap).position==="static")wrap.style.position="relative";
+ const h=document.createElement("div");h.className="gf-shint";h.hidden=true;h.setAttribute("role","listbox");
+ h.innerHTML='<small>You can search for</small>'+CATS.map(c=>'<button type="button" data-ex="'+c[2]+'"><i aria-hidden="true">'+c[0]+'</i>'+c[1]+'<em>e.g. '+c[2]+'</em></button>').join("");wrap.appendChild(h);
+ const maps=()=>{try{return appMode==="allmaps"}catch(e){return false}};
+ const sync=()=>{h.hidden=!(maps()&&document.activeElement===i&&!i.value.trim())};
+ i.addEventListener("focus",sync);i.addEventListener("input",sync);i.addEventListener("blur",()=>setTimeout(()=>{if(!h.contains(document.activeElement))h.hidden=true},150));
+ h.addEventListener("mousedown",e=>e.preventDefault());
+ h.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{i.value=b.dataset.ex;i.focus();i.dispatchEvent(new Event("input",{bubbles:true}));h.hidden=true});
+ i.addEventListener("keydown",e=>{if(e.key==="Escape")h.hidden=true})}
+wire();document.addEventListener("DOMContentLoaded",wire);setInterval(wire,1500);
+})();

@@ -245,7 +245,7 @@ setInterval(()=>{const o=S.place.compass;if(o&&o.el.isConnected)updCompass(o)},6
 /* ================= what each tool does ================= */
 const TOOLPANEL={pens:"gfkPens",pins:"gfkPins",palette:"gfkPal",sea:"gfkSea",shovel:"gfkShovel",geometry:"gfkGeo"};
 /* closing a tool's window (its ×, Esc, or its icon again) also puts down whatever it was doing */
-function allOff(){if(S.pen)penStop();if(S.pinArm)pinArm(false);if(S.dragging)dragOn(false);capture(false);try{GEO.sel=-1}catch(e){}render();sync()}
+function allOff(){try{if(HOLES&&HOLES.length)holes([])}catch(e){}S.shovelArm=false;if(S.pen)penStop();if(S.pinArm)pinArm(false);if(S.dragging)dragOn(false);capture(false);try{GEO.sel=-1}catch(e){}render();sync()}
 function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClientRect();
  if(TOOLPANEL[t]&&document.getElementById(TOOLPANEL[t])){closePanels();allOff();return}
  if(t==="dragger"&&S.dragging){dragOn(false);closePanels();return}

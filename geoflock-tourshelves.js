@@ -30,11 +30,12 @@ window.gfTourShelves=SHELVES;
 /* ---------- shelf tabs at the top of the Tours page: All, or one shelf at a time (remembered) ---------- */
 const COL={start:"#6ed0c8",physical:"#4f9fdc",living:"#7cc77a",culture:"#f2a7bd",ideas:"#b79be6",power:"#8fb6f2",history:"#e9b07a",cont:"#7cd2f0",books:"#d9b98a"};
 const css=document.createElement("style");css.textContent=`
-.tr-shelf-tabs{ display:flex; flex-wrap:nowrap; justify-content:flex-start; gap:5px; margin:2px 0 10px; overflow-x:auto; scrollbar-width:none; padding:2px; }
+.tr-shelf-tabs{ display:flex; flex-wrap:nowrap; justify-content:flex-start; gap:5px; margin:-8px 0 10px; overflow-x:auto; scrollbar-width:none; padding:2px; }
 .tr-shelf-tabs::-webkit-scrollbar{ display:none; }
 #toursView .tr-hero.tr-hero-s:not(.dg-head){ padding-top:6px !important; padding-bottom:4px !important; margin-bottom:4px !important; }
 #toursView .tr-hero.tr-hero-s:not(.dg-head) h2{ font-size:26px !important; margin:0 0 2px !important; }
-#toursView .tr-hero.tr-hero-s:not(.dg-head) p{ margin:0 0 6px !important; font-size:14px !important; }
+#toursView .tr-hero.tr-hero-s:not(.dg-head) p{ margin:0 !important; font-size:14px !important; }
+#toursView .tr-hero.tr-hero-s:not(.dg-head){ min-height:0 !important; }
 .tr-shelf-tabs button{ font:inherit; font-weight:700; font-size:12.5px; display:inline-flex; align-items:center; gap:5px; padding:4px 11px; flex:none; white-space:nowrap; border-radius:999px; cursor:pointer;
  border:2px solid var(--c); background:rgba(255,255,255,.6); color:#24304a; transition:background .15s; }
 .tr-shelf-tabs button:hover{ background:color-mix(in srgb,var(--c) 30%,#fff); }
