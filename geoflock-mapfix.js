@@ -565,3 +565,37 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 
 /* 38: "Relief underneath" sits in the map key again (with its colours), not in the switch rows over the map */
 (function(){const st=document.createElement("style");st.textContent="#amReliefUnderSw{display:none !important} #populationLegend label.hist-relief-sw,#flKey label.hist-relief-sw{display:inline-flex !important}";document.head.appendChild(st)})();
+
+/* 39: tour labels keep off the stop's own lines (rivers, routes, arrows) and the photo pins' spots, can be dragged
+   anywhere like the photos, and a pin is shown by a ring around the place (the line ends on the ring), not a dot on it */
+(function(){if(typeof psLayout!=="function"||typeof psLeaders!=="function")return;
+ const _lay=psLayout;psLayout=function(cands,pins,sizes,W,H,blocks){try{const S=psSteps()[ps.i]||{},B=blocks.slice();
+   (S.lines||[]).forEach(L=>{const c=L.coords||[];for(let i=0;i<c.length;i++){const a=psScreen(c[i]),b=i+1<c.length?psScreen(c[i+1]):null;if(!a)continue;const n=b?Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/14)):1;
+    for(let j=0;j<n;j++){const x=b?a[0]+(b[0]-a[0])*j/n:a[0],y=b?a[1]+(b[1]-a[1])*j/n:a[1];B.push({x:x-7,y:y-7,w:14,h:14})}}});
+   (S.phPins||[]).forEach(q=>{const a=q.at&&psScreen(q.at);if(a)B.push({x:a[0]-10,y:a[1]-10,w:20,h:20})});
+   const r=_lay.call(this,cands,pins,sizes,W,H,B);const off=ps._labOff&&ps._labOff.i===ps.i?ps._labOff.d:null;
+   if(off)r.forEach((q,k)=>{const d=off[k];if(!q||!d)return;q.x+=d[0];q.y+=d[1];q.ex=Math.max(q.x,Math.min(q.x+q.w,q.ax));q.ey=Math.max(q.y,Math.min(q.y+q.h,q.ay));q.gap=Math.max(q.gap||0,9)});return r}catch(e){return _lay.apply(this,arguments)}};
+ /* the ring: a circle around the spot, and the leader stops at its edge */
+ const RR=8,_ldr=psLeaders;psLeaders=function(pinsEl,rects){const r=_ldr.apply(this,arguments);try{const svg=pinsEl.querySelector(".ps-leaders");if(!svg)return r;
+   svg.querySelectorAll("circle.ps-dot").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");c.setAttribute("r",RR);c.classList.add("ps-ring");
+    svg.querySelectorAll("line.ps-ldr, line.ps-ldr-h").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d>RR+2){l.setAttribute("x1",(x+(x2-x)/d*RR).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*RR).toFixed(1))}}})})}catch(e){}return r};
+ /* dragging a label: it stays where it is put for this stop, and its line follows */
+ let drag=null;
+ document.addEventListener("pointerdown",e=>{const el=e.target.closest&&e.target.closest(".ps-pins .ps-lab");if(!el||e.button||!ps||!ps.lay)return;const pinsEl=el.closest(".ps-pins"),labs=[...pinsEl.querySelectorAll(".ps-lab")],k=labs.indexOf(el),R=ps.lay.rects[k];if(!R)return;
+  e.preventDefault();e.stopPropagation();drag={el,k,pinsEl,x:e.clientX,y:e.clientY,moved:false};try{el.setPointerCapture(e.pointerId)}catch(er){}},true);
+ document.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(!drag.moved&&Math.hypot(dx,dy)<3)return;drag.moved=true;drag.x=e.clientX;drag.y=e.clientY;e.stopPropagation();
+  const R=ps.lay.rects[drag.k];if(!R)return;R.x+=dx;R.y+=dy;R.ex=Math.max(R.x,Math.min(R.x+R.w,R.ax));R.ey=Math.max(R.y,Math.min(R.y+R.h,R.ay));R.gap=Math.max(R.gap||0,9);drag.el.style.left=R.x+"px";drag.el.style.top=R.y+"px";
+  if(!ps._labOff||ps._labOff.i!==ps.i)ps._labOff={i:ps.i,d:{}};const o=ps._labOff.d[drag.k]||[0,0];ps._labOff.d[drag.k]=[o[0]+dx,o[1]+dy];psLeaders(drag.pinsEl,ps.lay.rects)},true);
+ document.addEventListener("pointerup",e=>{if(!drag)return;const m=drag.moved;drag=null;if(m){e.stopPropagation();const stop=c=>{c.stopPropagation();c.preventDefault();removeEventListener("click",stop,true)};addEventListener("click",stop,true);setTimeout(()=>removeEventListener("click",stop,true),60)}},true);
+ const st=document.createElement("style");st.textContent=`
+ .ps-pins .ps-lab{ pointer-events:auto; cursor:grab; touch-action:none; user-select:none; }
+ .ps-pins .ps-lab:active{ cursor:grabbing; }
+ .ps-leaders circle.ps-ring{ fill:none !important; stroke:#13294b !important; stroke-width:2px !important; paint-order:stroke; filter:drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 1px #fff); }`;document.head.appendChild(st)})();
+
+/* 40: the photo pins also mark their spot with a small ring (the line ends at its edge), not a dot on it */
+(function(){const fix=()=>{if(typeof psPhPinsSync!=="function"||psPhPinsSync._gfRing)return false;const _s=psPhPinsSync;
+  psPhPinsSync=function(){const r=_s.apply(this,arguments);try{const box=psContainer&&psContainer(),svg=box&&box.querySelector(".ps-phpins svg.ps-sq-lead");if(svg){const RR=6;
+   svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");c.setAttribute("r",RR);c.classList.add("ps-ring2");
+    svg.querySelectorAll("line").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d>RR+2){l.setAttribute("x1",(x+(x2-x)/d*RR).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*RR).toFixed(1))}}})})}}catch(e){}return r};psPhPinsSync._gfRing=1;return true};
+ if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}
+ const st=document.createElement("style");st.textContent=".ps-sq-lead circle.ps-ring2{ fill:none !important; stroke-width:2px !important; filter:drop-shadow(0 0 1px #fff); }";document.head.appendChild(st)})();

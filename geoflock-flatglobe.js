@@ -101,7 +101,9 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
 /* the map's own hover runs once per pointer move, whichever listener hears it first */
 {const _hv=GlobeView.prototype._hover;GlobeView.prototype._hover=function(e){if(e&&typeof e==="object"){if(e._gfHov===this)return;try{e._gfHov=this}catch(er){}}return _hv.apply(this,arguments)}}
 function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g.canvas,pts=new Map;let drag=null,pinch=null,target=null,raf=0;
- const inMap=e=>{const rc=c.getBoundingClientRect();return e.clientX>=rc.left&&e.clientX<=rc.right&&e.clientY>=rc.top&&e.clientY<=rc.bottom&&!(e.target.closest&&e.target.closest(".globe-btns,.globe-tip,.gfk-coord,button,a,input,.gfk-cap,.gfk-obj,.gfk-tray,.gfk-panel,.gfk-pin"))};/* the toolkit's pens, pins and objects handle their own pointer */
+ /* only the map itself: not the tour card, labels, photos or panels that sit over it */
+ const onMap=t=>t===c||t===host||!!(t&&t.classList&&(t.classList.contains("globe-stage")||t.classList.contains("gfk-cap-pass")));
+ const inMap=e=>{const rc=c.getBoundingClientRect();return onMap(e.target)&&e.clientX>=rc.left&&e.clientX<=rc.right&&e.clientY>=rc.top&&e.clientY<=rc.bottom&&!(e.target.closest&&e.target.closest(".globe-btns,.globe-tip,.gfk-coord,button,a,input,.gfk-cap,.gfk-obj,.gfk-tray,.gfk-panel,.gfk-pin"))};/* the toolkit's pens, pins and objects handle their own pointer */
  const stop=e=>{e.stopPropagation();e.stopImmediatePropagation()};
  /* zoom glides to its target a little each frame, like zooming a photo */
  const glide=()=>{raf=0;if(!target)return;const z=g.zoom,dz=Math.log(target.z/z);if(Math.abs(dz)<.004){g.setZoom(target.z,target.at);target=null;return}g.setZoom(z*Math.exp(dz*.35),target.at);raf=requestAnimationFrame(glide)};
@@ -293,3 +295,13 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    if(g&&g!==f.geometry||this._flat&&g){const c=d3.geoCentroid(g);let r=0;/* the farthest coast point from the middle (works across the 180° line, unlike a box) */(g.type==="Polygon"?[g.coordinates]:g.coordinates).forEach(P=>{const ring=P[0],st=Math.max(1,Math.floor(ring.length/400));for(let i=0;i<ring.length;i+=st)r=Math.max(r,d3.geoDistance(ring[i],c))});
     const zoom=this._flat?Math.max(1.25,Math.min(11,Math.PI/(Math.max(.02,r)*(r>.3?3.4:4.4)))):Math.max(1,Math.min(9,.55/Math.max(.02,r)));
     return _fly.call(this,code,Object.assign({},opts||{},{center:c,zoom}))}}}catch(e){}return _fly.apply(this,arguments)}})();
+/* tours on the flat map: a pin is shown wherever it falls inside the map (not only within a globe's radius of the
+   middle), and each stop is framed from its flat-map view box rather than the globe's zoom */
+(function(){const fix=()=>{if(typeof psScreen!=="function"||typeof psGlobeTarget!=="function"||psScreen._gfFlat)return false;
+  const _sc=psScreen;psScreen=function(ll){try{if(ps&&ps.mode==="globe"&&ps.g&&ps.g._flat){const q=ps.g.projection()(ll);if(!q||!isFinite(q[0]))return null;const z=ps.g.size();if(q[0]<-40||q[1]<-40||q[0]>z.w+40||q[1]>z.h+40)return null;return[q[0],q[1]]}}catch(e){}return _sc.apply(this,arguments)};psScreen._gfFlat=1;
+  const _gt=psGlobeTarget;psGlobeTarget=function(S){try{const g=ps&&ps.g;if(g&&g._flat&&S){const v=S.flatView||S.view;if(v){const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom;
+     const pts=[];for(let i=0;i<=6;i++)for(let j=0;j<=6;j++){const q=b([v[0]+(v[2]-v[0])*i/6,v[1]+(v[3]-v[1])*j/6]);if(q)pts.push(q)}
+     if(pts.length){const xs=pts.map(q=>q[0]/z0),ys=pts.map(q=>q[1]/z0),bw=Math.max(1e-6,Math.max(...xs)-Math.min(...xs)),bh=Math.max(1e-6,Math.max(...ys)-Math.min(...ys));
+      const card=ps.card&&ps.card.offsetWidth?ps.card.offsetWidth+40:0,aw=Math.max(200,w-card);const zt=Math.max(1,Math.min(24,Math.min(aw/bw,h/bh)*.92));
+      return[(v[0]+v[2])/2,(v[1]+v[3])/2,zt]}}}}catch(e){}return _gt.apply(this,arguments)};return true};
+ if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
