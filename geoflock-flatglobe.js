@@ -271,3 +271,11 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
 (function(){const fix=()=>{if(typeof amtToLL!=="function"||amtToLL._gfFlat)return false;const _a=amtToLL;
   amtToLL=function(cx,cy){try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(g&&g._flat&&g.host&&g.host.isConnected&&g.host.offsetParent){const r=g.canvas.getBoundingClientRect();if(cx<r.left||cx>r.right||cy<r.top||cy>r.bottom)return null;const p=g.projection(),ll=p.invert([cx-r.left,cy-r.top]);return ll&&isFinite(ll[0])?ll:null}}catch(e){}return _a.apply(this,arguments)};amtToLL._gfFlat=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
+/* the hovered country's outline is drawn again last, over the city dots and the labels, so small places (Monaco,
+   San Marino) show it too */
+(function(){const P=GlobeView.prototype,_r=P._render;P._render=function(){const r=_r.apply(this,arguments);try{const code=this.hot,ctx=this.ctx;if(!code||!ctx)return r;
+  const fs=[...(this._base||[]),...(this._big||[])].filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return r;
+  const dpr=Math.min(2,window.devicePixelRatio||1),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
+  const path=d3.geoPath(this.projection(),ctx);ctx.lineJoin="round";
+  fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="rgba(20,30,50,.55)";ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.stroke()});ctx.restore()}catch(e){}return r}})();
