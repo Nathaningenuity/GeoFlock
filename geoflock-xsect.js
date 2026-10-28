@@ -138,6 +138,25 @@ function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFram
 /* ---------- profiles and the chart ---------- */
 function compute(){lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(lines.length===1){const step=Math.max(1,Math.floor(L.P.length/80));const segs=[];let cur=null;
  for(let i=0;i<L.P.length;i+=step){const c=countryAt(L.P[i].ll);if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs}})}
+/* detailed heights for a drawn line (not the rivers): AWS Terrain Tiles (Terrarium; SRTM, GMTED2010, ETOPO1 and other
+   open sources), fetched only for the tiles the line crosses, at a zoom that matches the line's length */
+const TILES=new Map();let refineId=0;
+function tile(z,x,y){const k=z+"/"+x+"/"+y;if(TILES.has(k))return TILES.get(k);const pr=new Promise((res,rej)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);res(g.getImageData(0,0,256,256).data)}catch(e){rej(e)}};im.onerror=rej;
+ im.src="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"+k+".png"});TILES.set(k,pr);pr.catch(()=>TILES.delete(k));return pr}
+const txy=(ll,z)=>{const n=2**z,la=Math.max(-85.05,Math.min(85.05,ll[1]))*Math.PI/180;return[(ll[0]+180)/360*n*256,(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n*256]};
+async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)return;const T=L.P[L.P.length-1].km;if(T<2)return;
+ const N=700,pts=densify(L.ll,N);
+ /* the zoom: about two pixels per sample, at most ~48 tiles */
+ let z=Math.max(3,Math.min(12,Math.round(Math.log2(40075*Math.cos((pts[0][1]+pts[pts.length-1][1])/2*Math.PI/180)/(256*(T/N)/2)))));
+ const need=z=>{const S=new Set();pts.forEach(ll=>{const q=txy(ll,z);S.add(z+"/"+(((Math.floor(q[0]/256)%2**z)+2**z)%2**z)+"/"+Math.floor(q[1]/256))});return S};let S=need(z);while(S.size>48&&z>3){z--;S=need(z)}
+ const T0={};try{await Promise.all([...S].map(k=>{const[a,b,c]=k.split("/").map(Number);return tile(a,b,c).then(d=>{T0[k]=d})}))}catch(e){return}
+ if(id!==refineId||lines.indexOf(L)<0)return;
+ const at=ll=>{const q=txy(ll,z),n=2**z,px=q[0]-.5,py=q[1]-.5,x0=Math.floor(px),y0=Math.floor(py),fx=px-x0,fy=py-y0;
+  const v=(X,Y)=>{const tx=((Math.floor(X/256)%n)+n)%n,ty=Math.max(0,Math.min(n-1,Math.floor(Y/256))),d=T0[z+"/"+tx+"/"+ty];if(!d)return null;const i=(((Y%256)+256)%256*256+(((X%256)+256)%256))*4;return d[i]*256+d[i+1]+d[i+2]/256-32768};
+  const a=v(x0,y0),b=v(x0+1,y0),c=v(x0,y0+1),d=v(x0+1,y0+1);if([a,b,c,d].some(x=>x==null))return null;return(a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy};
+ const P=[];let km=0;for(let i=0;i<pts.length;i++){if(i)km+=d3.geoDistance(pts[i-1],pts[i])*R_KM;const e=at(pts[i]);P.push({km,ll:pts[i],e:e==null?elevAt(pts[i][0],pts[i][1]):Math.round(e)})}
+ L.P=P;L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
+{const _c=compute;compute=function(){const r=_c.apply(this,arguments);try{lines.forEach(L=>{if(!L.river)refine(L)})}catch(e){}return r}}
 const STOPS=[[-11000,"#0b1d4d"],[-6000,"#123a7a"],[-3000,"#1f63a8"],[-200,"#4ea6d6"],[0,"#8fd3e8"],[1,"#4f9d52"],[300,"#8fbf5a"],[800,"#d8c86d"],[1600,"#c18f4f"],[3000,"#8d5a34"],[4500,"#a7a2a0"],[6000,"#ffffff"]];
 function chartSVG(){const W=900,H=190,ml=46,mr=10,mt=12,mb=lines.length===1?30:22;const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)return"";
  const comp=lines.length>1,xKey=p=>comp?p.fromSea:p.km;if(comp)Ps.forEach(L=>{const T=L.P[L.P.length-1].km;L.P.forEach(p=>p.fromSea=T-p.km)});
@@ -178,7 +197,7 @@ function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready
  const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chartSVG():'<div class="gf-xs-help">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b><span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>'+
   '<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":"✏ Draw")+'</button><select class="gf-xs-pre">'+presetOpts+'</select><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
-  '<div class="gf-xs-src">Heights: NOAA ETOPO 2022 (public domain), averaged over about 11 km; river levels from published lake, waterfall and dam figures, so the highest peaks read a few hundred metres low. The height is stretched far more than the length.</div></div>';
+  '<div class="gf-xs-src">Heights: NOAA ETOPO 2022 (public domain), averaged over about 11 km, then sharpened for drawn lines with AWS Terrain Tiles (SRTM, GMTED2010, ETOPO1 and other open sources); river levels from published lake, waterfall and dam figures, so the highest peaks read a few hundred metres low. The height is stretched far more than the length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
  panel.querySelector(".gf-xs-x").onclick=stop;panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
