@@ -282,7 +282,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   const dpr=Math.min(2,window.devicePixelRatio||1),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
   if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
   const path=d3.geoPath(this.projection(),ctx);ctx.lineJoin="round";
-  fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="#ffffff";ctx.lineWidth=2;ctx.stroke()});/* the same white line as the normal highlight */ctx.restore()}catch(e){}return r}})();
+  fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="#ffffff";ctx.lineWidth=2*Math.max(.35,Math.min(1.2,.42*Math.pow(this.zoom,.6)));ctx.stroke()});/* as thin as the normal highlight *//* the same white line as the normal highlight */ctx.restore()}catch(e){}return r}})();
 /* jumping to a country frames its mainland (with the pieces right next to it); far-off islands that belong to it (the
    Azores, the Canaries, Hawaii…) are simply shown if they fit, not used to centre or size the view */
 (function(){const P=GlobeView.prototype,_fly=P.flyTo;if(!_fly)return;
@@ -302,6 +302,11 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   const _gt=psGlobeTarget;psGlobeTarget=function(S){try{const g=ps&&ps.g;if(g&&g._flat&&S){const v=S.flatView||S.view;if(v){const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom;
      const pts=[];for(let i=0;i<=6;i++)for(let j=0;j<=6;j++){const q=b([v[0]+(v[2]-v[0])*i/6,v[1]+(v[3]-v[1])*j/6]);if(q)pts.push(q)}
      if(pts.length){const xs=pts.map(q=>q[0]/z0),ys=pts.map(q=>q[1]/z0),bw=Math.max(1e-6,Math.max(...xs)-Math.min(...xs)),bh=Math.max(1e-6,Math.max(...ys)-Math.min(...ys));
-      const card=ps.card&&ps.card.offsetWidth?ps.card.offsetWidth+40:0,aw=Math.max(200,w-card);const zt=Math.max(1,Math.min(24,Math.min(aw/bw,h/bh)*.92));
-      return[(v[0]+v[2])/2,(v[1]+v[3])/2,zt]}}}}catch(e){}return _gt.apply(this,arguments)};return true};
+      /* the same frame the old flat map used: the view box with an 8% margin (12% top and bottom), at least 5° of longitude wide, over the whole map */
+      let fw=bw*1.08,fh=bh*1.12;{const mx=(v[0]+v[2])/2,my=(v[1]+v[3])/2,qa=b([mx-2.5,my]),qb=b([mx+2.5,my]);if(qa&&qb){const minW=Math.abs(qb[0]-qa[0])/z0;if(fw<minW){fh*=minW/fw;fw=minW}}}
+      const zt=Math.max(1,Math.min(24,Math.min(w/fw,h/fh)));const cx=(Math.max(...xs)+Math.min(...xs))/2*z0,cy=(Math.max(...ys)+Math.min(...ys))/2*z0,ll=b.invert([cx,cy]);
+      return[ll&&isFinite(ll[0])?ll[0]:(v[0]+v[2])/2,ll&&isFinite(ll[1])?ll[1]:(v[1]+v[3])/2,zt]}}}}catch(e){}return _gt.apply(this,arguments)};
+  /* the old flat map did not slide the view aside for the card; neither does this one */
+  if(typeof psCardOver==="function"){const _co=psCardOver;psCardOver=function(){try{if(ps&&ps.g&&ps.g._flat)return 0}catch(e){}return _co.apply(this,arguments)}}
+  return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
