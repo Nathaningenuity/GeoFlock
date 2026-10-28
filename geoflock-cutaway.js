@@ -7,28 +7,31 @@ let on=false;const RE=6371;
 /* radius fractions and colours, centre outwards */
 const LAY=[["Inner core",1221,"#fff1a8","#f7c948","solid iron and nickel, about 5,200 °C"],["Outer core",3480,"#ffc06a","#f08a24","liquid iron and nickel; its swirling makes the magnetic field"],
  ["Lower mantle",5711,"#e4693a","#b8401f","hot solid rock, 660–2,890 km down"],["Upper mantle",6336,"#f08b4c","#d4582c","solid rock that flows very slowly; the plates ride on it"],["Crust",6371,"#9a6a45","#6e4528","5–70 km thick (drawn thicker here)"]];
-function draw(ctx,p){const t=p.translate(),R=p.scale();if(!isFinite(R)||R<30)return;const cx=t[0],cy=t[1],a0=-Math.PI/2,a1=0;
- ctx.save();
- /* the wedge's two cut faces: a lighter one and a shaded one, each with the layers as rings */
- const face=(b0,b1,k)=>{ctx.save();ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R+.5,b0,b1);ctx.closePath();ctx.clip();
-  for(let i=LAY.length-1;i>=0;i--){const L=LAY[i];let r=L[1]/RE*R;if(L[0]==="Upper mantle")r=R*.955;if(L[0]==="Crust")r=R+.5;const r0=i?(LAY[i-1][1]/RE*R):0;
-   const g=ctx.createRadialGradient(cx,cy,Math.max(0,r0),cx,cy,r);g.addColorStop(0,L[2]);g.addColorStop(1,L[3]);ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.fill()}
-  ctx.fillStyle="rgba(0,0,0,"+k+")";ctx.fillRect(cx-R-2,cy-R-2,2*R+4,2*R+4);ctx.restore()};
- face(a0,(a0+a1)/2,0);face((a0+a1)/2,a1,.16);
- /* the edges of the cut */
- ctx.strokeStyle="rgba(60,25,10,.55)";ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy);ctx.lineTo(cx+R,cy);ctx.stroke();
- ctx.strokeStyle="rgba(255,240,210,.5)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(-Math.PI/4),cy+R*Math.sin(-Math.PI/4));ctx.stroke();
- /* labels, each on its layer along the diagonal */
- const fs=Math.max(10,Math.min(14,R/26));ctx.font="800 "+fs+"px system-ui";ctx.textBaseline="middle";
- LAY.forEach((L,i)=>{const rIn=i?LAY[i-1][1]/RE*R:0;let rOut=L[1]/RE*R;if(L[0]==="Upper mantle")rOut=R*.955;if(L[0]==="Crust")return;const rm=(rIn+rOut)/2,ang=-Math.PI/4+(i%2?.12:-.12),W=ctx.canvas.clientWidth||2*cx,H=ctx.canvas.clientHeight||2*cy,tw=ctx.measureText(L[0]).width;
-  const x=Math.max(tw/2+6,Math.min(W-tw/2-6,cx+rm*Math.cos(ang))),y=Math.max(fs,Math.min(H-fs,cy+rm*Math.sin(ang)));
-  ctx.lineWidth=3;ctx.strokeStyle="rgba(40,15,5,.55)";ctx.fillStyle="#fff";ctx.textAlign="center";ctx.strokeText(L[0],x,y);ctx.fillText(L[0],x,y)});
- /* the crust gets a pointer from outside */
- {const W=ctx.canvas.clientWidth||2*cx,H=ctx.canvas.clientHeight||2*cy;let ang=-Math.PI*.12,x0=cx+R*Math.cos(ang),y0=cy+R*Math.sin(ang);
-  /* if the globe is bigger than the view, point at the crust where the cut's lower edge meets the view instead */
-  if(x0>W-60||y0<10){x0=Math.min(cx+R,W-50);y0=cy;ang=0}
-  const x1=Math.min(W-52,x0+R*.12),y1=Math.max(fs,y0-R*.1);ctx.strokeStyle="#5b3a17";ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y1);ctx.stroke();
-  ctx.textAlign="left";ctx.lineWidth=3;ctx.strokeStyle="#fff";ctx.fillStyle="#5b3a17";ctx.strokeText("Crust",x1+4,y1);ctx.fillText("Crust",x1+4,y1)}
+/* the cut: one eighth of the Earth taken out, its corner at the centre, opening up and to the right towards you.
+   The three flat faces of the cut show the layers as rings; drawn in true 3D (an orthographic view), shaded by the light. */
+const nrm=v=>{const l=Math.hypot(...v);return v.map(x=>x/l)},dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+function rotTo(v,d){/* the rotation that turns the view axis (0,0,1) to d, applied to v (Rodrigues) */const z=[0,0,1],k=cross(z,d),s=Math.hypot(...k),c=dot(z,d);if(s<1e-9)return v;const K=k.map(x=>x/s),t=Math.atan2(s,c),ct=Math.cos(t),st=Math.sin(t);
+ const kv=cross(K,v),kd=dot(K,v);return v.map((x,i)=>x*ct+kv[i]*st+K[i]*kd*(1-ct))}
+const DIR=nrm([.5,.42,.76]),q=Math.sqrt(2/3),AX=[90,210,330].map(a=>rotTo([q*Math.cos(a*Math.PI/180),q*Math.sin(a*Math.PI/180),1/Math.sqrt(3)],DIR));
+const LIGHT=nrm([-.45,.55,.7]);
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),rgb=(c,k)=>"rgb("+c.map(x=>Math.round(Math.min(255,x*k))).join(",")+")";
+function draw(ctx,p){const t=p.translate(),R=p.scale();if(!isFinite(R)||R<30)return;const cx=t[0],cy=t[1],S=v=>[cx+R*v[0],cy-R*v[1]];
+ ctx.save();ctx.lineJoin="round";
+ /* the three faces: each lies between two of the axes and faces the third */
+ const faces=[[0,1,2],[1,2,0],[2,0,1]].map(([i,j,k])=>({u:AX[i],v:AX[j],n:AX[k]})).filter(f=>f.n[2]>0);
+ faces.forEach(f=>{const lit=.62+.45*Math.max(0,dot(f.n,LIGHT));
+  for(let li=LAY.length-1;li>=0;li--){const L=LAY[li];let r=L[1]/RE;if(L[0]==="Upper mantle")r=.955;
+   ctx.beginPath();const o=S([0,0,0]);ctx.moveTo(o[0],o[1]);for(let a=0;a<=32;a++){const th=a/32*Math.PI/2,pt=S(f.u.map((x,i)=>r*(x*Math.cos(th)+f.v[i]*Math.sin(th))));ctx.lineTo(pt[0],pt[1])}ctx.closePath();
+   const g=ctx.createRadialGradient(o[0],o[1],0,o[0],o[1],R*r);g.addColorStop(0,rgb(hex(L[2]),lit));g.addColorStop(1,rgb(hex(L[3]),lit));ctx.fillStyle=g;ctx.fill()}
+  /* the face's rim */
+  ctx.beginPath();for(let a=0;a<=32;a++){const th=a/32*Math.PI/2,pt=S(f.u.map((x,i)=>x*Math.cos(th)+f.v[i]*Math.sin(th)));a?ctx.lineTo(pt[0],pt[1]):ctx.moveTo(pt[0],pt[1])}ctx.strokeStyle="rgba(50,25,10,.45)";ctx.lineWidth=1.2;ctx.stroke()});
+ /* the three edges of the cut, from the centre out */
+ ctx.strokeStyle="rgba(255,235,200,.75)";ctx.lineWidth=1.3;AX.forEach(a=>{const o=S([0,0,0]),e=S(a);ctx.beginPath();ctx.moveTo(o[0],o[1]);ctx.lineTo(e[0],e[1]);ctx.stroke()});
+ /* labels on the face that faces you most */
+ const f=faces.slice().sort((a,b)=>b.n[2]-a.n[2])[0];if(f){const fs=Math.max(10,Math.min(14,R/26)),W=ctx.canvas.clientWidth||2*cx,H=ctx.canvas.clientHeight||2*cy;ctx.font="800 "+fs+"px system-ui";ctx.textBaseline="middle";ctx.textAlign="center";
+  LAY.forEach((L,i)=>{if(L[0]==="Crust")return;const rIn=i?LAY[i-1][1]/RE:0,rOut=L[0]==="Upper mantle"?.955:L[1]/RE,rm=i?(rIn+rOut)/2:rOut*.45,th=Math.PI/4+(i%2?.2:-.2);
+   const pt=S(f.u.map((x,k)=>rm*(x*Math.cos(th)+f.v[k]*Math.sin(th)))),tw=ctx.measureText(L[0]).width,x=Math.max(tw/2+6,Math.min(W-tw/2-6,pt[0])),y=Math.max(fs,Math.min(H-fs,pt[1]));
+   ctx.lineWidth=3;ctx.strokeStyle="rgba(40,15,5,.6)";ctx.fillStyle="#fff";ctx.strokeText(L[0],x,y);ctx.fillText(L[0],x,y)})}
  ctx.restore()}
 const P=GlobeView.prototype,_dm=P._drawMeasure;P._drawMeasure=function(ctx,p){const r=_dm.apply(this,arguments);try{if(on&&typeof amGlobe!=="undefined"&&this===amGlobe&&!this._flat)draw(ctx,p)}catch(e){console.error(e)}return r};
 /* the key under the button: what each layer is */
@@ -42,7 +45,7 @@ function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const 
 setInterval(()=>{try{sync()}catch(e){}},400);
 const st=document.createElement("style");st.textContent=`
 .globe-btns .gf-cut.on{ background:#d4582c !important; color:#fff !important; }
-.gf-cut-key{ position:absolute; left:10px; top:64px; z-index:6; width:min(300px,46%); background:rgba(255,253,248,.94); color:#2b2118; border-radius:14px; padding:10px 12px; font:12px/1.35 system-ui,sans-serif; box-shadow:0 6px 18px rgba(0,0,0,.18); }
+.gf-cut-key{ position:absolute; left:10px; top:118px; z-index:6; width:min(300px,46%); background:rgba(255,253,248,.94); color:#2b2118; border-radius:14px; padding:10px 12px; font:12px/1.35 system-ui,sans-serif; box-shadow:0 6px 18px rgba(0,0,0,.18); }
 .gf-cut-key > b{ display:block; font-size:14px; margin-bottom:6px; } .gf-cut-key div{ display:flex; gap:8px; align-items:flex-start; margin:4px 0; }
 .gf-cut-key i{ width:14px; height:14px; border-radius:4px; flex:none; margin-top:1px; } .gf-cut-key small{ display:block; opacity:.65; margin-top:6px; }
 body.sky-night .gf-cut-key{ background:rgba(29,38,56,.94); color:#e6edf7; }`;document.head.appendChild(st);
