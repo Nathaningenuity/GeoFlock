@@ -283,7 +283,11 @@ if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
 if(typeof psSqPhoto==="function"&&typeof PS_PHOTO_DATA!=="undefined"){const LEO=PS_PHOTO_DATA.findIndex(p=>/King Leopold 2, and Congo Free State/.test(p.f||""));
  if(LEO>=0){const _sq=psSqPhoto;psSqPhoto=function(q){if(q&&/Leopold/.test(q.label||"")){const P=PS_PHOTO_DATA[LEO];if(P&&P.d)return P}return _sq.apply(this,arguments)}}}
 /* 14. A trackpad pinch (ctrl + wheel) or Safari gesture over a map zooms the map, never the whole page */
-document.addEventListener("wheel",e=>{if(e.ctrlKey&&e.target.closest&&e.target.closest("#allMapsWrap,.globe-host,#atlasStudyMapWrap,.map-wrap"))e.preventDefault()},{passive:false,capture:true});
+/* pinch (ctrl + wheel) over the map zooms the map; anywhere else, beside the globe too, it zooms the page as usual */
+document.addEventListener("wheel",e=>{if(!e.ctrlKey||!e.target.closest)return;const t=e.target;
+ if(t.tagName==="CANVAS"&&t.closest(".globe-host")){let g=null;try{for(const x of [typeof amGlobe!=="undefined"&&amGlobe,typeof stGlobe!=="undefined"&&stGlobe])if(x&&x.canvas===t)g=x}catch(_){}
+  if(g&&!g._flat){const rc=t.getBoundingClientRect(),z=g.size(),R=z.r*(g.zoom||1);if(Math.hypot(e.clientX-rc.left-z.w/2,e.clientY-rc.top-z.h/2)>R)return}e.preventDefault();return}
+ if(t.closest("svg")&&t.closest("#allMapsWrap,#atlasStudyMapWrap,.map-wrap"))e.preventDefault()},{passive:false,capture:true});
 /* Safari sends gesture events for a pinch instead: turn them into the map's own wheel zoom */
 {let last=1;["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>{const host=e.target.closest&&e.target.closest("#allMapsWrap,.globe-host,#atlasStudyMapWrap,.map-wrap");if(!host)return;e.preventDefault();
  if(t==="gesturestart"){last=1;return}const sc=e.scale||1,d=sc/last;last=sc;if(t==="gestureend"||Math.abs(d-1)<.01)return;

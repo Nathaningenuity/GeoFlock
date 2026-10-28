@@ -84,3 +84,20 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  Object.values(PS_TOURS).forEach(T=>(T.steps||[]).forEach(S=>{if(!S.lines)return;const i=S.lines.findIndex(L=>L.coords&&L.coords[0]&&L.coords[0][0]===98.22&&L.coords[0][1]===39.8);
   if(i<0)return;const k=S.lines[i].kind;S.lines.splice(i,1,...G.coordinates.filter(c=>c.length>1).map(c=>({coords:c,kind:k==="dash"?"solid":k||"solid",w:2})))}));return true}catch(e){return false}};
  if(!fix())document.addEventListener("DOMContentLoaded",fix)})();
+/* 6. Mountain-range names sit on the range itself, along its length, and steep ones read upwards (bottom to top, like the
+   Appalachians), never downwards. Position and slant come from each range's mapped shape. */
+(function(){if(typeof globeOverlays!=="function"||typeof LANDFORMS==="undefined")return;
+ const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\b(mountains|mts|mountain|range|ranges|the)\b/g,"").replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
+ const geomOf=g=>{if(!g||g.t!=="poly")return null;const deep=Array.isArray(g.c[0]&&g.c[0][0]&&g.c[0][0][0]);return{type:"MultiPolygon",coordinates:deep?g.c:g.c.map(r=>[r])}};
+ let SH=null;function shapes(){if(SH)return SH;SH={};LANDFORMS.items.forEach(o=>{if(o.cat!=="ranges")return;const g=geomOf(o.geom);if(g)SH[norm(o.name)]=g});return SH}
+ const R=d3.geoRobinson();
+ function place(g){const pts=[];g.coordinates.forEach(P=>P[0].forEach(c=>{const q=R(c);if(q)pts.push([q,c])}));if(pts.length<3)return null;
+  let mx=0,my=0;pts.forEach(([q])=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(([q])=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
+  let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;/* -90..90, screen y down */
+  /* an elongated range gets its slant; a round one stays level */const l1=(sxx+syy)/2+Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l2=(sxx+syy)/2-Math.sqrt(((sxx-syy)/2)**2+sxy*sxy);if(l1<2.2*Math.max(l2,1e-9))a=0;
+  if(a>50)a-=180;/* steep and falling to the right: turn it to read upwards */
+  /* the centre of the shape, moved onto the range if the centre falls outside it (a curved range) */
+  let ll=R.invert([mx,my]);if(ll&&!d3.geoContains(g,ll)){let best=null,bd=1e18;pts.forEach(([q,c])=>{const d=(q[0]-mx)**2+(q[1]-my)**2;if(d<bd){bd=d;best=c}});ll=best}
+  return ll?{ll,ang:a}:null}
+ const _go=globeOverlays;globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.landforms&&O.landforms.mountains&&!O._gfRng){O._gfRng=1;const S=shapes();
+  O.landforms.mountains.forEach(L=>{const g=S[norm(L.n)];if(!g)return;const p=place(g);if(p){L.ll=p.ll;L.ang=p.ang}})}}catch(e){console.error(e)}return O}})();
