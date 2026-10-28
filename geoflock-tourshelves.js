@@ -4,12 +4,12 @@
 if(typeof TOUR_GROUPS==="undefined"||typeof PS_TOUR_ORDER==="undefined")return;
 const SHELVES=[
  ["start","Start here","What the maps show, how maps can mislead, and the Earth seen whole",["geo","pop","projections","space","night","time"]],
- ["physical","Physical Earth","Height, plates, climate, water, islands and the forces that shape the land",["elev","plates","climate","rivers","lakes","seas","islands","hazards"]],
- ["living","Living planet","Animals, ecosystems, island life and where we came from",["animals","environment","islandlife","humans"]],
- ["culture","People & culture","Cities, migration, languages, religions, food, sport, landmarks and flags",["cities","migration","people","culture","langrel","food","musicsport","landmarks","flags"]],
- ["ideas","Ideas & arts","What people made and thought, and where it spread",["inventions"]],
- ["power","Power & economy","Governments, alliances, borders, money, trade and resources",["politics","govmap","geopol","borders","regions","gdp","transport","resources"]],
- ["history","History","World history from the first cities to today, the explorers, then one tour for each continent",["hancient","hempires","hmodern","explorers","heurope","hasia","hafrica","hnamerica","hsamerica","hoceania","hantarctica"]],
+ ["physical","Physical Earth","Height, plates, climate, water, islands and the forces that shape the land",["elev","plates","climate","weather","rivers","lakes","seas","coasts","islands","deserts","ice","ranges","volcanoes","hazards","caves"]],
+ ["living","Living planet","Animals, ecosystems, island life and where we came from",["animals","biomes","forests","ocean","amigration","environment","islandlife","humans","crops"]],
+ ["culture","People & culture","Cities, migration, languages, religions, food, sport, landmarks and flags",["cities","migration","people","culture","langrel","food","sports","musicsport","festivals","houses","landmarks","flags"]],
+ ["ideas","Ideas & arts","What people made and thought, and where it spread",["art","music","literature","philosophy","mythology","science","maths","psychology","inventions","words","learning"]],
+ ["power","Power & economy","Governments, alliances, borders, money, trade and resources",["govmap","politics","capitals","geopol","borders","regions","gdp","transport","energy","resources","currencies","conflicts"]],
+ ["history","History","World history from the first cities to today, the explorers, then one tour for each continent",["hancient","hmedieval","hgunpowder","hrevolutions","hwars","hcoldwar","hsince91","hempires","hmodern","explorers","heurope","hasia","hafrica","hnamerica","hsamerica","hoceania","hantarctica"]],
  ["cont","Regions","Seven tours, one for each continent",["europe","asia","africa","namerica","samerica","oceania","antarctica"]],
  ["books","Mapped books","Famous books about the world, followed on the map",[]]];
 function apply(){try{
@@ -17,7 +17,11 @@ function apply(){try{
  /* the shelves, in order; any other shelf (AP Human Geo) stays after them */
  const rest=TOUR_GROUPS.filter(g=>!own.has(g[0])&&!["maps","water","lines","nature","world"].includes(g[0]));
  TOUR_GROUPS.splice(0,TOUR_GROUPS.length,...SHELVES.map(s=>[s[0],s[1],s[2]]),...rest);
- const listed=[];SHELVES.forEach(s=>s[3].forEach(k=>{if(PS_TOURS[k]){PS_TOURS[k].group=s[0];listed.push(k)}}));
+ /* the old "Empires & independence" and "Modern history" tours step aside once the new era tours are there */
+ if(PS_TOURS.hmedieval&&PS_TOURS.hwars){["hempires","hmodern"].forEach(k=>{const i=PS_TOUR_ORDER.indexOf(k);if(i>=0)PS_TOUR_ORDER.splice(i,1);if(PS_TOURS[k])PS_TOURS[k].group="_retired"})}
+ /* music gets its own tour in Ideas & arts once it exists, sport stays here */
+ if(PS_TOURS.music&&PS_TOURS.sports){const i=PS_TOUR_ORDER.indexOf("musicsport");if(i>=0)PS_TOUR_ORDER.splice(i,1);if(PS_TOURS.musicsport)PS_TOURS.musicsport.group="_retired"}
+ const listed=[];SHELVES.forEach(s=>s[3].forEach(k=>{if(PS_TOURS[k]&&PS_TOURS[k].group!=="_retired"){PS_TOURS[k].group=s[0];listed.push(k)}}));
  /* tours left on a retired shelf go to the closest new one */
  const MOVE={maps:"power",water:"physical",lines:"power",nature:"living",world:"culture"};
  Object.keys(PS_TOURS).forEach(k=>{const g=PS_TOURS[k].group;if(MOVE[g]&&!listed.includes(k))PS_TOURS[k].group=MOVE[g]});
