@@ -46,3 +46,18 @@ window.gfPopView=v=>{view=v;sync()};
 setInterval(()=>{try{sync()}catch(e){}},400);
 addEventListener("resize",()=>{if(box)fit()});
 })();
+/* 2. Pop-up windows can be dragged: by their title, their top strip or their empty edges (never by buttons, images, maps or text fields) */
+(function(){
+const SEL=".flag-zoom-panel, .game-modal, .modal-panel";
+const st=document.createElement("style");st.textContent=`.flag-zoom-panel h2,.game-modal h2,.game-modal h3,.modal-panel .modal-header,.modal-panel .modal-title{cursor:move}.gf-mdrag{user-select:none;transition:none !important}`;document.head.appendChild(st);
+addEventListener("pointerdown",e=>{if(e.button)return;const box=e.target.closest&&e.target.closest(SEL);if(!box)return;
+ if(e.target.closest("button,a,input,select,textarea,label,[contenteditable],img,canvas,svg,video,iframe,.no-drag,[draggable=true]"))return;
+ const r=box.getBoundingClientRect(),inTop=e.clientY-r.top<34,head=!!e.target.closest("h1,h2,h3,.modal-header,.modal-title"),edge=e.target===box;if(!inTop&&!head&&!edge)return;
+ const m=/(-?[\d.]+)px\s+(-?[\d.]+)px/.exec(box.style.translate||"")||[0,0,0],x0=+m[1],y0=+m[2],sx=e.clientX,sy=e.clientY;let moved=false;
+ const mv=ev=>{const dx=ev.clientX-sx,dy=ev.clientY-sy;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;box.classList.add("gf-mdrag");
+  const nx=Math.max(-r.left-r.width+80,Math.min(innerWidth-r.left-80,x0+dx)),ny=Math.max(-r.top,Math.min(innerHeight-r.top-40,y0+dy));box.style.translate=nx+"px "+ny+"px";ev.preventDefault()};
+ const up=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true);box.classList.remove("gf-mdrag");if(moved){const k=ev=>{ev.stopPropagation();ev.preventDefault();removeEventListener("click",k,true)};addEventListener("click",k,true);setTimeout(()=>removeEventListener("click",k,true),50)}};
+ addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true)},true);
+/* a closed window comes back centred next time */
+setInterval(()=>{document.querySelectorAll(SEL).forEach(b=>{if(b.style.translate&&!b.offsetParent)b.style.translate=""})},500);
+})();
