@@ -61,7 +61,11 @@ addEventListener("pointermove",e=>{if(!on)return;const g=amGlobe;if(!g||!g.canva
 addEventListener("click",e=>{if(!on)return;const g=amGlobe;if(!g||e.target!==g.canvas)return;const i=layerAt(e.clientX,e.clientY);if(i==null)return;e.stopPropagation();e.preventDefault();sel=sel===i?null:i;key();g.request?g.request():g.render()},true);
 /* the card: every layer, the chosen one opened up with its depth, temperature and density */
 function key(){let k=document.querySelector(".gf-cut-key");const g=amGlobe;if(!on||!g||g._flat){if(k)k.remove();tip.hidden=true;return}
- if(!k){k=document.createElement("div");k.className="gf-cut-key";g.host.appendChild(k);k.addEventListener("click",e=>{const r=e.target.closest("[data-li]");if(!r)return;e.stopPropagation();const i=+r.dataset.li;sel=sel===i?null:i;key();g.request?g.request():g.render()})}
+ if(!k){k=document.createElement("div");k.className="gf-cut-key";g.host.appendChild(k);
+  /* drag it by its title or any empty part of the card */
+  k.addEventListener("pointerdown",e=>{if(e.button||e.target.closest("[data-li]"))return;e.preventDefault();e.stopPropagation();const hr=g.host.getBoundingClientRect(),r=k.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;k.classList.add("drag");
+   const mv=ev=>{k.style.left=Math.max(-r.width+60,Math.min(hr.width-60,ev.clientX-hr.left-dx))+"px";k.style.top=Math.max(0,Math.min(hr.height-40,ev.clientY-hr.top-dy))+"px"};
+   const up=()=>{k.classList.remove("drag");removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true)});k.addEventListener("click",e=>{const r=e.target.closest("[data-li]");if(!r)return;e.stopPropagation();const i=+r.dataset.li;sel=sel===i?null:i;key();g.request?g.request():g.render()})}
  k.innerHTML='<b class="ck-h">Inside the Earth</b>'+LAY.map((L,i)=>[L,i]).reverse().map(([L,i])=>'<div data-li="'+i+'" class="'+(sel===i?"on":"")+'"><i style="background:linear-gradient('+L[2]+','+L[3]+')"></i><span><b>'+L[0]+'</b> '+L[4]+
   (sel===i?'<dl><dt>Depth</dt><dd>'+L[5]+'</dd><dt>Temperature</dt><dd>'+L[6]+'</dd><dt>Density</dt><dd>'+L[7]+'</dd></dl>':'')+'</span></div>').join("")+
   '<small>Click a layer (here or in the cut) for more. Drag the globe to turn it; the cut turns with it. Nobody has dug deeper than 12 km: we know the inside from how earthquake waves travel through it.</small>'}
@@ -75,7 +79,7 @@ setInterval(()=>{try{sync()}catch(e){}},400);
 const st=document.createElement("style");st.textContent=`
 .globe-btns .gf-cut.on{ background:#d4582c !important; color:#fff !important; }
 .gf-cut-key{ position:absolute; left:10px; top:118px; z-index:6; width:min(300px,46%); background:rgba(255,253,248,.95); color:#2b2118; border-radius:14px; padding:10px 12px; font:12px/1.35 system-ui,sans-serif; box-shadow:0 6px 18px rgba(0,0,0,.18); }
-.gf-cut-key .ck-h{ display:block; font-size:14px; margin-bottom:6px; } .gf-cut-key div{ display:flex; gap:8px; align-items:flex-start; margin:2px 0; padding:4px 6px; border-radius:9px; cursor:pointer; }
+.gf-cut-key{ cursor:grab; } .gf-cut-key.drag{ cursor:grabbing; user-select:none; } .gf-cut-key .ck-h{ display:block; font-size:14px; margin-bottom:6px; } .gf-cut-key div{ display:flex; gap:8px; align-items:flex-start; margin:2px 0; padding:4px 6px; border-radius:9px; cursor:pointer; }
 .gf-cut-key div:hover{ background:rgba(212,88,44,.08); } .gf-cut-key div.on{ background:rgba(212,88,44,.14); }
 .gf-cut-key i{ width:14px; height:14px; border-radius:4px; flex:none; margin-top:1px; } .gf-cut-key small{ display:block; opacity:.65; margin-top:6px; }
 .gf-cut-key dl{ display:grid; grid-template-columns:auto 1fr; gap:2px 10px; margin:6px 0 2px; } .gf-cut-key dt{ opacity:.65; } .gf-cut-key dd{ margin:0; font-weight:700; }
