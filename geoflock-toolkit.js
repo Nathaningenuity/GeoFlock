@@ -22,6 +22,11 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 
 /* ================= the art ================= */
 const ART={
+shovel(u){/* a garden spade: steel blade, wooden shaft, D-handle */
+ return`<svg viewBox="0 0 80 100" class="gfk-art"><defs><linearGradient id="${u}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa4ad"/><stop offset=".45" stop-color="#e3e8ec"/><stop offset="1" stop-color="#7d8790"/></linearGradient><linearGradient id="${u}w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a5713f"/><stop offset=".5" stop-color="#d49a5c"/><stop offset="1" stop-color="#8a5a2e"/></linearGradient></defs>
+ <ellipse cx="44" cy="96" rx="22" ry="3" fill="#000" opacity=".2"/>
+ <g transform="rotate(-28 40 50)"><path d="M33 6 h14 a6 6 0 0 1 0 0 v8 h-3 v-4 h-8 v4 h-3z" fill="#5b3a1e"/><rect x="37.5" y="12" width="5" height="44" rx="2" fill="url(#${u}w)"/>
+ <path d="M30 56 h20 l-1 24 c0 8 -6 13 -9 15 c-3 -2 -9 -7 -9 -15z" fill="url(#${u}s)" stroke="#5e666d" stroke-width="1"/><path d="M36 58 h8 v6 h-8z" fill="#6c757c"/><path d="M33 84 c2 4 4 6 7 8" stroke="#fff" stroke-opacity=".6" stroke-width="1.2" fill="none"/></g></svg>`},
 compass(u,deg){deg=deg||0;let t="";for(let i=0;i<32;i++){const a=i*Math.PI/16,r1=i%8===0?33:i%2?37:35;t+=`<line x1="${50+Math.sin(a)*r1}" y1="${50-Math.cos(a)*r1}" x2="${50+Math.sin(a)*39}" y2="${50-Math.cos(a)*39}" stroke="#4a3a24" stroke-width="${i%8===0?1.6:.7}"/>`}
  return`<svg viewBox="0 0 100 100" class="gfk-art"><defs><radialGradient id="${u}b" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff2b8"/><stop offset=".35" stop-color="#e2b55a"/><stop offset=".75" stop-color="#a87526"/><stop offset="1" stop-color="#6b4512"/></radialGradient><radialGradient id="${u}f" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e9dcc0"/></radialGradient><linearGradient id="${u}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
  <circle cx="51" cy="53" r="47" fill="#000" opacity=".18"/><circle cx="50" cy="50" r="47" fill="url(#${u}b)"/><circle cx="50" cy="50" r="41" fill="#5a3c12" opacity=".5"/><circle cx="50" cy="50" r="40" fill="url(#${u}f)"/>${t}
@@ -168,8 +173,8 @@ function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forE
 /* ================= the tray ================= */
 const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there"],["ruler","Ruler","Drop it on the map, then click two places to measure"],
  ["pens","Pens","Pick a pen and colour, then draw on the map"],["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Roll for somewhere random"],
- ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"]];
-function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):ART.sea(u)}
+ ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"],["shovel","Shovel","Dig straight through the Earth, or cut a cross-section of the land"]];
+function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):t==="shovel"?ART.shovel(u):ART.sea(u)}
 function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.className="gfk-tray";
  tr.innerHTML='<button type="button" class="gfk-tab" aria-expanded="true" title="Show or hide the toolkit"><span>Toolkit</span><i>▾</i></button><div class="gfk-felt">'+
   TOOLS.map(([id,n,t])=>`<button type="button" class="gfk-slot gfk-${id}" data-tool="${id}" title="${esc(t)}" aria-label="${esc(n)}">${artFor(id)}<span>${esc(n.replace("Country dragger","Dragger").replace("Sea level changer","Sea level"))}</span></button>`).join("")+"</div>";
@@ -218,13 +223,13 @@ setInterval(()=>{const o=S.place.compass;if(o&&o.el.isConnected)updCompass(o)},6
 /* ================= what each tool does ================= */
 function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClientRect();
  if(t==="compass"||t==="ruler"){if(S.place[t])putAway(t);else dropTool(t,r.left+r.width*(t==="compass"?.18:.5),r.top+r.height*(t==="compass"?.55:.8))}
- else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel()}
+ else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelPanel()}
 function dropTool(t,cx,cy){if(t==="compass")placeAt("compass",cx,cy);
  else if(t==="ruler"){placeAt("ruler",cx,cy);measure(true)}
  else if(t==="pins")newPin(toLL(cx,cy),cx,cy);
  else if(t==="dice")roll(null,cx,cy);
  else if(t==="dragger"){const f=countryAt(cx,cy);dragOn(true);if(f&&f.properties.c!=="aq")lift(f,toLL(cx,cy))}
- else if(t==="pens")penPicker();else if(t==="palette")openPalette();else if(t==="sea")seaPanel()}
+ else if(t==="pens")penPicker();else if(t==="palette")openPalette();else if(t==="sea")seaPanel();else if(t==="shovel"){const ll=toLL(cx,cy);if(ll)dig(ll);else shovelPanel()}}
 function clickPlaced(t){if(t==="ruler")measure(true)}
 function putAway(t){const o=S.place[t];if(o){o.el.remove();delete S.place[t]}if(t==="ruler")measure(false);if(t==="pens")penStop();if(t==="pins")pinArm(false);if(t==="dragger")dragOn(false);sync()}
 function measure(on){try{if(onGlobe()){if(!!amGlobe._measure!==on)amGlobe.toggleMeasure()}else amtToggleMeasure(on)}catch(e){}}
@@ -517,7 +522,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-tab{ border:0; cursor:pointer; margin:0 0 -2px 14px; position:relative; z-index:1; padding:4px 12px 6px; border-radius:9px 9px 0 0; font:800 11px/1 system-ui,sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#fbefd8;
  background:linear-gradient(#8a5a30,#6a4020); box-shadow:inset 0 1px 0 rgba(255,255,255,.25); display:flex; gap:6px; align-items:center; }
 .gfk-tab i{ font-style:normal; transition:transform .2s; } .gfk-tray.closed .gfk-tab i{ transform:rotate(180deg); }
-.gfk-felt{ display:flex; gap:4px; align-items:flex-end; padding:8px 10px 8px; border-radius:14px 14px 0 0; max-width:min(560px,calc(100vw - 48px)); overflow-x:auto; scrollbar-width:none;
+.gfk-felt{ display:flex; gap:4px; align-items:flex-end; padding:8px 10px 8px; border-radius:14px 14px 0 0; max-width:min(640px,calc(100vw - 48px)); overflow-x:auto; scrollbar-width:none;
  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.08),transparent 60%),linear-gradient(#1f4a3a,#173a2d); border:5px solid transparent;
  border-image:repeating-linear-gradient(90deg,#a06a38 0 14px,#8c5a2c 14px 22px,#b07a44 22px 34px) 6; box-shadow:0 8px 22px rgba(30,20,10,.35), inset 0 3px 8px rgba(0,0,0,.45); }
 .gfk-felt::-webkit-scrollbar{ display:none; }
@@ -626,4 +631,46 @@ document.addEventListener("keydown",e=>{const t=e.target;if(t.classList&&t.class
 {const st=document.createElement("style");st.textContent=".gfk-kname{display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px dashed transparent;background:transparent;border-radius:6px;text-align:center;font:700 12px/1.3 inherit;color:inherit;padding:2px 4px}.gfk-kname:hover{border-color:#c9c2ae}.gfk-kname:focus{outline:none;border-color:#8a7a5a;background:#fff}";document.head.appendChild(st)}
 setTimeout(()=>{try{pinNamesLoad()}catch(e){}},500);
 
+
+/* --- shovel: dig straight through the Earth (where would you come out?), or cut a cross-section --- */
+const R_KM=6371;
+const featsNear=()=>{try{return projFeatures().filter(f=>f.geometry&&f.properties&&f.properties.c)}catch(e){return[]}};
+function placeName(ll){const fs=featsNear();for(const f of fs){try{if(d3.geoContains(f,ll)){const c=String(f.properties.c).toLowerCase();return{land:true,c,n:(COUNTRY_BY_CODE[c]||{}).n||f.properties.n||c.toUpperCase()}}}catch(e){}}
+ /* at sea: how deep, and the nearest land */
+ let best=null,bd=Infinity;fs.forEach(f=>{const g=f.geometry,polys=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];polys.forEach(P=>{const r=P[0],step=Math.max(1,Math.floor(r.length/60));for(let i=0;i<r.length;i+=step){const d=d3.geoDistance(ll,r[i]);if(d<bd){bd=d;best=f}}})});
+ let depth=null;try{if(window.gfCrossSection&&gfCrossSection.elevAt)depth=-gfCrossSection.elevAt(ll[0],ll[1])}catch(e){}
+ const nc=best?String(best.properties.c).toLowerCase():null;return{land:false,depth,near:nc?((COUNTRY_BY_CODE[nc]||{}).n||nc.toUpperCase()):null,km:Math.round(bd*R_KM)}}
+const anti=ll=>[ll[0]>0?ll[0]-180:ll[0]+180,-ll[1]];
+const fmtLL=ll=>Math.abs(ll[1]).toFixed(1)+"°"+(ll[1]>=0?"N":"S")+", "+Math.abs(ll[0]).toFixed(1)+"°"+(ll[0]>=0?"E":"W");
+function describe(P){return P.land?"<b>"+esc(P.n)+"</b>":"<b>the open sea</b>"+(P.depth>0?", about "+Math.round(P.depth).toLocaleString()+" m deep":"")+(P.near?" — the nearest land is "+esc(P.near)+", about "+P.km.toLocaleString()+" km away":"")}
+/* the Earth cut in half, with the hole drawn straight through the middle */
+function earthCut(){return'<svg viewBox="0 0 220 220" class="gfk-cut" role="img" aria-label="The Earth cut in half: crust, mantle, outer core and inner core, with a tunnel through the centre"><defs><radialGradient id="gfkCore" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff7c2"/><stop offset="1" stop-color="#ffbe3b"/></radialGradient></defs>'+
+ '<circle cx="110" cy="110" r="104" fill="#2f6fb0"/><circle cx="110" cy="110" r="100" fill="#c0532f"/><circle cx="110" cy="110" r="99" fill="#d9772f"/>'+
+ '<circle cx="110" cy="110" r="54.6" fill="#f2b33d"/><circle cx="110" cy="110" r="19.2" fill="url(#gfkCore)"/>'+
+ '<line x1="110" y1="4" x2="110" y2="216" stroke="#1d1d1d" stroke-width="3" stroke-dasharray="6 4"/><circle cx="110" cy="6" r="5" fill="#c0392b" stroke="#fff" stroke-width="2"/><circle cx="110" cy="214" r="5" fill="#2e7d32" stroke="#fff" stroke-width="2"/>'+
+ '<g font-size="9" font-weight="700" fill="#fff" stroke="#000" stroke-width="2" paint-order="stroke"><text x="120" y="30">Mantle</text><text x="120" y="66">Outer core (liquid)</text><text x="120" y="108">Inner core</text><text x="118" y="118" font-size="8">5,200 °C</text><text x="8" y="12" font-size="8">Crust (thin as an apple skin)</text></g></svg>'}
+function dig(ll){if(!ll)return;const B=anti(ll),PA=placeName(ll),PB=placeName(B);S.shovelArm=false;
+ const p=panel("gfkShovel",'<b class="gfk-ph">Shovel</b>'+segHTML("dig")+'<div class="gfk-dig">'+earthCut()+'<div class="gfk-digt"><p>You start in '+describe(PA)+' <small>('+fmtLL(ll)+')</small>.</p><p>Dig straight down through the centre, '+(2*R_KM).toLocaleString()+' km, and you come out in '+describe(PB)+' <small>('+fmtLL(B)+')</small>.</p>'+
+  '<p class="gfk-hint">On the way: about 35 km of crust, 2,900 km of rocky mantle, then an iron core about as hot as the surface of the Sun. Fall down a tunnel with no air and you would reach the far side in about 40 minutes.</p>'+
+  (PB.land?'':'<p class="gfk-hint">Most holes come out at sea: almost all land has ocean on its opposite side. Only about 15% of land has land on its opposite side: Argentina and China, for example, or New Zealand and Spain.</p>')+
+  '<button type="button" class="gfk-link" data-go>Show me where I come out →</button> <button type="button" class="gfk-link" data-again>Dig somewhere else</button></div></div>',true);if(!p)return;wireSeg(p);
+ holes([ll,B]);p.querySelector("[data-go]").onclick=()=>flyTo(B);p.querySelector("[data-again]").onclick=()=>{S.shovelArm=true;toast("Click anywhere on the map to dig")}}
+function segHTML(m){return'<div class="gfk-seg"><button type="button" data-sm="dig" class="'+(m==="dig"?"on":"")+'">⛏ Dig through</button><button type="button" data-sm="xs" class="'+(m==="xs"?"on":"")+'">✂ Cross-section</button></div>'}
+function wireSeg(p){p.querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="xs"){closePanels();S.shovelArm=false;try{gfCrossSection.start()}catch(e){toast("Cross-sections need the flat map or globe")}}else shovelPanel()})}
+function shovelPanel(){const p=panel("gfkShovel",'<b class="gfk-ph">Shovel</b>'+segHTML("dig")+'<p class="gfk-hint">Click a place on the map (or drag the shovel onto it) and dig straight through the middle of the Earth. Where do you come out?</p>');if(!p)return;wireSeg(p);S.shovelArm=true}
+/* the two holes, kept on the map */
+let HOLES=[],holeRaf=0;function holes(L){HOLES=L;cancelAnimationFrame(holeRaf);const h=host();document.querySelectorAll(".gfk-hole").forEach(x=>x.remove());if(!h)return;
+ const els=L.map((ll,i)=>{const d=document.createElement("div");d.className="gfk-hole"+(i?" gfk-hole-b":"");d.title=i?"Where you come out":"Where you dug";d.innerHTML=i?"⬆":"⛏";h.appendChild(d);return d});
+ const tick=()=>{if(!document.querySelector(".gfk-hole")){return}const hr=h.getBoundingClientRect();L.forEach((ll,i)=>{const q=toScreen(ll);els[i].style.display=q?"":"none";if(q){els[i].style.left=(q[0]-hr.left)+"px";els[i].style.top=(q[1]-hr.top)+"px"}});holeRaf=requestAnimationFrame(tick)};tick();
+ setTimeout(()=>{document.querySelectorAll(".gfk-hole").forEach(x=>x.classList.add("gfk-hole-old"))},60000)}
+function flyTo(ll){try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host.isConnected){amGlobe.rot=[-ll[0],-ll[1]];amGlobe.zoom=Math.max(amGlobe.zoom||1,amGlobe._flat?2.5:1.6);amGlobe.request?amGlobe.request():amGlobe.render()}}catch(e){}}
+/* while the shovel is out, a click on the map digs there (and nothing else: no country card) */
+{let dn=null;const inMap=e=>{const h=host();return h&&h.contains(e.target)&&!(e.target.closest&&e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj,button,input,label"))};
+ addEventListener("pointerdown",e=>{if(!S.shovelArm||!inMap(e))return;dn=[e.clientX,e.clientY,e.pointerId]},true);
+ addEventListener("pointerup",e=>{if(!S.shovelArm||!dn||e.pointerId!==dn[2])return;const moved=Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>6;dn=null;if(moved||!inMap(e))return;const ll=toLL(e.clientX,e.clientY);if(!ll)return;e.stopImmediatePropagation();e.preventDefault();S._shovelEat=Date.now();dig(ll)},true);
+ addEventListener("click",e=>{if(S._shovelEat&&Date.now()-S._shovelEat<600){e.stopImmediatePropagation();e.preventDefault();S._shovelEat=0}},true)}
+{const st=document.createElement("style");st.textContent=`.gfk-seg{display:inline-flex;background:#efe7dc;border-radius:999px;padding:2px;margin:4px 0 8px}.gfk-seg button{border:0;background:none;border-radius:999px;padding:5px 11px;font:700 12px system-ui;color:#5b3a17;cursor:pointer}.gfk-seg button.on{background:#8a5a2b;color:#fff}
+#gfkShovel{width:min(540px,calc(100vw - 24px))}.gfk-dig{display:flex;gap:14px;align-items:flex-start}.gfk-cut{width:170px;height:170px}.gfk-cut{width:150px;height:150px;flex:none}.gfk-digt p{margin:0 0 6px;font-size:13px;line-height:1.4}.gfk-digt small{opacity:.6}
+.gfk-hole{position:absolute;z-index:31;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#3b2a1a;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff,0 3px 8px rgba(0,0,0,.4);pointer-events:none}.gfk-hole-b{background:#2e7d32}
+@media (max-width:600px){.gfk-dig{flex-direction:column;align-items:center}}`;document.head.appendChild(st)}
 })();
