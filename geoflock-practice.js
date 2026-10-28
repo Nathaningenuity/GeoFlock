@@ -19,7 +19,7 @@ const css=document.createElement("style");css.textContent=`
 #appModeMapBtn,#appModeFlagBtn,#appModeCapitalBtn,#appModeLandformsBtn{ display:none !important; }
 #appModePracticeBtn{ --mc:#b8476f; }
 body.sky-theme #appModePracticeBtn{ --c:#e7a6bd; }
-body.sky-theme #appModeAllMapsBtn{ --c:#8fd1c4; } body.sky-theme #appModeApBtn{ --c:#aab8e8; }
+body.sky-theme #appModeAllMapsBtn{ --c:#8fd1c4; } #appModeApBtn{ --mc:#2a6fb0 !important; } body.sky-theme #appModeApBtn{ --c:#8fc3ea !important; }
 body.sky-theme #appModeTriviaBtn{ --c:#e9b07a; } body.sky-theme #appModeGamesBtn{ --c:#e3cc63; }
 body.pr-other #triviaModeTabs{ display:none !important; }
 /* subject tabs: attached to the top of the page, not floating pills */
