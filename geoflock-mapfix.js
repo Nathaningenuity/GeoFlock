@@ -599,3 +599,8 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
     svg.querySelectorAll("line").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d>RR+2){l.setAttribute("x1",(x+(x2-x)/d*RR).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*RR).toFixed(1))}}})})}}catch(e){}return r};psPhPinsSync._gfRing=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}
  const st=document.createElement("style");st.textContent=".ps-sq-lead circle.ps-ring2{ fill:none !important; stroke-width:2px !important; filter:drop-shadow(0 0 1px #fff); }";document.head.appendChild(st)})();
+
+/* 41: the time-zones tour runs on the satellite map, which is already dark: no dimming outside the highlighted places
+   (they keep their white outline) */
+(function(){const fix=()=>{if(typeof psDimFill!=="function"||psDimFill._gfTime)return false;const _d=psDimFill;psDimFill=function(){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="time")return"rgba(0,0,0,0)"}catch(e){}return _d.apply(this,arguments)};psDimFill._gfTime=1;return true};
+ if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
