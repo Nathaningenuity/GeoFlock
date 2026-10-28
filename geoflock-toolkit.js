@@ -22,6 +22,12 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 
 /* ================= the art ================= */
 const ART={
+geometry(u){/* a school geometry tin, open: protractor, set square and a drawing compass */
+ return`<svg viewBox="0 0 100 100" class="gfk-art"><defs><linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f6fb5"/><stop offset="1" stop-color="#25467e"/></linearGradient></defs>
+ <ellipse cx="50" cy="94" rx="40" ry="4" fill="#000" opacity=".22"/><rect x="8" y="40" width="84" height="50" rx="5" fill="url(#${u}t)" stroke="#183463" stroke-width="1"/><rect x="12" y="44" width="76" height="42" rx="3" fill="#e9eef6"/>
+ <path d="M18 80 A24 24 0 0 1 66 80 Z" fill="#cfe6ff" fill-opacity=".85" stroke="#2f6fb0" stroke-width="1"/><path d="M30 80 A12 12 0 0 1 54 80" fill="none" stroke="#2f6fb0" stroke-width=".7"/><g stroke="#2f6fb0" stroke-width=".6">${[...Array(9)].map((_,i)=>{const a=Math.PI*(i/8);return`<line x1="${42-22*Math.cos(a)}" y1="${80-22*Math.sin(a)}" x2="${42-19*Math.cos(a)}" y2="${80-19*Math.sin(a)}"/>`}).join("")}</g>
+ <path d="M66 82 L86 82 L86 54 Z" fill="#ffe08a" fill-opacity=".9" stroke="#b08a20" stroke-width="1"/>
+ <g transform="rotate(14 60 30)"><line x1="60" y1="6" x2="50" y2="58" stroke="#8a95a0" stroke-width="3" stroke-linecap="round"/><line x1="60" y1="6" x2="72" y2="58" stroke="#8a95a0" stroke-width="3" stroke-linecap="round"/><circle cx="60" cy="7" r="4.5" fill="#c8ced4" stroke="#6a737c"/><path d="M71 56 L73 64 L75 56Z" fill="#333"/><path d="M48.5 56 L50 64 L51.5 56Z" fill="#aaa"/></g></svg>`},
 shovel(u){/* a garden spade: steel blade, wooden shaft, D-handle */
  return`<svg viewBox="0 0 80 100" class="gfk-art"><defs><linearGradient id="${u}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa4ad"/><stop offset=".45" stop-color="#e3e8ec"/><stop offset="1" stop-color="#7d8790"/></linearGradient><linearGradient id="${u}w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a5713f"/><stop offset=".5" stop-color="#d49a5c"/><stop offset="1" stop-color="#8a5a2e"/></linearGradient></defs>
  <ellipse cx="44" cy="96" rx="22" ry="3" fill="#000" opacity=".2"/>
@@ -138,11 +144,11 @@ function ghostGeom(g){const key=g.at+"|"+(g.rot||0);if(!g._geo||g._at!==key){let
   if(g.rot){const r1=d3.geoRotation([-g.at[0],-g.at[1]]),r2=d3.geoRotation([0,0,g.rot]),f=p=>r1.invert(r2(r1(p))),ring=R=>R.map(f);G2=G2.type==="Polygon"?{type:"Polygon",coordinates:G2.coordinates.map(ring)}:{type:"MultiPolygon",coordinates:G2.coordinates.map(P=>P.map(ring))}}
   g._geo=G2;g._at=key}return g._geo}
 const GHOST_COLS=["#e8762a","#7a3fb0","#1e8c8a","#c8281c","#2f6fd0","#3a9a4a"];
-function penStyle(t){return PENS.find(p=>p[0]===t)||PENS[0]}
+function penStyle(t){return t==="geo"?["geo","",2.6,.95,"round"]:t==="geoDash"?["geoDash","",2,.9,"round"]:PENS.find(p=>p[0]===t)||PENS[0]}
 const inkCss=(c,P)=>`fill:none !important;stroke:${c} !important;stroke-width:${P[2]}px !important;stroke-opacity:${P[3]} !important;stroke-linecap:${P[4]} !important;stroke-linejoin:round !important;opacity:1 !important;stroke-dasharray:none !important;filter:none !important;`;
 function renderFlat(){const svg=svgEl();if(!svg)return;let g=svg.querySelector(":scope > g#gfKitLayer");if(!g){g=document.createElementNS(NS,"g");g.id="gfKitLayer";g.setAttribute("data-spin","no");svg.appendChild(g)}else if(g.nextElementSibling)svg.appendChild(g);
  const path=flatPath();if(!path)return;const k=unitsPerPx();let h="";
- K().ink.forEach((s,i)=>{const P=penStyle(s.t);const d=path({type:"LineString",coordinates:s.p});if(!d)return;
+ K().ink.forEach((s,i)=>{const P=penStyle(s.t);const d=path({type:"LineString",coordinates:s.p});if(!d)return;if(s.f){const df=path({type:"Polygon",coordinates:[s.p]});if(df)h+=`<path d="${df}" pointer-events="none" style="fill:${s.c};fill-opacity:.16;stroke:none"/>`}
   h+=`<path d="${d}" vector-effect="non-scaling-stroke" pointer-events="none" style="${inkCss(s.c,P)}${s.t==="highlighter"?"mix-blend-mode:multiply;":""}"/>`});
  if(S.stroke&&S.stroke.p.length>1){const P=penStyle(S.stroke.t),d=path({type:"LineString",coordinates:S.stroke.p});if(d)h+=`<path d="${d}" vector-effect="non-scaling-stroke" pointer-events="none" style="${inkCss(S.stroke.c,P)}"/>`}
  S.ghosts.forEach((G,i)=>{const d=path(ghostGeom(G));if(!d)return;const q=amtFromLL(G.at);
@@ -155,7 +161,8 @@ function renderGlobe(ctx,p){const path=d3.geoPath(p,ctx);ctx.save();
  try{const M=gfMS(),Sx=GF_STYLES[M.style],ov=amGlobe.cfg.overlays?amGlobe.cfg.overlays():{};if(Sx&&allMapsColorMode==="relief"&&ov.lakes){const O=globeOverlays(),c=[-amGlobe.rot[0],-amGlobe.rot[1]];
   ctx.fillStyle=Sx.sea[0][1];ctx.strokeStyle="rgba(0,0,0,.18)";ctx.lineWidth=.4;(O.lakes||[]).forEach(L=>{if(L.minor&&!ov.minorLakes&&!window._gfMinorOn)return;if(L.c&&d3.geoDistance(L.c,c)-(L.r||0)>Math.PI/2)return;ctx.beginPath();path(L);ctx.fill();ctx.stroke()})}}catch(e){}
  const strokes=K().ink.concat(S.stroke&&S.stroke.p.length>1?[S.stroke]:[]);
- strokes.forEach(s=>{const P=penStyle(s.t);ctx.globalAlpha=P[3];ctx.strokeStyle=s.c;ctx.lineWidth=P[2];ctx.lineCap=P[4];ctx.lineJoin="round";ctx.globalCompositeOperation=s.t==="highlighter"?"multiply":"source-over";ctx.beginPath();path({type:"LineString",coordinates:s.p});ctx.stroke()});
+ strokes.forEach(s=>{const P=penStyle(s.t);if(s.f){ctx.globalAlpha=.16;ctx.fillStyle=s.c;ctx.beginPath();path({type:"Polygon",coordinates:[s.p]});ctx.fill()}ctx.globalAlpha=P[3];ctx.strokeStyle=s.c;ctx.lineWidth=P[2];ctx.lineCap=P[4];ctx.lineJoin="round";ctx.setLineDash(s.t==="geoDash"?[6,5]:[]);ctx.globalCompositeOperation=s.t==="highlighter"?"multiply":"source-over";ctx.beginPath();path({type:"LineString",coordinates:s.p});ctx.stroke();ctx.setLineDash([])});
+ ctx.globalAlpha=1;strokes.forEach(s=>{if(!s.lab||!s.at)return;const q=p(s.at),r0=p.rotate();if(!q||!isFinite(q[0]))return;if(!amGlobe._flat&&d3.geoDistance(s.at,[-r0[0],-r0[1]])>Math.PI/2)return;ctx.font="800 12px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=3.5;ctx.strokeStyle="#fff";ctx.strokeText(s.lab,q[0],q[1]);ctx.fillStyle=s.c;ctx.fillText(s.lab,q[0],q[1])});
  ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";
  S.ghosts.forEach(G=>{ctx.beginPath();path(ghostGeom(G));ctx.fillStyle=G.col;ctx.globalAlpha=.45;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=G.col;ctx.lineWidth=2;ctx.stroke();const q=p(G.at),r0=p.rotate();if(q&&G.lab!==false&&d3.geoDistance(G.at,[-r0[0],-r0[1]])<Math.PI/2){ctx.font="800 12px system-ui";ctx.textAlign="center";ctx.lineWidth=3;ctx.strokeStyle=G.col;ctx.strokeText(G.label,q[0],q[1]);ctx.fillStyle="#fff";ctx.fillText(G.label,q[0],q[1])}});
  const r0=p.rotate();K().pins.forEach(pn=>{if(d3.geoDistance(pn.ll,[-r0[0],-r0[1]])>Math.PI/2-.02)return;const q=p(pn.ll);if(!q)return;const col=(PINKIND[pn.k]||PINKIND.note)[1],[x,y]=q;
@@ -171,10 +178,10 @@ function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forE
  if(!all){all=document.createElement("button");all.type="button";all.className="gfk-gall";all.textContent="Put all countries back";all.addEventListener("pointerdown",e=>e.stopPropagation(),true);all.onclick=e=>{e.stopPropagation();S.ghosts.length=0;render()};h.appendChild(all)}}
 
 /* ================= the tray ================= */
-const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there"],["ruler","Ruler","Drop it on the map, then click two places to measure"],
+const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there"],["geometry","Geometry set","Ruler, drawing compass, range rings, straight lines, shapes, and a place's latitude and longitude around the world"],
  ["pens","Pens","Pick a pen and colour, then draw on the map"],["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Roll for somewhere random"],
  ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"],["shovel","Shovel","Dig straight through the Earth, or cut a cross-section of the land"]];
-function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):t==="shovel"?ART.shovel(u):ART.sea(u)}
+function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):t==="shovel"?ART.shovel(u):t==="geometry"?ART.geometry(u):ART.sea(u)}
 function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.className="gfk-tray";
  tr.innerHTML='<button type="button" class="gfk-tab" aria-expanded="true" title="Show or hide the toolkit"><span>Toolkit</span><i>▾</i></button><div class="gfk-felt">'+
   TOOLS.map(([id,n,t])=>`<button type="button" class="gfk-slot gfk-${id}" data-tool="${id}" title="${esc(t)}" aria-label="${esc(n)}">${artFor(id)}<span>${esc(n.replace("Country dragger","Dragger").replace("Sea level changer","Sea level"))}</span></button>`).join("")+"</div>";
@@ -223,12 +230,13 @@ setInterval(()=>{const o=S.place.compass;if(o&&o.el.isConnected)updCompass(o)},6
 /* ================= what each tool does ================= */
 function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClientRect();
  if(t==="compass"||t==="ruler"){if(S.place[t])putAway(t);else dropTool(t,r.left+r.width*(t==="compass"?.18:.5),r.top+r.height*(t==="compass"?.55:.8))}
- else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelPanel()}
+ else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelPanel();else if(t==="geometry")geoPanel()}
 function dropTool(t,cx,cy){if(t==="compass")placeAt("compass",cx,cy);
  else if(t==="ruler"){placeAt("ruler",cx,cy);measure(true)}
  else if(t==="pins")newPin(toLL(cx,cy),cx,cy);
  else if(t==="dice")roll(null,cx,cy);
  else if(t==="dragger"){const f=countryAt(cx,cy);dragOn(true);if(f&&f.properties.c!=="aq")lift(f,toLL(cx,cy))}
+ else if(t==="geometry"){geoPanel();const ll=toLL(cx,cy);if(ll&&GEO.mode==="lineup")lineUp(ll)}
  else if(t==="pens")penPicker();else if(t==="palette")openPalette();else if(t==="sea")seaPanel();else if(t==="shovel"){const ll=toLL(cx,cy);if(ll)dig(ll);else shovelPanel()}}
 function clickPlaced(t){if(t==="ruler")measure(true)}
 function putAway(t){const o=S.place[t];if(o){o.el.remove();delete S.place[t]}if(t==="ruler")measure(false);if(t==="pens")penStop();if(t==="pins")pinArm(false);if(t==="dragger")dragOn(false);sync()}
@@ -673,4 +681,79 @@ function flyTo(ll){try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host.is
 #gfkShovel{width:min(540px,calc(100vw - 24px))}.gfk-dig{display:flex;gap:14px;align-items:flex-start}.gfk-cut{width:170px;height:170px}.gfk-cut{width:150px;height:150px;flex:none}.gfk-digt p{margin:0 0 6px;font-size:13px;line-height:1.4}.gfk-digt small{opacity:.6}
 .gfk-hole{position:absolute;z-index:31;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:#3b2a1a;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff,0 3px 8px rgba(0,0,0,.4);pointer-events:none}.gfk-hole-b{background:#2e7d32}
 @media (max-width:600px){.gfk-dig{flex-direction:column;align-items:center}}`;document.head.appendChild(st)}
+
+/* --- geometry set: ruler, drawing compass, range rings, straight lines, rectangles and ovals, and "line up" (a place's latitude and
+   longitude drawn around the world). "True to the globe": lines follow the Earth's curve and rings keep a real distance; off, shapes look
+   exactly as drawn on the screen. Shapes are kept with the drawings (Pens' Undo and Clear work on them too). --- */
+const GEO={mode:"compass",tru:true,km:1000,col:"#c8281c"};
+try{Object.assign(GEO,K().geo||{})}catch(e){}
+const geoSave=()=>{try{K().geo={mode:GEO.mode,tru:GEO.tru,km:GEO.km,col:GEO.col};save()}catch(e){}};
+const RAD=Math.PI/180,KM=6371;
+function dest(ll,brg,d){const f1=ll[1]*RAD,l1=ll[0]*RAD,t=brg*RAD,f2=Math.asin(Math.sin(f1)*Math.cos(d)+Math.cos(f1)*Math.sin(d)*Math.cos(t)),l2=l1+Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(f1),Math.cos(d)-Math.sin(f1)*Math.sin(f2));return[((l2/RAD+540)%360)-180,f2/RAD]}
+function bearing(a,b){const f1=a[1]*RAD,f2=b[1]*RAD,dl=(b[0]-a[0])*RAD;return Math.atan2(Math.sin(dl)*Math.cos(f2),Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl))/RAD}
+const gc=(a,b,n)=>{const f=d3.geoInterpolate(a,b),o=[];for(let i=0;i<=n;i++)o.push(f(i/n));return o};
+const kmTxt=k=>(k>=100?Math.round(k):k.toFixed(1)).toLocaleString()+" km";
+const fix=pts=>pts.filter(q=>q&&isFinite(q[0])).map(q=>[+q[0].toFixed(3),+q[1].toFixed(3)]);
+/* screen shapes, turned into places point by point */
+const scr=pts=>fix(pts.map(q=>toLL(q[0],q[1])));
+function shape(mode,a,b,shift,A,B){/* a,b: screen points; A,B: their places */
+ if(mode==="line"){if(GEO.tru){const d=d3.geoDistance(A,B)*KM;return{p:fix(gc(A,B,64)),lab:kmTxt(d),at:d3.geoInterpolate(A,B)(.5)}}const n=48;return{p:scr([...Array(n+1)].map((_,i)=>[a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]))}}
+ if(mode==="compass"){if(GEO.tru){const d=d3.geoDistance(A,B);if(shift){const b0=bearing(A,B),C=[0,1,2,3,4].map(k=>dest(A,b0+k*90,d));let p=[];for(let k=0;k<4;k++)p=p.concat(gc(C[k],C[k+1],24));return{p:fix(p),f:1,lab:kmTxt(d*KM),at:A}}
+   const ring=d3.geoCircle().center(A).radius(d/RAD).precision(1.5)().coordinates[0];return{p:fix(ring),f:1,lab:"r = "+kmTxt(d*KM),at:A}}
+  const r=Math.hypot(b[0]-a[0],b[1]-a[1]);if(shift)return{p:scr([[a[0]-r,a[1]-r],[a[0]+r,a[1]-r],[a[0]+r,a[1]+r],[a[0]-r,a[1]+r],[a[0]-r,a[1]-r]].flatMap((q,i,L)=>i?[...Array(12)].map((_,k)=>[L[i-1][0]+(q[0]-L[i-1][0])*(k+1)/12,L[i-1][1]+(q[1]-L[i-1][1])*(k+1)/12]):[q])),f:1};
+  return{p:scr([...Array(73)].map((_,i)=>[a[0]+r*Math.cos(i/72*2*Math.PI),a[1]+r*Math.sin(i/72*2*Math.PI)])),f:1}}
+ if(mode==="rect"||mode==="oval"){let x0=a[0],y0=a[1],x1=b[0],y1=b[1];
+  if(GEO.tru){let w=A[0],e=B[0],sN=A[1],nN=B[1];if(shift){const k=Math.cos(((sN+nN)/2)*RAD);const half=Math.abs(e-w)*k/2,mid=(sN+nN)/2,sg=nN>=sN?1:-1;nN=mid+sg*half;sN=mid-sg*half}
+   if(mode==="rect"){const P=[];const N=40;for(let i=0;i<=N;i++)P.push([w+(e-w)*i/N,sN]);for(let i=0;i<=N;i++)P.push([e,sN+(nN-sN)*i/N]);for(let i=0;i<=N;i++)P.push([e-(e-w)*i/N,nN]);for(let i=0;i<=N;i++)P.push([w,nN-(nN-sN)*i/N]);return{p:fix(P),f:1}}
+   const cx=(w+e)/2,cy=(sN+nN)/2,rx=Math.abs(e-w)/2,ry=Math.abs(nN-sN)/2;return{p:fix([...Array(97)].map((_,i)=>[cx+rx*Math.cos(i/96*2*Math.PI),cy+ry*Math.sin(i/96*2*Math.PI)])),f:1}}
+  if(shift){const d=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));x1=x0+Math.sign(x1-x0||1)*d;y1=y0+Math.sign(y1-y0||1)*d}
+  if(mode==="rect"){const C=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]],P=[C[0]];for(let i=1;i<5;i++)for(let k=1;k<=16;k++)P.push([C[i-1][0]+(C[i][0]-C[i-1][0])*k/16,C[i-1][1]+(C[i][1]-C[i-1][1])*k/16]);return{p:scr(P),f:1}}
+  const cx=(x0+x1)/2,cy=(y0+y1)/2,rx=Math.abs(x1-x0)/2,ry=Math.abs(y1-y0)/2;return{p:scr([...Array(73)].map((_,i)=>[cx+rx*Math.cos(i/72*2*Math.PI),cy+ry*Math.sin(i/72*2*Math.PI)])),f:1}}
+ return null}
+function ringAt(A){const ring=d3.geoCircle().center(A).radius(GEO.km/KM/RAD).precision(1.5)().coordinates[0];return{p:fix(ring),f:1,lab:kmTxt(GEO.km),at:A}}
+function keep(o){if(!o||!o.p||o.p.length<2)return;const k=K();k.ink.push(Object.assign({t:o.t||"geo",c:GEO.col},o));if(k.ink.length>400)k.ink.shift();save();render()}
+/* line up: a place's latitude all the way round, and its meridian pole to pole */
+let CITYLL=null;function cities(){if(CITYLL)return CITYLL;const PJ=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);CITYLL=[];try{(typeof ALLMAPS_CITIES!=="undefined"?ALLMAPS_CITIES:[]).forEach(r=>{const ll=PJ.invert([r[3],r[4]]);if(ll&&isFinite(ll[0]))CITYLL.push({n:r[0],ll,cap:r[2]===1})})}catch(e){}return CITYLL}
+const fmtLat=v=>Math.abs(v).toFixed(1)+"°"+(v>=0?"N":"S"),fmtLon=v=>Math.abs(v).toFixed(1)+"°"+(v>=0?"E":"W");
+function ctyOf(ll){try{for(const f of projFeatures()){if(f.geometry&&d3.geoContains(f,ll)){const c=String(f.properties.c).toLowerCase();return(COUNTRY_BY_CODE[c]||{}).n||null}}}catch(e){}return null}
+function lineUp(ll,name){const C=cities();if(!name){let best=null,bd=60/KM;C.forEach(c=>{const a=Math.sin((ll[1]-c.ll[1])*RAD/2)**2+Math.cos(c.ll[1]*RAD)*Math.cos(ll[1]*RAD)*Math.sin((ll[0]-c.ll[0])*RAD/2)**2,d=2*Math.asin(Math.min(1,Math.sqrt(a)));if(d<bd){bd=d;best=c}});if(best){name=best.n;ll=best.ll}}
+ const lat=ll[1],lon=ll[0],par=[],mer=[];for(let x=-180;x<=180;x+=2)par.push([x,lat]);for(let y=-89;y<=89;y+=2)mer.push([lon,y]);
+ keep({t:"geoDash",p:fix(par),lab:(name?name+" · ":"")+fmtLat(lat),at:[lon,lat+(lat>80?-2:2)]});keep({t:"geoDash",p:fix(mer)});
+ /* own great-circle distance (the flat map answers 0 for its own centre) */
+ const hav=(p,q)=>{const a=Math.sin((q[1]-p[1])*RAD/2)**2+Math.cos(p[1]*RAD)*Math.cos(q[1]*RAD)*Math.sin((q[0]-p[0])*RAD/2)**2;return 2*Math.asin(Math.min(1,Math.sqrt(a)))},far=c=>hav(c.ll,ll)*KM>900;
+ const lv=C.filter(c=>far(c)&&Math.abs(c.ll[1]-lat)<.8).sort((a,b)=>(b.cap-a.cap)||Math.abs(a.ll[1]-lat)-Math.abs(b.ll[1]-lat)).slice(0,8);
+ const ln=C.filter(c=>far(c)&&Math.abs(((c.ll[0]-lon+540)%360)-180)<.8).sort((a,b)=>(b.cap-a.cap)).slice(0,6);
+ const li=(c,k)=>'<li><b>'+esc(c.n)+'</b>'+(ctyOf(c.ll)?', '+esc(ctyOf(c.ll)):'')+' <small>'+(k==="lat"?fmtLat(c.ll[1]):fmtLon(c.ll[0]))+'</small></li>';
+ const box=document.querySelector("#gfkGeo .gfk-lu");if(box)box.innerHTML='<p><b>'+esc(name||"This place")+'</b> is at '+fmtLat(lat)+', '+fmtLon(lon)+'.</p>'+
+  (lv.length?'<p class="gfk-hint">Level with it (the same latitude):</p><ul class="gfk-lul">'+lv.map(c=>li(c,"lat")).join("")+'</ul>':'')+(ln.length?'<p class="gfk-hint">Due north and south (the same longitude):</p><ul class="gfk-lul">'+ln.map(c=>li(c,"lon")).join("")+'</ul>':'')}
+const MODES=[["ruler","📏","Ruler","Measure the distance between two places"],["compass","🧭","Compass","Drag from the centre outwards to draw a circle. Hold Shift for a square"],["ring","◎","Range ring","Click a place: a ring shows everything within that distance"],
+ ["line","╱","Straight line","Drag from one place to another"],["rect","▭","Rectangle","Drag a box. Hold Shift for a square"],["oval","⬭","Oval","Drag a box. Hold Shift for a circle"],["lineup","✛","Line up","Click a place (or type a city) to draw its latitude and longitude around the world"]];
+const GCOLS=["#c8281c","#2a3f8f","#1e8c8a","#2f8f3e","#e8762a","#7a3fb0","#1d1b18"];
+function geoPanel(){const M=MODES.find(m=>m[0]===GEO.mode)||MODES[1];
+ const p=panel("gfkGeo",'<b class="gfk-ph">Geometry set</b><div class="gfk-geom">'+MODES.map(m=>'<button type="button" data-gm="'+m[0]+'" class="'+(m[0]===GEO.mode?"on":"")+'" title="'+esc(m[3])+'"><i>'+m[1]+'</i>'+m[2]+'</button>').join("")+'</div>'+
+  '<p class="gfk-hint">'+esc(M[3])+'.</p>'+
+  (GEO.mode==="ring"?'<div class="gfk-km"><input type="number" min="1" max="20000" step="50" value="'+GEO.km+'" aria-label="Distance in km"> km '+[100,500,1000,2000,5000].map(k=>'<button type="button" data-km="'+k+'">'+k.toLocaleString()+'</button>').join("")+'</div>':'')+
+  (GEO.mode==="lineup"?'<input type="search" class="gfk-lus" placeholder="Type a city, e.g. Rome" list="gfkLuList"><datalist id="gfkLuList">'+cities().slice(0,1200).map(c=>'<option value="'+esc(c.n)+'">').join("")+'</datalist><div class="gfk-lu"></div>':'')+
+  (GEO.mode!=="ruler"&&GEO.mode!=="lineup"?'<label class="gfk-chk"><input type="checkbox" '+(GEO.tru?"checked":"")+' data-tru> True to the globe <small>'+(GEO.tru?"(lines follow the Earth's curve; sizes are real distances)":"(shapes look exactly as you draw them)")+'</small></label>':'')+
+  '<div class="gfk-cols">'+GCOLS.map(c=>'<button type="button" data-gc="'+c+'" style="background:'+c+'" class="'+(c===GEO.col?"on":"")+'" aria-label="Colour"></button>').join("")+'</div>'+
+  '<div class="gfk-acts"><button type="button" data-act="undo">Undo</button><button type="button" data-act="clear">Clear all drawings</button></div>',true);if(!p)return;
+ p.querySelectorAll("[data-gm]").forEach(b=>b.onclick=()=>{GEO.mode=b.dataset.gm;geoSave();geoPanel()});
+ const tr=p.querySelector("[data-tru]");if(tr)tr.onchange=()=>{GEO.tru=tr.checked;geoSave();geoPanel()};
+ p.querySelectorAll("[data-gc]").forEach(b=>b.onclick=()=>{GEO.col=b.dataset.gc;geoSave();p.querySelectorAll("[data-gc]").forEach(x=>x.classList.toggle("on",x===b))});
+ const ki=p.querySelector(".gfk-km input");if(ki){ki.onchange=()=>{GEO.km=Math.max(1,Math.min(20000,+ki.value||1000));geoSave()};p.querySelectorAll("[data-km]").forEach(b=>b.onclick=()=>{GEO.km=+b.dataset.km;ki.value=GEO.km;geoSave()})}
+ const ls=p.querySelector(".gfk-lus");if(ls)ls.onchange=()=>{const v=ls.value.trim().toLowerCase(),c=cities().find(x=>x.n.toLowerCase()===v)||cities().find(x=>x.n.toLowerCase().startsWith(v));if(c){lineUp(c.ll,c.n);try{amGlobe.rot=[-c.ll[0],-c.ll[1]];amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}}};
+ p.querySelector('[data-act="undo"]').onclick=()=>{const k=K();if(k.ink.length){k.ink.pop();save();render()}};
+ p.querySelector('[data-act="clear"]').onclick=()=>{if(!K().ink.length)return;if(confirm("Clear all your drawings and shapes?")){K().ink=[];save();render()}};
+ if(GEO.mode==="ruler"){capture(false);if(!S.place.ruler){const h=host();if(h){const r=h.getBoundingClientRect();dropTool("ruler",r.left+r.width*.5,r.top+r.height*.8)}}else measure(true);return}
+ if(S.pen){S.pen=null;sync()}pinArm(false);
+ let a=null,A=null;capture(true,"crosshair",{
+  down:e=>{a=[e.clientX,e.clientY];A=toLL(e.clientX,e.clientY);if(!A){a=null;return}if(GEO.mode==="ring"){keep(ringAt(A));a=null}else if(GEO.mode==="lineup"){lineUp(A);a=null}},
+  move:e=>{if(!a)return;const B=toLL(e.clientX,e.clientY);if(!B)return;const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);S.stroke=o?{t:"geo",c:GEO.col,p:o.p}:null;render()},
+  up:e=>{if(!a)return;S.stroke=null;const B=toLL(e.clientX,e.clientY);if(B&&Math.hypot(e.clientX-a[0],e.clientY-a[1])>5)keep(shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B));a=null;render()}});
+ /* closing the set puts the drawing tool away */
+ clearInterval(geoPanel._t);geoPanel._t=setInterval(()=>{if(!document.getElementById("gfkGeo")){clearInterval(geoPanel._t);if(!S.pen)capture(false)}},400)}
+{const st=document.createElement("style");st.textContent=`#gfkGeo{width:min(400px,calc(100vw - 24px))}.gfk-geom{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:6px 0}.gfk-geom button{border:1px solid #d9cdb8;background:#fffaf0;border-radius:10px;padding:6px 2px;font:700 11px system-ui;color:#4a3520;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}.gfk-geom button i{font-style:normal;font-size:16px}.gfk-geom button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}
+.gfk-km{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:4px 0}.gfk-km input{width:80px;font:inherit;padding:3px 6px;border-radius:8px;border:1px solid #ccb}.gfk-km button{border:1px solid #d9cdb8;background:#fff;border-radius:999px;padding:2px 8px;font:600 11px system-ui;cursor:pointer}
+.gfk-cols{display:flex;gap:6px;margin:8px 0}.gfk-cols button{width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #bbb;cursor:pointer}.gfk-cols button.on{box-shadow:0 0 0 2px #1d1b18}
+.gfk-lus{width:100%;box-sizing:border-box;font:inherit;padding:6px 10px;border-radius:999px;border:1px solid #ccb;margin:4px 0}.gfk-lu p{margin:6px 0 2px;font-size:13px}.gfk-lul{margin:0;padding-left:18px;font-size:12.5px;columns:2}.gfk-lul small{opacity:.6}`;document.head.appendChild(st)}
 })();
