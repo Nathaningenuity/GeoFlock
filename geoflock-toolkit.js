@@ -340,7 +340,9 @@ function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin
  p.querySelector('[data-act="del"]').onclick=()=>{const b=q.b;K().pins.splice(i,1);if(b)sameNames(b);save();render();closePanels()};p.querySelector('[data-act="ok"]').onclick=closePanels;setTimeout(()=>nm.focus(),30)}
 /* pins on the map: click to edit, drag to move, drag into the tray to remove */
 function pinAt(cx,cy){const P=K().pins;let best=-1,bd=10;P.forEach((q,i)=>{const s=toScreen(q.ll);if(!s)return;const d=Math.min(Math.hypot(s[0]-cx,s[1]-20-cy),Math.hypot(s[0]-cx,s[1]-10-cy)*1.3);if(d<bd){bd=d;best=i}});return best}
-function ghostAt(cx,cy){if(!S.ghosts.length)return-1;const ll=toLL(cx,cy);if(!ll)return-1;for(let i=S.ghosts.length-1;i>=0;i--){try{if(d3.geoContains(ghostGeom(S.ghosts[i]),ll))return i}catch(e){}}return-1}
+function ghostAt(cx,cy){if(!S.ghosts.length)return-1;const ll=toLL(cx,cy);if(ll)for(let i=S.ghosts.length-1;i>=0;i--){try{if(d3.geoContains(ghostGeom(S.ghosts[i]),ll))return i}catch(e){}}
+ /* a boost for tiny ones (the Maldives, a lone islet): a click within 16 px of a moved piece picks it up */
+ let best=-1,bd=16;S.ghosts.forEach((G,i)=>{try{const q=toScreen(G.at);if(!q)return;const d=Math.hypot(q[0]-cx,q[1]-cy);if(d<bd){bd=d;best=i}}catch(e){}});return best}
 document.addEventListener("pointerdown",e=>{if(e.button||!host()||S.pen||S.dragging)return;const h=host();if(!h.contains(e.target)||e.target.closest(".gfk-tray,.gfk-panel,.gfk-obj,.map-zoom-controls,button,input,label"))return;
  const pi=pinAt(e.clientX,e.clientY),gi=pi<0?ghostAt(e.clientX,e.clientY):-1;if(pi<0&&gi<0)return;
  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();const x0=e.clientX,y0=e.clientY;let moved=false;const G=gi>=0?S.ghosts[gi]:null,ll0=toLL(x0,y0),at0=G?G.at.slice():null;
@@ -495,16 +497,18 @@ const FPOS={};
 function freeDrag(el,handleSel,key,onDone){if(el._gfkFree)return;el._gfkFree=1;
  el.addEventListener("pointerdown",e=>{const h=e.target.closest&&e.target.closest(handleSel);if(!h||e.button||e.target.closest("button:not(.flk-pill),input,select,a"))return;if(!e.target.closest(".flk-pill"))e.preventDefault();const r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top,x0=e.clientX,y0=e.clientY;let moved=false;
   const mv=ev=>{if(!moved&&Math.hypot(ev.clientX-x0,ev.clientY-y0)<5)return;if(!moved){moved=true;el.classList.add("gfk-moving")}ev.preventDefault();
-   const l=Math.max(60-r.width,Math.min(innerWidth-60,ev.clientX-dx)),t=Math.max(4,Math.min(innerHeight-30,ev.clientY-dy));el.style.setProperty("left",l+"px","important");el.style.setProperty("top",t+"px","important");el.style.setProperty("right","auto","important");el.style.setProperty("bottom","auto","important");FPOS[key]=[l,t]};
+   const l=Math.max(60-r.width,Math.min(innerWidth-60,ev.clientX-dx)),t=Math.max(4,Math.min(innerHeight-30,ev.clientY-dy));if(BR.has(key)){/* held by its bottom-right corner, so it opens up and to the left */const rr=Math.max(0,innerWidth-l-r.width),bb=Math.max(0,innerHeight-t-r.height);place(el,key,[rr,bb]);FPOS[key]=[rr,bb]}else{el.style.setProperty("left",l+"px","important");el.style.setProperty("top",t+"px","important");el.style.setProperty("right","auto","important");el.style.setProperty("bottom","auto","important");FPOS[key]=[l,t]}};
   const up=ev=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up,true);el.classList.remove("gfk-moving");if(moved){const stop=c=>{c.stopPropagation();c.preventDefault();removeEventListener("click",stop,true)};addEventListener("click",stop,true);setTimeout(()=>removeEventListener("click",stop,true),50);onDone&&onDone()}};
   addEventListener("pointermove",mv);addEventListener("pointerup",up,true)})}
-function restore(el,key){const p=FPOS[key];if(!p)return;el.style.setProperty("left",p[0]+"px","important");el.style.setProperty("top",p[1]+"px","important");el.style.setProperty("right","auto","important");el.style.setProperty("bottom","auto","important")}
+const BR=new Set(["keyBR"]);
+function place(el,key,p){el.style.setProperty("right",p[0]+"px","important");el.style.setProperty("bottom",p[1]+"px","important");el.style.setProperty("left","auto","important");el.style.setProperty("top","auto","important")}
+function restore(el,key){const p=FPOS[key];if(!p)return;if(BR.has(key)){place(el,key,p);return}el.style.setProperty("left",p[0]+"px","important");el.style.setProperty("top",p[1]+"px","important");el.style.setProperty("right","auto","important");el.style.setProperty("bottom","auto","important")}
 setInterval(()=>{try{
  /* Map style panel: lifted out of the map onto the page, so it can go anywhere */
  const ms=document.getElementById("gfMsPanel");if(ms&&!ms._gfkFree){const r=ms.getBoundingClientRect();document.body.appendChild(ms);ms.classList.add("gfk-free");ms.style.setProperty("left",r.left+"px","important");ms.style.setProperty("top",Math.max(8,r.top)+"px","important");restore(ms,"ms");freeDrag(ms,".gf-ms-h","ms")}
  if(ms&&appMode!=="allmaps")ms.remove();
  /* the map key (bottom right) */
- const k=document.getElementById("flKey");if(k){freeDrag(k,".flk-h,.flk-pill","key");if(FPOS.key&&!k.style.left)restore(k,"key")}}catch(e){}},300);
+ const k=document.getElementById("flKey");if(k){freeDrag(k,".flk-h,.flk-pill","keyBR");if(FPOS.keyBR&&!k.style.right)restore(k,"keyBR")}}catch(e){}},300);
 window.gfToolkit={cursorFor,S,K,render,toLL,toScreen,putAway,dropTool,openPalette,seaPanel,penPicker,pinMenu,lift};
 
 /* ================= look ================= */

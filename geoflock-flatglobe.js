@@ -101,7 +101,7 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
 /* the map's own hover runs once per pointer move, whichever listener hears it first */
 {const _hv=GlobeView.prototype._hover;GlobeView.prototype._hover=function(e){if(e&&typeof e==="object"){if(e._gfHov===this)return;try{e._gfHov=this}catch(er){}}return _hv.apply(this,arguments)}}
 function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g.canvas,pts=new Map;let drag=null,pinch=null,target=null,raf=0;
- const inMap=e=>{const rc=c.getBoundingClientRect();return e.clientX>=rc.left&&e.clientX<=rc.right&&e.clientY>=rc.top&&e.clientY<=rc.bottom&&!(e.target.closest&&e.target.closest(".globe-btns,.globe-tip,.gfk-coord,button,a,input"))};
+ const inMap=e=>{const rc=c.getBoundingClientRect();return e.clientX>=rc.left&&e.clientX<=rc.right&&e.clientY>=rc.top&&e.clientY<=rc.bottom&&!(e.target.closest&&e.target.closest(".globe-btns,.globe-tip,.gfk-coord,button,a,input,.gfk-cap,.gfk-obj,.gfk-tray,.gfk-panel,.gfk-pin"))};/* the toolkit's pens, pins and objects handle their own pointer */
  const stop=e=>{e.stopPropagation();e.stopImmediatePropagation()};
  /* zoom glides to its target a little each frame, like zooming a photo */
  const glide=()=>{raf=0;if(!target)return;const z=g.zoom,dz=Math.log(target.z/z);if(Math.abs(dz)<.004){g.setZoom(target.z,target.at);target=null;return}g.setZoom(z*Math.exp(dz*.35),target.at);raf=requestAnimationFrame(glide)};
@@ -121,6 +121,7 @@ function wire(g){if(g._gfFlatWired)return;g._gfFlatWired=1;const host=g.host,c=g
   if(drag&&!drag.moved&&e.type==="pointerup"){const x=e.clientX,y=e.clientY;drag=null;
    if(g._measure){g._measureClick(x,y);return}
    if(g.cfg.clickLL){const rc=c.getBoundingClientRect(),ll=g.projection().invert([x-rc.left,y-rc.top]);if(ll)g.cfg.clickLL(ll);return}
+   if(document.querySelector(".gfk-pinning"))return;/* a click while pins are armed drops a pin (the toolkit does that), not open the country */
    const hh=g.hit(x,y);if(hh&&hh.code&&g.cfg.click)g.cfg.click(hh.code);return}
   if(drag&&drag.moved)g.request();drag=null};
  host.addEventListener("pointerup",up,true);host.addEventListener("pointercancel",up,true);
