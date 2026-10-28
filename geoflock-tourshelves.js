@@ -30,19 +30,24 @@ window.gfTourShelves=SHELVES;
 /* ---------- shelf tabs at the top of the Tours page: All, or one shelf at a time (remembered) ---------- */
 const COL={start:"#6ed0c8",physical:"#c9a06a",living:"#7cc77a",culture:"#f2a7bd",ideas:"#b79be6",power:"#8fb6f2",history:"#e9b07a",cont:"#7cd2f0",books:"#d9b98a"};
 const css=document.createElement("style");css.textContent=`
-.tr-shelf-tabs{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:4px auto 14px; max-width:1100px; }
-.tr-shelf-tabs button{ font:inherit; font-weight:700; font-size:13.5px; display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:999px; cursor:pointer;
+.tr-shelf-tabs{ display:flex; flex-wrap:nowrap; justify-content:flex-start; gap:5px; margin:2px 0 10px; overflow-x:auto; scrollbar-width:none; padding:2px; }
+.tr-shelf-tabs::-webkit-scrollbar{ display:none; }
+#toursView .tr-hero.tr-hero-s:not(.dg-head){ padding-top:6px !important; padding-bottom:4px !important; margin-bottom:4px !important; }
+#toursView .tr-hero.tr-hero-s:not(.dg-head) h2{ font-size:26px !important; margin:0 0 2px !important; }
+#toursView .tr-hero.tr-hero-s:not(.dg-head) p{ margin:0 0 6px !important; font-size:14px !important; }
+.tr-shelf-tabs button{ font:inherit; font-weight:700; font-size:12.5px; display:inline-flex; align-items:center; gap:5px; padding:4px 11px; flex:none; white-space:nowrap; border-radius:999px; cursor:pointer;
  border:2px solid var(--c); background:rgba(255,255,255,.6); color:#24304a; transition:background .15s; }
 .tr-shelf-tabs button:hover{ background:color-mix(in srgb,var(--c) 30%,#fff); }
 .tr-shelf-tabs button.on{ background:var(--c); }
-.tr-shelf-tabs button i{ font-style:normal; font-weight:600; font-size:11.5px; opacity:.6; }
+.tr-shelf-tabs button i{ font-style:normal; font-weight:600; font-size:10.5px; opacity:.6; }
 body.dark .tr-shelf-tabs button{ background:rgba(20,26,38,.55); color:#e8ecf3; } body.dark .tr-shelf-tabs button.on{ background:var(--c); color:#141a26; }
 .tr-sec.tr-off{ display:none !important; }
 @media (max-width:760px){ .tr-shelf-tabs{ flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; scrollbar-width:none; padding:0 8px; } .tr-shelf-tabs button{ flex:none; font-size:12.5px; padding:6px 11px; } }`;
 document.head.appendChild(css);
 let SEL="all";try{SEL=localStorage.getItem("gfTourShelf")||"all"}catch(e){}
 function tabs(){const v=document.getElementById("toursView");if(!v)return;const w=v.querySelector(".tr-wrap");if(!w)return;
- const secs=[...w.querySelectorAll(":scope > section.tr-sec")],byName=Object.fromEntries(SHELVES.map(x=>[x[1],x[0]]));
+ /* only the tour shelves (the Diagrams & simulations sections come after their own header) */
+ const dg=w.querySelector(":scope > .dg-head"),secs=[...w.querySelectorAll(":scope > section.tr-sec")].filter(x=>!dg||(dg.compareDocumentPosition(x)&Node.DOCUMENT_POSITION_PRECEDING)),byName=Object.fromEntries(SHELVES.map(x=>[x[1],x[0]]));
  secs.forEach(sec=>{const h=sec.querySelector("h3");sec.dataset.g=h&&byName[h.textContent.trim()]||"other"});
  const present=SHELVES.filter(x=>secs.some(sec=>sec.dataset.g===x[0]));if(!present.some(x=>x[0]===SEL))SEL="all";
  let nav=w.querySelector(".tr-shelf-tabs");if(!nav){nav=document.createElement("nav");nav.className="tr-shelf-tabs";nav.setAttribute("aria-label","Kinds of tour");const bar=w.querySelector(".ts-bar");if(bar)w.insertBefore(nav,bar);else return}
@@ -51,7 +56,7 @@ function tabs(){const v=document.getElementById("toursView");if(!v)return;const 
  nav.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{SEL=b.dataset.sh;try{localStorage.setItem("gfTourShelf",SEL)}catch(e){}tabs();const q=w.querySelector(".ts-in");if(q&&q.value){q.value="";q.dispatchEvent(new Event("input",{bubbles:true}))}});
  filter()}
 function filter(){const w=document.querySelector("#toursView .tr-wrap");if(!w)return;const q=w.querySelector(".ts-in"),searching=!!(q&&q.value.trim());
- w.querySelectorAll(":scope > section.tr-sec").forEach(sec=>sec.classList.toggle("tr-off",!searching&&SEL!=="all"&&sec.dataset.g!==SEL));
+ const dg=w.querySelector(":scope > .dg-head");w.querySelectorAll(":scope > section.tr-sec").forEach(sec=>{const tour=!dg||(dg.compareDocumentPosition(sec)&Node.DOCUMENT_POSITION_PRECEDING);sec.classList.toggle("tr-off",tour&&!searching&&SEL!=="all"&&sec.dataset.g!==SEL)});
  if(q&&!q._gfSh){q._gfSh=1;q.addEventListener("input",()=>setTimeout(filter,0))}}
 if(typeof renderToursView==="function"){const _rt=renderToursView;renderToursView=function(){const r=_rt.apply(this,arguments);try{tabs()}catch(e){console.error(e)}return r}}
 if(typeof toursRegroup==="function"){const _r=toursRegroup;toursRegroup=function(){const r=_r.apply(this,arguments);apply();return r}}
