@@ -8,7 +8,7 @@
 (function(){
 if(typeof GlobeView==="undefined"||typeof amGlobeOn!=="function"||typeof d3==="undefined"||!d3.geoRobinson)return;
 const RX=.8487,RY=1.3523;/* Robinson's width and height factors */
-const tour=()=>typeof ps!=="undefined"&&!!ps;
+const tour=()=>typeof ps!=="undefined"&&!!ps||!!window._gfPsStarting;
 function flatWanted(){try{return typeof appMode!=="undefined"&&appMode==="allmaps"&&FEATURES.globe&&!globePrefs().allmaps&&ALLMAPS_GLOBE_MODES.has(allMapsColorMode)&&!(typeof proj!=="undefined"&&proj.on)&&!tour()&&!(window.gfCartoOn&&gfCartoOn())}catch(e){return false}}
 /* which globes can turn flat: the Maps page's, and the Places and Capitals study map's */
 const stWanted=()=>{try{return typeof stGlobe!=="undefined"&&FEATURES.globe&&!globePrefs().study&&typeof activeTab!=="undefined"&&activeTab==="study"&&(appMode==="map"||appMode==="capital"&&window._gfCapMap)&&!tour()}catch(e){return false}};
@@ -293,3 +293,9 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    if(g&&g!==f.geometry||this._flat&&g){const c=d3.geoCentroid(g);let r=0;/* the farthest coast point from the middle (works across the 180° line, unlike a box) */(g.type==="Polygon"?[g.coordinates]:g.coordinates).forEach(P=>{const ring=P[0],st=Math.max(1,Math.floor(ring.length/400));for(let i=0;i<ring.length;i+=st)r=Math.max(r,d3.geoDistance(ring[i],c))});
     const zoom=this._flat?Math.max(1.25,Math.min(11,Math.PI/(Math.max(.02,r)*(r>.3?3.4:4.4)))):Math.max(1,Math.min(9,.55/Math.max(.02,r)));
     return _fly.call(this,code,Object.assign({},opts||{},{center:c,zoom}))}}}catch(e){}return _fly.apply(this,arguments)}})();
+/* a tour started from the flat map runs on the tour's own flat map: while it starts, the flat engine counts as off and
+   the view is handed back first, so the tour does not attach to the globe engine (and lose its flat-map controls, such
+   as "Show only places with more than…") */
+(function(){const fix=()=>{if(typeof psStart!=="function"||psStart._gfFlat)return false;const _s=psStart;
+  psStart=function(){const was=typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat;window._gfPsStarting=true;try{if(was&&typeof amGlobeSync==="function")amGlobeSync();return _s.apply(this,arguments)}finally{window._gfPsStarting=false}};psStart._gfFlat=1;return true};
+ if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
