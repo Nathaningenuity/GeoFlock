@@ -11,7 +11,7 @@ const SHELVES=[
  ["power","Power & economy","Governments, alliances, borders, money, trade and resources",["govmap","politics","capitals","geopol","borders","regions","gdp","transport","energy","resources","currencies","conflicts"]],
  ["history","History","World history from the first cities to today, the explorers, then one tour for each continent",["hancient","hmedieval","hgunpowder","hrevolutions","hwars","hcoldwar","hsince91","hempires","hmodern","explorers","heurope","hasia","hafrica","hnamerica","hsamerica","hoceania","hantarctica"]],
  ["cont","Regions","Seven tours, one for each continent",["europe","asia","africa","namerica","samerica","oceania","antarctica"]],
- ["books","Mapped books","Famous books about the world, followed on the map",[]]];
+ ["books","Mapped books","Famous books about the world, followed on the map",["bprisoners","bggs","bnations","bcollapse","b1493","bpivot","bseapower","bliemaps","bflat","bspiky","bbeagle","brihla","bremote","b80days","bcandide","bjourneywest","bsilkroads","bplagues","b12maps","b1001","bextinction"]]];
 function apply(){try{
  const own=new Set(SHELVES.map(s=>s[0]));
  /* the shelves, in order; any other shelf (AP Human Geo) stays after them */
