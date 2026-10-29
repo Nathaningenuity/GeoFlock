@@ -76,7 +76,7 @@ if(T("rivers")&&!T("rivers")._polA){T("rivers")._polA=1;
   xsec:{title:"The Nile from Lake Victoria to the sea",pts:[[33.2,0.45,"Lake Victoria"],[32.3,2.3],[31.6,4.85],[30.7,7.6],[31.65,9.53],[32.5,12.3],[32.53,15.6,"Khartoum"],[33.98,17.7],[33.98,18.0],[33.32,19.53],[31.85,18.55],[30.48,19.17],[30.4,19.6],[31.35,21.8],[31.6,22.35],[32.9,24.09,"Aswan"],[32.64,25.69],[32.73,26.16],[31.18,27.18],[30.75,28.1],[31.1,29.07],[31.24,30.04,"Cairo"],[31.0,31.4]],mark:380,
    note:"The dashed line marks 380 m, the river’s height at Khartoum. Heights are smoothed, and the line follows the river only roughly."},
   pins:[[[32.4,18.5],"The six cataracts: rocky rapids","point"]],
-  stat:"The Nile starts 1,134 m up, but north of Khartoum it falls only about 300 m in nearly 3,000 km",
+  stat:"The Nile starts 1,134 m up, but north of Khartoum it falls less than 400 m in about 3,000 km",
   body:"Move along the chart. The river drops fast from Lake Victoria through the rapids of Uganda and South Sudan, then crawls across the desert. Its last big steps are six rocky rapids called cataracts.",
   more:"The cataracts blocked boats for thousands of years, so the First Cataract at Aswan was Egypt’s traditional southern border. Lake Nasser, behind the Aswan High Dam, now drowns the first two."});
  set("rivers","Running from the sea",s=>{s.gfRuler={a:[-10.7,9.1],b:[-12.95,8.55]};s.lines=(s.lines||[]).filter(l=>!(l.coords&&l.coords.length===2&&l.coords[0][0]===-10.7));
@@ -91,7 +91,7 @@ if(T("lakes")&&!T("lakes")._polA){T("lakes")._polA=1;
  set("lakes","The biggest lake is called a sea",s=>{s.ghosts=[{code:"de",at:[56.5,46.5],col:"#8a63cf",label:"Germany, true size"}];
   s.body="At about 371,000 km², it is bigger than Germany: drag Germany over it to compare. It has no outlet to the ocean, so by most definitions it is a lake, not a sea."});
  set("lakes","The highest lake you can sail",s=>{s.xsec={title:"From the Pacific up to Lake Titicaca",pts:[[-71.34,-17.64,"Ilo"],[-70.6,-16.9],[-70.02,-15.84,"Puno"],[-69.4,-15.9,"Titicaca"],[-68.6,-16.2],[-68.15,-16.5,"La Paz"]],mark:3812,
-  note:"The dashed line is the lake’s surface, 3,812 m up: higher than any mountain in the Alps except a few. Heights are smoothed."};
+  note:"The dashed line is the lake’s surface, 3,812 m up. Heights are smoothed."};
   s.body="Move along the chart: from the Pacific coast the land climbs almost 4 km to the Altiplano, a high plain between two ranges of the Andes, where the lake lies. Peru and Bolivia share it."});
  set("lakes","Lakes in a crack",s=>{s.xsec={title:"Across the rift at Lake Tanganyika",pts:[[27.0,-5.9,"Congo basin"],[28.6,-5.9],[29.6,-6.0,"Lake Tanganyika"],[30.5,-6.0],[32.8,-5.0,"Tabora"]],mark:773,
   note:"The dashed line is the lake’s surface, 773 m up. Its floor, about 1,470 m deeper, is not shown: the chart stops at sea level."};
