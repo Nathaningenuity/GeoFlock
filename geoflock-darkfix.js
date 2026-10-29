@@ -4,7 +4,7 @@
 const dark=()=>document.body.classList.contains("sky-night");
 const rgba=c=>{const m=/rgba?\(([^)]+)\)/.exec(c);if(!m)return null;const v=m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat);return[v[0],v[1],v[2],v.length>3?v[3]:1]};
 const lum=c=>(.2126*c[0]+.7152*c[1]+.0722*c[2])/255;
-const SKIP="svg,canvas,img,video,iframe,input,select,textarea,.gfk-panel,.gfk-tray,.globe-stage,.flk,.gf-owid,.vy-chart,.flag-img,[data-nodark]";
+const SKIP="svg,canvas,img,video,iframe,input,select,textarea,.gfk-panel,.gfk-tray,.globe-stage,.flk,.gf-owid,.vy-chart,.flag-img,[data-nodark],.app-mode-tabs,.tab-btn.active";
 let seen=new WeakSet(),seenT=new WeakSet();
 function check(el){if(seen.has(el))return;seen.add(el);if(el.closest(SKIP))return;const cs=getComputedStyle(el);if(cs.backgroundImage&&cs.backgroundImage!=="none"&&!/gradient/.test(cs.backgroundImage))return;
  const bg=rgba(cs.backgroundColor);if(!bg||bg[3]<.35||lum(bg)<.62)return;

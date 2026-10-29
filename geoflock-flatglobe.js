@@ -47,7 +47,9 @@ try{if(typeof gfSpinWanted==="function"){const _s=gfSpinWanted;gfSpinWanted=func
 /* ---------- drawing ---------- */
 /* the flat map's own pictures (relief, shading, sea depth, satellite, climate…), as they are layered in the old map */
 const PICS={};const IMG=new Map;
-function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&amGlobe.request()}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};i.src=h;IMG.set(h,i)}return i}
+/* a picture that fails to load (a dropped connection) is tried again a little later, instead of staying broken for good */
+function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&amGlobe.request()}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};
+ i.onerror=()=>{const n=(i._gfTry||0)+1;if(n>6||/^(data|blob):/.test(h))return;setTimeout(()=>{if(IMG.get(h)!==i)return;IMG.delete(h);img(h)._gfTry=n},1500*n*n)};i.src=h;IMG.set(h,i)}return i}
 function pictures(D){if(D.fixed)return D.fixed();const now=performance.now(),C=PICS[D.key]||(PICS[D.key]={t:0,L:null});if(C.L&&now-C.t<400)return C.L;C.t=now;const svg=document.querySelector(D.svg);const PIC=C.L=[];if(!svg)return PIC;
  svg.querySelectorAll("image").forEach(el=>{let e=el,op=1,ok=true,blend="normal";while(e&&e!==svg){const cs=getComputedStyle(e);if(cs.display==="none"||cs.visibility==="hidden"){ok=false;break}op*=+cs.opacity;if(blend==="normal"&&cs.mixBlendMode&&cs.mixBlendMode!=="normal")blend=cs.mixBlendMode;e=e.parentNode}
   if(!ok||op<=.01)return;const h=el.getAttribute("href")||el.getAttribute("xlink:href");if(!h)return;
@@ -81,6 +83,8 @@ P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.tran
  if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;ctx.imageSmoothingQuality=k>3?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}ctx.restore();return 1}
  /* pictures still loading: draw them one by one (only in the usual frame) */
  if(this._gfDl){ctx.restore();return 0}
+ /* never the shading layers (multiply, screen) on their own: without the colour picture under them the map turns a washed-out white */
+ {const base=list.find(o=>o.blend==="normal"),bi=base&&img(base.h);if(!bi||!bi.complete||!bi.naturalWidth){ctx.restore();return 0}}
  {const ff=D.f(),kk=k/ff.s;ctx.setTransform(dpr*kk,0,0,dpr*kk,dpr*(t[0]-1e3*k-ff.bx*kk),dpr*(t[1]-500.5*k-ff.by*kk))}let drew=0;
  list.forEach(o=>{const im=img(o.h);if(!im.complete||!im.naturalWidth)return;ctx.globalAlpha=o.op;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;
   ctx.save();if(o.tf)ctx.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(ctx,im,o);ctx.restore();drew++});

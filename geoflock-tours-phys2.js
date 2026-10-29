@@ -4,7 +4,7 @@
    the ruler (gfRuler), the country dragger (ghosts) and the day-and-night gadget (gfSun). A stop with its own map mode (mode:"satellite")
    uses the shared per-stop switch (stopModes). Everything is undone when the tour ends.
    Photos: Wikimedia Commons (licence and author in each entry); most come from the shared library, new ones are listed below. */
-window.GF_PHYS2_PHOTOS=[];
+window.GF_PHYS2_PHOTOS=[{"f": "Dover White Cliffs 4.jpg", "d": "photos/xcb9bab48691be2c8.webp", "by": "kallerna", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Dover_White_Cliffs_4.jpg", "pins": ["White Cliffs of Dover"]}, {"f": "NB - Hopewell Rocks1.jpg", "d": "photos/xc161f810420c4816.webp", "by": "Wladyslaw", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:NB_-_Hopewell_Rocks1.jpg", "card": "coasts|The biggest tides", "pins": ["Hopewell Rocks at low tide"]}];
 (function(){
 if(typeof PS_TOURS==="undefined"||typeof PS_TOUR_ORDER==="undefined")return;
 const TL="#4f9fdc",W=[-180,-58,180,80];
@@ -147,19 +147,19 @@ S({title:"Islands of sand",view:[-78.8,33.8,-74.2,37.2],globe:[-75.8,35.5,6],car
  stat:"The Outer Banks are a chain of sandy barrier islands about 320 km long off North Carolina",
  body:"Barrier islands are long ribbons of sand piled up by waves parallel to the shore, with calm lagoons behind them. They are always on the move: storms wash sand over the top, so the islands slowly roll towards the mainland.",
  more:"In 1999 the Cape Hatteras Lighthouse, the tallest brick lighthouse in the United States, was moved almost 900 m inland on rails because the sea was eating the beach. The Wright brothers came here for the steady winds and soft sand."}),
-S({title:"A coast built by animals",view:[130,-27,158,-8],globe:[147,-18,3],card:"left",hiSoft:["au"],
+S({title:"A coast built by animals",view:[130,-27,158,-8],globe:[147,-18,3],card:"left",
  pins:[[[145.8,-16.9],"Cairns","point"],[[148.9,-20.3],"Whitsunday Islands","point"],[[152,-23.5],"Southern reefs","point"]],
  phPins:[ph([146.8,-18.5],"Great Barrier Reef"),ph([148.94,-19.76],"Heart Reef"),ph([146.15,-16.72],"Coral at Flynn Reef")],
  stat:"The Great Barrier Reef runs about 2,300 km along Australia’s north-east coast",
  body:"It is made of about 2,900 separate reefs built by tiny coral animals over thousands of years. The reef acts as a breakwater: big ocean waves break on the outer reef, so the coast behind it is sheltered, with calm water, sandy beaches and mangroves instead of pounding surf.",
  more:"It is the largest structure built by living things, big enough to see from space. Marine heatwaves have bleached large parts of it several times since 2016."}),
-S({title:"White cliffs and high cliffs",view:[-20,49.6,3.5,55.6],globe:[-4,52.5,3],card:"left",hiSoft:["gb","ie"],
+S({title:"White cliffs and high cliffs",view:[-20,49.6,3.5,55.6],globe:[-4,52.5,3],card:"left",
  pins:[[[1.36,51.13],"White Cliffs of Dover","point"],[[-9.43,52.97],"Cliffs of Moher: 214 m","point"],[[0.24,50.74],"Beachy Head","point"]],
  phPins:[ph([-9.43,52.97],"Cliffs of Moher"),ph([1.36,51.15],"White Cliffs of Dover")],
  stat:"The Cliffs of Moher in Ireland rise 214 m straight out of the Atlantic",
  body:"Cliffs form where waves attack rock: they cut a notch at the bottom until the rock above collapses, and the cliff steps back. Dover’s white cliffs are chalk, made of the tiny shells of countless sea plankton that settled on an ancient sea floor.",
  more:"A 2016 study found Dover’s chalk cliffs have been wearing back about ten times faster over the last 150 years than over the previous 7,000, now some 22 to 32 cm a year, partly because the beaches that shielded them have thinned."}),
-S({title:"The Twelve Apostles",view:[141.8,-39.4,144.4,-38.1],globe:[143.1,-38.66,9],card:"right",hiSoft:["au"],
+S({title:"The Twelve Apostles",view:[141.8,-39.4,144.4,-38.1],globe:[143.1,-38.66,9],card:"right",
  pins:[[[143.1,-38.66],"The Twelve Apostles","point"],[[142.98,-38.63],"London Arch","point"],[[142.9,-38.6],"Loch Ard Gorge","point"]],
  phPins:[ph([143.1,-38.66],"The Twelve Apostles")],
  stat:"There were never twelve: only about seven of these limestone stacks are still standing",
@@ -171,8 +171,9 @@ S({title:"The Wadden Sea",view:[-1,52.6,10.5,56.3],globe:[7,54,5],card:"left",
  stat:"Twice a day the tide drains from the Wadden Sea, uncovering the largest unbroken tidal flats on Earth",
  body:"For about 500 km along the coasts of the Netherlands, Germany and Denmark, mud and sand flats lie between the mainland and a chain of islands. At high tide they are under water; at low tide people can walk across the sea floor with a guide.",
  more:"Every year around 10 to 12 million migrating birds stop here to feed on worms, snails and shellfish. The Wadden Sea became a UNESCO World Heritage Site in 2009."}),
-S({title:"The biggest tides",view:[-68.5,43.3,-62.5,46.6],globe:[-65,45,5.5],card:"left",hiSoft:["ca"],
- pins:[[[-64.57,45.82],"Hopewell Rocks","point"],[[-64.2,45.3],"Minas Basin","point"]],
+S({title:"The biggest tides",view:[-68.5,43.3,-62.5,46.6],globe:[-65,45,5.5],card:"left",
+ pins:[[[-64.2,45.3],"Minas Basin","point"],[[-66.1,44.6],"Mouth of the bay","point"]],
+ phPins:[ph([-64.57,45.82],"Hopewell Rocks at low tide")],
  stat:"In the Bay of Fundy the sea rises and falls by up to about 16 m, twice a day",
  body:"The bay is long and narrows like a funnel, and it is just the right length for the water to slosh in and out in time with the tides, like water rocking in a bath. At Hopewell Rocks you can walk on the sea floor around the ‘flowerpot’ rocks, and paddle round them in a kayak six hours later.",
  more:"With each tide, over 100 billion tonnes of water flow in and out of the bay, more than all the world’s rivers carry in the same time."}),
@@ -231,9 +232,9 @@ S({title:"The oldest desert",view:[9,-30.5,21,-16.5],globe:[15,-24,3.8],card:"ri
  stat:"The Namib has been dry for at least 55 million years, probably longer than any other desert",
  body:"Like the Atacama in Chile, the Namib is a coastal fog desert. A cold ocean current chills the air so it cannot rise and rain, and instead fog rolls in off the sea. Its dunes, reddened by iron oxide (rust), are among the tallest on Earth.",
  more:"Some Namib beetles stand head-down on dune crests at dawn so fog droplets collect on their backs and run into their mouths. The Welwitschia plant grows just two leaves, which keep growing for its whole life, and some plants are thought to be over 1,000 years old."}),
-S({title:"The biggest desert is cold",view:[-180,-90,180,-58],globe:[160,-80,1.5],card:"left",hi:["aq"],
- pins:[[[162,-77.5],"McMurdo Dry Valleys","point"],[[0,-90],"South Pole","point"]],
- phPins:[ph([60,-80],"Antarctica’s ice sheet")],
+S({title:"The biggest desert is cold",view:[120,-85,180,-68],globe:[160,-80,1.5],card:"left",hi:["aq"],
+ pins:[[[162,-77.5],"McMurdo Dry Valleys","point"],[[140,-80],"Polar plateau: about 50 mm of water a year","point"]],
+ phPins:[ph([150,-80],"Antarctica’s ice sheet")],
  stat:"Antarctica is the largest desert on Earth, about 14 million km², bigger than the Sahara and Arabia together",
  body:"The air over the ice is so cold that it holds almost no water, so very little snow falls on the high interior, about as much water a year as falls on many hot deserts. The snow that does land never melts, and over hundreds of thousands of years it has built the ice sheet.",
  more:"In the McMurdo Dry Valleys, fierce winds sweep the snow away, leaving bare rock and gravel. They are so like Mars that scientists test space equipment there. The Arctic is the second-largest desert."}),
@@ -243,7 +244,7 @@ S({title:"The Sahara",view:[-18,6,42,37],globe:[12,22,1.8],card:"left",clim:DESE
  stat:"The Sahara is almost as big as the United States, and only about a quarter of it is sand dunes",
  body:"Most of the Sahara is rocky plateaus, gravel plains and mountains. Yet from about 11,000 to 5,000 years ago, monsoon rains reached far north and it had grassland, lakes, hippos and crocodiles. The blue shape is the United States at the same scale: drag it around.",
  more:"Rock paintings in Tassili n’Ajjer in Algeria show herds of cattle, and a cave in Egypt’s Gilf Kebir shows people swimming, in what is now one of the driest places on Earth."}),
-S({title:"The Empty Quarter",view:[40,13,62,28],globe:[50,20,3],card:"left",mode:"satellite",hi:["sa"],hiSoft:["om","ae","ye"],
+S({title:"The Empty Quarter",view:[40,13,62,28],globe:[50,20,3],card:"left",mode:"satellite",hi:["sa"],
  pins:[[[50,20],"Rub’ al Khali","point"],[[54.1,22.5],"Shaybah oil field","point"]],
  phPins:[ph([50,20.5],"The Empty Quarter"),ph([45.5,24.5],"Dunes from the Space Station")],
  stat:"The Rub’ al Khali, or Empty Quarter, is the largest unbroken sea of sand on Earth, about 650,000 km²",
@@ -300,9 +301,9 @@ S({title:"Ice",view:W,globe:[-40,60,1.2],
  stat:"About a tenth of Earth’s land is covered by ice, and it holds about two-thirds of all its fresh water",
  body:"Ice comes in many forms: ice sheets kilometres thick, glaciers that flow down valleys like slow rivers, frozen sea, icebergs, and ground that never thaws. It cools the planet, feeds great rivers and stores enough water to change the shape of the coasts.",
  more:"This tour visits the two great ice sheets, ice on the equator, the frozen Arctic Ocean, the ice age that buried Chicago and Berlin, and what the ice remembers about the air of the past."}),
-S({title:"Antarctica’s ice sheet",view:[-180,-90,180,-58],globe:[100,-80,1.5],card:"left",hi:["aq"],
- pins:[[[175,-82],"Ross Ice Shelf: nearly as big as France","point"],[[100,-67],"Denman Glacier: bed 3,500 m below sea level","point"],[[123.35,-75.1],"Dome C","point"],[[-100,-75.2],"Pine Island Glacier","point"]],
- phPins:[ph([60,-80],"Antarctica’s ice sheet"),ph([-175,-79],"Edge of the Ross Ice Shelf"),ph([-100.5,-75.4],"Pine Island Glacier")],
+S({title:"Antarctica’s ice sheet",view:[55,-86,180,-62],globe:[100,-80,1.5],card:"left",hi:["aq"],
+ pins:[[[175,-82],"Ross Ice Shelf: nearly as big as France","point"],[[100,-67],"Denman Glacier: bed 3,500 m below sea level","point"],[[123.35,-75.1],"Dome C","point"]],
+ phPins:[ph([90,-78],"Antarctica’s ice sheet"),ph([170,-78.5],"Edge of the Ross Ice Shelf")],
  stat:"Antarctica’s ice is up to about 4.8 km thick and holds enough water to raise the seas by about 58 m",
  body:"The ice sheet covers about 14 million km², more than the United States and Mexico together. It is so heavy that it presses the rock beneath it far down. The ice flows slowly towards the coast, where it spreads out over the sea as floating ice shelves.",
  more:"Under the Denman Glacier the rock floor lies about 3,500 m below sea level, the deepest canyon on land. Antarctica holds about 90% of the world’s ice."}),
@@ -312,7 +313,7 @@ S({title:"Greenland’s ice",view:[-110,58,-8,84],globe:[-42,72,2],card:"left",h
  stat:"Greenland’s ice sheet is up to about 3 km thick and covers about four-fifths of the island",
  body:"Snow piled up for hundreds of thousands of years has been squeezed into ice. Glaciers carry it down to the sea: Sermeq Kujalleq (Jakobshavn Glacier) at Ilulissat is one of the fastest on Earth, at times moving tens of metres a day.",
  more:"Since about 2002, Greenland has lost roughly 270 billion tonnes of ice a year, more than any other place except Antarctica. In summer, blue lakes and rivers of meltwater spread across its surface."}),
-S({title:"If Greenland melted",view:[-110,23,-72,42],globe:[-84,31,2.6],card:"left",gfSea:7,gfSeaUI:true,
+S({title:"If Greenland melted",view:[-110,23,-72,42],globe:[-84,31,2.6],card:"left",hi:["us"],gfSea:7,gfSeaUI:true,
  pins:[[[-80.19,25.76],"Miami","point"],[[-90.07,29.95],"New Orleans","point"],[[-81.0,25.9],"The Everglades","point"],[[-76.3,36.85],"Norfolk, Virginia","point"]],
  stat:"Melting all of Greenland’s ice would raise the sea by about 7 m; Antarctica’s would add about 58 m more",
  body:"Blue shows land the sea would cover if it rose 7 m: much of southern Florida, the Mississippi delta and the low coast from Texas to Virginia. Drag the sea level on the card to try other amounts.",
@@ -349,7 +350,7 @@ S({title:"Ground that never thaws",view:[78,48,172,76],globe:[125,64,2],card:"le
  stat:"Permanently frozen ground, permafrost, lies under about a quarter of the Northern Hemisphere’s land",
  body:"Permafrost is ground that stays frozen for at least two years in a row; in parts of Siberia it is over a kilometre deep. It underlies about two-thirds of Russia and half of Canada. Yakutsk is the largest city built on it, its buildings raised on stilts so their warmth does not thaw the ground.",
  more:"As permafrost thaws, the ground slumps and buildings crack. The Batagaika crater in Siberia, a slump about 1 km across, has grown for decades. Thawing ground also releases old carbon, and has revealed frozen mammoths and woolly rhinos."}),
-S({title:"The last ice age",view:[-130,24,120,74],globe:[-30,55,1.2],card:"right",gfSea:-120,
+S({title:"The last ice age",view:[-180,28,40,75],globe:[-30,55,1.2],card:"left",gfSea:-120,
  lines:[{coords:LAUR,kind:"dash"},{coords:FENNO,kind:"dash"}],
  pins:[[[-87.63,41.88],"Chicago: under the ice","point"],[[13.4,52.52],"Berlin: at the ice edge","point"],[[3,54.8],"Doggerland: dry land","point"],[[-90,57],"Ice up to 3 km thick","point"]],
  stat:"About 20,000 years ago, ice sheets covered most of Canada and northern Europe, reaching as far as Chicago and Berlin",
@@ -361,21 +362,21 @@ S({title:"Valleys the ice dug",view:[163.5,-47.6,172,-42.6],globe:[167.8,-45,5],
  stat:"Milford Sound is not a river valley but a fjord: a trough dug by a glacier and later flooded by the sea",
  body:"Rivers cut narrow V-shaped valleys. Glaciers grind them into wide U shapes with steep walls, and can dig far below sea level. When the ice melted, the sea flowed in, leaving fjords, and inland the hollows filled with long, deep lakes.",
  more:"The same ice-age glaciers shaped Norway’s fjords, Yosemite Valley in California, Scotland’s lochs and the English Lake District. New Zealand’s Fiordland has 14 fjords, all called ‘sounds’."}),
-S({title:"A park losing its glaciers",view:[-115.4,47.9,-112.6,49.3],globe:[-113.8,48.7,7],card:"left",hiSoft:["us","ca"],
+S({title:"A park losing its glaciers",view:[-115.4,47.9,-112.6,49.3],globe:[-113.8,48.7,7],card:"left",
  pins:[[[-113.72,48.75],"Grinnell Glacier","point"],[[-113.6,48.67],"Jackson Glacier","point"],[[-113.72,48.7],"Logan Pass","point"]],
  phPins:[ph([-113.72,48.76],"Grinnell Glacier, then and now")],
  stat:"Glacier National Park in Montana had about 150 glaciers around 1850; by 2015 only 26 were still big enough to count",
  body:"The park’s glaciers have been photographed and measured for over a century. Pictures taken from the same spots decades apart show thick ice turning into lakes and bare rock.",
  more:"Between 1966 and 2015 its named glaciers shrank by about 39% on average, and some by 85%. Scientists expect most of them to be gone within the lifetime of today’s students."}),
-S({title:"The Alps lose their ice",view:[0,44.6,14.5,48.2],globe:[9,46.5,5],card:"left",hiSoft:["ch","at","it","fr"],
+S({title:"The Alps lose their ice",view:[0,44.6,14.5,48.2],globe:[9,46.5,5],card:"left",
  pins:[[[8.03,46.5],"Aletsch Glacier: about 20 km long","point"],[[8.38,46.58],"Rhône Glacier, under blankets","point"],[[10.84,46.78],"Ötzi, found 1991","point"]],
  phPins:[ph([8.03,46.45],"Aletsch Glacier"),ph([7.66,45.98],"The Matterhorn")],
  stat:"The Aletsch, the longest glacier in the Alps, is about 20 km long and has been shrinking since the 1850s",
  body:"Alpine glaciers grew during the cold centuries of the ‘Little Ice Age’ and have been shrinking since. The melting sped up after the 1980s, and Swiss glaciers lost about a tenth of their remaining ice in just 2022 and 2023.",
  more:"Every summer, workers cover part of the Rhône Glacier with white blankets to slow the melting around its ice grotto. Melting ice also gives things back: in 1991 hikers found Ötzi, a man who died in the Alps about 5,300 years ago."}),
-S({title:"Ice that remembers",view:[-180,-90,180,-58],globe:[120,-78,1.5],card:"left",hi:["aq"],
+S({title:"Ice that remembers",view:[80,-84,150,-68],globe:[120,-78,1.5],card:"left",hi:["aq"],
  pins:[[[123.35,-75.1],"Dome C: 800,000 years of ice","point"],[[106.8,-78.46],"Vostok","point"],[[122.5,-75.3],"Little Dome C: 1.2 million years","point"]],
- phPins:[ph([60,-80],"Antarctica’s ice sheet")],
+ phPins:[ph([115,-77],"Antarctica’s ice sheet")],
  stat:"In January 2025 scientists drilled about 2.8 km down into Antarctic ice at least 1.2 million years old",
  body:"Each year’s snow traps tiny bubbles of air as it turns to ice. Drilling out long cylinders of ice, called ice cores, lets scientists read the air of the past, layer by layer, along with its temperature, dust and volcanic ash.",
  more:"The cores show carbon dioxide rising and falling with the ice ages, but never above about 300 parts per million in 800,000 years. Today it is over 420."}),
@@ -391,6 +392,8 @@ const TOURS={
 const IDS=Object.keys(TOURS);
 IDS.forEach(id=>{const T=TOURS[id],modes=[...new Set(T.steps.map(s=>s.mode).filter(Boolean))];
  PS_TOURS[id]={name:T.name,short:T.short,hint:T.hint,map:{mode:T.mode},group:"physical",col:TL,steps:T.steps,stopModes:modes.length>0,alsoOn:modes.filter(m=>m!==T.mode)};
+ /* polar stops switch to the globe for that stop (the same rule the other tours get at load time) */
+ T.steps.forEach(o=>{const v=o.view;if(!Array.isArray(v)||!Array.isArray(o.globe))return;let w=v[2]-v[0];if(w<0)w+=360;if(v[3]<=-55||v[1]>=55&&w>=120)o.autoGlobe=true});
  /* the card side chosen for a stop is kept (the shared layout code would otherwise move it) */
  if(typeof psLock==="function")T.steps.forEach(o=>{if(o.card)psLock(o,"card",o.card)})});
 /* on the Tours page, after the climate tour (the shelf file sets the final order) */
@@ -402,6 +405,12 @@ function climSel(){try{if(!mine()||typeof climateSelection==="undefined"||typeof
 if(typeof psGo==="function"){const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);climSel();setTimeout(climSel,600);setTimeout(climSel,2000);return r}}
 if(typeof psEnd==="function"){const _e=psEnd;psEnd=function(){const was=mine(),g=ps&&ps.g;const r=_e.apply(this,arguments);if(was){try{if(typeof climateSelection!=="undefined"&&climateSelection.size){climateSelection.clear();applyClimateSelection();if(g)g.render()}}catch(e){}}return r}}
 
+/* ---------- a stop's sea level can finish painting after the stop has drawn: show it as soon as it is ready ---------- */
+function seaWatch(){try{clearInterval(seaWatch._t);if(!mine())return;const St=psSteps()[ps.i];if(!St||!St.gfSea)return;const at=ps.i;let n=0;
+ seaWatch._t=setInterval(()=>{try{n++;if(!mine()||ps.i!==at||n>120){clearInterval(seaWatch._t);return}
+  const key=St.gfSea+"|"+gfMS().style;if(typeof GFL!=="undefined"&&GFL.seaCache&&GFL.seaCache[key]){clearInterval(seaWatch._t);setTimeout(()=>{try{gfMsRefresh();gfMsApply();if(typeof gfGlobeDirty==="function")gfGlobeDirty()}catch(e){}},200)}}catch(e){clearInterval(seaWatch._t)}},500)}catch(e){}}
+if(typeof psGo==="function"){const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);seaWatch();return r}}
+
 /* ---------- questions: a right answer inks the named country's Knowledge stamp ---------- */
 try{if(typeof TOURQ!=="undefined"){
 TOURQ.weather={mid:[
@@ -412,7 +421,7 @@ TOURQ.weather={mid:[
  {q:"Where do hurricanes never form?",o:["In the north-west Pacific","On the equator","Near the Caribbean","In the Bay of Bengal"],a:1,why:"The Earth’s spin gives no twist at the equator, so the storms can’t start spinning there.",st:"Where the big storms are born",kc:"ph"},
  {q:"In an El Niño year, warm Pacific water spreads towards…",o:["Indonesia","Peru and Ecuador","Japan","Antarctica"],a:1,why:"The trade winds weaken and the warm water sloshes back east.",st:"El Niño",kc:"pe"},
  {q:"Which lake has more lightning than anywhere else on Earth?",o:["Lake Victoria","Lake Maracaibo","Lake Baikal","Lake Titicaca"],a:1,why:"About 230 flashes per km² a year, mostly at night.",st:"The lightning capital",kc:"ve"},
- {q:"What makes Commonwealth Bay so windy?",o:["Hurricanes","Cold air pouring down off the ice sheet","The jet stream touching the ground","Mountain chinooks"],a:1,why:"Katabatic winds slide off the high Antarctic ice and are funnelled through the bay.",st:"The windiest place",kc:"au"}]};
+ {q:"What makes Commonwealth Bay so windy?",o:["Hurricanes","Cold air pouring down off the ice sheet","The jet stream touching the ground","Mountain chinooks"],a:1,why:"Katabatic winds slide off the high Antarctic ice and are funnelled through the bay.",st:"The windiest place",kc:"aq"}]};
 TOURQ.coasts={mid:[
  {at:"The longest coastline",st:"The longest coastline",q:"Which country has the longest coastline?",o:["Norway","Indonesia","Canada","Australia"],a:2,why:"About 243,000 km, counting its thousands of Arctic islands.",kc:"ca"},
  {at:"Fjords",st:"Fjords",q:"What carved the fjords?",o:["Rivers","Glaciers","Earthquakes","Ocean currents"],a:1,why:"Ice-age glaciers dug the valleys, then the sea flooded in.",kc:"no"},
