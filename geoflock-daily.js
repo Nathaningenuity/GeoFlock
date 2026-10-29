@@ -16,7 +16,8 @@ function html(){const day=dailySeed(),wiS=(stats.wiDaily||{})[day],ggS=(stats.gg
  const L=[["pin","📍","Pin it on the map",ggS!=null?ggS.toLocaleString()+" pts":"Today’s five photos",ggS!=null],["type","📷","Where is this?",wiS!=null?wiS.toLocaleString()+" pts":"Name today’s five",wiS!=null],["globle","🌍","Globle","Today’s hidden country",!!(dd&1)],["flagpie","🥧","Flagpie","Today’s flag",!!(dd&2)]],k=L.filter(x=>x[4]).length;
  return'<div class="dc-strip" id="dcCard"><div class="dc-h"><b>Daily challenges</b><small>'+k+'/4 today · same puzzles for everyone</small><span class="dc-streak" title="Days in a row with at least one daily challenge">🔥 '+n+' day'+(n===1?"":"s")+'</span></div><div class="dc-rows">'+
   L.map(([id,ic,t,sub,done])=>'<button type="button" class="dc-row'+(done?" ok":"")+'" data-dc="'+id+'"><span class="dc-ic">'+ic+'</span><span class="dc-t"><b>'+t+'</b><small>'+sub+'</small></span><span class="dc-st">'+(done?"✓":"Play")+'</span></button>').join("")+'</div></div>'}
-const _rh=renderHome;renderHome=function(){const r=_rh.apply(this,arguments);try{const sec=document.querySelector("#homeView .hi-today");if(sec){const old=document.getElementById("dcCard");if(old)old.remove();sec.insertAdjacentHTML("beforeend",html());sec.querySelectorAll("[data-dc]").forEach(b=>b.onclick=()=>open(b.dataset.dc))}}catch(e){console.error(e)}return r};
+/* the strip itself is no longer on Home (the Today cards cover the day); its games are opened from there */
+window.gfDailyOpen=open;window.gfDailyHTML=html;
 try{if(typeof appMode!=="undefined"&&appMode==="home")renderHome()}catch(e){}
 const css=document.createElement("style");css.textContent=`
 .dc-strip{ margin-top:12px; } .dc-h{ display:flex; gap:10px; align-items:baseline; margin:0 2px 8px; } .dc-h small{ opacity:.65; font-size:12px; } .dc-streak{ margin-left:auto; font-weight:800; font-size:13px; }
