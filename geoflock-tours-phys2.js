@@ -253,7 +253,7 @@ S({title:"The Empty Quarter",view:[40,13,62,28],globe:[50,20,3],card:"left",hi:[
  body:"It covers much of the south of the Arabian Peninsula, with dunes up to about 250 m high. Summer days pass 50 °C and it can go years without rain. From space, wind-sculpted dunes stretch in long orange ridges.",
  more:"The explorer Wilfred Thesiger crossed it twice with Bedouin companions in 1946–48. Far beneath the dunes lies oil, marked by the oil icons: the Shaybah field sits in the middle of the sands."}),
 S({title:"Lowest, hottest, driest",view:[-121,35.2,-115.6,37.5],globe:[-117,36.4,6],card:"left",
- xsec:{title:"From Mount Whitney to Badwater",pts:[[-118.29,36.58,"Mt Whitney"],[-118.06,36.55,"Owens Valley"],[-117.09,36.17,"Telescope Peak"],[-116.83,36.23,"Badwater"],[-116.6,36.3]],note:"About 135 km from the highest point in the lower 48 states to the lowest in North America. The chart stops at sea level; Badwater lies 86 m below it."},
+ xsec:{title:"From Mount Whitney to Badwater",pts:[[-118.29,36.58,"Mt Whitney"],[-118.06,36.55,"Owens Valley"],[-117.09,36.17,"Telescope Peak"],[-116.83,36.23,"Badwater"],[-116.6,36.3]],note:"About 135 km from the highest point in the lower 48 states to the lowest in North America. The chart smooths the sharpest peaks and stops at sea level; Badwater lies 86 m below it."},
  pins:[[[-116.83,36.23],"Badwater Basin: −86 m","point"],[[-116.87,36.46],"Furnace Creek: 56.7 °C, 1913","point"],[[-117.56,36.68],"Racetrack Playa","point"],[[-118.29,36.58],"Mount Whitney: 4,421 m","peak"]],
  phPins:[ph([-116.83,36.23],"Badwater, Death Valley")],
  stat:"Badwater Basin in Death Valley, 86 m below sea level, is the lowest point in North America",

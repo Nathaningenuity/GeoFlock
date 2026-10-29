@@ -92,14 +92,14 @@ let KN={};/* a group with one member alive is named after that member (Denmark i
 function powers(){const m=new Map,mem={};frame().forEach(f=>{const p=f.properties;if(p.k===0||!p.n)return;const k=keyOf(p);m.set(k,(m.get(k)||0)+p.a);(mem[k]=mem[k]||new Set).add(p.n)});KN={};for(const k in mem)if(k.startsWith("g:")&&mem[k].size===1)KN[k]=[...mem[k]][0];return[...m].sort((a,b)=>b[1]-a[1]).slice(0,12).map(x=>x[0])}
 /* ---------- focus: one polity (a coloured name in the key) or, in the guided tours, an old group key ----------
    The tours name their highlighted empire with the first map's group keys ("brit", "mon", "chn"…). Most polities in
-   this map carry the same key (gk); a few are matched by name, and "new" means states that did not exist a dozen
-   years earlier. */
+   this map carry the same key (gk); a few are matched by name, and "new" means states that did not exist six years
+   earlier. */
 const ALIAS={chn:/^(Great Ming|Ming|Qing|Northern Song|Southern Song|Song Empire|Han Empire|Western Han|Eastern Han|Tang|Sui|Yuan|China|Republic of China|People's Republic of China)$/,
  ann:/^(Russia|Ukraine)$/,sum:/^(Ur|Uruk|Lagash|Kish|Umma|Akkad|city-states|Sumer)$/,alex:/^(Empire of Alexander|Macedon|Kingdom of Macedon|Macedonia)$/};
-const NOTNEW=/German|Austria|Italy|Itali|France|French Rep|Japan|Trieste|occup|Occup|zone|Zone|Allied|Soviet|Russia|Spain|Portugal|Antarctic/;
+const NOTNEW=/Empire|\(|Kingdom of Serbia|German|Austria|Italy|Itali|France|French Rep|Japan|Trieste|occup|Occup|zone|Zone|Allied|Soviet|Russia|Spain|Portugal|Antarctic/;
 let newSet=null;
-function newNames(y){if(newSet&&newSet.y===y)return newSet.s;const prev=frameAt(y-13);if(!prev){need(y-13);return null}const had=new Set(prev.map(f=>f.properties.n));newSet={y,s:had};return had}
-function tourMatch(f,p){if(p.k===0||!p.n)return false;if(f==="new"){if(NOTNEW.test(p.n))return false;const had=newNames(curY);return had?!had.has(p.n):p.s>curY-13&&p.s<=curY+.5}
+function newNames(y){if(newSet&&newSet.y===y)return newSet.s;const prev=frameAt(y-6);if(!prev){need(y-6);return null}const had=new Set(prev.map(f=>f.properties.n));newSet={y,s:had};return had}
+function tourMatch(f,p){if(p.k===0||!p.n)return false;if(f==="new"){if(NOTNEW.test(p.n))return false;const had=newNames(curY);return had?!had.has(p.n):p.s>curY-6&&p.s<=curY+.5}
  if(ALIAS[f]&&ALIAS[f].test(p.n))return true;if(f==="mon"&&/Ming/.test(p.n))return false;return p.gk===f}
 function inFocus(p){const F=histFocus;if(!F)return true;if(F.startsWith("g:")||F.startsWith("n:"))return keyOf(p)===F;return tourMatch(F,p)}
 const FA=new Map;function focusAny(fr){const k=fr._id+"|"+histFocus+"|"+curY;if(FA.has(k))return FA.get(k);if(FA.size>50)FA.clear();const v=fr.some(f=>inFocus(f.properties));FA.set(k,v);return v}
@@ -308,11 +308,11 @@ function labelSet(feats,V,p,gv,LM){DBG.label++;const k=gv.ls?gv.ls():1,placed=[]
   const need=T>=3?0:T===2?(LM==="all"?.12:.35):LM==="all"?(people?.9:.6):(people?1.5:.95);if(b&&sw<w*need)return;
   /* a well-known name that is crowded out may sit just above or below its place */
   for(const dy of T>=2?[0,-fs*1.15,fs*1.15]:[0]){const bx=[q[0]-w/2-2,q[1]+dy-fs*.62,q[0]+w/2+2,q[1]+dy+fs*.62];if(placed.some(o=>!(bx[2]<o[0]||bx[0]>o[2]||bx[3]<o[1]||bx[1]>o[3])))continue;placed.push(bx);
-   out.push({nm,lon,lat,font:c.font,people,dy});break}});return out}
+   out.push({nm,lon,lat,font:c.font,people,dy});break}});out.k=k;return out}
 function drawLabels(ctx,p,set,alpha,skip){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=3;ctx.globalAlpha=alpha;
  set.forEach(o=>{if(skip&&skip.has(o.nm))return;const q=p([o.lon,o.lat]);if(!q||!isFinite(q[0]))return;ctx.font=o.font;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.strokeText(o.nm,q[0],q[1]+o.dy);ctx.fillStyle=o.people?"#6b5a45":"#2a2118";ctx.fillText(o.nm,q[0],q[1]+o.dy)});ctx.restore()}
 function labelsFor(feats,V,p,gv,LM,zooming){const key=[feats._id,V.key,LM,fxKey()].join("#");let o=LBL.get(feats._id+"#"+LM+"#"+fxKey());
- if(o&&(o.key===key||zooming&&V.flat))return o.set;const set=labelSet(feats,V,p,gv,LM);if(LBL.size>6)LBL.clear();LBL.set(feats._id+"#"+LM+"#"+fxKey(),{key,set});return set}
+ if(o&&(o.key===key||zooming&&V.flat&&Math.abs(o.set.k/(gv.ls?gv.ls():1)-1)<.12))return o.set;const set=labelSet(feats,V,p,gv,LM);if(LBL.size>6)LBL.clear();LBL.set(feats._id+"#"+LM+"#"+fxKey(),{key,set});return set}
 /* drawing on the globe and the flat map */
 W("histGlobeDraw",(ctx,p,gv)=>{if(!histOn()||!gv||gv!==amGlobe)return;const t0=performance.now();const feats=frame(),V=viewOf(ctx,p,gv);let alpha=1;try{if(typeof histReliefOn==="function"&&histReliefOn())alpha=.55}catch(e){}
  const now=performance.now();if(V.flat&&V.S!==lastS){lastS=V.S;lastSAt=now}const zooming=V.flat&&now-lastSAt<160;
