@@ -114,10 +114,8 @@ if(T("explorers")&&!T("explorers").steps._polD){T("explorers").steps._polD=1;
   s.body="In 1271 he set out with his father and uncle along the Silk Road to the court of Kublai Khan, the Mongol ruler of China, whose capital stood where Beijing is now: about 7,900 km from Venice as the crow flies (ruler). He served the khan for years, then came home by sea."});
  set("explorers","Ibn Battuta",s=>{s.gfRuler={a:[-5.8,35.77],b:[118.59,24.9]};
   s.body="He left Tangier, Morocco, in 1325, aged 21, to make the pilgrimage to Mecca, and kept going for about 29 years. The ruler measures Tangier to Quanzhou, in China: about 11,000 km. His zigzag journeys added up to roughly ten times that."});
- set("explorers","Sailing by the stars",s=>{s.gfRuler={a:[-155.5,19.6],b:[-149.43,-17.65]};
+ set("explorers","Sailing by the stars",s=>{s.view=[-180,-45,-95,35];s.card="right";s.gfRuler={a:[-155.5,19.6],b:[-149.43,-17.65]};
   s.body="The Hōkūleʻa, a copy of an ancient double-hulled canoe, sailed from Hawaii to Tahiti, about 4,200 km (ruler), steered by Mau Piailug, a navigator from Micronesia, who read the stars, swells and birds. It proved Polynesians could have found Hawaii on purpose."});
- set("explorers","Captain Cook",s=>{s.gfRuler={a:[-4.14,50.37],b:[-149.43,-17.65]};
-  s.body="On three voyages between 1768 and 1779, Cook charted New Zealand and Australia’s east coast and crossed the Antarctic Circle. His first voyage went from Plymouth to Tahiti, over 15,000 km in a straight line (ruler) and much further round South America."});
  set("explorers","Lewis and Clark",s=>{s.view=[-152,30,-86,54];s.card="left";s.xsec={title:"Along their route, St Louis to the Pacific",pts:[[-90.2,38.63,"St Louis"],[-94.6,39.1],[-96,41.3],[-100.8,46.8],[-101.27,47.3,"Fort Mandan"],[-104,47.9],[-108.5,47.7],[-111.3,47.5],[-112.5,45.6],[-113.44,44.97,"Lemhi Pass"],[-114.6,46.63],[-116.2,46.45],[-117.0,46.4],[-119.5,46.0],[-121.18,45.6],[-122.8,46.1],[-123.88,46.13,"Pacific"]],mark:2247,
    note:"The dashed line marks 2,247 m, Lemhi Pass on the Continental Divide. Heights are smoothed, and the line follows the route only roughly."};
   s.body="After the US bought the vast Louisiana territory from France, President Jefferson sent an expedition up the Missouri River to find a route to the Pacific. Move along the chart: the plains rise slowly for over 2,000 km, then the Rocky Mountains block the way."});
@@ -196,7 +194,7 @@ if(T("hsamerica")&&!T("hsamerica").steps._polD){T("hsamerica").steps._polD=1;
   s.body="The ruler spans the empire, from southern Colombia to central Chile. Its roads crossed deserts and mountain passes, with rope bridges over gorges, and relay runners called chasquis could carry a message up to about 240 km in a day."});
  ins("hsamerica","The Inca roads",{title:"Machu Picchu",view:[-80,-17,-66,-9],globe:[-72.5,-13.2,4],card:"left",hi:["pe"],sub:"1500/inca",
   pins:[[[-72.545,-13.163],"Machu Picchu","point"],[[-71.97,-13.53],"Cusco, the capital","point"]],
-  _histWide:1,xsec:{title:"From the Pacific over the Andes to Machu Picchu",pts:[[-76.2,-13.7,"Pacific"],[-75.4,-13.6],[-74.5,-13.5],[-73.6,-13.35],[-72.95,-13.25],[-72.545,-13.163,"Machu Picchu"],[-72.69,-12.86],[-72.9,-12.3],[-73.3,-11.6,"Amazon lowlands"]],mark:2430,
+  _histWide:1,xsec:{title:"From the Pacific over the Andes to Machu Picchu",pts:[[-76.2,-13.7,"Pacific"],[-75.4,-13.6],[-74.5,-13.5],[-73.6,-13.35],[-72.95,-13.25],[-72.545,-13.163,"Machu Picchu"],[-72.69,-12.86],[-72.9,-12.3],[-73.3,-11.6,"Amazon"]],mark:2430,
    note:"The dashed line marks 2,430 m, the height of Machu Picchu. Heights are smoothed, so the narrow river gorges look shallower than they are."},
   stat:"Machu Picchu sits on a ridge 2,430 m up, between the high Andes and the Amazon rainforest",
   body:"The emperor Pachacuti had it built around 1450, probably as a royal estate. Move along the chart: from the dry coast the Andes rise to over 4,000 m, and Machu Picchu perches on their eastern slope, where the land falls away towards the Amazon.",
@@ -219,7 +217,7 @@ if(T("hoceania")&&!T("hoceania").steps._polD){T("hoceania").steps._polD=1;
   ph([165.38,11.6],"Bikini Atoll"),ph([131.04,-25.34],"Uluru")]});
  set("hoceania","Voyagers of the open Pacific",s=>{s.gfRuler={a:[-149.43,-17.65],b:[-109.35,-27.1]};
   s.body="About 3,000 years ago, the Lapita people sailed east from near New Guinea to Fiji, Tonga and Samoa. Much later their descendants reached Hawaii, Rapa Nui (Easter Island), about 4,000 km from Tahiti (ruler), and, around 1250 to 1300 AD, New Zealand, the last."});
- set("hoceania","Easter Island’s giants",s=>{s.gfRuler={a:[-109.35,-27.1],b:[-130.1,-25.07]};
+ set("hoceania","Easter Island’s giants",s=>{s.view=[-175,-45,-95,-5];s.card="left";s.gfRuler={a:[-109.35,-27.1],b:[-130.1,-25.07]};
   s.body="Rapa Nui, or Easter Island, lies about 3,500 km from Chile, and over 2,000 km from Pitcairn, the nearest inhabited island (ruler). Its people carved the moai from volcanic rock at one quarry, Rano Raraku, and moved them across the island."});
  fr("hoceania","The oldest living culture",[95,-44,160,-8]);
  set("hoceania","The First Fleet",s=>{s.gfRuler={a:[-1.09,50.8],b:[151.21,-33.86]};
@@ -228,9 +226,9 @@ if(T("hoceania")&&!T("hoceania").steps._polD){T("hoceania").steps._polD=1;
 /* ───────── Antarctica (relief map, globe) ───────── */
 if(T("hantarctica")&&!T("hantarctica").steps._polD){T("hantarctica").steps._polD=1;
  set("hantarctica","Antarctica’s story",s=>{s.phPins=[ph([166.67,-77.85],"McMurdo: the biggest base"),ph([-52.3,-68.7],"Endurance, 1915"),ph([-36.5,-54.28],"Grytviken: old whaling station"),
-  ph([-26.2,-75.6],"Halley: the ozone hole station"),ph([142.66,-67.01],"Cape Denison: Mawson’s hut"),ph([-60.6,-62.95],"Deception Island: cruise ships")]});
- set("hantarctica","The unknown southern land",s=>{s.ghosts=[{code:"au",at:[60,-80],col:"#8a63cf",label:"Australia, true size"}];s.globe=[60,-60,1.1];
-  s.more="Antarctica means “opposite the Bear”: the Arctic is named after arktos, Greek for bear, after the Great Bear constellation. When explorers found Australia instead, it took the old name, which just means “southern”. The real southern continent lay much further south: drag Australia onto it and see that Antarctica is almost twice as big."});
+  ph([-26.2,-75.6],"Halley: the ozone hole station"),ph([142.66,-67.01],"Cape Denison: Mawson’s hut"),ph([-60.6,-62.95],"Deception Island: cruise ships")];
+  s.ghosts=[{code:"au",at:[75,-77],col:"#8a63cf",label:"Australia, true size"}];
+  s.body="For 2,000 years it was only an idea. Then came sealers, explorers racing to the Pole, a shipwreck with a happy ending, and a treaty that set a whole continent aside for science. Drag Australia across it: Antarctica is almost twice as big."});
  set("hantarctica","The first winter",s=>{s.gfSun={utc:12,day:172};
   s.body="The Belgian ship Belgica was frozen into the sea ice west of the Antarctic Peninsula for about a year. In June the Sun never rises over most of Antarctica (dark): move the date to see the polar night come and go. In the long darkness, the crew fell ill with scurvy."});
  set("hantarctica","Race to the Pole",s=>{s.gfRuler={a:[-164,-78.5],b:[0,-90]};

@@ -51,7 +51,7 @@ if(T("asia")&&!T("asia").steps._polE){T("asia").steps._polE=1;
   s.xsec={title:"From India’s plains over Everest and across Tibet",pts:[[85.1,25.6,"Patna"],[86.0,27.0],[86.93,27.99,"Everest"],[87.6,29.3],[88.6,31.0,"Tibet"],[88.0,33.5],[87.2,35.6,"Kunlun"],[86.2,38.0,"Taklamakan"]],mark:4500,
    note:"The dashed line marks 4,500 m, the Tibetan Plateau’s average height. Heights are smoothed: Everest’s real summit is 8,849 m."};
   s.body="The Himalaya, the Karakoram and their neighbours hold all of them, including all 14 peaks over 8,000 m. Move along the chart: from India’s plains the land leaps up over Everest and stays above 4,500 m across Tibet, then drops to the Taklamakan desert."});
- set("asia","Siberia",s=>{s.gfRuler={a:[60.6,56.84],b:[131.89,43.12]};s.view=[2,28,152,78];s.globe=[84,52,0.95];
+ set("asia","Siberia",s=>{s.gfRuler={a:[60.6,56.84],b:[131.89,43.12]};s.view=[-30,5,180,85];s.globe=[84,52,0.95];
   s.body="It is Russia east of the Urals: forest, bog and frozen tundra, with Lake Baikal, the deepest lake on Earth. The ruler crosses it from Yekaterinburg, in the Urals, to Vladivostok on the Pacific: about 5,100 km in a straight line.";
   s.more="Siberia is bigger than any country on Earth except Russia itself, and its taiga is the largest forest on Earth. In Oymyakon it has been −67.7 °C, and under much of Siberia the ground stays frozen all year. The Trans-Siberian Railway winds about 9,300 km from Moscow to Vladivostok and takes about a week. Its great rivers, the Ob, Yenisei and Lena, flow north to the Arctic."});
  set("asia","The Ring of Fire",s=>{s.on=["plates"];s.view=[62,-15,172,60];s.globe=[112,18,1.1];
@@ -62,7 +62,7 @@ if(T("asia")&&!T("asia").steps._polE){T("asia").steps._polE=1;
 }
 /* ───────── Africa ───────── */
 if(T("africa")&&!T("africa").steps._polE){T("africa").steps._polE=1;
- set("africa","The Sahara is mostly rock",s=>{delete s.drag;s.gfRuler={a:[-14.5,26.1],b:[34.2,26.1]};s.view=[-46,8,40,38];s.globe=[-3,23,1.9];
+ set("africa","The Sahara is mostly rock",s=>{delete s.drag;s.gfRuler={a:[-14.5,26.1],b:[34.2,26.1]};s.view=[-58,8,38,40];s.globe=[-3,23,1.9];
   s.body="It is the largest hot desert on Earth, about 9 million km². The ruler spans it from the Atlantic to the Red Sea: about 4,800 km. Sand seas cover only about a quarter of it; the rest is rock, gravel and mountains."});
  set("africa","The roof of Africa",s=>{s.view=[21,-12,45,6];
   s.xsec={title:"From Lake Victoria over Kilimanjaro to the sea",pts:[[33.8,-2.0,"Lake Victoria"],[35.0,-2.4],[36.0,-2.6,"Rift Valley"],[36.7,-2.85],[37.36,-3.07,"Kilimanjaro"],[38.5,-3.6],[39.66,-4.05,"Mombasa"]],
@@ -76,7 +76,7 @@ if(T("africa")&&!T("africa").steps._polE){T("africa").steps._polE=1;
 /* ───────── North America ───────── */
 if(T("namerica")&&!T("namerica").steps._polE){T("namerica").steps._polE=1;
  set("namerica","North America",s=>addPh(s,[ph([-151,63.07],"Denali 6,190 m"),ph([-110.83,44.46],"Old Faithful"),ph([-26.5,70.9],"Greenland: An iceberg in Føhn Fjord, East Greenland")]));
- set("namerica","The longest border",s=>{s.gfRuler={a:[-95.15,49],b:[-123.03,49]};s.globe=[-113,51,1.6];
+ set("namerica","The longest border",s=>{s.gfRuler={a:[-95.15,49],b:[-123.03,49]};s.view=[-160,38,-75,72];s.globe=[-113,51,1.6];
   s.body="It includes the border with Alaska. Across the prairies it follows a straight line, the 49th parallel, agreed in 1818 and 1846: the ruler measures that stretch, about 2,000 km."});
  set("namerica","Mountains and rivers",s=>{
   s.xsec={title:"From San Francisco over the Rockies to Kansas",pts:[[-122.4,37.78,"San Francisco"],[-120.5,37.9],[-119.4,37.85],[-116.5,39.0],[-111.9,40.76,"Salt Lake City"],[-108.5,40.0],[-106.1,39.6],[-104.99,39.74,"Denver"],[-101,39.0],[-97.5,38.5,"Kansas"]],mark:1609,

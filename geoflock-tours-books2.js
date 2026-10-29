@@ -193,7 +193,6 @@ S({title:"The gift of an island",view:[-25,34,9,58],globe:[-2,49,3.5],card:"left
  lines:[{coords:[[-4.49,48.39],[-9.5,45],[-10,40],[-9.5,37],[-6.5,36.1],[-5.4,35.95],[-2,36.4],[2,38.5],[5.93,43.12]],kind:"dash"}],
  pins:[[[-1.09,50.8],"Portsmouth","point"],[[-4.14,50.37],"Plymouth","point"],[[-4.49,48.39],"Brest: French Atlantic fleet","point"],[[5.93,43.12],"Toulon: French Mediterranean fleet","point"]],
  iconPins:[ic([-1.09,50.8],"ship"),ic([-4.49,48.39],"ship"),ic([5.93,43.12],"ship")],
- phPins:[ph([-0.13,51.5],"The Palace of Westminster")],
  stat:"Mahan listed six things that make sea power, and put geography first",
  body:"His six elements were a country’s position, its coastline and harbours, its size, its population, its people’s character and its government. Britain, an island with no land border to guard, could spend on its navy. France had to keep a big army, and split its fleet between Brest and Toulon (the dashed route around Spain).",
  more:"Mahan argued that France’s fleets could only join up by sailing past Gibraltar, which Britain held. Geography gave Britain a head start that France never overcame."}),
@@ -209,7 +208,7 @@ S({title:"Gibraltar",view:[-8.5,35.2,-4.5,36.9],globe:[-5.4,36,6],card:"left",hi
  iconPins:[ic([-5.35,36.14],"ship")],
  phPins:[ph([-5.81,35.78],"The Strait of Gibraltar")],
  stat:"An English and Dutch force captured Gibraltar in 1704, and Britain has held it ever since",
- body:"The strait is only about 14 km wide at its narrowest (drag the ruler), and every ship between the Atlantic and the Mediterranean must pass it. Mahan argued that bases at chokepoints like this let a navy control trade far from home.",
+ body:"The strait is barely 15 km wide at its narrowest (drag the ruler), and every ship between the Atlantic and the Mediterranean must pass it. Mahan argued that bases at chokepoints like this let a navy control trade far from home.",
  more:"Spain gave up Gibraltar in the Treaty of Utrecht of 1713 but has long asked for it back; it is a British Overseas Territory. The shipping lanes on the map still funnel through the strait."}),
 S({title:"The battle that freed America",view:[-95,16,-66,40],globe:[-74,28,3],card:"left",hiSoft:["us"],
  lines:[{coords:[[-72.2,19.76],[-71,22.5],[-72,27],[-74.5,33],[-75.9,36.9]],kind:"flow"}],
@@ -245,11 +244,11 @@ S({title:"The naval race",view:[-14,50,11,62],globe:[5,56,3.3],card:"left",hi:["
  stat:"Inspired partly by Mahan, Germany built a battle fleet to rival Britain’s, and the two raced to build battleships",
  body:"Kaiser Wilhelm II wanted a navy fit for a world power. Britain answered with HMS Dreadnought in 1906 and many more battleships. In 1916 the two fleets met once in full at Jutland, the biggest battleship battle of the First World War.",
  more:"Britain lost more ships and men, but the German fleet rarely left port again, and Britain’s blockade kept squeezing Germany. Many historians see the naval race as one cause of the rivalry that led to war."}),
-S({title:"Carriers replace battleships",view:[132,-10,252,50],globe:[190,22,1.2],card:"left",gfSun:{utc:18.3,day:341,city:["Pearl Harbor",-10.5]},
- pins:[[[-157.95,21.36],"Pearl Harbor, 7 Dec 1941","point"],[[-177.37,28.21],"Midway, June 1942","point"]],
+S({title:"Carriers replace battleships",view:[95,5,215,55],globe:[180,30,1.2],card:"left",gfRuler:{a:[147.65,44.9],b:[-157.95,21.36]},
+ pins:[[[-157.95,21.36],"Pearl Harbor, 7 Dec 1941","point"],[[-177.37,28.21],"Midway, June 1942","point"],[[147.65,44.9],"Hitokappu Bay: the carriers sail","point"]],
  iconPins:[ic([-177.37,28.21],"swords")],
  stat:"At Pearl Harbor and Midway, aircraft from carriers, not battleships’ guns, decided the battles",
- body:"Japan’s navy, which had studied Mahan closely, attacked the US fleet at Pearl Harbor at 7:48 in the morning on 7 December 1941 (day and night on the map). Six months later, at Midway, US carrier planes sank four Japanese carriers.",
+ body:"Japan’s navy, which had studied Mahan closely, sent six aircraft carriers about 5,600 km across the North Pacific in secret (drag the ruler) to attack the US fleet at Pearl Harbor on 7 December 1941. Six months later, at Midway, US carrier planes sank four Japanese carriers.",
  more:"Mahan’s idea of a decisive clash between battle fleets lived on, but the big gun gave way to the aircraft carrier. Today navies are built around carriers and submarines."}),
 S({title:"Chokepoints today",view:[-21,-15,106,42],globe:[70,15,1.6],card:"left",on:["connections"],
  pins:[[[56.4,26.6],"Strait of Hormuz","point"],[[101,2.8],"Strait of Malacca","point"],[[43.4,12.6],"Bab-el-Mandeb","point"],[[32.55,30.0],"Suez Canal","point"]],
@@ -280,7 +279,7 @@ S({title:"How to Lie with Maps",view:W,globe:[20,30,1],
  more:"The book, now in its third edition (2018), is used in classrooms everywhere. This tour uses GeoFlock’s own maps and tools to show its lessons."}),
 S({title:"White lies: leaving things out",view:[-16,56,34,72],globe:[14,64,3],card:"left",hi:["no"],gfRuler:{a:[7.05,57.98],b:[25.78,71.17]},
  pins:[[[7.05,57.98],"Lindesnes: the southern tip","point"],[[25.78,71.17],"North Cape","point"]],
- phPins:[ph([7.1,62.1],"Geirangerfjord")],
+ phPins:[ph([13.1,67.93],"Reine, Lofoten")],
  stat:"Norway’s coast is about 1,700 km from end to end, but over 100,000 km long counting every fjord and island",
  body:"Monmonier explains that a small world map must leave things out and smooth coastlines. On this map Norway has a few dozen bends; in reality it has thousands of fjords and about 240,000 islands. Drag the ruler: the straight line is nothing like the real coast.",
  more:"The more you zoom out, the more detail must go. Cartographers call this generalisation, and Monmonier calls it the map’s necessary white lies."}),
@@ -307,7 +306,7 @@ S({title:"Big land, few people",view:[-48,0,155,78],globe:[90,45,1.3],card:"left
  phPins:[ph([37.54,55.75],"Moscow City")],
  stat:"Bangladesh has more people than Russia, on less than one percent of Russia’s land",
  body:"On most maps size is what catches the eye, so huge, empty countries look important. Monmonier warns that maps of elections or populations by area can mislead this way. Bangladesh has been placed in Siberia at its true size (the green shape): drag it around Russia.",
- more:"A cartogram solves this by redrawing each country in proportion to its people or votes instead of its land, so Bangladesh grows and Russia shrinks."}),
+ more:"A cartogram solves this by redrawing each country in proportion to its people or votes instead of its land, so Bangladesh grows and Russia shrinks. Click ‘Cartogram’ above this map to see one."}),
 S({title:"Totals: the biggest look biggest",view:[-88,-10,102,70],globe:[60,35,1.2],card:"left",mode:"gdp",sub:"total",hi:["in","gb"],
  pins:[[[78,22],"India","point"],[[-2,54],"United Kingdom","point"]],
  phPins:[ph([-0.07,51.51],"The Tower of London")],
@@ -416,14 +415,14 @@ const CARD={
  "bpivot|Inner and outer crescents":"British Empire map - The India and Colonial Exhibition, London (1886) - BL.jpg","bpivot|The World-Island":"The HoloGlobe Project (Version 3) (SVS155 - earth night).jpg",
  "bpivot|Who rules East Europe":"Warsaw, Old Town Square.jpg","bpivot|Containing the Heartland":"2018 NATO Summit in Brussels (29510554308).jpg",
  "bpivot|New railways across the steppe":"VL 85-022 container train.jpg","bpivot|Now explore":"Astana-steppe-7748.jpg",
- "bseapower|The Influence of Sea Power upon History":"Antigua English Harbour Nelson's Dockyard 2.jpg","bseapower|The gift of an island":"HMS Bark Endeavour - Replica01.jpg",
+ "bseapower|The Influence of Sea Power upon History":"Antigua English Harbour Nelson's Dockyard 2.jpg","bseapower|The gift of an island":"Palace of Westminster as seen from Westminster Bridge.jpg",
  "bseapower|Trade, ships and colonies":"Galle Fort.jpg","bseapower|Gibraltar":"Strait of Gibraltar perspective.jpg",
- "bseapower|The battle that freed America":"Early European ship - Google Art Project.jpg","bseapower|Coaling stations":"Panorama of Valletta.jpg",
+ "bseapower|The battle that freed America":"HMS Bark Endeavour - Replica01.jpg","bseapower|Coaling stations":"Panorama of Valletta.jpg",
  "bseapower|Mahan’s advice to America":"Waikiki and Diamond Head.jpg","bseapower|The Panama Canal":"Locomotives Tow Container Ship through Miraflores Locks - Panama Canal.jpg",
  "bseapower|The naval race":"North Sea oil rig.jpg","bseapower|Carriers replace battleships":"USS Arizona Memorial (aerial view).jpg",
  "bseapower|Chokepoints today":"Tanker in the Strait of Hormuz.jpg","bseapower|Bases far from home":"MAERSK HANOI Container Ship (Port Koper SIKOP, 2023).jpg",
  "bseapower|Now explore":"Shanghai-Yangshan-Port-Containers2013-01.JPG",
- "bliemaps|How to Lie with Maps":"(Marshall Islands stick chart, Meddo type). LOC 2010586181.jpg","bliemaps|White lies: leaving things out":"Lofoten, Norway (Unsplash).jpg",
+ "bliemaps|How to Lie with Maps":"(Marshall Islands stick chart, Meddo type). LOC 2010586181.jpg","bliemaps|White lies: leaving things out":"Geirangerfjord from Ørnesvingen, 2013 June.jpg",
  "bliemaps|Mercator’s big north":"Earth from Space- Northeast Greenland National Park ESA512867.jpg","bliemaps|The Peters projection fight":"Tourists taking pictures at Prime Meridian monument, Greenwich Observatory, London.jpg",
  "bliemaps|Where you draw the line":"Tokyo Shibuya Scramble Crossing 2021-04-27.jpg","bliemaps|Big land, few people":"National Assembly of Bangladesh (জাতীয় সংসদ ভবন).jpg",
  "bliemaps|Totals: the biggest look biggest":"Tower of London from the Shard (8515883950).jpg","bliemaps|Rates: the map flips":"Marina Bay Singapore-3499.jpg",
@@ -454,7 +453,7 @@ const PIN={
  "Panama Canal Miraflores Locks":"Panama Canal Miraflores Locks.jpg","Digging the Culebra Cut, 1904":"Labourers at work on the panama canal at Culebra Cut 1904.jpg",
  "An oil rig in the North Sea":"North Sea oil rig.jpg","A mosque in Djibouti":"Djibouti mosque.JPG",
  /* How to Lie with Maps */
- "Iceberg, Ilulissat":"Iceberg in the Ilulissat Icefjord, Greenland (54067514893).jpg","Geirangerfjord":"Geirangerfjord from Ørnesvingen, 2013 June.jpg",
+ "Iceberg, Ilulissat":"Iceberg in the Ilulissat Icefjord, Greenland (54067514893).jpg","Geirangerfjord":"Geirangerfjord from Ørnesvingen, 2013 June.jpg","Reine, Lofoten":"Reine Lofoten 2009.JPG",
  "Bangladesh’s parliament":"National Assembly of Bangladesh (10).jpg","The London Eye":"London-Eye-2009.JPG","K2, Karakoram":"K2 2006b.jpg","The Coral Sea":"Coral Sea, Queensland (483718) (9443462706).jpg",
  "Moscow City":"Moscow-city (8293712287).jpg","Victoria Falls":"Victoria Falls from the Zimbabwe side.jpg","The Red Fort, Delhi":"Red Fort in Delhi 03-2016 img3.jpg",
  "Shibuya crossing, Tokyo":"Shibuya Crossing, Tokyo; December 2017.jpg","The Tower of London":"Tower of London from the Shard (8515883950).jpg",
@@ -474,6 +473,13 @@ function prep(St){try{const K=St&&KEEP.get(St);if(!K||!K.length)return;if(typeof
  if((St.phPins||[]).length!==K.length){St.phPins=K.map(q=>Object.assign({},q));St._sqPruned=-1;return true}}catch(e){console.error(e)}}
 function restore(){try{if(!mine())return;if(prep(psSteps()[ps.i])){if(typeof psPhPinsSync==="function")psPhPinsSync();if(typeof psPlacePins==="function")psPlacePins(true)}}catch(e){console.error(e)}}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(mine())prep(psSteps()[i])}catch(e){}const r=_g.apply(this,arguments);restore();setTimeout(restore,300);return r}}
+/* two Economy-map stops in a row (totals, then per person): the shared switch only sets a sub when the map mode changes, so the
+   second stop sets its own sub once the map is in that mode */
+function gdpSub(){try{if(!mine())return;const St=psSteps()[ps.i];if(!St||St.mode!=="gdp"||!St.sub||typeof allMapsSubMode==="undefined")return;
+ if(typeof allMapsColorMode!=="undefined"&&allMapsColorMode!=="gdp")return;if(allMapsSubMode.gdp===St.sub)return;allMapsSubMode.gdp=St.sub;
+ document.querySelectorAll("#allMapsSubModes [data-allmaps-sub]").forEach(x=>x.classList.toggle("active",x.dataset.allmapsSub===St.sub));
+ try{applyAllMapsColorMode(document.getElementById("allMapsWrap"))}catch(e){console.error(e)}try{if(typeof amGlobeOn==="function"&&amGlobeOn())amGlobeSync()}catch(e){}try{if(ps&&ps.g)ps.g.render()}catch(e){}}catch(e){console.error(e)}}
+if(typeof psGo==="function"){const _g2=psGo;psGo=function(){const r=_g2.apply(this,arguments);try{if(mine())[200,900,2000].forEach(t=>setTimeout(gdpSub,t))}catch(e){}return r}}
 /* covers for the Guided tours page cards */
 try{if(typeof TOUR_THUMBS!=="undefined"){const C={b1493:"Cerro Rico over Potosí, Bolivia.jpg",bpivot:"Trans-Siberian train on the steppe.jpg",bseapower:"Strait of Gibraltar perspective.jpg",bliemaps:"(Marshall Islands stick chart, Meddo type). LOC 2010586181.jpg"};
  const set=()=>{for(const id in C){if(TOUR_THUMBS[id])continue;const p=findP(C[id]);if(p&&p.d&&/^photos\//.test(p.d))TOUR_THUMBS[id]=p.d}};set();addEventListener("load",()=>setTimeout(set,1500))}}catch(e){}
