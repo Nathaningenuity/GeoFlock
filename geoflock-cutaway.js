@@ -71,10 +71,11 @@ function key(){let k=document.querySelector(".gf-cut-key");const g=amGlobe;if(!o
   '<small>Click a layer (here or in the cut) for more. Drag the globe to turn it; the cut turns with it. Nobody has dug deeper than 12 km: we know the inside from how earthquake waves travel through it.</small>'}
 const ICO='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M12 12V7.5M12 12h4.5" opacity=".6"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/></svg>';
 function toggle(g){on=!on;hov=null;sel=null;if(on){/* the cut starts at the meridian in the middle of the view, going east */try{lon0=Math.round(-g.rot[0])}catch(e){lon0=0}}key();try{g.request?g.request():g.render()}catch(_){}}
-function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const btns=g.host.querySelector(".globe-btns");if(!btns)return;let b=btns.querySelector(".gf-cut");
- if(g._flat||appMode!=="allmaps"){if(b)b.remove();if(on){on=false;key()}return}
- if(!b){b=document.createElement("button");b.type="button";b.className="gf-cut";b.innerHTML=ICO;b.onclick=e=>{e.stopPropagation();toggle(g)};btns.appendChild(b)}
- b.title=on?"Close the cutaway":"Look inside the Earth: cut a wedge out of the globe";b.classList.toggle("on",on);if(on&&!document.querySelector(".gf-cut-key"))key()}
+/* the way in is the toolkit's Shovel (on the globe): "Inside the Earth" */
+function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const old=g.host.querySelector(".globe-btns .gf-cut");if(old)old.remove();
+ if(g._flat||appMode!=="allmaps"){if(on){on=false;key();try{g.request?g.request():g.render()}catch(_){}}return}
+ if(on&&!document.querySelector(".gf-cut-key"))key()}
+window.gfCutaway={toggle:()=>{try{const g=amGlobe;if(g&&!g._flat)toggle(g)}catch(e){}},isOn:()=>on,ok:()=>{try{return!!(amGlobe&&!amGlobe._flat&&appMode==="allmaps")}catch(e){return false}}};
 setInterval(()=>{try{sync()}catch(e){}},400);
 const st=document.createElement("style");st.textContent=`
 .globe-btns .gf-cut.on{ background:#d4582c !important; color:#fff !important; }

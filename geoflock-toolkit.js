@@ -384,7 +384,7 @@ function parseLL(t){t=String(t).trim();const dms=/(\d+(?:\.\d+)?)\s*°\s*(?:(\d+
  if(dms){const v=(d,m,s2)=>+d+(+m||0)/60+(+s2||0)/3600;let la=v(dms[1],dms[2],dms[3]),lo=v(dms[5],dms[6],dms[7]);if(/[Ss]/.test(dms[4]))la=-la;if(/[Ww]/.test(dms[8]))lo=-lo;return[lo,la]}
  const m=/^\s*(-?\d+(?:\.\d+)?)\s*°?\s*([NSns])?\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*°?\s*([EWew])?\s*$/.exec(t);if(!m)return null;
  let la=+m[1],lo=+m[3];if(m[2]&&/[Ss]/.test(m[2]))la=-Math.abs(la);if(m[4]&&/[Ww]/.test(m[4]))lo=-Math.abs(lo);if(Math.abs(la)>90||Math.abs(lo)>180)return null;return[lo,la]}
-function pinAt(ll,name){try{flyTo(ll)}catch(e){}setTimeout(()=>{const q0=toScreen(ll);if(!name&&q0){newPin(ll,q0[0],q0[1]);return}
+function pinTyped(ll,name){try{flyTo(ll)}catch(e){}setTimeout(()=>{const q0=toScreen(ll);if(!name&&q0){newPin(ll,q0[0],q0[1]);return}
   const P=K().pins,n=name||(q0?placeName(ll,q0[0],q0[1],countryAt(q0[0],q0[1])):"")||llTxt(ll);const q={ll:ll.map(v=>+v.toFixed(3)),n,b:n,auto:name?0:1,k:S.pinKind||"been",note:"",t:Date.now(),opts:[]};P.push(q);save();render();
   try{pinProvince(q,null)}catch(e){}try{pinMenu()}catch(e){}toast("Pinned: "+n)},700)}
 function pinFindUI(p){const host=p.querySelector(".gfk-pickpins");if(!host||p.querySelector(".gfk-pinfind"))return;
@@ -395,8 +395,8 @@ function pinFindUI(p){const host=p.querySelector(".gfk-pickpins");if(!host||p.qu
   hits=t.length>1&&window.gfSearch?gfSearch.find(t).filter(e=>e.ll&&isFinite(e.ll[0])).slice(0,6):[];SG.hidden=!hits.length;
   SG.innerHTML=hits.map((e,i)=>'<button type="button" data-i="'+i+'">'+esc(e.n)+(label(e)?' <small>'+esc(label(e))+'</small>':'')+'</button>').join("");
   SG.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>go(b.dataset.i))});
- const go=i=>{const t=I.value.trim();if(i==="ll"||parseLL(t)){const ll=parseLL(t);if(ll)pinAt(ll,null);return}const e=hits[+i||0];if(!e){toast("No place found for “"+t+"”");return}pinAt(e.ll,e.n)};
- F.addEventListener("submit",ev=>{ev.preventDefault();go(0)});I.addEventListener("keydown",ev=>ev.stopPropagation())}
+ const go=i=>{const t=I.value.trim();if(i==="ll"||parseLL(t)){const ll=parseLL(t);if(ll)pinTyped(ll,null);return}const e=hits[+i||0];if(!e){toast("No place found for “"+t+"”");return}pinTyped(e.ll,e.n)};
+ F.addEventListener("submit",ev=>{ev.preventDefault();go(0)});I.addEventListener("keydown",ev=>{ev.stopPropagation();if(ev.key==="Enter"){ev.preventDefault();go(0)}})}
 /* the country a pin stands in (checked against the map's country shapes) */
 function pinCountry(q){try{const F=projFeatures();for(const f of F){if(f.geometry&&d3.geoContains(f,q.ll)){const c=COUNTRY_BY_CODE[String(f.properties.c).toLowerCase()];if(c)return c}}}catch(e){}return null}
 function editPin(i,cx,cy){const q=K().pins[i];if(!q)return;const p=panel("gfkPin",'<b class="gfk-ph">Pin</b><label class="gfk-f">Name<input type="text" maxlength="40" value="'+esc(q.n)+'"></label>'+((q.opts||[]).length>1?'<div class="gfk-names">'+q.opts.map(n=>'<button type="button" data-nm="'+esc(n)+'" class="'+(n===q.n?"on":"")+'">'+esc(n)+"</button>").join("")+"</div>":"")+'<div class="gfk-ll" title="Latitude, longitude">'+llTxt(q.ll)+'<small>'+q.ll[1].toFixed(4)+', '+q.ll[0].toFixed(4)+'</small></div>'+
@@ -729,11 +729,11 @@ function dig(ll){if(!ll)return;const B=anti(ll),PA=digPlace(ll),PB=digPlace(B);S
   (PB.land?'':'<p class="gfk-hint">Most holes come out at sea: almost all land has ocean on its opposite side. Only about 15% of land has land on its opposite side: Argentina and China, for example, or New Zealand and Spain.</p>')+
   '<button type="button" class="gfk-link" data-go>Show me where I come out →</button> <button type="button" class="gfk-link" data-again>Dig somewhere else</button></div></div>',true);if(!p)return;wireSeg(p);
  holes([ll,B]);p.querySelector("[data-go]").onclick=()=>flyTo(B);p.querySelector("[data-again]").onclick=()=>{S.shovelArm=true;toast("Click anywhere on the map to dig")}}
-function segHTML(m){return'<div class="gfk-seg"><button type="button" data-sm="xs" class="'+(m==="xs"?"on":"")+'">✂ Cross-section</button><button type="button" data-sm="dig" class="'+(m==="dig"?"on":"")+'">⛏ Dig through</button></div>'}
+function segHTML(m){const cut=window.gfCutaway&&gfCutaway.ok();return'<div class="gfk-seg"><button type="button" data-sm="xs" class="'+(m==="xs"?"on":"")+'">✂ Cross-section</button><button type="button" data-sm="dig" class="'+(m==="dig"?"on":"")+'">⛏ Dig through</button>'+(cut?'<button type="button" data-sm="cut" class="'+(gfCutaway.isOn()?"on":"")+'">🌋 Inside the Earth</button>':'')+'</div>'}
 /* the shovel opens the cross-section first (on the flat map); Dig through is one click away */
 function shovelOpen(){try{if(window.gfCrossSection&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat){closePanels();S.shovelArm=false;gfCrossSection.start();return}}catch(e){}shovelPanel()}
 window.gfShovelDig=()=>{try{gfCrossSection.stop()}catch(e){}shovelPanel()};
-function wireSeg(p){p.querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="xs"){closePanels();S.shovelArm=false;try{gfCrossSection.start()}catch(e){toast("Cross-sections need the flat map or globe")}}else shovelPanel()})}
+function wireSeg(p){p.querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="cut"){try{gfCutaway.toggle()}catch(e){}b.classList.toggle("on",gfCutaway.isOn());if(gfCutaway.isOn())closePanels();return}if(b.dataset.sm==="xs"){closePanels();S.shovelArm=false;try{gfCrossSection.start()}catch(e){toast("Cross-sections need the flat map or globe")}}else shovelPanel()})}
 function shovelPanel(){const p=panel("gfkShovel",'<b class="gfk-ph">Shovel</b>'+segHTML("dig")+'<p class="gfk-hint">Click a place on the map (or drag the shovel onto it) and dig straight through the middle of the Earth. Where do you come out?</p>');if(!p)return;wireSeg(p);S.shovelArm=true}
 /* the two holes, kept on the map */
 let HOLES=[],holeRaf=0;function holes(L){HOLES=L;cancelAnimationFrame(holeRaf);const h=host();document.querySelectorAll(".gfk-hole").forEach(x=>x.remove());if(!h)return;

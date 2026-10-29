@@ -171,11 +171,14 @@ function loadLF(){if(lfP)return lfP;lfP=fetch("textures/GF_REGIONS.json").then(r
  try{(globeOverlays().seas||[]).forEach(o=>{if(!o.poly||out.some(x=>x.n===o.n))return;const g=o.poly.type?o.poly:{type:"Polygon",coordinates:o.poly};fix(g);let a;try{a=d3.geoArea(g)}catch(e){return}if(!(a<2*Math.PI))return;out.push({n:o.n,g,b:d3.geoBounds(g),p:4,a,sea:true})})}catch(e){}
  LFD=out;if(on&&lines.length===1){compute();renderPanel()}return out});return lfP}
 const inB=(b,ll)=>!(ll[1]<b[0][1]||ll[1]>b[1][1]||(b[0][0]<=b[1][0]?(ll[0]<b[0][0]||ll[0]>b[1][0]):(ll[0]<b[0][0]&&ll[0]>b[1][0])));
-function lfAt(ll,e){if(e<-4000){for(const T of TRENCH)if(T.pts.some(q=>d3.geoDistance(q,ll)*R_KM<170))return{n:T.n,k:"trench"}}if(!LFD)return null;let best=null;
- for(const o of LFD){if(o.sea||o.lake){if(e>5&&!o.lake)continue}else if(e<-20)continue;if(!inB(o.b,ll))continue;try{if(!d3.geoContains(o.g,ll))continue}catch(er){continue}
-  const r=o.sea||o.lake?[5,o.a]:[o.p,o.a];if(!best||r[0]<best.r[0]||(r[0]===best.r[0]&&r[1]<best.r[1]))best={n:o.n,k:o.sea?"sea":o.lake?"lake":"land",r}}return best}
+/* minA: on a long line the bigger feature reads better (the Andes, not one of its cordilleras); on a short line the specific one */
+function lfAt(ll,e,minA){if(e<-4000){for(const T of TRENCH)if(T.pts.some(q=>d3.geoDistance(q,ll)*R_KM<170))return{n:T.n,k:"trench"}}if(!LFD)return null;const hit=[];
+ for(const o of LFD){if(o.sea||o.lake){if(e>5&&!o.lake)continue}else if(e<-20)continue;if(!inB(o.b,ll))continue;try{if(!d3.geoContains(o.g,ll))continue}catch(er){continue}hit.push(o)}
+ if(!hit.length)return null;const pr=o=>o.sea||o.lake?5:o.p,p0=Math.min(...hit.map(pr)),C=hit.filter(o=>pr(o)===p0);
+ const big=C.filter(o=>o.a>=(minA||0)).sort((x,y)=>x.a-y.a)[0]||C.sort((x,y)=>y.a-x.a)[0];return{n:big.n,k:big.sea?"sea":big.lake?"lake":"land"}}
 function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cur=null;
- for(let i=0;i<P.length;i+=step){const p=P[i],h=lfAt(p.ll,p.e),n=h&&h.n;if(cur&&cur.n===n){cur.b=p.km;cur.hi=Math.max(cur.hi,p.e);cur.lo=Math.min(cur.lo,p.e)}else{cur={n,k:h&&h.k,a:p.km,b:p.km,hi:p.e,lo:p.e};out.push(cur)}}
+ const Lk=(P[P.length-1].km||0)-(P[0].km||0),minA=Math.pow(Lk/7/R_KM,2);
+ for(let i=0;i<P.length;i+=step){const p=P[i],h=lfAt(p.ll,p.e,minA),n=h&&h.n;if(cur&&cur.n===n){cur.b=p.km;cur.hi=Math.max(cur.hi,p.e);cur.lo=Math.min(cur.lo,p.e)}else{cur={n,k:h&&h.k,a:p.km,b:p.km,hi:p.e,lo:p.e};out.push(cur)}}
  return out.filter(g=>g.n)}
 /* ---------- profiles and the chart ---------- */
 function compute(){lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const step=Math.max(1,Math.floor(L.P.length/80));const segs=[];let cur=null;
@@ -258,7 +261,7 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
    if(lo.e<-50)s+='<text x="'+X(lo.km)+'" y="'+(Y(lo.e)+14)+'" text-anchor="middle" font-size="11.5" font-weight="800" fill="#fff">▼ '+fmtE(lo.e)+'</text>';
    s+='<text x="'+(ml+4)+'" y="'+(H-mb-6)+'" font-size="12" font-weight="800" fill="#c0392b">A</text><text x="'+(W-mr-4)+'" y="'+(H-mb-6)+'" text-anchor="end" font-size="12" font-weight="800" fill="#c0392b">B</text>'}
   /* the landforms the line crosses: a name over each mountain range, plateau or plain, in the water for seas and trenches */
-  {const tot=P[P.length-1].km||1,LFX=[];(L.lf||[]).slice().sort((p,q)=>(q.b-q.a)-(p.b-p.a)).forEach(g=>{const a=X(g.a),b=X(g.b),w=b-a,nm=g.n,tw=nm.length*5.6;if(w<Math.max(18,tot?0:0)||(w<tw*.55&&g.k!=="trench"))return;const xm=(a+b)/2,L0=xm-tw/2-5,R0=xm+tw/2+5;if(LFX.some(q=>L0<q[1]&&R0>q[0]))return;LFX.push([L0,R0]);
+  {const tot=P[P.length-1].km||1,LFX=[];(L.lf||[]).slice().sort((p,q)=>(q.b-q.a)-(p.b-p.a)).forEach(g=>{const a=X(g.a),b=X(g.b),w=b-a,nm=g.n,tw=nm.length*5.6;if(w<Math.max(18,tot?0:0)||(w<tw*.55&&g.k!=="trench"))return;const xm=(a+b)/2,L0=xm-tw/2-5,R0=xm+tw/2+5,YY=g.k==="sea"||g.k==="trench"||g.k==="lake"?Y(g.lo):Y(Math.min(g.hi,e1));if(LFX.some(q=>L0<q[1]&&R0>q[0]&&Math.abs(q[2]-YY)<16))return;LFX.push([L0,R0,YY]);
    if(g.k==="sea"||g.k==="trench"||g.k==="lake"){const yy=g.k==="trench"?Y(g.lo)-8:Math.min(Y(g.lo)-6,Math.max(yz+13,(yz+Y(g.lo))/2));if(!inWin(g.lo)&&g.k==="trench")return;s+='<text x="'+xm.toFixed(1)+'" y="'+yy.toFixed(1)+'" text-anchor="middle" font-size="10.5" font-style="italic" font-weight="700" fill="'+(g.k==="trench"?"#fff":"#1f4f7a")+'">'+esc(nm)+'</text>'}
    else{const yy=Math.max(mt+24,Y(Math.min(g.hi,e1))-10);s+='<path d="M'+(a+2).toFixed(1)+','+(yy+4).toFixed(1)+'v-3H'+(b-2).toFixed(1)+'v3" fill="none" stroke="#6b4a2a" stroke-opacity=".55"/><text x="'+xm.toFixed(1)+'" y="'+(yy-1).toFixed(1)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b3a17">'+esc(nm)+'</text>'}})}
   (L.segs||[]).forEach(g=>{if(!g.c)return;const a=X(g.a),b=X(g.b),nm=cname(g.c);if(b-a<26||!nm)return;s+='<line x1="'+(a+1)+'" x2="'+(a+1)+'" y1="'+(H-mb+16)+'" y2="'+(H-mb+29)+'" stroke="#8a5a2b" stroke-opacity=".4"/>';
@@ -328,6 +331,6 @@ function pick(v,keepView){head=null;if(!v)return;armed=false;loadDEM().then(()=>
  compute();frameTo([].concat(...lines.map(L=>L.ll)));renderPanel()})}
 /* listen before the map does (it handles presses at the document level) */
 if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G();if(g&&g.host.contains(e.target))down(e)},true);addEventListener("pointermove",move,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true)}
-window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem};
+window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem,lfAt,loadLF};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
