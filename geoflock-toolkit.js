@@ -356,7 +356,7 @@ function placeName(ll,cx,cy,f){try{const cn=c=>(COUNTRY_BY_CODE[c]||{}).n||"",ct
 /* pins with the same automatic name are numbered 1, 2, 3… in the order they were dropped.
    A name you have typed yourself is never changed. */
 const DIR8=["north","north-east","east","south-east","south","south-west","west","north-west"];
-function bearing(a,b){const R=Math.PI/180,y=Math.sin((b[0]-a[0])*R)*Math.cos(b[1]*R),x=Math.cos(a[1]*R)*Math.sin(b[1]*R)-Math.sin(a[1]*R)*Math.cos(b[1]*R)*Math.cos((b[0]-a[0])*R);return(Math.atan2(y,x)/R+360)%360}
+function bearing360(a,b){const R=Math.PI/180,y=Math.sin((b[0]-a[0])*R)*Math.cos(b[1]*R),x=Math.cos(a[1]*R)*Math.sin(b[1]*R)-Math.sin(a[1]*R)*Math.cos(b[1]*R)*Math.cos((b[0]-a[0])*R);return(Math.atan2(y,x)/R+360)%360}
 function sameNames(base){const P=K().pins.filter(p=>p.b===base&&p.auto&&p.n.indexOf(base)===0);if(!P.length)return;
  if(P.length===1){P[0].n=base;return}
  P.sort((a,b)=>a.t-b.t).forEach((p,i)=>p.n=base+" "+(i+1))}
@@ -685,7 +685,7 @@ setTimeout(()=>{try{pinNamesLoad()}catch(e){}},500);
 /* --- shovel: dig straight through the Earth (where would you come out?), or cut a cross-section --- */
 const R_KM=6371;
 const featsNear=()=>{try{return projFeatures().filter(f=>f.geometry&&f.properties&&f.properties.c)}catch(e){return[]}};
-function placeName(ll){const fs=featsNear();for(const f of fs){try{if(d3.geoContains(f,ll)){const c=String(f.properties.c).toLowerCase();return{land:true,c,n:(COUNTRY_BY_CODE[c]||{}).n||f.properties.n||c.toUpperCase()}}}catch(e){}}
+function digPlace(ll){const fs=featsNear();for(const f of fs){try{if(d3.geoContains(f,ll)){const c=String(f.properties.c).toLowerCase();return{land:true,c,n:(COUNTRY_BY_CODE[c]||{}).n||f.properties.n||c.toUpperCase()}}}catch(e){}}
  /* at sea: how deep, and the nearest land */
  let best=null,bd=Infinity;fs.forEach(f=>{const g=f.geometry,polys=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];polys.forEach(P=>{const r=P[0],step=Math.max(1,Math.floor(r.length/60));for(let i=0;i<r.length;i+=step){const d=d3.geoDistance(ll,r[i]);if(d<bd){bd=d;best=f}}})});
  let depth=null;try{if(window.gfCrossSection&&gfCrossSection.elevAt)depth=-gfCrossSection.elevAt(ll[0],ll[1])}catch(e){}
@@ -699,7 +699,7 @@ function earthCut(){return'<svg viewBox="0 0 220 220" class="gfk-cut" role="img"
  '<circle cx="110" cy="110" r="54.6" fill="#f2b33d"/><circle cx="110" cy="110" r="19.2" fill="url(#gfkCore)"/>'+
  '<line x1="110" y1="4" x2="110" y2="216" stroke="#1d1d1d" stroke-width="3" stroke-dasharray="6 4"/><circle cx="110" cy="6" r="5" fill="#c0392b" stroke="#fff" stroke-width="2"/><circle cx="110" cy="214" r="5" fill="#2e7d32" stroke="#fff" stroke-width="2"/>'+
  '<g font-size="9" font-weight="700" fill="#fff" stroke="#000" stroke-width="2" paint-order="stroke"><text x="120" y="30">Mantle</text><text x="120" y="66">Outer core (liquid)</text><text x="120" y="108">Inner core</text><text x="118" y="118" font-size="8">5,200 °C</text><text x="8" y="12" font-size="8">Crust (thin as an apple skin)</text></g></svg>'}
-function dig(ll){if(!ll)return;const B=anti(ll),PA=placeName(ll),PB=placeName(B);S.shovelArm=false;
+function dig(ll){if(!ll)return;const B=anti(ll),PA=digPlace(ll),PB=digPlace(B);S.shovelArm=false;
  const p=panel("gfkShovel",'<b class="gfk-ph">Shovel</b>'+segHTML("dig")+'<div class="gfk-dig">'+earthCut()+'<div class="gfk-digt"><p>You start in '+describe(PA)+' <small>('+fmtLL(ll)+')</small>.</p><p>Dig straight down through the centre, '+(2*R_KM).toLocaleString()+' km, and you come out in '+describe(PB)+' <small>('+fmtLL(B)+')</small>.</p>'+
   '<p class="gfk-hint">On the way: about 35 km of crust, 2,900 km of rocky mantle, then an iron core about as hot as the surface of the Sun. Fall down a tunnel with no air and you would reach the far side in about 40 minutes.</p>'+
   (PB.land?'':'<p class="gfk-hint">Most holes come out at sea: almost all land has ocean on its opposite side. Only about 15% of land has land on its opposite side: Argentina and China, for example, or New Zealand and Spain.</p>')+
