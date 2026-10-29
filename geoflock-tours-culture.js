@@ -6,7 +6,7 @@
                                            spring new years, hanami, Inti Raymi, Oktoberfest, Día de Muertos, harvests, fire and ice, New Year
    houses     "Houses of the world"       how climate and materials shape homes, on the climate map
    Steps reuse what the World Maps view draws: the religions map (mode "culture", sub "rel/…") on the festival stops about faiths,
-   the climate and population maps, per-stop layers (on:[…]), the elevation threshold, the day-and-night gadget (gfSun).
+   the climate map, per-stop layers (on:[…]), the day-and-night gadget (gfSun), the ruler (gfRuler), and height cross-sections in the card (xsec).
    A stop with its own map mode uses the shared per-stop switch (stopModes). Photos: Wikimedia Commons (author and licence in
    each library entry); new ones are listed in GF_CULT_PHOTOS. */
 window.GF_CULT_PHOTOS=[{"f": "Sepak Takraw Bangkok.jpg", "d": "photos/xc793823d7f539c47.webp", "by": "Robertpollai", "lic": "CC BY 3.0", "page": "https://commons.wikimedia.org/wiki/File:Sepak_Takraw_Bangkok.jpg", "tour": "sports", "card": "Sepak takraw", "pins": ["Sepak takraw"]},
@@ -59,13 +59,14 @@ S({title:"Baseball’s map",view:W,spin:-150,globe:[-30,25,1],card:"left",hi:["u
  stat:"Baseball rules the US, Japan, Cuba, the Dominican Republic and South Korea, but few other places",
  body:"Baseball spread with American sailors, soldiers and teachers from the 1870s. Japan, which learned it then, won three of the first five World Baseball Classics, and its national high-school tournament at Koshien Stadium fills the stands every summer.",
  more:"About one in ten Major League players comes from the Dominican Republic, and the town of San Pedro de Macorís alone has produced dozens. Japan’s Shohei Ohtani, who both pitches and hits, is one of the most famous athletes on Earth."}),
-S({title:"Ice hockey and the cold north",view:W,spin:120,globe:[-30,55,1],card:"left",
+S({title:"Ice hockey and the cold north",view:W,spin:120,globe:[-30,55,1],card:"left",on:["grid"],
  hi:["ca","us","ru","se","fi","cz","sk","ch","lv","de"],
- pins:[[[-73.57,45.5],"Montreal: first indoor game, 1875","point"],[[24.94,60.17],"Helsinki","point"],[[14.42,50.09],"Prague","point"]],
+ lines:[{coords:[[-180,45],[180,45]],kind:"dash"}],
+ pins:[[[-73.57,45.5],"Montreal: first indoor game, 1875","point"],[[24.94,60.17],"Helsinki","point"],[[14.42,50.09],"Prague","point"],[[-35,45],"45° north","point"]],
  phPins:[ph([-83.74,42.27],"College ice hockey, Michigan")],
  stat:"The first organised indoor ice hockey game was played in Montreal on 3 March 1875",
- body:"Hockey grew on the frozen lakes and ponds of Canada, and the countries that are best at it all have long, snowy winters: on the climate map, the cold continental climates. Up to 2022, Canada had won the men’s Olympic title nine times, more than any other country.",
- more:"The National Hockey League has 32 teams in the US and Canada and draws players from Sweden, Finland, Russia, Czechia, Slovakia and beyond. In Finland, Czechia and Latvia hockey is the national passion, and world championship games empty the streets."}),
+ body:"Hockey grew on the frozen lakes and ponds of Canada, and the countries that are best at it all have long, snowy winters. Look at the dashed line, 45° north: almost all the hockey heartlands lie north of it, where lakes freeze hard every winter.",
+ more:"Up to 2022, Canada had won the men’s Olympic title nine times, more than any other country. The National Hockey League has 32 teams in the US and Canada and draws players from Sweden, Finland, Russia, Czechia, Slovakia and beyond. In Finland, Czechia and Latvia hockey is the national passion, and world championship games empty the streets."}),
 S({title:"Rugby in the South Pacific and southern Africa",view:W,spin:-40,globe:[120,-25,1],card:"left",hi:["nz","za","fj","ws","to","au"],hiSoft:["gb","ie","fr","ar","jp"],
  list:[["South Africa","4"],["New Zealand","3"],["Australia","2"],["England","1"]],
  pins:[[[28.06,-26.2],"Ellis Park: the 1995 final","point"],[[174.74,-36.88],"Eden Park, Auckland","point"],[[178.44,-18.14],"Suva, Fiji","point"]],
@@ -95,11 +96,12 @@ S({title:"Sepak takraw",view:[70,-11,128,24],globe:[108,6,2],card:"left",hi:["th
  body:"Played across Southeast Asia for centuries, it got its name from the Malay ‘sepak’, to kick, and the Thai ‘takraw’, a woven ball. Players spike the ball over the net with somersaulting overhead kicks.",
  more:"The ball was traditionally woven from rattan; today it is usually plastic. Sepak takraw has been part of the Asian Games since 1990, and Thailand has won most of the gold medals. Myanmar’s chinlone, a gentler cousin, is played in a circle with no net and no opponents."}),
 S({title:"The Tour de France",view:[-15,40.5,11,51.8],globe:[3,46,4],card:"left",hi:["fr"],
+ xsec:{title:"Height along a typical Tour",pts:[[2.17,41.39,"Barcelona"],[1.5,42.4],[.15,42.91,"Pyrenees"],[-.4,43.3],[1.44,43.6],[3.09,45.78,"Massif Central"],[5.28,44.17],[6.07,45.09,"Alps"],[6.6,45.7],[5.04,47.32],[2.35,48.87,"Paris"]],mark:1500,note:"The dashed line marks 1,500 m. The heights are smoothed: the road over the Col du Tourmalet tops out at 2,115 m."},
  lines:[{coords:[[2.17,41.39],[1.5,42.4],[.15,42.91],[-.4,43.3],[1.44,43.6],[3.09,45.78],[5.28,44.17],[6.07,45.09],[6.6,45.7],[5.04,47.32],[2.35,48.87]],kind:"dash"}],
  pins:[[[2.35,48.87],"Paris: the Champs-Élysées","point"],[[.15,42.91],"Col du Tourmalet","point"],[[6.07,45.09],"Alpe d’Huez","point"],[[5.28,44.17],"Mont Ventoux","point"],[[2.17,41.39],"Barcelona: the 2026 start","point"]],
  phPins:[ph([-.17,43.45],"The Tour de France in the Pyrenees")],
  stat:"The Tour de France covers about 3,500 km in three weeks, in 21 day-long stages",
- body:"The newspaper L’Auto started the Tour in 1903 to sell more papers, and its yellow pages gave the leader’s yellow jersey its colour. The route changes every year but usually climbs both the Pyrenees and the Alps and ends in Paris (a typical loop is drawn).",
+ body:"The newspaper L’Auto started the Tour in 1903 to sell more papers, and its yellow pages gave the leader’s yellow jersey its colour. The route changes every year but usually climbs both the Pyrenees and the Alps and ends in Paris (a typical loop is drawn; the chart shows its ups and downs).",
  more:"The Tour often starts abroad: in 2026 it set off from Barcelona. Since 1975 it has usually finished on the Champs-Élysées; in 2024 it ended in Nice instead, because Paris was getting ready for the Olympics."}),
 S({title:"The Olympic map",view:W,globe:[20,15,1],card:"left",spin:15,hi:["sn"],hiSoft:["gr","fr","us","gb","se","be","nl","de","fi","au","it","jp","mx","ca","ru","kr","es","cn","br"],
  pins:[[[23.74,37.97],"Athens: 1896 and 2004","point"],[[-17.45,14.7],"Dakar: Youth Olympics 2026","point"],[[2.35,48.86],"Paris: 1900, 1924, 2024","point"],[[-118.24,34.05],"Los Angeles 2028","point"],[[153,-27.5],"Brisbane 2032","point"],[[-43.2,-22.9],"Rio 2016","point"]],
@@ -119,12 +121,12 @@ S({title:"Where sports were invented",view:W,spin:35,globe:[-30,45,1],card:"left
  stat:"Basketball and volleyball were both invented in Massachusetts, in towns just 12 km apart",
  body:"In 1891 James Naismith, a Canadian teacher at a YMCA college in Springfield, invented basketball to keep students busy indoors in winter, nailing peach baskets to the balcony. In 1895, in nearby Holyoke, William G. Morgan invented a gentler game he called ‘mintonette’: volleyball.",
  more:"Judo was created in Tokyo in 1882 by Kanō Jigorō, who turned old jujutsu fighting into a sport and a way to train body and mind; it joined the Olympics at Tokyo in 1964. Golf grew up in Scotland, and lawn tennis held its first championship at Wimbledon in 1877."}),
-S({title:"Surfing from Hawaii",view:W,spin:130,globe:[-150,10,1.5],card:"left",hi:["us","pf"],
+S({title:"Surfing from Hawaii",view:W,spin:130,globe:[-150,10,1.5],card:"left",hi:["us","pf"],gfRuler:{a:[2.35,48.86],b:[-149.27,-17.85]},
  lines:[{coords:[[-157.83,21.28],[-140,30],[-122.03,36.96]],kind:"flow"}],
  pins:[[[-158.05,21.66],"Pipeline, North Shore","point"],[[-149.27,-17.85],"Teahupoʻo, Tahiti: Olympic surfing, 2024","point"],[[-122.03,36.96],"Santa Cruz: surfing reaches California, 1885","point"],[[-117.59,33.38],"Trestles: Los Angeles 2028","point"]],
  phPins:[ph([-157.83,21.28],"Waikiki, Hawaii"),ph([-149.27,-17.85],"Teahupoʻo’s wave")],
  stat:"At the Paris 2024 Olympics, the surfing was held in Tahiti, about 15,700 km from Paris",
- body:"Polynesians rode waves for centuries; in Hawaii, surfing, or heʻe nalu, was a sport of chiefs and commoners alike. It faded in the 1800s, then came back at Waikiki in the early 1900s.",
+ body:"Polynesians rode waves for centuries; in Hawaii, surfing, or heʻe nalu, was a sport of chiefs and commoners alike. It faded in the 1800s, then came back at Waikiki in the early 1900s. The ruler measures Paris to Teahupoʻo.",
  more:"Duke Kahanamoku, a Hawaiian Olympic swimming champion, showed off surfing in Australia in 1914–15 and in California, and three Hawaiian princes had already surfed at Santa Cruz in 1885. Surfing joined the Olympics at Tokyo; at Los Angeles 2028 it will be held at Trestles, in California."}),
 S({title:"Now explore",view:W,globe:[20,20,1],
  stat:"Hover any country to see its name and neighbours",
@@ -172,11 +174,11 @@ S({title:"Holi and Diwali",view:[50,5,98,36],globe:[80,22,2.2],card:"left",mode:
  stat:"Diwali, the festival of lights, was added to UNESCO’s list of the world’s living heritage in 2025",
  body:"Diwali comes in October or November, on the new moon of the month of Kartik. Homes are lit with clay oil lamps and fireworks, doorsteps are decorated with coloured rangoli patterns, and families share sweets to celebrate light over darkness.",
  more:"Many Hindus remember the god Rama’s return home to Ayodhya; Sikhs and Jains celebrate their own festivals at the same time. Holi, at the full moon in February or March, welcomes spring with bonfires and then a day of throwing coloured powder and water. The map shows where most people are Hindu."}),
-S({title:"Christmas and Easter",view:W,globe:[20,20,1],card:"left",spin:-20,mode:"culture",sub:"rel/cat+prot+orth+chr",
+S({title:"Christmas and Easter",view:W,globe:[20,20,1],card:"left",spin:-20,mode:"culture",sub:"rel/cat+prot+orth+chr",gfSun:{utc:12,day:359},
  pins:[[[35.2,31.7],"Bethlehem","point"],[[11.08,49.45],"Nuremberg’s Christmas market","point"],[[39.04,12.03],"Lalibela: Christmas on 7 January","point"],[[151.27,-33.89],"Sydney: Christmas on the beach","point"],[[139.7,35.7],"Japan: Christmas fried chicken","point"]],
  phPins:[ph([11.08,49.45],"A Christmas market"),ph([38.76,9.03],"Holy Trinity Cathedral, Addis Ababa")],
  stat:"Christmas comes in midsummer in Australia, and on 7 January in much of the Orthodox world",
- body:"Christians, about a third of the world’s people, celebrate the birth of Jesus on 25 December. Many Orthodox churches, in Russia, Serbia, Georgia, Egypt and Ethiopia, follow the older Julian calendar, now 13 days behind, so their Christmas falls on 7 January.",
+ body:"Christians, about a third of the world’s people, celebrate the birth of Jesus on 25 December. Many Orthodox churches, in Russia, Serbia, Georgia, Egypt and Ethiopia, follow the older Julian calendar, now 13 days behind, so their Christmas falls on 7 January. The map shows noon in London on Christmas Day: the far north stays dark all day, while Antarctica, in midsummer, has daylight round the clock.",
  more:"Easter mixes Sun and Moon: it is the first Sunday after the first full moon on or after 21 March, so it falls between 22 March and 25 April (in 2026 on 5 April; Orthodox Easter a week later). Christmas is also a holiday for many non-Christians: in Japan a fried-chicken dinner is a popular tradition. The map shows where most people are Christian."}),
 S({title:"New year in spring",view:[-30,0,112,48],globe:[70,28,1.4],card:"left",gfSun:{utc:15,day:79},
  G:[{t:"Nowruz: new year at the March equinox",c:"#e0609a",codes:["ir","af","tj","uz","tm","kz","kg","az"]},{t:"Songkran and its cousins, in mid-April",c:"#e0609a|pale",codes:["th","la","mm","kh","lk"]}],
@@ -185,12 +187,12 @@ S({title:"New year in spring",view:[-30,0,112,48],globe:[70,28,1.4],card:"left",
  stat:"Nowruz begins at the exact moment of the March equinox, when the day-and-night line runs from pole to pole",
  body:"Nowruz, ‘new day’, is a 3,000-year-old Persian new year kept by about 300 million people from Turkey and the Caucasus to Central Asia. Families set a table with seven things whose Persian names begin with ‘s’, and Iran’s calendar starts its year on that day.",
  more:"In mid-April, when the Sun enters Aries in the old Indian zodiac, Thailand celebrates Songkran: water poured gently over elders’ hands has grown into giant street water fights, and Laos, Myanmar, Cambodia and Sri Lanka hold their new years too. The map shows 3 p.m. UTC on 20 March 2026, close to the equinox: the Sun has just set over Iran."}),
-S({title:"Hanami: cherry blossom time",view:[110,24,148,46],globe:[136,35,3],card:"left",hi:["jp"],hiSoft:["kr"],
+S({title:"Hanami: cherry blossom time",view:[110,24,148,46],globe:[136,35,3],card:"left",hi:["jp"],hiSoft:["kr"],gfRuler:{a:[127.68,26.21],b:[141.35,43.06]},
  lines:[{coords:[[127.68,26.21],[130.4,33.59],[135.76,35.01],[139.69,35.69],[140.87,38.27],[141.35,43.06]],kind:"flow"}],
  pins:[[[127.68,26.21],"Okinawa: late January","point"],[[139.69,35.69],"Tokyo: late March","point"],[[140.87,38.27],"Sendai: mid-April","point"],[[141.35,43.06],"Sapporo: early May","point"],[[128.69,35.15],"Jinhae, Korea","point"]],
  phPins:[ph([138.75,35.5],"Cherry blossom and Mount Fuji"),ph([135.78,35],"Lanterns in Kyoto")],
  stat:"Kyoto’s records of cherry blossom dates go back about 1,200 years, and 2021’s bloom was the earliest in them",
- body:"Hanami means ‘flower viewing’: in spring, friends and families picnic under the cherry trees, and parks hang lanterns for viewing at night. Japan’s weather service tracks the ‘cherry blossom front’ as it moves north, from Okinawa in January to Hokkaido in May (arrow).",
+ body:"Hanami means ‘flower viewing’: in spring, friends and families picnic under the cherry trees, and parks hang lanterns for viewing at night. Japan’s weather service tracks the ‘cherry blossom front’ as it moves north, from Okinawa in January to Hokkaido in May (arrow): about 2,200 km in four months, as the ruler shows.",
  more:"Warmer springs are making the blossoms open earlier; in Kyoto they peaked on 26 March 2021. In 1912 Tokyo gave Washington, D.C., about 3,000 cherry trees, which now draw crowds of their own every spring."}),
 S({title:"Inti Raymi",view:[-95,-26,-58,-2],globe:[-72,-14,3],card:"left",hi:["pe"],hiSoft:["bo","ec"],gfSun:{utc:23,day:175},
  pins:[[[-71.97,-13.52],"Cusco","point"],[[-68.67,-16.55],"Tiwanaku: the Andean new year","point"]],
@@ -234,7 +236,7 @@ S({title:"Now explore",view:W,globe:[40,20,1],
  more:"The Houses of the world tour shows how people live, from igloos to houseboats."})];
 
 /* =====================================================================================================
-   3. Houses of the world (on the climate map; the city stops switch to the population map)
+   3. Houses of the world (on the climate map; the city stops turn on the cities layer)
    ===================================================================================================== */
 PC=COL.houses;
 const HOUSES=[
@@ -279,11 +281,13 @@ S({title:"The round houses of Fujian",view:[104,17,128,32],globe:[117,25,3],card
  stat:"A single Fujian tulou could house a whole clan, sometimes several hundred people",
  body:"From the 1100s to the 1900s, Hakka and other families in the hills of south-west Fujian built huge round or square homes of rammed earth, three to five storeys high. Every room faces an inner courtyard, with the family shrine in the middle.",
  more:"With one gate and windows only on the upper floors, a tulou was a fortress against bandits; its earth walls, over a metre thick at the base, keep it cool in summer. The cluster at Tianluokeng is nicknamed ‘four dishes and a soup’. Forty-six tulou became a World Heritage Site in 2008."}),
-S({title:"Toraja tongkonan",view:[108,-11,130,5],globe:[120,-3,3.5],card:"left",hi:["id"],
+S({title:"Toraja tongkonan",view:[112,-8,126,1],globe:[120,-3,3.5],card:"left",hi:["id"],
+ lines:[{coords:[[119.62,-4.01],[119.9,-2.97],[120.19,-2.99]],kind:"dash"}],
+ xsec:{title:"Sulawesi from the coast to Tana Toraja",pts:[[119.62,-4.01,"Parepare"],[119.9,-2.97,"Rantepao"],[120.19,-2.99,"Palopo"]],mark:1000,note:"Tana Toraja’s valleys lie high in Sulawesi’s mountains, cooler and rainier than the coast; the peaks round them pass 2,000 m."},
  pins:[[[119.9,-2.97],"Rantepao, Tana Toraja","point"]],
  phPins:[ph([119.9,-2.97],"Tongkonan houses, Tana Toraja")],
  stat:"Toraja tongkonan houses have huge saddle-shaped roofs that sweep up at both ends",
- body:"In the highlands of Sulawesi, in Indonesia, Toraja families build their ancestral houses, tongkonan, on wooden piles, traditionally facing north. A tongkonan belongs to a whole extended family and is the heart of its ceremonies, from weddings to funerals.",
+ body:"In the mountains of Sulawesi, in Indonesia (the chart shows the climb from the coast), Toraja families build their ancestral houses, tongkonan, on wooden piles, traditionally facing north. A tongkonan belongs to a whole extended family and is the heart of its ceremonies, from weddings to funerals.",
  more:"Rows of buffalo horns on the front post record ceremonies held by the family. Smaller houses opposite, built the same way, are rice barns."}),
 S({title:"Ndebele painted houses",view:[14,-35,36,-20],globe:[27,-27,4],card:"left",hi:["za"],
  pins:[[[28.7,-25.43],"KwaMhlanga","point"],[[29.36,-25.77],"Botshabelo","point"]],
@@ -309,14 +313,14 @@ S({title:"The Dutch canal house",view:[0,50.7,7.5,53.7],globe:[4.9,52.3,6],card:
  stat:"Amsterdam’s canal houses are tall and narrow, with a hook at the top to hoist furniture through the windows",
  body:"Merchants of the 1600s and 1700s built along the canals, where every metre of waterfront was precious, so plots were narrow and deep. The staircases inside are too steep and narrow for furniture, so it goes up on a rope from the beam at the top.",
  more:"Many houses lean forward on purpose, so hoisted goods don’t bump the front. The soggy ground means every house stands on wooden piles; the Royal Palace on Dam Square rests on 13,659 of them."}),
-S({title:"Cities of towers",view:[85,-4,126,28],globe:[110,12,2.5],card:"left",mode:"population",hi:["hk","sg"],
+S({title:"Cities of towers",view:[85,-4,126,28],globe:[110,12,2.5],card:"left",on:["cities"],hi:["hk","sg"],
  pins:[[[114.17,22.3],"Hong Kong","point"],[[103.85,1.29],"Singapore","point"],[[114.19,22.33],"Kowloon Walled City, pulled down 1993–94","point"]],
  phPins:[ph([114.17,22.3],"Hong Kong at night"),ph([103.9,1.31],"Singapore’s shophouses")],
  stat:"About three in four Singaporeans live in flats built by the government’s Housing and Development Board",
  body:"Where land is scarce, homes go up. Hong Kong has more skyscrapers than any other city, and about 45% of its people live in public rental or subsidised flats. Singapore’s public housing estates come with their own schools, markets and parks, and most families own their flats.",
  more:"Older Singapore lived in two- or three-storey shophouses, with a shop below and the family above. Hong Kong’s Kowloon Walled City, pulled down in 1993–94, packed about 33,000 people into 2.6 hectares: perhaps the most crowded place there has ever been."}),
-S({title:"Informal settlements",view:W,spin:100,globe:[0,0,1],card:"left",hi:["in","ke","br","co"],
- pins:[[[72.86,19.04],"Dharavi, Mumbai","point"],[[36.79,-1.31],"Kibera, Nairobi","point"],[[-43.25,-22.99],"Rocinha, Rio de Janeiro","point"],[[-75.55,6.29],"Medellín’s cable cars","point"]],
+S({title:"Informal settlements",view:W,spin:100,globe:[0,0,1],card:"left",on:["cities"],hi:["in","ke","br","co"],
+ pins:[[[72.86,19.04],"Dharavi, Mumbai","point"],[[36.79,-1.31],"Kibera, Nairobi","point"],[[27.86,-26.25],"Soweto, Johannesburg","point"],[[-43.25,-22.99],"Rocinha, Rio de Janeiro","point"],[[-75.55,6.29],"Medellín’s cable cars","point"]],
  phPins:[ph([72.86,19.04],"Dharavi, Mumbai")],
  stat:"More than a billion people live in informal settlements, neighbourhoods built by their residents without formal planning or title",
  body:"When cities grow faster than housing can be built, newcomers build homes for themselves on spare land: favelas in Brazil, Kibera in Nairobi, Dharavi in Mumbai. Many lack secure water, sanitation or legal title, yet they are busy neighbourhoods with shops, schools and workshops.",
@@ -328,8 +332,8 @@ S({title:"Homes on the water",view:W,spin:70,globe:[20,20,1],card:"left",hi:["in
  body:"The reeds at the bottom of each island slowly rot, so islanders keep adding fresh layers on top. In Kerala, in southern India, old rice barges called kettuvallam have become houseboats on the backwaters, and Amsterdam has about 2,500 houseboats moored along its canals.",
  more:"On Srinagar’s Dal Lake, carved wooden houseboats date from the 1800s. In the Netherlands, new floating homes are built to rise and fall with the water."}),
 S({title:"Now explore",view:W,globe:[40,20,1],
- stat:"Switch between the climate and population maps to see how people live",
- body:"Find where you live on the climate map. Which of these homes would suit your climate best? Turn on the population map to see where the world’s biggest cities are growing.",
+ stat:"Find your own climate on the map: which of these homes would suit it?",
+ body:"Hover the map to see each climate. Switch to the population map to see where the world’s biggest cities are growing, and where most people now live in flats and towers.",
  more:"The Cities tour looks more closely at how cities grow."})];
 
 /* ---------- the three tours ---------- */
@@ -395,7 +399,7 @@ const CARD={
  "houses|Houses on stilts":"Ganvié fishing village on stilts in Benin DSC 2926 (10281995914) (2).jpg","houses|Building with earth":"Medieval Mud-Skyscrapers of Shibam, Hadramawt Valley (2286363119).jpg",
  "houses|Living underground":"Castle Uçhisar in Cappadocia.jpg","houses|Maasai homes":"A Maasai dancer jumping high.jpg","houses|Steep roofs for rain and snow":"Thatched cottage in the sand dunes by Denmark.jpg",
  "houses|The Dutch canal house":"Water reflection of canal houses at blue hour in Damrak Amsterdam the Netherlands.jpg","houses|Cities of towers":"Hong Kong Harbour Night 2019-06-11.jpg",
- "houses|Homes on the water":"Kerala backwaters, Houseboats, India.jpg"};
+ "houses|Homes on the water":"Kerala backwaters, Houseboats, India.jpg","sports|Where sports were invented":"Cardiff Judo Group (1448810).jpg","festivals|Inti Raymi":"Sacsayhuamán, Cusco, Perú, 2015-07-31, DD 05.JPG","festivals|New year in spring":"Persepolis – Gate of All Nations 02.jpg","festivals|Oktoberfest and La Tomatina":"Weisswurst+pretzels+bavarian mustard, beergarden, Düll brewery.jpg","houses|Informal settlements":"Soweto township.jpg"};
 const PIN={
  "Maracanã, Rio de Janeiro":"Maracanã stadium.jpg","Lord’s, London":"Cricket at Lord's (16545553043).jpg","Baseball in Hiroshima":"Hiroshima Municipal Baseball Stadium 2009.JPG",
  "College ice hockey, Michigan":"Yost Ice Arena, Michigan Ice Hockey Game During Intermission.jpg","The Tour de France in the Pyrenees":"Peloton during Simacourbe climb of Tour de France 2024 stage 13.jpg",
@@ -416,6 +420,8 @@ const PIN={
  "A floating village on Tonlé Sap":"The floating village-Tonle Sap lake.jpg","Djenné’s mud-brick mosque":"The Great Mosque of Djenné in Mali is the largest mud brick building in the world. (32931594225).jpg",
  "A Hopi village on Second Mesa":"Hopi Village on the Second Mesa.jpg","A Maasai dancer":"A Maasai dancer jumping high.jpg","A Norfolk village":"Banham village from the air.jpg",
  "Singapore’s shophouses":"Colorful shophouses in Koon Seng Road, Singapore.jpg","A floating market, Cần Thơ":"Can Tho, Vietnam, Floating Market, Boats.jpg"};
+/* captions where a card photo shows the setting rather than the stop's subject itself */
+try{window.PS_PHOTO_CAP=window.PS_PHOTO_CAP||{};Object.assign(PS_PHOTO_CAP,{"sports|Where sports were invented":"Judo, created in Tokyo in 1882, practised in Cardiff","festivals|Inti Raymi":"The walls of Sacsayhuamán, where Inti Raymi is staged","houses|Snow houses":"Sweden’s Icehotel, rebuilt from river ice every winter","festivals|New year in spring":"Persepolis, Iran: ancient Persia’s royal city, linked in legend with Nowruz","festivals|Oktoberfest and La Tomatina":"Weisswurst, pretzels and mustard in a Bavarian beer garden","houses|Informal settlements":"Self-built homes in Soweto, Johannesburg"})}catch(e){}
 const PHOTOS=window.GF_CULT_PHOTOS||[];
 /* new photos name their tour, their card stop and/or their pin labels */
 PHOTOS.forEach(p=>{if(p.card&&p.tour)CARD[p.tour+"|"+p.card]=p.f;(p.pins||[]).forEach(l=>PIN[l]=p.f)});
