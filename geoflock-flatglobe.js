@@ -73,13 +73,21 @@ const COMPS={};
 function drawFit(c,im,o){const W=o.w||im.naturalWidth,H=o.hh||im.naturalHeight,pr=String(o.pr||"xMidYMid meet");
  if(/^none/.test(pr)||!im.naturalWidth){c.drawImage(im,o.x,o.y,W,H);return}const sl=/slice/.test(pr),k=sl?Math.max(W/im.naturalWidth,H/im.naturalHeight):Math.min(W/im.naturalWidth,H/im.naturalHeight),dw=im.naturalWidth*k,dh=im.naturalHeight*k;
  const ax=/xMin/.test(pr)?0:/xMax/.test(pr)?1:.5,ay=/YMin/.test(pr)?0:/YMax/.test(pr)?1:.5;c.drawImage(im,o.x+(W-dw)*ax,o.y+(H-dh)*ay,dw,dh)}
+/* the last few merged pictures are kept, so switching map modes back and forth (as tours do) needs no new merge */
+const KEEP=3,LASTOK={};
 function composite(list,D){let COMP=COMPS[D.key];const key=list.map(o=>o.h.slice(-40)+o.op+o.blend+(o.tf?[o.tf.a,o.tf.e,o.tf.f].join():"")+o.x+o.y+o.w).join("|");
- if(COMP&&COMP.key===key)return COMP;if(!list.every(o=>{const im=img(o.h);return im.complete&&im.naturalWidth}))return COMP&&COMP.part?null:null;
- const F=2,cv=COMP&&COMP.cv||document.createElement("canvas");cv.width=2000*F;cv.height=Math.round(1001*F);const x=cv.getContext("2d");const ff=D.f();/* the old map's own coordinates → the plain Robinson ones */x.setTransform(F/ff.s,0,0,F/ff.s,-F*ff.bx/ff.s,-F*ff.by/ff.s);x.imageSmoothingQuality="high";
+ if(COMP&&COMP.key===key)return COMP;
+ {const L=COMPS[D.key+"#"]=COMPS[D.key+"#"]||[],hit=L.find(c=>c.key===key);if(hit){L.splice(L.indexOf(hit),1);if(COMP)L.unshift(COMP);if(L.length>KEEP-1)L.length=KEEP-1;COMPS[D.key]=hit;return hit}}
+ if(!list.every(o=>{const im=img(o.h);return im.complete&&im.naturalWidth}))return null;
+ /* the picture being replaced goes to the keep list (a fresh canvas for the new one) */
+ if(COMP){const L=COMPS[D.key+"#"];L.unshift(COMP);if(L.length>KEEP-1)L.length=KEEP-1}
+ const F=2,cv=document.createElement("canvas");cv.width=2000*F;cv.height=Math.round(1001*F);const x=cv.getContext("2d");const ff=D.f();/* the old map's own coordinates → the plain Robinson ones */x.setTransform(F/ff.s,0,0,F/ff.s,-F*ff.bx/ff.s,-F*ff.by/ff.s);x.imageSmoothingQuality="high";
  list.forEach(o=>{const im=img(o.h);x.globalAlpha=o.op;x.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;x.save();if(o.tf)x.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(x,im,o);x.restore()});
  x.globalAlpha=1;x.globalCompositeOperation="source-over";COMP=COMPS[D.key]={cv,key,F};return COMP}
 P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,D=defOf(this)||{key:"am",svg:"#allMapsWrap > svg",f:()=>({s:1,bx:0,by:0})},list=pictures(D);if(!list.length)return 0;
- const C=composite(list,D);ctx.save();
+ let C=composite(list,D);ctx.save();
+ /* a new mode's pictures still loading: keep showing the last finished picture for a few seconds instead of a bare map */
+ if(C)LASTOK[D.key]=Date.now();else if(COMPS[D.key]&&Date.now()-(LASTOK[D.key]||0)<8000)C=COMPS[D.key];
  if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;ctx.imageSmoothingQuality=k>3?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}ctx.restore();return 1}
  /* pictures still loading: draw them one by one (only in the usual frame) */
  if(this._gfDl){ctx.restore();return 0}
