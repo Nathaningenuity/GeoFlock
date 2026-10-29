@@ -116,3 +116,27 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  if(typeof openFlagZoom==="function"){const _o=openFlagZoom;openFlagZoom=function(){try{if(typeof appMode!=="undefined"&&(appMode==="allmaps"||appMode==="map"))used("click")}catch(e){}return _o.apply(this,arguments)}}
  setInterval(sync,900);sync();
  const st=document.createElement("style");st.textContent=`body.gf-learn-off .gf-learn{display:none !important}#allMapsView .gf-learn{left:50% !important;transform:translateX(-50%);bottom:6px !important;white-space:nowrap}.gf-learn .gf-learn-x{pointer-events:auto;margin-left:6px;border:0;background:rgba(0,0,0,.08);color:inherit;border-radius:50%;width:17px;height:17px;line-height:15px;padding:0;font:700 13px system-ui;cursor:pointer;vertical-align:middle}.gf-learn .gf-learn-x:hover{background:rgba(0,0,0,.18)}body.sky-night .gf-learn .gf-learn-x,body.dark-theme .gf-learn .gf-learn-x{background:rgba(255,255,255,.15)}`;document.head.appendChild(st)})();
+/* Tour stops can switch map layers on for just that stop: on:["resources","hazards","plates","rivers","grid", …].
+   They go off again when the tour moves to a stop without them, or ends. */
+(function(){if(typeof psGo!=="function")return;
+ const IDS={rivers:"allMapsRiversToggle",lakes:"allMapsLakesToggle",landforms:"allMapsLandformsToggle",borders:"allMapsBordersToggle",cities:"allMapsCitiesToggle",labels:"allMapsShowLabelsToggle",ocean:"allMapsSeaLabelsToggle",grid:"allMapsGraticuleToggle",plates:"allMapsPlatesToggle",timezones:"allMapsTimeZonesToggle",daynight:"gfDayNightToggle",currents:"gfEimToggle"};
+ const BYLABEL={resources:"Resources",connections:"Connections",hazards:"Hazards",motion:"Plate motion"};
+ function input(n){if(IDS[n])return document.getElementById(IDS[n]);const t=BYLABEL[n];if(!t)return null;return[...document.querySelectorAll("#allMapsView label")].map(l=>l.querySelector("input[type=checkbox]")&&l.textContent.trim().startsWith(t)?l.querySelector("input"):null).find(Boolean)||null}
+ window.gfTourToggleInput=input;
+ /* switching off sets the box directly (a click during a tour can be held back by the tour's own toggle guard) */
+ const setOff=i=>{i.checked=false;i.dispatchEvent(new Event("change",{bubbles:true}))};
+ /* the stop on screen is watched (a stop can be reached many ways), and whatever a stop switched on goes off when it is left */
+ let lastI=null,lastT=null,onNow=[];
+ setInterval(()=>{try{const live=typeof ps!=="undefined"&&ps&&typeof appMode!=="undefined"&&appMode==="allmaps";
+  if(!live){if(onNow.length){onNow.forEach(n=>{const i=input(n);if(i&&i.checked)setOff(i)});onNow=[]}lastI=lastT=null;return}
+  if(ps.i===lastI&&ps.tour===lastT)return;lastI=ps.i;lastT=ps.tour;const S=(psSteps()||[])[ps.i]||{},want=new Set(S.on||[]);
+  onNow.forEach(n=>{if(want.has(n))return;const i=input(n);if(i&&i.checked)setOff(i)});const kept=onNow.filter(n=>want.has(n));
+  want.forEach(n=>{if(kept.includes(n))return;const i=input(n);if(i&&!i.checked){i.checked=true;i.dispatchEvent(new Event("change",{bubbles:true}));kept.push(n)}});onNow=kept}catch(e){console.error(e)}},300);
+})();
+/* stops in existing tours that show a map layer: resource icons, hazards, plate motion, currents, grid lines, routes, day and night */
+(function(){const ADD={resources:{0:["resources"],1:["resources"],2:["resources"],3:["resources"],4:["resources"],9:["resources"],10:["resources"],11:["resources"],12:["resources"],13:["resources"],14:["resources"]},
+ hazards:{0:["hazards"],5:["hazards"],6:["hazards"],7:["hazards"],9:["hazards"],10:["hazards"]},plates:{3:["motion"],8:["motion"],15:["motion"]},
+ transport:{0:["connections"],1:["connections"],2:["connections"],3:["connections"]},seas:{6:["currents"]},climate:{12:["currents"],7:["grid"]},geo:{7:["grid"]},time:{1:["daynight"]}};
+ const TITLES={resources:"Energy and resources",hazards:"Natural hazards",plates:"Plate tectonics",transport:"Transport and trade",seas:"Seas & oceans",climate:"The world’s climates",geo:"The world’s best surprises",time:"Time zones"};
+ function apply(){try{for(const k in ADD){const T=typeof PS_TOURS!=="undefined"&&PS_TOURS[k];if(!T||!T.steps||!T.steps[0]||T.steps[0].title!==TITLES[k])continue;for(const i in ADD[k]){const S=T.steps[+i];if(S&&!S.on)S.on=ADD[k][i]}}}catch(e){}}
+ apply();addEventListener("load",()=>setTimeout(apply,1500))})();
