@@ -49,6 +49,11 @@ body.gf-fs #allMapsView.gf-fs-sky{ background:var(--gf-fs-sky) repeat, #03060f !
 body.gf-fs #allMapsView.gf-fs-sky .globe-stage{ background:none !important; }
 body.gf-fs #allMapsView.gf-fs-sky .switch-label{ color:#dfe6f3 !important; text-shadow:none !important; }
 /* the round buttons sit over the map's right edge */
-body.gf-fs .globe-btns{ position:absolute !important; right:12px !important; left:auto !important; top:64px !important; z-index:8; }
+body.gf-fs .globe-btns{ position:absolute !important; right:12px !important; left:auto !important; top:4px !important; z-index:8; }
+/* the corners of the oval map are empty: toolkit in the bottom-left corner of the screen, the tour buttons in the top-left corner */
+body.gf-fs #allMapsView .gfk-tray{ position:fixed !important; left:10px !important; bottom:4px !important; top:auto !important; }
+body.gf-fs #allMapsView .ps-launcher{ top:0 !important; left:2px !important; bottom:auto !important; flex-direction:column; align-items:flex-start; gap:4px; max-width:240px; }
+body.gf-fs #allMapsView .ps-launcher .ps-launch{ font-size:12.5px !important; padding:6px 12px !important; }
+body.gf-fs #allMapsView .gf-learn{ left:50% !important; transform:translateX(-50%); bottom:6px !important; }
 body.gf-fs .globe-wrap-rel, body.gf-fs #amGlobeHost{ width:100% !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; }`;document.head.appendChild(st);
 })();

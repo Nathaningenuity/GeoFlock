@@ -105,3 +105,14 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
 (function(){if(typeof GlobeView==="undefined")return;let C=null;fetch("textures/CASPIAN.json").then(r=>r.json()).then(g=>{try{if(d3.geoArea(g)>2*Math.PI)g.coordinates[0].reverse()}catch(e){}C={type:"Feature",properties:{n:"Caspian Sea"},geometry:g}}).catch(()=>{});
  const isCasp=W=>{try{if(!W||W===C)return false;const c=d3.geoCentroid(W);return c[0]>46&&c[0]<55&&c[1]>36&&c[1]<48&&d3.geoArea(W)>.004}catch(e){return false}};
  const P=GlobeView.prototype,_r=P._render;P._render=function(){try{if(C&&this.hotWater&&isCasp(this.hotWater))this.hotWater=C}catch(e){}return _r.apply(this,arguments)}})();
+/* "Click a country to learn more about it": a small × closes it, and it goes away once a country has been clicked.
+   It stays away for a week, and for six weeks once it has been closed or used three times; after that long without
+   a country being clicked it comes back as a reminder. */
+(function(){const KEY="gfLearnHint",DAY=864e5;let off=false;
+ const get=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}},put=o=>{try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}};
+ const hide=o=>{const t=Math.max(o.click||0,o.x||0);if(!t)return false;return Date.now()-t<((o.n||0)>=3?42:7)*DAY};
+ function used(kind){const o=get();o[kind]=Date.now();o.n=(o.n||0)+1;put(o);off=true;sync()}
+ function sync(){document.body.classList.toggle("gf-learn-off",off||hide(get()));const el=document.getElementById("gfLearn");if(el&&!el.querySelector(".gf-learn-x")){const b=document.createElement("button");b.type="button";b.className="gf-learn-x";b.setAttribute("aria-label","Hide this tip");b.textContent="×";b.onclick=e=>{e.stopPropagation();used("x")};el.appendChild(b)}}
+ if(typeof openFlagZoom==="function"){const _o=openFlagZoom;openFlagZoom=function(){try{if(typeof appMode!=="undefined"&&(appMode==="allmaps"||appMode==="map"))used("click")}catch(e){}return _o.apply(this,arguments)}}
+ setInterval(sync,900);sync();
+ const st=document.createElement("style");st.textContent=`body.gf-learn-off .gf-learn{display:none !important}#allMapsView .gf-learn{left:50% !important;transform:translateX(-50%);bottom:6px !important;white-space:nowrap}.gf-learn .gf-learn-x{pointer-events:auto;margin-left:6px;border:0;background:rgba(0,0,0,.08);color:inherit;border-radius:50%;width:17px;height:17px;line-height:15px;padding:0;font:700 13px system-ui;cursor:pointer;vertical-align:middle}.gf-learn .gf-learn-x:hover{background:rgba(0,0,0,.18)}body.sky-night .gf-learn .gf-learn-x,body.dark-theme .gf-learn .gf-learn-x{background:rgba(255,255,255,.15)}`;document.head.appendChild(st)})();
