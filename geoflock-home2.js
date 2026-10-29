@@ -50,7 +50,7 @@ function todTour(){try{const S=window.gfTourShelves||[],ids=[];S.forEach(r=>{if(
 function todHTML(){const id=todTour();if(!id)return"";const T=PS_TOURS[id],cov=T&&(TOUR_THUMBS[id]||""),sh=(window.gfTourShelves||[]).find(r=>r[3].includes(id)),n=(T.steps||[]).length;
  const P=T&&(stats.tourProg||{})[id],prog=P&&P.max>0&&!P.done?" · you’re on stop "+(P.max+1):"";
  return'<button type="button" class="h2-card h2-tod" data-tod="'+esc(id)+'">'+(cov?'<span class="h2-tod-img"><img src="'+esc(cov)+'" alt="" loading="lazy"></span>':'')+
-  '<span class="h2-tod-t"><small>🧭 Tour of the day'+(sh?' · '+esc(sh[1]):'')+'</small><b>'+esc(T.name||T.short)+'</b><em>'+esc(T.hint||"")+'</em><span class="h2-tod-m">'+n+' stops · about '+Math.max(5,Math.round(n*0.7))+' minutes'+prog+'</span></span><span class="h2-tod-go">Start the tour →</span></button>'}
+  '<span class="h2-tod-t"><small>🧭 Tour of the day'+(sh?' · '+esc(sh[1]):'')+'</small><b>'+esc((n0=>n0.charAt(0).toUpperCase()+n0.slice(1))(String(T.name||T.short).replace(/^guided tour (on|of)\s+/i,"")))+'</b><em>'+esc(T.hint||"")+'</em><span class="h2-tod-m">'+n+' stops · about '+Math.max(5,Math.round(n*0.7))+' minutes'+prog+'</span></span><span class="h2-tod-go">Start the tour →</span></button>'}
 window.hiToday2=function(o){return'<div class="h2-today">'+guessHTML()+codHTML(o.cod)+questsHTML(o.q||{ids:[],done:[]},o.d5done)+'</div>'+todHTML()};
 window.hiToday2Wire=function(v){
  v.querySelectorAll("[data-hg]").forEach(b=>b.onclick=()=>{const G=guessToday();if(!G||guessState()!=null)return;
