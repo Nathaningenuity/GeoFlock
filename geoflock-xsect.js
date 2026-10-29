@@ -80,6 +80,7 @@ const css=document.createElement("style");css.textContent=`
 body.dark .gf-xs{ background:#1c2333; color:#e8ecf3; }
 .gf-xs-hctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px; }
 .gf-xs-hz button{ font-size:11px !important; }
+.gf-xs-dig{ border:1px solid #d9cdb8; background:#fffaf0; border-radius:999px; padding:4px 10px; font:700 12px system-ui; cursor:pointer; color:#5b3a17; }
 .gf-xs-up{ border:1px solid #d9cdb8; background:#fffaf0; border-radius:999px; padding:2px 9px; font:700 11px system-ui; cursor:pointer; color:#4a3520; }
 .gf-xs-pick{ display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
 .gf-xs-pick button{ border:2px solid var(--c); background:#fff; color:#1d2433; border-radius:999px; padding:2px 9px; font:700 11px system-ui; cursor:pointer; }
@@ -241,18 +242,22 @@ function cmpTable(){const Ps=lines.filter(L=>L.P&&L.P.length);if(Ps.length<2)ret
   return'<tr><td><i style="background:'+L.c+'"></i>'+esc(L.name)+'</td><td>'+Math.round(T/10)*10+' km</td><td>'+fmtE(L.P[0].e)+'</td><td>'+at(L,1000)+'</td><td>'+(bd?esc(bd.n)+" "+Math.round(bd.d)+" m":"—")+'</td></tr>'}).join("")+'</table>'}
 function niceStep(v){const p=Math.pow(10,Math.floor(Math.log10(Math.max(1e-9,v)))),m=v/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p}
 const fmtE=e=>(e<0?"−":"")+Math.abs(Math.round(e)).toLocaleString()+" m";
-function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready-made lines…</option>'+PRESETS.map((p,i)=>'<option value="p'+i+'">'+esc(p.n)+'</option>').join("")+'<optgroup label="Rivers, source to sea">'+Object.keys(RIVERS).map(k=>'<option value="r'+k+'">'+k+'</option>').join("")+'</optgroup><option value="cmp">Compare rivers (pick which)</option>';
+/* lines drawn with the pens or the geometry set can be cut too */
+const KINDS={compass:"Circle",ring:"Range ring",line:"Straight line",rect:"Rectangle",oval:"Oval"};
+function myInk(){try{return(stats.kit&&stats.kit.ink||[]).map((s,i)=>({s,i})).filter(o=>o.s.p&&o.s.p.length>1&&o.s.t!=="geoText")}catch(e){return[]}}
+function myLinesOpts(){const L=myInk();if(!L.length)return"";return'<optgroup label="Your drawings">'+L.slice(-20).reverse().map(o=>{const g=o.s.g,k=g?KINDS[g.m]||"Shape":o.s.t==="geoDash"?"Latitude / longitude line":"Pen line";return'<option value="d'+o.i+'">'+esc(k+(o.s.lab?" · "+o.s.lab:"")+(o.s.tx?" · "+o.s.tx:""))+'</option>'}).join("")+'</optgroup>'}
+function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready-made lines…</option>'+PRESETS.map((p,i)=>'<option value="p'+i+'">'+esc(p.n)+'</option>').join("")+'<optgroup label="Rivers, source to sea">'+Object.keys(RIVERS).map(k=>'<option value="r'+k+'">'+k+'</option>').join("")+'</optgroup><option value="cmp">Compare rivers (pick which)</option>'+myLinesOpts();
  const rvNow=lines.some(L=>L.river),cmpNow=lines.length>1||title==="Rivers compared";
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
  const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+(cmpNow?cmpTable():''):'<div class="gf-xs-help">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
  panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
-  '<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><select class="gf-xs-pre">'+presetOpts+'</select><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
+  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><select class="gf-xs-pre">'+presetOpts+'</select><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
   '<div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. ':'')+'Heights: NOAA ETOPO 2022 (public domain), averaged over about 11 km, then sharpened for drawn lines with AWS Terrain Tiles (SRTM, GMTED2010, ETOPO1 and other open sources); river levels from published lake, waterfall and dam figures, so the highest peaks read a few hundred metres low. The height is stretched far more than the length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
- panel.querySelector(".gf-xs-x").onclick=stop;panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
+ panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
  panel.querySelector(".gf-xs-pre").onchange=e=>{pick(e.target.value)};
  panel.querySelectorAll("[data-hz]").forEach(b=>b.onclick=()=>{const v=b.dataset.hz;yv={span:v==="all"?"all":+v,base:0};renderPanel()});
  const scroll=dir=>{if(yv.span==="all")return;const mx=chartSVG.dmax||0;yv.base=Math.max(0,Math.min(Math.max(0,mx-yv.span*.6),yv.base+dir*yv.span*.25));renderPanel()};
@@ -282,7 +287,8 @@ function frameTo(llAll){const g=G();if(!g||!llAll.length)return;try{const b=g._f
  const zt=Math.max(1,Math.min(12,Math.min(w/((x1-x0)*1.25||1),h*.48/((y1-y0)*1.25||1)))),cx=(x0+x1)/2,cy=(y0+y1)/2+(h*.5-h*.27)/zt;
  const c=b.invert([cx*z0,cy*z0]);if(c&&isFinite(c[0])){g.zoom=zt;g.rot=[-c[0],-c[1]];g.request()}}catch(e){}}
 function pick(v,keepView){head=null;if(!v)return;armed=false;loadDEM().then(()=>{
- if(v[0]==="p"){const P=PRESETS[+v.slice(1)];title=P.n;note=P.t;head=null;lines=[{ll:densify([P.a,P.b],500),c:"#c0392b"}]}
+ if(v[0]==="d"){const o=myInk().find(x=>x.i===+v.slice(1));if(!o){renderPanel();return}const g=o.s.g;title="Your "+(g?(KINDS[g.m]||"shape").toLowerCase():"line");note=g&&(g.m==="compass"||g.m==="ring"||g.m==="rect"||g.m==="oval")?"Round the outline of your shape, starting where it begins.":"Along the line you drew, from where you started it.";lines=[{ll:densify(o.s.p,600),c:o.s.c||"#c0392b"}]}
+ else if(v[0]==="p"){const P=PRESETS[+v.slice(1)];title=P.n;note=P.t;head=null;lines=[{ll:densify([P.a,P.b],500),c:"#c0392b"}]}
  else if(v[0]==="r"){const k=v.slice(1),s=stem(k);if(!s){note="";title=k;lines=[];renderPanel();return}title=k+": source to sea";note=(STORY[k]||{}).h||"";yv={span:YSPAN,base:0};lines=[{ll:s,c:RIVERS[k].c,river:1,name:k}]}
  else if(v==="cmp"){title="Rivers compared";note="Height above the sea against distance from the mouth, every river at the same scale. Pick the rivers to compare; scroll up (▲ or the mouse wheel) to see the high sources. White dots mark each river's biggest single drop.";if(!keepView)yv={span:YSPAN,base:0};
   lines=picks.map(k=>{const s=stem(k);return s?{ll:s,c:RIVERS[k].c,river:1,name:k}:null}).filter(Boolean)}

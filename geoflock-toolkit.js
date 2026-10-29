@@ -257,7 +257,7 @@ function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClient
  if(TOOLPANEL[t]&&document.getElementById(TOOLPANEL[t])){closePanels();allOff();return}
  if(t==="dragger"&&S.dragging){dragOn(false);closePanels();return}
  if(t==="compass"||t==="ruler"){if(S.place[t])putAway(t);else dropTool(t,r.left+r.width*(t==="compass"?.18:.5),r.top+r.height*(t==="compass"?.55:.8))}
- else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelPanel();else if(t==="geometry")geoPanel()}
+ else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelOpen();else if(t==="geometry")geoPanel()}
 function dropTool(t,cx,cy){if(t==="compass")placeAt("compass",cx,cy);
  else if(t==="ruler"){placeAt("ruler",cx,cy);measure(true)}
  else if(t==="pins")newPin(toLL(cx,cy),cx,cy);
@@ -705,7 +705,10 @@ function dig(ll){if(!ll)return;const B=anti(ll),PA=placeName(ll),PB=placeName(B)
   (PB.land?'':'<p class="gfk-hint">Most holes come out at sea: almost all land has ocean on its opposite side. Only about 15% of land has land on its opposite side: Argentina and China, for example, or New Zealand and Spain.</p>')+
   '<button type="button" class="gfk-link" data-go>Show me where I come out →</button> <button type="button" class="gfk-link" data-again>Dig somewhere else</button></div></div>',true);if(!p)return;wireSeg(p);
  holes([ll,B]);p.querySelector("[data-go]").onclick=()=>flyTo(B);p.querySelector("[data-again]").onclick=()=>{S.shovelArm=true;toast("Click anywhere on the map to dig")}}
-function segHTML(m){return'<div class="gfk-seg"><button type="button" data-sm="dig" class="'+(m==="dig"?"on":"")+'">⛏ Dig through</button><button type="button" data-sm="xs" class="'+(m==="xs"?"on":"")+'">✂ Cross-section</button></div>'}
+function segHTML(m){return'<div class="gfk-seg"><button type="button" data-sm="xs" class="'+(m==="xs"?"on":"")+'">✂ Cross-section</button><button type="button" data-sm="dig" class="'+(m==="dig"?"on":"")+'">⛏ Dig through</button></div>'}
+/* the shovel opens the cross-section first (on the flat map); Dig through is one click away */
+function shovelOpen(){try{if(window.gfCrossSection&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat){closePanels();S.shovelArm=false;gfCrossSection.start();return}}catch(e){}shovelPanel()}
+window.gfShovelDig=()=>{try{gfCrossSection.stop()}catch(e){}shovelPanel()};
 function wireSeg(p){p.querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="xs"){closePanels();S.shovelArm=false;try{gfCrossSection.start()}catch(e){toast("Cross-sections need the flat map or globe")}}else shovelPanel()})}
 function shovelPanel(){const p=panel("gfkShovel",'<b class="gfk-ph">Shovel</b>'+segHTML("dig")+'<p class="gfk-hint">Click a place on the map (or drag the shovel onto it) and dig straight through the middle of the Earth. Where do you come out?</p>');if(!p)return;wireSeg(p);S.shovelArm=true}
 /* the two holes, kept on the map */
