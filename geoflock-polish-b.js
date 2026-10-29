@@ -53,22 +53,21 @@ if(T("cities")&&!T("cities")._polB){T("cities")._polB=1;
   ph([-74.01,40.71],"New York","Wall Street - New York Stock Exchange.jpg"),ph([31.24,30.04],"Cairo","Cairo skyline, Nile River, Egypt.jpg"),
   ph([72.88,19.08],"Mumbai","Mumbai Skyline with Bandra–Worli Sea Link 25 July 2018 (1).jpg"),ph([-43.2,-22.9],"Rio de Janeiro","Copacabana, Rio de Janeiro, Brazil.jpg")];
   s.body="In 1950 fewer than a third of people lived in towns and cities; today it is over half, and by 2050 it may be two-thirds. Most of the growth is in Asia and Africa. The dots on the map are cities."});
- ins("cities","The biggest cities",{title:"A city the size of a country",view:[128,31,146,40.5],globe:[139.5,35.7,4.5],card:"left",
-  ghosts:[{code:"lu",at:[139.45,35.68],col:"#8a63cf",label:"Luxembourg, true size"}],
+ ins("cities","The biggest cities",{title:"A city the size of a country",view:[128,30.5,148,41],globe:[139.7,35.7,4.5],card:"left",
+  ghosts:[{code:"me",at:[139.9,35.75],col:"#8a63cf",label:"Montenegro, true size"}],
   pins:[[[139.69,35.69],"Tokyo","point"]],
-  stat:"Tokyo Metropolis is a little smaller than Luxembourg, but has about 20 times as many people",
-  body:"The purple shape is Luxembourg at its true size, laid over Tokyo: drag it around to compare. Tokyo Metropolis covers about 2,200 km² and has about 14 million people; Luxembourg covers about 2,600 km² and has about 690,000.",
-  more:"Tokyo’s built-up area spreads far beyond the metropolis, across the plain around Tokyo Bay: the wider Greater Tokyo area is home to well over 30 million people, more than live in all of Australia."});
- set("cities","The busiest ports",s=>{s.on=["connections"];
+  stat:"Greater Tokyo is about the size of Montenegro, but has about 60 times as many people",
+  body:"The purple shape is Montenegro at its true size, laid over Tokyo: drag it around to compare. Tokyo and its three neighbouring prefectures cover about 13,500 km² and are home to about 37 million people; Montenegro, about the same size, has about 620,000.",
+  more:"That is more people than live in all of Australia. Tokyo’s railways move them: Shinjuku station, used by about 3.5 million people a day, is the busiest railway station on Earth."});
+ set("cities","The busiest ports",s=>{s.on=["connections"];s.view=[80,-2,138,42];
   s.body="Shanghai is the busiest of all, handling over 50 million containers a year (counted in TEU, a standard 20-foot box). Singapore is second, and Ningbo, Qingdao, Shenzhen, Guangzhou and Tianjin are all in the top ten. The blue shipping lanes on the map link them to the world."});
  ins("cities","Divided cities",{title:"Capitals across a river",view:[13.9,-5.25,16.3,-3.55],globe:[15.3,-4.3,8],card:"left",hi:["cd","cg"],on:["rivers"],
   gfRuler:{a:[15.31,-4.32],b:[15.28,-4.265]},
-  pins:[[[15.31,-4.32],"Kinshasa (DR Congo)","point"],[[15.28,-4.265],"Brazzaville (Republic of the Congo)","point"]],
   stat:"Kinshasa and Brazzaville, the capitals of two countries, face each other across the Congo River",
-  body:"Apart from Rome and Vatican City, no two capitals are closer: the ruler measures about 6 km between their centres. There is no bridge, so people cross by boat.",
+  body:"Apart from Rome and Vatican City, no two capitals are closer: the ruler measures only about 7 km between their centres. There is no bridge, so people cross by boat.",
   more:"Kinshasa, with roughly 17 million people, is about seven times the size of Brazzaville. Just downstream, the river plunges through a string of rapids on its way to the Atlantic, which is why ships cannot sail up to the two cities from the sea."});
  set("cities","Capitals in the clouds",s=>{s.view=[-71.6,-17.9,-66.6,-15.1];s.globe=[-68.1,-16.5,6];s.card="left";delete s.spin;s.phPins=[];
-  s.pins=[[[-68.15,-16.5],"La Paz ~3,600 m","point"],[[-68.19,-16.51],"El Alto ~4,000 m","point"],[[-67.79,-16.64],"Illimani 6,438 m","point"]];
+  s.pins=[[[-68.15,-16.5],"La Paz ~3,600 m","point"],[[-68.19,-16.51],"El Alto ~4,000 m","point"]];
   s.xsec={title:"From El Alto down into La Paz and up to Illimani",pts:[[-68.21,-16.51,"El Alto"],[-68.17,-16.5],[-68.135,-16.497,"La Paz centre"],[-68.1,-16.52],[-68.07,-16.545,"Zona Sur"],[-67.95,-16.59],[-67.85,-16.62],[-67.79,-16.64,"Illimani"]],mark:3600,
    note:"The dashed line marks 3,600 m. El Alto sits on the flat Altiplano; La Paz fills a deep canyon below it, and the snowy peak of Illimani towers over both."};
   s.body="It is the highest seat of government in the world. The city fills a canyon below El Alto, a fast-growing city on the high plain above: move along the chart to see the drop. Cable cars carry commuters between the two.";
@@ -133,24 +132,22 @@ if(T("culture")&&!T("culture")._polB){const t=T("culture");t._polB=1;t.stopModes
 }
 /* ───────── Religions ───────── */
 if(T("langrel")&&!T("langrel")._polB){const t=T("langrel");t._polB=1;t.stopModes=true;
- ins("langrel","What the world believes",{title:"Christianity and Rome",mode:"history",sub:"400/rom",view:[-25,15,62,58],globe:[20,38,1.6],card:"left",
+ ins("langrel","What the world believes",{title:"Christianity and Rome",mode:"history",sub:"300/rom",view:[-50,12,60,60],globe:[20,38,1.6],card:"left",
   pins:[[[35.23,31.78],"Jerusalem","point"],[[12.49,41.89],"Rome","point"],[[28.98,41.01],"Constantinople (Istanbul)","point"]],
   stat:"In 380 Christianity became the official religion of the Roman Empire",
-  body:"Christianity began in the first century AD, in Roman Judea. It spread along the empire’s roads and sea routes, and after Emperor Constantine became a Christian in 312, it grew fast. The map shows the empire around 400.",
+  body:"Christianity began in the first century AD, in Roman Judea. It spread along the empire’s roads and sea routes, and after Emperor Constantine became a Christian in 312, it grew fast. The map shows the empire around 300, just before Constantine.",
   more:"From Rome and Constantinople, missionaries later carried the faith to the peoples beyond the borders: the Irish, Germans, Slavs and Russians. Rome became the centre of the Catholic Church, Constantinople of the Orthodox churches."});
- ins("langrel","Christianity and Rome",{title:"Islam’s first century",mode:"history",sub:"800/isl",view:[-25,5,85,52],globe:[35,30,1.4],card:"left",
+ ins("langrel","Christianity and Rome",{title:"Islam’s first century",mode:"history",sub:"800/isl",view:[-75,0,90,60],globe:[35,30,1.4],card:"left",
   pins:[[[39.83,21.42],"Mecca","point"],[[44.37,33.31],"Baghdad, capital from 762","point"],[[36.31,33.51],"Damascus","point"],[[-4.78,37.88],"Córdoba","point"]],
   stat:"Within about 120 years of Muhammad’s death in 632, Muslim rulers governed from Spain to Central Asia",
   body:"Arab armies conquered the Persian Empire and much of the Byzantine Empire. The map shows the Caliphate, ruled from Baghdad, in 800; Muslim Spain was ruled separately from Córdoba.",
   more:"Conquest did not mean everyone converted at once: most people in these lands became Muslim slowly, over several centuries. Arabic, the language of the Quran, became the language of government and learning, which is why so many of these countries speak Arabic today."});
- ins("langrel","Sunni and Shia",{title:"Fasting from dawn to sunset",sub:"rel",view:W,globe:[40,30,1],
-  gfSun:{utc:12,day:166,city:["Mecca",3]},
+ ins("langrel","Sunni and Shia",{title:"Fasting from dawn to sunset",sub:"rel",view:[-70,-15,120,75],globe:[40,30,1],
+  gfSun:{utc:20,day:166,city:["Oslo",2]},
   pins:[[[10.75,59.91],"Oslo: about 20 hours","point"],[[106.85,-6.2],"Jakarta: about 13 hours","point"],[[39.83,21.42],"Mecca: about 15 hours","point"]],
   stat:"When Ramadan falls in June, a fast in Oslo lasts about 20 hours, but one in Jakarta only about 13",
-  body:"In the month of Ramadan, Muslims eat and drink nothing from dawn to sunset. The far north has long summer days, as the night side of the map shows: move the time and date to see the days change.",
+  body:"In the month of Ramadan, Muslims eat and drink nothing from dawn to sunset. The map shows 10 pm in Oslo in June: the Sun is still up there, while Mecca and Jakarta are already dark. Move the time and date to see the days change.",
   more:"The Islamic calendar follows the Moon, so Ramadan comes about 11 days earlier each year and moves through all the seasons; in 2017 it fell in June, and in 2026 in February and March, when days everywhere are closer to 12 hours. Where the Sun barely sets, many Muslims follow the times of Mecca or of the nearest city with a normal day."});
- set("langrel","Sikhism’s Punjab",s=>{s.gfRuler={a:[74.88,31.62],b:[-79.76,43.73]};
-  s.body="Guru Nanak founded Sikhism in Punjab about 500 years ago. Most of the world’s 25–30 million Sikhs still live in Indian Punjab, but many moved to Britain, Canada and beyond: drag the ruler, Amritsar to Brampton, near Toronto, is about 11,000 km."});
  set("langrel","Now explore",s=>{s.body="Hover any country to see its name and neighbours. Click any colour in the key to see one religion on its own, or switch to Languages above the map."});
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.langrel;if(Q&&!Q._polB){Q._polB=1;(Q.recap||[]).forEach(q=>{if(q.st==="Hinduism and Buddhism"){q.st="Hindu India, Hindu Bali";q.why="About 95% of the world’s Hindus live in India."}});
   (Q.mid=Q.mid||[]).push({at:"Fasting from dawn to sunset",st:"Fasting from dawn to sunset",q:"Why is a June Ramadan fast much longer in Oslo than in Jakarta?",o:["Oslo’s mosques set different rules","Summer days are much longer far from the equator","Jakarta is in a different time zone","Ramadan is shorter in the south"],a:1,why:"Near the Arctic, June days last about 20 hours; near the equator, about 12.",kc:"no"});
