@@ -48,8 +48,30 @@ window.hiToday2Wire=function(v){
  v.querySelectorAll("[data-hg]").forEach(b=>b.onclick=()=>{const G=guessToday();if(!G||guessState()!=null)return;
   try{stats.homeGuess={day:G.day,pick:b.dataset.hg};if(b.dataset.hg===G.c&&typeof xpGain==="function")xpGain(10,"photo of the day");saveStats()}catch(e){}
   const card=v.querySelector(".h2-guess");if(card){const t=document.createElement("div");t.innerHTML=guessHTML();card.replaceWith(t.firstChild);hiToday2Wire(v)}});
- const m=v.querySelector("[data-hgmore]");if(m)m.onclick=()=>{const b=document.querySelector('[data-dc="type"]');if(b)b.click();else try{switchAppMode("games")}catch(e){}};
+ const m=v.querySelector("[data-hgmore]");if(m)m.onclick=()=>{try{if(window.gfDailyOpen)gfDailyOpen("type");else switchAppMode("games")}catch(e){}};
+ /* the five stamps are buttons: say so under them */
+ const row=v.querySelector(".gf-flock-row");if(row&&!v.querySelector(".gf-flock-tip"))row.insertAdjacentHTML("afterend",'<div class="gf-flock-tip">👆 Tap a stamp to start testing yourself</div>');
  v.querySelectorAll("[data-hq]").forEach(b=>b.onclick=()=>{try{questsOpen()}catch(e){}})};
+/* first-day quests: simple practice goals instead of the random mix */
+(function(){try{
+ if(typeof finalizeAnswer==="function"&&!finalizeAnswer._h2){const _f=finalizeAnswer;finalizeAnswer=function(){try{const m=typeof appMode!=="undefined"?appMode:"";if(m==="flag"||m==="map"||m==="capital"){const A=stats.modeAns=stats.modeAns||{};A[m]=(A[m]||0)+1}}catch(e){}return _f.apply(this,arguments)};finalizeAnswer._h2=1}
+ if(typeof QUESTS!=="undefined"&&!QUESTS.find(q=>q.id==="flag10")){
+  QUESTS.push({id:"flag10",text:"Answer 10 flag questions",n:10,ctr:()=>((stats.modeAns||{}).flag||0)},{id:"loc10",text:"Answer 10 location questions (find countries on the map)",n:10,ctr:()=>((stats.modeAns||{}).map||0)},
+   {id:"tour5",text:"See 5 stops of a guided tour",n:5,ctr:()=>Object.values(stats.tourProg||{}).reduce((n,o)=>n+((o&&o.max)||0),0)})}
+ const DAY1=["flag10","loc10","tour5"];
+ function day1(){try{const t=gmDayKey();if(stats.firstQuestDay==null)stats.firstQuestDay=(stats.totalAnswered||0)<30?t:"before";return stats.firstQuestDay===t}catch(e){return false}}
+ if(typeof questToday==="function"&&!questToday._h2){const _q=questToday;questToday=function(){try{const q=questState(),day=gmDayKey();
+   if(day1()&&(q.day!==day||(!(q.done||[]).length&&(q.ids||[]).join()!==DAY1.join()))){q.day=day;q.ids=DAY1.slice();q.done=[];q.ev={};q.base={};q.ids.forEach(id=>{const Q=QUESTS.find(x=>x.id===id);if(Q&&Q.ctr&&!Q.abs)q.base[id]=Q.ctr()})}}catch(e){}return _q.apply(this,arguments)};questToday._h2=1}
+}catch(e){console.error(e)}})();
+/* "Explore the maps" opens the relief map and starts the geography tour */
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#hiMapsBtn");if(!t)return;e.preventDefault();e.stopImmediatePropagation();
+ try{switchAppMode("allmaps");scrollTo({top:0});setTimeout(()=>{try{const r=document.querySelector('[data-allmaps-mode="relief"]');if(r&&!r.classList.contains("active"))r.click()}catch(er){}try{psLaunchTour("geo")}catch(er){}},150)}catch(er){console.error(er)}},true);
+/* the Knowledge stamp opens Trivia: point at "Start mixed trivia" */
+function nudgeMix(){let n=0;const t=setInterval(()=>{const b=document.getElementById("tvhMixGo");if(!b){if(++n>40)clearInterval(t);return}clearInterval(t);
+ b.classList.add("h2-nudge");try{b.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){}
+ if(!document.getElementById("h2NudgeTip")){const tip=document.createElement("div");tip.id="h2NudgeTip";tip.className="h2-nudge-tip";tip.textContent="Start here: a mix of questions from every topic";b.parentNode.style.position=b.parentNode.style.position||"relative";b.insertAdjacentElement("afterend",tip)}
+ const done=()=>{b.classList.remove("h2-nudge");const tp=document.getElementById("h2NudgeTip");if(tp)tp.remove()};b.addEventListener("click",done,{once:true});setTimeout(done,9000)},150)}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('.gf-st[data-gfgo="know"]');if(t)nudgeMix()},true);
 const css=document.createElement("style");css.textContent=`
 .h2-today{ display:grid; grid-template-columns:1.35fr 1fr 1fr; gap:14px; align-items:stretch; }
 .h2-card{ position:relative; border-radius:20px; overflow:hidden; min-height:268px; border:1px solid rgba(255,255,255,.75); background:rgba(255,255,255,.66); box-shadow:0 4px 18px rgba(20,40,70,.07); font:inherit; color:inherit; text-align:left; }
@@ -98,6 +120,10 @@ body.sky-night .h2-card:not(.h2-guess), body.dark-theme .h2-card:not(.h2-guess){
 body.sky-night .h2-card:not(.h2-guess) :is(b,small,em,.h2-cod-line,.h2-cod-fact,.h2-q-n){ color:inherit; } body.sky-night .h2-cod-h small{ opacity:.75; }
 body.sky-night .h2-q, body.dark-theme .h2-q{ background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.1); } body.sky-night .h2-q:hover{ background:rgba(255,255,255,.13); }
 body.sky-night .h2-link{ color:#8fe0d6; } body.sky-night .h2-q-t i{ background:rgba(255,255,255,.12); } body.sky-night .h2-cod-flag{ box-shadow:0 0 0 2px #2a3550, 0 3px 8px rgba(0,0,0,.3); }
+.gf-flock-tip{ font-size:12.5px; font-weight:700; opacity:.72; margin-top:6px; }
+.h2-nudge{ animation:h2Pulse 1.1s ease-in-out infinite; } @keyframes h2Pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,112,26,.55); } 50%{ box-shadow:0 0 0 10px rgba(232,112,26,0); } }
+.h2-nudge-tip{ display:inline-block; margin:8px 0 0 4px; padding:6px 12px; border-radius:10px; background:#16324f; color:#fff; font:700 13px/1.3 inherit; font-family:inherit; position:relative; animation:h2TipIn .3s ease-out; }
+.h2-nudge-tip::before{ content:""; position:absolute; left:22px; top:-6px; border:6px solid transparent; border-top:0; border-bottom-color:#16324f; } @keyframes h2TipIn{ from{ opacity:0; transform:translateY(-4px); } }
 @media (max-width:980px){ .h2-today{ grid-template-columns:1fr 1fr; } .h2-guess{ grid-column:1 / -1; min-height:300px; } }
 @media (max-width:640px){ .h2-today{ grid-template-columns:1fr; } .h2-card{ min-height:0; } .h2-guess{ min-height:330px; } }`;
 document.head.appendChild(css);

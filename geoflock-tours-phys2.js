@@ -4,7 +4,7 @@
    the ruler (gfRuler), the country dragger (ghosts) and the day-and-night gadget (gfSun). A stop with its own map mode (mode:"satellite")
    uses the shared per-stop switch (stopModes). Everything is undone when the tour ends.
    Photos: Wikimedia Commons (licence and author in each entry); most come from the shared library, new ones are listed below. */
-window.GF_PHYS2_PHOTOS=[{"f": "Dover White Cliffs 4.jpg", "d": "photos/xcb9bab48691be2c8.webp", "by": "kallerna", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Dover_White_Cliffs_4.jpg", "pins": ["White Cliffs of Dover"]}, {"f": "NB - Hopewell Rocks1.jpg", "d": "photos/xc161f810420c4816.webp", "by": "Wladyslaw", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:NB_-_Hopewell_Rocks1.jpg", "card": "coasts|The biggest tides", "pins": ["Hopewell Rocks at low tide"]}];
+window.GF_PHYS2_PHOTOS=[{"f": "Dover White Cliffs 4.jpg", "d": "photos/xcb9bab48691be2c8.webp", "by": "kallerna", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Dover_White_Cliffs_4.jpg", "pins": ["White Cliffs of Dover"]}, {"f": "NB - Hopewell Rocks1.jpg", "d": "photos/xc161f810420c4816.webp", "by": "Wladyslaw", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:NB_-_Hopewell_Rocks1.jpg", "card": "coasts|The biggest tides", "pins": ["Hopewell Rocks at low tide"]}, {"f": "Grinnell Glacier 2019.jpg", "d": "photos/x9214e160cc1ca187.webp", "by": "Lisa McKeon, USGS Northern Rocky Mountain Science Center", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Grinnell_Glacier_2019.jpg", "card": "ice|A park losing its glaciers", "pins": ["Grinnell Glacier, 2019"]}, {"f": "Tidal flats Wadden sea.JPG", "d": "photos/xa8bd111d8b43a4b7.webp", "by": "Koruko", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Tidal_flats_Wadden_sea.JPG", "card": "coasts|The Wadden Sea", "pins": ["Walking to Spiekeroog at low tide"]}];
 (function(){
 if(typeof PS_TOURS==="undefined"||typeof PS_TOUR_ORDER==="undefined")return;
 const TL="#4f9fdc",W=[-180,-58,180,80];
@@ -167,6 +167,7 @@ S({title:"The Twelve Apostles",view:[141.8,-39.4,144.4,-38.1],globe:[143.1,-38.6
  more:"In 2005 one stack, about 50 m tall, collapsed into the sea. Nearby London Arch, once called London Bridge, lost its span in 1990 and left two tourists stranded on the far side until a helicopter rescued them."}),
 S({title:"The Wadden Sea",view:[-1,52.6,10.5,56.3],globe:[7,54,5],card:"left",
  lines:[{coords:[[4.75,52.95],[5.2,53.35],[6,53.5],[7,53.7],[8,53.75],[8.45,54.3],[8.35,54.9],[8.4,55.4],[8.6,55.6]],kind:"dash"}],
+ phPins:[ph([7.75,53.72],"Walking to Spiekeroog at low tide")],
  pins:[[[5.5,53.4],"Mudflat hiking to the islands","point"],[[8.4,54.5],"North Frisian islands","point"],[[8.4,55.4],"Danish Wadden Sea","point"]],
  stat:"Twice a day the tide drains from the Wadden Sea, uncovering the largest unbroken tidal flats on Earth",
  body:"For about 500 km along the coasts of the Netherlands, Germany and Denmark, mud and sand flats lie between the mainland and a chain of islands. At high tide they are under water; at low tide people can walk across the sea floor with a guide.",
@@ -364,7 +365,7 @@ S({title:"Valleys the ice dug",view:[163.5,-47.6,172,-42.6],globe:[167.8,-45,5],
  more:"The same ice-age glaciers shaped Norway’s fjords, Yosemite Valley in California, Scotland’s lochs and the English Lake District. New Zealand’s Fiordland has 14 fjords, all called ‘sounds’."}),
 S({title:"A park losing its glaciers",view:[-115.4,47.9,-112.6,49.3],globe:[-113.8,48.7,7],card:"left",
  pins:[[[-113.72,48.75],"Grinnell Glacier","point"],[[-113.6,48.67],"Jackson Glacier","point"],[[-113.72,48.7],"Logan Pass","point"]],
- phPins:[ph([-113.72,48.76],"Grinnell Glacier, then and now")],
+ phPins:[ph([-113.72,48.76],"Grinnell Glacier, 2019")],
  stat:"Glacier National Park in Montana had about 150 glaciers around 1850; by 2015 only 26 were still big enough to count",
  body:"The park’s glaciers have been photographed and measured for over a century. Pictures taken from the same spots decades apart show thick ice turning into lakes and bare rock.",
  more:"Between 1966 and 2015 its named glaciers shrank by about 39% on average, and some by 85%. Scientists expect most of them to be gone within the lifetime of today’s students."}),
