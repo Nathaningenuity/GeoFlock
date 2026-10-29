@@ -18,8 +18,7 @@ const S=o=>Object.assign({_autoSpin:1,_ctx:1,_lg:1,_ky:1,_enr:1},o);
 /* insert a new stop after the stop titled `after` (once) */
 const ins=(id,after,s)=>{const t=T(id);if(!t||t.steps.some(x=>x.title===s.title))return;const i=t.steps.findIndex(x=>x.title===after);if(i<0)return;t.steps.splice(i+1,0,S(Object.assign(s.view?{_ff:1}:{},s)))};
 /* photo pins carry their library file; photos() turns it into the photo's index */
-const PINF={};
-const ph=(at,label,f)=>{if(f)PINF[label]=f;return{at,label,col:"#d9682b",icon:"photo"}};
+const ph=(at,label,f)=>({at,label,col:"#d9682b",icon:"photo",_f:f});
 
 /* card photos ("tour|title" → library file name) */
 const CARD={
@@ -44,7 +43,7 @@ function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(
 function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();
  for(const k in CARD){const i=libIdx(CARD[k]);if(i>=0)PS_PHOTO[k]=i}
  window.PS_SQ_IMG=window.PS_SQ_IMG||{};
- for(const id in OPEN){const t=T(id);if(!t)continue;t.steps.forEach(s=>(s.phPins||[]).forEach(q=>{const f=PINF[q.label];if(!f||q.img!=null)return;const i=libIdx(f);if(i>=0){q.img=i;PS_SQ_IMG[q.label]=i}}))}}catch(e){console.error(e)}}
+ for(const id in OPEN){const t=T(id);if(!t)continue;t.steps.forEach(s=>(s.phPins||[]).forEach(q=>{const f=q&&q._f;if(!f||q.img!=null)return;const i=libIdx(f);if(i>=0){q.img=i;if(PS_SQ_IMG[q.label]==null)PS_SQ_IMG[q.label]=i}}))}}catch(e){console.error(e)}}
 
 function patch(){
 /* ───────── Cities ───────── */
@@ -59,19 +58,19 @@ if(T("cities")&&!T("cities")._polB){T("cities")._polB=1;
   stat:"Greater Tokyo is about the size of Montenegro, but has about 60 times as many people",
   body:"The purple shape is Montenegro at its true size, laid over Tokyo: drag it around to compare. Tokyo and its three neighbouring prefectures cover about 13,500 km² and are home to about 37 million people; Montenegro, about the same size, has about 620,000.",
   more:"That is more people than live in all of Australia. Tokyo’s railways move them: Shinjuku station, used by about 3.5 million people a day, is the busiest railway station on Earth."});
- set("cities","The busiest ports",s=>{s.on=["connections"];s.view=[80,-2,138,42];
+ set("cities","The busiest ports",s=>{s.on=["connections"];s.view=[80,-2,138,42];s.globe=[114,20,1.8];
   s.body="Shanghai is the busiest of all, handling over 50 million containers a year (counted in TEU, a standard 20-foot box). Singapore is second, and Ningbo, Qingdao, Shenzhen, Guangzhou and Tianjin are all in the top ten. The blue shipping lanes on the map link them to the world."});
  ins("cities","Divided cities",{title:"Capitals across a river",view:[13.9,-5.25,16.3,-3.55],globe:[15.3,-4.3,8],card:"left",hi:["cd","cg"],on:["rivers"],
   gfRuler:{a:[15.31,-4.32],b:[15.28,-4.265]},
   stat:"Kinshasa and Brazzaville, the capitals of two countries, face each other across the Congo River",
   body:"Apart from Rome and Vatican City, no two capitals are closer: the ruler measures only about 7 km between their centres. There is no bridge, so people cross by boat.",
   more:"Kinshasa, with roughly 17 million people, is about seven times the size of Brazzaville. Just downstream, the river plunges through a string of rapids on its way to the Atlantic, which is why ships cannot sail up to the two cities from the sea."});
- set("cities","Capitals in the clouds",s=>{s.view=[-71.6,-17.9,-66.6,-15.1];s.globe=[-68.1,-16.5,6];s.card="left";delete s.spin;s.phPins=[];
+ set("cities","Capitals in the clouds",s=>{s.view=[-75,-19.8,-63,-13.6];s.globe=[-68.6,-16.6,4];s.card="left";delete s.spin;s.phPins=[];
   s.pins=[[[-68.15,-16.5],"La Paz ~3,600 m","point"],[[-68.19,-16.51],"El Alto ~4,000 m","point"]];
-  s.xsec={title:"From El Alto down into La Paz and up to Illimani",pts:[[-68.21,-16.51,"El Alto"],[-68.17,-16.5],[-68.135,-16.497,"La Paz centre"],[-68.1,-16.52],[-68.07,-16.545,"Zona Sur"],[-67.95,-16.59],[-67.85,-16.62],[-67.79,-16.64,"Illimani"]],mark:3600,
-   note:"The dashed line marks 3,600 m. El Alto sits on the flat Altiplano; La Paz fills a deep canyon below it, and the snowy peak of Illimani towers over both."};
-  s.body="It is the highest seat of government in the world. The city fills a canyon below El Alto, a fast-growing city on the high plain above: move along the chart to see the drop. Cable cars carry commuters between the two.";
-  s.more="La Paz’s cable-car network, opened from 2014, is the longest and highest urban cable-car system on Earth. Quito, in Ecuador, at about 2,850 m, is the highest official capital, and Bogotá is about 2,600 m up. Visitors often get altitude sickness on arrival."});
+  s.xsec={title:"From the Pacific over La Paz to the Amazon",pts:[[-70.31,-18.48,"Arica (coast)"],[-69.9,-18.2],[-69.5,-17.95],[-69.1,-17.6,"Altiplano"],[-68.6,-17.05],[-68.15,-16.5,"La Paz"],[-67.85,-16.2],[-67.57,-15.83,"Yungas"],[-67.5,-15.1],[-67.53,-14.44,"Amazon lowlands"]],mark:3600,
+   note:"The dashed line marks 3,600 m. La Paz lies on the edge of the Altiplano, a high plain between two ranges of the Andes; just beyond it the land drops steeply to the Amazon lowlands."};
+  s.body="It is the highest seat of government in the world, on the edge of the Altiplano, a high plain in the Andes: move along the chart from the Pacific coast to the Amazon. The city fills a canyon below El Alto, a fast-growing city on the plain above.";
+  s.more="Cable cars carry commuters between La Paz and El Alto: the network, opened from 2014, is the longest and highest urban cable-car system on Earth. Quito, in Ecuador, at about 2,850 m, is the highest official capital, and Bogotá is about 2,600 m up. Visitors often get altitude sickness on arrival."});
  set("cities","Now explore",s=>{s.body="Hover any country to see its name and neighbours. The Cities switch in the map options shows more cities; the People map shows how much of each country lives in towns."});
 }
 /* ───────── Migration ───────── */
@@ -79,7 +78,7 @@ if(T("migration")&&!T("migration")._polB){T("migration")._polB=1;
  set("migration","People on the move",s=>{s.phPins=[ph([-74.04,40.7],"Ellis Island, New York","Italian immigrants at Ellis Island.jpg"),ph([-117.1,32.54],"Tijuana–San Diego border","Border Wall at Tijuana and San Diego Border.jpg"),
   ph([55.27,25.2],"Dubai","Dubai Marina Skyline.jpg"),ph([36.32,32.29],"Zaatari camp, Jordan","Zaatari Refugee Camp John Green 18.png"),
   ph([22.77,49.78],"Przemyśl, Poland","Ukrainian refugees at Przemyśl returning home.jpg"),ph([120.98,14.6],"Manila","Sunset in Manila Bay, Manila, Philippines.jpg")]});
- set("migration","Mexico to the US",s=>{s.view=[-146,8,-76,50];s.globe=[-104,28,2.2];s.card="left";delete s.spin;
+ set("migration","Mexico to the US",s=>{s.view=[-146,8,-76,50];s.globe=[-104,30,1.9];s.card="left";delete s.spin;
   s.gfRuler={a:[-99.13,19.43],b:[-118.24,34.05]};
   s.body="Mexicans in the US sent home about $65 billion in 2024, more than Mexico earns from selling oil abroad. Drag the ruler: Mexico City to Los Angeles is about 2,500 km."});
  set("migration","The great Atlantic crossing",s=>{s.gfRuler={a:[-2.99,53.4],b:[-74.0,40.7]};
@@ -132,12 +131,12 @@ if(T("culture")&&!T("culture")._polB){const t=T("culture");t._polB=1;t.stopModes
 }
 /* ───────── Religions ───────── */
 if(T("langrel")&&!T("langrel")._polB){const t=T("langrel");t._polB=1;t.stopModes=true;
- ins("langrel","What the world believes",{title:"Christianity and Rome",mode:"history",sub:"300/rom",view:[-50,12,60,60],globe:[20,38,1.6],card:"left",
+ ins("langrel","What the world believes",{title:"Christianity and Rome",mode:"history",sub:"300/rom",view:[-50,12,60,60],globe:[14,38,1.5],card:"left",
   pins:[[[35.23,31.78],"Jerusalem","point"],[[12.49,41.89],"Rome","point"],[[28.98,41.01],"Constantinople (Istanbul)","point"]],
   stat:"In 380 Christianity became the official religion of the Roman Empire",
   body:"Christianity began in the first century AD, in Roman Judea. It spread along the empire’s roads and sea routes, and after Emperor Constantine became a Christian in 312, it grew fast. The map shows the empire around 300, just before Constantine.",
   more:"From Rome and Constantinople, missionaries later carried the faith to the peoples beyond the borders: the Irish, Germans, Slavs and Russians. Rome became the centre of the Catholic Church, Constantinople of the Orthodox churches."});
- ins("langrel","Christianity and Rome",{title:"Islam’s first century",mode:"history",sub:"800/isl",view:[-75,0,90,60],globe:[35,30,1.4],card:"left",
+ ins("langrel","Christianity and Rome",{title:"Islam’s first century",mode:"history",sub:"800/isl",view:[-75,0,90,60],globe:[28,30,1.2],card:"left",
   pins:[[[39.83,21.42],"Mecca","point"],[[44.37,33.31],"Baghdad, capital from 762","point"],[[36.31,33.51],"Damascus","point"],[[-4.78,37.88],"Córdoba","point"]],
   stat:"Within about 120 years of Muhammad’s death in 632, Muslim rulers governed from Spain to Central Asia",
   body:"Arab armies conquered the Persian Empire and much of the Byzantine Empire. The map shows the Caliphate, ruled from Baghdad, in 800; Muslim Spain was ruled separately from Córdoba.",
@@ -174,7 +173,7 @@ if(T("landmarks")&&!T("landmarks")._polB){T("landmarks")._polB=1;
   ph([-43.21,-22.95],"Christ the Redeemer","Rio de Janeiro - Cristo Redentor 01.jpg")]});
  set("landmarks","The Great Wall",s=>{s.gfRuler={a:[119.75,40.0],b:[98.21,39.8]};
   s.body="All its walls together run about 21,000 km, built and rebuilt over 2,000 years. The Ming wall that most visitors see winds about 8,850 km, yet its two ends are only about 1,800 km apart: drag the ruler."});
- set("landmarks","The Statue of Liberty",s=>{s.view=[-125,8,12,66];s.globe=[-35,42,1.1];
+ set("landmarks","The Statue of Liberty",s=>{s.view=[-125,8,12,66];s.globe=[-42,42,1];
   s.gfRuler={a:[2.35,48.86],b:[-74.04,40.69]};
   s.body="France gave the statue to the United States for the 100th anniversary of American independence, and it was unveiled in 1886. It was built in Paris and shipped about 5,800 km across the Atlantic: drag the ruler."});
  set("landmarks","Machu Picchu",s=>{s.view=[-81,-18,-66,-9];s.globe=[-72.3,-13.3,5];delete s.spin;

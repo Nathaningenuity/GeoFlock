@@ -82,7 +82,7 @@ const PIN={
  "Bleached coral":"Bleached Staghorn Coral.jpg",
  "Greenland: melting ice":"Early Melt on the Greenland Ice Sheet (33354485670).jpg",
  "Saihanba: planted forest":"Saihanba National Forest Park(Autumn 2011) - panoramio.jpg",
- "Yellowstone":"Radio collared gray wolf on snow.jpg",
+ "Yellowstone: wolves back since 1995":"Radio collared gray wolf on snow.jpg",
  "Qinghai–Tibet railway: Lhasa":"Potala Palace, August 2009.jpg"};
 
 function findIdx(f){try{if(typeof gfMergeExtra==="function")gfMergeExtra();return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
@@ -224,9 +224,9 @@ if(T("environment")&&!T("environment")._polC){T("environment")._polC=1;
  set("environment","Vanishing glaciers",s=>dropPh(s,["Pico Humboldt: Venezuela’s last glacier, gone"]));
  set("environment","If all the ice melted",s=>{dropPh(s,["the Netherlands"]);
   s.body="Blue shows land the sea would reach: most of the Netherlands and Denmark, northern Germany, London, Venice and the Po valley. Drag the slider to try smaller rises, and wait a few seconds for the map to repaint."});
- set("environment","Electric Norway",s=>{s.on=["resources"];
+ set("environment","Electric Norway",s=>{s.on=["resources"];s.view=[-25,55,35,72];
   s.body="Norway made electric cars cheaper with tax breaks, free parking and cheap tolls. Petrol cars have almost disappeared from its showrooms, even though, as the map’s oil and gas fields show, Norway got rich selling fossil fuels."});
- set("environment","The wolves return",s=>{dropPh(s,["Yellowstone"]);s.phPins=(s.phPins||[]).concat([ph([-110.5,44.6],"Yellowstone")])});
+ set("environment","The wolves return",s=>{dropPh(s,["Yellowstone"]);s.phPins=(s.phPins||[]).concat([ph([-110.5,44.6],"Yellowstone: wolves back since 1995")])});
 }
 /* tour questions: tie each one to a country (kc) when it has none */
 try{if(typeof TOURQ!=="undefined")for(const id in KC){const Q=TOURQ[id];if(!Q)continue;
