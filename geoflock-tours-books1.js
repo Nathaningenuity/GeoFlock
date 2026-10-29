@@ -5,9 +5,9 @@
    bcollapse   "Collapse"                 Jared Diamond, 2005
    Each stop shows one of the book's claims on the map. The books' ideas are summarised in our own words and presented as
    the authors' views; where other scholars disagree, the card says so in a line. No book covers or long quotes.
-   Stops use per-stop layers (on:[…]), the history map for one stop (mode:"history", sub:"<year>/<group>"), the City Lights
-   and satellite maps for one stop (mode:…, through the shared stopModes switch), the ruler (gfRuler), the true-size
-   country dragger (ghosts) and height cross-sections in the card (xsec).
+   Stops use per-stop layers (on:[…]), the history map for one stop (mode:"history", sub:"<year>/<group>") and the Economy
+   map for one stop (mode:"gdp"), both through the shared stopModes switch, the ruler (gfRuler), the true-size country
+   dragger (ghosts) and height cross-sections in the card (xsec).
    Photos: Wikimedia Commons, all from the shared library (licence and author in each library entry); new ones would be
    listed in GF_BOOKS1_PHOTOS. */
 window.GF_BOOKS1_PHOTOS=[];
@@ -32,7 +32,7 @@ S({title:"Russia’s open door",view:[-48,40,62,66],globe:[25,53,2.6],card:"left
  lines:[{coords:[[2.35,48.86],[13.4,52.52],[21.01,52.23],[27.56,53.9],[37.62,55.75]],kind:"flow"}],
  pins:[[[37.62,55.75],"Moscow","point"],[[21.01,52.23],"Warsaw","point"]],
  stat:"Marshall’s key to Russia: a flat plain runs from France to the Urals, and Poland is its narrowest point",
- body:"The North European Plain has no mountains to stop an invader: see the flat cross-section below. Between the Baltic Sea and the Carpathian Mountains it narrows to under 500 km (drag the ruler). Marshall argues that Russia’s leaders have always wanted to control or neutralise this gap.",
+ body:"The North European Plain has no mountains to stop an invader: see the flat cross-section in this card. Between the Baltic Sea and the Carpathian Mountains it narrows to under 500 km (drag the ruler). Marshall argues that Russia’s leaders have always wanted to control or neutralise this gap.",
  more:"Poles, Swedes, the French under Napoleon in 1812 and Germans twice, in 1914 and 1941, came at Russia across this plain. Marshall reads Moscow’s wish for friendly or weak neighbours to its west through this history."}),
 S({title:"The hunt for a warm-water port",view:[-89,30,150,78],globe:[60,60,1.6],card:"left",hi:["ru"],on:["connections"],
  pins:[[[33.08,68.97],"Murmansk","point"],[[131.89,43.12],"Vladivostok","point"],[[33.52,44.6],"Sevastopol","point"],[[29.05,41.12],"The Bosporus","point"],[[12.65,56.0],"Danish straits","point"]],
@@ -202,9 +202,9 @@ S({title:"Why Nations Fail",view:W,globe:[20,25,1],
  stat:"Acemoglu and Robinson’s 2012 book argues that rules made by people, not geography or culture, make nations rich or poor",
  body:"The economist Daron Acemoglu and the political scientist James A. Robinson call good rules ‘inclusive institutions’: secure property, fair courts, open markets and power shared widely. ‘Extractive institutions’ let a small elite squeeze wealth out of everyone else. This tour visits their examples.",
  more:"In 2024 they shared the Nobel Prize in economics with their colleague Simon Johnson for research on how institutions shape prosperity."}),
-S({title:"Nogales: one town, two countries",view:[-117.5,29,-107.5,34.2],globe:[-110.94,31.33,6],card:"left",hi:["us","mx"],
+S({title:"Nogales: one town, two countries",view:[-121,29,-107.5,34.5],globe:[-110.94,31.33,6],card:"left",hi:["us","mx"],
  lines:[{coords:[[-114.81,32.49],[-111.075,31.3323],[-108.21,31.3323]],kind:"solid"}],
- pins:[[[-110.94,31.33],"The two Nogales","point"],[[-110.97,32.22],"Tucson","point"],[[-110.96,29.07],"Hermosillo","point"]],
+ pins:[[[-110.94,31.33],"The two Nogales","point"]],
  phPins:[ph([-111.2,31.333],"The US–Mexico border wall")],
  stat:"The authors found households on the US side of the fence earned about three times as much as those on the Mexican side",
  body:"The two Nogales share the same people’s ancestors, food, music, climate and diseases. Only a fence divides them (the line). The authors argue that the difference is the institutions each side lives under: US laws, courts, police and elections compared with those of Mexico.",
@@ -242,7 +242,7 @@ S({title:"Venice closes its doors",view:[-15,28,36,50],globe:[16,40,2.5],card:"l
  stat:"In 1297 Venice’s Great Council closed its membership to new families: the Serrata, or ‘closure’",
  body:"Medieval Venice grew rich through trade, with contracts that let young merchants without money share in voyages and rise. The authors argue that once the old families shut newcomers out of power and trade, the city’s dynamism faded, and it slowly became a museum of its own past.",
  more:"Venice’s trade routes crossed the Mediterranean to Constantinople and Alexandria; the modern shipping lanes are shown. Other historians point to new ocean routes round Africa and the rise of the Ottomans as big reasons for its decline."}),
-S({title:"Botswana’s chiefs",view:[-30,-32,35,55],globe:[18,10,1.3],card:"left",hi:["bw"],hiSoft:["za","zw","na"],
+S({title:"Botswana’s chiefs",view:[-30,-32,35,55],globe:[18,10,1.3],card:"left",hi:["bw"],
  ghosts:[{code:"bw",at:[2.5,46.5],col:"#9a5a48",label:"Botswana, true size"}],
  pins:[[[25.91,-24.65],"Gaborone","point"],[[25.38,-21.31],"Orapa diamond mine","point"]],
  iconPins:[ic([25.38,-21.31],"gem")],
@@ -257,7 +257,7 @@ S({title:"Growth that cannot last?",view:[-38,15,140,70],globe:[90,45,1.4],card:
  body:"The Soviet Union grew quickly for decades by moving millions of people from farms into factories, then stalled and broke up in 1991. In 2012 the authors argued that China’s boom, driven by a state that controls who may succeed, would slow unless its institutions became more inclusive.",
  more:"This is one of the book’s most debated claims. China has kept growing since 2012, though more slowly, and economists still argue about what this means for the theory."}),
 S({title:"Geography or institutions?",view:W,globe:[20,10,1],card:"left",on:["grid"],
- lines:[{coords:[[-180,23.44],[180,23.44]],kind:"dash"},{coords:[[-180,-23.44],[180,-23.44]],kind:"dash"}],
+ lines:[{coords:[[-179,23.44],[-120,23.44],[-60,23.44],[0,23.44],[60,23.44],[120,23.44],[179,23.44]],kind:"dash"},{coords:[[-179,-23.44],[-120,-23.44],[-60,-23.44],[0,-23.44],[60,-23.44],[120,-23.44],[179,-23.44]],kind:"dash"}],
  pins:[[[18.07,59.33],"Stockholm: the Nobel Prize, 2024","point"]],
  phPins:[ph([18.07,59.33],"Stockholm")],
  stat:"Many of the world’s poorest countries lie between the tropics (dashed): is that geography, or history?",
@@ -272,10 +272,16 @@ S({title:"Now explore",view:W,globe:[20,25,1],
    ===================================================================================================== */
 const COLL=[
 S({title:"Collapse",view:W,globe:[-60,20,1],
- phPins:[ph([-109.23,-27.13],"Ahu Tongariki, Rapa Nui"),ph([-89.62,17.22],"Tikal"),ph([-89.14,14.84],"Copán"),ph([-37.63,65.61],"Tasiilaq, Greenland"),ph([-55.53,51.6],"L’Anse aux Meadows"),ph([-69.88,18.47],"Santo Domingo"),ph([145.4,-6.08],"The New Guinea highlands"),ph([-113.5,46.5],"A winter road in Montana")],
+ phPins:[ph([-109.23,-27.13],"Ahu Tongariki, Rapa Nui"),ph([-89.62,17.22],"Tikal"),ph([-89.14,14.84],"Copán"),ph([-37.63,65.61],"Tasiilaq, Greenland"),ph([-55.53,51.6],"L’Anse aux Meadows"),ph([-69.88,18.47],"Santo Domingo"),ph([145.4,-6.08],"The New Guinea highlands")],
  stat:"Jared Diamond’s 2005 book asks why some societies destroyed themselves and others survived",
  body:"Diamond suggests five things to check: damage people do to their environment, climate change, hostile neighbours, the loss of friendly trading partners, and, above all, how a society responds to its problems. This tour visits his case studies, from Easter Island to Hispaniola.",
- more:"The book starts in Montana, where Diamond spent summers, and ends with today’s world: he argues that collapse is a choice, not a fate."}),
+ more:"The book starts in Montana and ends with today’s world: Diamond argues that collapse is not a fate but depends on the choices a society makes."}),
+S({title:"Montana: trouble in paradise",view:[-126,43,-103,49.5],globe:[-112,46.5,4],card:"left",hiSoft:["us"],
+ pins:[[[-114.1,46.3],"The Bitterroot Valley","point"],[[-112.5,46.0],"Butte","point"],[[-113.99,46.87],"Missoula","point"]],
+ iconPins:[ic([-112.5,46.0],"pick")],
+ stat:"Diamond’s book begins in Montana, one of the emptiest and most beautiful US states",
+ body:"Diamond spent many summers in the Bitterroot Valley. He shows that even this rich, modern place faces his problems: old mines leaking toxic waste, forests made fire-prone by a century of putting out every fire, salty soils, scarce water and invading weeds.",
+ more:"At Butte, the Berkeley Pit, a flooded copper mine, holds a lake of acidic, metal-laden water; in 1995 a flock of snow geese died after landing on it. Diamond’s point: these are the same kinds of problems that ancient societies faced."}),
 S({title:"Easter Island",view:[-140,-40,-68,-15],globe:[-100,-27,2.2],card:"left",hi:["easter"],gfRuler:{a:[-109.35,-27.12],b:[-71.62,-33.05]},
  pins:[[[-109.35,-27.12],"Rapa Nui (Easter Island)","point"],[[-130.1,-25.07],"Pitcairn","point"],[[-71.62,-33.05],"Valparaíso, Chile","point"]],
  iconPins:[ic([-109.35,-27.12],"statue")],
@@ -283,12 +289,20 @@ S({title:"Easter Island",view:[-140,-40,-68,-15],globe:[-100,-27,2.2],card:"left
  stat:"Rapa Nui’s people carved nearly 1,000 giant stone statues, called moai, on an island 3,670 km from Chile",
  body:"Diamond’s best-known case: he argues the islanders cut down all their trees, partly to move the statues, so soil eroded, canoes could no longer be built and society fell into famine and war. Drag the ruler: no one could come to help.",
  more:"This is strongly debated. Many archaeologists now argue that the population stayed small and stable, that rats ate the palm seeds, and that the real disaster came after Europeans arrived in 1722: disease and slave raids in the 1860s."}),
-S({title:"Chaco Canyon",view:[-113,34,-105.5,38.5],globe:[-108,36,4.5],card:"left",hiSoft:["us"],
+S({title:"Pitcairn and Henderson",view:[-145,-29,-125,-19],globe:[-131,-24,4.5],card:"left",gfRuler:{a:[-134.97,-23.12],b:[-128.33,-24.37]},
+ lines:[{coords:[[-134.97,-23.12],[-130.1,-25.07]],kind:"dash"},{coords:[[-130.1,-25.07],[-128.33,-24.37]],kind:"dash"},{coords:[[-134.97,-23.12],[-131.5,-23.6],[-128.33,-24.37]],kind:"dash"}],
+ pins:[[[-134.97,-23.12],"Mangareva","point"],[[-130.1,-25.07],"Pitcairn: stone for tools","point"],[[-128.33,-24.37],"Henderson: turtles and seabirds","point"]],
+ phPins:[ph([-128.33,-24.37],"Henderson Island")],
+ stat:"When Mangareva lost its trees, its two small trading partners lost their lifeline",
+ body:"Three islands traded by canoe: Mangareva had food and pearl shell, Pitcairn had stone for tools, and Henderson had turtles and seabirds. Diamond argues that when Mangareva’s forests were cut, it could no longer build ocean-going canoes, and the voyages, hundreds of kilometres long (drag the ruler), stopped around 1500.",
+ more:"The people of Pitcairn and Henderson, cut off, died out. When the Bounty mutineers landed on Pitcairn in 1790, it was empty. This is Diamond’s fourth factor: losing friendly trading partners."}),
+S({title:"Chaco Canyon",view:[-124,30,-100,42],globe:[-108,36,4.5],card:"left",hiSoft:["us"],
  pins:[[[-107.96,36.06],"Chaco Canyon: Pueblo Bonito","point"],[[-108.46,37.18],"Mesa Verde","point"]],
  iconPins:[ic([-107.96,36.06],"steps")],
+ phPins:[ph([-110.5,35.83],"A Hopi village on Second Mesa")],
  stat:"Pueblo Bonito, with some 600 rooms, was the largest building in North America until the 1800s",
  body:"Ancestral Puebloans built great houses of stone in this dry canyon in New Mexico between about AD 850 and 1150. Diamond argues they cut the nearby woods and depended on farming in a fragile desert; when a long drought struck in the 1100s, the system fell apart and people left.",
- more:"Their timber was carried from mountains up to 75 km away. Their descendants, the Pueblo peoples, still live in the region today: they moved, rather than vanished."}),
+ more:"Mesa Verde’s cliff dwellings (pictured, in 1891), built by the same culture, were left around 1300. Their descendants, the Pueblo peoples such as the Hopi, still live in the region: they moved, rather than vanished."}),
 S({title:"The Classic Maya",view:[-97,13,-87,20],globe:[-90,17,4],card:"left",mode:"history",sub:"800/maya",
  pins:[[[-89.62,17.22],"Tikal","point"],[[-89.14,14.84],"Copán","point"],[[-91.98,17.48],"Palenque","point"],[[-89.74,18.1],"Calakmul","point"]],
  iconPins:[ic([-89.62,17.22],"pyramid")],
@@ -310,12 +324,12 @@ S({title:"Societies that succeeded",view:[104,-16,172,42],globe:[150,10,1.4],car
  stat:"Diamond’s success stories: Tokugawa Japan, tiny Tikopia and the New Guinea highlands",
  body:"In the 1600s Japan was losing its forests to building. The Tokugawa shoguns, from the top down, counted trees, rationed timber and planted new forests. On Tikopia, an island of under 5 km², people managed their gardens, fish and numbers carefully for some 3,000 years.",
  more:"The New Guinea highlanders, Diamond notes, farmed the same valleys for thousands of years, managing their soils from the bottom up. Japan is still about two-thirds forest."}),
-S({title:"Hispaniola: one island, two paths",view:[-78.6,17.4,-68.2,20.2],globe:[-71.5,19,6],card:"left",mode:"satellite",
+S({title:"Hispaniola: one island, two paths",view:[-78.6,17.4,-68.2,20.2],globe:[-71.5,19,6],card:"left",hi:["ht"],hiSoft:["do"],
  lines:[{coords:[[-71.68,19.71],[-71.73,19.4],[-71.64,19.2],[-71.78,18.95],[-71.69,18.6],[-71.95,18.38],[-71.74,18.04]],kind:"dash"}],
  pins:[[[-72.34,18.54],"Port-au-Prince, Haiti","point"],[[-69.93,18.49],"Santo Domingo, Dominican Republic","point"]],
  phPins:[ph([-69.88,18.47],"Santo Domingo")],
  stat:"Diamond wrote that forest covered 28% of the Dominican Republic but only about 1% of Haiti",
- body:"On the satellite map, the land west of the border (dashed) often looks browner. Diamond explains why: France ran Haiti as a crowded sugar colony with many enslaved workers; Haiti’s side gets less rain; and Dominican rulers, including the dictator Trujillo, protected forests while Haiti’s were cut for farmland and charcoal.",
+ body:"Haiti (highlighted) and the Dominican Republic share one island. In close-up satellite photos the border can often be traced where green forest gives way to bare hills. Diamond explains why: France ran Haiti as a crowded sugar colony with many enslaved workers; Haiti’s side gets less rain; and Dominican rulers, including the dictator Trujillo, protected forests while Haiti’s were cut for farmland and charcoal.",
  more:"Later satellite studies give different figures depending on what counts as forest, but the contrast along the border is real. The two countries share one island and very different histories."}),
 S({title:"Australia: mining the soil",view:[88,-42,155,-10],globe:[134,-27,2.4],card:"left",hi:["au"],on:["rivers"],
  pins:[[[138.88,-35.56],"Mouth of the Murray","point"],[[146,-31.5],"The Murray–Darling basin","point"],[[117.5,-31.5],"The Wheatbelt: salty soils","point"]],
@@ -325,13 +339,13 @@ S({title:"Australia: mining the soil",view:[88,-42,155,-10],globe:[134,-27,2.4],
  more:"The Murray–Darling rivers (shown in blue) water much of Australia’s farming, but in dry years so much is taken that little reaches the sea. Diamond saw Australia as a rich country starting to change course."}),
 S({title:"Now explore",view:W,globe:[-60,20,1],
  stat:"Hover any country to see its name and neighbours",
- body:"Switch to the Satellite map and look for borders you can see from space, like Haiti’s. Many archaeologists disagree with parts of Collapse: in the 2010 book Questioning Collapse, they argue that many of these peoples adapted and survived. Try Guns, Germs, and Steel next, Diamond’s earlier book."})];
+ body:"Switch to the Satellite map and zoom in on Hispaniola or Rapa Nui. Many archaeologists disagree with parts of Collapse: in the 2010 book Questioning Collapse, they argue that many of these peoples adapted and survived. Try Guns, Germs, and Steel next, Diamond’s earlier book."})];
 
 const TOURS={
  bprisoners:{name:"Prisoners of Geography",short:"Prisoners of Geography",hint:"Tim Marshall’s 2015 book, on the map: Russia’s open plain, China’s buffers, America’s rivers, Africa’s true size and the Arctic",steps:PRIS},
  bggs:{name:"Guns, Germs, and Steel",short:"Guns, Germs, and Steel",hint:"Jared Diamond’s 1997 book, on the map: Cajamarca, the Fertile Crescent, tame animals, Eurasia’s east–west axis and germs",steps:GGS},
  bnations:{name:"Why Nations Fail",short:"Why Nations Fail",hint:"Acemoglu and Robinson’s 2012 book, on the map: Nogales, the two Koreas, Potosí’s silver, 1688, Venice and Botswana",steps:NAT},
- bcollapse:{name:"Collapse",short:"Collapse",hint:"Jared Diamond’s 2005 book, on the map: Easter Island, Chaco Canyon, the Maya, Norse Greenland and Hispaniola",steps:COLL}};
+ bcollapse:{name:"Collapse",short:"Collapse",hint:"Jared Diamond’s 2005 book, on the map: Montana, Easter Island, Pitcairn, Chaco Canyon, the Maya, Norse Greenland and Hispaniola",steps:COLL}};
 const IDS=Object.keys(TOURS);
 /* stops with their own map mode use the shared per-stop switch (stopModes); alsoOn keeps the tour running in those modes */
 IDS.forEach(id=>{const T=TOURS[id],modes=[...new Set(T.steps.map(s=>s.mode).filter(Boolean))];PS_TOURS[id]={name:T.name,short:T.short,hint:T.hint,map:{mode:"relief"},group:"books",col:COL[id],steps:T.steps,stopModes:modes.length>0,alsoOn:modes}});
@@ -401,7 +415,7 @@ const CARD={
  "bnations|Venice closes its doors":"(Venice) Doge's Palace and campanile of St. Mark's Basilica facing the sea.jpg","bnations|Botswana’s chiefs":"Three Dikgosi Monument, Gaborone, Botswana.jpg",
  "bnations|Growth that cannot last?":"The panorama of Futian Shenzhen.jpg","bnations|Geography or institutions?":"Nobel prize medal for medicine, Sweden, 1945, to Sir Alexander Fleming (1881-1955) who discovered Penicillin. On display at the National Museum of Scotland.jpg",
  "bnations|Now explore":"Skeppsbrokajen Gamla Stan from Skeppsholmen Stockholm 2016 01.jpg",
- "bcollapse|Collapse":"Frederick Catherwood - Maya Stela at Copan, Honduras - B1979.12.689 - Yale Center for British Art.jpg","bcollapse|Easter Island":"Ahu Tongariki cropped.jpg",
+ "bcollapse|Collapse":"Frederick Catherwood - Maya Stela at Copan, Honduras - B1979.12.689 - Yale Center for British Art.jpg","bcollapse|Easter Island":"Ahu Tongariki cropped.jpg","bcollapse|Montana: trouble in paradise":"Winter Road Montana.jpg","bcollapse|Pitcairn and Henderson":"Polynesian double-hulled and outrigger canoes.jpg","bcollapse|Chaco Canyon":"Mesa-Verde---Cliff-Palace-in 1891 - edit1.jpg",
 "bcollapse|The Classic Maya":"Tikal Temple II.jpg",
  "bcollapse|The Norse in Greenland":"Tasiilaq, Greenland 02.jpg","bcollapse|Societies that succeeded":"Papua New Guinea (5986599443).jpg",
  "bcollapse|Hispaniola: one island, two paths":"Aerial view Ciudad Colonial Santo Domingo 09 2019 0067.jpg","bcollapse|Australia: mining the soil":"Petermann Ranges (AU), Uluru-Kata Tjuta National Park, Uluru -- 2019 -- 3688.jpg",
@@ -430,8 +444,8 @@ const PIN={
  "The Okavango Delta":"Okavango Delta, Botswana3.jpg","Moscow State University":"Moscow State University crop.jpg","Stockholm":"Stockholms stadshus February 2026 02.jpg",
  /* Collapse */
  "Ahu Tongariki, Rapa Nui":"Ahu Tongariki cropped.jpg","Tikal":"Tikal Temple II.jpg","Copán":"Copan Ruins - panoramio (2).jpg","Tasiilaq, Greenland":"Tasiilaq, Greenland 02.jpg",
- "L’Anse aux Meadows":"L'Anse aux Meadows, entrance to long house.jpg","Santo Domingo":"Aerial view Ciudad Colonial Santo Domingo 09 2019 0067.jpg","A winter road in Montana":"Winter Road Montana.jpg",
- "Motu Nui, Rapa Nui":"Motu Nui Islet - Easter Island (5956399066).jpg","Palenque":"Palenque temple 1.jpg",
+ "L’Anse aux Meadows":"L'Anse aux Meadows, entrance to long house.jpg","Santo Domingo":"Aerial view Ciudad Colonial Santo Domingo 09 2019 0067.jpg",
+ "Motu Nui, Rapa Nui":"Motu Nui Islet - Easter Island (5956399066).jpg","Palenque":"Palenque temple 1.jpg","Henderson Island":"Henderson Island-110259.jpg","A Hopi village on Second Mesa":"Hopi Village on the Second Mesa.jpg",
  "Bryggen, Bergen":"Bryggen, Bergen, Noruega, 2019-09-08, DD 115-117 PAN.jpg","Fushimi Inari, Kyoto":"Torii path with lantern at Fushimi Inari Taisha Shrine, Kyoto, Japan.jpg"};
 /* new photos (GF_BOOKS1_PHOTOS) name the stops (card:"tour|title") and pin labels they belong to */
 const PHOTOS=window.GF_BOOKS1_PHOTOS||[];

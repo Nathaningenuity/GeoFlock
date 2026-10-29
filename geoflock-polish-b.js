@@ -12,10 +12,11 @@ const T=id=>{try{const t=typeof PS_TOURS!=="undefined"&&PS_TOURS[id];return t&&t
 const st=(id,title)=>{const t=T(id);return t?t.steps.find(s=>s.title===title):null};
 /* some stops lock fields with getters (psLock in index.html); writes go through defineProperty so they replace those */
 const def=(t,k,v)=>Object.defineProperty(t,k,{configurable:true,enumerable:true,writable:true,value:v});
-const set=(id,title,f)=>{const s=st(id,title);if(s)try{f(new Proxy(s,{set(t,k,v){def(t,k,v);return true}}))}catch(e){console.error(e)}};
+/* a stop given its own view keeps it: _ff stops psFrameFix re-fitting it to the highlighted countries at the first tour start */
+const set=(id,title,f)=>{const s=st(id,title);if(s)try{f(new Proxy(s,{set(t,k,v){def(t,k,v);if(k==="view")def(t,"_ff",1);return true}}))}catch(e){console.error(e)}};
 const S=o=>Object.assign({_autoSpin:1,_ctx:1,_lg:1,_ky:1,_enr:1},o);
 /* insert a new stop after the stop titled `after` (once) */
-const ins=(id,after,s)=>{const t=T(id);if(!t||t.steps.some(x=>x.title===s.title))return;const i=t.steps.findIndex(x=>x.title===after);if(i<0)return;t.steps.splice(i+1,0,S(s))};
+const ins=(id,after,s)=>{const t=T(id);if(!t||t.steps.some(x=>x.title===s.title))return;const i=t.steps.findIndex(x=>x.title===after);if(i<0)return;t.steps.splice(i+1,0,S(Object.assign(s.view?{_ff:1}:{},s)))};
 /* photo pins carry their library file; photos() turns it into the photo's index */
 const PINF={};
 const ph=(at,label,f)=>{if(f)PINF[label]=f;return{at,label,col:"#d9682b",icon:"photo"}};
@@ -37,10 +38,7 @@ const CARD={
  "food|Potatoes from the Andes":"Amanecer en el lago Titicaca, Puno, Perú, 2015-08-01, DD 01.JPG",
  "food|Now explore":"Colorful Spices and Teas.jpg",
  "landmarks|Now explore":"Al Khazneh Petra edit 2.jpg",
- "flags|Flags of the world":"Finland flag raising at NATO Headquarters 4 April 2023.jpg",
- "flags|The Nordic cross":"Finland flag raising at NATO Headquarters 4 April 2023.jpg",
- "flags|Not a rectangle":"Boudhanath stupa, Kathmandu 01.jpg",
- "flags|Stars and stripes":"Providence Island view of downtown Monrovia.jpg"};
+ "flags|Flags of the world":"Finland flag raising at NATO Headquarters 4 April 2023.jpg"};
 
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();
@@ -116,7 +114,7 @@ if(T("people")&&!T("people")._polB){T("people")._polB=1;
 }
 /* ───────── Languages ───────── */
 if(T("culture")&&!T("culture")._polB){const t=T("culture");t._polB=1;t.stopModes=true;
- set("culture","Spanish: one country to twenty",s=>{s.title="The Spanish Empire";s.mode="history";s.sub="1783/spa";delete s.keyLabel;s.bannerNote="The Spanish Empire, 1783";
+ set("culture","Spanish: one country to twenty",s=>{s.title="The Spanish Empire";s.mode="history";s.sub="1783/spa";s.hi=[];s.phPins=[];delete s.keyLabel;s.bannerNote="The Spanish Empire, 1783";
   s.stat="Spanish began in one corner of Spain; its empire carried it across the Americas, and it is now spoken in 20 countries";
   s.body="The map shows the Spanish Empire in 1783, near its greatest extent. When its colonies broke away in the 1800s, they kept the language, which is why Spanish is spoken from Mexico to Argentina.";
   s.more="Mexico now has nearly three times as many Spanish speakers as Spain, and about 45 million people in the United States speak Spanish at home (US Census Bureau, 2024). Equatorial Guinea is the only Spanish-speaking country in Africa. Brazil, the giant in the middle, speaks Portuguese: see the next stop."});
@@ -165,10 +163,8 @@ if(T("food")&&!T("food")._polB){T("food")._polB=1;
   s.body="Potatoes were first farmed near Lake Titicaca, high in the Andes, about 8,000 years ago: move along the chart to climb there from the coast. The Incas freeze-dried them into chuño, which keeps for years."});
  set("food","The Spice Islands",s=>{s.gfRuler={a:[129.9,-4.5],b:[12.34,45.44]};
   s.body="The Maluku Islands, the “Spice Islands”, were the only source of cloves, and the tiny Banda Islands of nutmeg. Drag the ruler: the Bandas are about 12,500 km from Venice, and spices passed through many traders’ hands on the way, growing dearer each time."});
- set("food","One banana for the world",s=>{s.on=["connections"];
-  s.more="Until the 1950s the world ate a different banana, the Gros Michel, until a fungus called Panama disease wiped it out on the plantations. A new strain of the same disease now threatens the Cavendish. India grows the most bananas but eats nearly all of them; Ecuador sells the most abroad, in refrigerated ships along shipping lanes like those on the map."});
- set("food","The food giants",s=>{s.ghosts=[{code:"nl",at:[-98,39],col:"#e8590c",label:"Netherlands, true size"}];
-  s.body="The United States and Brazil export food on a giant scale. The Netherlands keeps up with high-tech greenhouses and by trading food through Rotterdam, Europe’s biggest port. The orange shape in the US is the Netherlands at its true size: drag it to compare."});
+ set("food","The food giants",s=>{s.ghosts=[{code:"nl",at:[-52,-12],col:"#e8590c",label:"Netherlands, true size"}];
+  s.body="The United States and Brazil export food on a giant scale. The Netherlands keeps up with high-tech greenhouses and by trading food through Rotterdam, Europe’s biggest port. The orange shape on Brazil is the Netherlands at its true size: Brazil and the US are each over 200 times bigger."});
 }
 /* ───────── Landmarks ───────── */
 if(T("landmarks")&&!T("landmarks")._polB){T("landmarks")._polB=1;

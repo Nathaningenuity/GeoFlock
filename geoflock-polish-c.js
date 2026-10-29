@@ -25,10 +25,7 @@ const allowMode=(id,mode)=>{const t=T(id);if(!t)return;t.stopModes=true;t.alsoOn
 const CARD={
  "govmap|Soldiers take over":"Pont de l'Amitié Chine-Niger - Niamey from the sky.jpg",
  "govmap|Capitals that moved":"Brasilia aerea estadionacional.jpg",
- "geopol|The strait that closed":"Tanker in the Strait of Hormuz.jpg",
- "geopol|The first island chain":"Taiwan's east coast.jpg",
  "geopol|Cables on the seabed":"Line3174 - Shipping Containers at the terminal at Port Elizabeth, New Jersey - NOAA.jpg",
- "borders|Africa carved up in Berlin":"Strait of Gibraltar perspective.jpg",
  "regions|Not quite countries":"Rock-of-Gibraltar-2011.jpg",
  "regions|America’s islands":"Flamenco Beach, Culebra Island, Puerto Rico.jpg",
  "regions|Denmark’s far north":"Tasiilaq, Greenland 02.jpg",
@@ -43,21 +40,13 @@ const CARD={
  "regions|The Kurdistan Region":"Erbil Citadel.jpg",
  "regions|Palestine":"Hisham Palace in Jericho2.jpg",
  "regions|Arctic oddities":"Longyearbyen-spisshus-2022.jpg",
- "gdp|Two giants":"Wall Street - New York Stock Exchange.jpg",
- "gdp|Flip the map: money per person":"Tokyo Shibuya Scramble Crossing 2021-04-27.jpg",
- "animals|Snow leopards":"Panthera uncia - Zoo Karlsruhe.jpg",
- "environment|Forests lost and found":"Ergaki, Siberian pine forest, Spruce forest, Taiga wilderness, Sayan Mountains, Siberia, Russia.jpg",
- "environment|A wall of trees":"Dori BurkinaFaso.png",
- "environment|If all the ice melted":"KinderdijkMolens02.jpg"};
+ "animals|Snow leopards":"Panthera uncia - Zoo Karlsruhe.jpg",};
 const CAP={
  "govmap|Soldiers take over":"Niamey, Niger’s capital: soldiers seized power here in July 2023",
  "geopol|Cables on the seabed":"Ships and containers ride on top; the internet’s cables lie on the seabed below",
- "borders|Africa carved up in Berlin":"The Strait of Gibraltar: Africa is only 14 km from Europe",
  "regions|Britain’s scattered pieces":"Gibraltar, a British Overseas Territory at the tip of Spain",
  "regions|Western Sahara":"The road to the port of Laayoune",
  "regions|Palestine":"Hisham’s Palace, an 8th-century ruin at Jericho",
- "environment|A wall of trees":"Bare, worn-out land near Dori, Burkina Faso: the kind of land the project aims to bring back",
- "environment|If all the ice melted":"Kinderdijk: much of the Netherlands already lies below sea level, behind dykes",
  "animals|Snow leopards":"A snow leopard in a zoo; in the wild they are very hard to see"};
 const PIN={
  "UN headquarters, New York":"Lower Manhattan from Jersey City November 2016 002.jpg",
@@ -127,8 +116,8 @@ if(T("govmap")&&!T("govmap")._polC){T("govmap")._polC=1;
   ph([-82.38,23.12],"Cuba: one party since 1965"),ph([-21.1,64.25],"Iceland’s parliament first met here in 930"),ph([-5.28,6.82],"Yamoussoukro’s giant basilica")]});
  set("govmap","One king, fifteen countries",s=>{s.gfSun={utc:0,day:355};
   s.body="Canada, Australia, New Zealand and Jamaica are fully independent, yet share Britain’s monarch. His 15 realms are spread so widely that the sun never sets on all of them at once: move the clock and some realm is always in daylight.";});
- set("govmap","Capitals that moved",s=>{s.gfRuler={a:[-43.2,-22.9],b:[-47.9,-15.8]};
-  s.body="Countries sometimes build a new capital in the middle of the country, to unite it and spread out development. The ruler measures how far inland Brazil moved its capital from Rio: about 930 km. Nigeria, Kazakhstan and Myanmar did the same."});
+ set("govmap","Capitals that moved",s=>{s.gfRuler={a:[76.9,43.24],b:[71.45,51.17]};
+  s.body="Countries sometimes build a new capital in the middle of the country, to unite it and spread out development. Brazil, Nigeria, Kazakhstan and Myanmar all did it. The ruler measures how far Kazakhstan moved its capital, from Almaty in the far south-east to Astana: about 970 km."});
 }
 /* ───────── International relations (Politics map) ───────── */
 if(T("politics")&&!T("politics")._polC){T("politics")._polC=1;
@@ -144,7 +133,7 @@ if(T("geopol")&&!T("geopol")._polC){T("geopol")._polC=1;
  set("geopol","The open plain",s=>{s.xsec={title:"The North European Plain, Paris to Moscow",pts:[[2.35,48.86,"Paris"],[4.35,50.85,"Brussels"],[9.73,52.37],[13.4,52.52,"Berlin"],[17,52.4],[21.01,52.23,"Warsaw"],[24.5,53.2],[27.56,53.9,"Minsk"],[32.05,54.78,"Smolensk"],[35,55.3],[37.62,55.75,"Moscow"]],mark:300,
   note:"The dashed line marks 300 m. From Paris to Moscow the land hardly rises: no mountain range stands in an army’s way."};
   s.body="The North European Plain has no mountains or seas to stop an army: move along the chart from Paris to Moscow and the land stays low all the way. Napoleon marched across it in 1812 and Germany in 1941; Russian armies have used it the other way."});
- set("geopol","Russia and warm water",s=>{s.on=["currents"];
+ set("geopol","Russia and warm water",s=>{s.on=["currents"];s.view=[-50,40,140,82];s.globe=[40,62,1.3];s.spin=0;
   s.body="Much of Russia’s coast freezes in winter. Its warmer ports sit on seas whose exits other countries control. The one big exception is Murmansk: follow the warm current on the map, the Gulf Stream’s last reach, round Norway to its ice-free harbour."});
  set("geopol","Chokepoints",s=>{s.on=["connections"]});
  set("geopol","The strait that closed",s=>{s.on=["connections"]});
@@ -161,7 +150,7 @@ if(T("geopol")&&!T("geopol")._polC){T("geopol")._polC=1;
 if(T("borders")&&!T("borders")._polC){T("borders")._polC=1;
  set("borders","Strange borders",s=>{s.phPins=[ph([-95,49.2],"The US–Canada border cut through forest"),ph([74.57,31.6],"The Wagah border ceremony"),
   ph([-117.1,32.54],"Tijuana: the US–Mexico border wall"),ph([33.32,35.34],"Kyrenia, Northern Cyprus"),ph([28.2,-29.6],"Lesotho, inside South Africa"),ph([0.5,42.7],"Pyrenees: a mountain border")]});
- set("borders","The longest borders",s=>{s.gfRuler={a:[-123.3,49],b:[-95.15,49]};
+ set("borders","The longest borders",s=>{s.view=[-180,22,-40,76];s.globe=[-100,52,1.5];s.spin=0;s.gfRuler={a:[-123.3,49],b:[-95.15,49]};
   s.body="Canada and the US share about 8,900 km of border, counting Alaska. The ruler measures its straightest part, along the 49th parallel: about 2,000 km without a bend. The longest unbroken land border is Russia and Kazakhstan’s, about 7,600 km."});
  set("borders","Rivers, mountains and rulers",s=>{s.gfRuler={a:[25,22],b:[36.88,22]};
   s.body="Old borders often follow nature: the Pyrenees between Spain and France, the Rio Grande between the US and Mexico. Straight lines were usually drawn by distant powers: the ruler follows the Egypt–Sudan border, about 1,200 km along the 22nd parallel."});
@@ -182,31 +171,31 @@ if(T("borders")&&!T("borders")._polC){T("borders")._polC=1;
 }
 /* ───────── Special regions (relief) ───────── */
 if(T("regions")&&!T("regions")._polC){T("regions")._polC=1;
- set("regions","Denmark’s far north",s=>{s.ghosts=[{code:"dk",at:[-42,72],col:"#8a63cf",label:"Denmark, true size"}];
+ set("regions","Denmark’s far north",s=>{s.view=[-125,52,0,84];s.globe=[-35,70,1.6];s.ghosts=[{code:"dk",at:[-38,70],col:"#8a63cf",label:"Denmark, true size"}];
   s.phPins=[ph([-6.95,62.1],"Faroe Islands: Saksun")];
   s.body="Greenland and the Faroe Islands belong to the Kingdom of Denmark but govern most of their own affairs, with their own parliaments and flags. Drag Denmark around Greenland: Greenland is about 50 times bigger, with about 57,000 people."});
  set("regions","France across the oceans",s=>{s.phPins=[ph([-151.74,-16.5],"Bora Bora, French Polynesia")]});
- set("regions","Britain’s scattered pieces",s=>{s.phPins=[ph([-64.78,32.3],"Bermuda"),ph([-57.85,-51.7],"Falklands: Stanley"),ph([-2.02,49.2],"Jersey: Mont Orgueil")]});
+ set("regions","Britain’s scattered pieces",s=>{s.view=[-95,8,10,60];s.globe=[-40,35,1.4];s.phPins=[ph([-64.78,32.3],"Bermuda"),ph([-2.02,49.2],"Jersey: Mont Orgueil")]});
  set("regions","The Dutch Caribbean",s=>{s.phPins=[ph([-70.03,12.52],"Aruba: Oranjestad")]});
  set("regions","Hong Kong and Macau",s=>{s.phPins=[ph([113.54,22.2],"Macau: Ruins of St Paul’s")]});
  set("regions","Breakaway regions of Europe",s=>{s.phPins=[ph([33.32,35.34],"Kyrenia, Northern Cyprus"),ph([41.02,43.0],"Sukhumi, Abkhazia")]});
- set("regions","Western Sahara",s=>{s.ghosts=[{code:"gb",at:[-12.5,24.5],col:"#8a63cf",label:"United Kingdom, true size"}];
+ set("regions","Western Sahara",s=>{s.view=[-30,19,-2,30];s.ghosts=[{code:"gb",at:[-12.5,24.5],col:"#8a63cf",label:"United Kingdom, true size"}];
   s.body="Western Sahara is mostly controlled by Morocco and claimed by the Sahrawi Arab Democratic Republic, and the UN lists it as a non-self-governing territory. Drag the UK over it: at about 266,000 km², the territory is a little bigger."});
  set("regions","Arctic oddities",s=>{s.gfSun={utc:11,day:355};s.phPins=[ph([19.94,60.1],"Åland: Mariehamn")];
   s.body="Svalbard is an Arctic archipelago under Norwegian sovereignty, governed by the 1920 Svalbard Treaty. It is so far north that the sun does not rise from late October to mid-February: move the date and watch the polar night end. Åland, further south, is an autonomous, demilitarised region of Finland."});
 }
 /* ───────── GDP (GDP map) ───────── */
 if(T("gdp")&&!T("gdp")._polC){T("gdp")._polC=1;
- set("gdp","Flip the map: money per person",s=>dropPh(s,["Tokyo’s Shibuya crossing","India: Taj Mahal"]));
+ set("gdp","Flip the map: money per person",s=>dropPh(s,["India: Taj Mahal"]));
  dropOff("gdp",["India and the UK","China’s rise"]);
 }
 /* ───────── Transport and trade (relief) ───────── */
 if(T("transport")&&!T("transport")._polC){T("transport")._polC=1;
  set("transport","The Suez Canal blocked",s=>{if(!s.on)s.on=["connections"]});
  set("transport","The long way round",s=>{if(!s.on)s.on=["connections"]});
- set("transport","The Trans-Siberian",s=>{s.on=["timezones"];
+ set("transport","The Trans-Siberian",s=>{s.on=["timezones"];s.view=[-35,30,140,72];s.spin=0;
   s.body="The journey takes about a week and passes along the shore of Lake Baikal. The time-zone bands on the map show why clocks are a puzzle: Moscow and Vladivostok are seven hours apart, and the line crosses eight time zones."});
- set("transport","The railway to the sky",s=>{s.xsec={title:"The Qinghai–Tibet railway, Xining to Lhasa",pts:[[101.78,36.62,"Xining"],[100,37.3],[97.4,37.4],[94.9,36.4,"Golmud"],[94.05,35.6],[93.0,35.0],[92.5,34.2],[91.6,32.9,"Tanggula"],[91.9,31.5],[91.1,30.3],[91.13,29.65,"Lhasa"]],mark:4000,
+ set("transport","The railway to the sky",s=>{s.view=[74,26,106,40];s.spin=0;s.xsec={title:"The Qinghai–Tibet railway, Xining to Lhasa",pts:[[101.78,36.62,"Xining"],[100,37.3],[97.4,37.4],[94.9,36.4,"Golmud"],[94.05,35.6],[93.0,35.0],[92.5,34.2],[91.6,32.9,"Tanggula"],[91.9,31.5],[91.1,30.3],[91.13,29.65,"Lhasa"]],mark:4000,
   note:"The dashed line marks 4,000 m. Heights are smoothed and the line follows the railway only roughly: the real pass is 5,072 m."};
   s.body="The Qinghai–Tibet railway opened in 2006. Move along the chart: after Golmud the line climbs onto the plateau and stays above 4,000 m for about 960 km, so the carriages pump in extra oxygen."});
  set("transport","North Sea to Black Sea",s=>{s.on=["rivers"]});
