@@ -310,7 +310,7 @@ function labelSet(feats,V,p,gv,LM){DBG.label++;const k=gv.ls?gv.ls():1,placed=[]
   for(const dy of T>=2?[0,-fs*1.15,fs*1.15]:[0]){const bx=[q[0]-w/2-2,q[1]+dy-fs*.62,q[0]+w/2+2,q[1]+dy+fs*.62];if(placed.some(o=>!(bx[2]<o[0]||bx[0]>o[2]||bx[3]<o[1]||bx[1]>o[3])))continue;placed.push(bx);
    out.push({nm,lon,lat,font:c.font,people,dy});break}});out.k=k;return out}
 function drawLabels(ctx,p,set,alpha,skip){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineWidth=3;ctx.globalAlpha=alpha;
- set.forEach(o=>{if(skip&&skip.has(o.nm))return;const q=p([o.lon,o.lat]);if(!q||!isFinite(q[0]))return;ctx.font=o.font;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.strokeText(o.nm,q[0],q[1]+o.dy);ctx.fillStyle=o.people?"#6b5a45":"#2a2118";ctx.fillText(o.nm,q[0],q[1]+o.dy)});ctx.restore()}
+ set.forEach(o=>{if(skip&&skip.has(o.nm))return;const q=p([o.lon,o.lat]);if(!q||!isFinite(q[0]))return;ctx.font=o.font;ctx.strokeStyle="rgba(255,255,255,.85)";const nm=String(o.nm).replace(/\s*\((?:c\.\s*)?\d{1,4}(?:\s*(?:BC|AD))?\s*[–-]\s*(?:\d{1,4}(?:\s*(?:BC|AD))?)?\)\s*$/,"");ctx.strokeText(nm,q[0],q[1]+o.dy);ctx.fillStyle=o.people?"#6b5a45":"#2a2118";ctx.fillText(nm,q[0],q[1]+o.dy)});ctx.restore()}
 function labelsFor(feats,V,p,gv,LM,zooming){const key=[feats._id,V.key,LM,fxKey()].join("#");let o=LBL.get(feats._id+"#"+LM+"#"+fxKey());
  if(o&&(o.key===key||zooming&&V.flat&&Math.abs(o.set.k/(gv.ls?gv.ls():1)-1)<.12))return o.set;const set=labelSet(feats,V,p,gv,LM);if(LBL.size>6)LBL.clear();LBL.set(feats._id+"#"+LM+"#"+fxKey(),{key,set});return set}
 /* drawing on the globe and the flat map */
