@@ -27,9 +27,16 @@ def main():
     idx = json.load(open(os.path.join(ROOT, "drillimg", "index.json"), encoding="utf-8"))
     src = json.load(open(os.path.join(ROOT, "tools", "currency_sources.json"), encoding="utf-8"))
     bad, exc, ok, checked = [], {}, 0, {}
+    nopic = {cc: e for k, e in src.items() if not k.startswith("_") and not e.get("file") for cc in e["countries"]}
     for cc in sorted(F):
         v = F[cc]
         errs = []
+        if cc in nopic and nopic[cc].get("exception"):
+            exc.setdefault("NO PICTURE: " + nopic[cc]["exception"], []).append(cc)
+            if (idx["by"].get(cc) or {}).get("cur"):
+                errs.append("listed as having no free picture, but an image is registered")
+            bad += [(cc, e) for e in errs]
+            continue
         if not re.fullmatch(r"[A-Z]{3}", v.get("iso") or ""):
             errs.append("label: no ISO 4217 code")
         if not v.get("cur") or not v.get("sym"):
@@ -85,12 +92,15 @@ def main():
                 errs.append("no Commons page")
             if C.get("kind") not in ("note", "coin"):
                 errs.append("kind is not note or coin")
-            if cc in EURO and C.get("kind") != "coin":
-                errs.append("euro country without its national euro coin")
-            if cc not in EURO and C.get("kind") == "coin":
-                errs.append("a coin, but coins are only for euro national sides")
             if C.get("exception"):
+                # a documented departure (an older note, or a coin where no free note exists): reported apart,
+                # the media rules below are waived but every technical and licence check above still applies
                 exc.setdefault(C["exception"], []).append(cc)
+            else:
+                if cc in EURO and C.get("kind") != "coin":
+                    errs.append("euro country without its national euro coin")
+                if cc not in EURO and C.get("kind") == "coin":
+                    errs.append("a coin, but coins are only for euro national sides")
         if errs:
             bad += [(cc, e) for e in errs]
         else:

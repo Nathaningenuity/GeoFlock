@@ -20,7 +20,7 @@ const only=(k,val)=>{const L=shared(k)[val];return!!L&&L.length===1};
 const DRILLS=[
  {id:"cur",name:"Currency",icon:"💰",ex:"Japan → yen",both:true,def:"fwd",
   fwd:{ask:c=>"What is the currency of "+NAME(c)+"?",ans:c=>curShort(F(c)),alts:c=>curAlts(F(c)),hint:c=>gfCurLabel(F(c)),key:c=>curShort(F(c))},
-  rev:{ask:c=>"Which country uses the "+curShort(F(c))+"?",sub:c=>F(c).sym,ok:c=>only(v=>curShort(v),curShort(F(c)))}},
+  rev:{ask:c=>"Which country uses the "+curShort(F(c))+"?",sub:c=>window.gfDrillMedia?"":F(c).sym,ok:c=>only(v=>curShort(v),curShort(F(c)))}},
  {id:"lang",name:"Language",icon:"🗣️",ex:"Brazil → Portuguese",both:true,def:"fwd",
   fwd:{ask:c=>"Name an official language of "+NAME(c),ans:c=>F(c).lang[0],alts:c=>F(c).lang,all:c=>F(c).lang,key:c=>F(c).lang[0]},
   rev:{ask:c=>"Which country has "+F(c).lang[0]+" as an official language?",ok:c=>only(v=>v.lang,F(c).lang[0])}},

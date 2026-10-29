@@ -8,10 +8,11 @@ tools/currency_sources.json is the single source of truth. Each entry is one pic
               "rotate": 90 | -90 | 180 (optional, degrees counter-clockwise, applied after trimming),
               "crop": [left, top, right, bottom] (optional, fractions of the source, applied first),
               "by": "...", "lic": "...", "page": "https://commons.wikimedia.org/wiki/File:...",
-              "exception": "why this one departs from the spec" (optional)}
+              "exception": "why this one departs from the spec" (optional; an entry with an exception and no
+                            "file" means no freely licensed picture exists, and the card keeps its drawn note)}
 
 For each entry the script
-  1. downloads a 1280 px thumbnail (a standard Wikimedia size) from upload.wikimedia.org (cached in ~/.cache/geoflock-cur, gently: one
+  1. downloads a 960 px thumbnail (a standard Wikimedia size; the original when smaller) from thumb.wikimedia.org (cached in ~/.cache/geoflock-cur, gently: one
      request every 5 s, exponential back-off on HTTP 429),
   2. trims scanner borders and plain background,
   3. turns a portrait note to landscape,
@@ -38,14 +39,14 @@ COIN_H = 0.82
 _last = [0.0]
 
 
-def commons_thumb(title, width=1280):
-    """upload.wikimedia.org thumbnail URL for a Commons file title"""
+def commons_thumb(title, width=960):
+    """thumb.wikimedia.org thumbnail URL for a Commons file title"""
     name = title.replace(" ", "_")
     h = hashlib.md5(name.encode("utf-8")).hexdigest()
     q = urllib.parse.quote(name)
     ext = name.rsplit(".", 1)[-1].lower()
     suffix = ".png" if ext in ("svg", "tif", "tiff") else ""
-    return f"https://upload.wikimedia.org/wikipedia/commons/thumb/{h[0]}/{h[:2]}/{q}/{width}px-{q}{suffix}"
+    return f"https://thumb.wikimedia.org/wikipedia/commons/thumb/{h[0]}/{h[:2]}/{q}/{width}px-{q}{suffix}"
 
 
 def commons_orig(title):
@@ -88,7 +89,7 @@ def fetch(url):
 
 
 def source_image(e):
-    for url in (commons_thumb(e["file"], e.get("width", 1280)), commons_orig(e["file"])):
+    for url in (commons_thumb(e["file"], e.get("width", 960)), commons_orig(e["file"])):
         data = fetch(url)
         if data:
             im = Image.open(io.BytesIO(data))
@@ -97,28 +98,44 @@ def source_image(e):
     raise RuntimeError("no image for " + e["file"])
 
 
-def _bg_colour(im):
-    """the colour of the outermost ring of pixels (median per channel)"""
+def _ring(im):
     w, h = im.size
     px = []
     for x in range(0, w, max(1, w // 200)):
         px += [im.getpixel((x, 0)), im.getpixel((x, h - 1))]
     for y in range(0, h, max(1, h // 200)):
         px += [im.getpixel((0, y)), im.getpixel((w - 1, y))]
+    return px
+
+
+def _bg_colour(px):
+    """the median colour of the outermost ring of pixels"""
     return tuple(sorted(c[i] for c in px)[len(px) // 2] for i in range(3))
 
 
+def _plain(px, bg, tol):
+    """is the ring (mostly) one plain colour, i.e. background and not part of the note?"""
+    near = sum(1 for c in px if max(abs(c[i] - bg[i]) for i in range(3)) <= tol)
+    return near >= 0.8 * len(px)
+
+
 def trim(im, tol=34, passes=3):
-    """cut away borders and plain background: rows and columns that are all (near) the edge colour or transparent"""
+    """cut away borders and plain background: rows and columns that are all (near) the edge colour or transparent.
+    Stops as soon as the edge is no longer one plain colour, so the note itself is never cut into."""
     im = im.convert("RGBA")
     for _ in range(passes):
         rgb = im.convert("RGB")
-        bg = Image.new("RGB", im.size, _bg_colour(rgb))
+        ring = _ring(rgb)
+        bgc = _bg_colour(ring)
+        a = im.getchannel("A")
+        if a.getextrema()[0] > 24 and not _plain(ring, bgc, tol):
+            break
+        bg = Image.new("RGB", im.size, bgc)
         diff = ImageChops.difference(rgb, bg).convert("L").point(lambda v: 255 if v > tol else 0)
-        alpha = im.getchannel("A").point(lambda v: 255 if v > 24 else 0)
+        alpha = a.point(lambda v: 255 if v > 24 else 0)
         mask = ImageChops.multiply(diff, alpha)
         # ignore specks, dust and jpeg noise
-        mask = mask.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5))
+        mask = mask.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3))
         box = mask.getbbox()
         if not box or box == (0, 0) + im.size:
             break
@@ -133,7 +150,8 @@ def round_cutout(im):
     w, h = im.size
     s = 4
     m = Image.new("L", (w * s, h * s), 0)
-    ImageDraw.Draw(m).ellipse((0, 0, w * s - 1, h * s - 1), fill=255)
+    i = round(0.015 * w * s)  # a hair inside the rim, so no background survives at the edge
+    ImageDraw.Draw(m).ellipse((i, i, w * s - 1 - i, h * s - 1 - i), fill=255)
     m = m.resize((w, h), Image.LANCZOS)
     im = im.convert("RGBA")
     im.putalpha(ImageChops.multiply(im.getchannel("A"), m))
@@ -171,6 +189,11 @@ def main(keys):
     os.makedirs(OUT, exist_ok=True)
     for key, e in src.items():
         if key.startswith("_") or (keys and key not in keys):
+            continue
+        if not e.get("file"):  # no freely licensed picture at all: a documented exception, the card keeps its drawn note
+            for cc in e["countries"]:
+                idx["by"].get(cc, {}).pop("cur", None)
+            print(f"{key:8} (no picture: {e.get('exception')})")
             continue
         rel = f"cur/{key}.webp"
         print(f"{key:8} {e['file']}")

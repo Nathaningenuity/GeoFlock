@@ -28,11 +28,11 @@ function langOne(name){const L=window.gfLangId&&gfLangId.LANGS;if(!L||!name)retu
  const hit=L.find(x=>x[1].toLowerCase()===n)||L.find(x=>n.startsWith(x[1].toLowerCase())||x[1].toLowerCase().startsWith(n));return hit?{src:"lang/"+hit[0]+".webp",name:hit[1]}:null}
 /* the clue for "Which country uses the …?": one plain neutral note with the currency's sign and nothing else
    (no code, no name, no colour per currency: a real banknote, or the ISO code, would name the country) */
-function note(v){return'<div class="dm-note"><b>'+esc(v.sym||"¤")+'</b></div>'}
+function note(v){return'<div class="dm-note"><span class="dm-sym">'+esc(v.sym||"¤")+'</span></div>'}
 /* the currency card: the prepared image (drillimg/cur/…) in the neutral tray, ⓘ with its credit on every card */
 const curLabel=v=>typeof gfCurLabel==="function"?gfCurLabel(v):[v.cur,v.iso,v.sym].filter(Boolean).join(" · ");
 function curHtml(v,c,k,clue){if(clue)return'<figure class="dm dm-cur dm-clue '+k+'" aria-label="A banknote">'+note(v)+'</figure>';
- const P=photo("cur",c);if(!P)return'<figure class="dm dm-cur '+k+'">'+note(v)+'</figure>';const C=P.C||{};
+ const P=photo("cur",c);if(!P)return'<figure class="dm dm-cur '+k+'" title="'+esc(curLabel(v)+"\nNo freely licensed picture of this currency is available, so a plain drawn note stands in.")+'">'+note(v)+'<span class="dm-cr" aria-hidden="true">ⓘ</span></figure>';const C=P.C||{};
  const tip=[curLabel(v),C.what,C.shared,"Image: "+([P.by,P.lic].filter(Boolean).join(", ")||"Wikimedia Commons")].filter(Boolean).join("\n");
  return'<figure class="dm dm-cur dm-cimg '+k+'" title="'+esc(tip)+'"><img src="'+esc(P.src)+'" alt="'+esc(C.what||v.cur)+'" loading="lazy"><span class="dm-cr" aria-hidden="true">ⓘ</span></figure>'}
 function html(id,c,cls,opt){const v=F(c);if(!v)return"";const k=cls||"",clue=!!(opt&&opt.clue),noCap=!!(opt&&opt.noCap);if(id==="cur")return curHtml(v,c,k,clue);const P=SUBJ[id]?photo(id,c):null;
@@ -63,7 +63,7 @@ const st=document.createElement("style");st.textContent=`
 .dm-cur .dm-cr{ opacity:.7; } .dm-cur:hover .dm-cr{ opacity:1; }
 .dm-note{ width:72%; height:72%; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#4f5b69;
  background:#dfe4ea; box-shadow:inset 0 0 0 5px #dfe4ea, inset 0 0 0 6px rgb(79 91 105 / .35), 0 2px 6px rgb(0 0 0 / .15); }
-.dm-note b{ font:800 2.6em/1 system-ui,sans-serif; }
+.dm-note .dm-sym{ font:800 clamp(22px,4.2vw,46px)/1 system-ui,sans-serif; letter-spacing:-.01em; }
 body.sky-night .dm.dm-cur{ background:#222b38; } body.sky-night .dm-note{ background:#323d4c; color:#c9d2dd; box-shadow:inset 0 0 0 5px #323d4c, inset 0 0 0 6px rgb(201 210 221 / .3), 0 2px 6px rgb(0 0 0 / .3); }
 body.sky-night .dm{ background:#253049; } body.sky-night .dm-flag{ background:#2a3550; }
 body.sky-night .dm-lang{ background:#f4f1ea; } body.sky-night .dm-lang figcaption{ color:#5d6574; }`;document.head.appendChild(st);
