@@ -6,7 +6,7 @@
                                            spring new years, hanami, Inti Raymi, Oktoberfest, Día de Muertos, harvests, fire and ice, New Year
    houses     "Houses of the world"       how climate and materials shape homes, on the climate map
    Steps reuse what the World Maps view draws: the religions map (mode "culture", sub "rel/…") on the festival stops about faiths,
-   the climate map, per-stop layers (on:[…]), the day-and-night gadget (gfSun), the ruler (gfRuler), the sea-level slider (gfSea) and height cross-sections in the card (xsec).
+   the climate map, per-stop layers (on:[…]), the day-and-night gadget (gfSun), the ruler (gfRuler), and height cross-sections in the card (xsec).
    A stop with its own map mode uses the shared per-stop switch (stopModes). Photos: Wikimedia Commons (author and licence in
    each library entry); new ones are listed in GF_CULT_PHOTOS. */
 window.GF_CULT_PHOTOS=[{"f": "Sepak Takraw Bangkok.jpg", "d": "photos/xc793823d7f539c47.webp", "by": "Robertpollai", "lic": "CC BY 3.0", "page": "https://commons.wikimedia.org/wiki/File:Sepak_Takraw_Bangkok.jpg", "tour": "sports", "card": "Sepak takraw", "pins": ["Sepak takraw"]},
@@ -307,12 +307,12 @@ S({title:"Steep roofs for rain and snow",view:[-110,20,145,62],globe:[60,45,1],c
  stat:"In Shirakawa-go, Japan, thatched roofs as steep as hands joined in prayer shed metres of snow",
  body:"Where it rains or snows a lot, roofs are steep so water and snow slide off. Thatch of reeds or straw, common in England, Ireland and Denmark, sheds rain and keeps a house warm; a good reed roof can last 50 years.",
  more:"Japan’s old farmhouses, minka, were built of timber, earth and paper with heavy thatched roofs. In the snowy mountain villages of Shirakawa-go and Gokayama the attics, under roofs called gasshō, ‘praying hands’, were used to raise silkworms, and villagers still rethatch them together."}),
-S({title:"The Dutch canal house",view:[0,50.7,7.5,53.7],globe:[4.9,52.3,6],card:"left",hi:["nl"],gfSea:1,gfSeaUI:true,
+S({title:"The Dutch canal house",view:[0,50.7,7.5,53.7],globe:[4.9,52.3,6],card:"left",hi:["nl"],
  pins:[[[4.89,52.37],"Amsterdam","point"],[[4.48,52.16],"Leiden","point"]],
  phPins:[ph([4.89,52.37],"Amsterdam’s canal houses")],
  stat:"Amsterdam’s canal houses are tall and narrow, with a hook at the top to hoist furniture through the windows",
  body:"Merchants of the 1600s and 1700s built along the canals, where every metre of waterfront was precious, so plots were narrow and deep. The staircases inside are too steep and narrow for furniture, so it goes up on a rope from the beam at the top.",
- more:"Amsterdam is built on soggy ground, much of it at or below sea level: the blue shows land that would flood without dykes if the sea rose 1 m (try the slider). So every old house stands on wooden piles; the Royal Palace on Dam Square rests on 13,659 of them."}),
+ more:"Many houses lean forward on purpose, so hoisted goods don’t bump the front. The soggy ground means every house stands on wooden piles; the Royal Palace on Dam Square rests on 13,659 of them."}),
 S({title:"Cities of towers",view:[85,-4,126,28],globe:[110,12,2.5],card:"left",on:["cities"],hi:["hk","sg"],
  pins:[[[114.17,22.3],"Hong Kong","point"],[[103.85,1.29],"Singapore","point"],[[114.19,22.33],"Kowloon Walled City, pulled down 1993–94","point"]],
  phPins:[ph([114.17,22.3],"Hong Kong at night"),ph([103.9,1.31],"Singapore’s shophouses")],

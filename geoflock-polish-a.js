@@ -52,7 +52,7 @@ if(T("space")&&!T("space")._polA){T("space")._polA=1;
  /* two of the tour's questions pointed at a stop ("The Great Barrier Reef") that is no longer in the tour */
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.space;if(Q){(Q.mid||[]).forEach(q=>{if(q.at==="The Great Barrier Reef")q.at="Shallow seas, deep seas"});
   (Q.recap||[]).forEach((q,i)=>{if(q.st==="The Great Barrier Reef")Q.recap[i]={q:"Why do satellites use Bolivia’s Salar de Uyuni to check their instruments?",o:["It is the coldest place on Earth","It is huge, very flat and bright","It never has clouds","It is on the equator"],a:1,why:"Its height varies by less than a metre across 100 km.",st:"A white mirror in the Andes"}})}}catch(e){}
- ins("space","Weather patterns from space",{title:"The line between day and night",view:W,globe:[20,15,1],gfSun:{utc:12,day:80},
+ ins("space","Weather patterns from space",{title:"The line between day and night",view:W,globe:[20,15,1],gfSun:{utc:15,day:80},
   stat:"At any moment, half the planet is in sunlight and half in night",
   body:"This satellite picture shows every place in daylight, but really the Sun lights only one side. The yellow line, the terminator, is where the Sun is rising or setting. Move the time and watch it sweep west.",
   more:"It moves about 1,670 km an hour at the equator, the speed the Earth turns. Change the date too: in June the whole Arctic stays lit all day, and in December it stays dark."});
@@ -63,20 +63,18 @@ if(T("night")&&!T("night")._polA){T("night")._polA=1;
   stat:"This picture is made of many nights. In reality only half the world is dark at once",
   body:"The shaded half is where it is night at the time shown. Move the clock: as night sweeps west, the lights of each continent come on in turn.",
   more:"At 20:00 in London, Europe and Africa are lighting up, Asia is deep in the night and the Americas are still in daylight."});
- set("night","Not every light is a city",s=>{s.on=["resources"];s.body="Where oil comes out of the ground, the gas that comes with it is often simply burned off. The flames are bright enough to see from space; the oil icons show the oil fields."});
  set("night","An island continent lit at the edges",s=>{s.gfRuler={a:[115.86,-31.95],b:[138.6,-34.93]};
   s.body="Australia’s lights form a broken ring around a dark middle, the Outback. The ruler measures from Perth to Adelaide, the next city of over a million: about 2,100 km."});
- set("night","The railway that lights Siberia",s=>{s.on=["connections"];});
  const t=T("night");if(!t.steps.some(s=>s.title==="Now explore"))t.steps.push({title:"Now explore",view:W,globe:[20,30,1],spin:0,
   stat:"Zoom in anywhere: every light is people, roads or industry",body:"Compare neighbours across a border, follow the lit lines of rivers, roads and railways, and look for the dark gaps where few people live."});
 }
 /* ───────── Rivers ───────── */
 if(T("rivers")&&!T("rivers")._polA){T("rivers")._polA=1;
- set("rivers","Rivers of the world",s=>{s.phPins=[ph([-50,-0.3],"Mouth: about a fifth of all river water reaching the sea​"),ph([32.53,15.6],"Khartoum: White and Blue Nile meet"),
+ set("rivers","Rivers of the world",s=>{s.phPins=[ph([-50,-0.3],"Mouth: about a fifth of all river water reaching the sea​"),ph([-59.9,-3.13],"Meeting of the Waters"),
   ph([111,30.82],"Three Gorges Dam"),ph([-112.1,36.1],"Grand Canyon"),ph([16.37,48.21],"Vienna"),ph([126,72.5],"Lena delta")]});
  ins("rivers","The longest river?",{title:"Downhill to the sea",view:[18,-5,46,33],globe:[32,12,1.8],riv:["Nile",["White Nile","#6fb3ea"]],
-  xsec:{title:"The Nile from Lake Victoria to the sea",pts:[[33.2,0.45,"Lake Victoria"],[32.3,2.3],[31.6,4.85,"Juba"],[30.7,7.6],[31.65,9.53],[32.5,12.3],[32.53,15.6,"Khartoum"],[33.98,17.7],[33.32,19.53],[30.48,19.17],[31.35,21.8],[32.9,24.09,"Aswan"],[31.24,30.04,"Cairo"],[31.0,31.4]],mark:500,
-   note:"Heights are smoothed. Most of the drop comes early, in Uganda and South Sudan; below Khartoum the river falls only a few hundred metres."},
+  xsec:{title:"The Nile from Lake Victoria to the sea",pts:[[33.2,0.45,"Lake Victoria"],[32.3,2.3],[31.6,4.85],[30.7,7.6],[31.65,9.53],[32.5,12.3],[32.53,15.6,"Khartoum"],[33.98,17.7],[33.98,18.0],[33.32,19.53],[31.85,18.55],[30.48,19.17],[30.4,19.6],[31.35,21.8],[31.6,22.35],[32.9,24.09,"Aswan"],[32.64,25.69],[32.73,26.16],[31.18,27.18],[30.75,28.1],[31.1,29.07],[31.24,30.04,"Cairo"],[31.0,31.4]],mark:380,
+   note:"The dashed line marks 380 m, the river’s height at Khartoum. Heights are smoothed, and the line follows the river only roughly."},
   pins:[[[32.4,18.5],"The six cataracts: rocky rapids","point"]],
   stat:"The Nile starts 1,134 m up, but north of Khartoum it falls only about 300 m in nearly 3,000 km",
   body:"Move along the chart. The river drops fast from Lake Victoria through the rapids of Uganda and South Sudan, then crawls across the desert. Its last big steps are six rocky rapids called cataracts.",
@@ -98,7 +96,7 @@ if(T("lakes")&&!T("lakes")._polA){T("lakes")._polA=1;
  set("lakes","Lakes in a crack",s=>{s.xsec={title:"Across the rift at Lake Tanganyika",pts:[[27.0,-5.9,"Congo basin"],[28.6,-5.9],[29.6,-6.0,"Lake Tanganyika"],[30.5,-6.0],[32.8,-5.0,"Tabora"]],mark:773,
   note:"The dashed line is the lake’s surface, 773 m up. Its floor, about 1,470 m deeper, is not shown: the chart stops at sea level."};
   s.body="It fills a crack in Africa’s crust, the Great Rift Valley, where the continent is slowly pulling apart. Move along the chart to cross the rift: the land drops between steep walls into the lake."});
- set("lakes","Deadly lakes",s=>{s.view=[1,-1,19,13];s.globe=[10.3,6.44,4];s.lk=[];s.pins=[[[10.3,6.44],"Lake Nyos","point"]];s.hi=["cm"];});
+ set("lakes","Deadly lakes",s=>{s.view=[1,-1,19,13];s.globe=[10.3,6.44,4];s.lk=[];s.pins=[[[10.3,6.44],"Lake Nyos","point"]];s.hi=["cm"];dropPh(s,["Lake Nyos, 1986"]);});
 }
 /* ───────── Seas ───────── */
 if(T("seas")&&!T("seas")._polA){T("seas")._polA=1;
@@ -115,7 +113,7 @@ if(T("islands")&&!T("islands")._polA){T("islands")._polA=1;
  set("islands","The biggest islands",s=>{s.ghosts=[{code:"gl",at:[134,-25],col:"#8a63cf",label:"Greenland, true size"}];delete s.drag;
   s.body="Australia is bigger still, but it counts as a continent: drag Greenland onto it and see that Australia is over three times larger. After Greenland come New Guinea, Borneo, Madagascar and Baffin Island."});
  set("islands","Three kinds of islands",s=>{s.gfSea=-120;s.gfSeaUI=true;s.view=W;
-  s.body="Continental islands, such as Great Britain and Sri Lanka, are pieces of a continent cut off by the sea. Lower the sea by 120 m, as in the last ice age, and they join their continent again. Volcanic islands like Hawaii and coral atolls like the Maldives stay islands."});
+  s.body="Continental islands, such as Great Britain and Sri Lanka, are pieces of a continent cut off by the sea. The map shows the sea 120 m lower, as in the last ice age: they join their continent again, while volcanic Hawaii and the coral Maldives stay islands. Slide the sea back to today to compare."});
  set("islands","An island in a lake on an island",s=>dropPh(s,["Samosir in Lake Toba"]));
  set("islands","The loneliest island town",s=>{s.gfRuler={a:[-12.31,-37.07],b:[-5.72,-15.95]};s.lines=(s.lines||[]).filter(l=>!(l.coords&&l.coords[0][0]===-12.31));
   s.body="It is the most remote inhabited island on Earth: the ruler measures about 2,400 km to St Helena, the nearest other town. There is no airport; a ship from South Africa takes about a week."});
@@ -137,9 +135,6 @@ if(T("climate")&&!T("climate")._polA){T("climate")._polA=1;
   stat:"The Earth is tilted, so for half the year the north leans towards the Sun",
   body:"In June the Sun stands overhead on the Tropic of Cancer (top dashed line): it is summer in the north, with long days, and winter in the south. Move the date to December and it swaps.",
   more:"The axis is tilted about 23.4°. Near the poles this means months of daylight in summer and months of night in winter; at the equator days stay about 12 hours long all year, so there is no real summer or winter."});
- set("climate","The driest place, and the Andes’ trick",s=>{s.xsec={title:"Across the Andes at the Atacama",pts:[[-70.4,-23.65,"Antofagasta"],[-69.3,-23.4],[-68.2,-22.9,"San Pedro"],[-67.2,-23.3],[-66.2,-23.9],[-65.3,-24.2,"Jujuy"],[-63.5,-24.0,"Chaco"]],mark:3000,
-  note:"Wet winds come from the east (right). They drop their rain on the Andes’ eastern slopes, and the air that crosses to the west is dry: a rain shadow. Heights are smoothed."};
-  s.body="In the north, winds blow from the east, so the Andes catch the rain and leave the west coast dry: move along the chart to cross them. Further south the winds come from the west, so southern Chile is soaked while Argentina is dry."});
 }
 }
 function run(){patch();photos()}
