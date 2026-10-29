@@ -2,8 +2,9 @@
    places and periods OpenHistoricalMap does not cover yet, all clipped to Natural Earth coastlines. Each polity has its
    own start and end date, so the year moves one year at a time from 3000 BC to today (the slider's scale is squeezed
    in early times), and the caption tells the story of the period rather than of one year.
-   The data is split by period (history/h2-*.json) and fetched when needed. Guided tours and the eras games keep the
-   older year-by-year maps (terra-atlas-history.js).
+   The data is split by period (history/h2-*.json) and fetched when needed. The guided history tours show this map too
+   (their stops name a year and an empire by the first map's keys, see "focus" below); only their stops before 3000 BC
+   (human origins) and the eras games keep the older year-by-year maps (terra-atlas-history.js).
    Playing: the year counts up one year at a time (faster in early times, when little changes); whenever the borders
    change, the map grows and shrinks into the new borders instead of jumping (see "transitions" below).
    Drawing: the map is drawn once into a picture a little larger than the view, and dragging only slides that picture. */
@@ -49,7 +50,8 @@ let curY=1914,pos=YEARS.indexOf(1914);
 function posOf(y){let lo=0,hi=N-1;while(lo<hi){const m=(lo+hi+1)>>1;if(YEARS[m]<=y)lo=m;else hi=m-1}return lo}
 const uOf=y=>{const i=posOf(y);return i>=N-1?N-1:i+(y-YEARS[i])/(YEARS[i+1]-YEARS[i])};
 const yOfU=u=>{u=Math.max(0,Math.min(N-1,u));const i=Math.floor(u);return i>=N-1?YMAX:Math.round(YEARS[i]+(u-i)*(YEARS[i+1]-YEARS[i]))};
-const useNew=()=>!!IDX&&!(typeof ps!=="undefined"&&ps);
+const tourOn=()=>typeof ps!=="undefined"&&!!ps;let tourOld=false,preTourY=null;
+const useNew=()=>!!IDX&&!(tourOn()&&tourOld);
 const yLabel=y=>y<=0?(1-y)+" BC":y<1000?"AD "+y:String(y);
 const yKey=y=>y<=0?"bc"+(1-y):String(y);
 const period=y=>PERIODS.find(p=>y>=p[0]&&y<p[1])||PERIODS[PERIODS.length-1];
@@ -63,7 +65,7 @@ function load(k){if(k<0||!IDX||k>=IDX.chunks.length||CH[k]||LOADING[k])return;LO
   P=P.map(poly=>poly.map(dens));P.forEach(poly=>{try{if(d3.geoArea({type:"Polygon",coordinates:poly})>2*Math.PI)poly.forEach(r=>r.reverse())}catch(e){}});
   f.geometry={type:"MultiPolygon",coordinates:P};f._b=d3.geoBounds(f);f.properties.imp=impOf(f.properties);out.push(f)});
  out.sort((a,b)=>(a.properties.o?1:0)-(b.properties.o?1:0)||b.properties.a-a.properties.a);
- CH[k]=out;delete LOADING[k];FC.clear();warm(out);if(useNew()&&histOn()&&chunkOf(curY)===k){histShown=-1;histSet(pos)}}).catch(()=>{delete LOADING[k]})}
+ CH[k]=out;delete LOADING[k];FC.clear();warm(out);if(useNew()&&histOn()&&chunkOf(curY)===k){histShown=-1;setYear(curY,false,tourOn())}}).catch(()=>{delete LOADING[k]})}
 function need(y){const k=chunkOf(y);load(k);load(k+1);if(k>0)load(k-1)}
 /* the polities alive in the shown year. The same set of polities is always the same array, so a change of borders
    can be told by the array alone. */
@@ -85,14 +87,27 @@ const IMP2=/\b(mitanni|arzawa|amurru|canaan|philistia|philistines|aram|aramean|a
 function impOf(p){const n=String(p.n||"");let tier=IMP3.test(n)?3:IMP2.test(n)?2:0;if(p.k===0)tier=Math.min(tier,1);/* peoples without a state */
  const a=+p.a||0;return{tier,score:tier*100+Math.log2(1+a)*9-(p.k===0?60:0)}}
 function labList(fr){const seen=new Set,L=[];(fr||frame()).slice().sort((a,b)=>b.properties.imp.score-a.properties.imp.score).forEach(f=>{const p=f.properties;if(!p.n||seen.has(p.n))return;const T=p.imp.tier;
- if(T<2&&p.a<(p.k===0?40:3))return;if(histFocus&&keyOf(p)!==histFocus)return;seen.add(p.n);L.push([keyOf(p),p.n,p.l[0],p.l[1],p.k===0?Math.min(p.a,60):p.a,0,f._b,p.k===0,T])});return L}
+ if(T<2&&p.a<(p.k===0?40:3))return;if(histFocus&&focusAny(fr||frame())&&!inFocus(p))return;seen.add(p.n);L.push([keyOf(p),p.n,p.l[0],p.l[1],p.k===0?Math.min(p.a,60):p.a,0,f._b,p.k===0,T])});return L}
 let KN={};/* a group with one member alive is named after that member (Denmark in 1000 is not yet "Denmark–Norway") */
 function powers(){const m=new Map,mem={};frame().forEach(f=>{const p=f.properties;if(p.k===0||!p.n)return;const k=keyOf(p);m.set(k,(m.get(k)||0)+p.a);(mem[k]=mem[k]||new Set).add(p.n)});KN={};for(const k in mem)if(k.startsWith("g:")&&mem[k].size===1)KN[k]=[...mem[k]][0];return[...m].sort((a,b)=>b[1]-a[1]).slice(0,12).map(x=>x[0])}
+/* ---------- focus: one polity (a coloured name in the key) or, in the guided tours, an old group key ----------
+   The tours name their highlighted empire with the first map's group keys ("brit", "mon", "chn"…). Most polities in
+   this map carry the same key (gk); a few are matched by name, and "new" means states that did not exist a dozen
+   years earlier. */
+const ALIAS={chn:/^(Great Ming|Ming|Qing|Northern Song|Southern Song|Song Empire|Han Empire|Western Han|Eastern Han|Tang|Sui|Yuan|China|Republic of China|People's Republic of China)$/,
+ ann:/^(Russia|Ukraine)$/,sum:/^(Ur|Uruk|Lagash|Kish|Umma|Akkad|city-states|Sumer)$/,alex:/^(Empire of Alexander|Macedon|Kingdom of Macedon|Macedonia)$/};
+const NOTNEW=/German|Austria|Italy|Itali|France|French Rep|Japan|Trieste|occup|Occup|zone|Zone|Allied|Soviet|Russia|Spain|Portugal|Antarctic/;
+let newSet=null;
+function newNames(y){if(newSet&&newSet.y===y)return newSet.s;const prev=frameAt(y-13);if(!prev){need(y-13);return null}const had=new Set(prev.map(f=>f.properties.n));newSet={y,s:had};return had}
+function tourMatch(f,p){if(p.k===0||!p.n)return false;if(f==="new"){if(NOTNEW.test(p.n))return false;const had=newNames(curY);return had?!had.has(p.n):p.s>curY-13&&p.s<=curY+.5}
+ if(ALIAS[f]&&ALIAS[f].test(p.n))return true;if(f==="mon"&&/Ming/.test(p.n))return false;return p.gk===f}
+function inFocus(p){const F=histFocus;if(!F)return true;if(F.startsWith("g:")||F.startsWith("n:"))return keyOf(p)===F;return tourMatch(F,p)}
+const FA=new Map;function focusAny(fr){const k=fr._id+"|"+histFocus+"|"+curY;if(FA.has(k))return FA.get(k);if(FA.size>50)FA.clear();const v=fr.some(f=>inFocus(f.properties));FA.set(k,v);return v}
 const W=(name,fn)=>{const old=window[name]||eval(name);const f=function(){return useNew()?fn.apply(this,arguments):old.apply(this,arguments)};f._old=old;try{eval(name+"=f")}catch(e){window[name]=f}};
 W("histFeatures",()=>frame());
 W("histYear",()=>yearObj());
 W("histLabelList",()=>labMode()==="off"?[]:labList());
-W("histFill",p=>{if(histFocus&&keyOf(p)!==histFocus)return p.k===0?"#f1ece2":"#e6e1d6";if(p.k===0||!p.c)return p.k===0?HIST_LAND:"hsl(200,28%,80%)";return p.c});
+W("histFill",p=>{if(histFocus&&focusAny(frame())&&!inFocus(p))return p.k===0?"#f1ece2":"#e6e1d6";if(p.k===0||!p.c)return p.k===0?HIST_LAND:"hsl(200,28%,80%)";return p.c});
 W("histDescribe",f=>{const p=f.properties;let s=p.n||"Unnamed";if(p.k===0)return s+" — peoples without a state";const G=p.gk&&HIST_DATA.groups[p.gk];if(G&&G[0]!==p.n&&!KN["g:"+p.gk]&&!/^(Russia|China|India|Persia|Germany|Italy|Japan|Egypt)$/.test(G[0]))s+=" — "+G[0];
  if(p.o){const a=Math.floor(p.s),b=p.e>=9999?null:Math.floor(p.e);s+=" ("+(b==null?"since "+yLabel(a):yLabel(a).replace(/^AD /,"")+"–"+yLabel(b).replace(/^AD /,""))+")"}return s});
 function eraHTML(){return PERIODS.map(P=>{let a=YEARS.findIndex(y=>y>=P[0]),b=YEARS.findIndex(y=>y>=P[1]);if(b<0)b=N-1;const on=curY>=P[0]&&curY<P[1];
@@ -135,11 +150,26 @@ function syncUI(light){const legend=document.getElementById("populationLegend");
  dockSync()}
 function storyBar(card){const bar=card&&card.querySelector(".hs-bar i");if(!bar)return;const P=period(curY);bar.style.transition="none";bar.style.width=histPlaying?(Math.max(0,Math.min(1,(curY-P[0])/(P[1]-P[0])))*100).toFixed(1)+"%":"0%"}
 /* show a year: the map moves to it (with a short transition when the borders change) */
-function setYear(y,light){curY=Math.max(YMIN,Math.min(YMAX,Math.round(y)));pos=posOf(curY);histIdx=pos;need(curY);const fr=frame();
- if(histFocus&&!fr.some(f=>keyOf(f.properties)===histFocus))histFocus=null;histHotI=null;
+function setYear(y,light,inTour){curY=Math.max(YMIN,Math.min(YMAX,Math.round(y)));pos=posOf(curY);histIdx=pos;need(curY);const fr=frame();
+ if(histFocus&&!tourOn()&&!focusAny(fr))histFocus=null;histHotI=null;
  if(!reqMap()){const now=performance.now();if(!light||fr!==svgFr&&now-svgT>300){svgFr=fr;svgT=now;histShown=-1;try{histRender()}catch(e){}}}syncUI(light)}
 let svgFr=null,svgT=0;
 W("histSet",i=>{i=Math.max(0,Math.min(N-1,i|0));setYear(YEARS[i])});
+/* in a guided tour, histSet gets an index into the first map's years: shown on this map at that exact year (stops
+   before 3000 BC, where this map has no data, keep the first map) */
+{const _hs=histSet,_old=_hs._old;const yk=k=>/^bc/.test(k)?1-(+k.slice(2)):+k;
+ histSet=function(i){if(!tourOn()||!IDX||!HIST_DATA)return _hs.apply(this,arguments);const n=HIST_DATA.years.length;i=Math.max(0,Math.min(n-1,i|0));const Y=HIST_DATA.years[i],y=Y?yk(Y.y):NaN;
+  if(preTourY==null)preTourY=curY;
+  if(!(y>=YMIN)){if(!tourOld){tourOld=true;LAY=null;TR=null}return _old.apply(this,arguments)}
+  if(tourOld){tourOld=false;LAY=null;TR=null}setYear(Math.min(YMAX,y),false,true);histIdx=i;try{if(ps&&ps.g&&ps.g!==amGlobe&&ps.g.request)ps.g.request()}catch(e){}}}
+/* a stop that replays a few years ends on its own highlighted empire again */
+try{const _ar=histAnimRun;histAnimRun=function(keys){const r=_ar.apply(this,arguments);try{const at=ps&&ps.i,S=ps&&psSteps()[at],f=S&&S.sub&&String(S.sub).split("/")[1];
+ if(f&&keys&&keys.length){const wait=Math.max(0,keys.length-2)*1050+1300+150;setTimeout(()=>{try{if(ps&&ps.i===at&&!histAnimT&&!histFocus&&IDX&&!tourOld){histFocus=f;LBL.clear();reqMap()}}catch(e){}},wait)}}catch(e){}return r}}catch(e){}
+/* the tours frame a stop on its highlighted empire */
+{const _fb=histFocusBox;histFocusBox=function(sub){try{if(!IDX||tourOld)return _fb.apply(this,arguments);const[yk0,f]=String(sub||"").split("/");if(!f)return null;const y=/^bc/.test(yk0)?1-(+yk0.slice(2)):+yk0;if(!(y>=YMIN))return _fb.apply(this,arguments);
+ const fr=frameAt(Math.min(YMAX,y));if(!fr)return _fb.apply(this,arguments);const keep=histFocus,cy=curY;histFocus=f;curY=Math.min(YMAX,y);const fs=fr.filter(x=>tourMatch(f,x.properties)&&x._b);histFocus=keep;curY=cy;if(!fs.length)return null;
+ let lo=1e9,hi=-1e9,la0=90,la1=-90;const c0=fs[0]._b[0][0];fs.forEach(x=>{let a=x._b[0][0],b=x._b[1][0];if(b<a)b+=360;while(a-c0>180){a-=360;b-=360}while(c0-a>180){a+=360;b+=360}lo=Math.min(lo,a);hi=Math.max(hi,b);la0=Math.min(la0,x._b[0][1]);la1=Math.max(la1,x._b[1][1])});
+ return{lo,hi,la0,la1,c:(lo+hi)/2}}catch(e){return _fb.apply(this,arguments)}}}
 /* ---------- playing ----------
    The year counts up one by one. Years per second (at 1×): fast in the early millennia, when maps change slowly, and
    slower towards today, when borders change nearly every year. */
@@ -176,7 +206,7 @@ document.addEventListener("click",e=>{if(!useNew())return;const b=e.target.close
 /* ================= drawing ================= */
 /* Shapes are projected once per east–west frame into Path2D at scale 1 (the flat map is only scaled and shifted), so a
    frame only fills ready-made shapes. A shape's outline leaves out the old cut along the 180° meridian. */
-const PC=new Map;function pcFor(dl){let c=PC.get(dl);if(!c){if(PC.size>3)PC.delete(PC.keys().next().value);c={unit:d3.geoRobinson().scale(1).translate([0,0]).rotate([dl,0]).precision(.0003),f:new WeakMap,s:new WeakMap};PC.set(dl,c)}return c}
+const PC=new Map;function pcFor(dl){let c=PC.get(dl);if(!c){if(PC.size>1)PC.delete(PC.keys().next().value);c={unit:d3.geoRobinson().scale(1).translate([0,0]).rotate([dl,0]).precision(.0003),f:new WeakMap,s:new WeakMap};PC.set(dl,c)}return c}
 let GP=d3.geoPath;try{if(d3.geoPath._gfOrig)GP=d3.geoPath._gfOrig}catch(e){}
 const gpath=(proj,ctx)=>GP===d3.geoPath?d3.geoPath(proj,ctx):GP(proj,ctx);
 function fillPath(f,dl){const C=pcFor(dl);let pa=C.f.get(f);if(!pa){pa=new Path2D();try{gpath(C.unit,pa)(f)}catch(e){}C.f.set(f,pa)}return pa}
@@ -259,9 +289,9 @@ function maskAt(G,e){const thr=e*(G.Tmax+2),d=G.md.data,T=G.T;for(let i=0,n=T.le
 const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 function startTransition(ctx,V,from,toFeats){const sp=typeof histStorySpeed!=="undefined"?histStorySpeed:1;
  const t0=performance.now(),B=layerFor(toFeats,V,from.R,null),t1=performance.now(),G=analyse(from,B,V);(window.GF_HIST2_TT=window.GF_HIST2_TT||[]).push([Math.round(t1-t0),Math.round(performance.now()-t1),G?G.nch:0]);if(window.GF_HIST2_TT.length>50)window.GF_HIST2_TT.shift();if(!G){if(LAY!==B)putCv(from.cv);LAY=B;TR=null;return}
- const dur=histPlaying?Math.max(260,Math.min(900,(420+G.Tmax*2.2)/Math.sqrt(sp))):window.HIST_DRAG?220:340;
+ const dur=histPlaying?Math.max(260,Math.min(900,(420+G.Tmax*2.2)/Math.sqrt(sp))):window.HIST_DRAG?220:tourOn()?Math.min(800,420+G.Tmax*2.2):340;
  if(!WORK)WORK=document.createElement("canvas");TR={A:from,B,G,t0:performance.now(),dur,work:WORK};from.busy=true}
-function endTransition(){if(!TR)return;TR.A.busy=false;if(TR.A.cv!==TR.B.cv)putCv(TR.A.cv);LAY=TR.B;TR=null}
+function endTransition(){if(!TR)return;TR.A.busy=false;if(TR.A.cv!==TR.B.cv)putCv(TR.A.cv);if(LAY&&LAY!==TR.A&&LAY!==TR.B&&LAY.cv!==TR.B.cv)putCv(LAY.cv);LAY=TR.B;TR=null}
 function drawTransition(ctx,V,alpha){const e=ease(Math.min(1,(performance.now()-TR.t0)/TR.dur)),A=TR.A,B=TR.B,G=TR.G;
  const[x,y]=layerXY(A,V,0),sx=Math.max(0,-x),sy=Math.max(0,-y),sw=Math.min(A.w-sx,V.cw-(x+sx)),sh=Math.min(A.h-sy,V.ch-(y+sy));if(sw<=0||sh<=0)return e;
  const wk=TR.work;if(wk.width!==sw||wk.height!==sh){wk.width=sw;wk.height=sh}const c=wk.getContext("2d");c.globalCompositeOperation="source-over";c.clearRect(0,0,sw,sh);c.drawImage(B.cv,sx,sy,sw,sh,0,0,sw,sh);
@@ -269,8 +299,8 @@ function drawTransition(ctx,V,alpha){const e=ease(Math.min(1,(performance.now()-
  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=alpha;ctx.drawImage(A.cv,sx,sy,sw,sh,x+sx,y+sy,sw,sh);ctx.drawImage(wk,x+sx,y+sy);ctx.restore();return e}
 
 /* ---------- names ---------- */
-const LBL=new Map;
-function labelSet(feats,V,p,gv,LM){DBG.label++;const k=gv.ls?gv.ls():1,placed=[],out=[],ctr=V.flat?null:V.ctr,c=document.createElement("canvas").getContext("2d");
+const LBL=new Map;let MC=null;
+function labelSet(feats,V,p,gv,LM){DBG.label++;const k=gv.ls?gv.ls():1,placed=[],out=[],ctr=V.flat?null:V.ctr,c=MC||(MC=document.createElement("canvas").getContext("2d"));
  labList(feats).forEach(([gid,nm,lon,lat,area,_a,b,people,T])=>{if(ctr&&d3.geoDistance([lon,lat],ctr)>1.35)return;const q=p([lon,lat]);if(!q||!isFinite(q[0]))return;
   const fs=(area>600?14:area>150?12.5:11)*k;c.font=(people?"italic 700 ":"800 ")+fs+"px 'Nunito Sans', system-ui, sans-serif";const w=c.measureText(nm).width;
   let sw=0;if(b){const my=(b[0][1]+b[1][1])/2,a0=p([b[0][0],my]),a1=p([b[1][0],my]);sw=a0&&a1?Math.abs(a1[0]-a0[0]):0}
@@ -322,8 +352,9 @@ function stepBy(d){const i=posOf(curY);setYear(d>0?YEARS[Math.min(N-1,i+1)]:YEAR
 document.addEventListener("keydown",e=>{if(!useNew()||!histOn())return;const r=e.target.closest&&e.target.closest(".hist-track.hist2 .hist-range");if(!r)return;
  const k=e.key;if(k==="ArrowLeft"||k==="ArrowDown"){stepBy(-1)}else if(k==="ArrowRight"||k==="ArrowUp"){stepBy(1)}else if(k==="Home")setYear(YMIN);else if(k==="End")setYear(YMAX);else return;e.preventDefault();e.stopPropagation();histStop()},true);
 /* when a tour hands the map back, show the new map at the year it was on */
-try{const _pe=psEnd;psEnd=function(){const y=curY;const r=_pe.apply(this,arguments);try{if(useNew()&&histOn())setYear(y)}catch(e){}return r}}catch(e){}
-let wasNew=null;setInterval(()=>{const n=useNew();if(n!==wasNew){wasNew=n;if(n){histIdx=pos;histFocus=null}histShown=-1;FC.clear();LAY=null;TR=null;LBL.clear();try{if(histOn()){const legend=document.getElementById("populationLegend");if(legend)legend.innerHTML=histLegendHTML();if(!reqMap())histRender();dockSync()}}catch(e){}}if(!n){const d=document.querySelector(".hist-dock");if(d)d.remove()}},500);
+try{const _pl=psLaunchTour;psLaunchTour=function(){if(!tourOn()&&IDX)preTourY=curY;return _pl.apply(this,arguments)}}catch(e){}
+try{const _pe=psEnd;psEnd=function(){const y=preTourY!=null?preTourY:curY;preTourY=null;const r=_pe.apply(this,arguments);tourOld=false;try{if(IDX&&histOn()){histFocus=null;LAY=null;TR=null;setYear(y)}}catch(e){}return r}}catch(e){}
+let wasNew=null;setInterval(()=>{const n=useNew();if(n!==wasNew){wasNew=n;if(n&&!tourOn()){histIdx=pos;histFocus=null}histShown=-1;FC.clear();LAY=null;TR=null;LBL.clear();try{if(histOn()){const legend=document.getElementById("populationLegend");if(legend)legend.innerHTML=histLegendHTML();if(!reqMap())histRender();dockSync()}}catch(e){}}if(!n){const d=document.querySelector(".hist-dock");if(d)d.remove()}},500);
 
 /* ---------- a lighter frame for the whole map while it is dragged (history map only) ----------
    1. The map's size is worked out once per frame instead of a dozen times: each time it read the page layout, and the
@@ -343,7 +374,7 @@ const h2Map=g=>{try{return g===amGlobe&&useNew()&&histOn()}catch(e){return false
 /* ================= the timeline on the map =================
    The year slider sits at the bottom of the map, in the middle, clear of the toolkit tray: narrower beside a folded
    tray, above an open one when there is no room beside it. On a phone it sits just under the map. */
-function dockHost(){try{if(useNew()&&histOn()&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobeOn()&&amGlobe.host&&amGlobe.host.isConnected&&appMode==="allmaps")return amGlobe.host}catch(e){}return null}
+function dockHost(){try{if(useNew()&&!tourOn()&&histOn()&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobeOn()&&amGlobe.host&&amGlobe.host.isConnected&&appMode==="allmaps")return amGlobe.host}catch(e){}return null}
 function dockSync(){const h=dockHost();let d=document.querySelector(".hist-dock");const legend=document.getElementById("populationLegend");
  if(!h){if(d)d.remove();if(legend)legend.classList.remove("hist-docked");document.querySelectorAll(".hd-over").forEach(x=>x.classList.remove("hd-over"));return}
  if(!d){d=document.createElement("div");d.className="hist-dock";d.innerHTML=`<div class="hd-year"></div>${barHTML()}`;["wheel","dblclick","touchstart","pointerdown","mousedown"].forEach(t=>d.addEventListener(t,e=>e.stopPropagation(),{passive:true}))}
@@ -363,10 +394,12 @@ function placeDock(d,h){const fs=document.body.classList.contains("gf-fs"),phone
     /* room beside it, with the slider still centred? */
     const half=(r.left+r.right)/2<mid?mid-r.right-8:r.left-8-mid,ww=Math.min(w,2*half);if(ww>=440){w=ww;continue}
     if(!fs){ok=false;break}bottom=hr.bottom-r.top+6;w=want;again=true;break}if(!ok||!again)break}
-  if(ok){d.style.width=Math.round(w)+"px";d.style.left=Math.round(mid-hr.left-w/2)+"px";d.style.bottom=Math.round(bottom)+"px";d.style.marginLeft="";h.style.setProperty("--hd-space",Math.round(bottom+dh+8)+"px");h.classList.add("hd-over");return}}
+  if(ok){d.style.width=Math.round(w)+"px";d.style.left=Math.round(mid-hr.left-w/2)+"px";d.style.bottom=Math.round(bottom)+"px";d.style.marginLeft="";d.style.marginTop="";h.style.setProperty("--hd-space",Math.round(bottom+dh+8)+"px");h.classList.add("hd-over");return}}
  /* no room on the map: just under it */
  h.classList.remove("hd-over");if(d.previousElementSibling!==h)h.after(d);d.classList.add("hd-below");const pr=d.parentNode.getBoundingClientRect(),w=phone?pr.width:Math.min(want,pr.width);
- d.style.left=d.style.bottom="";d.style.width=Math.round(w)+"px";d.style.marginLeft=phone?"0px":Math.max(0,Math.round(mid-pr.left-w/2))+"px"}
+ d.style.left=d.style.bottom="";d.style.width=Math.round(w)+"px";d.style.marginLeft=phone?"0px":Math.max(0,Math.round(mid-pr.left-w/2))+"px";
+ /* buttons that hang below the map (phones) must not cover it */
+ let mt=8;h.querySelectorAll(".globe-btns, .gfk-tray").forEach(x=>{const r=x.getBoundingClientRect();if(r.height&&r.bottom>hr.bottom&&getComputedStyle(x).position==="absolute")mt=Math.max(mt,Math.round(r.bottom-hr.bottom+8))});d.style.marginTop=mt+"px"}
 addEventListener("resize",()=>{try{dockSync();freeCard(true)}catch(e){}});setInterval(()=>{try{if(histOn()&&useNew())dockSync();else{const d=document.querySelector(".hist-dock");if(d)d.remove()}}catch(e){}},400);
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest(".gfk-tab"))setTimeout(()=>{try{dockSync()}catch(err){}},30)});
 
@@ -404,5 +437,5 @@ body.sky-night .hist-dock{background:rgba(29,37,70,.92);color:#e6ebfa}body.sky-n
 .hist-story .hs-grip{position:absolute;left:50%;top:-4px;width:40px;height:10px;margin-left:-20px;cursor:grab;background:radial-gradient(circle,#b9c3cd 1.6px,transparent 2px) 0 0/8px 5px;opacity:.9}
 .hist-story .hs-head::before{display:none}
 .hist-story .hs-head,.hist-story .hs-year{cursor:grab}`;document.head.appendChild(st);
-window.GF_HIST2={years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?N-1:i)},year:()=>curY,setYear:y=>setYear(y),frame:()=>frame(),labels:()=>{const o=LBL.get(frame()._id+"#"+labMode()+"#"+fxKey());return o&&o.set},tr:()=>TR,imp:p=>impOf(p)};
+window.GF_HIST2={years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?N-1:i)},year:()=>curY,setYear:y=>setYear(y),frame:()=>frame(),labels:()=>{const o=LBL.get(frame()._id+"#"+labMode()+"#"+fxKey());return o&&o.set},tr:()=>TR,imp:p=>impOf(p),focusInfo:()=>{const fr=frame();return{focus:histFocus,old:tourOld,y:curY,any:!!histFocus&&focusAny(fr),names:histFocus?[...new Set(fr.filter(f=>inFocus(f.properties)).map(f=>f.properties.n))].slice(0,6):[]}},featsAt:async y=>{for(let i=0;i<200&&!CH[chunkOf(y)];i++){need(y);await new Promise(r=>setTimeout(r,100))}return frameAt(y)||[]}};
 })();
