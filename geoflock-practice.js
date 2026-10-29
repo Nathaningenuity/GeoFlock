@@ -55,7 +55,7 @@ body.pr-choosing #mainContent > #prChoose{ display:block !important; }
 .pro-drills{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:0 0 12px; }
 .pro-drills .chip{ display:inline-flex; gap:6px; align-items:center; }
 .pro-tools{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; align-items:center; margin:0 0 14px; }
-.pro-tools input{ font:inherit; padding:7px 12px; border-radius:999px; border:1px solid rgba(0,0,0,.15); min-width:220px; }
+.pro-tools input{ font:inherit; padding:7px 12px; border-radius:999px; border:1px solid rgba(0,0,0,.15); min-width:min(300px,100%); }
 .pro-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px; }
 .pro-card{ display:flex; gap:10px; align-items:center; background:rgba(255,255,255,.75); border-radius:12px; padding:9px 11px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
 body.sky-night .pro-card{ background:rgba(30,38,54,.8); }
