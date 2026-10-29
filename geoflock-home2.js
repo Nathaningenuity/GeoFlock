@@ -43,7 +43,15 @@ function questsHTML(q,d5done){const rows=[];
   rows.push('<button type="button" class="h2-q'+(done?" ok":"")+'" data-hq="'+esc(id)+'"><span class="h2-q-ic">'+(done?"✓":"★")+'</span><span class="h2-q-t"><b>'+esc(Q.text)+'</b><i><u style="width:'+Math.round(100*n/Math.max(1,Q.n))+'%"></u></i></span><span class="h2-q-n">'+n+'/'+Q.n+'</span></button>')});
  const dn=(q.done||[]).length,tot=(q.ids||[]).length||3;
  return'<div class="h2-card h2-quests"><div class="h2-quests-h"><b>Daily quests</b><button type="button" id="hiQuests" class="h2-link">'+dn+'/'+tot+' done · details</button></div>'+rows.join("")+'<small class="h2-quests-f">New quests and a new Daily 5 every day</small></div>'}
-window.hiToday2=function(o){return'<div class="h2-today">'+guessHTML()+codHTML(o.cod)+questsHTML(o.q||{ids:[],done:[]},o.d5done)+'</div>'};
+/* tour of the day: one guided tour picked for today (the same for everyone), preferring ones not finished yet */
+function todTour(){try{const S=window.gfTourShelves||[],ids=[];S.forEach(r=>{if(r[0]==="books")return;r[3].forEach(id=>{const T=PS_TOURS[id];if(T&&T.group!=="_retired"&&(T.steps||[]).length>4&&!ids.includes(id))ids.push(id)})});if(!ids.length)return null;
+ const r=rng(dayNum()*104729+7),order=ids.slice();for(let i=order.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+ const done=id=>{try{const o=(stats.tourProg||{})[id];return!!(o&&o.done)}catch(e){return false}};return order.find(id=>!done(id))||order[0]}catch(e){return null}}
+function todHTML(){const id=todTour();if(!id)return"";const T=PS_TOURS[id],cov=T&&(TOUR_THUMBS[id]||""),sh=(window.gfTourShelves||[]).find(r=>r[3].includes(id)),n=(T.steps||[]).length;
+ const P=T&&(stats.tourProg||{})[id],prog=P&&P.max>0&&!P.done?" · you’re on stop "+(P.max+1):"";
+ return'<button type="button" class="h2-card h2-tod" data-tod="'+esc(id)+'">'+(cov?'<span class="h2-tod-img"><img src="'+esc(cov)+'" alt="" loading="lazy"></span>':'')+
+  '<span class="h2-tod-t"><small>🧭 Tour of the day'+(sh?' · '+esc(sh[1]):'')+'</small><b>'+esc(T.name||T.short)+'</b><em>'+esc(T.hint||"")+'</em><span class="h2-tod-m">'+n+' stops · about '+Math.max(5,Math.round(n*0.7))+' minutes'+prog+'</span></span><span class="h2-tod-go">Start the tour →</span></button>'}
+window.hiToday2=function(o){return'<div class="h2-today">'+guessHTML()+codHTML(o.cod)+questsHTML(o.q||{ids:[],done:[]},o.d5done)+'</div>'+todHTML()};
 window.hiToday2Wire=function(v){
  v.querySelectorAll("[data-hg]").forEach(b=>b.onclick=()=>{const G=guessToday();if(!G||guessState()!=null)return;
   try{stats.homeGuess={day:G.day,pick:b.dataset.hg};if(b.dataset.hg===G.c&&typeof xpGain==="function")xpGain(10,"photo of the day");saveStats()}catch(e){}
@@ -51,7 +59,8 @@ window.hiToday2Wire=function(v){
  const m=v.querySelector("[data-hgmore]");if(m)m.onclick=()=>{try{if(window.gfDailyOpen)gfDailyOpen("type");else switchAppMode("games")}catch(e){}};
  /* the five stamps are buttons: say so under them */
  const row=v.querySelector(".gf-flock-row");if(row&&!v.querySelector(".gf-flock-tip"))row.insertAdjacentHTML("afterend",'<div class="gf-flock-tip">👆 Tap a stamp to start testing yourself</div>');
- v.querySelectorAll("[data-hq]").forEach(b=>b.onclick=()=>{try{questsOpen()}catch(e){}})};
+ v.querySelectorAll("[data-hq]").forEach(b=>b.onclick=()=>{try{questsOpen()}catch(e){}});
+ v.querySelectorAll("[data-tod]").forEach(b=>b.onclick=()=>{try{psLaunchTour(b.dataset.tod)}catch(e){console.error(e)}})};
 /* first-day quests: simple practice goals instead of the random mix */
 (function(){try{
  if(typeof finalizeAnswer==="function"&&!finalizeAnswer._h2){const _f=finalizeAnswer;finalizeAnswer=function(){try{const m=typeof appMode!=="undefined"?appMode:"";if(m==="flag"||m==="map"||m==="capital"){const A=stats.modeAns=stats.modeAns||{};A[m]=(A[m]||0)+1}}catch(e){}return _f.apply(this,arguments)};finalizeAnswer._h2=1}
@@ -124,6 +133,14 @@ body.sky-night .h2-link{ color:#8fe0d6; } body.sky-night .h2-q-t i{ background:r
 .h2-nudge{ animation:h2Pulse 1.1s ease-in-out infinite; } @keyframes h2Pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(232,112,26,.55); } 50%{ box-shadow:0 0 0 10px rgba(232,112,26,0); } }
 .h2-nudge-tip{ display:inline-block; margin:8px 0 0 4px; padding:6px 12px; border-radius:10px; background:#16324f; color:#fff; font:700 13px/1.3 inherit; font-family:inherit; position:relative; animation:h2TipIn .3s ease-out; }
 .h2-nudge-tip::before{ content:""; position:absolute; left:22px; top:-6px; border:6px solid transparent; border-top:0; border-bottom-color:#16324f; } @keyframes h2TipIn{ from{ opacity:0; transform:translateY(-4px); } }
+.h2-tod{ display:grid; grid-template-columns:220px 1fr auto; gap:18px; align-items:center; width:100%; min-height:0; margin-top:14px; padding:0 18px 0 0; cursor:pointer; }
+.h2-tod:hover{ transform:translateY(-1px); box-shadow:0 8px 24px rgba(20,40,70,.12); }
+.h2-tod-img{ display:block; height:124px; overflow:hidden; } .h2-tod-img img{ width:100%; height:100%; object-fit:cover; display:block; }
+.h2-tod-t{ display:flex; flex-direction:column; gap:4px; padding:12px 0; min-width:0; } .h2-tod-t small{ font-size:11.5px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#c25a10; }
+.h2-tod-t b{ font-size:19px; line-height:1.2; } .h2-tod-t em{ font-style:normal; font-size:13.5px; opacity:.78; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; } .h2-tod-m{ font-size:12px; opacity:.6; }
+.h2-tod-go{ padding:10px 16px; border-radius:999px; background:#2f8f86; color:#fff; font-weight:800; font-size:14px; white-space:nowrap; }
+body.sky-night .h2-tod-t small{ color:#ffb27a; }
+@media (max-width:640px){ .h2-tod{ grid-template-columns:96px 1fr; padding:0 12px 0 0; } .h2-tod-img{ height:100%; min-height:110px; } .h2-tod-go{ grid-column:1 / -1; margin:0 12px 12px; text-align:center; } }
 @media (max-width:980px){ .h2-today{ grid-template-columns:1fr 1fr; } .h2-guess{ grid-column:1 / -1; min-height:300px; } }
 @media (max-width:640px){ .h2-today{ grid-template-columns:1fr; } .h2-card{ min-height:0; } .h2-guess{ min-height:330px; } }`;
 document.head.appendChild(css);
