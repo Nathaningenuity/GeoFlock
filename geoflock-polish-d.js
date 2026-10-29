@@ -15,6 +15,8 @@ const st=(id,title)=>{const t=T(id);return t?t.steps.find(s=>s.title===title):nu
 const set=(id,title,f)=>{const s=st(id,title);if(s)try{f(s)}catch(e){console.error(e)}};
 /* insert a new stop after the stop titled `after` (once) */
 const ins=(id,after,S)=>{const t=T(id);if(!t||t.steps.some(s=>s.title===S.title))return;const i=t.steps.findIndex(s=>s.title===after);if(i<0)return;t.steps.splice(i+1,0,S)};
+/* a new frame for a stop, with the card on the left (the frames keep the subject in the right part of the map) */
+const fr=(id,title,v)=>set(id,title,s=>{s.view=v;s.card="left"});
 const ph=(at,label)=>({at,label,col:"#d9682b",icon:"photo"});
 /* history-map year and highlighted polity; a stop that replays years (histAnim) keeps its replay and ends on this focus */
 /* applied on every run, because index.html re-applies its own year table shortly after the page loads */
@@ -96,17 +98,17 @@ if(T("hancient")&&!T("hancient")._polD){T("hancient")._polD=1;
  set("hancient","The Persian Empire",s=>{s.gfRuler={a:[28.04,38.49],b:[48.25,32.19]};
   s.body="Cyrus the Great founded it in about 550 BC, and under Darius it covered about 5.5 million km². The ruler spans its Royal Road, from Sardis to Susa: about 2,000 km straight, 2,700 km along the road, which royal riders covered in about a week."});
 /* frame the subject in the right part of the map, clear of the card */
- set("hancient","The Indus Valley",s=>{s.view=[46,17,84,37]});
- set("hancient","China’s Yellow River",s=>{s.view=[92,24,128,46]});
- set("hancient","Kush and Aksum",s=>{s.view=[12,4,48,27]});
+ fr("hancient","The Indus Valley",[46,17,84,37]);
+ fr("hancient","China’s Yellow River",[92,24,128,46]);
+ fr("hancient","Kush and Aksum",[12,4,48,27]);
  set("hancient","Sailors of two oceans",s=>{s.gfRuler={a:[113.9,0],b:[46.9,-19]};
   s.body="Starting from Taiwan about 5,000 years ago, Austronesian sailors in outrigger canoes spread through the Philippines and Indonesia, then east across the Pacific and west across the Indian Ocean. The ruler measures Borneo to Madagascar: about 7,600 km of open ocean."});
 }
 /* ───────── Explorers (relief map) ───────── */
 if(T("explorers")&&!T("explorers")._polD){T("explorers")._polD=1;
- set("explorers","Columbus, 1492",s=>{s.on=["currents"];s.view=[-128,-2,-2,52];s.gfRuler={a:[-17.1,28.1],b:[-74.5,24.05]};
+ set("explorers","Columbus, 1492",s=>{s.on=["currents"];s.view=[-128,-2,-2,52];s.card="left";s.gfRuler={a:[-17.1,28.1],b:[-74.5,24.05]};
   s.body="He first sailed south to the Canary Islands, where the trade winds blow steadily from the east and the ocean currents flow west with them (arrows). Riding them, his three ships crossed about 5,700 km of open sea (ruler) and reached the Bahamas on 12 October 1492."});
- set("explorers","The Vikings got there first",s=>{s.view=[-125,35,22,75]});
+ fr("explorers","The Vikings got there first",[-125,35,22,75]);
  set("explorers","Around the world",s=>{s.gfRuler={a:[-75,-52.5],b:[144.7,13.4]};
   s.body="Ferdinand Magellan led five Spanish ships west, through a strait at the tip of South America, then across the Pacific to Guam: over 14,000 km of open ocean (ruler). He was killed in the Philippines in 1521; Juan Sebastián Elcano brought one ship home in 1522."});
  set("explorers","Zheng He’s treasure fleets",s=>{s.on=["connections"];
@@ -127,9 +129,9 @@ if(T("explorers")&&!T("explorers")._polD){T("explorers")._polD=1;
 if(T("heurope")&&!T("heurope")._polD){T("heurope")._polD=1;
  set("heurope","Europe’s story",s=>{s.phPins=[ph([23.73,37.97],"Athens: the Parthenon"),ph([4.54,43.95],"Pont du Gard: Roman aqueduct"),ph([11.26,43.77],"Florence: Renaissance dome"),
   ph([10.7,59.9],"Oslo: a Viking ship"),ph([-2.24,53.48],"Manchester: cotton mills"),ph([13.38,52.52],"Berlin: Brandenburg Gate")];s.view=[-60,30,48,70]});
- set("heurope","Rome falls, nations rise",s=>{s.view=[-45,28,38,62]});
- set("heurope","The Black Death",s=>{s.view=[-55,30,45,66]});
- set("heurope","The Renaissance",s=>{s.view=[-2,35,22,48]});
+ fr("heurope","Rome falls, nations rise",[-45,28,38,62]);
+ fr("heurope","The Black Death",[-55,30,45,66]);
+ fr("heurope","The Renaissance",[-2,35,22,48]);
  set("heurope","The Vikings",s=>{s.gfRuler={a:[5.32,60.39],b:[-55.53,51.6]};
   s.body="From 793, when they raided the monastery of Lindisfarne in England, Norse ships sailed from Scandinavia to Iceland, Greenland and Newfoundland, and down Russia’s rivers towards Constantinople. The ruler measures Norway to Newfoundland: about 3,800 km."});
  set("heurope","Napoleon’s Europe",s=>{s.gfRuler={a:[2.35,48.86],b:[37.62,55.75]};
@@ -140,9 +142,14 @@ if(T("heurope")&&!T("heurope")._polD){T("heurope")._polD=1;
 /* ───────── Asia ───────── */
 if(T("hasia")&&!T("hasia")._polD){T("hasia")._polD=1;
  set("hasia","Asia’s story",s=>{s.phPins=[ph([46.1,30.96],"Ur: a ziggurat"),ph([77.74,23.48],"Sanchi: a Buddhist stupa"),ph([109.27,34.38],"Xi’an: clay soldiers"),
-  ph([103.87,13.41],"Angkor Wat at sunrise"),ph([77.24,28.66],"Delhi: the Red Fort"),ph([121.5,31.24],"Shanghai today")]});
+  ph([103.87,13.41],"Angkor Wat at sunrise"),ph([77.24,28.66],"Delhi: the Red Fort"),ph([121.5,31.24],"Shanghai today")];s.view=[0,-12,150,60]});
  set("hasia","The first emperor",s=>{s.gfRuler={a:[119.75,40.0],b:[98.22,39.8]};
   s.more="Farmers digging a well near Xi’an found the Terracotta Army in 1974; the emperor’s own tomb has still not been opened. Most of the Great Wall you can visit today (amber) was built much later, under the Ming: from Shanhaiguan to Jiayuguan is about 1,800 km in a straight line (ruler), but all its sections and branches add up to about 21,000 km."});
+/* frame the subject in the right part of the map, clear of the card */
+ fr("hasia","Islam’s rapid spread",[-110,-20,128,60]);
+ fr("hasia","An alphabet invented by a king",[95,28,145,46]);
+ fr("hasia","1979: a turning year",[25,22,78,42]);
+ fr("hasia","Asia’s giants return",[20,-5,140,52]);
  set("hasia","Gandhi and the princes",s=>{s.gfRuler={a:[72.58,23.06],b:[72.8,20.89]};
   s.more="On the Salt March, Gandhi walked about 390 km from his ashram in Ahmedabad to the sea at Dandi (the ruler measures the straight line, about 240 km) to make salt, breaking a British tax. Almost all the princes joined India or Pakistan, but Hyderabad, the richest, was taken over by India’s army in 1948. Kashmir’s ruler joined India during fighting with forces from Pakistan, and the region has been divided and disputed ever since."});
  set("hasia","Shenzhen’s rise",s=>{s.on=["connections"];
@@ -155,8 +162,13 @@ if(T("hafrica")&&!T("hafrica")._polD){T("hafrica")._polD=1;
  set("hafrica","Where we began",s=>{s.xsec={title:"Across the Great Rift Valley in Kenya",pts:[[34.3,-0.45,"Lake Victoria"],[35.0,-0.45],[35.6,-0.45,"Mau Escarpment"],[36.1,-0.45,"Rift floor"],[36.6,-0.45,"Aberdares"],[37.3,-0.45],[38.0,-0.45]],mark:1800,
    note:"The dashed line marks 1,800 m. The rift floor sits between two high walls. Heights are smoothed."};
   s.body="Older human relatives lived along East Africa’s Great Rift Valley for millions of years, like “Lucy”, found in Ethiopia. Move along the chart to cross the rift: lakes and fossil beds lie on its floor. But the oldest known Homo sapiens bones were found at Jebel Irhoud, in Morocco."});
- set("hafrica","Mansa Musa’s gold",s=>{s.gfRuler={a:[-3.0,16.77],b:[31.24,30.04]};
-  s.body="In the 1300s, the Mali Empire controlled much of West Africa’s gold. On his pilgrimage to Mecca in 1324, Mansa Musa crossed the Sahara to Cairo, about 3,900 km from Timbuktu (ruler), and gave away so much gold there that its price fell for years."});
+ set("hafrica","Mansa Musa’s gold",s=>{s.gfRuler={a:[-3.0,16.77],b:[31.24,30.04]};s.view=[-55,-2,48,38];s.card="left";
+  s.body="In the 1300s, the Mali Empire controlled much of West Africa’s gold. On his pilgrimage to Mecca in 1324, Mansa Musa crossed the Sahara to Cairo, about 3,800 km from Timbuktu (ruler), and gave away so much gold there that its price fell for years."});
+/* frame the subject in the right part of the map, clear of the card */
+ fr("hafrica","Abu Simbel",[14,16.5,42,30]);
+ fr("hafrica","Carthage against Rome",[-25,28,30,50]);
+ fr("hafrica","Great Zimbabwe",[12,-30,44,-10]);
+ fr("hafrica","The Swahili coast",[-5,-16,80,30]);
  set("hafrica","Carving up Africa",s=>{s.ghosts=[{code:"be",at:[23.5,-2.5],col:"#8a63cf",label:"Belgium, true size"}];
   s.body="After the Berlin Conference of 1884–85, European powers divided Africa. France took the most land (blue), Britain the most people (red), and King Leopold II ran the Congo as his private property. Drag Belgium across the Congo to compare."});
 }
@@ -164,36 +176,42 @@ if(T("hafrica")&&!T("hafrica")._polD){T("hafrica")._polD=1;
 if(T("hnamerica")&&!T("hnamerica")._polD){T("hnamerica")._polD=1;
  set("hnamerica","North America’s history",s=>{s.phPins=[ph([-108.47,37.17],"Mesa Verde: cliff houses"),ph([-90.06,38.66],"Cahokia: Monks Mound"),ph([-99.13,19.43],"Tenochtitlan: the Aztec capital"),
   ph([-81.31,29.9],"St Augustine: Spanish fort"),ph([-77.23,39.81],"Gettysburg, 1863"),ph([-77.01,38.89],"Washington: the Capitol")]});
+/* frame the subject in the right part of the map, clear of the card */
+ fr("hnamerica","The Aztecs",[-118,12,-86,26]);
+ fr("hnamerica","1492",[-100,15,-62,28]);
+ fr("hnamerica","Spain in the US",[-160,16,-72,46]);
+ fr("hnamerica","Mexico loses half",[-150,14,-85,46]);
+ set("hnamerica","Coast to coast by rail",s=>{s.view=[-150,25,-85,52];s.card="left";s._histWide=1});
  set("hnamerica","Coast to coast by rail",s=>{s.gfRuler={a:[-95.94,41.26],b:[-121.49,38.58]};
   s.body="The Central Pacific built east from Sacramento and the Union Pacific west from Omaha, about 2,200 km apart (ruler); the track itself was about 2,860 km. They met at Promontory Summit, Utah, where a golden spike was hammered in on 10 May 1869."});
- set("hnamerica","1867: two big deals",s=>{s.ghosts=[{code:"r:alaska",at:[-98,40],col:"#8a63cf",label:"Alaska, true size"}];
-  s.body="Russia sold Alaska for $7.2 million, and critics called it “Seward’s Folly”. Drag Alaska over the other states: it is about a fifth of their size. That same year, on 1 July, four British colonies united as Canada (outlined)."});
+ set("hnamerica","The Louisiana Purchase",s=>{s.ghosts=[{code:"fr",at:[-99,43],col:"#8a63cf",label:"France, true size"}];s.view=[-135,25,-78,52];s.card="left";
+  s.body="For $15 million, the US bought about 2.1 million km², all or part of 15 of today’s states: nearly four times the size of France (drag it). Napoleon wanted cash for his wars, and had lost hope of an empire in the Americas."});
 }
 /* ───────── South America ───────── */
 if(T("hsamerica")&&!T("hsamerica")._polD){T("hsamerica")._polD=1;
  set("hsamerica","South America’s history",s=>{s.phPins=[ph([-77.52,-10.89],"Caral: 5,000-year-old city"),ph([-75.13,-14.74],"Nazca: desert drawings"),ph([-72.55,-13.16],"Machu Picchu: Inca city"),
   ph([-65.75,-19.62],"Potosí: the silver mountain"),ph([-47.86,-15.8],"Brasília: a new capital"),ph([-73.2,-41.5],"Monte Verde: 14,500 years ago")]});
- set("hsamerica","The Inca roads",s=>{s.gfRuler={a:[-77.28,1.21],b:[-72.4,-35.3]};s.hi=[];s.hiSoft=[];delete s.legend;delete s.G;s.view=[-112,-40,-48,6];
+ set("hsamerica","The Inca roads",s=>{s.gfRuler={a:[-77.28,1.21],b:[-72.4,-35.3]};s.hi=[];s.hiSoft=[];delete s.legend;delete s.G;s.view=[-112,-40,-48,6];s.card="left";
   s.stat="The Inca Empire stretched about 4,000 km along the Andes, tied together by 30,000 km of roads";
   s.body="The ruler spans the empire, from southern Colombia to central Chile. Its roads crossed deserts and mountain passes, with rope bridges over gorges, and relay runners called chasquis could carry a message up to about 240 km in a day."});
  ins("hsamerica","The Inca roads",{title:"Machu Picchu",view:[-80,-17,-66,-9],globe:[-72.5,-13.2,4],card:"left",hi:["pe"],sub:"1500/inca",
   pins:[[[-72.545,-13.163],"Machu Picchu","point"],[[-71.97,-13.53],"Cusco, the capital","point"]],
-  xsec:{title:"From the Pacific over the Andes to Machu Picchu",pts:[[-76.2,-13.7,"Pacific"],[-75.4,-13.6],[-74.5,-13.5],[-73.6,-13.35],[-72.95,-13.25],[-72.545,-13.163,"Machu Picchu"],[-72.3,-12.9],[-72.0,-12.5,"Amazon lowlands"]],mark:2430,
+  _histWide:1,xsec:{title:"From the Pacific over the Andes to Machu Picchu",pts:[[-76.2,-13.7,"Pacific"],[-75.4,-13.6],[-74.5,-13.5],[-73.6,-13.35],[-72.95,-13.25],[-72.545,-13.163,"Machu Picchu"],[-72.3,-12.9],[-72.0,-12.5,"Amazon lowlands"]],mark:2430,
    note:"The dashed line marks 2,430 m, the height of Machu Picchu. Heights are smoothed, so the narrow river gorges look shallower than they are."},
   stat:"Machu Picchu sits on a ridge 2,430 m up, between the high Andes and the Amazon rainforest",
   body:"The emperor Pachacuti had it built around 1450, probably as a royal estate. Move along the chart: from the dry coast the Andes rise to over 4,000 m, and Machu Picchu perches on their eastern slope, where the land falls away towards the Amazon.",
   more:"The Spanish never found it. Farmers living nearby knew it well, and in 1911 a local guide led the American explorer Hiram Bingham there, who made it famous. Its stones were cut to fit so tightly without mortar that they have survived many earthquakes."});
- set("hsamerica","Pizarro and Atahualpa",s=>{s.ghosts=[{code:"es",at:[-62,-12],col:"#8a63cf",label:"Spain, true size"}];s.view=[-104,-24,-48,10];
+ set("hsamerica","Pizarro and Atahualpa",s=>{s.ghosts=[{code:"es",at:[-62,-12],col:"#8a63cf",label:"Spain, true size"}];s.view=[-104,-24,-48,10];s.card="left";
   s.body="The Inca Empire, about four times the size of Spain (drag it), had just been torn apart by a civil war between Atahualpa and his brother Huáscar, and by smallpox, which arrived from Europe before the Spanish did."});
  set("hsamerica","The liberators",s=>{s.xsec={title:"San Martín’s crossing, Mendoza to Santiago",pts:[[-68.84,-32.89,"Mendoza"],[-69.3,-32.6],[-69.75,-32.6],[-70.1,-32.8,"Andes pass"],[-70.5,-32.9],[-70.65,-33.45,"Santiago"]],mark:3500,
    note:"The dashed line marks 3,500 m. His columns crossed passes even higher than the smoothed heights show."}});
  set("hsamerica","Brasília",s=>{s.gfRuler={a:[-43.2,-22.9],b:[-47.88,-15.79]}});
 /* frame the subject in the right part of the map, clear of the card */
- set("hsamerica","Sugar and slavery",s=>{s.view=[-110,-40,25,12]});
- set("hsamerica","The new arrivals",s=>{s.view=[-100,-50,-30,-10]});
- set("hsamerica","Brasília",s=>{s.view=[-75,-30,-30,-5]});
- set("hsamerica","Years of military rule",s=>{s.view=[-110,-56,-25,13]});
- set("hsamerica","The Falklands War",s=>{s.view=[-95,-58,-45,-38]});
+ fr("hsamerica","Sugar and slavery",[-110,-40,25,12]);
+ fr("hsamerica","The new arrivals",[-100,-50,-30,-10]);
+ fr("hsamerica","Brasília",[-75,-30,-30,-5]);
+ fr("hsamerica","Years of military rule",[-110,-56,-25,13]);
+ fr("hsamerica","The Falklands War",[-95,-58,-45,-38]);
 }
 /* ───────── Oceania ───────── */
 if(T("hoceania")&&!T("hoceania")._polD){T("hoceania")._polD=1;
@@ -203,7 +221,7 @@ if(T("hoceania")&&!T("hoceania")._polD){T("hoceania")._polD=1;
   s.body="About 3,000 years ago, the Lapita people sailed east from near New Guinea to Fiji, Tonga and Samoa. Much later their descendants reached Hawaii, Rapa Nui (Easter Island), about 4,000 km from Tahiti (ruler), and, around 1250 to 1300 AD, New Zealand, the last."});
  set("hoceania","Easter Island’s giants",s=>{s.gfRuler={a:[-109.35,-27.1],b:[-130.1,-25.07]};
   s.body="Rapa Nui, or Easter Island, lies about 3,500 km from Chile, and over 2,000 km from Pitcairn, the nearest inhabited island (ruler). Its people carved the moai from volcanic rock at one quarry, Rano Raraku, and moved them across the island."});
- set("hoceania","The oldest living culture",s=>{s.view=[95,-44,160,-8]});
+ fr("hoceania","The oldest living culture",[95,-44,160,-8]);
  set("hoceania","The First Fleet",s=>{s.gfRuler={a:[-1.09,50.8],b:[151.21,-33.86]};
   s.body="Eleven ships carried about 1,400 people, over half of them convicts, from England to Sydney Cove: about 17,000 km in a straight line (ruler), and far more by sea. The British flag was raised there on 26 January 1788, now Australia Day."});
 }
@@ -224,6 +242,8 @@ if(T("hantarctica")&&!T("hantarctica")._polD){T("hantarctica")._polD=1;
   s.body="Snow piles up year after year and turns to ice, trapping tiny bubbles of air. Move along the chart: the ice sheet rises to about 3,500 m at Vostok. Drilling cores through it lets scientists read the climate of the past."});
 }
 }
-function run(){patch();subs();photos()}
+/* the deep-time card chart on "Where we began" gives way to the Rift Valley cross-section (one gadget per stop) */
+function diag(){try{if(typeof PS_DIAG!=="undefined"&&T("hafrica"))delete PS_DIAG["hafrica|Where we began"]}catch(e){}}
+function run(){patch();subs();diag();photos()}
 run();addEventListener("load",()=>setTimeout(run,1500));setTimeout(run,4000);
 })();

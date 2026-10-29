@@ -111,7 +111,7 @@ const KC={govmap:{"One king, fifteen countries":"ca","You must vote":"au","Ruled
 
 function patch(){
 /* ───────── How countries are run (Politics map) ───────── */
-if(T("govmap")&&!T("govmap")._polC){T("govmap")._polC=1;
+if(T("govmap")&&!T("govmap").steps._polC){T("govmap").steps._polC=1;
  set("govmap","How the world is run",s=>{s.phPins=[ph([12.45,41.9],"Vatican: the Pope rules alone"),ph([57.53,22.93],"Oman: the sultan makes the laws"),
   ph([-82.38,23.12],"Cuba: one party since 1965"),ph([-21.1,64.25],"Iceland’s parliament first met here in 930"),ph([-5.28,6.82],"Yamoussoukro’s giant basilica")]});
  set("govmap","One king, fifteen countries",s=>{s.gfSun={utc:0,day:355};
@@ -120,14 +120,14 @@ if(T("govmap")&&!T("govmap")._polC){T("govmap")._polC=1;
   s.body="Countries sometimes build a new capital in the middle of the country, to unite it and spread out development. Brazil, Nigeria, Kazakhstan and Myanmar all did it. The ruler measures how far Kazakhstan moved its capital, from Almaty in the far south-east to Astana: about 970 km."});
 }
 /* ───────── International relations (Politics map) ───────── */
-if(T("politics")&&!T("politics")._polC){T("politics")._polC=1;
+if(T("politics")&&!T("politics").steps._polC){T("politics").steps._polC=1;
  set("politics","Politics of the world",s=>{s.phPins=[ph([-73.97,40.75],"UN headquarters, New York"),ph([6.14,46.2],"Geneva: UN offices"),
   ph([20.9,42.6],"Kosovo"),ph([30.25,7.3],"South Sudan: Cattle at a camp near Imehejek"),ph([103.82,1.35],"Singapore: left Malaysia in 1965")]});
  set("politics","Borders without passports",s=>{s.gfRuler={a:[-9.14,38.72],b:[24.94,60.17]};
   s.body="In the Schengen area, 29 countries have no routine checks at their shared borders: the ruler measures Lisbon to Helsinki, over 3,300 km without a passport check. Ireland stays out to keep its open border with the UK."});
 }
 /* ───────── Geopolitics (relief) ───────── */
-if(T("geopol")&&!T("geopol")._polC){T("geopol")._polC=1;
+if(T("geopol")&&!T("geopol").steps._polC){T("geopol").steps._polC=1;
  set("geopol","Geopolitics",s=>{s.phPins=[ph([28.98,41.05],"Bosphorus: the Black Sea’s only exit"),ph([-79.9,9.1],"Panama Canal"),ph([56.3,26.6],"Strait of Hormuz"),
   ph([-42,72],"Greenland’s ice"),ph([-68.3,-23.5],"Lithium ponds, Atacama")]});
  set("geopol","The open plain",s=>{s.xsec={title:"The North European Plain, Paris to Moscow",pts:[[2.35,48.86,"Paris"],[4.35,50.85,"Brussels"],[9.73,52.37],[13.4,52.52,"Berlin"],[17,52.4],[21.01,52.23,"Warsaw"],[24.5,53.2],[27.56,53.9,"Minsk"],[32.05,54.78,"Smolensk"],[35,55.3],[37.62,55.75,"Moscow"]],mark:300,
@@ -147,7 +147,7 @@ if(T("geopol")&&!T("geopol")._polC){T("geopol")._polC=1;
   s.body="Satellites carry less than 1%. The cables, shown on the map, come ashore in only a few places, and many lines between Europe and Asia squeeze across Egypt and down the Red Sea, so one dragged anchor can slow the internet for millions."});
 }
 /* ───────── Borders (relief; two stops on the History map) ───────── */
-if(T("borders")&&!T("borders")._polC){T("borders")._polC=1;
+if(T("borders")&&!T("borders").steps._polC){T("borders").steps._polC=1;
  set("borders","Strange borders",s=>{s.phPins=[ph([-95,49.2],"The US–Canada border cut through forest"),ph([74.57,31.6],"The Wagah border ceremony"),
   ph([-117.1,32.54],"Tijuana: the US–Mexico border wall"),ph([33.32,35.34],"Kyrenia, Northern Cyprus"),ph([28.2,-29.6],"Lesotho, inside South Africa"),ph([0.5,42.7],"Pyrenees: a mountain border")]});
  set("borders","The longest borders",s=>{s.view=[-180,22,-40,76];s.globe=[-100,52,1.5];s.spin=0;s.gfRuler={a:[-123.3,49],b:[-95.15,49]};
@@ -170,7 +170,7 @@ if(T("borders")&&!T("borders")._polC){T("borders")._polC=1;
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.borders;if(Q)(Q.mid||[]).forEach(q=>{if(q.at==="Rivers, mountains and rulers")q.at="Europe before the First World War"})}catch(e){}
 }
 /* ───────── Special regions (relief) ───────── */
-if(T("regions")&&!T("regions")._polC){T("regions")._polC=1;
+if(T("regions")&&!T("regions").steps._polC){T("regions").steps._polC=1;
  set("regions","Denmark’s far north",s=>{s.view=[-125,52,0,84];s.globe=[-35,70,1.6];s.ghosts=[{code:"dk",at:[-38,70],col:"#8a63cf",label:"Denmark, true size"}];
   s.phPins=[ph([-6.95,62.1],"Faroe Islands: Saksun")];
   s.body="Greenland and the Faroe Islands belong to the Kingdom of Denmark but govern most of their own affairs, with their own parliaments and flags. Drag Denmark around Greenland: Greenland is about 50 times bigger, with about 57,000 people."});
@@ -185,15 +185,15 @@ if(T("regions")&&!T("regions")._polC){T("regions")._polC=1;
   s.body="Svalbard is an Arctic archipelago under Norwegian sovereignty, governed by the 1920 Svalbard Treaty. It is so far north that the sun does not rise from late October to mid-February: move the date and watch the polar night end. Åland, further south, is an autonomous, demilitarised region of Finland."});
 }
 /* ───────── GDP (GDP map) ───────── */
-if(T("gdp")&&!T("gdp")._polC){T("gdp")._polC=1;
+if(T("gdp")&&!T("gdp").steps._polC){T("gdp").steps._polC=1;
  set("gdp","Flip the map: money per person",s=>dropPh(s,["India: Taj Mahal"]));
  dropOff("gdp",["India and the UK","China’s rise"]);
 }
 /* ───────── Transport and trade (relief) ───────── */
-if(T("transport")&&!T("transport")._polC){T("transport")._polC=1;
+if(T("transport")&&!T("transport").steps._polC){T("transport").steps._polC=1;
  set("transport","The Suez Canal blocked",s=>{if(!s.on)s.on=["connections"]});
  set("transport","The long way round",s=>{if(!s.on)s.on=["connections"]});
- set("transport","The Trans-Siberian",s=>{s.on=["timezones"];s.view=[-35,30,140,72];s.spin=0;
+ set("transport","The Trans-Siberian",s=>{s.on=["timezones"];s.view=[-35,30,140,72];s.globe=[60,52,1];s.spin=0;
   s.body="The journey takes about a week and passes along the shore of Lake Baikal. The time-zone bands on the map show why clocks are a puzzle: Moscow and Vladivostok are seven hours apart, and the line crosses eight time zones."});
  set("transport","The railway to the sky",s=>{s.view=[74,26,106,40];s.spin=0;s.xsec={title:"The Qinghai–Tibet railway, Xining to Lhasa",pts:[[101.78,36.62,"Xining"],[100,37.3],[97.4,37.4],[94.9,36.4,"Golmud"],[94.05,35.6],[93.0,35.0],[92.5,34.2],[91.6,32.9,"Tanggula"],[91.9,31.5],[91.1,30.3],[91.13,29.65,"Lhasa"]],mark:4000,
   note:"The dashed line marks 4,000 m. Heights are smoothed and the line follows the railway only roughly: the real pass is 5,072 m."};
@@ -202,7 +202,7 @@ if(T("transport")&&!T("transport")._polC){T("transport")._polC=1;
  dropOff("transport");
 }
 /* ───────── Animals (relief) ───────── */
-if(T("animals")&&!T("animals")._polC){T("animals")._polC=1;
+if(T("animals")&&!T("animals").steps._polC){T("animals").steps._polC=1;
  set("animals","Animals of the world",s=>{s.on=["grid"];s.phPins=[ph([-62,-4],"Amazon rainforest"),ph([34.8,-2.4],"Serengeti: wildebeest"),ph([20,79],"Polar bear, Svalbard"),
   ph([103.5,31],"Giant pandas"),ph([114,0.5],"Orangutan, Borneo"),ph([0,-70],"Penguins, Antarctica")];
   s.body="Warm, wet tropical forests near the equator (the middle grid line) hold far more kinds of animals than cold or dry places. A single hectare of Amazon forest can have more kinds of trees than all of Europe."});
@@ -213,7 +213,7 @@ if(T("animals")&&!T("animals")._polC){T("animals")._polC=1;
  dropOff("animals");
 }
 /* ───────── Environment (relief) ───────── */
-if(T("environment")&&!T("environment")._polC){T("environment")._polC=1;
+if(T("environment")&&!T("environment").steps._polC){T("environment").steps._polC=1;
  dropOff("environment");
  set("environment","People and the planet",s=>{s.phPins=[ph([-63,-10.5],"Rondônia: cleared forest"),ph([-42,72],"Greenland: melting ice"),ph([77.2,28.61],"Delhi: winter smog"),
   ph([179.2,-8.52],"Funafuti, Tuvalu "),ph([147,-18],"Bleached coral"),ph([117.3,42.4],"Saihanba: planted forest")]});

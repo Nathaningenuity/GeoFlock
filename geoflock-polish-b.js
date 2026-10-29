@@ -47,7 +47,7 @@ function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="
 
 function patch(){
 /* ───────── Cities ───────── */
-if(T("cities")&&!T("cities")._polB){T("cities")._polB=1;
+if(T("cities")&&!T("cities").steps._polB){T("cities").steps._polB=1;
  set("cities","Cities of the world",s=>{s.phPins=[ph([139.7,35.69],"Tokyo","Tokyo Shibuya Scramble Crossing 2021-04-27.jpg"),ph([3.4,6.45],"Lagos","Lagos skyline.jpg"),
   ph([-74.01,40.71],"New York","Wall Street - New York Stock Exchange.jpg"),ph([31.24,30.04],"Cairo","Cairo skyline, Nile River, Egypt.jpg"),
   ph([72.88,19.08],"Mumbai","Mumbai Skyline with Bandra–Worli Sea Link 25 July 2018 (1).jpg"),ph([-43.2,-22.9],"Rio de Janeiro","Copacabana, Rio de Janeiro, Brazil.jpg")];
@@ -74,7 +74,7 @@ if(T("cities")&&!T("cities")._polB){T("cities")._polB=1;
  set("cities","Now explore",s=>{s.body="Hover any country to see its name and neighbours. The Cities switch in the map options shows more cities; the People map shows how much of each country lives in towns."});
 }
 /* ───────── Migration ───────── */
-if(T("migration")&&!T("migration")._polB){T("migration")._polB=1;
+if(T("migration")&&!T("migration").steps._polB){T("migration").steps._polB=1;
  set("migration","People on the move",s=>{s.phPins=[ph([-74.04,40.7],"Ellis Island, New York","Italian immigrants at Ellis Island.jpg"),ph([-117.1,32.54],"Tijuana–San Diego border","Border Wall at Tijuana and San Diego Border.jpg"),
   ph([55.27,25.2],"Dubai","Dubai Marina Skyline.jpg"),ph([36.32,32.29],"Zaatari camp, Jordan","Zaatari Refugee Camp John Green 18.png"),
   ph([22.77,49.78],"Przemyśl, Poland","Ukrainian refugees at Przemyśl returning home.jpg"),ph([120.98,14.6],"Manila","Sunset in Manila Bay, Manila, Philippines.jpg")]});
@@ -97,7 +97,7 @@ if(T("migration")&&!T("migration")._polB){T("migration")._polB=1;
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.migration;if(Q&&!Q._polB){Q._polB=1;(Q.recap=Q.recap||[]).push({q:"Which Italian island, closer to Tunisia than to Sicily, is a main landing point for boats crossing the Mediterranean?",o:["Lampedusa","Sardinia","Malta","Crete"],a:0,why:"Lampedusa lies under 200 km from Sfax, in Tunisia.",st:"Crossing the Mediterranean",kc:"it"})}}catch(e){}
 }
 /* ───────── People ───────── */
-if(T("people")&&!T("people")._polB){T("people")._polB=1;
+if(T("people")&&!T("people").steps._polB){T("people").steps._polB=1;
  set("people","The people map",s=>{s.phPins=[ph([139.7,35.69],"Tokyo","Shibuya Crossing, Tokyo; December 2017.jpg"),ph([90.4,23.8],"Dhaka","Garment workers rally in Dhaka.jpg"),
   ph([15.3,-4.32],"Kinshasa","Boulevard du 30 juin, Kinshasa.jpg"),ph([7.99,16.97],"Agadez, Niger","Niger, Agadez (28), grand mosque, old city.jpg"),
   ph([-21.9,64.15],"Reykjavík","View of Reykjavík from Hallgrímskirkja, 20230507 1229 5733.jpg"),ph([126.98,37.57],"Seoul","Skyline view from Seoul City (South Korea).jpg")]});
@@ -112,7 +112,7 @@ if(T("people")&&!T("people")._polB){T("people")._polB=1;
   {q:"Which country tops the UN’s Human Development Index?",o:["Norway","Switzerland","Iceland","Japan"],a:2,why:"Iceland, with fewer people than Bristol, came first in the latest index.",st:"Top of the class",kc:"is"}]}}catch(e){}
 }
 /* ───────── Languages ───────── */
-if(T("culture")&&!T("culture")._polB){const t=T("culture");t._polB=1;t.stopModes=true;
+if(T("culture")&&!T("culture").steps._polB){const t=T("culture");t.steps._polB=1;t.stopModes=true;
  set("culture","Spanish: one country to twenty",s=>{s.title="The Spanish Empire";s.mode="history";s.sub="1783/spa";s.hi=[];s.phPins=[];delete s.keyLabel;s.bannerNote="The Spanish Empire, 1783";
   s.stat="Spanish began in one corner of Spain; its empire carried it across the Americas, and it is now spoken in 20 countries";
   s.body="The map shows the Spanish Empire in 1783, near its greatest extent. When its colonies broke away in the 1800s, they kept the language, which is why Spanish is spoken from Mexico to Argentina.";
@@ -130,7 +130,7 @@ if(T("culture")&&!T("culture")._polB){const t=T("culture");t._polB=1;t.stopModes
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.culture;if(Q)[].concat(Q.mid||[],Q.recap||[]).forEach(q=>{if(q.st==="Spanish: one country to twenty")q.st="The Spanish Empire";if(q.at==="Spanish: one country to twenty")q.at="The Spanish Empire"})}catch(e){}
 }
 /* ───────── Religions ───────── */
-if(T("langrel")&&!T("langrel")._polB){const t=T("langrel");t._polB=1;t.stopModes=true;
+if(T("langrel")&&!T("langrel").steps._polB){const t=T("langrel");t.steps._polB=1;t.stopModes=true;
  ins("langrel","What the world believes",{title:"Christianity and Rome",mode:"history",sub:"300/rom",view:[-50,12,60,60],globe:[14,38,1.5],card:"left",
   pins:[[[35.23,31.78],"Jerusalem","point"],[[12.49,41.89],"Rome","point"],[[28.98,41.01],"Constantinople (Istanbul)","point"]],
   stat:"In 380 Christianity became the official religion of the Roman Empire",
@@ -142,10 +142,10 @@ if(T("langrel")&&!T("langrel")._polB){const t=T("langrel");t._polB=1;t.stopModes
   body:"Arab armies conquered the Persian Empire and much of the Byzantine Empire. The map shows the Caliphate, ruled from Baghdad, in 800; Muslim Spain was ruled separately from Córdoba.",
   more:"Conquest did not mean everyone converted at once: most people in these lands became Muslim slowly, over several centuries. Arabic, the language of the Quran, became the language of government and learning, which is why so many of these countries speak Arabic today."});
  ins("langrel","Sunni and Shia",{title:"Fasting from dawn to sunset",sub:"rel",view:[-70,-15,120,75],globe:[40,30,1],
-  gfSun:{utc:20,day:166,city:["Oslo",2]},
+  gfSun:{utc:19,day:166,city:["Oslo",2]},
   pins:[[[10.75,59.91],"Oslo: about 20 hours","point"],[[106.85,-6.2],"Jakarta: about 13 hours","point"],[[39.83,21.42],"Mecca: about 15 hours","point"]],
   stat:"When Ramadan falls in June, a fast in Oslo lasts about 20 hours, but one in Jakarta only about 13",
-  body:"In the month of Ramadan, Muslims eat and drink nothing from dawn to sunset. The map shows 10 pm in Oslo in June: the Sun is still up there, while Mecca and Jakarta are already dark. Move the time and date to see the days change.",
+  body:"In the month of Ramadan, Muslims eat and drink nothing from dawn to sunset. The map shows 9 pm in Oslo in June: the Sun is still up there, while Mecca and Jakarta are already dark. Move the time and date to see the days change.",
   more:"The Islamic calendar follows the Moon, so Ramadan comes about 11 days earlier each year and moves through all the seasons; in 2017 it fell in June, and in 2026 in February and March, when days everywhere are closer to 12 hours. Where the Sun barely sets, many Muslims follow the times of Mecca or of the nearest city with a normal day."});
  set("langrel","Now explore",s=>{s.body="Hover any country to see its name and neighbours. Click any colour in the key to see one religion on its own, or switch to Languages above the map."});
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.langrel;if(Q&&!Q._polB){Q._polB=1;(Q.recap||[]).forEach(q=>{if(q.st==="Hinduism and Buddhism"){q.st="Hindu India, Hindu Bali";q.why="About 95% of the world’s Hindus live in India."}});
@@ -153,7 +153,7 @@ if(T("langrel")&&!T("langrel")._polB){const t=T("langrel");t._polB=1;t.stopModes
   Q.recap.push({q:"In which year did Christianity become the official religion of the Roman Empire?",o:["AD 33","312","380","1054"],a:2,why:"Constantine became a Christian in 312; in 380 it became the state religion.",st:"Christianity and Rome",kc:"it"})}}catch(e){}
 }
 /* ───────── Food ───────── */
-if(T("food")&&!T("food")._polB){T("food")._polB=1;
+if(T("food")&&!T("food").steps._polB){T("food").steps._polB=1;
  set("food","Food of the world",s=>{s.phPins=[ph([38.7,7.5],"Ethiopia: coffee","Coffee ceremony of Ethiopia and Eritrea 1.jpg"),ph([102.8,23.1],"Yunnan: rice terraces","Terrace field yunnan china denoised.jpg"),
   ph([-5.5,7.5],"Côte d’Ivoire: cocoa","Breaking open cocoa pods in Ivory Coast.png"),ph([-70,-15.8],"Andes: potatoes","Bitter potato varieties of Solanum curtilobum.png"),
   ph([80.7,7],"Sri Lanka: tea","Sri Lanka-Tea plantation-15.jpg"),ph([14.25,40.85],"Naples: pizza","L&B Spumoni Gardens pizza (41436).jpg"),ph([129.9,-4.5],"Banda Islands: nutmeg","Nutmeg ready.jpg")]});
@@ -162,11 +162,11 @@ if(T("food")&&!T("food")._polB){T("food")._polB=1;
   s.body="Potatoes were first farmed near Lake Titicaca, high in the Andes, about 8,000 years ago: move along the chart to climb there from the coast. The Incas freeze-dried them into chuño, which keeps for years."});
  set("food","The Spice Islands",s=>{s.gfRuler={a:[129.9,-4.5],b:[12.34,45.44]};
   s.body="The Maluku Islands, the “Spice Islands”, were the only source of cloves, and the tiny Banda Islands of nutmeg. Drag the ruler: the Bandas are about 12,500 km from Venice, and spices passed through many traders’ hands on the way, growing dearer each time."});
- set("food","The food giants",s=>{s.ghosts=[{code:"nl",at:[-52,-12],col:"#e8590c",label:"Netherlands, true size"}];
-  s.body="The United States and Brazil export food on a giant scale. The Netherlands keeps up with high-tech greenhouses and by trading food through Rotterdam, Europe’s biggest port. The orange shape on Brazil is the Netherlands at its true size: Brazil and the US are each over 200 times bigger."});
+ set("food","The food giants",s=>{s.ghosts=[{code:"nl",at:[-22,-6],col:"#e8590c",label:"Netherlands, true size"}];
+  s.body="The United States and Brazil export food on a giant scale. The Netherlands keeps up with high-tech greenhouses and by trading food through Rotterdam, Europe’s biggest port. The orange shape is the Netherlands at its true size: drag it onto Brazil or the US, each over 200 times bigger."});
 }
 /* ───────── Landmarks ───────── */
-if(T("landmarks")&&!T("landmarks")._polB){T("landmarks")._polB=1;
+if(T("landmarks")&&!T("landmarks").steps._polB){T("landmarks").steps._polB=1;
  set("landmarks","Landmarks of the world",s=>{s.phPins=[ph([117.23,40.68],"The Great Wall","Great Wall of China July 2006.JPG"),ph([31.13,29.98],"The pyramids of Giza","All Gizah Pyramids.jpg"),
   ph([78.04,27.17],"The Taj Mahal","Taj Mahal, Agra, India edit2.jpg"),ph([-72.55,-13.16],"Machu Picchu","80 - Machu Picchu - Juin 2009 - edit.jpg"),
   ph([2.29,48.86],"The Eiffel Tower","Paris - The Eiffel Tower in spring - 2307.jpg"),ph([151.21,-33.86],"Sydney Opera House","Sydney Opera House - Dec 2008.jpg"),
@@ -177,15 +177,15 @@ if(T("landmarks")&&!T("landmarks")._polB){T("landmarks")._polB=1;
   s.gfRuler={a:[2.35,48.86],b:[-74.04,40.69]};
   s.body="France gave the statue to the United States for the 100th anniversary of American independence, and it was unveiled in 1886. It was built in Paris and shipped about 5,800 km across the Atlantic: drag the ruler."});
  set("landmarks","Machu Picchu",s=>{s.view=[-81,-18,-66,-9];s.globe=[-72.3,-13.3,5];delete s.spin;
-  s.xsec={title:"From Cusco down the Sacred Valley to Machu Picchu",pts:[[-71.97,-13.52,"Cusco"],[-72.03,-13.42],[-72.12,-13.31,"Urubamba"],[-72.26,-13.26,"Ollantaytambo"],[-72.4,-13.2],[-72.545,-13.163,"Machu Picchu"]],mark:2430,
-   note:"The dashed line marks 2,430 m, the height of Machu Picchu: lower and warmer than Cusco, on a ridge high above the Urubamba river."};
+  s.xsec={title:"From Cusco past Machu Picchu to the Amazon",pts:[[-71.97,-13.52,"Cusco"],[-72.12,-13.31],[-72.26,-13.26],[-72.545,-13.163,"Machu Picchu"],[-72.69,-12.86,"Quillabamba"],[-72.85,-12.4],[-73.0,-11.8,"Amazon lowlands"]],mark:2430,
+   note:"The dashed line marks 2,430 m, the height of Machu Picchu. It sits where the high Andes drop towards the Amazon rainforest: lower and warmer than Cusco."};
   s.body="The Incas built it around 1450, on a ridge 2,430 m up in the Andes, probably as an estate for the emperor Pachacuti. Move along the chart: it lies lower than Cusco, the Inca capital, where the forest begins."});
  set("landmarks","Stonehenge",s=>{s.lines=(s.lines||[]).filter(l=>!(l.coords&&l.coords[0]&&l.coords[0][1]>56));
   s.gfRuler={a:[-3.3,57.6],b:[-1.83,51.18]};
   s.more="In 2024 scientists showed that the 6-tonne Altar Stone came from north-east Scotland: drag the ruler, it is over 700 km away. The giant sarsen stones came from about 25 km to the north. The stones line up with the sunrise at midsummer and the sunset at midwinter."});
 }
 /* ───────── Flags ───────── */
-if(T("flags")&&!T("flags")._polB){T("flags")._polB=1;
+if(T("flags")&&!T("flags").steps._polB){T("flags").steps._polB=1;
  set("flags","The Union Jack in the corner",s=>{s.gfRuler={a:[-0.13,51.51],b:[174.78,-41.29]};
   s.body="Australia, New Zealand, Tuvalu and Fiji keep the Union Jack in the top corner, a sign of their past in the British Empire, though they lie on the far side of the world: drag the ruler, London to Wellington is about 18,800 km."});
  set("flags","Stars and stripes",s=>{s.lines=[];s.gfRuler={a:[-76.29,36.85],b:[-10.8,6.3]};s.view=[-100,-12,20,52];s.globe=[-40,22,1.2];
@@ -193,7 +193,7 @@ if(T("flags")&&!T("flags")._polB){T("flags")._polB=1;
  set("flags","Suns on flags",s=>{s.gfSun={utc:20.75,day:80,city:["Tokyo",9]};
   s.body="Japan’s red disc is the rising sun: its name, Nihon, means “origin of the sun”, because it lies east of China, towards the sunrise. The map shows dawn reaching Japan. Argentina and Uruguay share the “Sun of May”, with a face."});
  set("flags","Not a rectangle",s=>{s.xsec={title:"Nepal, from the plains to Everest",pts:[[85.92,26.73,"Janakpur"],[86.1,27.0],[86.35,27.35],[86.6,27.6],[86.93,27.99,"Everest"],[87.1,28.3,"Tibet"]],mark:3000,
-   note:"In under 200 km, Nepal climbs from under 100 m on the plains to 8,849 m at the top of Everest, the world’s highest point."};
+   note:"The dashed line marks 3,000 m. In under 200 km, Nepal climbs from under 100 m on the plains to the top of Everest, 8,849 m; the chart’s smoothed heights round off the sharpest peaks."};
   s.body="Nepal is the only country whose flag isn’t four-sided. Its two triangles are often said to stand for the peaks of the Himalayas: move along the chart to cross them."});
 }
 }
