@@ -270,7 +270,7 @@ S({title:"Learning to read",view:W,globe:[0,20,1],card:"left",hi:["se","cu"],
  stat:"In 1820 only about 12% of the world’s adults could read; today about 87% can",
  body:"Mass reading came with Protestant churches, cheap printing and, above all, free schools paid for by governments in the 1800s and 1900s. In Sweden, the church tested every household’s reading from the late 1600s, and by 1800 most Swedes could read.",
  more:"In 1961 Cuba sent about 250,000 volunteers, many of them teenagers, into the countryside and taught over 700,000 adults to read in a year. Still, about 750 million adults cannot read, two-thirds of them women."}),
-S({title:"School around the world",view:W,globe:[100,20,1],card:"left",hi:["sg","jp","kr","ee","fi"],hiSoft:["au","br","za"],
+S({title:"School around the world",view:W,globe:[100,20,1],card:"left",hi:["sg","jp","kr","ee","fi"],
  pins:[[[103.82,1.35],"Singapore: top in PISA 2022","point"],[[24.94,60.17],"Finland: school starts at 7","point"],[[139.69,35.69],"Japan: the year starts in April","point"],[[149.13,-35.28],"Australia: the year starts in summer","point"]],
  phPins:[ph([103.86,1.28],"Marina Bay, Singapore")],
  stat:"Children in Finland start school at seven; in England many start at four",
@@ -406,8 +406,8 @@ if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(mine())prep(p
 /* stops with their own map mode and a sub-map (culture "lang/…", people "urban", history "1600/spa"): the shared helpers read
    the tour's own mode (relief), so lend them the stop's mode while they run */
 const stopT=(T,S)=>T&&S&&S.mode&&T.map&&S.mode!==T.map.mode?Object.assign({},T,{map:Object.assign({},T.map,{mode:S.mode})}):T;
-if(!window.GF_I3_NOSUB&&typeof psKeyInfo==="function"){const _k=psKeyInfo;psKeyInfo=function(S,T){try{if(mine())T=stopT(T,S)}catch(e){}return _k.call(this,S,T)}}
-if(!window.GF_I3_NOSUB&&typeof psAutoLabels==="function"){const _a=psAutoLabels;psAutoLabels=function(S,T){try{if(mine())T=stopT(T,S)}catch(e){}return _a.call(this,S,T)}}
+if(typeof psKeyInfo==="function"){const _k=psKeyInfo;psKeyInfo=function(S,T){try{if(mine())T=stopT(T,S)}catch(e){}return _k.call(this,S,T)}}
+if(typeof psAutoLabels==="function"){const _a=psAutoLabels;psAutoLabels=function(S,T){try{if(mine())T=stopT(T,S)}catch(e){}return _a.call(this,S,T)}}
 /* the shared sub-map switch (psSetSub) only looks at the tour's own mode, so apply a stop's sub-map here once its mode is on */
 function applySub(){try{if(!mine()||psSwitching)return;const S=psSteps()[ps.i];if(!S||!S.mode||!S.sub||!allMapsColorModeOn||allMapsColorMode!==S.mode)return;const m=S.mode,[k,f]=S.sub.split("/");
  if(m==="history"){if(typeof HIST_DATA==="undefined"||!HIST_DATA)return;const i=HIST_DATA.years.findIndex(Y=>Y.y===k);if(i<0||(histIdx===i&&histFocus===(f||null)))return;
