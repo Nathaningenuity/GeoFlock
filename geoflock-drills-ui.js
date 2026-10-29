@@ -19,7 +19,7 @@ const only=(k,val)=>{const L=shared(k)[val];return!!L&&L.length===1};
 /* the drills: what the question shows, what the answer is, which directions make sense, and which way they start (def) */
 const DRILLS=[
  {id:"cur",name:"Currency",icon:"💰",ex:"Japan → yen",both:true,def:"fwd",
-  fwd:{ask:c=>"What is the currency of "+NAME(c)+"?",ans:c=>curShort(F(c)),alts:c=>curAlts(F(c)),hint:c=>F(c).cur+" · "+F(c).sym+" · "+F(c).iso,key:c=>curShort(F(c))},
+  fwd:{ask:c=>"What is the currency of "+NAME(c)+"?",ans:c=>curShort(F(c)),alts:c=>curAlts(F(c)),hint:c=>gfCurLabel(F(c)),key:c=>curShort(F(c))},
   rev:{ask:c=>"Which country uses the "+curShort(F(c))+"?",sub:c=>F(c).sym,ok:c=>only(v=>curShort(v),curShort(F(c)))}},
  {id:"lang",name:"Language",icon:"🗣️",ex:"Brazil → Portuguese",both:true,def:"fwd",
   fwd:{ask:c=>"Name an official language of "+NAME(c),ans:c=>F(c).lang[0],alts:c=>F(c).lang,all:c=>F(c).lang,key:c=>F(c).lang[0]},
@@ -90,7 +90,7 @@ function answer(given,ok){if(!R||R.answered||R.done)return;R.answered=true;R.giv
 function skip(){if(!R||R.answered||R.done)return;answer("",false)}
 function checkTyped(txt){const D=R.D,c=R.cur;if(R.dir==="rev")return false;const side=D.fwd;return side.alts(c).some(a=>close(txt,a))}
 function rightLabel(){const D=R.D,c=R.cur;if(R.dir==="rev")return NAME(c);const side=D.fwd;return side.all?side.all(c).join(" · "):side.ans(c)}
-function factLine(c){const v=F(c);const D=R.D;if(D.id==="cur")return v.cur+" · "+v.sym+" · "+v.iso;if(D.id==="lang")return"Official: "+v.lang.join(", ");if(D.id==="dem")return"People: "+v.dem;if(D.id==="call")return"Phone code +"+v.call;if(D.id==="city")return"Largest city: "+v.city+(v.city===(COUNTRY_BY_CODE[c].caps||[])[0]?" (also the capital)":"");if(D.id==="lm")return v.lm;if(D.id==="an")return"National animal: "+v.an;return""}
+function factLine(c){const v=F(c);const D=R.D;if(D.id==="cur")return gfCurLabel(v);if(D.id==="lang")return"Official: "+v.lang.join(", ");if(D.id==="dem")return"People: "+v.dem;if(D.id==="call")return"Phone code +"+v.call;if(D.id==="city")return"Largest city: "+v.city+(v.city===(COUNTRY_BY_CODE[c].caps||[])[0]?" (also the capital)":"");if(D.id==="lm")return v.lm;if(D.id==="an")return"National animal: "+v.an;return""}
 function render(msg){const v=document.getElementById("triviaView");if(!v)return;const S=st();
  if(!R||msg){v.innerHTML='<div class="dr-wrap'+(S.pv?" dr-pvonly":"")+'">'+(S.pv?'<button type="button" class="chip dr-home" id="drHome">← Trivia</button>':'')+'<div class="dr-head"><h2>Drills</h2><p>One fact, every country. Pick a drill and practise it until it sticks.</p></div>'+(msg?'<p class="dr-msg">'+esc(msg)+'</p>':'')+
   '<div class="dr-grid">'+DRILLS.map(D=>{const both=D.both;const d=dirOf(D);return'<div class="dr-tile" data-d="'+D.id+'"><button type="button" class="dr-go" data-go="'+D.id+'"><span class="dr-ic">'+D.icon+'</span><b>'+D.name+'</b><small>'+esc(D.ex)+'</small></button>'+(both?'<div class="dr-dir"><button type="button" data-dir="fwd" class="'+(d==="fwd"?"on":"")+'">Country → '+D.name.toLowerCase()+'</button><button type="button" data-dir="rev" class="'+(d==="rev"?"on":"")+'">'+D.name+' → country</button></div>':'<div class="dr-dir one">'+(D.revOnly?"Landmark → country":"Country → "+D.name.toLowerCase())+'</div>')+'</div>'}).join("")+'</div>'+

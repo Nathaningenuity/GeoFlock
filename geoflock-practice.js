@@ -63,7 +63,10 @@ body.sky-night .pro-card{ background:rgba(30,38,54,.8); }
 .pro-card b{ display:block; font-size:13.5px; } .pro-card span{ display:block; font-size:13px; opacity:.85; }
 .pro-go{ text-align:center; margin:22px 0; } .pro-go p{ opacity:.75; margin:0 0 12px; }
 .pro-mcard{ display:flex !important; flex-direction:column; align-items:stretch !important; padding:8px !important; gap:8px; }
-.pro-mcard .pro-cap{ display:flex; align-items:center; gap:10px; padding:0 4px 2px; } .pro-mcard .pro-cap img{ width:30px !important; height:auto !important; border-radius:3px; flex:none; }
+.pro-mcard .pro-cap{ display:flex; align-items:center; gap:10px; padding:0 4px 2px; }
+/* every flag in the same 3:2 box with a 1px hairline, so light flags (Cyprus, Japan) keep their edge */
+.pro-mcard .pro-cap img{ width:30px !important; height:20px !important; object-fit:contain; border-radius:2px; flex:none; box-shadow:none !important; border:1px solid rgb(0 0 0 / .18); box-sizing:content-box; background:transparent; }
+body.sky-night .pro-mcard .pro-cap img{ border-color:rgb(255 255 255 / .28); }
 .pro-or{ margin:12px 0 8px !important; font-size:12px; } .pro-alt{ background:#fff !important; color:#2b3566 !important; border:2px solid #e3b77c !important; } .pro-alt small{ display:block; font-weight:500; font-size:11.5px; opacity:.7; }
 body.sky-night .pro-alt{ background:#253049 !important; color:#e8ecf6 !important; }
 .pro-count{ text-align:center; font-size:12.5px; opacity:.65; margin:0 0 10px; }
@@ -120,7 +123,7 @@ const REG=["all","Europe","Asia","Africa","Americas","Oceania"];
 const OTABS=[["study","Study"],["flashcards","Flashcards"],["quiz","Quiz"],["speed","Speed Round"]];
 function drills(){const D=window.gfDrills;const L=D?D.list().slice():[];L.push({id:"call",name:"Phone code",icon:"📞"});
  if(window.gfProvinces)L.push({id:"pv",name:"States & provinces",icon:"🗺️",noFlash:true});return L}
-function factText(id,v){if(!v)return null;switch(id){case"cur":return v.cur+(v.sym?" ("+v.sym+")":"");case"lang":return(v.lang||[]).join(", ");case"dem":return v.dem;case"city":return v.city;case"lm":return v.lm;case"an":return v.an;case"call":return v.call?"+"+v.call:null}return null}
+function factText(id,v){if(!v)return null;switch(id){case"cur":return typeof gfCurLabel==="function"?gfCurLabel(v):v.cur;case"lang":return(v.lang||[]).join(", ");case"dem":return v.dem;case"city":return v.city;case"lm":return v.lm;case"an":return v.an;case"call":return v.call?"+"+v.call:null}return null}
 function renderOther(){const v=document.getElementById("triviaView");if(!v||!isOther())return;sync();const P=PS(),L=drills();if(!L.find(x=>x.id===P.dl))P.dl=L[0]?L[0].id:"cur";
  const D=L.find(x=>x.id===P.dl)||{};let tab=P.tab;if(D.noStudy&&tab==="study")tab="quiz";if(D.noFlash&&(tab==="flashcards"||tab==="speed"))tab=D.noStudy?"quiz":"study";
  const tabs='<nav class="tabs pro-tabs">'+OTABS.map(([k,l])=>{const off=(k==="study"&&D.noStudy)||((k==="flashcards"||k==="speed")&&D.noFlash);return'<button type="button" class="tab-btn'+(tab===k?" active":"")+'" data-prt="'+k+'"'+(off?' disabled title="Not for this one"':'')+'>'+l+'</button>'}).join("")+'</nav>';
