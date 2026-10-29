@@ -3,7 +3,8 @@
    Photos come first from the app's own photo library (PS_PHOTO_DATA, looked up by file name: drillimg/index.json "lib"),
    then from drillimg/ (Wikipedia/Wikimedia Commons, credited in drillimg/index.json "credit"). A fact without a photo gets a
    drawn stand-in (the currency's sign on a note, the flag). gfDrillMedia.html(drillId, code, cls, {clue}) gives the markup;
-   with clue:true nothing in it names the answer (a reverse question shows the picture as its clue). */
+   with clue:true nothing in it names the answer (a reverse question shows the picture as its clue; for a currency
+   that is the drawn note, since a real banknote names its country). */
 (function(){
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let IDX={by:{},credit:{},lib:{}};fetch("drillimg/index.json").then(r=>r.ok?r.json():null).then(j=>{if(j&&j.by){IDX=Object.assign({by:{},credit:{},lib:{}},j);document.dispatchEvent(new Event("gf-drillimg"))}}).catch(()=>{});
@@ -26,11 +27,10 @@ function langOne(name){const L=window.gfLangId&&gfLangId.LANGS;if(!L||!name)retu
 /* a stand-in banknote: the currency's sign big, its code and name small (not when it is the clue: the code starts with the country's) */
 function note(v,clue){const sym=esc(v.sym||v.iso||"¤"),hue=[...String(v.iso||v.cur)].reduce((a,ch)=>(a*31+ch.charCodeAt(0))%9973,7)*47%360;
  return'<div class="dm-note" style="--h:'+hue+'"><b>'+sym+'</b>'+(clue?'':'<small>'+esc(v.iso||"")+'</small><i>'+esc(v.cur)+'</i>')+'</div>'}
-function html(id,c,cls,opt){const v=F(c);if(!v)return"";const k=cls||"",clue=!!(opt&&opt.clue),noCap=!!(opt&&opt.noCap);const P=SUBJ[id]?photo(id,c):null;
+function html(id,c,cls,opt){const v=F(c);if(!v)return"";const k=cls||"",clue=!!(opt&&opt.clue),noCap=!!(opt&&opt.noCap);const P=SUBJ[id]&&!(clue&&id==="cur")?photo(id,c):null;
  if(P){const name=SUBJ[id](v)||"",cr=[P.by,P.lic].filter(Boolean).join(" · "),tip=(clue?"":name+" — ")+"Photo: "+(cr||"Wikimedia Commons");
-  /* the currency's name would give away the country of a reverse question */
-  const cap=noCap||(clue&&id==="cur")?"":name;
-  return'<figure class="dm dm-ph '+k+'" title="'+esc(tip)+'"><span class="dm-bg" style="background-image:url(&quot;'+esc(P.src)+'&quot;)"></span><img src="'+esc(P.src)+'" alt="'+esc(clue&&id==="cur"?"A banknote or coin":name)+'" loading="lazy">'+
+  const cap=noCap?"":name;
+  return'<figure class="dm dm-ph '+k+'" title="'+esc(tip)+'"><span class="dm-bg" style="background-image:url(&quot;'+esc(P.src)+'&quot;)"></span><img src="'+esc(P.src)+'" alt="'+esc(name)+'" loading="lazy">'+
    (cap?'<figcaption>'+esc(cap)+'</figcaption>':'')+'<span class="dm-cr" aria-hidden="true">ⓘ</span></figure>'}
  if(id==="lang"){const L=langImg(v.lang||[]);if(L)return'<figure class="dm dm-lang '+k+'"><img src="'+L.src+'" alt="A line of '+esc(L.name)+'" loading="lazy"><figcaption>'+(clue?'Which language is this?':esc(L.name))+'</figcaption></figure>'}
  if(id==="cur")return'<figure class="dm dm-cur '+k+'">'+note(v,clue)+'</figure>';
@@ -44,7 +44,7 @@ const st=document.createElement("style");st.textContent=`
 .dm-ph img, .pro-card .dm-ph img{ object-fit:contain; position:relative; }
 .dm-ph figcaption{ position:absolute; left:0; right:0; bottom:0; padding:14px 10px 6px; font:600 12.5px/1.25 system-ui,sans-serif; color:#fff; text-align:left;
  background:linear-gradient(transparent,rgba(0,0,0,.62)); text-shadow:0 1px 2px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
-.dm-cr{ position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; font:700 11px/18px system-ui,sans-serif; text-align:center; opacity:0; transition:opacity .15s; pointer-events:none; }
+.dm-cr{ position:absolute; top:6px; right:6px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; font:700 11px/18px system-ui,sans-serif; text-align:center; opacity:.55; transition:opacity .15s; pointer-events:none; }
 .dm-ph:hover .dm-cr{ opacity:1; }
 .pro-card .dm-ph figcaption{ display:none; }
 .dm-flag{ background:#f3f5f8; } .dm-flag img, .pro-card .dm-flag img{ object-fit:contain; padding:10%; filter:drop-shadow(0 2px 6px rgba(0,0,0,.18)); }

@@ -61,13 +61,13 @@ function frame(){const y=YEARS[pos];if(framesCache.has(pos))return framesCache.g
  if(framesCache.size>60)framesCache.clear();framesCache.set(pos,fr);lastFrame=fr;return fr}
 const keyOf=p=>p.gk&&HIST_DATA.groups[p.gk]?"g:"+p.gk:"n:"+p.n;
 const keyName=k=>KN[k]||(k.startsWith("g:")?HIST_DATA.groups[k.slice(2)][0]:k.slice(2));
-function labList(){const seen=new Set,L=[];frame().slice().sort((a,b)=>b.properties.a-a.properties.a).forEach(f=>{const p=f.properties;if(!p.n||seen.has(p.n)||p.a<(p.k===0?40:3))return;if(histFocus&&keyOf(p)!==histFocus)return;seen.add(p.n);L.push([keyOf(p),p.n,p.l[0],p.l[1],p.k===0?Math.min(p.a,60):p.a])});return L}
+function labList(){const seen=new Set,L=[];frame().slice().sort((a,b)=>b.properties.a-a.properties.a).forEach(f=>{const p=f.properties;if(!p.n||seen.has(p.n)||p.a<(p.k===0?40:3))return;if(histFocus&&keyOf(p)!==histFocus)return;seen.add(p.n);L.push([keyOf(p),p.n,p.l[0],p.l[1],p.k===0?Math.min(p.a,60):p.a,0,f._b,p.k===0])});return L}
 let KN={};/* a group with one member alive is named after that member (Denmark in 1000 is not yet "Denmark–Norway") */
 function powers(){const m=new Map,mem={};frame().forEach(f=>{const p=f.properties;if(p.k===0||!p.n)return;const k=keyOf(p);m.set(k,(m.get(k)||0)+p.a);(mem[k]=mem[k]||new Set).add(p.n)});KN={};for(const k in mem)if(k.startsWith("g:")&&mem[k].size===1)KN[k]=[...mem[k]][0];return[...m].sort((a,b)=>b[1]-a[1]).slice(0,12).map(x=>x[0])}
 const W=(name,fn)=>{const old=window[name]||eval(name);const f=function(){return useNew()?fn.apply(this,arguments):old.apply(this,arguments)};try{eval(name+"=f")}catch(e){window[name]=f}};
 W("histFeatures",()=>frame());
 W("histYear",()=>yearObj());
-W("histLabelList",()=>labList());
+W("histLabelList",()=>labMode()==="off"?[]:labList());
 W("histFill",p=>{if(histFocus&&keyOf(p)!==histFocus)return p.k===0?"#f1ece2":"#e6e1d6";if(p.k===0||!p.c)return p.k===0?HIST_LAND:"hsl(200,28%,80%)";return p.c});
 W("histDescribe",f=>{const p=f.properties;let s=p.n||"Unnamed";if(p.k===0)return s+" — peoples without a state";const G=p.gk&&HIST_DATA.groups[p.gk];if(G&&G[0]!==p.n&&!KN["g:"+p.gk]&&!/^(Russia|China|India|Persia|Germany|Italy|Japan|Egypt)$/.test(G[0]))s+=" — "+G[0];
  if(p.o){const a=Math.floor(p.s),b=p.e>=9999?null:Math.floor(p.e);s+=" ("+(b==null?"since "+yLabel(a):yLabel(a).replace(/^AD /,"")+"–"+yLabel(b).replace(/^AD /,""))+")"}return s});
@@ -83,6 +83,7 @@ W("histLegendHTML",()=>{const Y=yearObj(),N=YEARS.length,fr=frame();const keys=p
       <button type="button" class="hist-btn" data-hstep="1" aria-label="Later">›</button>
     </div>
     <div class="hist-cap"><b>${Y.label}</b> ${loading?"Loading borders…":"<i>"+period(YEARS[pos])[2]+"</i> · "+pRange(period(YEARS[pos]))}</div>
+    <span class="hist-names">Names <button type="button" data-hnames="main" class="${labMode()==="main"?"on":""}" title="Names that fit; zoom in for smaller places">Main</button><button type="button" data-hnames="all" class="${labMode()==="all"?"on":""}" title="Every name that has room">All</button><button type="button" data-hnames="off" class="${labMode()==="off"?"on":""}" title="No names: hover a place to see it">Off</button></span>
     <span class="legend-swatches th-swatches hist-keys">${keys}${fr.some(f=>f.properties.k===0)?`<span class="legend-swatch"><i style="background:${HIST_LAND}"></i>No state</span>`:""}</span>
     <span class="legend-note">Hover to name a state; click it for its story. Click a coloured name to show it alone; use ← → to step through time. Borders: OpenHistoricalMap contributors (CC0), with gaps filled from historical-basemaps by A. Ourednik (GPL-3.0); coastlines from Natural Earth. Borders before about 1500 are approximate, and many early states had no fixed borders at all.</span>`});
 W("histSet",i=>{pos=Math.max(0,Math.min(YEARS.length-1,i|0));histIdx=pos;need(YEARS[pos]);const fr=frame();if(histFocus&&!fr.some(f=>keyOf(f.properties)===histFocus))histFocus=null;histHotI=null;histRender();
@@ -111,9 +112,15 @@ W("histGlobeDraw",(ctx,p,gv)=>{if(!histOn()||!gv||gv!==amGlobe)return;const path
  feats.forEach(f=>{if(!flat){const b=f._b;let x1=b[1][0];if(x1<b[0][0])x1+=360;if(x1-b[0][0]<170){const c=[(b[0][0]+x1)/2,(b[0][1]+b[1][1])/2],r=Math.max(d3.geoDistance(c,b[0]),d3.geoDistance(c,b[1]),d3.geoDistance(c,[b[0][0],b[1][1]]),d3.geoDistance(c,[x1,b[0][1]]));if(d3.geoDistance(c,ctr)-r>1.6)return}}
   ctx.beginPath();path(f);ctx.fillStyle=histFill(f.properties);ctx.fill();if(f.properties.k!==0){ctx.lineWidth=f.properties.o?.55:.45;ctx.strokeStyle="rgba(60,45,30,.42)";ctx.stroke()}});
  ctx.globalAlpha=1;if(histHotI!=null&&feats[histHotI]){ctx.beginPath();path(feats[histHotI]);ctx.lineWidth=2;ctx.strokeStyle="#fff";ctx.stroke()}
- const placed=[],k=gv.ls?gv.ls():1;ctx.textAlign="center";ctx.textBaseline="middle";labList().forEach(([gid,nm,lon,lat,area])=>{if(!flat&&d3.geoDistance([lon,lat],ctr)>1.35)return;const q=p([lon,lat]);if(!q||!isFinite(q[0]))return;
-  const fs=(area>600?15:area>150?13:area>40?11.5:10.5)*k;ctx.font=`800 ${fs}px 'Nunito Sans', system-ui, sans-serif`;const w=ctx.measureText(nm).width,bx=[q[0]-w/2,q[1]-fs*.6,q[0]+w/2,q[1]+fs*.6];if(placed.some(o=>!(bx[2]<o[0]||bx[0]>o[2]||bx[3]<o[1]||bx[1]>o[3])))return;placed.push(bx);
-  ctx.lineWidth=3;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.strokeText(nm,q[0],q[1]);ctx.fillStyle="#2a2118";ctx.fillText(nm,q[0],q[1])});ctx.restore()});
+ /* names: "Main" names a place only when its name fits inside it on the screen (zoom in for the small ones), "All" names
+    everything that has room, "Off" leaves names to the hover */
+ const LM=labMode();if(LM!=="off"){const placed=[],k=gv.ls?gv.ls():1;ctx.textAlign="center";ctx.textBaseline="middle";labList().forEach(([gid,nm,lon,lat,area,_a,b,people])=>{if(!flat&&d3.geoDistance([lon,lat],ctr)>1.35)return;const q=p([lon,lat]);if(!q||!isFinite(q[0]))return;
+  const fs=(area>600?14:area>150?12.5:11)*k;ctx.font=(people?"italic 700 ":"800 ")+fs+"px 'Nunito Sans', system-ui, sans-serif";const w=ctx.measureText(nm).width;
+  if(b){const my=(b[0][1]+b[1][1])/2,a0=p([b[0][0],my]),a1=p([b[1][0],my]),sw=a0&&a1?Math.abs(a1[0]-a0[0]):0;const need=LM==="all"?(people?.9:.6):(people?1.5:.95);if(sw<w*need)return}
+  const bx=[q[0]-w/2-2,q[1]-fs*.62,q[0]+w/2+2,q[1]+fs*.62];if(placed.some(o=>!(bx[2]<o[0]||bx[0]>o[2]||bx[3]<o[1]||bx[1]>o[3])))return;placed.push(bx);
+  ctx.lineWidth=3;ctx.strokeStyle="rgba(255,255,255,.85)";ctx.strokeText(nm,q[0],q[1]);ctx.fillStyle=people?"#6b5a45":"#2a2118";ctx.fillText(nm,q[0],q[1])})}ctx.restore()});
+function labMode(){try{return localStorage.getItem("gfHistNames")||"main"}catch(e){return"main"}}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-hnames]");if(!b)return;try{localStorage.setItem("gfHistNames",b.dataset.hnames)}catch(err){}document.querySelectorAll("[data-hnames]").forEach(x=>x.classList.toggle("on",x===b));try{amGlobe.request()}catch(err){}try{histRender()}catch(err){}});
 /* the old drag handler counts the old frames, so the new map handles its own drag on the slider */
 document.addEventListener("pointerdown",e=>{if(!useNew()||!histOn()||e.button>0)return;const tr=e.target.closest&&e.target.closest(".hist-track.hist2");if(!tr)return;const r=tr.querySelector(".hist-range");if(!r)return;
  if(e.target.closest("[data-hy]")&&e.target!==r)return;e.stopPropagation();if(e.target!==r)e.preventDefault();r.focus();histStop();const legend=tr.closest("#populationLegend");legend&&legend.classList.add("hist-dragging");window.HIST_DRAG=true;
@@ -122,6 +129,6 @@ document.addEventListener("pointerdown",e=>{if(!useNew()||!histOn()||e.button>0)
  document.addEventListener("pointermove",mv);document.addEventListener("pointerup",up);document.addEventListener("pointercancel",up);mv(e)},true);
 /* when a tour hands the map back, show the new map at the year it was on */
 let wasNew=null;setInterval(()=>{const n=useNew();if(n!==wasNew){wasNew=n;if(n){histIdx=pos;histFocus=null}histShown=-1;framesCache.clear();try{if(histOn()){const legend=document.getElementById("populationLegend");if(legend)legend.innerHTML=histLegendHTML();histRender()}}catch(e){}}},500);
-const st=document.createElement("style");st.textContent=`.hist-track.hist2 .hist-era{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:clip}.hist-track.hist2 .hist-tick span{white-space:nowrap}.hist-cap i{font-style:normal;font-weight:800}.hist-track.hist2 .hist-era:not(.on){color:transparent}.hist-track.hist2 .hist-era.on{overflow:visible;z-index:2}`;document.head.appendChild(st);
+const st=document.createElement("style");st.textContent=`.hist-track.hist2 .hist-era{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:clip}.hist-track.hist2 .hist-tick span{white-space:nowrap}.hist-cap i{font-style:normal;font-weight:800}.hist-names{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;margin:2px 10px 4px 0;vertical-align:middle}.hist-names button{border:1px solid #c9bda6;background:#fffaf0;border-radius:999px;padding:1px 9px;font:700 11.5px system-ui;cursor:pointer;color:#4a3520}.hist-names button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}body.dark .hist-names button:not(.on),body.sky-night .hist-names button:not(.on){background:#25304a;color:#e6edf7;border-color:#3a4a66}.hist-track.hist2 .hist-era:not(.on){color:transparent}.hist-track.hist2 .hist-era.on{overflow:visible;z-index:2}`;document.head.appendChild(st);
 window.GF_HIST2={years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?YEARS.length-1:i)}};
 })();
