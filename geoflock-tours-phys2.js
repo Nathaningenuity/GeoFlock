@@ -20,7 +20,7 @@ S({title:"Weather and winds",view:W,globe:[-40,15,1],gfCur:{air:1},
  stat:"Weather is air on the move: the Sun heats the Earth unevenly, and the winds try to even it out",
  body:"The tropics get far more sunshine than the poles. Warm air rises, cold air sinks, and the spinning Earth bends the moving air into great belts of wind. The arrows on the map show the winds near the ground and, as longer lines, the jet streams high above.",
  more:"This tour visits the steady trade winds, the jet stream, the monsoon, the birthplaces of hurricanes, the windiest and the wettest places on Earth, and a lake lit up by lightning almost every night."}),
-S({title:"Belts of wind",view:[-180,-62,180,72],globe:[-30,10,1],card:"left",gfCur:{air:1},on:["grid"],
+S({title:"Belts of wind",view:[-180,-62,180,72],globe:[-30,10,1],card:"right",gfCur:{air:1},on:["grid"],
  pins:[[[-35,16],"North-east trade winds","point"],[[-25,-14],"South-east trade winds","point"],[[-27,2],"Doldrums","point"],[[-38,47],"Westerlies","point"],[[-110,-48],"Westerlies","point"],[[-42,31],"Horse latitudes: sinking air","point"]],
  stat:"Near the equator the trade winds blow steadily from the east; farther from it, the westerlies blow from the west",
  body:"Hot air rises at the equator, spreads out high up and sinks again about 30° north and south. This giant loop is called a Hadley cell. The sinking air is dry, which is why so many deserts lie near 30°, and the air flowing back towards the equator along the ground makes the trade winds.",
@@ -347,7 +347,7 @@ S({title:"Ground that never thaws",view:[78,48,172,76],globe:[125,64,2],card:"le
  phPins:[ph([129.73,62.03],"Yakutsk"),ph([136,71],"Thawing coast, Yana Bay")],
  stat:"Permanently frozen ground, permafrost, lies under about a quarter of the Northern Hemisphere’s land",
  body:"Permafrost is ground that stays frozen for at least two years in a row; in parts of Siberia it is over a kilometre deep. It underlies about two-thirds of Russia and half of Canada. Yakutsk is the largest city built on it, its buildings raised on stilts so their warmth does not thaw the ground.",
- more:"As permafrost thaws, the ground slumps and buildings crack. The Batagaika crater in Siberia, over 1 km across, has grown for decades. Thawing ground also releases old carbon, and has revealed frozen mammoths and woolly rhinos."}),
+ more:"As permafrost thaws, the ground slumps and buildings crack. The Batagaika crater in Siberia, a slump about 1 km across, has grown for decades. Thawing ground also releases old carbon, and has revealed frozen mammoths and woolly rhinos."}),
 S({title:"The last ice age",view:[-130,24,64,74],globe:[-30,55,1.2],card:"left",gfSea:-120,
  lines:[{coords:LAUR,kind:"dash"},{coords:FENNO,kind:"dash"}],
  pins:[[[-87.63,41.88],"Chicago: under the ice","point"],[[13.4,52.52],"Berlin: at the ice edge","point"],[[3,54.8],"Doggerland: dry land","point"],[[-90,57],"Ice up to 3 km thick","point"]],
@@ -402,7 +402,7 @@ if(typeof psEnd==="function"){const _e=psEnd;psEnd=function(){const was=mine(),g
 /* ---------- questions: a right answer inks the named country's Knowledge stamp ---------- */
 try{if(typeof TOURQ!=="undefined"){
 TOURQ.weather={mid:[
- {at:"Belts of wind",st:"Belts of wind",q:"Which way do the trade winds blow?",o:["From the poles to the equator, curving to blow from the east","From the west, all round the world","Straight up","From the equator to the poles"],a:0,why:"Air sinking near 30° flows back towards the equator, and the spinning Earth turns it to blow from the east.",kc:"cv"},
+ {at:"Belts of wind",st:"Belts of wind",q:"Which way do the trade winds blow?",o:["Towards the equator, from the east","From the west, all round the world","Straight up","From the equator towards the poles"],a:0,why:"Air sinking near 30° flows back towards the equator, and the spinning Earth turns it to blow from the east.",kc:"cv"},
  {at:"The wettest place",st:"The wettest place",q:"Why is Mawsynram so wet?",o:["It is on the equator","Monsoon winds hit steep hills straight off the sea","It is in a rainforest","It is below sea level"],a:1,why:"The air is forced up the Khasi Hills, cools and drops its water.",kc:"in"},
  {at:"Warm winds off the mountains",st:"Warm winds off the mountains",q:"What is a chinook?",o:["A cold sea breeze","A warm, dry wind coming down a mountain","A kind of tornado","A summer monsoon"],a:1,why:"Air warms as it rushes down the far side of a range; in the Alps it is called the foehn.",kc:"us"}],
  recap:[
