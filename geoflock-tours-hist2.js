@@ -51,7 +51,7 @@ S({title:"Four empires fall",view:[-12,34,45,66],globe:[18,50,1.5],sub:"1919/new
  pins:[[[2.12,48.8],"Versailles","point"]],
  stat:"By 1919 the German, Austro-Hungarian, Russian and Ottoman empires were gone, and nine new countries were on the map of Europe",
  body:"The fighting stopped at 11 a.m. on 11 November 1918. At the Paris Peace Conference, the winners redrew the map: Poland, Czechoslovakia, Yugoslavia, Finland, Estonia, Latvia and Lithuania appeared, with Austria and Hungary as separate states (yellow).",
- more:"Germany signed the Treaty of Versailles on 28 June 1919, five years to the day after Sarajevo, and lost land, colonies and its army. About 9 to 10 million soldiers had died. A flu pandemic that followed, in 1918–20, killed tens of millions more."}),
+ more:"Germany signed the Treaty of Versailles on 28 June 1919, five years to the day after Sarajevo, and lost land, colonies and most of its army. The last Habsburg emperor, Karl, gave up power at Schönbrunn Palace in Vienna (in the photo) on 11 November 1918. About 9 to 10 million soldiers had died. A flu pandemic that followed, in 1918–20, killed tens of millions more."}),
 S({title:"Crash and dictators",view:[-153,0,42,68],globe:[-30,40,1.1],sub:"1930",
  G:[{t:"Fascist dictatorships by 1938",c:"#8c6d5a",codes:["de","it"]}],
  pins:[[[-74.01,40.71],"Wall Street crash, 1929","point"],[[12.5,41.9],"Mussolini in power, 1922","point"],[[13.4,52.52],"Hitler in power, 1933","point"],[[-3.7,40.42],"Spanish Civil War, 1936–39","point"]],
@@ -99,7 +99,7 @@ S({title:"The human cost",view:W,globe:[60,35,1],sub:"1945",
  G:[{t:"Soviet Union: about 24 million dead",c:"#b9524f",codes:USSR},{t:"China: 15 to 20 million",c:"#c9a24f",codes:["cn"]},{t:"Germany, Poland, Japan: 3 to 7 million each",c:"#8c6d5a",codes:["de","pl","jp"]}],
  stat:"World War II killed about 70 to 85 million people, around 3% of everyone alive in 1940",
  body:"More civilians died than soldiers: in bombing, massacres, famine and disease, and in the Holocaust. The Soviet Union and China lost the most people; Poland lost the biggest share, about one person in six.",
- more:"Tens of millions more were left homeless or driven from their homes. Compare countries on the card: estimates vary, so the numbers are rounded."}),
+ more:"Tens of millions more were left homeless or driven from their homes. Warsaw’s Old Town (in the photo) was almost totally destroyed in 1944 and rebuilt brick by brick after the war. Compare countries on the card: estimates vary, so the numbers are rounded."}),
 S({title:"The United Nations",view:W,globe:[-60,35,1],sub:"1945",spin:100,
  G:[{t:"Permanent members of the Security Council",c:"#4a7fc1",codes:["us","gb","fr","cn","ru"]}],
  pins:[[[-122.42,37.78],"San Francisco, June 1945","point"],[[-73.97,40.75],"UN headquarters, New York","point"]],
@@ -401,7 +401,7 @@ const P={sarajevo:"Latin Bridge 2023.jpg",anzac:"View of Anzac Cove - Gallipoli 
  mostar:"Stari Most, Mostar.jpg",zaatari:"Zaatari Refugee Camp John Green 18.png",kyiv:"People on a metro station during Russian invasion, Kyiv, 2022.jpg",przemysl:"Ukrainian refugees at Przemyśl returning home.jpg",
  greenland:"Early Melt on the Greenland Ice Sheet (33354485670).jpg",riga:"0873 LVA Riga freedom monument SE.jpg",astana:"Night at Esil District, Astana (P1190721).jpg",baghdad:"Sunset in Baghdad, Iraq.jpg",
  westminster:"Palace of Westminster as seen from Westminster Bridge.jpg",charles:"Charles Bridge Covid.jpg",krakow:"Empty Old Town Market Square in Kraków during the COVID-19 pandemic in Poland, April 2020.jpg",wuhan:"CN - Hubei - Wuhan - Kranichpagode.jpg",
- front:"The Australian Imperial Force on the Western Front, 1916-1918. Q578.jpg",damascus:"Old Damascus 20.jpg",nyse:"Wall Street - New York Stock Exchange.jpg",stpauls:"St Pauls aerial (cropped).jpg",dday:"Into the Jaws of Death 23-0455M edit.jpg",warsaw:"Warsaw, Old Town Square.jpg",nkrumah:"KwameNkrumahOnGhanianIndependenceDay6March1957PostageStamp.JPG",bamyan:"Afghan students in Bamyan.jpg",
+ front:"The Australian Imperial Force on the Western Front, 1916-1918. Q578.jpg",damascus:"Old Damascus 20.jpg",nyse:"Wall Street - New York Stock Exchange.jpg",stpauls:"St Pauls aerial (cropped).jpg",dday:"Into the Jaws of Death 23-0455M edit.jpg",warsaw:"Warsaw, Old Town Square.jpg",schon:"Partie centrale façade château Schönbrunn côté Jardins lumière soir hiver.jpg",nkrumah:"KwameNkrumahOnGhanianIndependenceDay6March1957PostageStamp.JPG",bamyan:"Afghan students in Bamyan.jpg",
  nato:"Finland flag raising at NATO Headquarters 4 April 2023.jpg",bamiyan:"Buddhas of Bamiyan D39.jpg"};
 const PIN={"Latin Bridge, Sarajevo":P.sarajevo,"Anzac Cove":P.anzac,"Stalingrad":P.stal,"Auschwitz-Birkenau":P.ausch,"USS Arizona Memorial":P.arizona,"Genbaku Dome":P.genbaku,"UN General Assembly":P.unga,
  "Checkpoint Charlie, 1963":P.checkpoint,"The Berlin Wall":P.wall,"Panmunjom":P.dmz,"Wagah border":P.wagah,"Black Star Square, Accra":P.accra,"Ho Chi Minh Mausoleum":P.hcm,"Huey helicopter":P.huey,"Havana":P.havana,
@@ -410,7 +410,7 @@ const PIN={"Latin Bridge, Sarajevo":P.sarajevo,"Anzac Cove":P.anzac,"Stalingrad"
  "Greenland ice melting":P.greenland,"Freedom Monument, Riga":P.riga,"Astana":P.astana,"Baghdad":P.baghdad,"Palace of Westminster":P.westminster,"Charles Bridge, Prague, 2020":P.charles,"Kraków, April 2020":P.krakow,"Wuhan":P.wuhan};
 const CARD={
  hwars:{"A world at war":P.anzac,"A shot in Sarajevo":P.sarajevo,"Gallipoli":P.anzac,"Stalingrad":P.stal,"The Holocaust":P.ausch,"War in the Pacific":P.arizona,"Hiroshima and Nagasaki":P.genbaku,"The United Nations":P.unga,
-  "The Western Front":P.front,"A new Middle East":P.damascus,"Crash and dictators":P.nyse,"Blitzkrieg":P.stpauls,"D-Day":P.dday,"The human cost":P.warsaw},
+  "The Western Front":P.front,"A new Middle East":P.damascus,"Crash and dictators":P.nyse,"Blitzkrieg":P.stpauls,"D-Day":P.dday,"The human cost":P.warsaw,"Four empires fall":P.schon},
  hcoldwar:{"Two superpowers":P.bikini,"The Iron Curtain":P.checkpoint,"Berlin divided":P.wall,"NATO and the Warsaw Pact":P.bikini,"Partition of India":P.wagah,"China’s revolution":P.tian,"The Korean War":P.dmz,"The Year of Africa":P.accra,"Vietnam":P.huey,"The Cuban Missile Crisis":P.havana,"The space race":P.aldrin,"The Wall falls":P.fall,"The end of the Soviet Union":P.kremlin,"Neither East nor West":P.nkrumah,"Afghanistan, 1979":P.bamyan},
  hsince91:{"A new world":P.nine,"One country becomes fifteen":P.riga,"Yugoslavia breaks apart":P.mostar,"Europe grows together":P.ep,"The rise of China":P.shenzhen,"September 11":P.nine,"The Iraq War":P.baghdad,"The Arab Spring":P.zaatari,"The newest country":P.juba,"Climate agreements":P.greenland,"Brexit":P.westminster,"COVID-19":P.charles,"War in Ukraine":P.kyiv}};
 const PHOTOS=window.GF_HIST2_PHOTOS||[];

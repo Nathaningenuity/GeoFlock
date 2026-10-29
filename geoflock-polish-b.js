@@ -10,7 +10,9 @@ const OPEN={cities:"Cities of the world",migration:"People on the move",people:"
 const W=[-180,-58,180,80];
 const T=id=>{try{const t=typeof PS_TOURS!=="undefined"&&PS_TOURS[id];return t&&t.steps&&t.steps[0]&&t.steps[0].title===OPEN[id]?t:null}catch(e){return null}};
 const st=(id,title)=>{const t=T(id);return t?t.steps.find(s=>s.title===title):null};
-const set=(id,title,f)=>{const s=st(id,title);if(s)try{f(s)}catch(e){console.error(e)}};
+/* some stops lock fields with getters (psLock in index.html); writes go through defineProperty so they replace those */
+const def=(t,k,v)=>Object.defineProperty(t,k,{configurable:true,enumerable:true,writable:true,value:v});
+const set=(id,title,f)=>{const s=st(id,title);if(s)try{f(new Proxy(s,{set(t,k,v){def(t,k,v);return true}}))}catch(e){console.error(e)}};
 const S=o=>Object.assign({_autoSpin:1,_ctx:1,_lg:1,_ky:1,_enr:1},o);
 /* insert a new stop after the stop titled `after` (once) */
 const ins=(id,after,s)=>{const t=T(id);if(!t||t.steps.some(x=>x.title===s.title))return;const i=t.steps.findIndex(x=>x.title===after);if(i<0)return;t.steps.splice(i+1,0,S(s))};
