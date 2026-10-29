@@ -420,7 +420,7 @@ function pills(){try{ const dn=LEGS.filter((_,i)=>legDone(i)).length;
 setInterval(pills,1000);
 let hq=0;new MutationObserver(()=>{if(hq)return;hq=requestAnimationFrame(()=>{hq=0;
  /* the current Home page: a chart card under "Today" */
- const td=document.querySelector("section.hi-today");if(td&&!document.getElementById("hxRoute")){const v=document.createElement("section");v.id="hxRoute";v.className="hi-voyage";v.innerHTML='<h2 class="hi-h2">Your voyage</h2>';td.after(v)}
+ const td=document.querySelector("section.hi-today");if(td&&!document.getElementById("hxRoute")){const v=document.createElement("section");v.id="hxRoute";v.className="hi-voyage";v.innerHTML='<h2 class="hi-h2">Your voyage</h2>';(document.querySelector("section.hi-index")||td).after(v)}
  const s=document.getElementById("hxRoute");if(s&&!s.dataset.vy)try{homeCard(s)}catch(e){console.error(e)}
  const c=document.getElementById("hiCont");if(c&&!c.dataset.vy){c.dataset.vy="1";c.innerHTML=(firstOpen()?"Continue your voyage":"Start your voyage")+" <span>→</span>"}
  pills();
