@@ -104,7 +104,7 @@ S({title:"Not the biggest city",view:W,globe:[20,30,1],card:"left",on:["cities"]
  stat:"In many countries the capital is not the largest city",
  body:"Washington is far smaller than New York, Ottawa than Toronto, and Ankara than Istanbul. Often the capital was a compromise between rival cities, or was moved away from a crowded old port to a more central or safer spot.",
  more:"Canberra, Brasília, Abuja, Islamabad, Bern (Switzerland’s ‘federal city’), Wellington and Rabat are all smaller than their country’s biggest city. The cities layer is on."}),
-S({title:"Two capitals across a river",view:[13.9,-5.0,16.2,-3.6],globe:[15.3,-4.3,8],card:"left",hi:["cd","cg"],mode:"satellite",gfRuler:{a:[15.307,-4.31],b:[15.283,-4.273]},
+S({title:"Two capitals across a river",view:[12.6,-5.6,16.6,-3.0],globe:[15.3,-4.3,7],card:"left",hi:["cd","cg"],on:["rivers"],gfRuler:{a:[15.307,-4.31],b:[15.283,-4.273]},
  pins:[[[15.31,-4.33],"Kinshasa","point"],[[15.27,-4.26],"Brazzaville","point"]],
  stat:"Kinshasa and Brazzaville are the closest pair of capital cities in the world, apart from Rome and Vatican City",
  body:"They face each other across the Congo River, only a few kilometres apart (drag the ruler). Kinshasa is the capital of the Democratic Republic of the Congo, once ruled by Belgium; Brazzaville is the capital of the Republic of the Congo, once ruled by France.",
@@ -236,13 +236,12 @@ S({title:"Amsterdam’s stock exchange",view:W,globe:[40,20,1],card:"left",mode:
  stat:"In 1602 the Dutch East India Company sold shares to the public, and Amsterdam became the first modern stock market",
  body:"Anyone could buy a share in the company’s voyages to the spice islands of Asia and sell it on to someone else. Traders met every day at an exchange building opened in 1611, and the Bank of Amsterdam (1609) let merchants pay each other without moving coins.",
  more:"The History map lights up the Dutch trading empire around 1650, with bases from the Americas to Indonesia. Stock markets today, from New York to Mumbai, still work the same way."}),
-S({title:"The euro",view:[-32,34,36,62],globe:[10,48,2.5],card:"left",
- hi:["at","be","bg","hr","cy","ee","fi","fr","de","gr","ie","it","lv","lt","lu","mt","nl","pt","sk","si","es"],hiSoft:["me","xk","ad","mc","sm","va"],
+S({title:"The euro",view:[-32,34,36,62],globe:[10,48,2.5],card:"left",mode:"gdp",sub:"currency/eur",
  pins:[[[8.68,50.11],"European Central Bank, Frankfurt","point"]],
  phPins:[ph([2.35,48.86],"Paris"),ph([12.34,45.43],"Venice")],
  stat:"Since 1 January 2026, 21 EU countries share the euro, used by more than 350 million people",
  body:"The euro was born in 1999, and its notes and coins arrived on 1 January 2002, replacing francs, marks, lire and more. Bulgaria became the 21st member in 2026. The European Central Bank in Frankfurt sets one interest rate for them all.",
- more:"Each country puts its own design on one side of its coins, but they can be spent anywhere in the euro area. Montenegro and Kosovo use the euro without being members, and Andorra, Monaco, San Marino and Vatican City use it by agreement (paler)."}),
+ more:"Each country puts its own design on one side of its coins, but they can be spent anywhere in the euro area. Montenegro and Kosovo use the euro without being members, and Andorra, Monaco, San Marino and Vatican City use it by agreement. The Economy map’s Currencies view lights every place that pays in euros."}),
 S({title:"The CFA francs",view:[-46,-12,22,24],globe:[0,6,2.5],card:"left",
  G:[{t:"West African CFA franc",c:"#5b86d6",codes:["bj","bf","ci","gw","ml","ne","sn","tg"]},{t:"Central African CFA franc",c:"#e3a54a",codes:["cm","cf","td","cg","gq","ga"]}],
  pins:[[[-17.45,14.69],"Dakar: West African central bank","point"],[[11.5,3.87],"Yaoundé: Central African central bank","point"]],
@@ -256,12 +255,12 @@ S({title:"The Eastern Caribbean dollar",view:[-73,10,-57,20],globe:[-62,15.5,5],
  stat:"Eight Caribbean islands share one currency, fixed at 2.70 Eastern Caribbean dollars to the US dollar since 1976",
  body:"Six independent countries and two British territories, Anguilla and Montserrat, share a central bank in Basseterre, on St Kitts. For small islands, sharing a currency is cheaper and safer than each running its own.",
  more:"Trade, tourism and fishing link the islands, and one dollar makes it easy to pay across them. The link to the US dollar has now held for 50 years."}),
-S({title:"Dollarisation",view:W,globe:[-80,5,1.2],card:"left",hi:["ec","sv","pa","tl","fm","pw","mh"],hiSoft:["zw"],
+S({title:"Dollarisation",view:[-150,-30,-10,40],globe:[-80,5,1.6],card:"left",mode:"gdp",sub:"currency/usd",
  pins:[[[-78.47,-0.18],"Ecuador: dollar since 2000","point"],[[-89.19,13.69],"El Salvador: since 2001","point"],[[-79.52,8.98],"Panama: since 1904","point"]],
  phPins:[ph([-79.52,8.98],"Panama City"),ph([-78.51,-0.22],"Quito")],
  stat:"Ecuador, El Salvador and Panama use the US dollar as their own money",
  body:"Panama has used the dollar since 1904, alongside its own balboa coins. Ecuador gave up its currency, the sucre, for the dollar in 2000 after a banking crash and soaring prices; El Salvador followed in 2001.",
- more:"Timor-Leste, the Marshall Islands, Micronesia and Palau use it too, and in Zimbabwe (paler) most payments are made in dollars. El Salvador made bitcoin legal money in 2021, but in 2025 dropped the rule that shops must accept it."}),
+ more:"Timor-Leste, the Marshall Islands, Micronesia and Palau use it too, and in Zimbabwe most payments are made in dollars (every dollar user is lit). El Salvador made bitcoin legal money in 2021, but in 2025 dropped the rule that shops must accept it."}),
 S({title:"Germany, 1923",view:[-12,42,28,58],globe:[10,51,3],card:"left",mode:"history",sub:"1919",
  pins:[[[13.4,52.52],"Berlin","point"]],
  phPins:[ph([13.38,52.52],"The Reichstag, Berlin")],
@@ -292,9 +291,9 @@ S({title:"Money on a phone",view:[16,-12,46,6],globe:[37,-1,4],card:"left",hi:["
  stat:"Most adults in Kenya send and receive money by mobile phone, with M-Pesa, launched in 2007",
  body:"Pesa is Swahili for money. With M-Pesa, people keep money on their SIM card, pay with a text message and swap cash at small shops, even without a bank account. It pays school fees, wages, taxi fares and electricity bills.",
  more:"Mobile money has spread across Africa and Asia; neighbouring Tanzania, Uganda and Rwanda use it widely too (paler). Many central banks are now testing digital versions of their own currencies."}),
-S({title:"Now explore",view:W,globe:[20,20,1],mode:"gdp",sub:"total",
- stat:"Hover any country to see its name and its economy",
- body:"The Wealth map shows each country’s economy, in total or per person. Which countries that share a currency are rich, and which are poor? The GDP tour explains how the world’s money is shared out."})];
+S({title:"Now explore",view:W,globe:[20,20,1],mode:"gdp",sub:"currency",
+ stat:"Hover any country to see which money it uses",
+ body:"This is the Economy map’s Currencies view: click a colour in the key to see one currency on its own. Switch to GDP per person to compare rich and poor countries that share a currency. The GDP tour explains how the world’s money is shared out."})];
 
 /* =====================================================================================================
    4. Conflicts and peace
@@ -397,7 +396,9 @@ const mine=()=>typeof ps!=="undefined"&&ps&&IDS.includes(ps.tour);
 /* ---------- a stop's sub-map (sub:"…") follows the stop's own mode, not only the tour's ----------
    The shared psSetSub reads the tour's map mode; here a stop on the Politics, History, Wealth or Population map gets its own sub. */
 if(typeof psSetSub==="function"){const _ss=psSetSub;psSetSub=function(sub){try{if(mine()&&sub){const St=psSteps()[ps.i],T=PS_TOURS[ps.tour],m=St&&St.mode;
- if(m==="gdp"||m==="population"||m==="people"){if(typeof allMapsSubMode!=="undefined"&&allMapsSubMode[m]!==sub){allMapsSubMode[m]=sub;document.querySelectorAll("#allMapsSubModes [data-allmaps-sub]").forEach(x=>x.classList.toggle("active",x.dataset.allmapsSub===sub));try{applyAllMapsColorMode(document.getElementById("allMapsWrap"))}catch(e){}try{if(typeof amGlobeOn==="function"&&amGlobeOn())amGlobeSync()}catch(e){}try{if(ps.g)ps.g.render()}catch(e){}}return}
+ const k0=String(sub).split("/")[0];
+ if(m==="gdp"&&typeof TH_THEMES!=="undefined"&&TH_THEMES[k0]&&k0!=="total"&&k0!=="percapita"&&typeof allMapsSubMode!=="undefined")allMapsSubMode.gdp=k0;
+ else if(m==="gdp"||m==="population"||m==="people"){if(typeof allMapsSubMode!=="undefined"&&allMapsSubMode[m]!==sub){allMapsSubMode[m]=sub;document.querySelectorAll("#allMapsSubModes [data-allmaps-sub]").forEach(x=>x.classList.toggle("active",x.dataset.allmapsSub===sub));try{applyAllMapsColorMode(document.getElementById("allMapsWrap"))}catch(e){}try{if(typeof amGlobeOn==="function"&&amGlobeOn())amGlobeSync()}catch(e){}try{if(ps.g)ps.g.render()}catch(e){}}return}
  if(m&&T&&T.map&&T.map.mode!==m){const m0=T.map.mode;T.map.mode=m;try{return _ss.apply(this,arguments)}finally{T.map.mode=m0}}}}catch(e){console.error(e)}return _ss.apply(this,arguments)}}
 
 /* ---------- questions: a right answer inks the named country's Knowledge stamp ---------- */

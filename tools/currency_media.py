@@ -7,6 +7,7 @@ tools/currency_sources.json is the single source of truth. Each entry is one pic
               "shared": "Shared currency, issued by the BCEAO" (optional),
               "rotate": 90 | -90 | 180 (optional, degrees counter-clockwise, applied after trimming),
               "crop": [left, top, right, bottom] (optional, fractions of the source, applied first),
+              "floodbg": true (optional: clear a plain background around an irregular subject, e.g. a fan of notes),
               "by": "...", "lic": "...", "page": "https://commons.wikimedia.org/wiki/File:...",
               "exception": "why this one departs from the spec" (optional; an entry with an exception and no
                             "file" means no freely licensed picture exists, and the card keeps its drawn note)}
@@ -158,11 +159,28 @@ def round_cutout(im):
     return im
 
 
+def flood_background(im, tol=26):
+    """make the plain background around an irregular subject (a fan of notes) transparent: flood-fill from the corners"""
+    im = im.convert("RGBA")
+    rgb = im.convert("RGB")
+    mask = Image.new("L", im.size, 0)
+    w, h = im.size
+    for xy in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        probe = rgb.copy()
+        ImageDraw.floodfill(probe, xy, (255, 0, 255), thresh=tol)
+        hit = ImageChops.difference(probe, rgb).convert("L").point(lambda v: 255 if v else 0)
+        mask = ImageChops.lighter(mask, hit)
+    im.putalpha(ImageChops.subtract(im.getchannel("A"), mask))
+    return im
+
+
 def normalise(im, e):
     if e.get("crop"):
         l, t, r, b = e["crop"]
         W, H = im.size
         im = im.crop((round(l * W), round(t * H), round(r * W), round(b * H)))
+    if e.get("floodbg"):
+        im = flood_background(im)
     im = trim(im, e.get("tol", 34)) if not e.get("notrim") else im.convert("RGBA")
     if e.get("rotate"):
         im = im.rotate(e["rotate"], expand=True)
