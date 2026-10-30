@@ -78,7 +78,9 @@ function holes(L){if(!L||L._holes||L.type!=="MultiPolygon")return;L._holes=1;
   const g={type:"Polygon",coordinates:[P[i].coordinates[0]].concat(hs)};if(d3.geoArea(g)>2*Math.PI)g.coordinates=g.coordinates.map(x=>x.slice().reverse());out.push(g.coordinates)});
  if(out.length)L.coordinates=out}
 if(typeof globeOverlays==="function"){const _go=globeOverlays;
- globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.lakes&&!O._lakeHoles){O._lakeHoles=1;O.lakes.forEach(holes)}}catch(e){console.error(e)}return O}}
+ /* each lake becomes a new object: anything already cached for the old one (simplified globe shapes, flat-map paths drawn
+    before this script loaded) was cut with its islands as separate filled shapes, and must not be reused */
+ globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.lakes&&!O._lakeHoles){O._lakeHoles=1;O.lakes=O.lakes.map(L=>{if(!L||L.type!=="MultiPolygon")return L;const N=Object.assign({},L,{coordinates:L.coordinates.slice()});holes(N);return N})}}catch(e){console.error(e)}return O}}
 const lk=document.createElement("style");lk.textContent="svg path:is(.map-lake,.map-lake-minor,.map-lake-hit){ fill-rule:evenodd; }";document.head.appendChild(lk);
 /* 4. */
 if(typeof gfGlobeKey==="function"){const VG={key:null,sig:null,busy:false,n:0};const _gk=gfGlobeKey;
