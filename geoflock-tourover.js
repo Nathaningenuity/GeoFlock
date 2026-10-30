@@ -1,7 +1,9 @@
 /* GeoFlock: tour stops can lay context over the map they run on (usually the Relief map) instead of switching maps.
    gfEmpire:{y:1530,gk:"inca",name:"Inca Empire"}   an empire's extent in year y, from the History map's own data
                                                      (history/h2-*.json; gk is the History map's group key, "chn" also
-                                                     matches China's dynasties by name), shaded and outlined
+                                                     matches China's dynasties by name), shaded and outlined, named with
+                                                     its year at its label point (at:[lon,lat] moves it, name:"" hides
+                                                     it; col and alpha change the colour); a list draws several
    gfClimate:{alpha:.5, box:[w,s,e,n]}              today's climate zones (the Climate map's own picture, Köppen
                                                      classes) laid half see-through over the stop's view (or box)
    Both are drawn on the globe and on the flat map (the tours draw through psGlobeDraw on both), under the stop's
@@ -43,19 +45,22 @@ function climCells(box){const C=climData();if(!C)return null;const key=box.join(
  const res=[...byCol].map(([col,polys])=>({col,geo:{type:"MultiPolygon",coordinates:polys}}));C.cells.set(key,res);return res}
 
 /* ---------- drawing: fills go to a picture of their own, laid over the map half see-through ---------- */
-let OFF=null;
-function layer(ctx,p,alpha,draw){const cv=ctx.canvas;if(!OFF)OFF=document.createElement("canvas");if(OFF.width!==cv.width||OFF.height!==cv.height){OFF.width=cv.width;OFF.height=cv.height}
- const o=OFF.getContext("2d");o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,OFF.width,OFF.height);o.setTransform(ctx.getTransform());draw(o,d3.geoPath(p,o));
- ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=alpha;ctx.drawImage(OFF,0,0);ctx.restore()}
+/* each picture is kept while the view does not move (a hover or a label redraws the map without moving it) */
+const OFF=new Map;
+function layer(ctx,p,alpha,draw,id){const cv=ctx.canvas,M=ctx.getTransform();let R=OFF.get(id);if(!R){R={cv:document.createElement("canvas"),key:""};OFF.set(id,R)}
+ const key=[cv.width,cv.height,M.a,M.b,M.c,M.d,M.e,M.f,p.rotate?p.rotate().join():"",p.scale(),p.translate().join()].join("|");
+ if(R.key!==key){const c=R.cv;if(c.width!==cv.width||c.height!==cv.height){c.width=cv.width;c.height=cv.height}
+  const o=c.getContext("2d");o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,c.width,c.height);o.setTransform(M);draw(o,d3.geoPath(p,o));R.key=key}
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=alpha;ctx.drawImage(R.cv,0,0);ctx.restore()}
 function drawOver(ctx,p,gv){if(typeof ps==="undefined"||!ps||!gv||gv!==ps.g)return;const S=(psSteps()||[])[ps.i];if(!S||!(S.gfEmpire||S.gfClimate))return;
  if(S.gfClimate){const o=S.gfClimate===true?{}:S.gfClimate,box=o.box||S.view||[-180,-60,180,80],cells=climCells(box);
-  if(cells)layer(ctx,p,o.alpha||.5,(c,path)=>cells.forEach(z=>{c.beginPath();path(z.geo);c.fillStyle=z.col;c.fill()}))}
- if(S.gfEmpire){(Array.isArray(S.gfEmpire)?S.gfEmpire:[S.gfEmpire]).forEach(o=>{const E=empire(o);if(!E||!E.feats.length)return;const col=o.col||E.col;
-  layer(ctx,p,o.alpha||.42,(c,path)=>{c.beginPath();E.feats.forEach(f=>path(f));c.fillStyle=col;c.fill()});
+  if(cells)layer(ctx,p,o.alpha||.5,(c,path)=>cells.forEach(z=>{c.beginPath();path(z.geo);c.fillStyle=z.col;c.fill()}),"clim|"+ps.tour+"|"+ps.i)}
+ if(S.gfEmpire){(Array.isArray(S.gfEmpire)?S.gfEmpire:[S.gfEmpire]).forEach((o,k)=>{const E=empire(o);if(!E||!E.feats.length)return;const col=o.col||E.col;
+  layer(ctx,p,o.alpha||.42,(c,path)=>{c.beginPath();E.feats.forEach(f=>path(f));c.fillStyle=col;c.fill()},"emp|"+ps.tour+"|"+ps.i+"|"+k);
   const path=d3.geoPath(p,ctx);ctx.save();ctx.lineJoin="round";
   E.feats.forEach(f=>{if((f.properties.a||0)<E.big*.25)return;ctx.beginPath();path(f);ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke()});
   /* the empire's name and year, in its colour, at its label point */
-  const name=o.name||E.feats[0].properties.n,at=o.at||E.feats[0].properties.l;let q=null;try{q=at&&p(at)}catch(e){}
+  const name=o.name!=null?o.name:E.feats[0].properties.n,at=o.at||E.feats[0].properties.l;let q=null;try{q=at&&p(at)}catch(e){}
   if(name&&q&&(!gv._flat?d3.geoDistance(at,[-gv.rot[0],-gv.rot[1]])<Math.PI/2-.05:true)){const s=Math.max(12,Math.min(17,12+(gv.zoom||1)));ctx.font="800 "+s+"px Inter, system-ui, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
    const txt=name+(o.label===false?"":", "+(o.y<0?(-o.y+1)+" BC":o.y));ctx.lineWidth=4;ctx.strokeStyle="rgba(255,255,255,.92)";ctx.strokeText(txt,q[0],q[1]);ctx.fillStyle="#3b2414";ctx.fillText(txt,q[0],q[1])}
   ctx.restore()})}}

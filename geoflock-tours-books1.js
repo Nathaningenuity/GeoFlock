@@ -162,7 +162,7 @@ S({title:"The Americas stand on end",view:[-143,-22,-58,42],globe:[-80,10,1.4],c
  stat:"In the Americas the long axis runs north–south, across tropical lowlands and deserts",
  body:"Mesoamerica and the Andes are only about 4,500 km apart (drag the ruler), but crossing the grid’s lines of latitude means very different climates. Diamond argues that this slowed everything down: the llama and the potato never reached Mexico, and maize took thousands of years to adapt to the cooler, longer-day summers of North America.",
  more:"Africa also stands north–south, with the Sahara and the tropics in the way. Diamond sees the shape of the continents as one of the deepest reasons why history unfolded differently on each."}),
-S({title:"Germs from the farmyard",view:[-172,-20,4,48],globe:[-50,18,1.5],card:"left",hi:["mx","pe"],hiSoft:["es"],gfEmpire:[{y:1519,gk:"aztec",name:"Aztec Empire",at:[-97.5,22.6]},{y:1519,gk:"inca",name:"Inca Empire",at:[-66,-17]}],
+S({title:"Germs from the farmyard",view:[-172,-20,4,48],globe:[-50,18,1.5],card:"left",hi:["mx","pe"],hiSoft:["es"],gfEmpire:[{y:1519,gk:"aztec",name:""},{y:1519,gk:"inca",name:"Inca Empire",at:[-66,-17]}],
  lines:[{coords:[[-5.99,37.39],[-20,30],[-45,22],[-69.9,18.5]],kind:"flow"},{coords:[[-69.9,18.5],[-85,20],[-96.13,19.2]],kind:"flow"}],
  pins:[[[-69.9,18.5],"Hispaniola: smallpox arrives, 1518","point"],[[-96.13,19.2],"Veracruz, 1520","point"],[[-99.13,19.43],"Tenochtitlan","point"],[[-78.47,-0.18],"Quito","point"]],
  phPins:[ph([-99.13,19.43],"Mexico City’s Zócalo")],
