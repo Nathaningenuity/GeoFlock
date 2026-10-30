@@ -32,6 +32,8 @@ float iceH(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x 
 float iceN(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(iceH(i), iceH(i + vec3(1,0,0)), f.x), mix(iceH(i + vec3(0,1,0)), iceH(i + vec3(1,1,0)), f.x), f.y),
              mix(mix(iceH(i + vec3(0,0,1)), iceH(i + vec3(1,0,1)), f.x), mix(iceH(i + vec3(0,1,1)), iceH(i + vec3(1,1,1)), f.x), f.y), f.z); }
+/* a fixed rotation, so the octaves' lattices do not line up (no visible grid squares) */
+vec3 iceR(vec3 v){ return vec3(0.8*v.y + 0.6*v.z, -0.8*v.x + 0.36*v.y - 0.48*v.z, -0.6*v.x - 0.48*v.y + 0.64*v.z); }
 /* uv: the satellite picture's (u, v); p: the point on the unit sphere; fw: the size of a screen pixel on the sphere;
    wat: how much the satellite pixel is water (ice only on water, so islands stay visible). Returns colour and cover. */
 vec4 seaIce(vec2 uv, vec3 p, float fw, float wat){
@@ -43,7 +45,9 @@ vec4 seaIce(vec2 uv, vec3 p, float fw, float wat){
   if(m.r + m.g < 0.004) return vec4(0.0);
   /* texture on the sphere (no seams, no pinching at the poles); fine octaves fade out when smaller than a pixel */
   float w2 = 1.0 - smoothstep(0.25, 0.8, 260.0 * fw), w3 = 1.0 - smoothstep(0.25, 0.8, 900.0 * fw);
-  float n1 = iceN(p * 70.0), n2 = mix(0.5, iceN(p * 260.0), w2), n3 = mix(0.5, iceN(p * 900.0), w3);
+  float n1 = iceN(p * 70.0);
+  vec3 q = iceR(p * 260.0); q += (vec3(iceN(q * 0.31 + 11.0), iceN(q * 0.31 + 23.0), iceN(q * 0.31 + 37.0)) - 0.5) * 2.4;
+  float n2 = mix(0.5, iceN(q), w2), n3 = mix(0.5, iceN(iceR(iceR(p * 900.0)) + q * 0.9), w3);
   float n = n1 * 0.5 + n2 * 0.32 + n3 * 0.18;
   float c = m.r;
   /* the pack: solid where concentration is high; toward the edge it breaks into floes and fades into the water */
@@ -56,7 +60,7 @@ vec4 seaIce(vec2 uv, vec3 p, float fw, float wat){
   ice = mix(vec3(0.56, 0.66, 0.76) * (0.9 + 0.2 * n), ice, smoothstep(0.2, 0.8, c));
   /* leads: faint darker cracks inside the pack */
   float ld = (1.0 - smoothstep(0.0, 0.05, abs(n2 - 0.5))) * w2 * smoothstep(0.55, 0.95, c);
-  ice *= 1.0 - 0.2 * ld;
+  ice *= 1.0 - 0.1 * ld;
   a *= mix(1.0, smoothstep(0.05, 0.45, wat), 0.85);
   /* ice shelves: smooth, bright, faintly blue, joined to the ice sheet's white */
   float s = smoothstep(0.2, 0.7, m.g);
@@ -139,6 +143,7 @@ function hJ(x,y,z){x=fract(x*.3183099+.1)*17;y=fract(y*.3183099+.1)*17;z=fract(z
 function nJ(x,y,z){const ix=Math.floor(x),iy=Math.floor(y),iz=Math.floor(z);let fx=x-ix,fy=y-iy,fz=z-iz;fx=fx*fx*(3-2*fx);fy=fy*fy*(3-2*fy);fz=fz*fz*(3-2*fz);
  const L=(a,b,t)=>a+(b-a)*t;
  return L(L(L(hJ(ix,iy,iz),hJ(ix+1,iy,iz),fx),L(hJ(ix,iy+1,iz),hJ(ix+1,iy+1,iz),fx),fy),L(L(hJ(ix,iy,iz+1),hJ(ix+1,iy,iz+1),fx),L(hJ(ix,iy+1,iz+1),hJ(ix+1,iy+1,iz+1),fx),fy),fz)}
+const rJ=(x,y,z)=>[.8*y+.6*z,-.8*x+.36*y-.48*z,-.6*x-.48*y+.64*z];
 const ss=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
 const FLAT={urls:null,busy:false};
 function flatBuild(){if(FLAT.urls||FLAT.busy||!maskImg||typeof d3==="undefined"||!d3.geoRobinson)return;FLAT.busy=true;
@@ -153,12 +158,14 @@ function flatBuild(){if(FLAT.urls||FLAT.busy||!maskImg||typeof d3==="undefined"|
    for(let py=0;py<H;py++){const my=y0+(py+.5)/K;for(let px=0;px<W;px++){const ll=ROB.invert([(px+.5)/K,my]);if(!ll||!(Math.abs(ll[0])<=180))continue;
     const m=samp(ll[0],ll[1]);if(!m||m[0]+m[1]<.004)continue;
     const la=ll[1]*Math.PI/180,lo=ll[0]*Math.PI/180,X=Math.cos(la)*Math.cos(lo),Y=Math.cos(la)*Math.sin(lo),Z=Math.sin(la);
-    const w2=1-ss(.25,.8,260*fw),w3=1-ss(.25,.8,900*fw);const n1=nJ(X*70,Y*70,Z*70),n2=w2?.5+(nJ(X*260,Y*260,Z*260)-.5)*w2:.5,n3=w3?.5+(nJ(X*900,Y*900,Z*900)-.5)*w3:.5;
+    const w2=1-ss(.25,.8,260*fw),w3=1-ss(.25,.8,900*fw);const n1=nJ(X*70,Y*70,Z*70);
+    let [qx,qy,qz]=rJ(X*260,Y*260,Z*260);const ox=nJ(qx*.31+11,qy*.31+11,qz*.31+11)-.5,oy=nJ(qx*.31+23,qy*.31+23,qz*.31+23)-.5,oz=nJ(qx*.31+37,qy*.31+37,qz*.31+37)-.5;qx+=ox*2.4;qy+=oy*2.4;qz+=oz*2.4;
+    const n2=w2?.5+(nJ(qx,qy,qz)-.5)*w2:.5;let n3=.5;if(w3){const r=rJ(...rJ(X*900,Y*900,Z*900));n3=.5+(nJ(r[0]+qx*.9,r[1]+qy*.9,r[2]+qz*.9)-.5)*w3}
     const n=n1*.5+n2*.32+n3*.18,cc=m[0],brk=n1*.15+n2*.55+n3*.3;let a=ss(.2,.55,cc+(brk-.5)*.6*(1-cc*.5));
     const k=.88+.18*n1,k2=.9+.2*n,pd=(1-ss(.32,.5,n2))*w2*.45,mix=ss(.2,.8,cc);
     const ir=.8*k+(.6-.8*k)*pd,ig=.85*k+(.72-.85*k)*pd,ib=.9*k+(.84-.9*k)*pd;
     let r=.56*k2+(ir-.56*k2)*mix,gg=.66*k2+(ig-.66*k2)*mix,b=.76*k2+(ib-.76*k2)*mix;
-    const ld=(1-ss(0,.05,Math.abs(n2-.5)))*w2*ss(.55,.95,cc),dk=1-.2*ld;r*=dk;gg*=dk;b*=dk;
+    const ld=(1-ss(0,.05,Math.abs(n2-.5)))*w2*ss(.55,.95,cc),dk=1-.1*ld;r*=dk;gg*=dk;b*=dk;
     const s=ss(.2,.7,m[1]),sk=.96+.05*n1;r+=(.9*sk-r)*s;gg+=(.925*sk-gg)*s;b+=(.95*sk-b)*s;a=Math.max(a*.96,s*.97);
     const i=(py*W+px)*4;D[i]=r*255;D[i+1]=gg*255;D[i+2]=b*255;D[i+3]=a*255}}
    x.putImageData(id,0,0);out.push({x:0,y:y0,w:2e3,h:y1-y0});pend.push(new Promise(res=>c.toBlob(bl=>{res(bl?URL.createObjectURL(bl):null);c.width=c.height=0},"image/png")))});
