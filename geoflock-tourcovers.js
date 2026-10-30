@@ -61,7 +61,11 @@ const COVER={
 const POS={capitals:"50% 88%",hgunpowder:"50% 15%",hwars:"50% 55%",hrevolutions:"50% 30%"};
 /* the new photos join the library (as the tour files do) */
 try{const L=window.GF_TOURCOVER_PHOTOS;if(window._gfExtraDone&&typeof PS_PHOTO_DATA!=="undefined"){const have=new Set(PS_PHOTO_DATA.map(p=>p&&p.f));L.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}else if(typeof GF_EXTRA_PHOTOS!=="undefined")L.forEach(p=>GF_EXTRA_PHOTOS.push(p))}catch(e){}
-function set(){for(const id in COVER)if(COVER[id])TOUR_THUMBS[id]=COVER[id]}
+/* the owner's swap: Ancient civilisations gets the Great Pyramid photo, Maths gets the ancient-civilisations map cover */
+let ANC=null;
+function set(){try{if(ANC==null&&TOUR_THUMBS.hancient&&TOUR_THUMBS.hancient!==COVER.maths)ANC=TOUR_THUMBS.hancient}catch(e){}
+ for(const id in COVER)if(COVER[id])TOUR_THUMBS[id]=COVER[id];
+ if(ANC){TOUR_THUMBS.hancient=COVER.maths;TOUR_THUMBS.maths=ANC}}
 set();addEventListener("load",()=>setTimeout(set,1600));
 /* crop positions on the tour cards and the home page tour tiles */
 const css=Object.keys(POS).map(id=>'.tr-thumb[data-tour-go="'+id+'"] img,.hx-tour[data-hx-tour="'+id+'"] .hx-tour-pic img{object-position:'+POS[id]+'}').join("\n");
