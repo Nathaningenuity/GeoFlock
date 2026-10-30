@@ -328,8 +328,8 @@ if(T("hg4d")&&!T("hg4d").steps._polI){T("hg4d").steps._polI=1;
   s.body="The UN Convention on the Law of the Sea (UNCLOS, 1982) gives each coastal state a territorial sea of 12 nautical miles, about 22 km, treated almost like land. Drag the ruler: the Strait of Dover is only about 33 km wide, so Britain’s and France’s territorial seas meet in the middle. Foreign ships may still pass through peacefully."});
  set("hg4d","Exclusive economic zones",s=>{s.gfRuler={a:[109.2,12.2],b:[112.61,12.2]};
   s.body="In its exclusive economic zone (EEZ), reaching 200 nautical miles (about 370 km, the ruler’s length) from the coast, a state alone may fish, drill and mine. In the South China Sea, China’s broad claim overlaps the EEZs of Vietnam, the Philippines, Malaysia and Brunei."});
- set("hg4d","Compact and elongated states",s=>{s.ghosts=[{code:"cl",at:[18,2],col:"#8a63cf",label:"Chile, true size"}];
-  s.body="A compact state, roughly round like Rwanda or Poland, has all its regions close to the centre. An elongated state stretches thin: Chile is over 4,000 km long but on average under 200 km wide, which makes transport and defence harder. The purple shape is Chile at its true size, laid across Africa: drag it."});
+ set("hg4d","Compact and elongated states",s=>{s.ghosts=[{code:"cl",at:[-28,-22],col:"#8a63cf",label:"Chile, true size"}];
+  s.body="A compact state, roughly round like Rwanda or Poland, has all its regions close to the centre. An elongated state stretches thin: Chile is over 4,000 km long but on average under 200 km wide, which makes transport and defence harder. The purple shape is Chile at its true size: drag it onto Europe or Africa to compare."});
 }
 /* ───────── Unit 5: How the world farms ───────── */
 if(T("hg5a")&&!T("hg5a").steps._polI){T("hg5a").steps._polI=1;
@@ -507,8 +507,8 @@ if(T("hg4b")&&!T("hg4b").steps._polI2){T("hg4b").steps._polI2=1;
 }
 if(T("hg4c")&&!T("hg4c").steps._polI2){T("hg4c").steps._polI2=1;
  set("hg4c","The end of empires",s=>{s.stat="More than half of today’s states have become independent since 1945"});
- set("hg4c","Military alliances",s=>{s.view=[-22,45,78,74];s.globe=[20,58,1.6];delete s.spin;s.gfRuler={a:[27.9,60.55],b:[29.6,69.5]};
-  s.body="NATO, founded in 1949, is a military alliance of North American and European states. Under Article 5, members treat an attack on one as an attack on all. After Russia’s 2022 invasion of Ukraine, Finland joined in 2023 and Sweden in 2024; Finland’s border with Russia, about 1,340 km long, roughly doubled NATO’s land border with Russia. Drag the ruler along it."});
+ set("hg4c","Military alliances",s=>{s.view=[-34,45,66,74];s.globe=[20,58,1.6];delete s.spin;s.gfRuler={a:[27.9,60.55],b:[29.6,69.5]};
+  s.body="NATO, founded in 1949, is a military alliance of North American and European states. Under Article 5, members treat an attack on one as an attack on all. After Russia’s 2022 invasion of Ukraine, Finland joined in 2023 and Sweden in 2024; Finland’s border with Russia, about 1,340 km long, roughly doubled NATO’s land border with Russia: drag the ruler, its ends are about 1,000 km apart in a straight line."});
 }
 if(T("hg4d")&&!T("hg4d").steps._polI2){T("hg4d").steps._polI2=1;
  set("hg4d","Enclaves and exclaves",s=>{s.view=[-20,33,50,66];s.globe=[15,50,2];delete s.spin;s.gfRuler={a:[22.79,54.36],b:[23.5,53.95]};
