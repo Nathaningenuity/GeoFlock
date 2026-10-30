@@ -47,12 +47,15 @@ vec4 seaIce(vec2 uv, vec3 p, float fw, float wat){
   float n = n1 * 0.5 + n2 * 0.32 + n3 * 0.18;
   float c = m.r;
   /* the pack: solid where concentration is high; toward the edge it breaks into floes and fades into the water */
-  float a = smoothstep(0.1, 0.78, c + (n - 0.5) * 0.5 * (1.0 - c * 0.6));
-  vec3 ice = vec3(0.84, 0.885, 0.93) * (0.9 + 0.14 * n);
-  ice = mix(vec3(0.56, 0.66, 0.76) * (0.9 + 0.2 * n), ice, smoothstep(0.25, 0.85, c));
+  float a = smoothstep(0.16, 0.62, c + (n - 0.5) * 0.6 * (1.0 - c * 0.5));
+  vec3 ice = vec3(0.86, 0.90, 0.94) * (0.86 + 0.2 * n1);
+  /* summer melt ponds: a blue-grey mottling */
+  float pond = (1.0 - smoothstep(0.32, 0.5, n2)) * w2;
+  ice = mix(ice, vec3(0.60, 0.72, 0.84), pond * 0.45);
+  ice = mix(vec3(0.56, 0.66, 0.76) * (0.9 + 0.2 * n), ice, smoothstep(0.2, 0.8, c));
   /* leads: faint darker cracks inside the pack */
   float ld = (1.0 - smoothstep(0.0, 0.05, abs(n2 - 0.5))) * w2 * smoothstep(0.55, 0.95, c);
-  ice *= 1.0 - 0.14 * ld;
+  ice *= 1.0 - 0.2 * ld;
   a *= mix(1.0, smoothstep(0.05, 0.45, wat), 0.85);
   /* ice shelves: smooth, bright, faintly blue, joined to the ice sheet's white */
   float s = smoothstep(0.2, 0.7, m.g);
@@ -150,9 +153,11 @@ function flatBuild(){if(FLAT.urls||FLAT.busy||!maskImg||typeof d3==="undefined"|
     const m=samp(ll[0],ll[1]);if(!m||m[0]+m[1]<.004)continue;
     const la=ll[1]*Math.PI/180,lo=ll[0]*Math.PI/180,X=Math.cos(la)*Math.cos(lo),Y=Math.cos(la)*Math.sin(lo),Z=Math.sin(la);
     const w2=1-ss(.25,.8,260*fw),w3=1-ss(.25,.8,900*fw);const n1=nJ(X*70,Y*70,Z*70),n2=w2?.5+(nJ(X*260,Y*260,Z*260)-.5)*w2:.5,n3=w3?.5+(nJ(X*900,Y*900,Z*900)-.5)*w3:.5;
-    const n=n1*.5+n2*.32+n3*.18,cc=m[0];let a=ss(.1,.78,cc+(n-.5)*.5*(1-cc*.6));
-    const k=.9+.14*n,k2=.9+.2*n,mix=ss(.25,.85,cc);let r=.56*k2+(.84*k-.56*k2)*mix,gg=.66*k2+(.885*k-.66*k2)*mix,b=.76*k2+(.93*k-.76*k2)*mix;
-    const ld=(1-ss(0,.05,Math.abs(n2-.5)))*w2*ss(.55,.95,cc),dk=1-.14*ld;r*=dk;gg*=dk;b*=dk;
+    const n=n1*.5+n2*.32+n3*.18,cc=m[0];let a=ss(.16,.62,cc+(n-.5)*.6*(1-cc*.5));
+    const k=.86+.2*n1,k2=.9+.2*n,pd=(1-ss(.32,.5,n2))*w2*.45,mix=ss(.2,.8,cc);
+    const ir=.86*k+(.6-.86*k)*pd,ig=.9*k+(.72-.9*k)*pd,ib=.94*k+(.84-.94*k)*pd;
+    let r=.56*k2+(ir-.56*k2)*mix,gg=.66*k2+(ig-.66*k2)*mix,b=.76*k2+(ib-.76*k2)*mix;
+    const ld=(1-ss(0,.05,Math.abs(n2-.5)))*w2*ss(.55,.95,cc),dk=1-.2*ld;r*=dk;gg*=dk;b*=dk;
     const s=ss(.2,.7,m[1]),sk=.96+.05*n1;r+=(.9*sk-r)*s;gg+=(.925*sk-gg)*s;b+=(.95*sk-b)*s;a=Math.max(a*.96,s*.97);
     const i=(py*W+px)*4;D[i]=r*255;D[i+1]=gg*255;D[i+2]=b*255;D[i+3]=a*255}}
    x.putImageData(id,0,0);out.push({x:0,y:y0,w:2e3,h:y1-y0});pend.push(new Promise(res=>c.toBlob(bl=>{res(bl?URL.createObjectURL(bl):null);c.width=c.height=0},"image/png")))});

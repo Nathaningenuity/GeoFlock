@@ -29,6 +29,7 @@ precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
 uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun;
 out vec4 o;
+/*ICE_DEF*/
 float gmin(float a, float b){ return abs(a) < abs(b) ? a : b; }
 vec3 nrm(float phi, float lam){ return vec3(cos(phi)*cos(lam), cos(phi)*sin(lam), sin(phi)); }
 /* how land-like a satellite pixel is (0 = open water) */
@@ -95,6 +96,7 @@ void main(){
   /* only where the water really is shallow (lighter in the picture), so the colour follows the real shelf edges */
   sea = mix(sea, vec3(0.17, 0.40, 0.38) * (0.75 + lum), smoothstep(0.0, 1.0, rim) * 0.45 * smoothstep(0.03, 0.12, lum) * tq);
   day = mix(day, sea, water);
+  /*ICE_MIX*/
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
      Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
      sunset; a gentle tone curve (like a camera exposure, as in real photos from space) keeps the day side bright.
@@ -122,7 +124,7 @@ void main(){
 const VS="#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
 function prog(G){if(G._dng!==undefined)return G._dng;G._dng=null;const gl=G.gl;
  try{const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
-  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,window.gfSeaIce?gfSeaIce.patch(FS):FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
   const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uCl","uClA","uSun"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
  catch(e){console.error("Day & Night globe:",e)}return G._dng}
@@ -139,6 +141,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    gl.uniform1f(u.uClA,ct?1:0);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
+   try{window.gfSeaIce&&gfSeaIce.bind(this,P.pr,4)}catch(e){}
    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return}}}catch(e){console.error(e)}
  return _draw.apply(this,arguments)}}
 /* the night picture's GPU copy is let go on leaving, unless City Lights is the map showing */

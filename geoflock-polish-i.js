@@ -115,7 +115,7 @@ const KC={
 /* new questions, each tied to a stop this file adds or changes (mid: shown after that stop) */
 const NEWQ={
  hg1:[{at:"Every flat map distorts",st:"Every flat map distorts",q:"Drag Greenland’s true shape onto Africa. Why does Greenland look as big as Africa on a Mercator map?",o:["Greenland is really that big","Mercator stretches areas more and more towards the poles","Africa is drawn too small on purpose","Satellites measured Greenland wrongly"],a:1,why:"Mercator keeps directions true but swells areas near the poles; Africa is about 14 times bigger.",kc:"gl"}],
- hg2a:[{at:"The big clusters",st:"The big clusters",q:"Set the slider to show only places with over 100 people per km². Where do the largest areas remain?",o:["North Africa and Arabia","South and East Asia","Canada and Russia","Australia"],a:1,why:"The Ganges plain, eastern China and Java stay crowded; deserts, forests and cold lands drop out.",kc:"in"}],
+ hg2a:[{at:"The big clusters",st:"The big clusters",q:"On the population map, where are the largest areas with over 220 people per km²?",o:["North Africa and Arabia","South and East Asia","Canada and Russia","Australia"],a:1,why:"The Ganges plain, eastern China and Java are the largest dark areas; deserts, forests and cold lands are almost empty.",kc:"in"}],
  hg2b:[{at:"Population pyramids",st:"Population pyramids",q:"Which country’s pyramid has the widest base?",o:["Japan","Italy","Niger","South Korea"],a:2,why:"Niger has about six children per woman, so each new age group is much larger than the last.",kc:"ne"}],
  hg2c:[{at:"Brain drain",st:"Brain drain",q:"A Nigerian-trained nurse moves to a London hospital for higher pay. For Nigeria this is an example of…",o:["brain drain","chain migration","an intervening opportunity","forced migration"],a:0,why:"Skilled people trained at home leave for better pay abroad.",kc:"ng"}],
  hg3a:[{at:"Trade carries faith",st:"Trade carries faith",q:"With the shipping lanes switched on, which route best explains how Islam reached Indonesia?",o:["Overland across the Himalayas","Indian Ocean sea routes used by Muslim traders","The Trans-Siberian Railway","Pacific routes from the Americas"],a:1,why:"Muslim merchants sailing from Arabia, Persia and India carried the faith to the ports of Southeast Asia.",kc:"id"}],
@@ -168,17 +168,18 @@ if(T("hg1")&&!T("hg1").steps._polI){T("hg1").steps._polI=1;
  set("hg1","Time–space compression",s=>{s.gfSun={utc:13,day:80,city:["London",0]};
   s.body="Time–space compression is the shrinking of effective distance as transport and communication improve. Cunard’s first steamship took about two weeks from Liverpool to Boston; a message now crosses in under a second. The shading shows 1 pm in London, still early morning in Boston: move the time.";
   s.more="The places do not move; the time and cost of linking them fall. Firms now run offices on several continents as one team, handing work across the time zones."});
- set("hg1","Density, concentration and pattern",s=>{s.gfThr={kind:"pop",v:100};
-  s.body="Density is how many per unit of area. Concentration is how close together they sit: clustered or dispersed. Pattern is their arrangement: lines, grids, rings. The map shows only places with over 100 people per km²: Egypt’s people cluster along the Nile. Drag the slider."});
+ set("hg1","Density, concentration and pattern",s=>{s.view=[8,16,46,36];s.globe=[30,26,3];delete s.spin;s.iconPins=[];s.gfRuler={a:[32.9,24.09],b:[31.24,30.04]};
+  s.pins=[[[[31.2,27]],"Clustered: the Nile valley","area"],[[[25,25]],"Dispersed: the Sahara","area"]];
+  s.body="Density is how many per unit of area. Concentration is how close together they sit: clustered or dispersed. Pattern is their arrangement: lines, grids, rings. Egypt’s people cluster in a line along the Nile: drag the ruler, Aswan to Cairo is about 680 km of crowded valley, often only a few kilometres wide.";
+  s.more="Pattern shows in the US Great Plains too: the Land Ordinance of 1785 divided much of the interior into square-mile sections, so farms and roads form a grid."});
 }
 /* ───────── Unit 1: Data, regions and environment ───────── */
 if(T("hg1b")&&!T("hg1b").steps._polI){T("hg1b").steps._polI=1;
  set("hg1b","Data, regions and environment",s=>{s.phPins=[ph([-0.137,51.513],"Soho: John Snow’s pump","John Snow's pump, Broadwick Street.jpg"),ph([-62.5,-10.5],"Rondônia: seen from space","Aerial view of the Amazon Rainforest.jpg"),
   ph([10,23],"The Sahara: a formal region","Sahara satellite hires.jpg"),ph([59.02,43.77],"Moynaq: the shrinking Aral Sea","Stranded ships at Moynaq, Aral Sea.jpg"),
   ph([103.86,1.29],"Singapore: hot and rich","Puente Helix, Marina Bay, Singapur, 2023-08-16, DD 144-146 HDR.jpg"),ph([-77.01,38.89],"Washington: census seats","United States Capitol.jpg")]});
- set("hg1b","Counting everyone",s=>{s.gfThr={kind:"pop",v:100};
-  s.pins=[[[-76.93,38.85],"Suitland, Maryland: the Census Bureau","point"]];
-  s.body="A census is an official count of a whole population, usually with questions on age, household, work and origin. It is the basis of most population maps, including this one. Drag the slider to show only places with more than a chosen number of people per km²."});
+ set("hg1b","Counting everyone",s=>{s.pins=[[[-76.93,38.85],"Suitland, Maryland: the Census Bureau","point"]];
+  s.body="A census is an official count of a whole population, usually with questions on age, household, work and origin. It is the basis of most population maps, and of the city sizes behind the city dots switched on here."});
  set("hg1b","Formal and functional regions",s=>{s.gfRuler={a:[-16,21],b:[37,21]};
   s.body="A formal region shares one measurable trait: the Sahara’s desert climate, or the area where French is spoken. Drag the ruler: the Sahara stretches about 5,500 km from the Atlantic to the Red Sea. A functional region is tied to a centre by links, such as everyone who commutes into London."});
  set("hg1b","Does nature decide?",s=>{s.on=["grid"]});
@@ -190,8 +191,8 @@ if(T("hg2a")&&!T("hg2a").steps._polI){T("hg2a").steps._polI=1;
  set("hg2a","Where people live",s=>{s.phPins=[ph([139.7,35.69],"Tokyo","Tokyo Shibuya Scramble Crossing 2021-04-27.jpg"),ph([31.24,30.04],"Cairo: the Nile","Cairo skyline, Nile River, Egypt.jpg"),
   ph([88,31],"Tibet: almost empty","Tibetan Plateau landscape.jpg"),ph([106.9,47.92],"Ulaanbaatar","Ulaanbaatar skyline from Sukhbaatar square in 2025.jpg"),
   ph([106.85,-6.2],"Jakarta, Java","Jakarta Panorama.jpg"),ph([-47.88,-15.79],"Brasília","Catedral Metropolitana de Brasília - Brasília - 20150603150521.jpg"),ph([5.3,52.37],"Amsterdam","Water reflection of canal houses at blue hour in Damrak Amsterdam the Netherlands.jpg")]});
- set("hg2a","The big clusters",s=>{s.gfThr={kind:"pop",v:100};
-  s.body="East Asia (eastern China, Japan, Korea) and South Asia (India, Pakistan, Bangladesh) are the two largest clusters. Europe and the eastern United States are smaller; West Africa is growing fast. The map shows only places with over 100 people per km²: drag the slider."});
+ set("hg2a","The big clusters",s=>{s.on=["cities"];
+  s.body="East Asia (eastern China, Japan, Korea) and South Asia (India, Pakistan, Bangladesh) are the two largest clusters: the darkest areas on the map. Europe and the eastern United States are smaller; West Africa is growing fast."});
  set("hg2a","Coasts and rivers",s=>{s.on=["rivers"]});
  set("hg2a","Arithmetic density",s=>{s.ghosts=[{code:"bd",at:[103,46.5],col:"#8a63cf",label:"Bangladesh, true size"}];
   s.body="Arithmetic density is total people divided by total land area. Bangladesh packs about 175 million people into an area the size of England and Wales; Mongolia, over ten times larger, has about 3.5 million. Drag Bangladesh, in purple at its true size, around Mongolia."});
@@ -332,8 +333,8 @@ if(T("hg5a")&&!T("hg5a").steps._polI){T("hg5a").steps._polI=1;
   s.body="Maize, potatoes, tomatoes, cassava and cacao went from the Americas to Europe, Africa and Asia. Wheat, sugar cane, coffee, cattle and horses went west, with diseases such as smallpox that killed most of the Indigenous population. Drag the ruler: Seville to Veracruz, Spain’s main route, is about 8,700 km."});
  set("hg5a","Subsistence and commercial",s=>{s.sub="farm/w1+w5";
   s.body="Subsistence farmers grow food mainly for their own families, mostly in poorer countries. Commercial farmers grow crops and animals to sell, usually on large, mechanised farms. The map shows only the two extremes: where over half of workers farm, as in Ethiopia, and where under one in twenty do, as in the United States."});
- set("hg5a","Intensive farming",s=>{s.gfThr={kind:"pop",v:500};
-  s.more="It feeds the densest rural populations on Earth. The map shows only places with over 500 people per km²: the deltas of Bangladesh, Vietnam and southern China stand out. Drag the slider."});
+ set("hg5a","Intensive farming",s=>{s.sub="farm/w3+w4+w5";
+  s.more="It feeds the densest rural populations on Earth, in the river deltas of Bangladesh, Vietnam and southern China. The map shows only countries where over 15% of workers farm."});
 }
 /* ───────── Unit 5: Models of rural land ───────── */
 if(T("hg5b")&&!T("hg5b").steps._polI){T("hg5b").steps._polI=1;
@@ -391,16 +392,16 @@ if(T("hg6b")&&!T("hg6b").steps._polI){T("hg6b").steps._polI=1;
   ph([-99.13,19.43],"Mexico City","Mexico City Zocalo and Cathedral c 1950s, MAF 007305-001.jpg"),ph([3.39,6.45],"Lagos","Lagos skyline.jpg"),
   ph([106.83,-6.2],"Jakarta","Jakarta Panorama.jpg"),ph([-74.01,40.71],"New York","Lower Manhattan from Jersey City November 2016 002.jpg")];
   s.body="Each city is unique, but patterns repeat: business centres, industrial zones, rich and poor districts and suburbs. This tour sets each classic model beside a real city. The satellite map shows each city’s setting; the diagrams and photos show its inside."});
- set("hg6b","Land rent and density",s=>{s.gfThr={kind:"pop",v:1000};
-  s.more="The map shows only places with over 1,000 people per km²: drag the slider down and the city spreads out as density falls away from the centre."});
+ set("hg6b","Land rent and density",s=>{
+  s.more="On the population map the darkest cells, over 5,000 people per km², sit at the centre; colours fade as density falls away towards the suburbs."});
 }
 /* ───────── Unit 6: Building better cities ───────── */
 if(T("hg6c")&&!T("hg6c").steps._polI){T("hg6c").steps._polI=1;
  set("hg6c","Building better cities",s=>{s.phPins=[ph([121.47,31.23],"Shanghai: a new metro","Type 1 \"Watermelon\" Train of Line 2 leaving Yuandong Avenue Station, Shanghai Metro, Aug 11 2023.jpg"),ph([-0.016,51.543],"London: a brownfield park","Queen Elizabeth Olympic Park.jpg"),
   ph([-77.23,38.92],"Tysons: an edge city","Tysons Corner, Virginia.jpg"),ph([-96.95,32.81],"Texas suburbs","Suburbs of Irving, Texas.jpg"),
   ph([-122.68,45.52],"Portland: smart growth","Portland Streetcar.jpg"),ph([-86.13,30.32],"Seaside: new urbanism","Seaside, Florida.jpg")]});
- set("hg6c","Urban sprawl",s=>{s.gfThr={kind:"pop",v:500};
-  s.more="Sprawl raises traffic, emissions and the cost of pipes and roads for each household. The map shows only places with over 500 people per km²: drag the slider to see how thinly Atlanta is spread."});
+ set("hg6c","Urban sprawl",s=>{
+  s.more="Sprawl raises traffic, emissions and the cost of pipes and roads for each household. On the population map Atlanta shows as a wide, pale smudge, not a dark core."});
 }
 /* ───────── Unit 6: Cities under pressure ───────── */
 if(T("hg6d")&&!T("hg6d").steps._polI){T("hg6d").steps._polI=1;
@@ -493,6 +494,10 @@ if(T("hg4a")&&!T("hg4a").steps._polI2){T("hg4a").steps._polI2=1;
  set("hg4a","Multistate nations",s=>{s.lines=[];s.gfRuler={a:[126.1,37.75],b:[128.37,38.61]};
   s.body="A multistate nation lives in more than one state. Koreans share one language and history but have been split between North and South Korea since 1945; the Demilitarised Zone, about 250 km long (drag the ruler), still divides them. When the Soviet Union broke up in 1991, millions of ethnic Russians were left in neighbouring states."});
 }
+if(T("hg4b")&&!T("hg4b").steps._polI2){T("hg4b").steps._polI2=1;
+ set("hg4b","Devolution",s=>{s.gfRuler={a:[-0.13,51.5],b:[-3.17,55.95]};
+  s.more="Drag the ruler: Edinburgh is about 530 km from Westminster, in London. Distance and a separate history, law and church helped Scotland keep its own identity."});
+}
 if(T("hg4c")&&!T("hg4c").steps._polI2){T("hg4c").steps._polI2=1;
  set("hg4c","The end of empires",s=>{s.stat="More than half of today’s states have become independent since 1945"});
  set("hg4c","Military alliances",s=>{s.gfRuler={a:[27.9,60.55],b:[29.6,69.5]};
@@ -520,23 +525,22 @@ if(T("hg5c")&&!T("hg5c").steps._polI2){T("hg5c").steps._polI2=1;
 if(T("hg6b")&&!T("hg6b").steps._polI2){const t=T("hg6b");t.steps._polI2=1;
  try{def(t,"map",Object.assign({},t.map||{},{mode:"population"}))}catch(e){}
  set("hg6b","Inside the city",s=>{s.body="Each city is unique, but patterns repeat: business centres, industrial zones, rich and poor districts and suburbs. This tour sets each classic model beside a real city on the population map, where the darkest colours mark the most people per km²; the diagrams and photos show each city’s inside."});
- set("hg6b","The concentric zone model",s=>{s.gfThr={kind:"pop",v:1000};
-  s.more="It fits older North American cities built around one downtown, less so European cities where the rich live centrally. The map shows only places with over 1,000 people per km²: drag the slider down and Chicago spreads outward in rings."});
+ set("hg6b","The concentric zone model",s=>{s.gfRuler={a:[-87.63,41.88],b:[-88.15,41.75]};
+  s.more="It fits older North American cities built around one downtown, less so European cities where the rich live centrally. Drag the ruler: Naperville, a commuter suburb in the outer ring, is about 45 km from the Loop."});
  set("hg6b","The multiple nuclei model",s=>{s.on=["cities"]});
- set("hg6b","The galactic city",s=>{s.gfThr={kind:"pop",v:250};
-  s.more="Many suburbanites now commute from suburb to suburb and rarely visit downtown. Drag the slider: the Washington area spreads far beyond the old city in every direction."});
+ set("hg6b","The galactic city",s=>{s.on=["cities"];
+  s.more="Many suburbanites now commute from suburb to suburb and rarely visit downtown."});
 }
 if(T("hg6c")&&!T("hg6c").steps._polI2){const t=T("hg6c");t.steps._polI2=1;
  try{def(t,"map",Object.assign({},t.map||{},{mode:"population"}))}catch(e){}
- set("hg6c","Suburbanisation",s=>{s.gfThr={kind:"pop",v:1000};
-  s.more="Many early suburbs sold only to white buyers, fuelling “white flight” from city centres. Drag the slider down to see how far New York’s suburbs spread."});
+ set("hg6c","Suburbanisation",s=>{s.gfRuler={a:[-73.99,40.75],b:[-73.51,40.72]};
+  s.more="Many early suburbs sold only to white buyers, fuelling “white flight” from city centres. Drag the ruler: Levittown is about 40 km from Midtown Manhattan."});
  set("hg6c","Edge cities and boomburbs",s=>{s.on=["cities"]});
- set("hg6c","Greenbelts",s=>{s.gfThr={kind:"pop",v:500};
-  s.more="It has contained sprawl but squeezed housing supply, which many blame for London’s high prices. Drag the slider: towns beyond the belt show up as separate islands of people."});
+ set("hg6c","Greenbelts",s=>{s.on=["cities"];
+  s.more="It has contained sprawl but squeezed housing supply, which many blame for London’s high prices. Growth has leapt to towns beyond the belt, such as Reading and Milton Keynes."});
 }
 if(T("hg6d")&&!T("hg6d").steps._polI2){T("hg6d").steps._polI2=1;
- set("hg6d","Informal settlements",s=>{s.gfThr={kind:"pop",v:1000};
-  s.more="The informal sector, untaxed work from street trading to small workshops, employs most workers in many of these cities. The map shows only places with over 1,000 people per km²: drag the slider."});
+ set("hg6d","Informal settlements",s=>{s.on=["cities"]});
 }
 if(T("hg7a")&&!T("hg7a").steps._polI2){T("hg7a").steps._polI2=1;
  set("hg7a","World-systems theory",s=>{s.on=["connections"];
@@ -555,7 +559,11 @@ Object.assign(CARD,{"hg7c|Trade and the world economy":"Locomotives Tow Containe
  "hg5b|Three agricultural revolutions":"Corncobs.jpg","hg5b|Patterns of rural settlement":"Hopi Village on the Second Mesa.jpg"});
 /* framing: on every zoomed-in stop the card covers the left ~40% of the map, so shift (or widen) the view until
    everything the stop draws sits in the right part */
-for(const id in OPEN){const t=T(id);if(!t||t.steps._polIF)continue;t.steps._polIF=1;t.steps.forEach(frame)}
+for(const id in OPEN){const t=T(id);if(!t||t.steps._polIF)continue;t.steps._polIF=1;
+ /* the city stops of Unit 6 were framed 16° wide; zoom in as far as the flat map goes (about 9°), the city right of centre */
+ if(/^hg6[bcd]$/.test(id))t.steps.forEach(s=>{const v=s.view;if(!v||v[2]-v[0]>17)return;const p=(s.pins||[])[0];if(!p)return;const a=Array.isArray(p[0][0])?p[0][0]:p[0];
+  def(s,"view",[+(a[0]-5.85).toFixed(2),+(a[1]-2.6).toFixed(2),+(a[0]+3.15).toFixed(2),+(a[1]+2.6).toFixed(2)]);def(s,"_ff",1)});
+ t.steps.forEach(frame)}
 /* ───────── tour questions: a country (kc) for each, plus the new ones ───────── */
 try{if(typeof TOURQ!=="undefined")for(const id in OPEN){const Q=TOURQ[id];if(!Q||!T(id)||Q._polI)continue;Q._polI=1;
  [...(Q.mid||[]),...(Q.recap||[])].forEach(q=>{if(!q.kc&&KC[id]&&KC[id][q.st])q.kc=KC[id][q.st];if(!q.kc&&q.pick&&q.pick.length)q.kc=q.pick[0]});

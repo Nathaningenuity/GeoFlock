@@ -30,7 +30,7 @@ body.gf-fs:not(.gf-fs-layers) .all-maps-controls #globalSearchWrap{ visibility:v
 body.gf-fs #allMapsToggleRow{ position:relative; z-index:9; }
 body.gf-fs .all-maps-controls{ position:relative; z-index:9; }
 /* 2. full screen: the key under the map is out of sight, so the floating key takes over (it reads the hidden one) */
-body.gf-fs #allMapsView #populationLegend:not(.hist-docked){ display:block !important; position:absolute !important; left:-10000px !important; top:0 !important; width:600px !important; visibility:hidden !important; pointer-events:none !important; }
+body.gf-fs #allMapsView #populationLegend:not(.hist-docked){ display:block !important; position:absolute !important; left:0 !important; top:-10000px !important; width:600px !important; visibility:hidden !important; pointer-events:none !important; }
 /* 5. the floating key, fitted round the map's buttons */
 #flKey.gfx-fit.open{ max-height:var(--gfx-mh) !important; }
 #flKey.gfx-fit{ bottom:var(--gfx-b,16px) !important; }
@@ -55,10 +55,19 @@ body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky #globalSearchInput{ background
 body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky #globalSearchInput::placeholder{ color:#5a6a85 !important; }
 body.gf-fs.gfx-sky .gfx-arr{ color:#eef1ff; background:linear-gradient(90deg,rgba(3,6,15,0),rgba(3,6,15,.97) 45%); }
 body.gf-fs.gfx-sky .gfx-arr.l{ background:linear-gradient(270deg,rgba(3,6,15,0),rgba(3,6,15,.97) 45%); }
+/* light theme, Satellite globe (normal view): the starry halo round the globe reached up under the layer switches, so
+   their grey names sat on near-black; the halo now fades out closer to the globe, and the switch names get a light backing */
+body:not(.sky-night) .globe-stage.gf-sky::before{
+ -webkit-mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-rs,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-rs,200px) * .32), #000 calc(var(--gf-rs,200px) * 1.0), transparent calc(var(--gf-rs,200px) * 1.16));
+ mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-rs,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-rs,200px) * .32), #000 calc(var(--gf-rs,200px) * 1.0), transparent calc(var(--gf-rs,200px) * 1.16)); }
+body:not(.sky-night):not(.gf-fs) #allMapsView.sat-on.globe-on .all-maps-controls .switch-label{ background:rgba(255,255,255,.82); border-radius:6px; padding:1px 5px; }
 /* 9. dark theme: dim labels */
 body.sky-night .hist-era{ color:#aeb9dc !important; opacity:1 !important; }
 body.sky-night .hist-era.on{ color:#ffd98a !important; }
-body.sky-night .gf-eim-key{ color:#b9c6dc !important; }`;
+body.sky-night .gf-eim-key{ color:#b9c6dc !important; }
+body.sky-night #populationLegend .hist-relief-sw, body.sky-night #populationLegend .th-relief-sw{ color:#c9d3ea !important; opacity:1 !important; }
+/* the floating key's "Show all" stays on one line */
+.flk-h .flk-all{ white-space:nowrap; flex:none; }`;
 document.head.appendChild(css);
 
 /* 4. the globe's canvas spans the whole map area; the globe leaves room for its rim glow above and below */
@@ -87,10 +96,12 @@ function keySync(){const k=document.getElementById("flKey");if(!k)return;
  if(k.style.display==="none"||!k.classList.contains("open")||k.style.left||k.style.top||!onMaps()){off();return}
  off();const kr=k.getBoundingClientRect();if(!kr.width)return;
  const obs=[...document.querySelectorAll("#allMapsView .globe-btns, #allMapsView .map-zoom-controls, #allMapsView .gfk-coord, #allMapsView .gfk-tray, #gfDngPanel.gf-dng-float")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.bottom>0&&r.top<innerHeight);
- let bot=16,width=0,topLim=0;
- obs.forEach(o=>{if(!(o.left<kr.right&&o.right>kr.left))return;
-  if(o.top>innerHeight*.6&&o.bottom>kr.top){bot=Math.max(bot,innerHeight-o.top+8);return}
-  if(hit(o,kr)){const w=Math.round(kr.right-o.right-10);if(w>=230&&o.right<kr.right){width=width?Math.min(width,w):w}else topLim=Math.max(topLim,o.bottom+8)}});
+ let bot=16,width=0,topLim=0;const low=o=>o.top>innerHeight*.6;
+ obs.forEach(o=>{if(o.left<kr.right&&o.right>kr.left&&low(o)&&o.bottom>kr.top)bot=Math.max(bot,innerHeight-o.top+8)});
+ /* where the key would stand once lifted above those */
+ const sh=bot-16,kk={left:kr.left,right:kr.right,top:kr.top-sh,bottom:kr.bottom-sh};
+ obs.forEach(o=>{if(!(o.left<kk.right&&o.right>kk.left)||low(o))return;
+  if(hit(o,kk)){const w=Math.round(kk.right-o.right-10);if(w>=230&&o.right<kk.right){width=width?Math.min(width,w):w}else topLim=Math.max(topLim,o.bottom+8)}});
  if(bot===16&&!width&&!topLim)return;
  const mh=Math.max(150,Math.round(innerHeight-bot-Math.max(topLim,8)));
  k.style.setProperty("--gfx-b",bot+"px");k.style.setProperty("--gfx-mh",mh+"px");if(width)k.style.setProperty("--gfx-w",width+"px");
@@ -122,8 +133,11 @@ function dngSync(){const el=document.getElementById("gfDngPanel");if(!el||el.hid
  const fl=el.classList.contains("gf-dng-float");
  if(fl&&!fs()&&!el._moved){const tray=document.querySelector("#allMapsView .gfk-tray");const t=tray&&vis(tray)?tray.getBoundingClientRect():null;
   const left=t&&t.top<innerHeight?t.right+14:12,w=Math.max(300,Math.min(620,innerWidth-left-14));
-  el.style.left="auto";el.style.right="14px";el.style.transform="none";el.style.width=w+"px";el._gfx=1}
- else if(el._gfx&&(!fl||fs())&&!el._moved){["left","right","transform","width"].forEach(k=>el.style.removeProperty(k));el._gfx=0}}
+  el.style.left="auto";el.style.right="14px";el.style.transform="none";el.style.width=w+"px";
+  /* and above "Point at the map" */
+  const c=document.querySelector("#allMapsView .gfk-coord");let bot=12;if(c&&vis(c)){const cr=c.getBoundingClientRect();if(cr.bottom>innerHeight-140&&cr.top<innerHeight&&cr.right>innerWidth-14-w)bot=Math.max(bot,Math.round(innerHeight-cr.top+8))}
+  el.style.bottom=bot+"px";el._gfx=1}
+ else if(el._gfx&&(!fl||fs())&&!el._moved){["left","right","transform","width","bottom"].forEach(k=>el.style.removeProperty(k));el._gfx=0}}
 function fold(f){f.textContent=dngMin?"▴":"▾";f.title=dngMin?"Show the sliders":"Fold the panel to one line";f.setAttribute("aria-label",f.title);f.setAttribute("aria-expanded",String(!dngMin))}
 
 /* 8. the full-screen tab row: arrows when it scrolls */
