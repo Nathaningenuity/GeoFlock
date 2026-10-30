@@ -699,6 +699,7 @@ body.dark-theme .gfk-coord{ background:rgba(28,38,56,.92); color:#dbe6f2; }
 #allMapsWrap:has(> .gfk-tray.closed) > #gfLearn, .globe-host:has(> .gfk-tray.closed) #gfLearn{ bottom:36px !important; }
 #allMapsWrap:has(> .gfk-tray) > .am-measure{ top:14px !important; bottom:auto !important; }
 body.dark-theme .gfk-panel, body.sky-night .gfk-panel{ background:#1d2638; color:#e6edf7; }
+body.dark-theme .gfk-pinlist [data-go], body.sky-night .gfk-pinlist [data-go]{ color:#e6edf7 !important; } body.dark-theme .gfk-pinlist small, body.sky-night .gfk-pinlist small{ color:#b4c3d6 !important; opacity:1; } body.dark-theme .gfk-pinlist li, body.sky-night .gfk-pinlist li{ border-bottom-color:rgba(255,255,255,.1); }
 @media (max-width:640px){ #allMapsWrap > .gfk-tray, .globe-host > .gfk-tray{ position:relative; left:auto; bottom:auto; margin:8px 0 4px; width:100%; } .gfk-felt{ max-width:100%; } .gfk-slot{ width:48px; height:56px; } .gfk-slot.gfk-ruler{ width:78px; } .gfk-panel, .gfk-panel.gfk-wide{ width:calc(100vw - 24px); } .gfk-obj{ width:84px; height:84px; } .gfk-obj.gfk-o-ruler{ width:190px; height:38px; } }
 `;document.head.appendChild(css);
 /* typing a new meaning under a pin colour */

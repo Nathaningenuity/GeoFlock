@@ -332,6 +332,6 @@ function pick(v,keepView){head=null;if(!v)return;armed=false;loadDEM().then(()=>
  compute();frameTo([].concat(...lines.map(L=>L.ll)));renderPanel()})}
 /* listen before the map does (it handles presses at the document level) */
 if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G();if(g&&g.host.contains(e.target))down(e)},true);addEventListener("pointermove",move,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true)}
-window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem,lfAt,loadLF};
+window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem,lfAt,loadLF,get armed(){return on&&armed},get drawing(){return!!drawing}};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();

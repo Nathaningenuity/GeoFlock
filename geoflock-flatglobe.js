@@ -283,7 +283,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   d.addEventListener("pointerdown",e=>e.stopPropagation());d.addEventListener("pointerup",e=>e.stopPropagation())}
  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeCard()});
  document.addEventListener("pointerup",e=>{try{if(!window._gfCapMap||typeof stGlobe==="undefined"||!stGlobe||!stGlobe._flat){closeCard();return}const cv=stGlobe.canvas,r=cv.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
-  if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;
+  if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;if(window.gfClickGuard&&!gfClickGuard.ok(e))return;
   const x=e.clientX-r.left,y=e.clientY-r.top;let best=null,bd=14;stars().forEach(s=>{if(!s._q)return;const d=Math.hypot(s._q[0]-x,s._q[1]-y);if(d<bd){bd=d;best=s}});
   if(!best)best=stars().find(s=>s._lb&&x>=s._lb[0]-2&&x<=s._lb[2]+2&&y>=s._lb[1]-3&&y<=s._lb[3]+3)||null;
   if(best){e.stopPropagation();const hr=stGlobe.host.getBoundingClientRect();openCard(best,e.clientX-hr.left,e.clientY-hr.top)}else closeCard()}catch(er){}},true);

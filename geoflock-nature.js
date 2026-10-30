@@ -95,7 +95,7 @@ document.addEventListener("pointerleave",tipHide);
 let down=null;document.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY]},true);
 /* clicking opens the card for what is there (instead of the country) */
 const _oz=openFlagZoom;openFlagZoom=function(){try{if(vecOn()&&typeof appMode!=="undefined"&&appMode==="allmaps"&&down&&!(typeof ps!=="undefined"&&ps)){const h=hit(llAt(down[0],down[1]));if(h&&h.kind!=="foot"){card(h);return}if(h)return}}catch(e){console.error(e)}return _oz.apply(this,arguments)};
-document.addEventListener("click",e=>{if(!vecOn()||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;const t=e.target;if(!t.closest||!t.closest("#allMapsWrap > svg, #amGlobeHost")||t.closest("path[data-code],path[id],.gf-ly-pt"))return;
+document.addEventListener("click",e=>{if(!vecOn()||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;if(window.gfClickGuard&&!gfClickGuard.ok(e))return;const t=e.target;if(!t.closest||!t.closest("#allMapsWrap > svg, #amGlobeHost")||t.closest("path[data-code],path[id],.gf-ly-pt"))return;
  /* in the sea (no country under the pointer) */
  const h=hit(llAt(e.clientX,e.clientY));if(h&&h.kind!=="foot")card(h)});
 
