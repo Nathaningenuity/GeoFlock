@@ -38,6 +38,9 @@ float shore(vec2 uv){ float a = 0.0; for(int i = 0; i < 8; i++){ float t = float
   a = max(a, landish(texture(uSat, uv + d * vec2(0.0011, 0.0022)).rgb));
   a = max(a, 0.55 * landish(texture(uSat, uv + d * vec2(0.0026, 0.0052)).rgb));
   a = max(a, 0.22 * landish(texture(uSat, uv + d * vec2(0.0045, 0.009)).rgb)); } return a; }
+/* how enclosed by land a water pixel is (lakes, narrow inland seas): the share of 12 directions that meet land ~2.5° away */
+float enclosed(vec2 uv){ float a = 0.0; for(int i = 0; i < 12; i++){ float t = float(i) * 0.5235988; vec2 d = vec2(cos(t), sin(t));
+  a += landish(textureLod(uSat, uv + d * vec2(0.007, 0.014), 2.0).rgb); } return a / 12.0; }
 void main(){
   vec2 f = gl_FragCoord.xy;
   float dd = length(f - uC); if(dd > uF * (uSpace > 0.5 ? 1.045 : 1.0)) discard;
@@ -81,6 +84,9 @@ void main(){
   vec3 turq = mix(day, vec3(0.16, 0.50, 0.54) * (0.6 + lum * 1.4), 0.38);
   vec3 sea = mix(deep, turq, shelf * shelf * (1.0 - cyan) * tq);
   sea = mix(sea, mix(day, vec3(0.34, 0.86, 0.84) * (0.72 + lum), 0.4), cyan * smoothstep(0.12, 0.24, lum) * tq);
+  /* lakes take the same lighter, shallow-water blue as the coasts instead of the open ocean's navy */
+  float lake = water > 0.0 ? smoothstep(0.6, 0.9, enclosed(vec2(u, v))) : 0.0;
+  sea = mix(sea, vec3(0.20, 0.40, 0.52) * (0.8 + lum * 1.2), lake * 0.6);
   /* a faint glowing rim along the coasts, sea-green like plankton-rich shallows, that fades into the dark ocean */
   float rim = shore(vec2(u, v));
   /* only where the water really is shallow (lighter in the picture), so the colour follows the real shelf edges */
@@ -171,7 +177,21 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
   el.querySelector('[data-dng="now"]').onclick=()=>{stop();const lat=S.lat;toNow();S.lat=lat;ui();req()};
   el.querySelector('[data-dng="reset"]').onclick=()=>{stop();toNow();ui();req()};
   el.querySelector('[data-dng="play"]').onclick=()=>{if(S.play)stop();else play()}}
- if(el.previousElementSibling!==host)host.after(el);return el}
+ if(!el._spacer){el._spacer=document.createElement("div");el._spacer.className="gf-dng-spacer"}
+ if(el._spacer.previousElementSibling!==host)host.after(el._spacer);if(el.previousElementSibling!==el._spacer)el._spacer.after(el);dragWire(el);return el}
+/* the panel is a legend: in its place under the globe when that is on screen; otherwise it floats at the bottom of the
+   window (scrollable if tall). In full screen it floats at the right. Floating, it can be dragged by its top row. */
+function dragWire(el){if(el._drag)return;el._drag=1;let d=null;
+ el.addEventListener("pointerdown",e=>{if(!el.classList.contains("gf-dng-float")&&!document.body.classList.contains("gf-fs"))return;if(!e.target.closest(".gf-dng-top")||e.target.closest("button,input"))return;
+  const r=el.getBoundingClientRect();d={x:e.clientX-r.left,y:e.clientY-r.top};el.setPointerCapture(e.pointerId);e.preventDefault()});
+ el.addEventListener("pointermove",e=>{if(!d)return;const w=el.offsetWidth,h=el.offsetHeight,x=Math.max(4,Math.min(innerWidth-w-4,e.clientX-d.x)),y=Math.max(4,Math.min(innerHeight-h-4,e.clientY-d.y));
+  el.style.left=x+"px";el.style.top=y+"px";el.style.right="auto";el.style.bottom="auto";el.style.transform="none";el._moved=1});
+ el.addEventListener("pointerup",()=>{d=null})}
+function floatSync(){const el=document.getElementById("gfDngPanel");if(!el||el.hidden)return;const fs=document.body.classList.contains("gf-fs"),sp=el._spacer;
+ let fl=fs;if(!fs&&sp){const r=sp.getBoundingClientRect(),h=el.classList.contains("gf-dng-float")?(sp._h||el.offsetHeight):el.offsetHeight;fl=r.top+Math.min(h,60)>innerHeight||r.top+h<0}
+ if(fl!==el.classList.contains("gf-dng-float")){if(fl&&sp){sp._h=el.offsetHeight;sp.style.height=sp._h+"px"}else if(sp){sp.style.height="0px"}
+  el.classList.toggle("gf-dng-float",fl);if(!fl||!el._moved){["left","top","right","bottom","transform"].forEach(k=>el.style.removeProperty(k));el._moved=0}}}
+addEventListener("scroll",()=>{try{floatSync()}catch(e){}},{passive:true});addEventListener("resize",()=>{try{floatSync()}catch(e){}});
 function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)return;const m=lonToMin(S.lon);
  el.querySelector(".gf-dng-time").textContent=fmtMin(m)+" UTC";
  el.querySelector(".gf-dng-where").textContent="Sun overhead at "+fmtLL(S.lat,"N","S")+", "+fmtLL(S.lon,"E","W");
@@ -182,14 +202,25 @@ function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)re
 /* play: a day in 24 seconds */
 function play(){let last=performance.now();const step=now=>{if(!S.play)return;const dt=Math.min(100,now-last);last=now;S.lon=((S.lon-dt*.015+540)%360+360)%360-180;ui();req();S.play=requestAnimationFrame(step)};S.play=requestAnimationFrame(step);ui()}
 function stop(){if(S.play){cancelAnimationFrame(S.play);S.play=null;ui()}}
-/* Day & Night sits in the Satellite map's own measure row (like GDP / GDP per person): "Satellite" or "Day & Night" */
+/* Day & Night sits in the Satellite map's own measure row (like GDP / GDP per person): "Day & Night" (the default on
+   the globe), "Day" (the plain satellite picture) or "Night" (the City Lights map, which needs the dark theme) */
+function toNight(){const go=()=>{const n=document.querySelector('#allMapsToggleRow [data-allmaps-mode="night"]');if(n)n.click()};
+ const dark=document.body.classList.contains("sky-night");if(dark){go();return}
+ const m=document.createElement("div");m.className="gf-nightask";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");
+ m.innerHTML='<div><div class="ico">🌙</div><h3>Night needs the dark theme</h3><p>City lights only show in the dark <b>Starlight</b> theme. Turn it on now? You can switch back with the sun button at the top.</p><div class="row"><button type="button" class="pri" data-y>Turn on dark mode</button><button type="button" data-n>Not now</button></div></div>';
+ document.body.appendChild(m);const done=()=>m.remove();
+ m.querySelector("[data-y]").onclick=()=>{done();try{stats.theme="night";applyTheme();saveStats()}catch(e){}setTimeout(go,250)};
+ m.querySelector("[data-n]").onclick=done;m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus()}
 function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn(),host=document.getElementById(gOn?"amGlobeSubs":"allMapsSubModes");if(!host)return null;
  ["amGlobeSubs","allMapsSubModes"].forEach(id=>{const o=document.getElementById(id);if(o&&o!==host&&o.querySelector("[data-dng-sub]"))o.innerHTML=""});
  const want=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite"&&allMapsColorModeOn&&GLOBE_TEX.night&&FEATURES.globe&&!(typeof proj!=="undefined"&&proj.on);
  let c=document.getElementById("gfDngChip");
  if(!want){if(c&&c.parentNode===host)host.innerHTML="";return c}
- if(!c||c.parentNode!==host){host.innerHTML='<button type="button" class="chip sub-chip" data-dng-sub="sat">Satellite</button><button type="button" class="chip sub-chip" id="gfDngChip" data-dng-sub="dn" title="The satellite globe lit by the sun: day on one half, city lights on the other">Day &amp; Night</button>';
-  host.querySelectorAll("[data-dng-sub]").forEach(b=>b.onclick=e=>{e.stopPropagation();set(b.dataset.dngSub==="dn")});c=document.getElementById("gfDngChip")}
+ if(!c||c.parentNode!==host){host.innerHTML='<button type="button" class="chip sub-chip" id="gfDngChip" data-dng-sub="dn" title="The satellite globe lit by the sun: day on one half, city lights on the other">Day &amp; Night</button>'+
+   '<button type="button" class="chip sub-chip" data-dng-sub="sat" title="The satellite picture in full daylight everywhere">Day</button>'+
+   '<button type="button" class="chip sub-chip" data-dng-sub="night" title="City lights at night (needs the dark Starlight theme)">Night</button>';
+  host.querySelectorAll("[data-dng-sub]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.dngSub;
+   if(k==="night"){toNight();return}S.userDay=k==="sat";set(k==="dn")});c=document.getElementById("gfDngChip")}
  return c}
 function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.night&&!(typeof proj!=="undefined"&&proj.on)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}}
 function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
@@ -200,11 +231,14 @@ function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  else{stop();freeNight();if(S.wasFlat){S.wasFlat=false;try{globePrefs().allmaps=false;saveStats();amGlobeSync()}catch(e){}}}
  sync();req()}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
+ /* Day & Night is the default view of the Satellite globe: each time the Satellite map is opened on the globe */
+ try{const satNow=allMapsColorModeOn&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat);
+  if(satNow&&!S.wasSat){S.wasSat=true;if(!S.on&&!S.userDay&&allowed()){setTimeout(()=>set(true),0)}}else if(!satNow&&!S.on){S.wasSat=false;S.userDay=false}}catch(e){}
  if(S.on&&!(allowed()&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
- document.querySelectorAll("[data-dng-sub]").forEach(b=>b.classList.toggle("active",(b.dataset.dngSub==="dn")===!!S.on));
+ document.querySelectorAll("[data-dng-sub]").forEach(b=>{const k=b.dataset.dngSub;b.classList.toggle("active",k==="dn"?!!S.on:k==="sat"?!S.on:false)});
  if(c)c.setAttribute("aria-pressed",String(S.on));
  if(view)view.classList.toggle("gf-dng-on",S.on);
- const p=S.on?panel():document.getElementById("gfDngPanel");if(p){p.hidden=!S.on;if(S.on)ui()}}
+ const p=S.on?panel():document.getElementById("gfDngPanel");if(p){p.hidden=!S.on;if(p._spacer&&!S.on)p._spacer.style.height="0px";if(S.on){ui();floatSync()}}}
 /* any other map chip, or the Flat map switch, leaves this view; the checks run after the click has done its work */
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('#allMapsToggleRow [data-allmaps-mode], #amGlobeSwitch [data-view="flat"], #projTabChip');
  if(t&&S.on){S.on=false;stop();freeNight();
@@ -218,7 +252,9 @@ setInterval(()=>{try{if(document.getElementById("allMapsToggleRow"))sync()}catch
 const css=document.createElement("style");css.textContent=`
 .gf-dng-chip span{ font-size:1.05em; margin-right:2px; }
 /* full screen: the sun panel stands at the right edge, clear of the globe */
-body.gf-fs .gf-dng{ position:fixed !important; right:14px; top:50%; transform:translateY(-50%); width:300px; max-width:calc(100vw - 28px); margin:0 !important; z-index:60; }
+.gf-dng.gf-dng-float{ position:fixed !important; left:50%; bottom:12px; transform:translateX(-50%); width:min(620px,calc(100vw - 24px)); max-height:42vh; overflow:auto; margin:0 !important; z-index:60; box-shadow:0 8px 30px rgba(0,0,0,.3); }
+body.gf-fs .gf-dng.gf-dng-float{ left:auto; right:14px; bottom:auto; top:50%; transform:translateY(-50%); width:300px; }
+.gf-dng.gf-dng-float .gf-dng-top{ cursor:grab; } .gf-dng-spacer{ height:0; }
 .gf-dng{ position:relative; z-index:5; max-width:620px; margin:8px auto 4px; padding:10px 14px 8px; border-radius:16px; background:var(--surface,#101c30); color:rgb(var(--text-rgb)); border:1px solid var(--line); box-shadow:0 4px 18px rgba(0,0,0,.18); font-size:13px; }
 .gf-dng[hidden]{ display:none !important; }
 .gf-dng-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
@@ -237,7 +273,9 @@ body.gf-fs .gf-dng{ position:fixed !important; right:14px; top:50%; transform:tr
  background:linear-gradient(90deg,#0d1a3a 0%,#2a3f78 20%,#f0a24a 26%,#8fd0ff 34%,#bfe6ff 50%,#8fd0ff 66%,#f0a24a 74%,#2a3f78 80%,#0d1a3a 100%); }
 .gf-dng-row input[data-dng="time"]::-webkit-slider-thumb{ -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#ffc533; border:2px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.4); }
 .gf-dng-row input[data-dng="time"]::-moz-range-thumb{ width:20px; height:20px; border-radius:50%; background:#ffc533; border:2px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.4); }
-.gf-dng-season{ font-style:normal; font-size:11.5px; opacity:.75; min-width:150px; text-align:right; }
+.gf-dng-season{ font-style:normal; font-size:11.5px; opacity:.75; text-align:right; }
+/* the season slider is as long as the time slider; its date sits on a line of its own underneath */
+.gf-dng-row:has(.gf-dng-season){ flex-wrap:wrap; row-gap:0; } .gf-dng-row .gf-dng-season{ flex-basis:100%; margin:-2px 0 0; }
 body.sky-night .gf-dng{ background:#16213a; border-color:rgba(150,175,230,.22); box-shadow:0 4px 22px rgba(0,0,0,.45); }
 body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.25); }
 @media (max-width:600px){ .gf-dng{ margin:6px 0 4px; padding:8px 10px; } .gf-dng-where{ width:100%; order:9; } .gf-dng-season{ min-width:0; } }`;
