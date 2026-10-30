@@ -31,6 +31,13 @@ uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform 
 out vec4 o;
 float gmin(float a, float b){ return abs(a) < abs(b) ? a : b; }
 vec3 nrm(float phi, float lam){ return vec3(cos(phi)*cos(lam), cos(phi)*sin(lam), sin(phi)); }
+/* how land-like a satellite pixel is (0 = open water) */
+float landish(vec3 c){ float l = dot(c, vec3(0.3, 0.55, 0.15)); return 1.0 - smoothstep(0.015, 0.07, c.b - max(c.r, c.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, l)); }
+/* closeness to the coast: 1 right at the shore, fading smoothly to 0 about 1.6° out to sea */
+float shore(vec2 uv){ float a = 0.0; for(int i = 0; i < 8; i++){ float t = float(i) * 0.7853982 + 0.39; vec2 d = vec2(cos(t), sin(t));
+  a = max(a, landish(texture(uSat, uv + d * vec2(0.0011, 0.0022)).rgb));
+  a = max(a, 0.55 * landish(texture(uSat, uv + d * vec2(0.0026, 0.0052)).rgb));
+  a = max(a, 0.22 * landish(texture(uSat, uv + d * vec2(0.0045, 0.009)).rgb)); } return a; }
 void main(){
   vec2 f = gl_FragCoord.xy;
   float dd = length(f - uC); if(dd > uF * (uSpace > 0.5 ? 1.045 : 1.0)) discard;
@@ -64,11 +71,20 @@ void main(){
      dissolves gradually into the dark navy of the open ocean (a wide, smooth ramp on how light the water is, so there
      is no edge); water the picture already shows light cyan (the Bahamas banks, reefs) gets a little brighter. */
   float shelf = smoothstep(0.035, 0.17, lum);
+  /* colour follows what is in the water, not only depth: clear tropical shallows and reefs are turquoise; cold seas
+     (the North Sea, the Yellow Sea's latitudes) and sediment-brown river mouths get only a faint hint */
+  float tropic = 1.0 - smoothstep(0.42, 0.78, abs(phi));
+  float muddy = smoothstep(0.85, 1.05, day.r / max(day.b, 0.001));
+  float tq = mix(0.25, 1.0, tropic) * (1.0 - 0.8 * muddy);
   float cyan = smoothstep(0.78, 0.95, day.g / max(day.b, 0.001));
   vec3 deep = day * vec3(0.98, 1.0, 1.04);
   vec3 turq = mix(day, vec3(0.16, 0.50, 0.54) * (0.6 + lum * 1.4), 0.38);
-  vec3 sea = mix(deep, turq, shelf * shelf * (1.0 - cyan));
-  sea = mix(sea, mix(day, vec3(0.34, 0.86, 0.84) * (0.72 + lum), 0.4), cyan * smoothstep(0.12, 0.24, lum));
+  vec3 sea = mix(deep, turq, shelf * shelf * (1.0 - cyan) * tq);
+  sea = mix(sea, mix(day, vec3(0.34, 0.86, 0.84) * (0.72 + lum), 0.4), cyan * smoothstep(0.12, 0.24, lum) * tq);
+  /* a faint glowing rim along the coasts, sea-green like plankton-rich shallows, that fades into the dark ocean */
+  float rim = shore(vec2(u, v));
+  /* only where the water really is shallow (lighter in the picture), so the colour follows the real shelf edges */
+  sea = mix(sea, vec3(0.17, 0.40, 0.38) * (0.75 + lum), smoothstep(0.0, 1.0, rim) * 0.45 * smoothstep(0.03, 0.12, lum) * tq);
   day = mix(day, sea, water);
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
      Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
@@ -147,7 +163,8 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
   el.innerHTML='<div class="gf-dng-top"><span class="gf-dng-ico">'+SUN_SVG+'</span><b class="gf-dng-time" aria-live="polite"></b><span class="gf-dng-where"></span><span class="gf-dng-sp"></span>'+
    '<button type="button" class="gf-dng-btn" data-dng="play" title="Play a day" aria-pressed="false">▶</button><button type="button" class="gf-dng-btn" data-dng="now" title="Put the sun where it is right now">Now</button><button type="button" class="gf-dng-btn" data-dng="reset" title="Reset time and season to now">Reset to now</button></div>'+
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1440" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
-   '<label class="gf-dng-row"><span>Season</span><input type="range" min="-23.4" max="23.4" step="0.1" data-dng="lat" aria-label="Season: the latitude where the sun is overhead"><em class="gf-dng-season"></em></label>';
+   '<label class="gf-dng-row"><span>Season</span><input type="range" min="-23.4" max="23.4" step="0.1" data-dng="lat" aria-label="Season: the latitude where the sun is overhead"><em class="gf-dng-season"></em></label>'+
+   '<p class="gf-dng-note">Enhanced colour: shallow tropical seas are made a little more turquoise, as in NASA’s Blue Marble pictures.</p>';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="lat"]');
   t.addEventListener("input",()=>{stop();S.lon=minToLon(+t.value);sunPing();ui(true);req()});
   l.addEventListener("input",()=>{stop();S.lat=+l.value;sunPing();ui(true);req()});
@@ -206,6 +223,7 @@ body.gf-fs .gf-dng{ position:fixed !important; right:14px; top:50%; transform:tr
 .gf-dng[hidden]{ display:none !important; }
 .gf-dng-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
 .gf-dng-ico{ display:inline-flex; }
+.gf-dng-note{ margin:4px 0 0; font-size:11px; opacity:.6; line-height:1.3; }
 .gf-dng-time{ font-size:17px; font-variant-numeric:tabular-nums; letter-spacing:.2px; }
 .gf-dng-where{ font-size:12px; opacity:.72; }
 .gf-dng-sp{ flex:1; }
