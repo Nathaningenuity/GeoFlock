@@ -48,7 +48,7 @@ try{if(typeof gfSpinWanted==="function"){const _s=gfSpinWanted;gfSpinWanted=func
 /* the flat map's own pictures (relief, shading, sea depth, satellite, climate…), as they are layered in the old map */
 const PICS={};const IMG=new Map;
 /* a picture that fails to load (a dropped connection) is tried again a little later, instead of staying broken for good */
-function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&amGlobe.request()}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};
+function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&(amGlobe._flat&&amGlobe.render?amGlobe.render():amGlobe.request())}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};
  i.onerror=()=>{const n=(i._gfTry||0)+1;if(n>6||/^(data|blob):/.test(h))return;setTimeout(()=>{if(IMG.get(h)!==i)return;IMG.delete(h);img(h)._gfTry=n},1500*n*n)};i.src=h;IMG.set(h,i)}return i}
 function pictures(D){if(D.fixed)return D.fixed();const now=performance.now(),C=PICS[D.key]||(PICS[D.key]={t:0,L:null});if(C.L&&now-C.t<400)return C.L;C.t=now;const svg=document.querySelector(D.svg);const PIC=C.L=[];if(!svg)return PIC;
  svg.querySelectorAll("image").forEach(el=>{let e=el,op=1,ok=true,blend="normal";while(e&&e!==svg){const cs=getComputedStyle(e);if(cs.display==="none"||cs.visibility==="hidden"){ok=false;break}op*=+cs.opacity;if(blend==="normal"&&cs.mixBlendMode&&cs.mixBlendMode!=="normal")blend=cs.mixBlendMode;e=e.parentNode}
@@ -88,7 +88,7 @@ P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.tran
  let C=composite(list,D);ctx.save();
  /* a new mode's pictures still loading: keep showing the last finished picture for a few seconds instead of a bare map */
  window.gfMapLoading=!C;if(C)LASTOK[D.key]=Date.now();else if(COMPS[D.key]&&Date.now()-(LASTOK[D.key]||0)<8000)C=COMPS[D.key];
- if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;ctx.imageSmoothingQuality=k>3?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}
+ if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;/* "medium" shrinks a large picture through blurred half-size copies; "high" keeps it sharp (cheap enough once still) */ctx.imageSmoothingQuality=k>3||!(this._moving||this._fastMove)?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}
  /* zoomed in on City Lights: a sharp picture of the view from the globe's picture over it (geoflock-nightsharp.js) */
  if(window.gfNightSharp)try{window.gfNightSharp(this,ctx,dpr,list,C)}catch(e){console.error(e)}ctx.restore();return 1}
  /* pictures still loading: draw them one by one (only in the usual frame) */
