@@ -2,7 +2,7 @@
    mythology  "Myths and legends"        real places behind famous myths: Olympus, Troy, Thera and Atlantis, the flood, Uluru, Kailash,
                                           Norse fire and ice, Loch Ness, Stonehenge, Pele, Fuji and Teotihuacan
    science    "Where science happened"   from Zhang Heng's earthquake detector to CERN: observatories, labs, voyages and expeditions
-   maths      "Maths on the map"         where maths was made (Babylon, Alexandria, the House of Wisdom, the Kerala school, Königsberg)
+   maths      "Maths"                    where maths was made (Babylon, Alexandria, the House of Wisdom, the Kerala school, Königsberg)
                                           and maths you can see on the map (great circles, projections, latitude, antipodes, coastlines)
    Stops reuse what the World Maps view draws: per-stop layers (on:[…]), the history map for one stop (mode:"history", sub:"<year>/<group>"),
    the satellite and night maps (mode:…, through the shared stopModes switch), the ruler (gfRuler), the country dragger (ghosts),
@@ -212,10 +212,10 @@ S({title:"Now explore",view:W,globe:[20,25,1],
  body:"Turn on the Time zones layer to see how the world still counts from Greenwich, or the Plate boundaries to follow Tharp’s ridge. The Maths tour visits Eratosthenes, who measured the whole Earth with a shadow."})];
 
 /* =====================================================================================================
-   3. Maths on the map
+   3. Maths
    ===================================================================================================== */
 const MATHS=[
-S({title:"Maths on the map",view:W,globe:[40,25,1],on:["grid"],
+S({title:"Maths",view:W,globe:[40,25,1],on:["grid"],
  phPins:[ph([44.42,32.54],"Babylon’s Processional Way"),ph([29.91,31.21],"Alexandria’s new library"),ph([-89.62,17.22],"Tikal"),ph([76.3,9.9],"The Kerala backwaters"),ph([10.4,43.72],"Pisa"),ph([-78.45,0],"The Middle of the World monument"),ph([-0.0015,51.48],"Greenwich")],
  stat:"Every map is made with maths, and maths itself was made in many places",
  body:"This tour visits places where big mathematical ideas were born, from counting in sixties to zero and infinite sums. Then it shows the maths hiding in the map itself: lines of latitude, great circles, stretched countries and the far side of the world.",
@@ -310,7 +310,7 @@ S({title:"Now explore",view:W,globe:[40,25,1],
 const TOURS={
  mythology:{name:"Guided tour on mythology",short:"Mythology",hint:"Olympus, Troy, Thera and Atlantis, the flood, Uluru, Kailash, Norse fire and ice, Loch Ness, Stonehenge, Pele and Teotihuacan",steps:MYTH},
  science:{name:"Guided tour on science",short:"Science",hint:"Zhang Heng, Ibn al-Haytham, Samarkand, Galileo, Greenwich, the Galápagos, Curie, Einstein’s eclipse, CERN and Antarctica",steps:SCI},
- maths:{name:"Guided tour on maths on the map",short:"Maths on the map",hint:"Counting in sixties, Euclid and Eratosthenes, π and zero, the House of Wisdom, Königsberg, great circles, Mercator and antipodes",steps:MATHS}};
+ maths:{name:"Guided tour on maths",short:"Maths",hint:"Counting in sixties, Euclid and Eratosthenes, π and zero, the House of Wisdom, Königsberg, great circles, Mercator and antipodes",steps:MATHS}};
 const IDS=Object.keys(TOURS);
 /* stops with their own map mode use the shared per-stop switch (stopModes); alsoOn keeps the tour running in those modes */
 IDS.forEach(id=>{const T=TOURS[id],modes=[...new Set(T.steps.map(s=>s.mode).filter(Boolean))];PS_TOURS[id]={name:T.name,short:T.short,hint:T.hint,map:{mode:"relief"},group:"ideas",col:COL[id],steps:T.steps,stopModes:modes.length>0,alsoOn:modes}});
@@ -367,7 +367,7 @@ const CARD={
  "science|Mapping the ocean floor":"Almannagjá rift at Þingvellir National Park.jpg","science|CERN":"Arc-en-ciel sur le jet d'eau de Genève - GT 2025.jpg",
  "science|Launching into space":"Apollo 11 Launch - GPN-2000-000630.jpg","science|Dark skies":"Mauna Kea Eastern Telescopes.jpg",
  "science|The ozone hole":"Halley VI Antarctic Research Station - Science modules.jpg",
- "maths|Maths on the map":"Mitad del Mundo 05.jpg",
+ "maths|Maths":"Mitad del Mundo 05.jpg",
  "maths|Counting in sixties":"Proto cuneiform tablet OIM A12259.jpg","maths|Euclid’s Alexandria":"Alexandrina Library in Alexandria, Egypt. 03.jpg",
  "maths|Eratosthenes measures the Earth":"Aswan Nile R04.jpg","maths|The Maya and zero":"Frederick Catherwood - Maya Stela at Copan, Honduras - B1979.12.689 - Yale Center for British Art.jpg",
  "maths|Zero travels west":"Piazza dei Miracoli (Pisa) 2023.jpg","maths|The House of Wisdom":"Tigris in Baghdad 1958 04.jpg",
