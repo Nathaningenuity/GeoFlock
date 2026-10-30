@@ -27,7 +27,7 @@ function draw(){globe();const wrap=document.getElementById("allMapsWrap"),svg=wr
 /* the globe: ask it to redraw; its overlay hook below paints the night side */
 function globe(){try{if(typeof amGlobe!=="undefined"&&amGlobe)amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}}
 if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){
- try{if(on&&typeof amGlobe!=="undefined"&&this===amGlobe){const s=subsolar(Date.now()),anti=[s[0]+180>180?s[0]-180:s[0]+180,-s[1]],path=d3.geoPath(p,ctx);
+ try{if(on&&typeof amGlobe!=="undefined"&&this===amGlobe&&!(window.gfDNG&&gfDNG.on())){const s=subsolar(Date.now()),anti=[s[0]+180>180?s[0]-180:s[0]+180,-s[1]],path=d3.geoPath(p,ctx);
   ctx.save();ctx.fillStyle="#06122b";[[90,.3],[84,.16],[78,.12],[72,.1]].forEach(([r,o])=>{ctx.globalAlpha=o;ctx.beginPath();path(d3.geoCircle().center(anti).radius(r).precision(2)());ctx.fill()});ctx.globalAlpha=1;
   const c=[-this.rot[0],-this.rot[1]];if(d3.geoDistance(s,c)<Math.PI/2-.02){const q=p(s);if(q){ctx.fillStyle="rgba(255,211,77,.35)";ctx.beginPath();ctx.arc(q[0],q[1],9,0,7);ctx.fill();ctx.fillStyle="#ffcc33";ctx.strokeStyle="#fff";ctx.lineWidth=1;ctx.beginPath();ctx.arc(q[0],q[1],4.5,0,7);ctx.fill();ctx.stroke()}}
   ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
