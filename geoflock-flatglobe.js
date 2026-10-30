@@ -88,7 +88,9 @@ P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.tran
  let C=composite(list,D);ctx.save();
  /* a new mode's pictures still loading: keep showing the last finished picture for a few seconds instead of a bare map */
  window.gfMapLoading=!C;if(C)LASTOK[D.key]=Date.now();else if(COMPS[D.key]&&Date.now()-(LASTOK[D.key]||0)<8000)C=COMPS[D.key];
- if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;ctx.imageSmoothingQuality=k>3?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}ctx.restore();return 1}
+ if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;ctx.imageSmoothingQuality=k>3?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}
+ /* zoomed in on City Lights: a sharp picture of the view from the globe's picture over it (geoflock-nightsharp.js) */
+ if(window.gfNightSharp)try{window.gfNightSharp(this,ctx,dpr,list,C)}catch(e){console.error(e)}ctx.restore();return 1}
  /* pictures still loading: draw them one by one (only in the usual frame) */
  if(this._gfDl){ctx.restore();return 0}
  /* never the shading layers (multiply, screen) on their own: without the colour picture under them the map turns a washed-out white */
