@@ -210,7 +210,7 @@ function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.cla
  /* the map's hover label must not show through the tray */
  const hideTip=()=>document.querySelectorAll(".map-territory-tooltip, .map-tooltip, .globe-tip").forEach(x=>{x.classList.remove("show");x.style.opacity="0"});
  ["mousemove","mouseover","pointermove"].forEach(ev=>tr.addEventListener(ev,e=>{e.stopPropagation();hideTip()}));tr.addEventListener("mouseleave",()=>document.querySelectorAll(".map-territory-tooltip, .map-tooltip, .globe-tip").forEach(x=>x.style.opacity=""));
- tr.querySelector(".gfk-tab").onclick=()=>{S.open=!S.open;try{K().closed=!S.open;save()}catch(e){}sync()};
+ tr.querySelector(".gfk-tab").onclick=()=>{S.open=!S.open;if(S.inTour)S.preTour=S.open;else try{K().closed=!S.open;save()}catch(e){}sync()};
  tr.querySelectorAll(".gfk-slot").forEach(b=>wireDrag(b,b.dataset.tool,"tray"));
  ["pointerdown","mousedown","click","wheel","dblclick"].forEach(t=>tr.addEventListener(t,e=>e.stopPropagation()));
  return tr}
@@ -555,7 +555,10 @@ document.addEventListener("mousemove",e=>{if(!coordOn)return;gpsXY=[e.clientX,e.
  const inside=h.contains(gpsXY[2])&&gpsXY[2]!==c&&!c.contains(gpsXY[2]);gpsPaint(c,inside?toLL(gpsXY[0],gpsXY[1]):null)})},{passive:true});
 
 /* ================= keep it all in place ================= */
-function sync(){const h=host();const show=h&&appMode==="allmaps"&&!(typeof ps!=="undefined"&&ps)&&!document.querySelector("#gfDeep:not([hidden])")&&!(typeof proj!=="undefined"&&proj.on);
+function sync(){const h=host();const tour=typeof ps!=="undefined"&&!!ps;
+ /* during a guided tour the toolkit stays, folded when the tour starts; it opens again as it was when the tour ends */
+ if(tour&&!S.inTour){S.inTour=true;S.preTour=S.open;S.open=false}else if(!tour&&S.inTour){S.inTour=false;S.open=S.preTour}
+ const show=h&&appMode==="allmaps"&&!document.querySelector("#gfDeep:not([hidden])")&&!(typeof proj!=="undefined"&&proj.on);
  if(!show){if(S.tray)S.tray.remove();if(S.pen||S.pinArm||S.dragging){penStop();S.pinArm=false;S.dragging=false}closePanels();Object.values(S.place).forEach(o=>o.el.remove());return}
  if(!S.tray)S.tray=buildTray();if(S.tray.parentNode!==h)h.appendChild(S.tray);
  S.tray.classList.toggle("closed",!S.open);S.tray.querySelector(".gfk-tab").setAttribute("aria-expanded",S.open);
