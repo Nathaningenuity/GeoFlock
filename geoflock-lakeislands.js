@@ -2,8 +2,9 @@
    country ("Ometepe — Nicaragua"), highlights the island and the country it belongs to, and leaves the lake alone.
    - Big islands are the holes already in the lake shapes (the lake data has them as inner rings): the hole is the island.
      Samosir is joined to Lake Toba's shore at this resolution, so its outline is the part of Toba's ring that runs round it.
-   - Small islands are not in the lake shapes: each has a centre point and is hovered within about 9 px of it, with a
-     small dot drawn there while it is hovered. They are only hoverable once the map is zoomed in far enough to see the lake.
+   - Small islands are not in the lake shapes: each has a centre point and is hovered within about 9 px of it. Where the lake
+     is painted over one, a small dot of land marks it once the map is zoomed in far enough (not on the satellite picture),
+     and it is highlighted while hovered.
    - Islands are hoverable while the lakes are shown; with the lakes off only on a picture map (relief, satellite…) and
      only islands big enough on screen to be seen on their own.
    Works on the Maps page's flat map and globe (both are amGlobe), in light and dark themes. The islands are in search too. */
@@ -23,7 +24,7 @@ const ISLES=[
  ["Mantsinsaari","ru","Lake Ladoga",31.59,61.35,"s",["Mantsinsaari Island"]],
  ["Bolshoy Klimenetsky Island","ru","Lake Onega",35.26,61.97,"s",["Klimenetsky Island","Bolshoi Klimenetsky","Big Klimenetsky Island"]],
  ["Sääminginsalo","fi","Lake Saimaa",29.09,61.97,"s",["Saaminginsalo"]],
- ["Likoma Island","mw","Lake Malawi",34.73,-12.06,"s",["Likoma"],"in Mozambique’s waters"],
+ ["Likoma Island","mw","Lake Malawi",34.73,-12.06,"s",["Likoma"],"surrounded by Mozambican waters"],
  ["Idjwi","cd","Lake Kivu",29.06,-2.11,"s",["Idjwi Island","Ijwi"]],
  ["Bugala (Ssese Islands)","ug","Lake Victoria",32.255,-0.44,"s",["Ssese Islands","Sese Islands","Bugala Island","Bugala"]],
  ["Buvuma Island","ug","Lake Victoria",33.29,0.22,"s",["Buvuma"]],
@@ -31,6 +32,8 @@ const ISLES=[
  ["Wolfe Island","ca","Lake Ontario",-76.43,44.17,"s",[]],
  ["Amherst Island","ca","Lake Ontario",-76.72,44.16,"s",[]],
  ["Pelee Island","ca","Lake Erie",-82.66,41.78,"s",["Pelee"]],
+ ["Kelleys Island","us","Lake Erie",-82.705,41.605,"s",["Kelley's Island","Kelleys"]],
+ ["South Bass Island","us","Lake Erie",-82.83,41.65,"p",["Put-in-Bay","South Bass"]],
  ["Beaver Island","us","Lake Michigan",-85.55,45.67,"s",[]],
  ["St. Joseph Island","ca","Lake Huron",-83.94,46.21,"s",["Saint Joseph Island","St Joseph Island"]],
  ["Drummond Island","us","Lake Huron",-83.66,46.01,"s",[]],
@@ -49,12 +52,12 @@ const ISLES=[
  ["Frauenchiemsee","de","Chiemsee",12.4229,47.8737,"p",["Fraueninsel","Frauen Island"]],
  ["Ufenau","ch","Lake Zurich",8.7817,47.2181,"p",["Ufnau","Ufenau Island"]],
  ["Kizhi","ru","Lake Onega",35.224,62.067,"p",["Kizhi Island","Kizhi Pogost"]],
- ["Isla del Sol","bo","Lake Titicaca",-69.17,-16.02,"p",["Island of the Sun"]],
- ["Isla de la Luna","bo","Lake Titicaca",-69.071,-16.04,"p",["Island of the Moon","Koati"]],
- ["Taquile","pe","Lake Titicaca",-69.69,-15.77,"p",["Taquile Island","Isla Taquile"]],
- ["Amantaní","pe","Lake Titicaca",-69.72,-15.66,"p",["Amantani","Amantani Island","Isla Amantaní"]],
- ["Uros floating islands","pe","Lake Titicaca",-69.97,-15.82,"p",["Uros","Uros Islands","Islas flotantes de los Uros","Floating islands"]],
- ["Chizumulu Island","mw","Lake Malawi",34.62,-12.02,"p",["Chizumulu"],"in Mozambique’s waters"],
+ ["Isla del Sol","bo","Lago Titicaca",-69.17,-16.02,"p",["Island of the Sun"]],
+ ["Isla de la Luna","bo","Lago Titicaca",-69.071,-16.04,"p",["Island of the Moon","Koati"]],
+ ["Taquile","pe","Lago Titicaca",-69.69,-15.77,"p",["Taquile Island","Isla Taquile"]],
+ ["Amantaní","pe","Lago Titicaca",-69.72,-15.66,"p",["Amantani","Amantani Island","Isla Amantaní"]],
+ ["Uros floating islands","pe","Lago Titicaca",-69.97,-15.82,"p",["Uros","Uros Islands","Islas flotantes de los Uros","Floating islands"]],
+ ["Chizumulu Island","mw","Lake Malawi",34.62,-12.02,"p",["Chizumulu"],"surrounded by Mozambican waters"],
  ["Dek Island","et","Lake Tana",37.267,11.917,"p",["Dek","Lake Tana islands"]],
  ["Daga Island","et","Lake Tana",37.30,11.883,"p",["Daga","Lake Tana islands"]],
  ["Akdamar","tr","Lake Van",43.0365,38.3412,"p",["Akdamar Island","Aghtamar","Akhtamar"]],
@@ -73,23 +76,38 @@ function prep(){if(READY)return;let O;try{O=globeOverlays()}catch(e){return}if(!
   else if(L){const polys=L.type==="MultiPolygon"?L.coordinates:[L.coordinates];
    for(const P of polys){for(let k=1;k<P.length;k++){const g=smallPoly(P[k]);if(d3.geoContains(g,I.ll)){poly=g;break}}if(poly)break}}
   if(poly){I.g=poly;I.c=d3.geoCentroid(poly);I.km2=d3.geoArea(poly)*6371*6371;let r=0;poly.coordinates[0].forEach(p=>{r=Math.max(r,d3.geoDistance(p,I.c))});I.r=r}
-  else{I.kind="p";console.warn("lake islands: no hole for",I.n)}})}
+  else I.kind="p";
+  /* a small island the lake shape paints over (it has no hole of its own) gets a dot of land */
+  I.dot=I.kind==="p"&&!!L&&(()=>{try{return d3.geoContains(L,I.ll)}catch(e){return false}})()})}
 const countryName=cc=>{try{if(typeof allMapsCountryName==="function"){const n=allMapsCountryName(cc);if(n)return n}}catch(e){}try{return COUNTRY_BY_CODE[cc].n}catch(e){}return cc.toUpperCase()};
 const labelOf=I=>I.n+" — "+countryName(I.cc)+(I.note?" ("+I.note+")":"");
 const onMaps=g=>{try{return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==="allmaps"&&!g.cfg.noHover&&!(typeof proj!=="undefined"&&proj.on)}catch(e){return false}};
+const lakeShown=(ov,I)=>!!ov.lakes&&!(I.L&&I.L.minor&&!ov.minorLakes&&!window._gfMinorOn);
+/* pixels per degree of longitude at a point (small islands are only marked once the map is zoomed in that far) */
+const pxDeg=(p,ll)=>{const c=p(ll),q=p([ll[0]+.1,ll[1]]);return c&&q?Math.hypot(q[0]-c[0],q[1]-c[1])*10:0};
 /* is this island shown, and where is the mouse on it? */
 function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g.cfg.overlays():{};const raster=!!(g.cfg.raster&&g.cfg.raster());
  const p=g.projection(),ctr=[-g.rot[0],-g.rot[1]];let best=null,bd=Infinity;
  for(const I of ISLES){if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.01)continue;
-  const lakeOn=!!ov.lakes&&!(I.L&&I.L.minor&&!ov.minorLakes&&!window._gfMinorOn);const c=p(I.kind==="s"?I.c:I.ll);if(!c)continue;
+  const lakeOn=lakeShown(ov,I);const c=p(I.kind==="s"?I.c:I.ll);if(!c)continue;
   const d=Math.hypot(c[0]-mx,c[1]-my);
   if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r+.02&&d>HOVER_PX)continue;
    /* size on screen: the island's radius in pixels */
    const e=p([I.c[0]+I.r*180/Math.PI/Math.max(.2,Math.cos(I.c[1]*Math.PI/180)),I.c[1]]),px=e?Math.abs(e[0]-c[0]):0;
    if(!lakeOn&&!(raster&&px*2>=BIG_ALONE_PX))continue;
    const inside=d3.geoContains(I.g,ll);if(!inside&&!(px*2<16&&d<=HOVER_PX))continue;const s=inside?-1:d;if(s<bd){bd=s;best=I}}
-  else{if(!lakeOn||d>HOVER_PX)continue;const q=p([I.ll[0]+.1,I.ll[1]]);if(!q||Math.hypot(q[0]-c[0],q[1]-c[1])*10<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
+  else{if(!lakeOn||d>HOVER_PX)continue;if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
  return best}
+/* small islands the lake is painted over show as a dot of land once the map is zoomed in far enough to see them
+   (not on the satellite picture, which is left as it is) */
+const sat=()=>{try{return allMapsColorMode==="satellite"}catch(e){return false}};
+function dots(g){prep();if(!READY||sat())return;const ov=g.cfg.overlays?g.cfg.overlays():{};if(!ov.lakes)return;
+ const p=g.projection(),ctr=[-g.rot[0],-g.rot[1]],list=[];
+ for(const I of ISLES){if(!I.dot||!lakeShown(ov,I))continue;if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.02)continue;const k=pxDeg(p,I.ll);if(k<PT_MIN_PXDEG)continue;const c=p(I.ll);if(c)list.push([c,k])}
+ if(!list.length)return;const ctx=g.ctx,dpr=Math.min(2,window.devicePixelRatio||1),dk=dark();
+ ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dk?"#8f8a6c":"#d2c79f";ctx.strokeStyle=dk?"rgba(255,255,255,.55)":"rgba(70,58,30,.6)";ctx.lineWidth=.8;
+ /* a little bigger as the map zooms in, but always small: these islands are only a few km across */
+ list.forEach(([c,k])=>{const rr=Math.max(1.8,Math.min(3.4,k/40));ctx.beginPath();ctx.arc(c[0],c[1],rr,0,2*Math.PI);ctx.fill();ctx.stroke()});ctx.restore()}
 function install(){const P=GlobeView.prototype;
  const _hov=P._hover;P._hover=function(e){const r=_hov.apply(this,arguments);if(!onMaps(this))return r;const was=this._gfIsle;let I=null;
   try{if(e&&isFinite(e.clientX)){const h=this.hit(e.clientX,e.clientY);if(h&&h.ll){const rc=this.canvas.getBoundingClientRect();I=find(this,h.ll,e.clientX-rc.left,e.clientY-rc.top)}}}catch(err){console.error(err)}
@@ -97,7 +115,9 @@ function install(){const P=GlobeView.prototype;
   if(I){this.hotWater=null;this.hot=I.cc;const hb=this.stage.getBoundingClientRect();this.tip.textContent=labelOf(I);this.tip.style.left=e.clientX-hb.left+14+"px";this.tip.style.top=e.clientY-hb.top+14+"px";this.tip.hidden=false;this.canvas.style.cursor="pointer"}
   if(I!==was||I)this.request();return r};
  /* the island is drawn last, over the country outline */
- const _ren=P._render;P._render=function(){const r=_ren.apply(this,arguments);const I=this._gfIsle;if(!I||!onMaps(this)||this.tip.hidden)return r;
+ const _ren=P._render;P._render=function(){const r=_ren.apply(this,arguments);if(!onMaps(this))return r;
+  try{dots(this)}catch(err){console.error(err)}
+  const I=this._gfIsle;if(!I||this.tip.hidden)return r;
   try{const ctx=this.ctx,dpr=Math.min(2,window.devicePixelRatio||1),{w,h,r:R}=this.size(),p=this.projection(),dk=dark();
    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,R,0,2*Math.PI);ctx.clip()}
    ctx.lineJoin="round";ctx.lineCap="round";const fill=dk?"rgba(255,226,120,0.62)":"rgba(255,206,64,0.58)",edge=dk?"#fff3c4":"#7a4a00";

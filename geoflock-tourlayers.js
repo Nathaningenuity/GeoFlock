@@ -36,7 +36,7 @@ function begin(){if(sess)return false;sess={off:new Set()};if(pending){pending.f
 /* the viewer's layers are noted once, when the tour begins (later restarts of the same tour, for a stop on another map,
    must not take the tour's own layers for the viewer's) */
 function quiet(){try{if(!live()||!onMaps())return;const first=begin(),need=needed(PS_TOURS[ps.tour]);
-  if(first){nowOn().concat(pre||[]).forEach(n=>sess.off.add(n));pre=null}
+  if(first){const turned=new Set(ps.turned||[]);(pre||nowOn().filter(n=>{const i=input(n);return!(i&&turned.has(i.id))})).forEach(n=>sess.off.add(n));pre=null}
   sess.off.forEach(n=>{if(!need.has(n))set(input(n),false)})}catch(e){console.error(e)}}
 function finish(){if(!sess)return;const off=[...sess.off];sess=null;if(!off.length)return;pending=off;clearTimeout(pendT);
  /* after the tour's own clean-up (geoflock-mapsx.js switches its per-stop layers off every 300 ms) */

@@ -119,7 +119,7 @@ S({title:"Yali’s question",view:[114,-14,156,2],globe:[145,-6,3.5],card:"left"
  stat:"In 1972 a New Guinean politician, Yali, asked Diamond why white people had so much ‘cargo’ and New Guineans so little",
  body:"‘Cargo’ meant manufactured goods: steel axes, matches, cloth, medicines. Diamond spent 25 years trying to answer Yali’s question, and this book is his answer. He insists it has nothing to do with intelligence: he found New Guineans at least as clever as Westerners.",
  more:"New Guinea’s highlanders were among the world’s first farmers, growing crops at Kuk Swamp thousands of years ago. But, Diamond argues, their crops were poor in protein and they had no big animals to tame."}),
-S({title:"Cajamarca, 1532",view:[-92,-20,-66,12],globe:[-76,-8,2.5],card:"left",gfEmpire:{y:1530,gk:"inca",name:"Inca Empire",at:[-75.2,-10.2]},
+S({title:"Cajamarca, 1532",view:[-92,-20,-66,12],globe:[-76,-8,2.5],card:"left",gfEmpire:{y:1530,gk:"inca",name:"Inca Empire",at:[-68,-9.5]},
  lines:[{coords:[[-79.52,8.98],[-80.5,2],[-81.2,-2],[-80.45,-3.57],[-79.5,-5.5],[-78.52,-7.16]],kind:"flow"}],
  pins:[[[-78.52,-7.16],"Cajamarca","point"],[[-80.45,-3.57],"Tumbes","point"],[[-79.52,8.98],"Panama","point"],[[-71.97,-13.53],"Cusco, the Inca capital","point"]],
  iconPins:[ic([-78.52,-7.16],"swords")],
