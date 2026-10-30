@@ -66,6 +66,9 @@ body.sky-night .hist-era{ color:#aeb9dc !important; opacity:1 !important; }
 body.sky-night .hist-era.on{ color:#ffd98a !important; }
 body.sky-night .gf-eim-key{ color:#b9c6dc !important; }
 body.sky-night #populationLegend .hist-relief-sw, body.sky-night #populationLegend .th-relief-sw{ color:#c9d3ea !important; opacity:1 !important; }
+/* the floating key stood above the country profile's backdrop (and other dialogs): hidden while one is open */
+body:has(#flagZoomOverlay) #flKey, body:has(.gf-nightask) #flKey,
+body:has(#flagZoomOverlay) .gfx-arr, body:has(.gf-nightask) .gfx-arr{ visibility:hidden !important; }
 /* the floating key's "Show all" stays on one line */
 .flk-h .flk-all{ white-space:nowrap; flex:none; }`;
 document.head.appendChild(css);
