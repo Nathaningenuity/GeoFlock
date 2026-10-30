@@ -71,14 +71,15 @@ const smallPoly=r=>{const g={type:"Polygon",coordinates:[r.slice()]};if(d3.geoAr
 /* the island shapes, from the lake holes (built once, after the overlays exist) */
 let READY=false;
 function prep(){if(READY)return;let O;try{O=globeOverlays()}catch(e){return}if(!O||!O.lakes)return;READY=true;
- ISLES.forEach(I=>{const L=O.lakes.find(x=>x.n===I.lake);I.L=L||null;if(I.kind!=="s")return;let poly=null;
+ const inLake=(L,ll)=>{try{return!!L&&d3.geoContains(L,ll)}catch(e){return false}};
+ ISLES.forEach(I=>{const L=O.lakes.find(x=>x.n===I.lake);I.L=L||null;
+  /* a small island the lake shape paints over (it has no hole of its own) gets a dot of land */
+  if(I.kind!=="s"){I.dot=inLake(L,I.ll);return}let poly=null;
   if(I.n==="Samosir")poly=smallPoly(SAMOSIR);
   else if(L){const polys=L.type==="MultiPolygon"?L.coordinates:[L.coordinates];
    for(const P of polys){for(let k=1;k<P.length;k++){const g=smallPoly(P[k]);if(d3.geoContains(g,I.ll)){poly=g;break}}if(poly)break}}
   if(poly){I.g=poly;I.c=d3.geoCentroid(poly);I.km2=d3.geoArea(poly)*6371*6371;let r=0;poly.coordinates[0].forEach(p=>{r=Math.max(r,d3.geoDistance(p,I.c))});I.r=r}
-  else I.kind="p";
-  /* a small island the lake shape paints over (it has no hole of its own) gets a dot of land */
-  I.dot=I.kind==="p"&&!!L&&(()=>{try{return d3.geoContains(L,I.ll)}catch(e){return false}})()})}
+  else{I.kind="p";I.dot=inLake(L,I.ll)}})}
 const countryName=cc=>{try{if(typeof allMapsCountryName==="function"){const n=allMapsCountryName(cc);if(n)return n}}catch(e){}try{return COUNTRY_BY_CODE[cc].n}catch(e){}return cc.toUpperCase()};
 const labelOf=I=>I.n+" — "+countryName(I.cc)+(I.note?" ("+I.note+")":"");
 const onMaps=g=>{try{return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==="allmaps"&&!g.cfg.noHover&&!(typeof proj!=="undefined"&&proj.on)}catch(e){return false}};
