@@ -414,10 +414,10 @@ function nations(){const id="bnations";const H=y=>({mode:"history",sub:y,card:"l
   stat:"Printing in Arabic letters was long resisted in the Ottoman Empire: the first Muslim-run press was allowed only in 1727, nearly 300 years after Gutenberg",
   body:"The authors argue that the Ottoman sultans feared new ideas that could weaken their rule, so printing in Arabic script was blocked for centuries. They say that by about 1800 only 2 or 3 Ottomans in 100 could read, against about 6 in 10 adult men in England.",
   more:"Historians debate how strict the ban really was: scribes and religious scholars also had reasons to resist, and Jewish, Armenian and Greek printers worked in Istanbul long before 1727. Even İbrahim Müteferrika’s press printed fewer than twenty books before it closed."}));
- ins(id,"Botswana’s chiefs",Object.assign(H("1975"),{title:"Tearing up the railway",view:[-14.5,6.6,-9.6,10.2],globe:[-11.8,8.4,6],hi:["sl"],
+ ins(id,"Botswana’s chiefs",Object.assign(H("1975"),{title:"Tearing up the railway",view:[-15.5,6.8,-10,9.8],globe:[-11.8,8.4,6],hiSoft:["sl"],
   lines:[{coords:[[-13.23,8.48],[-12.9,8.35],[-12.4,8.1],[-11.74,7.96],[-11.19,7.88],[-10.7,8.1]],kind:"dash"}],
-  pins:[[[-13.23,8.48],"Freetown","point"],[[-11.74,7.96],"Bo","point"],[[-10.7,8.1],"Pendembu: the end of the line","point"]],
-  phPins:[ph([-13.25,8.47],"Freetown’s beach","Beach in Freetown, Sierra Leone (14176784751).jpg")],
+  pins:[[[-11.74,7.96],"Bo","point"],[[-10.7,8.1],"Pendembu: the end of the line","point"]],
+  phPins:[ph([-13.23,8.48],"Freetown: where the line began","Beach in Freetown, Sierra Leone (14176784751).jpg")],
   stat:"In the 1970s Sierra Leone’s ruler shut the railway to the region where his opponents lived, and sold off its track",
   body:"The authors tell how Siaka Stevens, who ruled from 1968 to 1985, closed the line (dashed) that ran into the Mende lands of the south and east, which backed his rivals, and sold off the rails and trains. A tool for the whole economy was destroyed because it could help the wrong people.",
   more:"For the authors this is extractive politics at its plainest: a ruler would rather the country stay poor than risk his power. Compare Botswana, the stop before, where leaders shared the wealth instead."}));
@@ -444,12 +444,12 @@ function collapse(){const id="bcollapse";const H=y=>({mode:"history",sub:y,card:
   stat:"Diamond found some of the best-protected rainforest in Papua New Guinea around an oil field",
   body:"Diamond was surprised by the Kutubu oil project, run by Chevron when he visited: the company banned its workers from hunting or buying wild animals and guarded hard against spills, because an accident would cost it far more than prevention. Birds of paradise and tree kangaroos thrived there.",
   more:"Diamond uses Kutubu to argue that companies protect the environment when the public and governments make damage costly to them. Critics say one well-run field doesn’t excuse the oil industry."}));
- ins(id,"An oil field that saved the forest",Object.assign(H("2005"),{title:"We are all in the polder",view:[2.5,50.8,8,54],globe:[5.5,52.5,6],hi:["nl"],
+ ins(id,"An oil field that saved the forest",Object.assign({mode:"relief",card:"left"},{title:"We are all in the polder",view:[2.5,50.8,8,54],globe:[5.5,52.5,6],hi:["nl"],
   gfSea:3,gfSeaUI:true,
   pins:[[[5.5,52.5],"Flevoland: land from the sea","point"],[[4.48,51.92],"Rotterdam","point"]],
   phPins:[ph([4.64,51.88],"Kinderdijk: windmills that pumped the polders","The windmills of Kinderdijk.JPG")],
   stat:"A Dutch saying: be kind to your enemy, because he may run the pump next to yours in the polder",
-  body:"Diamond ends with the Netherlands, where about a quarter of the land lies below sea level, in polders: land won from the sea and kept dry by dikes and pumps. If the dikes fail, rich and poor drown together, so everyone has a reason to work together. Try the sea-level slider to see what the dikes hold back.",
+  body:"Diamond ends with the Netherlands, where about a quarter of the land lies below sea level, in polders: land won from the sea and kept dry by dikes and pumps. If the dikes fail, rich and poor drown together, so everyone has a reason to work together. The map shows the sea 3 m higher, as if there were no dikes: drag the sea-level slider to see what they hold back.",
   more:"Diamond sees this as the lesson of his book: societies do better when their leaders cannot escape the problems they cause. Dutch politics, with its habit of bargaining until everyone can agree, is called the polder model. Flevoland, the newest province, was pumped dry in the 1950s and 1960s."}));
 }
 
