@@ -73,7 +73,7 @@ const CARD={
  "hg6c|Building better cities":"Shanghai by night.jpg",
  "hg6c|Counting the city":"Times square nuit.jpg",
  "hg6d|Cities under pressure":"Low visibility due to Smog at New Delhi Railway station 31st Dec 2017 after 9AM DSCN8829 1.jpg",
- "hg6d|Redlining":"Baltimore row houses.jpg",
+ "hg6d|Redlining":"United States Capitol.jpg",
  "hg6d|Environmental injustice":"Children queue for water in a camp in Sudan.jpg",
  "hg7a|Measuring development":"High Angle View Of Kigali City Street on November 29, 2018. Emmanuel Kwizera.jpg",
  "hg7a|GDP, GNI and per person":"Wall Street - New York Stock Exchange.jpg",
@@ -391,7 +391,7 @@ if(T("hg6a")&&!T("hg6a").steps._polI){T("hg6a").steps._polI=1;
   s.body="A megalopolis is a chain of cities grown together. “BosWash”, from Boston through New York and Philadelphia to Washington, about 630 km (drag the ruler), holds about 50 million people. Japan’s corridor from Tokyo to Osaka is another. A metacity has over 20 million people."});
  set("hg6a","World cities",s=>{s.on=["connections"];
   s.more="They connect more closely to each other than to their own countryside: the flight paths and undersea cables on the map tie them together, and a London banker may deal more with New York than with towns nearby."});
- set("hg6a","The gravity model",s=>{s.gfRuler={a:[-74,40.7],b:[-87.63,41.88]};
+ set("hg6a","The gravity model",s=>{s.view=[-140,28,-60,60];s.globe=[-95,40,1.8];delete s.spin;s.gfRuler={a:[-74,40.7],b:[-87.63,41.88]};
   s.body="The gravity model predicts the interaction between two places: multiply their populations and divide by the distance between them squared. Drag the ruler: Chicago is about 1,150 km from New York, Denver about 2,600 km, so far more people travel between New York and Chicago."});
 }
 /* ───────── Unit 6: Inside the city ───────── */
@@ -530,7 +530,7 @@ if(T("hg5c")&&!T("hg5c").steps._polI2){T("hg5c").steps._polI2=1;
  set("hg5c","Fair trade",s=>{s.gfRuler={a:[-75.6,4.8],b:[9.99,53.55]};
   s.more="Drag the ruler: the beans travel about 9,000 km to roasters in Europe. Fair trade is still a small share of sales, and much of the shop price stays with roasters and retailers."});
 }
-/* Inside the city and Building better cities move to the population map: the satellite and city-lights maps cannot
+/* Inside the city, Building better cities and Cities under pressure move to the population map: the satellite and city-lights maps cannot
    zoom in far enough to show a city's inside, and the city-lights map is not offered in the light theme */
 if(T("hg6b")&&!T("hg6b").steps._polI2){const t=T("hg6b");t.steps._polI2=1;
  try{def(t,"map",Object.assign({},t.map||{},{mode:"population"}))}catch(e){}
@@ -549,7 +549,8 @@ if(T("hg6c")&&!T("hg6c").steps._polI2){const t=T("hg6c");t.steps._polI2=1;
  set("hg6c","Greenbelts",s=>{s.on=["cities"];
   s.more="It has contained sprawl but squeezed housing supply, which many blame for London’s high prices. Growth has leapt to towns beyond the belt, such as Reading and Milton Keynes."});
 }
-if(T("hg6d")&&!T("hg6d").steps._polI2){T("hg6d").steps._polI2=1;
+if(T("hg6d")&&!T("hg6d").steps._polI2){const t=T("hg6d");t.steps._polI2=1;
+ try{def(t,"map",Object.assign({},t.map||{},{mode:"population"}))}catch(e){}
  set("hg6d","Informal settlements",s=>{s.on=["cities"]});
 }
 if(T("hg7a")&&!T("hg7a").steps._polI2){T("hg7a").steps._polI2=1;
