@@ -579,9 +579,13 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
    (S.phPins||[]).forEach(q=>{const a=q.at&&psScreen(q.at);if(a)B.push({x:a[0]-10,y:a[1]-10,w:20,h:20})});
    const r=_lay.call(this,cands,pins,sizes,W,H,B);const off=ps._labOff&&ps._labOff.i===ps.i?ps._labOff.d:null;
    if(off)r.forEach((q,k)=>{const d=off[k];if(!q||!d)return;q.x+=d[0];q.y+=d[1];q.ex=Math.max(q.x,Math.min(q.x+q.w,q.ax));q.ey=Math.max(q.y,Math.min(q.y+q.h,q.ay));q.gap=Math.max(q.gap||0,9)});return r}catch(e){return _lay.apply(this,arguments)}};
- /* the ring: a circle around the spot, and the leader stops at its edge */
+ /* pins are small solid dots; a ring (a circle around the spot, the leader stopping at its edge) only where a dot would
+    cover what the pin is about: a pin marked {ring:true} (or "ring" as its kind) */
  const RR=8,_ldr=psLeaders;psLeaders=function(pinsEl,rects){const r=_ldr.apply(this,arguments);try{const svg=pinsEl.querySelector(".ps-leaders");if(!svg)return r;
-   svg.querySelectorAll("circle.ps-dot").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");c.setAttribute("r",RR);c.classList.add("ps-ring");
+   const S=(typeof psSteps==="function"&&ps)?psSteps()[ps.i]||{}:{},want=(S.pins||[]).filter(p=>p&&(p.ring||(Array.isArray(p)&&(p[2]==="ring"||p[3]==="ring")))).map(p=>{try{return psScreen(Array.isArray(p)?p[0]:p.at)}catch(e){return null}}).filter(Boolean);
+   svg.querySelectorAll("circle.ps-dot").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");
+    if(!want.some(q=>Math.hypot(q[0]-x,q[1]-y)<3)){c.classList.remove("ps-ring");c.classList.add("ps-dot-s");c.setAttribute("r",3.6);return}
+    c.setAttribute("r",RR);c.classList.add("ps-ring");
     svg.querySelectorAll("line.ps-ldr, line.ps-ldr-h").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d>RR+2){l.setAttribute("x1",(x+(x2-x)/d*RR).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*RR).toFixed(1))}}})})}catch(e){}return r};
  /* dragging a label: it stays where it is put for this stop, and its line follows */
  let drag=null;
@@ -594,15 +598,16 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
  const st=document.createElement("style");st.textContent=`
  .ps-pins .ps-lab{ pointer-events:auto; cursor:grab; touch-action:none; user-select:none; }
  .ps-pins .ps-lab:active{ cursor:grabbing; }
+ .ps-leaders circle.ps-dot-s{ fill:#13294b !important; stroke:#fff !important; stroke-width:1.6px !important; }
  .ps-leaders circle.ps-ring{ fill:none !important; stroke:#13294b !important; stroke-width:2px !important; paint-order:stroke; filter:drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 1px #fff); }`;document.head.appendChild(st)})();
 
-/* 40: the photo pins also mark their spot with a small ring (the line ends at its edge), not a dot on it */
+/* 40: the photo pins mark their spot with a small dot (rings were too many and looked strange) */
 (function(){const fix=()=>{if(typeof psPhPinsSync!=="function"||psPhPinsSync._gfRing)return false;const _s=psPhPinsSync;
   psPhPinsSync=function(){const r=_s.apply(this,arguments);try{const box=psContainer&&psContainer(),svg=box&&box.querySelector(".ps-phpins svg.ps-sq-lead");if(svg){const RR=6;
-   svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");c.setAttribute("r",RR);c.classList.add("ps-ring2");
+   svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");c.setAttribute("r",3.4);c.classList.add("ps-dot2");
     svg.querySelectorAll("line").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d>RR+2){l.setAttribute("x1",(x+(x2-x)/d*RR).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*RR).toFixed(1))}}})})}}catch(e){}return r};psPhPinsSync._gfRing=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}
- const st=document.createElement("style");st.textContent=".ps-sq-lead circle.ps-ring2{ fill:none !important; stroke-width:2px !important; filter:drop-shadow(0 0 1px #fff); }";document.head.appendChild(st)})();
+ const st=document.createElement("style");st.textContent=".ps-sq-lead circle.ps-dot2{ stroke:#fff !important; stroke-width:1.4px !important; }";document.head.appendChild(st)})();
 
 /* 41: the time-zones tour runs on the satellite map, which is already dark: no dimming outside the highlighted places
    (they keep their white outline) */
