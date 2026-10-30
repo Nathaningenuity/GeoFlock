@@ -308,7 +308,7 @@ function trim(s){s=s.trim();if(s.length<=MAX)return s;
  const c=s.split(/\s*\(|,\s|\s+[~·–—]\s*|\s+-\s+/)[0].trim();if(c.length>=3&&!STOP.test(c)&&c.length<=MAX)return c;
  const w=(c.length>=3?c:s).split(/\s+/);let o="";for(const x of w){if((o+" "+x).trim().length>MAX-2)break;o=(o+" "+x).trim()}
  return(o||s.slice(0,MAX-2))+"…"}
-function cap(t){t=String(t==null?"":t).trim();if(GF_PHCAP[t])return GF_PHCAP[t];
+function cap(t){t=String(t==null?"":t).trim();if(GF_PHCAP[t])return GF_PHCAP[t];{const z=t.replace(/\u200b/g,"");if(z!==t){if(GF_PHCAP[z])return GF_PHCAP[z];t=z}}
  const m=/^([^:]{2,}?):\s+(.+)$/.exec(t),NAME=/^(?:[Tt]he\s+)?[A-Z0-9ÀÁÂÄÅÇÉÈÍÓÖØÚÜĀŌŪ“‘"']/;
  /* "Place: Name" — the photo shows the named thing */
  if(m&&NAME.test(m[2].trim()))return trim(m[2].trim().replace(/^the\s/,"The "));

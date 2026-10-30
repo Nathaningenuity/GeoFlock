@@ -320,7 +320,7 @@ if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
 })();
 /* 16. Pin photos that were shared with a pin they did not fit: France's mainland pin gets the Eiffel Tower, and pins whose only
        photo showed somewhere else (Khouribga had a tagine, Saint Martin had Saint Kitts) show the plain photo icon instead. */
-(function(){const NONE=new Set(["Khouribga: Morocco’s phosphate mines","Saint Martin: French north, Dutch south"]);
+(function(){const NONE=new Set(["Khouribga: Morocco’s phosphate mines",]);
  try{GF_SQ_FILE["Metropolitan France"]="Tour Eiffel Wikimedia Commons.jpg"}catch(e){}
  if(typeof psSqPhoto==="function"){const _p=psSqPhoto;psSqPhoto=function(q){if(q&&NONE.has(String(q.label).replace(/​/g,"")))return null;return _p.apply(this,arguments)}}})();
 /* 17. History map: clicking a place opens the power that ruled it that year (not today's country): its name, what it was part
