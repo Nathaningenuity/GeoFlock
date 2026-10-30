@@ -72,6 +72,10 @@ const SQ={/*SQ*/
 "Straits of Mackinac: Michigan and Huron meet":"Mackinac Bridge Walk.jpg",
 "Saint Martin: French north, Dutch south":"Grand Case auf Saint Martin.jpg","Saint Martin: French north, Dutch south\u200b":"Grand Case auf Saint Martin.jpg",
 "Strait of Magellan":"00 2521 Punta Arenas - Chile.jpg",
+/* pins in other tours that had no picture, filled from photos already in the library */
+"Heart Reef, off the Whitsundays":"The heart reef, part of the Great Barrier Reef near Airlie Beach, Whitsunday Islands, Queensland.jpg",
+"Khouribga: Morocco’s phosphate mines":"Ancien terril phosphate OCP Khouribga.jpg",
+"Ethiopia: Rock church of St George, Lalibela":"Lalibela, san giorgio, esterno 24.jpg",
 "Quito ~2,850 m":"Quito DotM banner.jpg",
 "Mawsynram: the wettest place":"Living root bridge, Maghalaya, India1.jpg",
 "Brunei, in two pieces":"Kampong Ayer, Brunei in January 2026 (DSCF1416).jpg"
