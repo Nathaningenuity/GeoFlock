@@ -556,8 +556,9 @@ document.addEventListener("mousemove",e=>{if(!coordOn)return;gpsXY=[e.clientX,e.
 
 /* ================= keep it all in place ================= */
 function sync(){const h=host();const tour=typeof ps!=="undefined"&&!!ps;
- /* during a guided tour the toolkit stays, folded when the tour starts; it opens again as it was when the tour ends */
- if(tour&&!S.inTour){S.inTour=true;S.preTour=S.open;S.open=false}else if(!tour&&S.inTour){S.inTour=false;S.open=S.preTour}
+ /* during a guided tour the toolkit stays, under the tour card and folded when the tour starts (open in full screen,
+    where there is room); it goes back to how it was when the tour ends */
+ const fs=document.body.classList.contains("gf-fs");if(tour&&!S.inTour){S.inTour=true;S.preTour=S.open;S.open=fs;S.tourFs=fs}else if(tour&&S.tourFs!==fs){S.tourFs=fs;S.open=fs}else if(!tour&&S.inTour){S.inTour=false;S.open=S.preTour}
  const show=h&&appMode==="allmaps"&&!document.querySelector("#gfDeep:not([hidden])")&&!(typeof proj!=="undefined"&&proj.on);
  if(!show){if(S.tray)S.tray.remove();if(S.pen||S.pinArm||S.dragging){penStop();S.pinArm=false;S.dragging=false}closePanels();Object.values(S.place).forEach(o=>o.el.remove());return}
  if(!S.tray)S.tray=buildTray();if(S.tray.parentNode!==h)h.appendChild(S.tray);

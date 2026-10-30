@@ -21,6 +21,11 @@ if(!hook()){const t=setInterval(()=>{if(hook())clearInterval(t)},300)}
 let lastHash="";
 setInterval(()=>{try{
  document.body.classList.toggle("gf-touring",on());
+ /* the toolkit sits right under the tour card (folded at first); in full screen it keeps its own spot */
+ try{const tr=document.querySelector("#allMapsView .gfk-tray"),card=on()&&ps.card;
+  if(tr&&card&&card.isConnected&&innerWidth>640&&!document.body.classList.contains("gf-fs")){const par=tr.offsetParent;if(par){const pr=par.getBoundingClientRect(),cr=card.getBoundingClientRect();
+   tr.style.setProperty("top",Math.round(cr.bottom-pr.top+8)+"px","important");tr.style.setProperty("left",Math.round(cr.left-pr.left)+"px","important");tr.style.setProperty("bottom","auto","important");tr.style.setProperty("z-index","8","important");tr._gftl=1}}
+  else if(tr&&tr._gftl){["top","left","bottom","z-index"].forEach(k=>tr.style.removeProperty(k));tr._gftl=0}}catch(e){}
  if(want){const age=Date.now()-wantAt;
   if(on()&&ps.tour===want){const st=wantStop;want=null;wantStop=0;if(chip)hide();if(st>0&&typeof psGo==="function")setTimeout(()=>{try{if(on())psGo(st)}catch(e){}},400)}
   else if(typeof appMode!=="undefined"&&appMode==="allmaps"&&!on()){
@@ -59,8 +64,6 @@ const css=document.createElement("style");css.textContent=`
 .gftl{ position:absolute; left:50%; top:14px; transform:translateX(-50%); z-index:60; display:flex; align-items:center; gap:9px; padding:8px 14px; border-radius:999px;
  background:rgba(255,255,255,.95); color:#16324f; font:600 13.5px/1.2 inherit; font-family:inherit; box-shadow:0 4px 16px rgba(0,0,0,.18); pointer-events:auto; white-space:nowrap; }
 .gftl[hidden]{ display:none; }
-/* during a tour the toolkit sits to the right of the tour card, folded until opened */
-@media (min-width:761px){ body.gf-touring:not(.gf-fs) #allMapsView .gfk-tray{ left:auto !important; right:64px !important; } }
 .gftl-spin{ width:14px; height:14px; border-radius:50%; border:2.5px solid rgba(31,111,159,.25); border-top-color:#1f6f9f; animation:gftlspin .8s linear infinite; }
 .gftl-spin[hidden]{ display:none; }
 @keyframes gftlspin{ to{ transform:rotate(360deg); } }
