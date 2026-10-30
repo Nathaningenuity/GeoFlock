@@ -1,7 +1,7 @@
 /* GeoFlock: the Day & Night globe.
    A second globe view of the Satellite map: the sunlit half shows the satellite picture (seas a little lighter and more
-   turquoise), the dark half shows the City Lights picture, with a soft twilight band (about 10° of sun angle) and a faint
-   warm glow along the line between them. The cloud layer is bright white by day and dark and faint by night, dimming the
+   turquoise), the dark half shows the City Lights picture, lit by real sun geometry: daylight fades with the sun's height (Lambert),
+   twilight lasts to 12° below the horizon (nautical dusk), and city lights come on from sunset. The cloud layer is bright white by day and dark and faint by night, dimming the
    city lights under it.
    How it works: the globe is drawn by a WebGL fragment shader (GlobeGL). While this view is on and the globe is drawing the
    satellite picture, GlobeGL.draw uses a second shader program, on the same context, that samples the satellite, night and
@@ -43,8 +43,8 @@ void main(){
     float rr = sqrt(r2), t = rr - 1.0; float lx = xx/rr, ly = yy/rr;
     float phi = asin(clamp(ly*uCp, -1.0, 1.0)); float lam = uLam0 + atan(lx, -ly*uSp);
     float s = dot(nrm(phi, lam), uSun);
-    float lit = smoothstep(-0.25, 0.15, s);
-    vec3 c = mix(vec3(1.0, 0.55, 0.25), vec3(0.42, 0.66, 1.0), smoothstep(-0.05, 0.3, s));
+    float lit = smoothstep(-0.208, 0.15, s);
+    vec3 c = vec3(0.42, 0.66, 1.0);
     o = vec4(c, exp(-t * 30.0) * 0.8 * lit); return;
   }
   if(dd > uF) discard;
@@ -60,20 +60,32 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
-  vec3 sea = day * vec3(1.06, 1.32, 1.16) + vec3(0.008, 0.045, 0.05);
+  /* sea colour by depth, read from how light the water is: the deep ocean just a little lighter, shelf seas a touch of
+     turquoise, and the shallowest water (reefs, banks, lagoons) clearly turquoise, like the Blue Marble picture */
+  float shelf = smoothstep(0.07, 0.15, lum), shoal = smoothstep(0.15, 0.27, lum);
+  vec3 deep = day * 1.12 + vec3(0.01, 0.015, 0.025);
+  vec3 sea = mix(deep, day * vec3(0.95, 1.22, 1.16) + vec3(0.0, 0.03, 0.035), shelf);
+  sea = mix(sea, day * vec3(0.78, 1.52, 1.34) + vec3(0.0, 0.08, 0.08), shoal);
   day = mix(day, sea, water);
-  /* a little shading towards the terminator, as the sun gets low */
-  day *= mix(0.62, 1.0, smoothstep(-0.05, 0.45, s));
-  float dayMix = smoothstep(-0.18, 0.10, s);
+  /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
+     Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
+     sunset; a gentle tone curve (like a camera exposure, as in real photos from space) keeps the day side bright.
+     After sunset the sky still lights the ground: civil twilight to 6° below the horizon (s = -0.105), nautical to 12°
+     (s = -0.208). City lights show from about sunset and are fully visible by nautical dusk. */
+  float direct = pow(clamp(s, 0.0, 1.0), 0.5);
+  float twi = 0.22 * smoothstep(-0.208, 0.0, s);
+  /* the satellite picture never swaps for another map: it just darkens (a faint moonlit trace stays all night), and
+     the city lights are added on top as the sky gets dark */
+  float light = max(0.035, direct + twi * (1.0 - direct));
+  float lights = 1.0 - smoothstep(-0.208, 0.0, s);
+  ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
     float cs = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc + 0.0018, v - 0.0014), gx, gy).r) * uClA;
-    day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0) * mix(0.62, 1.0, smoothstep(-0.05, 0.45, s)), cl * 0.95);
-    ngt = ngt * (1.0 - cl * 0.7) + cl * 0.06; }
-  vec3 col = mix(ngt, day, dayMix);
-  /* the warm glow along the terminator, a touch stronger on the clouds that catch it */
-  col += vec3(1.0, 0.48, 0.16) * exp(-pow(s / 0.08, 2.0)) * (0.17 + 0.16 * cl + 0.04 * dot(day, vec3(0.33)));
-  if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 2.4) * 0.6 * smoothstep(-0.2, 0.2, s)); }
+    day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0), cl * 0.95);
+    ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; }
+  vec3 col = day * light + ngt * lights;
+  if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 2.4) * 0.6 * smoothstep(-0.105, 0.2, s)); }
   o = vec4(col, 1.0);
 }`;
 const VS="#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
@@ -101,17 +113,21 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
 /* the night picture's GPU copy is let go on leaving, unless City Lights is the map showing */
 function freeNight(){try{const G=amGlobe&&amGlobe.gl;if(!G||!G.tex.night||allMapsColorMode==="night")return;G.tex.night.list.forEach(t=>{try{G.gl.deleteTexture(t)}catch(e){}});delete G.tex.night}catch(e){}}
 
-/* the sun, a small disc where it is overhead */
-{const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){
- try{if(S.on&&typeof amGlobe!=="undefined"&&this===amGlobe&&!this._flat){const s=[S.lon,S.lat],c=[-this.rot[0],-this.rot[1]];
-  if(d3.geoDistance(s,c)<Math.PI/2-.02){const q=p(s);if(q){ctx.save();const g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],16);g.addColorStop(0,"rgba(255,236,170,.75)");g.addColorStop(1,"rgba(255,210,90,0)");
-   ctx.fillStyle=g;ctx.beginPath();ctx.arc(q[0],q[1],16,0,7);ctx.fill();ctx.fillStyle="#ffd34d";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(q[0],q[1],5,0,7);ctx.fill();ctx.stroke();ctx.restore()}}}}
- catch(e){console.error(e)}return _dm.apply(this,arguments)}}
+
 
 /* rivers and lakes are drawn over the picture in day colours; they are left off here */
 function patchCfg(){if(typeof amGlobe==="undefined"||!amGlobe||amGlobe._dngCfg)return;amGlobe._dngCfg=1;const ov=amGlobe.cfg.overlays;
  amGlobe.cfg.overlays=function(){const o=ov.apply(this,arguments);if(S.on&&o){o.rivers=false;o.lakes=false}return o}}
 
+/* the sun: shown only while the Time or Season slider is moving, then it stays ~2.5 s and fades out */
+let sunAt=0,sunRaf=0;
+function sunPing(){sunAt=performance.now();if(!sunRaf){const tick=()=>{const age=performance.now()-sunAt;try{amGlobe.request()}catch(e){}sunRaf=age<3400?requestAnimationFrame(tick):0};sunRaf=requestAnimationFrame(tick)}}
+{const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){
+ try{const age=performance.now()-sunAt,a=age<2500?1:Math.max(0,1-(age-2500)/900);
+  if(a>0&&S.on&&typeof amGlobe!=="undefined"&&this===amGlobe&&!this._flat){const sp=[S.lon,S.lat],c=[-this.rot[0],-this.rot[1]];
+   if(d3.geoDistance(sp,c)<Math.PI/2-.02){const q=p(sp);if(q){ctx.save();ctx.globalAlpha=a;const g=ctx.createRadialGradient(q[0],q[1],0,q[0],q[1],16);g.addColorStop(0,"rgba(255,236,170,.75)");g.addColorStop(1,"rgba(255,210,90,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(q[0],q[1],16,0,7);ctx.fill();ctx.fillStyle="#ffd34d";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(q[0],q[1],5,0,7);ctx.fill();ctx.stroke();ctx.restore()}}}}
+ catch(e){console.error(e)}return _dm.apply(this,arguments)}}
 /* ---------- the chip, the panel ---------- */
 const fmtMin=m=>{m=Math.round(m)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
 const fmtLL=(v,p,n)=>Math.abs(v).toFixed(0)+"°"+(v>=0?p:n);
@@ -127,8 +143,8 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1440" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Season</span><input type="range" min="-23.4" max="23.4" step="0.1" data-dng="lat" aria-label="Season: the latitude where the sun is overhead"><em class="gf-dng-season"></em></label>';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="lat"]');
-  t.addEventListener("input",()=>{stop();S.lon=minToLon(+t.value);ui(true);req()});
-  l.addEventListener("input",()=>{stop();S.lat=+l.value;ui(true);req()});
+  t.addEventListener("input",()=>{stop();S.lon=minToLon(+t.value);sunPing();ui(true);req()});
+  l.addEventListener("input",()=>{stop();S.lat=+l.value;sunPing();ui(true);req()});
   el.querySelector('[data-dng="now"]').onclick=()=>{stop();const lat=S.lat;toNow();S.lat=lat;ui();req()};
   el.querySelector('[data-dng="reset"]').onclick=()=>{stop();toNow();ui();req()};
   el.querySelector('[data-dng="play"]').onclick=()=>{if(S.play)stop();else play()}}
