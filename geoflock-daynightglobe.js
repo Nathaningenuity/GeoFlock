@@ -71,20 +71,22 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
-  /* sea colour, like the Blue Marble picture: the lighter shallow water near coasts takes a soft turquoise that
-     dissolves gradually into the dark navy of the open ocean (a wide, smooth ramp on how light the water is, so there
-     is no edge); water the picture already shows light cyan (the Bahamas banks, reefs) gets a little brighter. */
-  float shelf = smoothstep(0.035, 0.17, lum);
-  /* colour follows what is in the water, not only depth: clear tropical shallows and reefs are turquoise; cold seas
-     (the North Sea, the Yellow Sea's latitudes) and sediment-brown river mouths get only a faint hint */
+  /* sea colour, like the Blue Marble picture: a smooth gradient on how shallow the water looks (its lightness in the
+     picture), from the dark navy of the open ocean through teal-turquoise over the continental shelves to bright aqua
+     over the shallowest banks (the Bahamas, reefs). The picture's own texture is kept on top of the new colours. */
+  float shelf = smoothstep(0.03, 0.22, lum);
+  float sh = shelf * shelf * (3.0 - 2.0 * shelf);
+  /* colour follows what is in the water as well as depth: the tropics and reefs are the most turquoise; cold seas a
+     little less; sediment-brown river mouths keep their own colour */
   float tropic = 1.0 - smoothstep(0.42, 0.78, abs(phi));
   float muddy = smoothstep(0.85, 1.05, day.r / max(day.b, 0.001));
-  float tq = mix(0.25, 1.0, tropic) * (1.0 - 0.8 * muddy);
+  float tq = mix(0.65, 1.0, tropic);
   float cyan = smoothstep(0.78, 0.95, day.g / max(day.b, 0.001));
-  vec3 deep = day * vec3(0.98, 1.0, 1.04);
-  vec3 turq = mix(day, vec3(0.16, 0.50, 0.54) * (0.6 + lum * 1.4), 0.38);
-  vec3 sea = mix(deep, turq, shelf * shelf * (1.0 - cyan) * tq);
-  sea = mix(sea, mix(day, vec3(0.34, 0.86, 0.84) * (0.72 + lum), 0.4), cyan * smoothstep(0.12, 0.24, lum) * tq);
+  vec3 navy = vec3(0.055, 0.085, 0.20), teal = vec3(0.15, 0.44, 0.50), aqua = vec3(0.34, 0.82, 0.80);
+  vec3 base = mix(navy, mix(navy, teal, tq), sh);
+  base = mix(base, aqua, smoothstep(0.15, 0.30, lum) * max(cyan, 0.35) * tq);
+  vec3 sea = base * clamp(lum / mix(0.07, 0.2, shelf), 0.78, 1.25);
+  sea = mix(sea, day, 0.2 + 0.7 * muddy);
   /* lakes take the same lighter, shallow-water blue as the coasts instead of the open ocean's navy */
   float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0;
   sea = mix(sea, vec3(0.21, 0.41, 0.53), lake * 0.55);
