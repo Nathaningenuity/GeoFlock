@@ -28,7 +28,14 @@ function labels(){const n=night();if(n===was)return;const ts=["allMapsShowLabels
  const set=(t,v)=>{if(t.checked!==v){t.checked=v;t.dispatchEvent(new Event("change",{bubbles:true}))}};
  if(n){saved=ts.map(t=>t.checked);ts.forEach(t=>set(t,false))}else if(was&&saved)ts.forEach((t,i)=>{if(saved[i])set(t,true)});was=n}
 const css=document.createElement("style");css.textContent=`
-[data-allmaps-mode="night"]::after{ content:"★"; font-size:.72em; margin-left:4px; color:#f5c84b; vertical-align:.18em; }
+[data-allmaps-mode="night"]{ position:relative; overflow:visible; }
+[data-allmaps-mode="night"]::after{ content:""; position:absolute; top:-5px; right:-3px; width:15px; height:15px; pointer-events:none;
+ background:radial-gradient(circle,#fff 0 18%,rgba(255,255,255,.55) 30%,rgba(255,255,255,0) 62%);
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z'/%3E%3C/svg%3E") center/contain no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z'/%3E%3C/svg%3E") center/contain no-repeat;
+ background-color:#fff; filter:drop-shadow(0 0 3px rgba(255,255,255,.95)) drop-shadow(0 0 6px rgba(190,215,255,.8)); animation:gfStarTw 2.6s ease-in-out infinite; }
+@keyframes gfStarTw{ 0%,100%{ opacity:.85; transform:scale(.9) rotate(0deg); } 50%{ opacity:1; transform:scale(1.12) rotate(12deg); } }
+@media (prefers-reduced-motion:reduce){ [data-allmaps-mode="night"]::after{ animation:none; } }
 .gf-nightask{ position:fixed; inset:0; z-index:10050; display:flex; align-items:center; justify-content:center; background:rgba(8,12,28,.55); }
 .gf-nightask > div{ width:min(400px,calc(100vw - 32px)); background:#fffdf8; color:#22324a; border-radius:18px; padding:22px 22px 18px; box-shadow:0 18px 50px rgba(0,0,0,.35); font:500 14.5px/1.45 system-ui,sans-serif; text-align:center; }
 .gf-nightask h3{ margin:4px 0 6px; font-size:19px; } .gf-nightask .ico{ font-size:34px; }
@@ -49,3 +56,5 @@ if(typeof psLaunchTour==="function"){const _l=psLaunchTour;psLaunchTour=function
 function printChip(){const b=document.getElementById("gfPrintChip");if(!b)return;const want=document.body.classList.contains("sky-night")?"🖨":"🖨 Printable maps";if(b.textContent!==want){b.textContent=want;b.setAttribute("aria-label","Printable maps")}}
 setInterval(()=>{try{fold();labels();printChip()}catch(e){}},400);
 })();
+/* the City Lights tour plays on the globe, where the night picture is sharpest */
+(function(){const set=()=>{try{const T=PS_TOURS.night;if(T&&T.map&&!T.map.globe){T.map.globe=true;return true}return!!(T&&T.map&&T.map.globe)}catch(e){return false}};if(!set()){let n=0;const t=setInterval(()=>{if(set()||++n>60)clearInterval(t)},500)}})();
