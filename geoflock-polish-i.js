@@ -377,7 +377,7 @@ if(T("hg5d")&&!T("hg5d").steps._polI){T("hg5d").steps._polI=1;
  set("hg5d","Draining the water",s=>{s.ghosts=[{code:"ie",at:[60,45],col:"#8a63cf",label:"Ireland, true size"}];
   s.body="From the 1960s Soviet planners diverted the Amu Darya and Syr Darya to grow cotton, and the Aral Sea, once the world’s fourth-largest lake, largely dried up. In 1960 it covered about 68,000 km², a little less than the Republic of Ireland, shown in purple: drag it."});
  set("hg5d","Dead zones",s=>{s.on=["rivers"];s.lines=[];
-  s.body="Nitrogen and phosphorus from Corn Belt fields flow down the Mississippi, shown on the map, to the Gulf of Mexico. They feed algae blooms that rot and use up the oxygen, leaving a summer dead zone, often over 10,000 square kilometres, where fish cannot live."});
+  s.body="Nitrogen and phosphorus from Corn Belt fields flow down the Mississippi to the Gulf of Mexico. They feed algae blooms that rot and use up the oxygen, leaving a summer dead zone, often over 10,000 square kilometres, where fish cannot live."});
  set("hg5d","Changing diets",s=>{s.on=["connections"];s.lines=[];
   s.body="As incomes rise, diets shift from grains to meat, dairy and oils. China eats over a quarter of the world’s meat and imports about 60% of the world’s traded soybeans, many shipped from Brazil along the sea lanes on the map, to feed its pigs."});
 }
