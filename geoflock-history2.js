@@ -46,7 +46,7 @@ const LOOK=["the river valleys of the Tigris and Euphrates, the Nile and the Ind
  "Russia reaching across Siberia to the Pacific.","the United States after 1783, and Napoleon’s France around 1810.","the new republics of Latin America in the 1820s.",
  "Africa filling with colonial colours after 1885.","the new countries of central and eastern Europe after 1918.","Africa’s new countries around 1960.","the 15 countries that came out of the Soviet Union."];
 /* the year shown (exact, one year at a time) and its place on the slider's scale */
-let curY=1914,pos=YEARS.indexOf(1914);
+let curY=1000,pos=YEARS.indexOf(1000);if(pos<0){curY=1914;pos=YEARS.indexOf(1914)}/* opens at AD 1000: a busy, varied world, and the map moves fastest from here on */
 function posOf(y){let lo=0,hi=N-1;while(lo<hi){const m=(lo+hi+1)>>1;if(YEARS[m]<=y)lo=m;else hi=m-1}return lo}
 const uOf=y=>{const i=posOf(y);return i>=N-1?N-1:i+(y-YEARS[i])/(YEARS[i+1]-YEARS[i])};
 const yOfU=u=>{u=Math.max(0,Math.min(N-1,u));const i=Math.floor(u);return i>=N-1?YMAX:Math.round(YEARS[i]+(u-i)*(YEARS[i+1]-YEARS[i]))};
