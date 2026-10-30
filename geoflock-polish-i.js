@@ -146,6 +146,12 @@ function frame(s){try{const v=s.view;if(!v||v[2]-v[0]>=200||s.card==="right")ret
  if(f(mx)+(.52-f(mn))<=.95){const d=(.52-f(mn))*ew;W0=v[0]-d;E0=v[2]-d}
  else{const nw=Math.max(w,(mx-mn)/.43),c=mn-.02*nw;W0=c-nw/2;E0=c+nw/2}
  def(s,"view",[+W0.toFixed(2),v[1],+E0.toFixed(2),v[3]]);def(s,"_ff",1);def(s,"card","left")}catch(e){console.error(e)}}
+/* the Economy map's data views (main export, trade, blocs…) switch only for its own tour; let these units switch them too */
+function subWrap(){try{if(typeof psSetSub!=="function"||psSetSub._polI)return;const _ss=psSetSub;
+ const w=function(sub){try{const T=typeof ps!=="undefined"&&ps&&PS_TOURS[ps.tour];if(sub&&T&&OPEN[ps.tour]&&T.map&&T.map.mode==="gdp"&&typeof allMapsSubMode!=="undefined"){const k=String(sub).split("/")[0];
+  if(allMapsSubMode.gdp!==k){allMapsSubMode.gdp=k;document.querySelectorAll("#allMapsSubModes [data-allmaps-sub]").forEach(x=>x.classList.toggle("active",x.dataset.allmapsSub===k));
+   try{applyAllMapsColorMode(document.getElementById("allMapsWrap"))}catch(e){console.error(e)}try{if(typeof amGlobeOn==="function"&&amGlobeOn())amGlobeSync()}catch(e){}try{if(ps.g)ps.g.render()}catch(e){}}return}}catch(e){}return _ss.apply(this,arguments)};
+ w._polI=1;psSetSub=w}catch(e){console.error(e)}}
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();
  for(const k in CARD){const i=libIdx(CARD[k]);if(i>=0)PS_PHOTO[k]=i}
@@ -349,14 +355,15 @@ if(T("hg5b")&&!T("hg5b").steps._polI){T("hg5b").steps._polI=1;
 }
 /* ───────── Unit 5: Food in a global system ───────── */
 if(T("hg5c")&&!T("hg5c").steps._polI){T("hg5c").steps._polI=1;
- set("hg5c","Food in a global system",s=>{s.sub="export/food";
+ set("hg5c","Food in a global system",s=>{s.sub="export";
   s.phPins=[ph([75.85,30.9],"Punjab: wheat","Wheat field in Punjab.jpg"),ph([-5.5,7.5],"Côte d’Ivoire: cocoa","Breaking open cocoa pods in Ivory Coast.png"),
   ph([-75.6,4.8],"Colombia: coffee","Coffee tree in Hacienda Guayabal, Colombia.jpg"),ph([3.95,49.1],"Champagne","Marne Hautvillers Forets et Vignes 22062016 - panoramio.jpg"),
   ph([23.5,-3],"DR Congo: women farmers","Women farmers in DR Congo.jpg"),ph([-93.5,42],"Iowa: maize and soy","Iowa farm.jpg")];
-  s.body="Modern farming is tied to world markets, big companies and international aid. The map shows the countries whose main export is food. This tour follows the Green Revolution, the chains that carry food to shops, the countries that live off exports, and the fight against hunger."});
+  s.body="Modern farming is tied to world markets, big companies and international aid. The map colours each country by its main export: for many, it is food. This tour follows the Green Revolution, the chains that carry food to shops, the countries that live off exports, and the fight against hunger."});
  set("hg5c","From farm to supermarket",s=>{s.on=["connections"];s.lines=[];
   s.body="Agribusiness joins farming to the firms that supply seeds and machines and those that process, ship and sell food. A commodity chain links a banana grown in Ecuador, the world’s largest banana exporter, to a supermarket in Germany: refrigerated ships carry it about 10,000 km along the shipping lanes on the map."});
- set("hg5c","Living off exports",s=>{s.sub="export/food"});
+ set("hg5c","Living off exports",s=>{s.sub="export"});
+ for(const x of ["The Green Revolution","The costs of the Green Revolution","From farm to supermarket","Bigger farms, fewer farmers","Fair trade","Value-added crops","Women who farm"])set("hg5c",x,s=>{if(!s.sub)s.sub="percapita"});
  set("hg5c","Feeding eight billion",s=>{s.sub="poverty";
   s.more="The map shows the share of people in extreme poverty: hunger is worst where poverty and conflict meet. Roughly a third of all food is lost or wasted between farm and fork."});
 }
@@ -443,15 +450,15 @@ if(T("hg7c")&&!T("hg7c").steps._polI){const t=T("hg7c");t.steps._polI=1;
   ph([6.15,46.21],"Geneva: the WTO","Arc-en-ciel sur le jet d'eau de Genève - GT 2025.jpg"),ph([16.37,48.21],"Vienna: OPEC","OPEC headquarters in Vienna.jpg"),
   ph([114.06,22.54],"Shenzhen","The panorama of Futian Shenzhen.jpg"),ph([-117.0,32.52],"Tijuana: maquiladoras","Maquiladoras in Tijuana.jpg"),ph([90.4,23.8],"Dhaka: garments","Garment workers rally in Dhaka.jpg")];
   s.body="No country makes everything it needs. The map shows how much each country trades, compared with the size of its economy. This tour asks why countries trade, who sets the rules, and how global trade has moved factories to new places."});
- set("hg7c","Comparative advantage",s=>{s.sub="export/textiles";
-  s.more="The map shows the countries whose main export is clothing and textiles, mostly in South Asia, where labour is cheap."});
- set("hg7c","Complementarity",s=>{s.sub="export/metals";s.on=["resources"]});
+ set("hg7c","Comparative advantage",s=>{s.sub="export";
+  s.more="The map colours each country by its main export: clothing and textiles lead in Bangladesh and Pakistan, where labour is cheap."});
+ set("hg7c","Complementarity",s=>{s.sub="export";s.on=["resources"]});
  sub("Neoliberal policies","debt");sub("The World Trade Organization","trade");
- set("hg7c","Trade blocs",s=>{s.sub="blocs/eu+usmca+mercosur+asean";s.hi=[];s.view=W;s.globe=[10,25,1];
+ set("hg7c","Trade blocs",s=>{s.sub="blocs";s.hi=[];s.view=W;s.globe=[10,25,1];
   s.body="The European Union’s single market lets goods, services, money and people move freely among its 27 members. Other blocs on the map include the USMCA in North America, Mercosur in South America and ASEAN in Southeast Asia."});
- set("hg7c","OPEC and oil",s=>{s.sub="export/oil";s.on=["resources"];
-  s.more="The map shows the countries whose main export is oil and gas, OPEC members and others such as Russia, Norway and Canada."});
- sub("The world’s factory","export/machinery");sub("Free-trade and export processing zones","trade");sub("Factories on the border","blocs/usmca");
+ set("hg7c","OPEC and oil",s=>{s.sub="export";s.on=["resources"];
+  s.more="The map colours each country by its main export: oil and gas for OPEC members, and for others such as Russia, Norway and Canada."});
+ sub("The world’s factory","export");sub("Free-trade and export processing zones","trade");sub("Factories on the border","blocs");
  set("hg7c","Containers and global trade",s=>{s.sub="trade";s.on=["connections"]});
 }
 /* ───────── Unit 7: Sustainable development ───────── */
@@ -572,6 +579,6 @@ try{if(typeof TOURQ!=="undefined")for(const id in OPEN){const Q=TOURQ[id];if(!Q|
  [...(Q.mid||[]),...(Q.recap||[])].forEach(q=>{if(!q.kc&&KC[id]&&KC[id][q.st])q.kc=KC[id][q.st];if(!q.kc&&q.pick&&q.pick.length)q.kc=q.pick[0]});
  (NEWQ[id]||[]).forEach(q=>{if(T(id).steps.some(s=>s.title===q.st)&&!(Q.mid||[]).some(x=>x.q===q.q))(Q.mid=Q.mid||[]).push(q)})}}catch(e){console.error(e)}
 }
-function run(){patch();photos()}
+function run(){patch();photos();subWrap()}
 run();addEventListener("load",()=>setTimeout(run,1500));setTimeout(run,4000);
 })();
