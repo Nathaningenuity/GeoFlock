@@ -21,6 +21,10 @@ let q=0;function scan(){q=0;if(!dark())return;const v=[...document.querySelector
  (v.length?v:[document.body]).forEach(root=>{root.querySelectorAll("div,section,article,li,a,button,label,aside,header,details").forEach(el=>{if(el.offsetParent!==null)check(el)});
  root.querySelectorAll("span,small,b,strong,em,i,p,div,a,label,h1,h2,h3,h4,li,button").forEach(el=>{if(el.offsetParent!==null)text(el)})})}
 const st=document.createElement("style");st.textContent=`
+/* map sub-mode chips (GDP, GDP per person…): dark glass chips with light text at night */
+body.sky-night #allMapsSubModes .sub-chip:not(.active), body.sky-night #allMapsSubModes.am-sub-left [data-allmaps-sub]:not(.active){ background:rgba(255,255,255,.1) !important; color:#e6ebfb !important; border-color:rgba(255,255,255,.22) !important; box-shadow:none !important; opacity:1 !important; }
+body.sky-night #allMapsSubModes .sub-chip:not(.active):hover{ background:rgba(255,255,255,.18) !important; }
+body.sky-night #allMapsSubModes .sub-chip.active{ opacity:1 !important; }
 body.sky-night .gf-dkfix{ background-color:rgba(28,36,62,.86) !important; border-color:rgba(255,255,255,.12) !important; color:#e8ecf6; }
 body.sky-night .gf-dkfix:hover{ background-color:rgba(40,50,84,.92) !important; }
 /* the map switches' names: crisp, not glowing */
