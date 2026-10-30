@@ -38,9 +38,10 @@ float shore(vec2 uv){ float a = 0.0; for(int i = 0; i < 8; i++){ float t = float
   a = max(a, landish(texture(uSat, uv + d * vec2(0.0011, 0.0022)).rgb));
   a = max(a, 0.55 * landish(texture(uSat, uv + d * vec2(0.0026, 0.0052)).rgb));
   a = max(a, 0.22 * landish(texture(uSat, uv + d * vec2(0.0045, 0.009)).rgb)); } return a; }
-/* how enclosed by land a water pixel is (lakes, narrow inland seas): the share of 12 directions that meet land ~2.5° away */
-float enclosed(vec2 uv){ float a = 0.0; for(int i = 0; i < 12; i++){ float t = float(i) * 0.5235988; vec2 d = vec2(cos(t), sin(t));
-  a += landish(textureLod(uSat, uv + d * vec2(0.007, 0.014), 2.0).rgb); } return a / 12.0; }
+/* how enclosed by land a water pixel is (lakes, narrow inland seas): the share of 16 directions, at two distances,
+   that meet land; read from a blurred copy of the picture so the result changes smoothly (no blotches) */
+float enclosed(vec2 uv){ float a = 0.0; for(int i = 0; i < 16; i++){ float t = float(i) * 0.3926991; vec2 d = vec2(cos(t), sin(t));
+  a += landish(textureLod(uSat, uv + d * vec2(0.005, 0.01), 5.0).rgb) + landish(textureLod(uSat, uv + d * vec2(0.009, 0.018), 5.0).rgb); } return a / 32.0; }
 void main(){
   vec2 f = gl_FragCoord.xy;
   float dd = length(f - uC); if(dd > uF * (uSpace > 0.5 ? 1.045 : 1.0)) discard;
@@ -85,8 +86,8 @@ void main(){
   vec3 sea = mix(deep, turq, shelf * shelf * (1.0 - cyan) * tq);
   sea = mix(sea, mix(day, vec3(0.34, 0.86, 0.84) * (0.72 + lum), 0.4), cyan * smoothstep(0.12, 0.24, lum) * tq);
   /* lakes take the same lighter, shallow-water blue as the coasts instead of the open ocean's navy */
-  float lake = water > 0.0 ? smoothstep(0.6, 0.9, enclosed(vec2(u, v))) : 0.0;
-  sea = mix(sea, vec3(0.20, 0.40, 0.52) * (0.8 + lum * 1.2), lake * 0.6);
+  float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0;
+  sea = mix(sea, vec3(0.21, 0.41, 0.53), lake * 0.55);
   /* a faint glowing rim along the coasts, sea-green like plankton-rich shallows, that fades into the dark ocean */
   float rim = shore(vec2(u, v));
   /* only where the water really is shallow (lighter in the picture), so the colour follows the real shelf edges */
@@ -189,6 +190,7 @@ function dragWire(el){if(el._drag)return;el._drag=1;let d=null;
  el.addEventListener("pointerup",()=>{d=null})}
 function floatSync(){const el=document.getElementById("gfDngPanel");if(!el||el.hidden)return;const fs=document.body.classList.contains("gf-fs"),sp=el._spacer;
  let fl=fs;if(!fs&&sp){const r=sp.getBoundingClientRect(),h=el.classList.contains("gf-dng-float")?(sp._h||el.offsetHeight):el.offsetHeight;fl=r.top+Math.min(h,60)>innerHeight||r.top+h<0}
+ try{const k=document.getElementById("flKey");const kv=k&&k.offsetParent&&getComputedStyle(k).display!=="none"&&!k.hidden?k.getBoundingClientRect().height+10:0;el.style.setProperty("--gf-dng-lift",Math.round(kv)+"px")}catch(e){}
  if(fl!==el.classList.contains("gf-dng-float")){if(fl&&sp){sp._h=el.offsetHeight;sp.style.height=sp._h+"px"}else if(sp){sp.style.height="0px"}
   el.classList.toggle("gf-dng-float",fl);if(!fl||!el._moved){["left","top","right","bottom","transform"].forEach(k=>el.style.removeProperty(k));el._moved=0}}}
 addEventListener("scroll",()=>{try{floatSync()}catch(e){}},{passive:true});addEventListener("resize",()=>{try{floatSync()}catch(e){}});
@@ -252,8 +254,11 @@ setInterval(()=>{try{if(document.getElementById("allMapsToggleRow"))sync()}catch
 const css=document.createElement("style");css.textContent=`
 .gf-dng-chip span{ font-size:1.05em; margin-right:2px; }
 /* full screen: the sun panel stands at the right edge, clear of the globe */
-.gf-dng.gf-dng-float{ position:fixed !important; left:50%; bottom:12px; transform:translateX(-50%); width:min(620px,calc(100vw - 24px)); max-height:42vh; overflow:auto; margin:0 !important; z-index:60; box-shadow:0 8px 30px rgba(0,0,0,.3); }
-body.gf-fs .gf-dng.gf-dng-float{ left:auto; right:14px; bottom:auto; top:50%; transform:translateY(-50%); width:300px; }
+/* floating, it is a narrow vertical legend at the right, like the floating map key (and above it when both show) */
+.gf-dng.gf-dng-float{ position:fixed !important; left:auto; right:16px; bottom:calc(16px + var(--gf-dng-lift,0px)); transform:none; width:280px; max-width:calc(100vw - 32px); max-height:min(420px,calc(100vh - 120px)); overflow:auto; margin:0 !important; z-index:791; box-shadow:0 8px 30px rgba(0,0,0,.3); }
+.gf-dng.gf-dng-float .gf-dng-top{ flex-wrap:wrap; } .gf-dng.gf-dng-float .gf-dng-where{ flex-basis:100%; font-size:11.5px; }
+.gf-dng.gf-dng-float .gf-dng-sp{ display:none; } .gf-dng.gf-dng-float .gf-dng-row > span{ width:46px; }
+body.gf-fs .gf-dng.gf-dng-float{ bottom:auto; top:50%; transform:translateY(-50%); }
 .gf-dng.gf-dng-float .gf-dng-top{ cursor:grab; } .gf-dng-spacer{ height:0; }
 .gf-dng{ position:relative; z-index:5; max-width:620px; margin:8px auto 4px; padding:10px 14px 8px; border-radius:16px; background:var(--surface,#101c30); color:rgb(var(--text-rgb)); border:1px solid var(--line); box-shadow:0 4px 18px rgba(0,0,0,.18); font-size:13px; }
 .gf-dng[hidden]{ display:none !important; }
