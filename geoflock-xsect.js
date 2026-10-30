@@ -6,7 +6,8 @@
 if(typeof d3==="undefined")return;
 const $=id=>document.getElementById(id),esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const mode=()=>{try{return appMode==="allmaps"?allMapsColorMode:null}catch(e){return null}};
-const G=()=>{try{return amGlobe&&amGlobe._flat&&amGlobe.host.isConnected?amGlobe:null}catch(e){return null}};
+/* works on the flat map and on the globe */
+const G=()=>{try{return amGlobe&&amGlobe.host.isConnected&&(amGlobe._flat||typeof amGlobeOn!=="function"||amGlobeOn())?amGlobe:null}catch(e){return null}};
 const R_KM=6371;
 /* ---------- the height grid ---------- */
 let DEM=null,demP=null;
@@ -318,7 +319,7 @@ function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready
   svg.setAttribute("tabindex","0");svg.addEventListener("keydown",e=>{if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();put((head==null?X0:head)+(e.key==="ArrowRight"?1:-1)*(e.shiftKey?40:8))});
   if(head!=null)put(head)}}
 /* fly so the whole line sits in the top half of the map, above the chart */
-function frameTo(llAll){const g=G();if(!g||!llAll.length)return;try{const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom,q=llAll.map(ll=>b(ll)).filter(p=>p&&isFinite(p[0]));if(!q.length)return;
+function frameTo(llAll){const g=G();if(!g||!llAll.length)return;if(!g._flat){try{const c=d3.geoCentroid({type:"MultiPoint",coordinates:llAll});if(c&&isFinite(c[0])){g.rot=[-c[0],-c[1]];g.request()}}catch(e){}return}try{const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom,q=llAll.map(ll=>b(ll)).filter(p=>p&&isFinite(p[0]));if(!q.length)return;
  const xs=q.map(p=>p[0]/z0),ys=q.map(p=>p[1]/z0),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
  const zt=Math.max(1,Math.min(12,Math.min(w/((x1-x0)*1.25||1),h*.48/((y1-y0)*1.25||1)))),cx=(x0+x1)/2,cy=(y0+y1)/2+(h*.5-h*.27)/zt;
  const c=b.invert([cx*z0,cy*z0]);if(c&&isFinite(c[0])){g.zoom=zt;g.rot=[-c[0],-c[1]];g.request()}}catch(e){}}
