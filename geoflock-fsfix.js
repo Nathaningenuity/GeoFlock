@@ -35,6 +35,7 @@ body.gf-fs #allMapsView #populationLegend:not(.hist-docked){ display:block !impo
 #flKey.gfx-fit.open{ max-height:var(--gfx-mh) !important; }
 #flKey.gfx-fit{ bottom:var(--gfx-b,16px) !important; }
 #flKey.gfx-fit.gfx-w.open{ width:var(--gfx-w) !important; }
+#flKey.gfx-fit.gfx-r{ right:var(--gfx-r) !important; }
 /* 7. the sun panel's fold */
 .gf-dng-fold{ border:1px solid var(--line); background:var(--raised); color:inherit; border-radius:50%; width:28px; height:28px; padding:0; font:700 13px system-ui,sans-serif; cursor:pointer; flex:none; }
 body.sky-night .gf-dng-fold{ background:#22304f; border-color:rgba(150,175,230,.25); }
@@ -95,18 +96,23 @@ function btnsSync(){const g=G();if(!g||!g.host)return;const b=g.host.querySelect
 
 /* 5. the floating key keeps clear of the round buttons, the toolkit and "Point at the map" */
 function keySync(){const k=document.getElementById("flKey");if(!k)return;
- const off=()=>{k.classList.remove("gfx-fit","gfx-w")};
+ const off=()=>{k.classList.remove("gfx-fit","gfx-w","gfx-r")};
  if(k.style.display==="none"||!k.classList.contains("open")||k.style.left||k.style.top||!onMaps()){off();return}
  off();const kr=k.getBoundingClientRect();if(!kr.width)return;
  const obs=[...document.querySelectorAll("#allMapsView .globe-btns, #allMapsView .map-zoom-controls, #allMapsView .gfk-coord, #allMapsView .gfk-tray, #gfDngPanel.gf-dng-float")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.bottom>0&&r.top<innerHeight);
- let bot=16,width=0,topLim=0;const low=o=>o.top>innerHeight*.6;
+ let bot=16,width=0,topLim=0,side=null;const low=o=>o.top>innerHeight*.6;
  obs.forEach(o=>{if(o.left<kr.right&&o.right>kr.left&&low(o)&&o.bottom>kr.top)bot=Math.max(bot,innerHeight-o.top+8)});
  /* where the key would stand once lifted above those */
  const sh=bot-16,kk={left:kr.left,right:kr.right,top:kr.top-sh,bottom:kr.bottom-sh};
  obs.forEach(o=>{if(!(o.left<kk.right&&o.right>kk.left)||low(o))return;
-  if(hit(o,kk)){const w=Math.round(kk.right-o.right-10);if(w>=230&&o.right<kk.right){width=width?Math.min(width,w):w}else topLim=Math.max(topLim,o.bottom+8)}});
+  if(hit(o,kk)){const w=Math.round(kk.right-o.right-10);if(w>=230&&o.right<kk.right){width=width?Math.min(width,w):w}else{topLim=Math.max(topLim,o.bottom+8);if(!side||o.left<side.left)side=o}}});
  if(bot===16&&!width&&!topLim)return;
- const mh=Math.max(150,Math.round(innerHeight-bot-Math.max(topLim,8)));
+ let mh=Math.max(150,Math.round(innerHeight-bot-Math.max(topLim,8))),rgt=0;
+ /* too little room under the buttons: the key stands to their left instead, at its full height */
+ if(mh<300&&side&&side.left-kr.width-12>innerWidth*.35){rgt=Math.round(innerWidth-side.left+8);const L=innerWidth-rgt-kr.width,Rr=innerWidth-rgt;
+  bot=16;obs.forEach(o=>{if(low(o)&&o.left<Rr&&o.right>L)bot=Math.max(bot,Math.round(innerHeight-o.top+8))});mh=Math.round(innerHeight-bot-8);
+  obs.forEach(o=>{if(!low(o)&&o!==side&&o.left<innerWidth-rgt&&o.right>innerWidth-rgt-kr.width)mh=Math.min(mh,Math.round(innerHeight-bot-o.bottom-8))})}
+ k.style.setProperty("--gfx-r",rgt?rgt+"px":"16px");k.classList.toggle("gfx-r",!!rgt);
  k.style.setProperty("--gfx-b",bot+"px");k.style.setProperty("--gfx-mh",mh+"px");if(width)k.style.setProperty("--gfx-w",width+"px");
  k.classList.add("gfx-fit");k.classList.toggle("gfx-w",!!width)}
 
@@ -119,7 +125,7 @@ function bottomSync(){const g=G();const host=g&&g.host&&vis(g.host)?g.host:docum
   const dock=document.querySelector("#allMapsView .hist-dock");const d=dock&&vis(dock)?dock.getBoundingClientRect():null;
   ["#allMapsView .gfk-tray","#allMapsView .gfk-coord"].forEach(sel=>{const e=document.querySelector(sel);if(!e)return;
    if(d){e.style.removeProperty("bottom");const r=e.getBoundingClientRect();const need=r.bottom>d.top-4&&r.left<d.right&&r.right>d.left;
-    if(need||e._gfx===2){const base=sel.includes("tray")?4:12;e.style.setProperty("bottom",Math.round(innerHeight-d.top+6)+"px","important");e._gfx=2}}
+    if(need||e._gfx===2){e.style.setProperty("bottom",Math.round(innerHeight-d.top+6)+"px","important");e._gfx=2}}
    else if(e._gfx===2){e.style.removeProperty("bottom");e._gfx=0}});return}
  els.forEach(e=>{if(e._gfx===2){e.style.removeProperty("bottom");e._gfx=0}});
  const hr=host.getBoundingClientRect();const over=hr.bottom-innerHeight+6;

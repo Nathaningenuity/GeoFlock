@@ -142,9 +142,9 @@ function frame(s){try{const v=s.view;if(!v||v[2]-v[0]>=200||s.card==="right")ret
  (s.lines||[]).forEach(l=>(l.coords||[]).forEach(add));
  const L=P.filter(a=>a[0]>=v[0]-20&&a[0]<=v[2]+20).map(a=>a[0]);if(!L.length)return;
  const w=v[2]-v[0],ew=Math.max(w,(v[3]-v[1])*1.6),cx=(v[0]+v[2])/2,mn=Math.min(...L),mx=Math.max(...L),f=x=>.5+(x-cx)/ew;
- if(f(mn)>=.45)return;let W0,E0;
- if(f(mx)+(.46-f(mn))<=.95){const d=(.46-f(mn))*ew;W0=v[0]-d;E0=v[2]-d}
- else{const nw=Math.max(w,(mx-mn)/.48),c=mn+.04*nw;W0=c-nw/2;E0=c+nw/2}
+ if(f(mn)>=.48)return;let W0,E0;
+ if(f(mx)+(.52-f(mn))<=.95){const d=(.52-f(mn))*ew;W0=v[0]-d;E0=v[2]-d}
+ else{const nw=Math.max(w,(mx-mn)/.43),c=mn-.02*nw;W0=c-nw/2;E0=c+nw/2}
  def(s,"view",[+W0.toFixed(2),v[1],+E0.toFixed(2),v[3]]);def(s,"_ff",1);def(s,"card","left")}catch(e){console.error(e)}}
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();
