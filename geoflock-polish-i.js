@@ -220,8 +220,9 @@ if(T("hg2d")&&!T("hg2d").steps._polI){T("hg2d").steps._polI=1;
   ph([139.7,35.69],"Tokyo: nearly three in ten over 65","Tokyo traffic (9412150126).jpg"),ph([116.4,39.93],"Beijing: a shrinking China","Old men playing cards in a Beijing hutong.jpg"),
   ph([102.8,23.1],"Yunnan: more people, more terraces","Terrace field yunnan china denoised.jpg"),ph([2.1,13.5],"Niger: still growing fast","A village in Niger.jpg")]});
  set("hg2d","Pronatalist policies",s=>{s.stat="South Korea has spent over $200 billion since 2006 trying to raise its birth rate"});
- set("hg2d","Choosing who comes in",s=>{s.sub="mig/m4+m5";
-  s.more="The map shows the countries where over one in ten people was born abroad: Canada, Australia, the Gulf states and much of Europe. Japan, in pale, is not among them."});
+ set("hg2d","Choosing who comes in",s=>{s.sub="mig/m4+m5";s.view=[-125,15,25,65];s.globe=[-50,45,1.3];
+  s.pins=[[[-79.38,43.65],"Toronto: about half born abroad","point"]];
+  s.more="The map shows the countries where over one in ten people was born abroad: Canada, the United States, Australia, the Gulf states and much of Europe. Japan is not among them."});
  set("hg2d","An ageing world",s=>{s.sub="age/a4";
   s.more="The map shows only the countries with a median age over 40: almost all of Europe, plus Japan, South Korea, Canada and Cuba. Most of Africa’s median ages are under 20."});
 }
@@ -491,6 +492,7 @@ if(T("hg3c")&&!T("hg3c").steps._polI2){T("hg3c").steps._polI2=1;
   s.more="Drag the ruler: Amritsar to Southall, in west London, is about 6,300 km, yet chain migration has made Southall one of the largest Punjabi communities outside India."});
 }
 if(T("hg4a")&&!T("hg4a").steps._polI2){T("hg4a").steps._polI2=1;
+ set("hg4a","State, nation, nation-state",s=>{s.view=W;s.globe=[60,40,1];delete s.spin});
  set("hg4a","Multistate nations",s=>{s.lines=[];s.gfRuler={a:[126.1,37.75],b:[128.37,38.61]};
   s.body="A multistate nation lives in more than one state. Koreans share one language and history but have been split between North and South Korea since 1945; the Demilitarised Zone, about 250 km long (drag the ruler), still divides them. When the Soviet Union broke up in 1991, millions of ethnic Russians were left in neighbouring states."});
 }

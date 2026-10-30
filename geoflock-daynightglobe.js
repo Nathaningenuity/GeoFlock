@@ -27,11 +27,22 @@ function req(){try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())
 const FS=`#version 300 es
 precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
-uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn;
+uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn;
 out vec4 o;
 /*ICE_DEF*/
 float gmin(float a, float b){ return abs(a) < abs(b) ? a : b; }
 vec3 nrm(float phi, float lam){ return vec3(cos(phi)*cos(lam), cos(phi)*sin(lam), sin(phi)); }
+/* sea colour from depth (metres below sea level), fixed stops, interpolated smoothly between them */
+vec3 depthColour(float d){
+  const vec3 c0 = vec3(0.498, 0.890, 0.839), c20 = vec3(0.235, 0.769, 0.753), c60 = vec3(0.118, 0.604, 0.682),
+             c150 = vec3(0.090, 0.408, 0.561), c400 = vec3(0.059, 0.247, 0.447), c1000 = vec3(0.043, 0.165, 0.361), c3000 = vec3(0.031, 0.118, 0.282);
+  if(d < 20.0) return mix(c0, c20, d / 20.0);
+  if(d < 60.0) return mix(c20, c60, (d - 20.0) / 40.0);
+  if(d < 150.0) return mix(c60, c150, (d - 60.0) / 90.0);
+  if(d < 400.0) return mix(c150, c400, (d - 150.0) / 250.0);
+  if(d < 1000.0) return mix(c400, c1000, (d - 400.0) / 600.0);
+  if(d < 3000.0) return mix(c1000, c3000, (d - 1000.0) / 2000.0);
+  return c3000; }
 /* how land-like a satellite pixel is (0 = open water) */
 float landish(vec3 c){ float l = dot(c, vec3(0.3, 0.55, 0.15)); return 1.0 - smoothstep(0.015, 0.07, c.b - max(c.r, c.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, l)); }
 /* closeness to the coast: 1 right at the shore, fading smoothly to 0 about 1.6° out to sea */
@@ -72,33 +83,16 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
-  /* sea colour, like the Blue Marble picture: a smooth gradient on how shallow the water looks (its lightness in the
-     picture), from the dark navy of the open ocean through teal-turquoise over the continental shelves to bright aqua
-     over the shallowest banks (the Bahamas, reefs). The picture's own texture is kept on top of the new colours. */
-  float shelf = smoothstep(0.03, 0.22, lum);
-  float sh = shelf * shelf * (3.0 - 2.0 * shelf);
-  /* colour follows what is in the water as well as depth: the tropics and reefs are the most turquoise; cold seas a
-     little less; sediment-brown river mouths keep their own colour */
-  float tropic = 1.0 - smoothstep(0.42, 0.78, abs(phi));
-  float muddy = smoothstep(0.85, 1.05, day.r / max(day.b, 0.001));
-  float tq = mix(0.65, 1.0, tropic);
-  float cyan = smoothstep(0.78, 0.95, day.g / max(day.b, 0.001));
-  /* shelves are a lighter blue (not turquoise); turquoise is kept for the water right along the coasts (below) */
-  vec3 navy = vec3(0.055, 0.085, 0.20), shelfBlue = vec3(0.13, 0.30, 0.52), aqua = vec3(0.34, 0.82, 0.80);
-  vec3 base = mix(navy, shelfBlue, sh);
-  base = mix(base, aqua, smoothstep(0.12, 0.26, lum) * max(cyan, 0.5) * tq);
-  vec3 sea = base * clamp(lum / mix(0.07, 0.2, shelf), 0.78, 1.25);
-  sea = mix(sea, day, 0.2 + 0.7 * muddy);
-  /* lakes take the same lighter, shallow-water blue as the coasts instead of the open ocean's navy */
+  /* the sea is coloured entirely from real depth (ETOPO bathymetry, textures/BATHY.webp: sqrt(depth/3000 m) in 0–255),
+     not blended with the satellite picture: light turquoise at the shore through teal and the shelf edge to a flat deep
+     navy below 3000 m; the depth is read with smooth (bilinear) filtering, so the colours run as gradients */
+  float bv = uBathyOn > 0.5 ? texture(uBathy, vec2(u, v)).r : 0.6;
+  vec3 sea = depthColour(bv * bv * 3000.0);
+  /* where the depth data says sea, it is sea: the satellite picture is replaced there, not blended */
+  if(uBathyOn > 0.5) water = max(water, smoothstep(0.03, 0.09, bv));
+  /* lakes (water enclosed by land) are not in the ocean depth data: give them a mid-depth blue */
   float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0;
-  sea = mix(sea, vec3(0.21, 0.41, 0.53), lake * 0.55);
-  /* a faint, soft cyan glow that spreads out from every coast and dissolves into the dark ocean: read from a pre-made
-     "distance to coast" picture (textures/COAST_GLOW.webp: the land mask blurred outward at three widths, ~40, ~120 and
-     ~280 km), so it is smooth and costs one look-up */
-  float cg = uGlowOn > 0.5 ? texture(uGlow, vec2(u, v)).r : 0.0;
-  /* near the coast the water turns turquoise, fading to the shelf's lighter blue and then the navy further out */
-  sea = mix(sea, vec3(0.16, 0.48, 0.52) * (0.8 + lum * 1.2), smoothstep(0.0, 1.0, cg) * 0.6 * tq * (1.0 - 0.7 * muddy));
-  sea += vec3(0.06, 0.14, 0.15) * cg * cg * tq;
+  sea = mix(sea, depthColour(120.0), lake);
   day = mix(day, sea, water);
   /*ICE_MIX*/
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
@@ -130,7 +124,7 @@ function prog(G){if(G._dng!==undefined)return G._dng;G._dng=null;const gl=G.gl;
  try{const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
   const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,window.gfSeaIce?gfSeaIce.patch(FS):FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
-  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uCl","uClA","uSun","uGlow","uGlowOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
+  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uCl","uClA","uSun","uGlow","uGlowOn","uBathy","uBathyOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
  catch(e){console.error("Day & Night globe:",e)}return G._dng}
 /* the coastal glow picture: loaded once, one small GPU texture per globe */
 let GLOW_IMG=null;
@@ -138,6 +132,12 @@ function glowTex(G){if(G._dngGlow)return G._dngGlow;if(!GLOW_IMG){GLOW_IMG=new I
  if(!GLOW_IMG.complete||!GLOW_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,GLOW_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngGlow=t}
+/* the ocean depth picture (ETOPO 0.1°): loaded once, one small GPU texture per globe */
+let BATHY_IMG=null;
+function bathyTex(G){if(G._dngBathy)return G._dngBathy;if(!BATHY_IMG){BATHY_IMG=new Image();BATHY_IMG.onload=()=>{try{req()}catch(e){}};BATHY_IMG.src="textures/BATHY.webp"}
+ if(!BATHY_IMG.complete||!BATHY_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,BATHY_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngBathy=t}
 const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):null}catch(e){return null}};
 {const _draw=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){
  try{if(o&&S.on&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
@@ -151,6 +151,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    gl.uniform1f(u.uClA,ct?1:0);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
+   {const bt=bathyTex(this);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}
    {const gt=glowTex(this);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,gt);gl.uniform1i(u.uGlow,5);gl.uniform1f(u.uGlowOn,gt?1:0)}
    try{window.gfSeaIce&&gfSeaIce.bind(this,P.pr,4)}catch(e){}
    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return}}}catch(e){console.error(e)}

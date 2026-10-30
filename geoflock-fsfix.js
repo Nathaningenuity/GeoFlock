@@ -110,7 +110,10 @@ function keySync(){const k=document.getElementById("flKey");if(!k)return;
  let mh=Math.max(150,Math.round(innerHeight-bot-Math.max(topLim,8))),rgt=0;
  /* too little room under the buttons: the key stands to their left instead, at its full height */
  if(mh<300&&side&&side.left-kr.width-12>innerWidth*.35){rgt=Math.round(innerWidth-side.left+8);const L=innerWidth-rgt-kr.width,Rr=innerWidth-rgt;
-  bot=16;obs.forEach(o=>{if(low(o)&&o.left<Rr&&o.right>L)bot=Math.max(bot,Math.round(innerHeight-o.top+8))});mh=Math.round(innerHeight-bot-8);
+  bot=16;obs.forEach(o=>{if(low(o)&&o.left<Rr&&o.right>L)bot=Math.max(bot,Math.round(innerHeight-o.top+8))});
+  /* never over the map tabs and layer rows */
+  let tb=8;["allMapsToggleRow"].map(id=>document.getElementById(id)).concat([document.querySelector("#allMapsView .all-maps-controls"),document.querySelector("#allMapsSubModes")]).forEach(e=>{if(e&&e.getClientRects().length){const r=e.getBoundingClientRect();if(r.height&&r.bottom>0&&r.top<innerHeight*.4)tb=Math.max(tb,r.bottom+8)}});
+  mh=Math.round(innerHeight-bot-tb);
   obs.forEach(o=>{if(!low(o)&&o!==side&&o.left<innerWidth-rgt&&o.right>innerWidth-rgt-kr.width)mh=Math.min(mh,Math.round(innerHeight-bot-o.bottom-8))})}
  k.style.setProperty("--gfx-r",rgt?rgt+"px":"16px");k.classList.toggle("gfx-r",!!rgt);
  k.style.setProperty("--gfx-b",bot+"px");k.style.setProperty("--gfx-mh",mh+"px");if(width)k.style.setProperty("--gfx-w",width+"px");
@@ -131,7 +134,9 @@ function bottomSync(){const g=G();const host=g&&g.host&&vis(g.host)?g.host:docum
  const hr=host.getBoundingClientRect();const over=hr.bottom-innerHeight+6;
  const lift=hr.top<innerHeight-260&&over>0?Math.min(over,hr.height*.45):0;
  els.forEach(e=>{if(!host.contains(e)&&!e.closest(".globe-wrap-rel, #allMapsWrap")){return}
-  if(lift){e.style.translate="0 "+(-Math.round(lift))+"px";e._gfx=1}else if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}})}
+  /* during a guided tour the tour places the folded tray itself, just under its card (geoflock-tourload.js) */
+  const own=e.classList.contains("gfk-tray")&&(document.body.classList.contains("gf-touring")||e._gftl||(typeof ps!=="undefined"&&ps));
+  if(lift&&!own){e.style.translate="0 "+(-Math.round(lift))+"px";e._gfx=1}else if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}})}
 
 /* 7. the sun panel: a fold, and a place clear of the toolkit */
 let dngMin=false;

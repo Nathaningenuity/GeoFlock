@@ -47,8 +47,9 @@ vec4 seaIce(vec2 uv, vec3 p, float fw, float wat){
   float n = n1 * 0.5 + n2 * 0.32 + n3 * 0.18;
   float c = m.r;
   /* the pack: solid where concentration is high; toward the edge it breaks into floes and fades into the water */
-  float a = smoothstep(0.16, 0.62, c + (n - 0.5) * 0.6 * (1.0 - c * 0.5));
-  vec3 ice = vec3(0.86, 0.90, 0.94) * (0.86 + 0.2 * n1);
+  float brk = n1 * 0.15 + n2 * 0.55 + n3 * 0.3;
+  float a = smoothstep(0.2, 0.55, c + (brk - 0.5) * 0.6 * (1.0 - c * 0.5));
+  vec3 ice = vec3(0.80, 0.85, 0.90) * (0.88 + 0.18 * n1);
   /* summer melt ponds: a blue-grey mottling */
   float pond = (1.0 - smoothstep(0.32, 0.5, n2)) * w2;
   ice = mix(ice, vec3(0.60, 0.72, 0.84), pond * 0.45);
@@ -153,9 +154,9 @@ function flatBuild(){if(FLAT.urls||FLAT.busy||!maskImg||typeof d3==="undefined"|
     const m=samp(ll[0],ll[1]);if(!m||m[0]+m[1]<.004)continue;
     const la=ll[1]*Math.PI/180,lo=ll[0]*Math.PI/180,X=Math.cos(la)*Math.cos(lo),Y=Math.cos(la)*Math.sin(lo),Z=Math.sin(la);
     const w2=1-ss(.25,.8,260*fw),w3=1-ss(.25,.8,900*fw);const n1=nJ(X*70,Y*70,Z*70),n2=w2?.5+(nJ(X*260,Y*260,Z*260)-.5)*w2:.5,n3=w3?.5+(nJ(X*900,Y*900,Z*900)-.5)*w3:.5;
-    const n=n1*.5+n2*.32+n3*.18,cc=m[0];let a=ss(.16,.62,cc+(n-.5)*.6*(1-cc*.5));
-    const k=.86+.2*n1,k2=.9+.2*n,pd=(1-ss(.32,.5,n2))*w2*.45,mix=ss(.2,.8,cc);
-    const ir=.86*k+(.6-.86*k)*pd,ig=.9*k+(.72-.9*k)*pd,ib=.94*k+(.84-.94*k)*pd;
+    const n=n1*.5+n2*.32+n3*.18,cc=m[0],brk=n1*.15+n2*.55+n3*.3;let a=ss(.2,.55,cc+(brk-.5)*.6*(1-cc*.5));
+    const k=.88+.18*n1,k2=.9+.2*n,pd=(1-ss(.32,.5,n2))*w2*.45,mix=ss(.2,.8,cc);
+    const ir=.8*k+(.6-.8*k)*pd,ig=.85*k+(.72-.85*k)*pd,ib=.9*k+(.84-.9*k)*pd;
     let r=.56*k2+(ir-.56*k2)*mix,gg=.66*k2+(ig-.66*k2)*mix,b=.76*k2+(ib-.76*k2)*mix;
     const ld=(1-ss(0,.05,Math.abs(n2-.5)))*w2*ss(.55,.95,cc),dk=1-.2*ld;r*=dk;gg*=dk;b*=dk;
     const s=ss(.2,.7,m[1]),sk=.96+.05*n1;r+=(.9*sk-r)*s;gg+=(.925*sk-gg)*s;b+=(.95*sk-b)*s;a=Math.max(a*.96,s*.97);
