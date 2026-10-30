@@ -70,7 +70,7 @@ const PINS={/*PINS*/
 const SQ={/*SQ*/
 "Saimaa, Finland’s largest lake":"Lake Saimaa aerial.jpg",
 "Straits of Mackinac: Michigan and Huron meet":"Mackinac Bridge Walk.jpg",
-"Saint Martin: French north, Dutch south":"Grand Case auf Saint Martin.jpg",
+"Saint Martin: French north, Dutch south":"Grand Case auf Saint Martin.jpg","Saint Martin: French north, Dutch south\u200b":"Grand Case auf Saint Martin.jpg",
 "Strait of Magellan":"00 2521 Punta Arenas - Chile.jpg",
 "Quito ~2,850 m":"Quito DotM banner.jpg",
 "Mawsynram: the wettest place":"Living root bridge, Maghalaya, India1.jpg",
@@ -79,7 +79,7 @@ const SQ={/*SQ*/
 /* captions for labels the caption rule would get wrong */
 const CAP={/*CAP*/
 "Straits of Mackinac: Michigan and Huron meet":"The Straits of Mackinac",
-"Saint Martin: French north, Dutch south":"Grand Case, Saint-Martin",
+"Saint Martin: French north, Dutch south":"Grand Case, Saint-Martin","Saint Martin: French north, Dutch south\u200b":"Grand Case, Saint-Martin",
 "Strait of Magellan":"Punta Arenas on the Strait",
 "Armero after the 1985 mudflow":"Armero after the mudflow",
 "Inside Tham Luang’s entrance chamber":"Tham Luang’s entrance",
@@ -121,5 +121,9 @@ function run(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="und
  try{window.GF_PHCAP=window.GF_PHCAP||{};Object.assign(GF_PHCAP,CAP)}catch(e){}
  cards();pins();imgs()}catch(e){console.error("review-phys-photos",e)}}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(typeof ps!=="undefined"&&ps&&TOURS.includes(ps.tour))run()}catch(e){}return _g.apply(this,arguments)}}
+/* other files also pick pictures for pin labels (some wrong, e.g. Saint Kitts for Saint Martin): wrap psSqPhoto last, after load, so the pictures chosen here win; labels are matched without zero-width spaces */
+const PICK=()=>{const m={};for(const l in SQ)m[l.replace(/\u200b/g,"")]=SQ[l];for(const k in PINS)PINS[k].forEach(p=>{m[p[1]]=p[2]});return m};
+const outer=()=>{if(typeof psSqPhoto!=="function"||psSqPhoto._rvpp)return;const m=PICK(),_p=psSqPhoto;psSqPhoto=function(q){try{const f=q&&m[String(q.label||"").replace(/\u200b/g,"")];if(f){const i=libIdx(f);const P=i>=0?PS_PHOTO_DATA[i]:null;if(P&&P.d)return P}}catch(e){}return _p.apply(this,arguments)};psSqPhoto._rvpp=1};
+addEventListener("load",()=>setTimeout(outer,2000));if(document.readyState==="complete")setTimeout(outer,2000);
 run();addEventListener("load",()=>setTimeout(run,1500));[0,1500,5000,12000].forEach(t=>setTimeout(run,t));
 })();
