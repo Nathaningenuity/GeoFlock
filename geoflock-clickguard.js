@@ -55,14 +55,14 @@ function toolArmed(opts){opts=opts||{};
 /* the current press: where it went down, how far it has moved, when */
 let rec=null;
 function onDown(e){if(e.isPrimary===false)return;
- if(e.pointerType==="mouse"&&e.button!==0){rec={x:e.clientX,y:e.clientY,t:performance.now(),max:0,surface:false,map:false,ui:true,modal:false,armed:"",fresh:true,tgt:e.target,btn:true};return}
- rec={x:e.clientX,y:e.clientY,t:performance.now(),max:0,surface:isSurface(e.target),map:inAnyMap(e.target),world:inWorld(e.target),ui:isUI(e.target),
+ if(e.pointerType==="mouse"&&e.button!==0){rec={x:e.clientX,y:e.clientY,t:e.timeStamp,max:0,surface:false,map:false,ui:true,modal:false,armed:"",fresh:true,tgt:e.target,btn:true};return}
+ rec={x:e.clientX,y:e.clientY,t:e.timeStamp,max:0,surface:isSurface(e.target),map:inAnyMap(e.target),world:inWorld(e.target),ui:isUI(e.target),
   modal:modalOpen(),armed:toolArmed({open:true}),fresh:true,tgt:e.target,id:e.pointerId}}
 function onMove(e){if(!rec||!rec.fresh||e.isPrimary===false)return;const d=Math.hypot(e.clientX-rec.x,e.clientY-rec.y);if(d>rec.max)rec.max=d}
 addEventListener("pointerdown",onDown,true);
 addEventListener("pointermove",onMove,{capture:true,passive:true});
 /* the press is spent once its click has been handled (or, with no click, shortly after it lets go) */
-addEventListener("pointerup",e=>{onMove(e);if(rec){rec.up=performance.now();const r=rec;setTimeout(()=>{if(rec===r)r.fresh=false},400)}},true);
+addEventListener("pointerup",e=>{onMove(e);if(rec){rec.upT=e.timeStamp;const r=rec;setTimeout(()=>{if(rec===r)r.fresh=false},400)}},true);
 addEventListener("pointercancel",()=>{if(rec)rec.fresh=false},true);
 /* why a press must not open anything ("" = it may) */
 function why(e,opts){opts=opts||{};
@@ -76,7 +76,8 @@ function why(e,opts){opts=opts||{};
  if(r.modal)return"modal";
  let d=r.max;if(e&&e.clientX!=null&&(e.clientX||e.clientY)){d=Math.max(d,Math.hypot(e.clientX-r.x,e.clientY-r.y))}
  if(d>MOVE)return"moved";
- if(performance.now()-r.t>HOLD)return"held";
+ /* event times, not "now": a busy page that handles the release late is not a long press */
+ const at=e&&e.timeStamp>=r.t?(r.upT||e.timeStamp):performance.now();if(at-r.t>HOLD)return"held";
  if(e&&e.target&&e.type!=="pointerup"&&!opts.anyTarget){const t=e.target;if(isUI(t)&&!isSurface(t))return"ui"}
  return""}
 let lastWhy="";

@@ -48,6 +48,13 @@ body.gf-fs .gf-dng.gf-dng-float.gf-dng-min{ width:auto; }
 body.sky-night .gfx-arr{ color:#eef1ff; background:linear-gradient(90deg,rgba(14,19,40,0),rgba(14,19,40,.97) 45%); }
 body.sky-night .gfx-arr.l{ background:linear-gradient(270deg,rgba(14,19,40,0),rgba(14,19,40,.97) 45%); }
 body.gf-fs .gfx-arr.on{ display:flex; }
+/* full screen over the starry sky (Satellite globe) in the light theme: the pale see-through chips turned grey on black */
+body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky #allMapsToggleRow .chip:not(.active), body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky #allMapsToggleRow button:not(.active):not(.on),
+body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky .sub-chip:not(.active), body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky .ps-launch-more{ background:rgba(255,255,255,.94) !important; color:#1b2a4a !important; opacity:1 !important; }
+body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky #globalSearchInput{ background:rgba(255,255,255,.94) !important; color:#1b2a4a !important; }
+body:not(.sky-night).gf-fs #allMapsView.gf-fs-sky #globalSearchInput::placeholder{ color:#5a6a85 !important; }
+body.gf-fs.gfx-sky .gfx-arr{ color:#eef1ff; background:linear-gradient(90deg,rgba(3,6,15,0),rgba(3,6,15,.97) 45%); }
+body.gf-fs.gfx-sky .gfx-arr.l{ background:linear-gradient(270deg,rgba(3,6,15,0),rgba(3,6,15,.97) 45%); }
 /* 9. dark theme: dim labels */
 body.sky-night .hist-era{ color:#aeb9dc !important; opacity:1 !important; }
 body.sky-night .hist-era.on{ color:#ffd98a !important; }
@@ -132,7 +139,8 @@ function arrows(){const row=document.getElementById("allMapsToggleRow");
  AL.classList.toggle("on",more&&row.scrollLeft>4);AR.classList.toggle("on",more&&row.scrollLeft<row.scrollWidth-row.clientWidth-4)}
 document.addEventListener("scroll",e=>{if(e.target&&e.target.id==="allMapsToggleRow")try{arrows()}catch(x){}},true);
 
-function tick(){[btnsSync,keySync,bottomSync,dngSync,arrows].forEach(f=>{try{f()}catch(e){}})}
+function skySync(){const v=document.getElementById("allMapsView");document.body.classList.toggle("gfx-sky",!!(v&&v.classList.contains("gf-fs-sky")&&fs()))}
+function tick(){try{skySync()}catch(e){}[btnsSync,keySync,bottomSync,dngSync,arrows].forEach(f=>{try{f()}catch(e){}})}
 setInterval(tick,350);addEventListener("resize",()=>setTimeout(tick,150));addEventListener("scroll",()=>{try{bottomSync();keySync()}catch(e){}},{passive:true});
 window.gfFsFix={tick};
 })();
