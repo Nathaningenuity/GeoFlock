@@ -48,7 +48,7 @@ try{if(typeof gfSpinWanted==="function"){const _s=gfSpinWanted;gfSpinWanted=func
 /* the flat map's own pictures (relief, shading, sea depth, satellite, climate…), as they are layered in the old map */
 const PICS={};const IMG=new Map;
 /* a picture that fails to load (a dropped connection) is tried again a little later, instead of staying broken for good */
-function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&amGlobe.request()}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};
+function img(h){let i=IMG.get(h);if(!i){i=new Image();i.decoding="async";i.onload=()=>{try{amGlobe&&(amGlobe._flat&&amGlobe.render?amGlobe.render():amGlobe.request())}catch(e){}try{stGlobe&&stGlobe.request()}catch(e){}};
  i.onerror=()=>{const n=(i._gfTry||0)+1;if(n>6||/^(data|blob):/.test(h))return;setTimeout(()=>{if(IMG.get(h)!==i)return;IMG.delete(h);img(h)._gfTry=n},1500*n*n)};i.src=h;IMG.set(h,i)}return i}
 function pictures(D){if(D.fixed)return D.fixed();const now=performance.now(),C=PICS[D.key]||(PICS[D.key]={t:0,L:null});if(C.L&&now-C.t<400)return C.L;C.t=now;const svg=document.querySelector(D.svg);const PIC=C.L=[];if(!svg)return PIC;
  svg.querySelectorAll("image").forEach(el=>{let e=el,op=1,ok=true,blend="normal";while(e&&e!==svg){const cs=getComputedStyle(e);if(cs.display==="none"||cs.visibility==="hidden"){ok=false;break}op*=+cs.opacity;if(blend==="normal"&&cs.mixBlendMode&&cs.mixBlendMode!=="normal")blend=cs.mixBlendMode;e=e.parentNode}

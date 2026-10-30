@@ -102,3 +102,10 @@ function start(g){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key)r
   later(step)}).catch(e=>{console.error(e);kill(me)})}
 window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.height]:null,building:!!job,file:!!(tex&&tex.ok)});
 })();
+/* a clean redraw once the City Lights flat map settles (after opening, zooming or panning): otherwise the last frame
+   could stay a scaled, blurred stand-in until the next interaction */
+(function(){let key="",since=0,done="";
+ setInterval(()=>{try{if(typeof amGlobe==="undefined"||!amGlobe||!amGlobe._flat||appMode!=="allmaps"||allMapsColorMode!=="night")return;
+  const p=amGlobe.projection(),t=p.translate(),k=[p.scale().toFixed(2),t[0].toFixed(1),t[1].toFixed(1),amGlobe._gfDl||0].join("|");
+  if(k!==key){key=k;since=Date.now();return}
+  if(done!==k&&Date.now()-since>450&&!amGlobe._moving&&!amGlobe._flying){done=k;const r=()=>{try{if(key===k&&allMapsColorMode==="night"&&amGlobe._flat)(amGlobe.render?amGlobe.render():amGlobe.request())}catch(e){}};[0,1200,3500].forEach(ms=>setTimeout(r,ms))}}catch(e){}},150)})();

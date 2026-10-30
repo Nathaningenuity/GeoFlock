@@ -22,6 +22,8 @@ const L={res:{on:false,parts:new Set(RES_GROUPS.map(g=>g[0]))},con:{on:false,par
 window.GF_LAYERS=L;
 
 /* volcano: a red triangle with a notch for the crater (peaks are brown triangles); centred on 0,0, about 18 units across */
+/* the Hazards layer shows its volcanoes as the plain volcano emoji (no badge or ring), about the same size */
+const VOLC_EMO="\u{1F30B}";
 const VOLC_D="M-9,7L-2.6,-8.4L-1,-6.4L1,-6.4L2.6,-8.4L9,7Z",PEAK_D="M0,-9.5L8.5,7L-8.5,7Z";
 try{if(typeof SPOT_SVG!=="undefined"){SPOT_SVG.volcano='<svg viewBox="-11 -11 22 22"><path d="'+VOLC_D+'" fill="#d63a2a" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>';SPOT_SVG.mountain='<svg viewBox="-11 -11 22 22"><path d="'+PEAK_D+'" fill="#6d4b2f" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>'}}catch(e){}
 /* every drawable thing: {t:"pt"|"line", ll|line, icon, col, n, f, sz} */
@@ -59,7 +61,7 @@ function drawFlat(force){const svg=svgEl();if(!svg)return;let g=svg.querySelecto
    lines+='<path class="gf-ly-hit" data-i="'+i+'" d="'+d+'"/><path class="gf-ly-line" d="'+d+'" style="stroke:'+it.col+';stroke-width:'+it.w+';stroke-opacity:'+(it.op||1)+(it.dash?";stroke-dasharray:"+it.dash:"")+'"/>'}
   else{const p=P(it.ll);if(!p)return;const x=p[0].toFixed(1),y=p[1].toFixed(1);
    if(it.ring){const r=Math.max(4,(it.mag-6.5)*4);pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'"><circle r="'+r+'" style="fill:'+it.col+';fill-opacity:.28;stroke:'+it.col+';stroke-width:1.6"/><circle r="2.2" style="fill:'+it.col+'"/></g>'}
-   else if(it.tri)pts+='<g class="gf-ly-pt gf-ly-tri" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><path d="'+VOLC_D+'" style="fill:#d63a2a;stroke:#fff;stroke-width:1.4;stroke-linejoin:round"/></g>'
+   else if(it.tri)pts+='<g class="gf-ly-pt gf-ly-tri" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle class="gf-ly-emo-hit" r="9"/><text class="gf-ly-emo" text-anchor="middle" dy=".35em" font-size="17">'+VOLC_EMO+'</text></g>'
    else pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle r="9" style="fill:#fff;stroke:'+it.col+';stroke-width:1.8"/><text text-anchor="middle" dy=".36em" font-size="10.5">'+it.icon+"</text></g>"}});
  g._items=its;g.innerHTML='<g class="gf-ly-lines">'+lines+'</g><g class="gf-ly-pts">'+pts+"</g>";scale(svg)}
 /* icons keep their size on screen */
@@ -80,7 +82,7 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
   ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
   const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),vis=[];its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(q)vis.push({it,q,x:q[0],y:q[1],r:7.5*zk*(it.sz||1)})});spread(vis,.72);/* small icons may overlap a little */vis.forEach(o=>{if(this._gfLayHot===o.it)o.r*=1.3});
   vis.forEach(o=>{const it=o.it,q=[o.x,o.y];if(Math.hypot(o.x-o.q[0],o.y-o.q[1])>2){ctx.strokeStyle="rgba(20,30,50,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.q[0],o.q[1]);ctx.lineTo(o.x,o.y);ctx.stroke();ctx.fillStyle="rgba(20,30,50,.75)";ctx.beginPath();ctx.arc(o.q[0],o.q[1],1.8,0,7);ctx.fill()}
-   if(it.tri){const r=o.r;ctx.save();ctx.translate(q[0],q[1]);ctx.scale(r/9,r/9);ctx.fillStyle="#d63a2a";ctx.strokeStyle="#fff";ctx.lineWidth=1.4*9/r;ctx.lineJoin="round";const P2=new Path2D(VOLC_D);ctx.fill(P2);ctx.stroke(P2);ctx.restore()}
+   if(it.tri){const r=o.r;ctx.save();ctx.globalAlpha=1;ctx.font=Math.round(r*1.9)+"px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(VOLC_EMO,q[0],q[1]+r*.08);ctx.restore()}
    else if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
    else{const r=o.r;ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*zk*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
    pts.push([q[0],q[1],it])});
@@ -111,6 +113,10 @@ g.gf-layers .gf-ly-pt{ cursor:pointer; }
 g.gf-layers .gf-ly-pt circle{ vector-effect:non-scaling-stroke; }
 g.gf-layers .gf-ly-true{ stroke:rgba(20,30,50,.6); stroke-width:1; vector-effect:non-scaling-stroke; fill:none; }
 g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
+g.gf-layers .gf-ly-tri .gf-ly-emo-hit{ fill:transparent; stroke:none; }
+g.gf-layers .gf-ly-tri .gf-ly-emo{ font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif; pointer-events:none; }
+g.gf-layers .gf-ly-tri:hover .gf-ly-emo{ filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+.gf-lk-emo{ display:inline-block; width:20px; text-align:center; font-size:16px; line-height:20px; font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif; }
 .gf-ly-tip{ position:fixed; z-index:9999; pointer-events:none; max-width:280px; background:rgba(16,28,48,.94); color:#fff; font-size:12.5px; line-height:1.35; padding:7px 10px; border-radius:9px; box-shadow:0 4px 14px rgba(0,0,0,.25); display:none; }
 .gf-ly-tip b{ display:block; font-size:13px; }
 /* while an icon's note is showing, the country tooltip under it steps aside */
@@ -164,7 +170,7 @@ function layersKey(){const row=(ic,t)=>'<span class="gf-lk-row">'+ic+"<span>"+t+
  if(L.con.on){const P=L.con.parts,r=[];if(P.has("lanes"))r.push(row(lineIcon("#1f6fb8",3),"Shipping lane (thicker = busier)"));if(P.has("choke"))r.push(row(dotIcon("⚠️","#d9534f"),"Chokepoint: a narrow sea passage"));if(P.has("ports"))r.push(row(dotIcon("⚓","#1f6fb8"),"Big port"));
   if(P.has("cables"))r.push(row(lineIcon("#8a4fc7",1.4),"Undersea internet cable"));if(P.has("pipes")){r.push(row(lineIcon("#5a3a22",2,"6 3"),"Oil pipeline"));r.push(row(lineIcon("#e07b1a",2,"6 3"),"Gas pipeline"))}if(P.has("flights"))r.push(row(lineIcon("#d63b6a",1.6,"2 4"),"Busy flight route"));
   if(r.length)h+='<div class="gf-lk-sec"><b>Connections</b>'+r.join("")+"</div>"}
- if(L.haz.on){const P=L.haz.parts,r=[];if(P.has("volc"))r.push(row('<svg viewBox="-11 -11 22 22" width="20" height="20"><path d="'+VOLC_D+'" fill="#d63a2a" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>',"Volcano"));
+ if(L.haz.on){const P=L.haz.parts,r=[];if(P.has("volc"))r.push(row('<span class="gf-lk-emo" aria-hidden="true">'+VOLC_EMO+'</span>',"Volcano"));
   if(P.has("quakes"))r.push(row('<svg viewBox="-11 -11 22 22" width="20" height="20"><circle r="8" fill="#e0482f" fill-opacity=".28" stroke="#e0482f" stroke-width="1.6"/><circle r="2.2" fill="#e0482f"/></svg>',"Great earthquake (bigger ring = stronger)"));
   if(P.has("cyc"))r.push(row(lineIcon("#3a7bd5",2.4),"Usual cyclone path, starting at 🌀"));if(P.has("tsu"))r.push(row(dotIcon("🌊","#1c8fb0"),"Big tsunami"));
   if(r.length)h+='<div class="gf-lk-sec"><b>Hazards</b>'+r.join("")+"</div>"}
