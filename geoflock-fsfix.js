@@ -146,7 +146,7 @@ function dngSync(){const el=document.getElementById("gfDngPanel");if(!el||el.hid
  el.classList.toggle("gf-dng-min",dngMin);
  const fl=el.classList.contains("gf-dng-float");
  if(fl&&!fs()&&!el._moved){const tray=document.querySelector("#allMapsView .gfk-tray");const t=tray&&vis(tray)?tray.getBoundingClientRect():null;
-  const left=t&&t.top<innerHeight?t.right+14:12,w=Math.max(300,Math.min(620,innerWidth-left-14));
+  const w=280;/* a narrow vertical legend, as the owner asked */
   el.style.left="auto";el.style.right="14px";el.style.transform="none";el.style.width=w+"px";
   /* and above "Point at the map" */
   const c=document.querySelector("#allMapsView .gfk-coord");let bot=12;if(c&&vis(c)){const cr=c.getBoundingClientRect();if(cr.bottom>innerHeight-140&&cr.top<innerHeight&&cr.right>innerWidth-14-w)bot=Math.max(bot,Math.round(innerHeight-cr.top+8))}

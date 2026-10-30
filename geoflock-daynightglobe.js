@@ -188,7 +188,7 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    '<button type="button" class="gf-dng-btn" data-dng="play" title="Play a day" aria-pressed="false">▶</button><button type="button" class="gf-dng-btn" data-dng="now" title="Put the sun where it is right now">Now</button><button type="button" class="gf-dng-btn" data-dng="reset" title="Reset time and season to now">Reset to now</button></div>'+
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1440" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Season</span><input type="range" min="-23.4" max="23.4" step="0.1" data-dng="lat" aria-label="Season: the latitude where the sun is overhead"><em class="gf-dng-season"></em></label>'+
-   '<p class="gf-dng-note">Enhanced colour: shallow tropical seas are made a little more turquoise, as in NASA’s Blue Marble pictures.</p>';
+   '<p class="gf-dng-note">Enhanced colour: the sea is coloured by its real depth (NOAA ETOPO), from turquoise shallows to the deep navy of the open ocean.</p>';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="lat"]');
   t.addEventListener("input",()=>{stop();S.lon=minToLon(+t.value);sunPing();ui(true);req()});
   l.addEventListener("input",()=>{stop();S.lat=+l.value;sunPing();ui(true);req()});
