@@ -484,8 +484,8 @@ if(T("hg5d")&&!T("hg5d").steps._rvA){T("hg5d").steps._rvA=1;
 }
 /* ───────── hg6a A world of cities ───────── */
 if(T("hg6a")&&!T("hg6a").steps._rvA){T("hg6a").steps._rvA=1;
- set("hg6a","Site and situation",s=>{s.title="Where the ships stopped";s.view=[-92,29,-70,43];s.globe=[-80,36,2.6];s.card="left";s.phPins=[];
-  s.lines=[{coords:[[-74.76,40.22],[-75.16,39.95],[-76.61,39.29],[-77.07,38.91],[-77.46,38.3],[-77.44,37.54],[-77.4,37.23],[-78.64,35.78],[-81.03,34.0],[-81.97,33.47],[-83.63,32.84],[-84.99,32.46]],kind:"dash"}];
+ set("hg6a","Site and situation",s=>{s.title="Where the ships stopped";s.view=[-92.8,28,-68.8,45];s.globe=[-79,37,2.6];s.card="left";s.phPins=[];
+  s.lines=[{coords:[[-74.76,40.22],[-75.16,39.95],[-76.61,39.29],[-77.07,38.91],[-77.46,38.3],[-77.44,37.54],[-77.4,37.23],[-78.64,35.78],[-81.03,34.0],[-81.97,33.47]],kind:"dash"}];
   s.pins=[[[-74.76,40.22],"Trenton","point"],[[-77.07,38.91],"Georgetown, Washington","point"],[[-77.44,37.54],"Richmond","point"],[[-81.03,34.0],"Columbia","point"],[[-81.97,33.47],"Augusta","point"]];
   s.stat="A line of US cities sits where rivers tumble off the hills";
   s.body="Along the US East Coast the Fall Line (dashed) marks where hard upland rock meets the soft coastal plain, and rivers drop in rapids. Ships could sail no further upstream, and the falls could turn mill wheels, so Trenton, Richmond, Columbia, Augusta and Georgetown in Washington grew right on the line.";

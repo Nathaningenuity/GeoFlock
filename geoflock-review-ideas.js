@@ -298,7 +298,7 @@ PLAN.mythology={order:[
  "Thera and Atlantis",["The flood",e({_rvNoEmp:1})],"Stories that remember the sea",
  S({title:"The word that saved an island",view:[89.5,0,99.5,7.5],globe:[96,3.5,4],hiSoft:["id"],
   gfRuler:{a:[95.85,3.32],b:[95.32,5.55]},
-  pins:[pt([95.85,3.32],"Epicentre, 26 December 2004"),pt([95.32,5.55],"Banda Aceh")],
+  pins:[pt([95.85,3.32],"Epicentre, 26 December 2004"),pt([96.1,2.6],"Simeulue")],
   stat:"In 2004 the tsunami reached Simeulue first, yet only a handful of its people died, thanks to one word",
   body:"After a deadly tsunami in 1907, islanders passed down one word, smong, in lullabies and stories: if the ground shakes hard and the sea draws back, run to the hills. When the great earthquake of 26 December 2004 struck just off the island, people ran uphill at once. Most counts give seven deaths on Simeulue; along the nearby coast of Sumatra, where no such story was told, tens of thousands died.",
   more:"The UN’s disaster agency now uses smong as an example of how local knowledge can save lives. It is proof of this tour’s opening idea: a story can carry the memory of a real event, and a warning, across generations. The ruler runs from the epicentre to Banda Aceh."}),
@@ -315,6 +315,8 @@ PLAN.mythology={order:[
   body:"The Tonga of the Zambezi valley believed Nyami Nyami, a serpent-like river spirit, lived in the gorge at Kariba. The dam would drown the valley, and about 57,000 Tonga were moved from their homes, many to poorer land. Then came huge floods, in 1957 and again in 1958, which swept away roads, bridges and parts of the works.",
   more:"The engineers finished the dam anyway, and the lake behind it filled over the following years. Nyami Nyami carvings, a snake with a fish’s head, are sold all along the Zambezi, and some people still blame tremors near the lake on him."}),
  "Now explore"]};
+PH["mythology|The word that saved an island"]={set:true,pins:[[[95.32,5.55],"Banda Aceh after the 2004 tsunami","Aceh 2004 tsunami standing mosque USGS.jpg"]]};
+CARD["mythology|The word that saved an island"]="Aceh 2004 tsunami standing mosque USGS.jpg";
 PH["mythology|A war that made a lake"]={set:true,pins:[[[-122.1,42.94],"Crater Lake and Wizard Island","@craterlake"]]};
 PH["mythology|The river god and the dam"]={set:true,pins:[[[28.76,-16.52],"The Kariba Dam","KaribaDam.jpg"]]};
 CARD["mythology|A war that made a lake"]="@craterlake";CARD["mythology|The river god and the dam"]="KaribaDam.jpg";

@@ -353,8 +353,8 @@ function explorers(){
   stat:"About 2,300 years ago a Greek sailor from Marseille described the midnight sun and a frozen sea, and was called a liar",
   body:"Around 325 BC Pytheas sailed out past Gibraltar, round Britain and north to a land he called Thule (dashed: one likely route). There, he said, the sun barely set in summer, and the sea turned into something like jelly. Later Greek writers mocked him, because the far north they imagined could not be like that.",
   more:"His book is lost; we know it only from the writers who sneered at it. Thule may have been Iceland or Norway, and “Ultima Thule” came to mean the edge of the world."});
- ins("explorers","The man nobody believed",{title:"The envoy who opened the Silk Road",view:[52,22,120,52],globe:[85,39,2],
-  gfEmpire:[{y:-120,gk:"chn",name:"Han China"},{y:-120,gk:"xiong",name:"Xiongnu",col:"#7a5a3a"}],
+ ins("explorers","The man nobody believed",{title:"The envoy who opened the Silk Road",view:[24,20,122,54],globe:[85,39,2],
+  gfEmpire:[{y:-119,gk:"chn",name:"Han China"},{y:-119,gk:"xiong",name:"Xiongnu",col:"#7a5a3a"}],
   lines:[{coords:[[108.94,34.27],[103.8,36.06],[100.4,38.9],[94.66,40.14],[89,42.9],[82,41.5],[75.99,39.47],[71.5,40.5],[67,39.65],[66.9,36.76]],kind:"flow"},{coords:[[66.9,36.76],[73,37.6],[80,37.1],[88,38.5],[94.66,40.14]],kind:"dash"}],
   pins:[P([108.94,34.27],"Chang’an, about 138 BC"),P([71.5,40.5],"Ferghana: the “heavenly horses”"),P([66.9,36.76],"Bactria")],
   phPins:[ph([94.66,40.14],"Dunhuang: Zhang Qian takes leave of the emperor","ZHANGQIAN")],
