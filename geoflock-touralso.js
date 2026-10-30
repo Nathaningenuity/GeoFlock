@@ -4,7 +4,7 @@
 (function(){
 const ALSO={
  nature:["animals","amigration","ocean","islandlife","humans","crops","environment","food","deserts","bggs","bcollapse"],
- satellite:["biomes","forests","ranges","volcanoes","ice","caves","landmarks","geo","humans","islandlife","animals","bggs","bcollapse","hantarctica","explorers"],
+ satellite:["forests","ranges","volcanoes","ice","caves","landmarks","geo","humans","islandlife","animals","bggs","bcollapse","hantarctica","explorers"],
  elevation:["ranges","volcanoes","lakes","ice","geo","resources","bprisoners","hantarctica"],
  politics:["capitals","regions","conflicts","flags","sports","festivals","bprisoners","bnations","europe","asia","africa","namerica","samerica","oceania"],
  population:["cities","night"],
