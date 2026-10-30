@@ -530,7 +530,7 @@ if(T("hg6c")&&!T("hg6c").steps._rvA){T("hg6c").steps._rvA=1;
   more:"Critics point to sprawl and flooding as the city paves over wetlands; supporters say other cities’ zoning is what makes them unaffordable."}));
  ins("hg6c","The infrastructure of cities",Object.assign(at(12.4,55.75,9),{title:"A city shaped like a hand",
   lines:[[12.55,56.0],[12.3,55.93],[12.07,55.84],[12.08,55.64],[12.18,55.46]].map(b=>({coords:[[12.57,55.68],b],kind:"flow"})),
-  pins:[[[12.57,55.68],"The palm: central Copenhagen","point"]],phPins:[ph([12.56,55.69],"Copenhagen","Cityscape and skyline by the Copenhagen Lakes, Denmark - (36018109956).jpg")],
+  pins:[[[12.57,55.68],"The palm: central Copenhagen","point"]],
   stat:"Since 1947 Copenhagen has grown along five “fingers” of railway, with green wedges between them",
   body:"The Finger Plan put new housing and offices along rail lines reaching out from the city centre, the “palm”, and kept the land between the lines for farms, forests and parks. This is transit-oriented development: build where the trains already go.",
   more:"Nearly half of Copenhageners now ride to work or school by bike. Tokyo’s private railways went further: they built whole suburbs around their own stations."}));

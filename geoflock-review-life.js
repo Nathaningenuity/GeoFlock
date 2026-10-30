@@ -329,7 +329,7 @@ function landmarks(){if(!once("landmarks"))return;
 }
 
 function migration(){if(!once("migration"))return;
- ins("migration","China moves to the cities",{title:"North by railway",view:[-155,22,-68,52],globe:[-90,38,1.8],card:"left",hi:["us"],
+ ins("migration","China moves to the cities",{title:"North by railway",view:[-155,22,-68,52],globe:[-90,38,1.8],card:"left",
   lines:[{coords:[[-90.57,34.2],[-90.05,35.15],[-89.18,37.0],[-88.24,40.12],[-87.63,41.88]],kind:"flow"},
    {coords:[[-80.84,35.23],[-77.44,37.54],[-77.04,38.9],[-75.16,39.95],[-74.0,40.71]],kind:"flow"},
    {coords:[[-96.8,32.78],[-101.8,33.6],[-106.4,31.76],[-112.07,33.45],[-118.24,34.05]],kind:"flow"}],
