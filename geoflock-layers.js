@@ -61,7 +61,7 @@ function drawFlat(force){const svg=svgEl();if(!svg)return;let g=svg.querySelecto
    lines+='<path class="gf-ly-hit" data-i="'+i+'" d="'+d+'"/><path class="gf-ly-line" d="'+d+'" style="stroke:'+it.col+';stroke-width:'+it.w+';stroke-opacity:'+(it.op||1)+(it.dash?";stroke-dasharray:"+it.dash:"")+'"/>'}
   else{const p=P(it.ll);if(!p)return;const x=p[0].toFixed(1),y=p[1].toFixed(1);
    if(it.ring){const r=Math.max(4,(it.mag-6.5)*4);pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'"><circle r="'+r+'" style="fill:'+it.col+';fill-opacity:.28;stroke:'+it.col+';stroke-width:1.6"/><circle r="2.2" style="fill:'+it.col+'"/></g>'}
-   else if(it.tri)pts+='<g class="gf-ly-pt gf-ly-tri" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle class="gf-ly-emo-hit" r="9"/><text class="gf-ly-emo" text-anchor="middle" dy=".35em" font-size="17">'+VOLC_EMO+'</text></g>'
+   else if(it.tri)pts+='<g class="gf-ly-pt gf-ly-tri" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle class="gf-ly-emo-hit" r="9"/><text class="gf-ly-emo" text-anchor="middle" dy=".35em" font-size="19">'+VOLC_EMO+'</text></g>'
    else pts+='<g class="gf-ly-pt" data-i="'+i+'" data-x="'+x+'" data-y="'+y+'" data-sz="'+(it.sz||1)+'"><circle r="9" style="fill:#fff;stroke:'+it.col+';stroke-width:1.8"/><text text-anchor="middle" dy=".36em" font-size="10.5">'+it.icon+"</text></g>"}});
  g._items=its;g.innerHTML='<g class="gf-ly-lines">'+lines+'</g><g class="gf-ly-pts">'+pts+"</g>";scale(svg)}
 /* icons keep their size on screen */
@@ -82,7 +82,7 @@ if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;Gl
   ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
   const zk=Math.min(2.2,.85*Math.pow(Math.max(1,this.zoom||1),.5)),vis=[];its.forEach(it=>{if(it.t!=="pt"||d3.geoDistance(it.ll,c)>Math.PI/2-.03)return;const q=p(it.ll);if(q)vis.push({it,q,x:q[0],y:q[1],r:7.5*zk*(it.sz||1)})});spread(vis,.72);/* small icons may overlap a little */vis.forEach(o=>{if(this._gfLayHot===o.it)o.r*=1.3});
   vis.forEach(o=>{const it=o.it,q=[o.x,o.y];if(Math.hypot(o.x-o.q[0],o.y-o.q[1])>2){ctx.strokeStyle="rgba(20,30,50,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(o.q[0],o.q[1]);ctx.lineTo(o.x,o.y);ctx.stroke();ctx.fillStyle="rgba(20,30,50,.75)";ctx.beginPath();ctx.arc(o.q[0],o.q[1],1.8,0,7);ctx.fill()}
-   if(it.tri){const r=o.r;ctx.save();ctx.globalAlpha=1;ctx.font=Math.round(r*1.9)+"px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(VOLC_EMO,q[0],q[1]+r*.08);ctx.restore()}
+   if(it.tri){const r=o.r;ctx.save();ctx.globalAlpha=1;ctx.font=Math.round(r*2.3)+"px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.shadowColor="rgba(255,255,255,.75)";ctx.shadowBlur=3;ctx.fillText(VOLC_EMO,q[0],q[1]+r*.08);ctx.restore()}
    else if(it.ring){const r=Math.max(4,(it.mag-6.5)*4)*Math.min(2.2,Math.pow(Math.max(1,this.zoom||1),.5));ctx.fillStyle=it.col;ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=it.col;ctx.lineWidth=1.6;ctx.stroke();ctx.beginPath();ctx.arc(q[0],q[1],2.2,0,7);ctx.fill()}
    else{const r=o.r;ctx.fillStyle="#fff";ctx.strokeStyle=it.col;ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(q[0],q[1],r,0,7);ctx.fill();ctx.stroke();ctx.font=(9*zk*(it.sz||1))+"px system-ui, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";ctx.fillStyle="#222";ctx.fillText(it.icon,q[0],q[1]+.5)}
    pts.push([q[0],q[1],it])});
@@ -114,7 +114,7 @@ g.gf-layers .gf-ly-pt circle{ vector-effect:non-scaling-stroke; }
 g.gf-layers .gf-ly-true{ stroke:rgba(20,30,50,.6); stroke-width:1; vector-effect:non-scaling-stroke; fill:none; }
 g.gf-layers .gf-ly-pt:hover circle:first-child{ stroke-width:3 !important; }
 g.gf-layers .gf-ly-tri .gf-ly-emo-hit{ fill:transparent; stroke:none; }
-g.gf-layers .gf-ly-tri .gf-ly-emo{ font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif; pointer-events:none; }
+g.gf-layers .gf-ly-tri .gf-ly-emo{ font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif; pointer-events:none; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.75)); }
 g.gf-layers .gf-ly-tri:hover .gf-ly-emo{ filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
 .gf-lk-emo{ display:inline-block; width:20px; text-align:center; font-size:16px; line-height:20px; font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',system-ui,sans-serif; }
 .gf-ly-tip{ position:fixed; z-index:9999; pointer-events:none; max-width:280px; background:rgba(16,28,48,.94); color:#fff; font-size:12.5px; line-height:1.35; padding:7px 10px; border-radius:9px; box-shadow:0 4px 14px rgba(0,0,0,.25); display:none; }

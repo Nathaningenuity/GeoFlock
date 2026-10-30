@@ -94,11 +94,11 @@ function drawLand(host,P){
     if(L.snow){ctx.save();path();ctx.clip();const g=ctx.createLinearGradient(0,0,0,L.snow);g.addColorStop(0,P.snow);g.addColorStop(1,P.snow0);
       ctx.fillStyle=g;ctx.fillRect(0,0,W,L.snow);ctx.restore()}
     if(L.rim){ctx.strokeStyle=P.rim(L.rim);ctx.lineWidth=1;ctx.beginPath();ys.forEach((y,i)=>i?ctx.lineTo(i*2,y):ctx.moveTo(0,y));ctx.stroke()}
-    if(L.river){/* a river winding from the lake toward the viewer */
-      const pts=[];for(let i=0;i<=40;i++){const t=i/40,y=H*0.80+t*(H*0.22),x=vc+Math.sin(t*5.2+0.6)*W*(narrow?0.07:0.035)*t*1.6+t*W*0.02;pts.push([x,y,1.5+t*t*16])}
+    if(L.river){/* a river winding from the lake toward the viewer; it starts at the near shore, so it is drawn on the land only */
+      ctx.save();path();ctx.clip();const pts=[];for(let i=0;i<=40;i++){const t=i/40,y=H*0.80+t*(H*0.22),x=vc+Math.sin(t*5.2+0.6)*W*(narrow?0.07:0.035)*t*1.6+t*W*0.02;pts.push([x,y,1.5+t*t*16])}
       const g=ctx.createLinearGradient(0,H*0.8,0,H);g.addColorStop(0,P.w[0]);g.addColorStop(1,P.w[1]);ctx.fillStyle=g;
       ctx.beginPath();pts.forEach(([x,y,w],i)=>i?ctx.lineTo(x-w,y):ctx.moveTo(x-w,y));pts.slice().reverse().forEach(([x,y,w])=>ctx.lineTo(x+w,y));ctx.closePath();ctx.fill();
-      ctx.strokeStyle=P.ripple;for(let i=6;i<40;i+=5){const[x,y,w]=pts[i];ctx.beginPath();ctx.moveTo(x-w*0.5,y);ctx.lineTo(x+w*0.3,y);ctx.stroke()}}
+      ctx.strokeStyle=P.ripple;for(let i=6;i<40;i+=5){const[x,y,w]=pts[i];ctx.beginPath();ctx.moveTo(x-w*0.5,y);ctx.lineTo(x+w*0.3,y);ctx.stroke()}ctx.restore()}
     if(L.trees){if(P.tree)ctx.fillStyle=P.tree(L.col);/* trees grow in patches: woods, then open ground */
       const T=L.trees;let x=rand()*10;while(x<W){const i=Math.min(ys.length-1,Math.round(x/2)),y=ys[i],patch=smooth(x*S*5,90+T.min,3);
         if(y<H-2&&patch>(P.patch||0.52)&&rand()<T.p*(P.lush||1)){const h=(T.min+rand()*(T.max-T.min))*(0.7+0.5*patch);
@@ -166,7 +166,9 @@ function drawDayLand(host){
     if(rand()<0.65)pine(ctx,x,y+2+rand()*Y(0.03),6+rand()*9,(rand()-0.5)*0.4);else roundTree(ctx,x,y+2+rand()*Y(0.02),7+rand()*5)}
   mistBand(lakeY-Y(0.01),Y(0.025),.5,224);
   /* 4. the lake in the valley: sky-coloured water with the range reflected faintly, and a light shimmer */
-  {const cxL=(lakeL+lakeR)/2,rx=(lakeR-lakeL)/2*0.92,ry=Y(0.10);const basin=()=>{ctx.beginPath();ctx.ellipse(cxL,lakeY,rx,ry,0,0,Math.PI);ctx.closePath()};
+  const cxL=(lakeL+lakeR)/2,rx=(lakeR-lakeL)/2*0.92,ry=Y(0.10),basin=()=>{ctx.beginPath();ctx.ellipse(cxL,lakeY,rx,ry,0,0,Math.PI);ctx.closePath()},
+    inLake=(x,y)=>y>=lakeY-1&&Math.pow((x-cxL)/rx,2)+Math.pow((y-lakeY)/ry,2)<1;
+  {
     const g=ctx.createLinearGradient(0,lakeY,0,lakeY+ry);g.addColorStop(0,"#c6e7ef");g.addColorStop(1,"#94cadd");ctx.fillStyle=g;basin();ctx.fill();
     ctx.save();basin();ctx.clip();ctx.globalAlpha=.22;ctx.translate(0,2*lakeY);ctx.scale(1,-1);ctx.fillStyle="#6fa58d";shape(hill);ctx.fill();ctx.globalAlpha=.10;ctx.fillStyle="#ffffff";shape(far);ctx.fill();ctx.restore();
     ctx.strokeStyle="rgba(255,255,255,.8)";ctx.lineWidth=1;for(let k=0;k<30;k++){const t=rand(),x=cxL+(rand()-0.5)*rx*1.6*(1-t*0.5),y=lakeY+3+t*ry*0.8,l=4+rand()*16*(1-t*0.4);ctx.globalAlpha=.35+rand()*.4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+l,y);ctx.stroke()}ctx.globalAlpha=1;
@@ -182,6 +184,8 @@ function drawDayLand(host){
 
   /* 6. a stream winding down the valley toward the viewer: thin and faint in the distance, wider and brighter up close */
   {const x0=X(0.34),x1=X(0.47),y0=lakeY-1,pts=[];
+    /* it leaves the lake at the near shore: nothing of it is drawn over the water */
+    ctx.save();ctx.beginPath();ctx.rect(-W,-H,3*W,3*H);ctx.ellipse(cxL,lakeY,rx+1,ry+1,0,0,Math.PI);ctx.closePath();ctx.clip("evenodd");
     for(let i=0;i<=120;i++){const t=i/120,y=y0+(H+6-y0)*Math.pow(t,1.25),amp=X(0.015)+X(0.10)*Math.pow(t,1.4);
       const x=x0+(x1-x0)*t+amp*Math.sin(t*Math.PI*2.6+0.7)+X(0.01)*(smooth(t*6,261,3)-0.5);pts.push([x,y,0.8+Math.pow(t,1.6)*(W<900?15:26)])}
     const band=(k,col)=>{ctx.fillStyle=col;ctx.beginPath();pts.forEach(([x,y,w],i)=>i?ctx.lineTo(x-w*k,y):ctx.moveTo(x-w*k,y));pts.slice().reverse().forEach(([x,y,w])=>ctx.lineTo(x+w*k,y));ctx.closePath();ctx.fill()};
@@ -190,9 +194,9 @@ function drawDayLand(host){
     ctx.strokeStyle="rgba(255,255,255,.7)";ctx.lineWidth=1;ctx.lineCap="round";
     for(let i=14;i<118;i+=4){const[x,y,w]=pts[i];if(w<2)continue;const o=(rand()-0.5)*w*0.8;ctx.beginPath();ctx.moveTo(x+o-w*0.25,y);ctx.lineTo(x+o+w*0.2,y);ctx.stroke()}
     /* trees and reeds along the banks */
-    ctx.fillStyle="#6aa47f";for(let i=10;i<112;i+=5){if(rand()<0.45)continue;const[x,y,w]=pts[i],side=rand()<0.5?-1:1,h=4+i*0.12;
-      if(rand()<0.3)poplar(ctx,x+side*(w*1.5+3+rand()*5),y+1,h*1.4);else roundTree(ctx,x+side*(w*1.5+4+rand()*6),y+1,h)}
-    mistBand(y0+Y(0.01),Y(0.03),.7,262)}   /* the stream emerges from the valley mist */
+    ctx.restore();
+    ctx.fillStyle="#6aa47f";for(let i=10;i<112;i+=5){if(rand()<0.45)continue;const[x,y,w]=pts[i],side=rand()<0.5?-1:1,h=4+i*0.12,tx=x+side*(w*1.5+4+rand()*6);
+      if(inLake(x,y)||inLake(tx,y+1))continue;if(rand()<0.3)poplar(ctx,tx,y+1,h*1.4);else roundTree(ctx,tx,y+1,h)}}   /* the stream emerges from the valley mist */
 }
 /* ---------- day sky: soft stretched clouds in two loose bands, and a low warm glow behind the ranges ---------- */
 function drawDaySky(cv){
@@ -207,8 +211,8 @@ function drawDaySky(cv){
   for(let j=0;j<h;j++){const y=j/sc;let m=0;for(const[c,s,a] of bands)m=Math.max(m,a*Math.exp(-Math.pow((y/H-c)/s,2)));
     const st=0.75*Math.exp(-Math.pow((y/H-ls)/0.035,2));if(m<0.02&&st<0.02)continue;
     for(let i=0;i<w;i++){const x=i/sc,p=(j*w+i)*4;let A=0,cr=255,cg=255,cb=255;
-      if(m>=0.02){const n=fbm(x*k*2.2+3,y*k*7.5,5),v=Math.max(0,(n-0.42)/0.26)*m;A=v*v*150}
-      if(st>=0.02){const n=fbm(x*k*1.6+40,y*k*16,5),v=Math.max(0,(n-0.40)/0.30)*st,B=v*v*140;if(B>A){A=B;cr=236;cg=244;cb=248}}
+      if(m>=0.02){const n=fbm(x*k*2.2+3,y*k*7.5,5),v=Math.max(0,(n-0.44)/0.26)*m;A=v*v*190}
+      if(st>=0.02){const n=fbm(x*k*1.6+40,y*k*16,5),v=Math.max(0,(n-0.38)/0.30)*st,B=v*150;if(B>A){A=B;cr=236;cg=244;cb=248}}
       if(A<=0)continue;D[p]=cr;D[p+1]=cg;D[p+2]=cb;D[p+3]=Math.min(255,A)}}
   oc.putImageData(img,0,0);ctx.imageSmoothingQuality="high";ctx.drawImage(off,0,0,cv.width,cv.height)}
 /* ---------- day clouds: fair-weather cumulus, each modelled as a heap of spheres (big billows carrying smaller ones),
@@ -287,11 +291,12 @@ function drawDayClouds(cv){
   /* [x, y of the base, size, how tall, haze]: big towering clouds high up, flatter and hazier ones toward the horizon */
   const C=[[0.10,0.20,1.15,0.9,0],[0.38,0.11,0.75,0.7,0.02],[0.70,0.23,1.35,1.0,0],[0.93,0.13,0.70,0.65,0.03],
            [0.24,0.40,0.55,0.55,0.12],[0.55,0.44,0.45,0.45,0.16],[0.83,0.41,0.52,0.5,0.14],[0.05,0.52,0.36,0.35,0.24],[0.42,0.57,0.30,0.3,0.3],[0.97,0.56,0.32,0.3,0.3],[0.68,0.60,0.26,0.25,0.34],
-           [0.15,0.655,0.24,0.18,0.45],[0.33,0.675,0.18,0.15,0.5],[0.60,0.665,0.22,0.16,0.48],[0.88,0.68,0.20,0.15,0.5]];
+           [0.15,0.645,0.30,0.2,0.45],[0.47,0.665,0.26,0.16,0.5],[0.74,0.635,0.24,0.2,0.45],[0.95,0.675,0.22,0.15,0.55]];
   const landTop=1-Math.min(0.28,250/H);
   C.forEach(([fx,fy,sc,tall,haze],k)=>{if(fy>landTop-0.03)return;rnd=1013+k*7919;const w=base*sc;
-    const b=cumulus(w,{tall,res,haze,seed:k*13.7});ctx.globalAlpha=0.95-0.3*haze;ctx.drawImage(b.cv,fx*W-b.ax,fy*H-b.ay,b.w,b.h)});
-  ctx.globalAlpha=1}
+    const b=cumulus(w,{tall,res,haze,seed:k*13.7}),sx=1+haze*1.2;   /* distant ones are seen edge-on: flatter */
+    ctx.globalAlpha=0.95-0.4*haze;ctx.filter=haze>0.2?`blur(${(haze*1.6).toFixed(2)}px)`:"none";ctx.drawImage(b.cv,fx*W-b.ax*sx,fy*H-b.ay,b.w*sx,b.h)});
+  ctx.globalAlpha=1;ctx.filter="none"}
 
 /* ---------- a few small flocks crossing the day sky, wings beating ---------- */
 function birdsSVG(){const up="M0 0 C-3 -2 -6 -3 -9 -2 C-6 -2.4 -3 -1 0 1 C3 -1 6 -2.4 9 -2 C6 -3 3 -2 0 0Z",dn="M0 0 C-3 1 -6 3 -8 5 C-5 2 -3 1 0 1.2 C3 1 5 2 8 5 C6 3 3 1 0 0Z";
