@@ -393,10 +393,11 @@ function flags(){if(!once("flags"))return;
   stat:"Five Central American flags share blue and white stripes: two oceans with the land between",
   body:"Guatemala, Honduras, El Salvador, Nicaragua and Costa Rica were once one country, the Federal Republic of Central America (1823–1841). Its flag’s two blue bands are usually read as the Pacific and the Caribbean, with the white isthmus between them. All five kept the design, or echoes of it, after the union broke up.",
   more:"Honduras’s five stars stand for the five old members. El Salvador’s and Nicaragua’s emblems show five volcanoes between two seas, and Nicaragua’s rainbow makes it the other flag with purple besides Dominica’s. Costa Rica added a red stripe in 1848."});
- ins("flags","Maps on flags",{title:"Flags that are sea charts",view:[150,-12,180,14],globe:[167,0,3],card:"left",on:["grid"],hi:["nr","mh"],
-  pins:[P([166.93,-0.53],"Nauru"),P([171.2,7.1],"Marshall Islands")],
+ ins("flags","Maps on flags",{title:"Flags that are sea charts",view:[150,-12,180,14],globe:[167,0,3],card:"left",hi:["nr","mh"],
+  lines:[{coords:dense([150,0],[180,0],10),kind:"dash"}],
+  pins:[P([166.93,-0.53],"Nauru"),P([171.2,7.1],"Marshall Islands"),P([176,0],"The equator")],
   stat:"Nauru’s flag is a map: a yellow line for the equator, and a star just below it for the island",
-  body:"Nauru’s flag puts a white star on a blue sea just under a yellow stripe, because the island lies about 60 km south of the equator (the grid’s middle line). The star’s 12 points stand for Nauru’s 12 traditional tribes.",
+  body:"Nauru’s flag puts a white star on a blue sea just under a yellow stripe, because the island lies about 60 km south of the equator (dashed). The star’s 12 points stand for Nauru’s 12 traditional tribes.",
   more:"The Marshall Islands, north of the equator, fly a star above two rays that widen as they rise, orange and white, for its two chains of islands: Ralik, ‘sunset’, and Ratak, ‘sunrise’."});
  CARD["flags|Flags that are sea charts"]="Aerial view of Nauru-mod.jpg";
 }

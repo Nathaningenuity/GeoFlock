@@ -40,13 +40,13 @@ const CARD={"time|Pyongyang time":"Tower of Juche Idea, Pyongyang, North Korea (
 
 /* ======================================================================= START HERE */
 function pop(){const id="pop";
- ins(id,"The United States: the 100th meridian",{title:"An ancient shoreline votes",view:[-95,28.5,-78,37.5],globe:[-87,32.5,4],card:"left",
+ ins(id,"The United States: the 100th meridian",{title:"An ancient shoreline votes",view:[-104,28,-80,37.5],globe:[-87,32.5,4],card:"left",
   lines:[{coords:[[-89.2,34.6],[-88.8,34.0],[-88.45,33.45],[-88.0,32.95],[-87.5,32.6],[-87.0,32.4],[-86.4,32.25],[-85.8,32.15],[-85.1,32.05],[-84.4,32.0]],kind:"dash"}],
-  pins:[[[-87.02,32.41],"Selma","point"],[[-86.3,32.38],"Montgomery","point"],[[[-88.2,33.0],[-86.6,32.0]],"The Black Belt","area"]],
+  pins:[[[-87.02,32.41],"Selma","point"],[[[-88.2,33.0],[-86.6,32.0]],"The Black Belt","area"]],
   stat:"A coastline from the age of the dinosaurs still shows up on maps of who lives where, and how they vote",
   body:"Some 80 million years ago a shallow sea covered the US South. The chalky mud on its floor, laid down in a curve near the old shore (dashed), weathered into dark, rich soil: the “Black Belt”. In the 1800s that soil made the best cotton land, so the plantations, and the enslaved people forced to work on them, crowded along the same arc.",
   more:"Many of their descendants still live there: the counties where most people are Black trace the old shoreline across Alabama and Mississippi, and on maps of recent US presidential elections the arc stands out as a curve of Democratic-voting counties across the mostly Republican Deep South. Booker T. Washington wrote in 1901 that the name first meant the colour of the soil, and later the people."});
- ins(id,"Australia keeps to the coast",{title:"Central America faces the Pacific",view:[-93,6.5,-76,18.5],globe:[-85,12.5,4],card:"left",hi:["gt","sv","hn","ni","cr"],
+ ins(id,"Australia keeps to the coast",{title:"Central America faces the Pacific",view:[-101,6.5,-76,18.5],globe:[-85,12.5,4],card:"left",
   lines:[{coords:[[-92.1,15.0],[-91.2,14.6],[-90.6,14.4],[-89.6,13.85],[-88.6,13.5],[-87.6,13.0],[-86.9,12.6],[-86.2,12.0],[-85.6,11.4],[-85.0,10.8],[-84.4,10.2],[-83.8,9.9]],kind:"dash"}],
   pins:[[[-90.51,14.63],"Guatemala City","point"],[[-89.19,13.69],"San Salvador","point"],[[-87.21,14.07],"Tegucigalpa","point"],[[-84.09,9.93],"San José","point"],[[-83.77,12.01],"Bluefields: the empty Caribbean side","point"]],
   phPins:[ph([-86.27,12.15],"Managua: the old cathedral","Old Cathedral of Managua (20450013).jpg")],
