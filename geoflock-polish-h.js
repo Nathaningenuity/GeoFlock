@@ -28,6 +28,7 @@ try{if(window._gfExtraDone&&typeof PS_PHOTO_DATA!=="undefined"){const have=new S
 
 /* card photos ("tour|title" → library file name) */
 const CARD={
+ "weather|El Niño":"Waves in the Pacific Ocean.jpg",
  "weather|Now explore":"Pacific ocean rainbow.jpg",
  "coasts|The Wadden Sea":"Tidal flats Wadden sea.JPG",
  "coasts|The biggest tides":"NB - Hopewell Rocks1.jpg",
@@ -64,7 +65,9 @@ function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="
 function patch(){
 /* ───────── Weather ───────── */
 if(once("weather")){
- set("weather","El Niño",s=>{s.body="Normally the trade winds push warm surface water west towards Indonesia, and cold, food-rich water wells up off Peru. In an El Niño year the trade winds weaken, the warm water spreads back east, and the rain follows it. The ocean-currents layer shows the currents that normally run west."});
+ set("weather","Where air masses collide",s=>{s.view=[-150,18,-66,56];s.globe=[-98,38,2]});
+ /* the story spans the whole Pacific, which the flat map cuts in half: show it on the globe */
+ set("weather","El Niño",s=>{s.pacific=true;s.globe=[-128,-4,1.35];s.body="Normally the trade winds push warm surface water west towards Indonesia, and cold, food-rich water wells up off Peru. In an El Niño year the trade winds weaken, the warm water spreads back east, and the rain follows it. The ocean-currents layer shows the currents that normally run west."});
 }
 /* ───────── Coasts ───────── */
 if(once("coasts")){
@@ -89,7 +92,8 @@ if(once("volcanoes")){
   s.xsec={title:"From the sea floor over Mauna Loa",pts:[[-157.7,18.55,"Sea floor"],[-157.0,18.85],[-156.3,19.15],[-155.95,19.3,"Coast"],[-155.608,19.475,"Mauna Loa"],[-155.468,19.821,"Mauna Kea"],[-155.1,20.05],[-154.6,20.3],[-154.0,20.6,"Sea floor"]],mark:0,
    note:"The dashed line is sea level. Most of the volcano is hidden under the Pacific: from the sea floor, about 5 km down, it climbs about 9 km."};
   s.body="Hawaii’s volcanoes erupt runny basalt lava that spreads far before it cools, building wide, gentle domes shaped like a warrior’s shield lying on the ground. Move along the chart: most of Mauna Loa is under the sea."});
- set("volcanoes","Vesuvius and Pompeii",s=>{s.gfRuler={a:[14.08,40.78],b:[14.426,40.821]};
+ set("volcanoes","Yellowstone’s supervolcano",s=>{s.view=[-130,40,-104,48.5];s.card="left"});
+ set("volcanoes","Vesuvius and Pompeii",s=>{s.view=[12.2,40.15,15.4,41.4];s.card="left";s.gfRuler={a:[14.08,40.78],b:[14.426,40.821]};
   s.body="Pliny the Younger watched from Misenum, about 30 km across the bay (the ruler), as a column of ash rose like a giant pine tree, then fell on Pompeii and Herculaneum. The towns were buried, preserved for archaeologists to dig up 1,700 years later."});
  set("volcanoes","Krakatoa and Tambora",s=>{s.view=[56,-30,128,10];s.globe=[92,-10,1.6];s.card="left";
   s.gfRuler={a:[105.42,-6.1],b:[63.42,-19.72]};

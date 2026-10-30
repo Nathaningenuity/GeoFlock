@@ -60,16 +60,15 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
-  /* sea colour by depth, read from how light the water is. Water the satellite picture already shows light cyan (the
-     Bahamas banks, reefs, lagoons) becomes bright turquoise; blue shallow coastal water turns gently turquoise; the deep
-     ocean is only a little lighter. */
-  float shelf = smoothstep(0.06, 0.13, lum);
+  /* sea colour, like the Blue Marble picture: the lighter shallow water near coasts takes a soft turquoise that
+     dissolves gradually into the dark navy of the open ocean (a wide, smooth ramp on how light the water is, so there
+     is no edge); water the picture already shows light cyan (the Bahamas banks, reefs) gets a little brighter. */
+  float shelf = smoothstep(0.035, 0.17, lum);
   float cyan = smoothstep(0.78, 0.95, day.g / max(day.b, 0.001));
-  vec3 deep = day * 1.1 + vec3(0.008, 0.012, 0.02);
-  vec3 turq = mix(day, vec3(0.10, 0.56, 0.60) * (0.6 + lum * 1.6), 0.6);
-  vec3 sea = mix(deep, turq, shelf * (1.0 - cyan));
-  /* already-cyan shallows (the Bahamas banks, reefs) become bright turquoise */
-  sea = mix(sea, mix(day, vec3(0.30, 0.88, 0.86) * (0.72 + lum), 0.6), cyan * smoothstep(0.12, 0.22, lum));
+  vec3 deep = day * vec3(0.98, 1.0, 1.04);
+  vec3 turq = mix(day, vec3(0.16, 0.50, 0.54) * (0.6 + lum * 1.4), 0.38);
+  vec3 sea = mix(deep, turq, shelf * shelf * (1.0 - cyan));
+  sea = mix(sea, mix(day, vec3(0.34, 0.86, 0.84) * (0.72 + lum), 0.4), cyan * smoothstep(0.12, 0.24, lum));
   day = mix(day, sea, water);
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
      Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
