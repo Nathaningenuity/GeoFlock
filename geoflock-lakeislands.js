@@ -62,7 +62,7 @@ const ISLES=[
 ].map(r=>({n:r[0],cc:r[1],lake:r[2],ll:[r[3],r[4]],kind:r[5],alt:r[6]||[],note:r[7]||""}));
 /* Samosir: the stretch of Lake Toba's own ring that runs round the island, closed across the isthmus at Pangururan */
 const SAMOSIR=[[98.69,2.608],[98.74,2.531],[98.858,2.441],[98.899,2.428],[98.978,2.463],[98.978,2.48],[98.845,2.678],[98.796,2.73],[98.732,2.755],[98.701,2.744],[98.679,2.709],[98.676,2.627],[98.69,2.608]];
-const HOVER_PX=9,PT_MIN_PXDEG=20,BIG_ALONE_PX=12;
+const HOVER_PX=9,PT_MIN_PXDEG=20,BIG_ALONE_PX=8;
 const dark=()=>document.body.classList.contains("sky-night");
 const smallPoly=r=>{const g={type:"Polygon",coordinates:[r.slice()]};if(d3.geoArea(g)>2*Math.PI)g.coordinates=[r.slice().reverse()];return g};
 /* the island shapes, from the lake holes (built once, after the overlays exist) */
