@@ -15,7 +15,7 @@ const CARD={/*CARD*/
 "elev|Sea level isn’t level":"Geoid undulation 10k scale.jpg",
 "lakes|A lake made by mistake":"Salton Sea 01 2013.jpg",
 "islands|No snakes in Ireland":"Benny Trapp Vipera berus.jpg",
-"rivers|The Amazon once flowed west":"Amazon River - 2018.jpg",
+"rivers|The Amazon once flowed west":"Aerial view of the Amazon Rainforest.jpg",
 "deserts|Death Valley’s heat trap":"Boardwalk at Badwater Basin, Death Valley National Park, California.jpg"
 };
 /* photo pins to (re)place on a stop: "tour|title" → [[lon,lat],label,file]; replaces a pin of the same label */

@@ -530,6 +530,8 @@ function edit(id,s,o){
   else{def(s,k,v);if(k==="view")def(s,"_ff",1)}}}
 function patchTour(id){const sp=SPEC[id];let t;try{t=PS_TOURS[id]}catch(e){return}
  if(!t||!Array.isArray(t.steps)||!t.steps.length||t.steps._rvPow)return;
+ /* other files keep adding and renaming stops until the page has loaded: patch only after that, or their stops drop out of the order */
+ if(!window._gfRvPowReady)return;
  try{photoMerge();const steps=t.steps,by=new Map(steps.map(s=>[strip(s.title),s]));
   if(sp.hint)t.hint=sp.hint;
   /* carry photo pins from stops that are dropped or merged into the stop that keeps their story */
@@ -571,5 +573,5 @@ function questions(){try{if(typeof TOURQ==="undefined")return;
 function run(){for(const id in SPEC)patchTour(id);cards();questions()}
 window.gfRvPow={SPEC,run};
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(typeof ps!=="undefined"&&ps&&SPEC[ps.tour]){patchTour(ps.tour);cards();const S0=(psSteps()||[])[i];if(S0)regPins(S0)}}catch(e){}return _g.apply(this,arguments)}}
-[0,1500,5000,12000].forEach(ms=>setTimeout(run,ms));addEventListener("load",()=>setTimeout(run,800));
+const ready=()=>setTimeout(()=>{window._gfRvPowReady=1;run();[1500,5000,12000].forEach(ms=>setTimeout(run,ms))},1500);if(document.readyState==="complete")ready();else addEventListener("load",ready);
 })();

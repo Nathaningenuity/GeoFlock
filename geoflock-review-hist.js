@@ -527,10 +527,10 @@ function hwars(){
   body:"Countries at war censored news of the disease to protect morale. Spain was neutral, so its papers reported it freely, especially when the king fell ill, and the world assumed it had started there. Troop ships and trains carried it everywhere; it probably killed about 50 million people worldwide, more than the war itself.",
   more:"Where it really began is still debated; one early outbreak was at an army camp in Kansas in March 1918. In Spain it was called the “French flu”."});
  ins("hwars","Stalingrad",{title:"The line that couldn’t be outflanked",sub:"1938/ita",view:[8,25,36,42],globe:[24,32,3],
-  lines:[{coords:[[28.95,30.9],[28.5,30.35],[27.95,29.95]],kind:"red"},{coords:[[14.27,40.85],[13.19,32.9]],kind:"dash"},{coords:[[13.19,32.9],[20.07,32.12],[23.96,32.08],[27.2,31.35],[28.6,30.8]],kind:"dash"}],
-  gfRuler:{a:[28.95,30.9],b:[27.95,29.95]},
-  pins:[P([27.5,29.5],"Qattara Depression: impassable"),P([23.96,32.08],"Tobruk"),P([29.92,31.2],"Alexandria"),P([13.19,32.9],"Tripoli: fuel from Italy")],
-  phPins:[ph([28.95,30.83],"El Alamein: the Commonwealth war cemetery","ALAMEIN")],
+  lines:[{coords:[[28.95,30.85],[28.85,30.55],[28.7,30.29]],kind:"red"},{coords:[[14.27,40.85],[13.19,32.9]],kind:"dash"},{coords:[[13.19,32.9],[20.07,32.12],[23.96,32.08],[27.2,31.35],[28.6,30.8]],kind:"dash"}],
+  gfRuler:{a:[28.95,30.85],b:[28.7,30.29]},
+  pins:[P([27.6,29.6],"Qattara Depression: impassable"),P([23.96,32.08],"Tobruk"),P([29.92,31.2],"Alexandria"),P([13.19,32.9],"Tripoli: fuel from Italy")],
+  phPins:[ph([28.98,30.83],"El Alamein: the Commonwealth war cemetery","ALAMEIN")],
   stat:"At El Alamein the desert war stopped where the sea and an impassable depression left a gap only about 60 km wide",
   body:"In the open Western Desert, armies could always swing round each other’s flank. But at El Alamein the Qattara Depression, a huge sunken basin of salt marsh and soft sand, comes within about 60 km of the sea (ruler). In 1942 the British held this gap, and in November their victory there turned the war in North Africa.",
   more:"Rommel’s German and Italian army was also starved of fuel, which had to cross the Mediterranean and then come hundreds of kilometres by road (dashed). Churchill later wrote: “Before Alamein we never had a victory. After Alamein we never had a defeat.”"});
@@ -549,12 +549,11 @@ function hwars(){
 function hcoldwar(){
  set("hcoldwar","The space race",{
   more:"Soviet rockets flew from Baikonur, now in Kazakhstan; Apollo launched from Cape Canaveral in Florida. Valentina Tereshkova became the first woman in space in 1963. The rockets were close cousins of the missiles built to carry bombs."});
- ins("hcoldwar","NATO and the Warsaw Pact",{title:"A city under the ice",sub:"1960",view:[-110,52,60,88],globe:[-30,78,1.6],
-  lines:[{coords:[[-61.13,77.17],[-40,84],[0,86.5],[40,80],[45,70],[37.6,55.75]],kind:"dash"}],
-  pins:[P([-68.7,76.53],"Thule Air Base"),P([37.6,55.75],"Moscow")],
+ ins("hcoldwar","NATO and the Warsaw Pact",{title:"A city under the ice",sub:"1960",view:[-112,62,-18,84],globe:[-55,76,3],
+  pins:[P([-68.7,76.53],"Thule Air Base")],
   phPins:[ph([-61.13,77.17],"Camp Century: a tunnel being roofed","CAMPCENTURY")],
   stat:"In 1959 the US Army built a nuclear-powered base in tunnels under Greenland’s ice",
-  body:"Camp Century, about 240 km from the US base at Thule, had a portable nuclear reactor and a secret purpose: to test whether missiles could be hidden in tunnels under the ice, within range of the Soviet Union over the top of the world (dashed). The moving ice squeezed the tunnels shut, and it was abandoned in 1967.",
+  body:"Camp Century, about 240 km from the US base at Thule, had a portable nuclear reactor and a secret purpose: to test whether missiles could be hidden in tunnels under the ice, within range of the Soviet Union across the Arctic, the shortest way between the two superpowers. The moving ice squeezed the tunnels shut, and it was abandoned in 1967.",
   more:"Its waste was left buried in the ice, which could melt out as the climate warms. Soil from the bottom of a 1966 ice core drilled there, looked at again decades later, held plant fossils: proof that Greenland had been free of ice within the last million years."});
  ins("hcoldwar","The Korean War",{title:"Suez, 1956",sub:"1955",view:[22,24,42,36],globe:[32,30,3.6],
   lines:[{coords:[[34.4,31.3],[33.6,30.8],[32.6,30.5]],kind:"flow"},{coords:[[33.5,34.5],[32.6,32.5],[32.3,31.3]],kind:"flow"}],

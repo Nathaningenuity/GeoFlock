@@ -318,13 +318,13 @@ function oceania(){const id="oceania";
  rm(id,"Wider than the Moon");                     /* word for word the same as the geography tour's stop */
  set(id,"Only in Australia",s=>{s.stat="About 80% of Australia’s mammals, reptiles and flowering plants are found nowhere else";
   rep(s,"more","About 80% of its mammals, reptiles and flowering plants are found nowhere else. ","")});
- ins(id,"The red centre",{title:"Goyder’s Line",view:[131,-36.5,143,-29],globe:[138.5,-33,5],card:"left",hi:["au"],
+ ins(id,"The red centre",{title:"Goyder’s Line",view:[127,-36.5,143,-29],globe:[138.5,-33,5],card:"left",hi:["au"],
   lines:[{coords:[[133.9,-32.0],[135.1,-32.6],[136.0,-33.4],[136.9,-33.2],[137.7,-32.6],[138.3,-32.5],[138.75,-32.7],[139.4,-33.1],[140.1,-33.6],[141.0,-33.9]],kind:"dash"}],
   pins:[[[138.61,-32.73],"Orroroo","point"],[[138.6,-34.93],"Adelaide","point"],[[[138.5,-31.6],[137.6,-31.2]],"North of the line: too dry to farm","area"]],
   stat:"In 1865 a surveyor drew a line beyond which farming would fail. Farmers ignored it, and their ruined houses still stand",
   body:"George Goyder rode across South Australia during a drought and mapped where the saltbush showed the land was too dry for crops (dashed, roughly drawn). A run of wet years in the 1870s tempted farmers north of his line to grow wheat. When the dry years returned, the crops failed and families walked away.",
   more:"Stone cottages and empty towns north of the line are still there. It is still used as a guide to where crops are safe, and scientists warn that a warmer, drier climate could push it south."});
- ins(id,"Only in Australia",{title:"Water from under the desert",view:[126,-36,158,-9],globe:[143,-25,2.5],card:"left",
+ ins(id,"Only in Australia",{title:"Water from under the desert",view:[116,-36,158,-9],globe:[143,-25,2.5],card:"left",
   lines:[{poly:[[138,-12.5],[142.5,-10.9],[145,-14.5],[147,-19.5],[149.3,-24],[151,-27.5],[150.3,-30.5],[148.3,-32.6],[145.5,-32.8],[143,-31.6],[140.3,-30.5],[137.8,-29.6],[135.6,-28.6],[134.2,-26.2],[135.2,-23.2],[137,-20.2],[138,-16.8],[138,-12.5]],kind:"shade"}],
   xsec:{title:"From the Great Dividing Range west to Lake Eyre",pts:[[150.3,-26.6,"Great Dividing Range"],[148,-26.2],[145.5,-26],[143,-26.5],[140.5,-27.5],[137.6,-28.4,"Lake Eyre"]],mark:300,
    note:"The dashed line marks 300 m. Under the land, sandstone layers slope the same way, carrying rain from the hills west under the Outback."},
@@ -333,7 +333,7 @@ function oceania(){const id="oceania";
   body:"Rain falling on the Great Dividing Range soaks into layers of sandstone that slope west under the Outback (shaded, roughly), and creeps inland a few metres a year. Drill a well and the water often rushes up by itself, because it is under pressure: an artesian bore. Much of outback cattle farming depends on it.",
   more:"Where the water leaks out naturally it forms “mound springs”, tiny oases in the desert with fish and snails found nowhere else. Early bores were left running freely and the pressure dropped, so thousands are now being capped and piped."});
  const T2=[-175.39,-20.55];
- ins(id,"The Polynesian triangle",{title:"The biggest blast in a century",view:[-180,-27,-170,-14],globe:[-175.4,-20.6,6],card:"left",hi:["to"],
+ ins(id,"The Polynesian triangle",{title:"The biggest blast in a century",view:[-180,-27,-168,-14],globe:[-175.4,-20.6,6],card:"left",hi:["to"],
   lines:[{coords:ring(T2,1.2),kind:"dash"},{coords:ring(T2,2.4),kind:"dash"},{coords:ring(T2,3.6),kind:"dash"}],
   pins:[[T2,"Hunga Tonga–Hunga Haʻapai","point"],[[-175.2,-21.14],"Nukuʻalofa","point"]],
   phPins:[ph([-175.0,-20.0],"The ash cloud, seen from the Space Station","ISS-66 Atmospheric plume from 2022 Hunga Tonga eruption (1).jpg")],

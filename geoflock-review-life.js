@@ -89,7 +89,7 @@ function environment(){if(!once("environment"))return;
   more:"Dozens of countries followed, many of them in Africa. Rwanda has banned plastic bags since 2008 and checks luggage at the airport; Kenya’s 2017 ban allows fines of up to about $40,000 or four years in prison. Enforcement is the hard part: thin bags crept back into Dhaka’s markets."});
  /* the exclusion zone drawn as a rough 30 km ring round the plant */
  const ring=[];for(let a=0;a<=360;a+=20)ring.push([+(30.1+0.43*Math.cos(a*Math.PI/180)).toFixed(3),+(51.39+0.27*Math.sin(a*Math.PI/180)).toFixed(3)]);
- ins("environment","The wolves return",{title:"Chernobyl’s accidental wildlife park",view:[18,44,42,58],globe:[30.1,51.4,4],card:"left",hiSoft:["ua","by"],
+ ins("environment","The wolves return",{title:"Chernobyl’s accidental wildlife park",view:[18,44,42,58],globe:[30.1,51.4,4],card:"left",
   lines:[{coords:ring,kind:"dash"}],pins:[P([30.1,51.39],"Chernobyl power plant")],
   phPins:[ph([29.6,51.75],"Pripyat: a town left to nature","A bird's eye view of the town of Pripyat (02710022).jpg")],
   stat:"Wolves in the Chernobyl exclusion zone are about seven times as common as in nearby nature reserves",
@@ -453,7 +453,7 @@ function langrel(){if(!once("langrel"))return;
   stat:"From New York, the shortest way to Mecca sets off to the north-east, even though Mecca lies further south",
   body:"Muslims face Mecca to pray, a direction called the qibla. On a flat map Mecca looks south-east of New York (dashed), but on the globe the shortest route, a great circle, sets off north-east over the Atlantic towards Europe (the ruler; drag its ends). American Muslims long argued about which was right, and most mosques there now face north-east.",
   more:"Muslim astronomers worked out the qibla with spherical trigonometry over 1,000 years ago, and many old mosques face in slightly different directions as their methods improved. In Manhattan, the Islamic Cultural Center is turned about 29° off the street grid so that it faces Mecca."});
- ins("langrel","Sikhism’s Punjab",{title:"Waiting for the vultures",view:[50,12,80,32],globe:[70,22,3],card:"left",sub:"rel/_",_from:"culture",
+ ins("langrel","Sikhism’s Punjab",{title:"Waiting for the vultures",view:[50,12,80,32],globe:[70,22,3],card:"left",mode:"relief",
   lines:[{coords:[[54.37,31.9],[60,27.5],[66,24.5],[72.87,20.48]],kind:"flow"}],
   pins:[P([72.80,18.96],"Doongerwadi, Mumbai"),P([72.87,20.48],"Udvada: the Parsis’ holiest fire"),P([54.37,31.9],"Yazd, Iran")],
   stat:"Mumbai’s Parsis traditionally leave their dead to vultures, but India lost almost all its vultures in about a decade",
@@ -543,7 +543,7 @@ function houses(){if(!once("houses"))return;
    TOUR QUESTIONS: follow renamed and removed stops, a few new ones
    ===================================================================================================== */
 const NEWQ={
- environment:[{st:"Bags that flooded a city",q:"Why did Bangladesh ban thin plastic bags in 2002?",o:["They blocked Dhaka’s drains in floods","They were killing river dolphins","Plastic was too expensive to import","To protect its jute farmers"],a:0,why:"Choked drains made the floods of 1988 and 1998 worse, so the ban was about flooding first.",kc:"bd"},{st:"The man who poisoned the air twice",q:"Which country sold the world’s last leaded petrol, in 2021?",o:["Algeria","Norway","Bhutan","Brazil"],a:0,why:"Algeria used up the last stocks in July 2021, a century after lead was first added to petrol.",kc:"dz"}],
+ environment:[{st:"Bags that flooded a city",q:"Why did Bangladesh ban thin plastic bags in 2002?",o:["They blocked Dhaka’s drains in floods","They were killing river dolphins","Plastic was too expensive to import","To protect its jute farmers"],a:0,why:"Choked drains made the floods of 1988 and 1998 worse, so the ban was about flooding first.",kc:"bd"}],
  animals:[{st:"The last few vaquitas",q:"What is killing the last vaquitas?",o:["Gillnets set for the totoaba fish","Oil spills","Shark attacks","Cold water"],a:0,why:"Vaquitas drown in gillnets set for totoaba, whose swim bladders sell for thousands of dollars in China.",kc:"mx"}],
  landmarks:[{st:"The tower that leans to survive",q:"Why does the Leaning Tower of Pisa lean?",o:["Its soft clay ground sank on one side","It was built leaning on purpose","An earthquake in 1990 tipped it","Its top floors are made of heavier stone"],a:0,why:"The soft river clay under it sank on one side within five years of the start of building.",kc:"it"},
   {st:"Petra’s war on floods",q:"How did Petra’s builders protect the Siq from flash floods?",o:["With a dam and a tunnel through the mountain","By roofing over the gorge","By moving the city uphill","With walls of sandbags"],a:0,why:"The Nabataeans dammed the Siq’s entrance and cut an 88 m tunnel to send floodwater around it.",kc:"jo"}],
