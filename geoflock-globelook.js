@@ -8,9 +8,9 @@ if(typeof GlobeView==="undefined")return;
 const dark=()=>document.body.classList.contains("sky-night");
 const css=document.createElement("style");css.textContent=`
 .globe-stage.gf-sky{ background:none !important; isolation:isolate; }
-.globe-stage.gf-sky::before{ content:""; position:absolute; inset:calc(var(--gf-r,200px) * -.32); z-index:-1; pointer-events:none; background-image:var(--gf-sky); background-size:auto;
- -webkit-mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-r,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-r,200px) * .32), #000 calc(var(--gf-r,200px) * 1.0), transparent calc(var(--gf-r,200px) * 1.32));
- mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-r,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-r,200px) * .32), #000 calc(var(--gf-r,200px) * 1.0), transparent calc(var(--gf-r,200px) * 1.32)); }
+.globe-stage.gf-sky::before{ content:""; position:absolute; inset:calc(var(--gf-rs,200px) * -.32); z-index:-1; pointer-events:none; background-image:var(--gf-sky); background-size:auto;
+ -webkit-mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-rs,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-rs,200px) * .32), #000 calc(var(--gf-rs,200px) * 1.0), transparent calc(var(--gf-rs,200px) * 1.32));
+ mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-rs,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-rs,200px) * .32), #000 calc(var(--gf-rs,200px) * 1.0), transparent calc(var(--gf-rs,200px) * 1.32)); }
 .globe-stage{ isolation:isolate; } .globe-stage .gf-float{ position:absolute; z-index:-1; pointer-events:none; left:calc(var(--gf-cx) - var(--gf-r) * .62); width:calc(var(--gf-r) * 1.24); top:calc(var(--gf-cy) + var(--gf-r) * 1.04); height:calc(var(--gf-r) * .16);
  background:radial-gradient(ellipse at center, rgba(20,40,70,.28), rgba(20,40,70,.1) 45%, transparent 70%); filter:blur(2px); }`;document.head.appendChild(css);
 /* the rim: drawn just outside the globe's edge, after everything else */
@@ -23,7 +23,9 @@ function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const 
  const v=document.getElementById("allMapsView"),sat=v&&v.classList.contains("sat-on"),full=!!document.fullscreenElement||document.body.classList.contains("gf-fs"),globe=!g._flat&&appMode==="allmaps";
  /* where the globe is, for the fade and the shadow */
  try{const p=g.projection(),t=p.translate(),R=p.scale(),cr=g.canvas.getBoundingClientRect(),sr=st.getBoundingClientRect();
-  st.style.setProperty("--gf-cx",(cr.left-sr.left+t[0])+"px");st.style.setProperty("--gf-cy",(cr.top-sr.top+t[1])+"px");st.style.setProperty("--gf-r",Math.max(40,R)+"px")}catch(e){}
+  st.style.setProperty("--gf-cx",(cr.left-sr.left+t[0])+"px");st.style.setProperty("--gf-cy",(cr.top-sr.top+t[1])+"px");st.style.setProperty("--gf-r",Math.max(40,R)+"px");
+  /* the starry sky keeps the size of the unzoomed globe: zooming in moves the Earth closer, not the stars */
+  st.style.setProperty("--gf-rs",Math.max(40,R/Math.max(1,g.zoom||1))+"px")}catch(e){}
  const wantSky=globe&&sat&&!full;
  if(wantSky&&!st.classList.contains("gf-sky")){st.classList.remove("gf-sky");const bg=getComputedStyle(st).backgroundImage;if(bg&&bg!=="none"){st.style.setProperty("--gf-sky",bg);st.classList.add("gf-sky")}}
  else if(!wantSky&&st.classList.contains("gf-sky"))st.classList.remove("gf-sky");
