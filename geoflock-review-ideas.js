@@ -86,7 +86,7 @@ order:[
   stat:"Windmills still turn at Nashtifan in eastern Iran, driven by the ‘wind of 120 days’",
   body:"Every summer, from about May to September, a strong wind blows from the north down eastern Iran into the Sistan basin, almost always from the same direction (arrows). People there built windmills whose sails turn flat, like a revolving door, on an upright shaft, set behind tall mud walls that steer the wind onto one side of the sails, and used them to grind grain.",
   more:"Arab and Persian geographers described Sistan’s windmills over 1,000 years ago. A mill that catches the wind on one side only suits a place where the wind never changes direction. Europe’s windmills, with upright sails turned to face the wind, appear in the late 1100s and may be a separate invention. About 30 mills stand at Nashtifan, and a few still grind."}),
- S({title:"The heavy plough and the furlong",view:[-26,34,24,62],globe:[6,50,2.2],gfClimate:{alpha:.5,box:[-32,28,46,68]},
+ S({title:"The heavy plough and the furlong",view:[-24,34,36,62],globe:[6,50,2.2],gfClimate:{alpha:.5,box:[-32,28,46,68]},
   pins:[area([14.5,40.6],"Dry summers, light soils: the scratch-plough"),area([12,52.6],"Wet, heavy clay: the heavy plough")],
   stat:"A ‘furlong’ was a ‘furrow long’: the length of one furrow, about as far as an ox team could plough before it needed a rest",
   body:"The light scratch-plough of the dry Mediterranean only scratches a groove, and it could not cope with the heavy, wet clay soils of northern Europe. The heavy plough had an iron blade and a board that turned the soil right over, which also drained it, but it needed a team of up to eight oxen. Few farmers owned eight, so villages pooled their animals, and because such a long team was hard to turn, fields were laid out in long, thin strips.",
@@ -140,7 +140,7 @@ order:[
   body:"Japan sits where four of Earth’s plates meet (the lines on the map), so it shakes constantly. Its pagodas are built as stacked storeys that are not tied tightly to one another, around a tall central post, the shinbashira. In a quake the storeys sway in opposite directions, like a wriggling snake, and the shaking is soaked up instead of breaking the building.",
   more:"Records suggest hardly any pagoda has ever been brought down by an earthquake, though many burned. Hōryū-ji, near Nara, has some of the oldest wooden buildings in the world. The designers of Tokyo Skytree gave it a concrete central column inspired by the shinbashira."}),
  "Gothic cathedrals","The Alhambra","The Forbidden City",
- S({title:"The blue from one valley",view:[-20,20,80,56],globe:[42,37,1.6],hi:["af"],
+ S({title:"The blue from one valley",view:[-25,18,85,58],globe:[42,37,1.6],hi:["af"],
   lines:[{coords:[[70.79,36.2],[68.9,36.7],[66.9,36.75],[62.2,36.6],[58.8,36.2],[54,36],[51.4,35.7],[48.5,34.8],[44.4,33.3],[41,34.5],[38.2,35.9],[37.16,36.2],[35.8,36.1]],kind:"dash"},{coords:[[35.8,36.1],[30,35],[24,35.5],[19.5,38.5],[17,41.5],[13.5,44.5],[12.33,45.44]],kind:"dash"}],
   pins:[pt([67.83,34.82],"Bamiyan: ultramarine murals, about 650"),pt([12.33,45.44],"Venice: where the blue entered Europe")],
   stat:"For centuries Europe’s finest blue paint came from one set of mines in the mountains of north-east Afghanistan",
@@ -171,7 +171,7 @@ PH["art|Pagodas that dance"]={set:true,pins:[[[135.73,34.61],"Hōryū-ji: the pa
 PH["art|The blue from one valley"]={set:true,pins:[[[70.79,36.2],"Sar-i Sang: lapis lazuli","@lapis"],[[12.48,41.9],"Rome: ultramarine for the Virgin’s robe","@virgin"]]};
 PH["art|Venice paints on canvas"]={set:true,pins:[[[12.34,45.43],"Titian, master of Venice’s oil on canvas","@titian"]]};
 PH["art|Dots in the desert"]={set:true,pins:[[[131.92,-23.21],"Papunya’s desert country","@papunya"]]};
-CARD["art|Pagodas that dance"]="@horyuji";CARD["art|The blue from one valley"]="@lapis";CARD["art|Venice paints on canvas"]="@titian";CARD["art|Dots in the desert"]="@papunya";
+CARD["art|Pagodas that dance"]="@horyuji";CARD["art|Now explore"]="@giza";CARD["art|The blue from one valley"]="@lapis";CARD["art|Venice paints on canvas"]="@titian";CARD["art|Dots in the desert"]="@papunya";
 TQ.art={mid:[
  {at:"The first artists",st:"The first artists",q:"Where is the oldest known cave art, a hand stencil at least 67,800 years old?",o:["Lascaux, France","Altamira, Spain","Sulawesi, Indonesia","Kakadu, Australia"],a:2,why:"It was found on Muna, an island off Sulawesi.",kc:"id"},
  {at:"Pagodas that dance",st:"Pagodas that dance",q:"What helps Japan’s wooden pagodas survive earthquakes?",o:["Deep stone foundations","Loose storeys swaying round a central post","Steel cables","Very thick walls"],a:1,why:"The storeys sway in opposite directions around the shinbashira, soaking up the shaking.",kc:"jp"},
@@ -209,7 +209,7 @@ order:[
  "The great Russian novels","Things Fall Apart","Magical realism in Colombia",
  ["The Nobel map",addMore("Per person, the record belongs to Saint Lucia: about 180,000 people and two winners, the poet Derek Walcott (literature, 1992) and the economist Arthur Lewis (1979).")],
  ["Now explore",e({body:"Where was your favourite book written? Find it on the map. The Mapped books shelf follows famous journeys in books, the Learning tour follows printing and libraries, and the Philosophy tour visits the thinkers behind many of these stories."})]]};
-PH["literature|Weeping at the campsite"]={set:true,pins:[[[58.6,22.0],"Arabian sands: Wahiba, Oman","@bedouin"]]};
+PH["literature|Weeping at the campsite"]={set:true,pins:[]};
 PH["literature|Sagas by the fireside"]={set:true,pins:[[[-21.13,64.26],"Þingvellir: the Althing’s rift","Almannagjá rift at Þingvellir National Park.jpg"]]};
 PH["literature|Bashō’s narrow road"]={set:true,pins:[[[139.8,35.68],"Bashō, with his frog haiku","@basho"]]};
 CARD["literature|Weeping at the campsite"]="@bedouin";CARD["literature|Sagas by the fireside"]="Almannagjá rift at Þingvellir National Park.jpg";CARD["literature|Bashō’s narrow road"]="@basho";
@@ -365,7 +365,7 @@ PLAN.maths={order:[
   body:"Each summer the Nile flooded its valley and buried the fields under fresh mud, wiping out the markers between them. Farmers paid tax according to the size of their land, so royal surveyors, the ‘rope-stretchers’, measured the fields out again every year with knotted ropes. Working out the areas of oddly shaped plots, over and over, is where the Greeks believed geometry came from.",
   more:"The Rhind Papyrus, copied around 1550 BC and bought in Luxor in 1858, teaches how to find the areas of fields, triangles and circles; its rule for a circle works out at π ≈ 3.16. The Rivers tour shows how the flood made Egypt."}),
  "Euclid’s Alexandria","Eratosthenes measures the Earth","Zu Chongzhi and π","The Maya and zero",
- ["Zero travels west",e({title:"Zero and algebra go west",view:[-28,6,80,54],globe:[40,30,1.6],lines:ZERO_LINES,
+ ["Zero travels west",e({title:"Zero and algebra go west",view:[-16,4,96,56],globe:[40,30,1.6],lines:ZERO_LINES,
   gfEmpire:{y:800,gk:"isl",name:"Abbasid Caliphate",at:[46,30]},
   pins:[pt([72.27,25],"Bhinmal: Brahmagupta, 628"),pt([5.08,36.75],"Béjaïa: Fibonacci learns the digits"),pt([60.62,41.38],"Khwarazm, al-Khwarizmi’s homeland")],
   stat:"The digits 0 to 9 were invented in India, and the words ‘algebra’ and ‘algorithm’ come from one man in Baghdad",
@@ -403,7 +403,7 @@ TQ.maths={mid:[
 /* ---------------------------------- Words on the map ---------------------------------- */
 PLAN.words={order:[
  "Words on the map","Tea or chá?","Borrowed words","England’s place-name layers","The -stans","Saints and rivers","How countries got their names",
- S({title:"Words named after places",view:[-27,27,45,57],globe:[15,42,2],
+ S({title:"Words named after places",view:[-30,26,52,58],globe:[15,42,2],
   lines:[{coords:[[18.22,47.6],[16.37,48.21],[11.5,48.5],[7,49],[2.35,48.86],[-0.13,51.5]],kind:"flow"}],
   pins:[pt([18.22,47.6],"Kocs → coach"),pt([4.36,43.84],"Nîmes → denim"),pt([8.93,44.41],"Genoa (Gênes) → jeans"),pt([43.13,36.34],"Mosul → muslin"),pt([22.93,37.94],"Corinth → currant"),pt([-5.81,35.77],"Tangier → tangerine"),pt([23.97,38.15],"Marathon")],
   stat:"The word ‘coach’ comes from Kocs, a Hungarian village whose light, fast carriages were famous in the 1400s",

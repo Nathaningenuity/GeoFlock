@@ -182,7 +182,7 @@ function europe(){const id="europe";
  set(id,"Europe’s great rivers",s=>{if(!/Belgrade/.test(s.more||""))s.more=(s.more||"")+" Many of Europe’s capitals and big cities sit on rivers that boats could sail up from the sea: London, Paris, Vienna, Budapest, Belgrade. Before railways, a navigable river into the heart of a country was the easiest highway."});
  ins(id,"Emptying in the east",{title:"The Hajnal line",view:[-12,36,45,66],globe:[18,52,1.8],card:"left",
   lines:[{coords:[[30.32,59.94],[27.5,58],[25,56],[23,53.5],[21.5,51.5],[19.5,50],[17.5,48.7],[15.5,47.3],[13.77,45.65]],kind:"dash"}],
-  pins:[[[30.32,59.94],"St Petersburg","point"],[[13.77,45.65],"Trieste","point"],[[[2,49],[8,51]],"West: late marriage, a home of their own","area"],[[[35,52],[30,49]],"East: early marriage, big family households","area"]],
+  pins:[[[30.32,59.94],"St Petersburg","point"],[[13.77,45.65],"Trieste","point"],[[[10.5,51.5],[8.5,50.5]],"West: late marriage, a home of their own","area"],[[[35,52],[30,49]],"East: early marriage, big family households","area"]],
   stat:"For centuries a line from St Petersburg to Trieste split Europe into late marriages in the west and early ones in the east",
   body:"West of the line, women usually married in their mid-twenties, many never married at all, and a new couple set up a household of its own. East of it, almost everyone married young, and the bride usually moved in with her husband’s family. The demographer John Hajnal mapped the line in 1965.",
   more:"Late marriage meant fewer children per woman, and many young people worked for years as servants in other households before they married. Some historians link this “European marriage pattern” to western Europe’s early economic growth; others disagree, and the line is a broad pattern, not a wall."});
@@ -191,7 +191,7 @@ function europe(){const id="europe";
   stat:"In Italy, the regions with the most choirs and football clubs turned out to have the best-run governments",
   body:"In 1970 Italy set up new regional governments, all with the same powers. Twenty years later the political scientist Robert Putnam found that some, mostly in the north, worked far better than others, mostly in the south. The best predictor was not wealth but how many people joined choirs, sports clubs and societies, read newspapers and voted.",
   more:"Putnam traced the gap back to the Middle Ages, when cities in the north governed themselves while the south was ruled from above by kings. Critics say he gives too little weight to later history and economics, but his 1993 book, Making Democracy Work, made “social capital”, the trust people build by joining in, famous."});
- ins(id,"The European Union",{title:"Changing wheels at the border",view:[-12,34,45,64],globe:[15,50,1.8],card:"left",
+ ins(id,"The European Union",{title:"Changing wheels at the border",view:[-36,34,45,64],globe:[15,50,1.8],card:"left",
   G:[{t:"Rails 1,520 mm apart (Finland 1,524)",c:"#c92a2a",codes:["ru","by","ua","md","lt","lv","ee","fi"]},{t:"Rails 1,668 mm apart",c:"#f08c00",codes:["es","pt"]}],
   hi:["ru","by","ua","md","lt","lv","ee","fi","es","pt"],hiSoft:[],legend:null,_hsMerged:1,
   pins:[[[23.69,52.08],"Brest: wheels changed here","point"],[[-1.79,43.34],"Irun–Hendaye: the gauge changes","point"]],
