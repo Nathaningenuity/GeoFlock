@@ -17,7 +17,7 @@
    (about 0.5 MB), never as a whole decoded picture. Hooked from geoflock-flatglobe.js (_flatPictures). */
 (function(){
 if(typeof GlobeView==="undefined"||typeof d3==="undefined"||!d3.geoRobinson)return;
-const IDLE=280,SLICE=8,BAND=8,MINMAG=1.15;
+const IDLE=280,SLICE=8,BAND=8,MINMAG=0.2;/* the flat night picture is softer than the globe's at every zoom, so the sharp overlay is used from the default view on */
 let tex=null,texUnused=0,O=null,job=null,timer=0,want=null,lastKey="";
 const free=cv=>{try{if(cv&&cv.close)cv.close();else if(cv){cv.width=0;cv.height=0}}catch(e){}};
 const night=h=>{try{return typeof NL_IMAGE!=="undefined"&&h===NL_IMAGE}catch(e){return false}};
