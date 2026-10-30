@@ -92,7 +92,7 @@ function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g
  return best}
 function install(){const P=GlobeView.prototype;
  const _hov=P._hover;P._hover=function(e){const r=_hov.apply(this,arguments);if(!onMaps(this))return r;const was=this._gfIsle;let I=null;
-  try{if(e&&!this.tip.hidden||this._gfIsle){const h=this.hit(e.clientX,e.clientY);if(h&&h.ll){const rc=this.canvas.getBoundingClientRect();I=find(this,h.ll,e.clientX-rc.left,e.clientY-rc.top)}}}catch(err){console.error(err)}
+  try{if(e&&isFinite(e.clientX)){const h=this.hit(e.clientX,e.clientY);if(h&&h.ll){const rc=this.canvas.getBoundingClientRect();I=find(this,h.ll,e.clientX-rc.left,e.clientY-rc.top)}}}catch(err){console.error(err)}
   this._gfIsle=I;
   if(I){this.hotWater=null;this.hot=I.cc;const hb=this.stage.getBoundingClientRect();this.tip.textContent=labelOf(I);this.tip.style.left=e.clientX-hb.left+14+"px";this.tip.style.top=e.clientY-hb.top+14+"px";this.tip.hidden=false;this.canvas.style.cursor="pointer"}
   if(I!==was||I)this.request();return r};
@@ -104,7 +104,6 @@ function install(){const P=GlobeView.prototype;
    if(I.kind==="s"){const path=d3.geoPath(p,ctx);ctx.beginPath();path(I.g);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke()}
    else{const c=p(I.ll);if(c){ctx.beginPath();ctx.arc(c[0],c[1],4.2,0,2*Math.PI);ctx.fillStyle=dk?"#ffe27a":"#ffc52e";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#ffffff";ctx.stroke();ctx.beginPath();ctx.arc(c[0],c[1],5.6,0,2*Math.PI);ctx.lineWidth=1.1;ctx.strokeStyle=edge;ctx.stroke()}}
    ctx.restore()}catch(err){console.error(err)}return r};
- /* leaving the map or dragging hides the tip; the island goes with it */
  addSearch()}
 /* search: each island as an "islands" entry (an island the search already has gets the other names) */
 function addSearch(){const S=window.gfSearch;if(!S||!S.build)return;const FOLD={"ø":"o","æ":"ae","œ":"oe","ß":"ss","ł":"l","đ":"d","ð":"d","þ":"th","ı":"i","-":" ","–":" ","—":" "};

@@ -60,24 +60,31 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
-  /* sea colour by depth, read from how light the water is: the deep ocean just a little lighter, shelf seas a touch of
-     turquoise, and the shallowest water (reefs, banks, lagoons) clearly turquoise, like the Blue Marble picture */
-  float shelf = smoothstep(0.07, 0.15, lum), shoal = smoothstep(0.15, 0.27, lum);
-  vec3 deep = day * 1.12 + vec3(0.01, 0.015, 0.025);
-  vec3 sea = mix(deep, day * vec3(0.95, 1.22, 1.16) + vec3(0.0, 0.03, 0.035), shelf);
-  sea = mix(sea, day * vec3(0.78, 1.52, 1.34) + vec3(0.0, 0.08, 0.08), shoal);
+  /* sea colour by depth, read from how light the water is. Water the satellite picture already shows light cyan (the
+     Bahamas banks, reefs, lagoons) becomes bright turquoise; blue shallow coastal water turns gently turquoise; the deep
+     ocean is only a little lighter. */
+  float shelf = smoothstep(0.06, 0.13, lum);
+  float cyan = smoothstep(0.78, 0.95, day.g / max(day.b, 0.001));
+  vec3 deep = day * 1.1 + vec3(0.008, 0.012, 0.02);
+  vec3 turq = mix(day, vec3(0.10, 0.56, 0.60) * (0.6 + lum * 1.6), 0.6);
+  vec3 sea = mix(deep, turq, shelf * (1.0 - cyan));
+  /* already-cyan shallows (the Bahamas banks, reefs) become bright turquoise */
+  sea = mix(sea, mix(day, vec3(0.30, 0.88, 0.86) * (0.72 + lum), 0.6), cyan * smoothstep(0.12, 0.22, lum));
   day = mix(day, sea, water);
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
      Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
      sunset; a gentle tone curve (like a camera exposure, as in real photos from space) keeps the day side bright.
      After sunset the sky still lights the ground: civil twilight to 6° below the horizon (s = -0.105), nautical to 12°
      (s = -0.208). City lights show from about sunset and are fully visible by nautical dusk. */
-  float direct = pow(clamp(s, 0.0, 1.0), 0.5);
-  float twi = 0.22 * smoothstep(-0.208, 0.0, s);
-  /* the satellite picture never swaps for another map: it just darkens (a faint moonlit trace stays all night), and
-     the city lights are added on top as the sky gets dark */
-  float light = max(0.035, direct + twi * (1.0 - direct));
-  float lights = 1.0 - smoothstep(-0.208, 0.0, s);
+  /* a deliberately wide, smooth twilight (the owner asked for a much wider gradient than strict physics gives):
+     the satellite picture starts dimming from about 35° of sun height and keeps darkening to about 18° below the
+     horizon (the end of astronomical twilight); the city lights fade in over that same wide band, from just before
+     sunset to full strength around 20° below. */
+  /* the satellite picture fades evenly and slowly: 100% where the sun is ~50° up, down to almost nothing ~27° below */
+  float t = clamp((s + 0.45) / 1.22, 0.0, 1.0);
+  float light = mix(0.03, 1.0, t);
+  /* the night picture steps in gradually: about 1% where the sun is still ~15° up, rising evenly to 100% at ~25° below */
+  float lights = clamp((0.26 - s) / 0.68, 0.0, 1.0);
   ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
@@ -159,11 +166,15 @@ function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)re
 /* play: a day in 24 seconds */
 function play(){let last=performance.now();const step=now=>{if(!S.play)return;const dt=Math.min(100,now-last);last=now;S.lon=((S.lon-dt*.015+540)%360+360)%360-180;ui();req();S.play=requestAnimationFrame(step)};S.play=requestAnimationFrame(step);ui()}
 function stop(){if(S.play){cancelAnimationFrame(S.play);S.play=null;ui()}}
-/* Day & Night is a third view of the Satellite map, beside Flat map and Globe: it shows only on the Satellite map */
-function chip(){const sw=document.getElementById("amGlobeSwitch");if(!sw)return null;let c=document.getElementById("gfDngChip");
- if(!c){c=document.createElement("button");c.type="button";c.className="gf-dng-view";c.id="gfDngChip";c.dataset.dng="view";c.title="The satellite globe lit by the sun: day on one half, city lights on the other";
-  c.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg>Day &amp; Night';c.onclick=e=>{e.stopPropagation();set(!S.on)}}
- if(c.parentNode!==sw)sw.appendChild(c);return c}
+/* Day & Night sits in the Satellite map's own measure row (like GDP / GDP per person): "Satellite" or "Day & Night" */
+function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn(),host=document.getElementById(gOn?"amGlobeSubs":"allMapsSubModes");if(!host)return null;
+ ["amGlobeSubs","allMapsSubModes"].forEach(id=>{const o=document.getElementById(id);if(o&&o!==host&&o.querySelector("[data-dng-sub]"))o.innerHTML=""});
+ const want=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite"&&allMapsColorModeOn&&GLOBE_TEX.night&&FEATURES.globe&&!(typeof proj!=="undefined"&&proj.on);
+ let c=document.getElementById("gfDngChip");
+ if(!want){if(c&&c.parentNode===host)host.innerHTML="";return c}
+ if(!c||c.parentNode!==host){host.innerHTML='<button type="button" class="chip sub-chip" data-dng-sub="sat">Satellite</button><button type="button" class="chip sub-chip" id="gfDngChip" data-dng-sub="dn" title="The satellite globe lit by the sun: day on one half, city lights on the other">Day &amp; Night</button>';
+  host.querySelectorAll("[data-dng-sub]").forEach(b=>b.onclick=e=>{e.stopPropagation();set(b.dataset.dngSub==="dn")});c=document.getElementById("gfDngChip")}
+ return c}
 function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.night&&!(typeof proj!=="undefined"&&proj.on)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}}
 function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(allMapsColorMode!=="satellite"&&sat)sat.click();}
@@ -174,17 +185,15 @@ function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  sync();req()}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
  if(S.on&&!(allowed()&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
- if(c){const show=GLOBE_TEX.night&&FEATURES.globe&&allMapsColorMode==="satellite"&&allMapsColorModeOn&&!(typeof proj!=="undefined"&&proj.on);c.style.display=show?"":"none";
-  c.classList.toggle("on",S.on);c.setAttribute("aria-pressed",String(S.on));
-  const sw=document.getElementById("amGlobeSwitch");if(sw&&S.on)sw.querySelectorAll("[data-view]").forEach(b=>b.classList.remove("on"))}
+ document.querySelectorAll("[data-dng-sub]").forEach(b=>b.classList.toggle("active",(b.dataset.dngSub==="dn")===!!S.on));
+ if(c)c.setAttribute("aria-pressed",String(S.on));
  if(view)view.classList.toggle("gf-dng-on",S.on);
  const p=S.on?panel():document.getElementById("gfDngPanel");if(p){p.hidden=!S.on;if(S.on)ui()}}
 /* any other map chip, or the Flat map switch, leaves this view; the checks run after the click has done its work */
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('#allMapsToggleRow [data-allmaps-mode], #amGlobeSwitch [data-view], #projTabChip');
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('#allMapsToggleRow [data-allmaps-mode], #amGlobeSwitch [data-view="flat"], #projTabChip');
  if(t&&S.on){S.on=false;stop();freeNight();
   /* back to the flat map if that is where Day & Night was opened from */
   if(S.wasFlat&&t.matches("[data-allmaps-mode]"))try{globePrefs().allmaps=false;saveStats()}catch(e){}
-  if(t.matches('[data-view="globe"]'))try{globePrefs().allmaps=true;saveStats()}catch(e){}
   S.wasFlat=false;setTimeout(()=>{try{amGlobeSync()}catch(e){}sync();req()},0)}},true);
 {const _s=amGlobeSync;amGlobeSync=function(){const r=_s.apply(this,arguments);try{patchCfg();sync()}catch(e){console.error(e)}return r}}
 if(typeof renderAllMapsView==="function"){const _r=renderAllMapsView;renderAllMapsView=function(){const r=_r.apply(this,arguments);try{sync()}catch(e){}return r}}
@@ -192,6 +201,8 @@ setInterval(()=>{try{if(document.getElementById("allMapsToggleRow"))sync()}catch
 
 const css=document.createElement("style");css.textContent=`
 .gf-dng-chip span{ font-size:1.05em; margin-right:2px; }
+/* full screen: the sun panel stands at the right edge, clear of the globe */
+body.gf-fs .gf-dng{ position:fixed !important; right:14px; top:50%; transform:translateY(-50%); width:300px; max-width:calc(100vw - 28px); margin:0 !important; z-index:60; }
 .gf-dng{ position:relative; z-index:5; max-width:620px; margin:8px auto 4px; padding:10px 14px 8px; border-radius:16px; background:var(--surface,#101c30); color:rgb(var(--text-rgb)); border:1px solid var(--line); box-shadow:0 4px 18px rgba(0,0,0,.18); font-size:13px; }
 .gf-dng[hidden]{ display:none !important; }
 .gf-dng-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
