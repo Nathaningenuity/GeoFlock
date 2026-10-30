@@ -219,7 +219,11 @@ function fit(pop){pop.style.left="";pop.style.right="";requestAnimationFrame(()=
 document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("#allMapsView .all-maps-label-controls .lf-caret, #allMapsView .all-maps-label-controls .gf-fcaret");if(c){const pop=c.parentNode.querySelector(".lf-pop, .gf-fold-pop");if(pop)setTimeout(()=>fit(pop),0)}},true);
 function hoverMenu(ctrl){if(!canHover||ctrl._gfHov)return;const pop=ctrl.querySelector(":scope > .lf-pop, :scope > .gf-fold-pop"),car=ctrl.querySelector(":scope > .lf-caret, :scope > .gf-fcaret");if(!pop||!car)return;ctrl._gfHov=1;let t=0,pinned=false;
  const open=()=>{clearTimeout(t);fit(pop);document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop").forEach(o=>{if(o!==pop&&!o.closest("#lfCtl, .lf-control:not(.gf-ly-fold):not(#gfEimCtl)"))o.hidden=true});pop.hidden=false;car.setAttribute("aria-expanded","true")};
- ctrl.addEventListener("mouseenter",open);ctrl.addEventListener("mouseleave",()=>{clearTimeout(t);if(!pinned)t=setTimeout(()=>{pop.hidden=true;car.setAttribute("aria-expanded","false")},280)});
+ /* Landforms opens on hovering anywhere on it; the other layers only on hovering the little ▾, or once the label or
+    the switch is clicked (hovering over a whole row opened menus by accident) */
+ const lf=/^lfControl-/.test(ctrl.id);
+ if(lf)ctrl.addEventListener("mouseenter",open);else{car.addEventListener("mouseenter",open);ctrl.addEventListener("click",e=>{if(pop.contains(e.target)||car.contains(e.target))return;setTimeout(open,0)})}
+ ctrl.addEventListener("mouseleave",()=>{clearTimeout(t);if(!pinned)t=setTimeout(()=>{pop.hidden=true;car.setAttribute("aria-expanded","false")},280)});
  car.addEventListener("click",()=>{pinned=!pop.hidden||!pinned;setTimeout(()=>{pinned=!pop.hidden},0)},true);
  document.addEventListener("click",e=>{if(!ctrl.contains(e.target))pinned=false})}
 function cloudBtn(){const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g.host)return;const bar=g.host.querySelector(".globe-btns");if(!bar)return;let b=bar.querySelector('[data-g="gfclouds"]');
