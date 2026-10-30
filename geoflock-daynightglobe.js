@@ -88,6 +88,14 @@ void main(){
      navy below 3000 m; the depth is read with smooth (bilinear) filtering, so the colours run as gradients */
   float bv = uBathyOn > 0.5 ? texture(uBathy, vec2(u, v)).r : 0.6;
   vec3 sea = depthColour(bv * bv * 3000.0);
+  /* the sea floor drops from the shelf to the deep within a few kilometres, which would give a hard edge: the colour is
+     averaged over the sea around each point (rings out to about 1.1°, land left out), so shallow turquoise fades
+     gradually into the deep blue */
+  if(uBathyOn > 0.5){ vec3 acc = sea * 2.0; float wt = 2.0;
+    for(int i = 0; i < 10; i++){ float t = float(i) * 0.6283185 + 0.2; vec2 d = vec2(cos(t), sin(t)) * vec2(0.5, 1.0);
+      for(int k = 1; k <= 4; k++){ float r = float(k) * 0.0015; float b = texture(uBathy, vec2(u, v) + d * r).r;
+        float w = (1.25 - float(k) * 0.22) * smoothstep(0.03, 0.09, b); acc += depthColour(b * b * 3000.0) * w; wt += w; } }
+    sea = acc / wt; }
   /* where the depth data says sea, it is sea: the satellite picture is replaced there, not blended */
   if(uBathyOn > 0.5) water = max(water, smoothstep(0.03, 0.09, bv));
   /* lakes (water enclosed by land) are not in the ocean depth data: give them a mid-depth blue */
