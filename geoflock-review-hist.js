@@ -494,7 +494,7 @@ function hrevolutions(){
   stat:"In 1848 a Scottish botanist, disguised as a Chinese official, smuggled about 20,000 tea plants out of China",
   body:"Britain bought huge amounts of tea from China and wanted its own supply. Robert Fortune shaved his head, wore Chinese clothes and visited tea districts closed to foreigners. He shipped seedlings, seeds and skilled Chinese tea workers to the Himalayan foothills of British India (arrows).",
   more:"He moved the plants in sealed glass cases that kept them alive at sea. India became the world’s second-biggest tea producer, and many of its early tea gardens grew from his Chinese plants."});
- ins("hrevolutions","The great tea theft",{title:"The year of revolutions",sub:"1850",view:[-12,34,30,58],globe:[10,47,2.6],
+ ins("hrevolutions","The great tea theft",{title:"The year of revolutions",sub:"1850",view:[-26,35,26,57],globe:[10,47,2.6],
   lines:[{coords:[[13.36,38.12],[9,41],[5,44],[2.35,48.86]],kind:"flow"},{coords:[[2.35,48.86],[8,48.5],[16.37,48.21]],kind:"flow"},{coords:[[2.35,48.86],[8,51],[13.4,52.52]],kind:"flow"},{coords:[[16.37,48.21],[19.04,47.5]],kind:"flow"},{coords:[[16.37,48.21],[12,46.5],[9.19,45.46]],kind:"flow"}],
   pins:[P([13.36,38.12],"Palermo, 12 January"),P([2.35,48.86],"Paris, February"),P([16.37,48.21],"Vienna, 13 March"),P([13.4,52.52],"Berlin, 18 March"),P([9.19,45.46],"Milan, 18 March"),P([19.04,47.5],"Pest, 15 March")],
   stat:"In 1848 revolutions broke out in dozens of European cities within weeks, and in Italian “a 48” still means chaos",
