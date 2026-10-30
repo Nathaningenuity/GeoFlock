@@ -432,8 +432,6 @@ if(T("hg7b")&&!T("hg7b").steps._polI){T("hg7b").steps._polI=1;
  set("hg7b","Industry and the global economy",s=>{s.phPins=[ph([-2.24,53.48],"Manchester: the first factories","Newcomen atmospheric engine (Heat Engines, 1913).jpg"),ph([7.04,51.49],"The Ruhr: coal and steel","Zollverein Coal Mine, Essen.jpg"),
   ph([4.1,51.95],"Rotterdam: break of bulk","Shipping container stacks - Port of Rotterdam - 2017 - 6.jpg"),ph([-122.03,37.37],"Silicon Valley","Silicon Valley from above.jpg"),
   ph([1.36,43.63],"Toulouse: Airbus","Airbus A350 under assembly in Toulouse.jpg"),ph([77.66,12.98],"Bengaluru: IT services","Bagmane Tech Park, Bengaluru.jpg"),ph([-83.07,42.31],"Detroit","Ambassador Bridge from the Detroit River, Windsor, Ontario, 2025-07-27 03.jpg")]});
- set("hg7b","Industry spreads",s=>{s.on=["resources"];
-  s.body="Belgium and the Ruhr in Germany industrialised in the early 1800s, then the north-eastern United States. Meiji Japan industrialised deliberately after 1868, opening the Yawata steelworks in 1901. Early factories clustered on coalfields, shown by the map’s resource symbols, because coal was bulky and costly to move."});
  set("hg7b","Bulk-reducing and bulk-gaining",s=>{s.gfRuler={a:[-68.9,-22.3],b:[-70.65,-33.45]};
   s.body="Copper ore is mostly waste rock, so it is smelted beside mines like Chuquicamata in Chile’s Atacama, about 1,250 km from Santiago (drag the ruler): a bulk-reducing industry. Bottling drinks adds heavy water, so bottling plants sit near the cities that drink them: bulk-gaining."});
  set("hg7b","Break-of-bulk points",s=>{s.on=["rivers"];s.lines=[];
