@@ -212,7 +212,7 @@ function drawDaySky(cv){
     const st=0.75*Math.exp(-Math.pow((y/H-ls)/0.035,2));if(m<0.02&&st<0.02)continue;
     for(let i=0;i<w;i++){const x=i/sc,p=(j*w+i)*4;let A=0,cr=255,cg=255,cb=255;
       if(m>=0.02){const n=fbm(x*k*2.2+3,y*k*7.5,5),v=Math.max(0,(n-0.44)/0.26)*m;A=v*v*190}
-      if(st>=0.02){const n=fbm(x*k*1.6+40,y*k*16,5),v=Math.max(0,(n-0.38)/0.30)*st,B=v*150;if(B>A){A=B;cr=236;cg=244;cb=248}}
+      if(st>=0.02){const n=fbm(x*k*1.6+40,y*k*16,4),v=Math.max(0,(n-0.38)/0.30)*st,B=v*150;if(B>A){A=B;cr=236;cg=244;cb=248}}
       if(A<=0)continue;D[p]=cr;D[p+1]=cg;D[p+2]=cb;D[p+3]=Math.min(255,A)}}
   oc.putImageData(img,0,0);ctx.imageSmoothingQuality="high";ctx.drawImage(off,0,0,cv.width,cv.height)}
 /* ---------- day clouds: fair-weather cumulus, each modelled as a heap of spheres (big billows carrying smaller ones),
@@ -248,31 +248,32 @@ function cumulus(w,o){
   const N=cw*ch,Z=new Float32Array(N),T=new Float32Array(N);let top=YB;
   for(const[x,y,z,r] of P){top=Math.min(top,y-r);const x0=Math.max(0,Math.floor(x-r)),x1=Math.min(cw-1,Math.ceil(x+r)),y0=Math.max(0,Math.floor(y-r)),y1=Math.min(ch-1,Math.ceil(y+r)),r2=r*r;
     for(let j=y0;j<=y1;j++){const dy=j-y;for(let i=x0;i<=x1;i++){const dx=i-x,d2=dx*dx+dy*dy;if(d2>=r2)continue;const h=Math.sqrt(r2-d2),q=j*cw+i,zz=z+h;if(zz>Z[q])Z[q]=zz;T[q]+=h*2}}}
-  const Zs=blurBox(Z,cw,ch,U*0.006),Zb=blurBox(Z,cw,ch,U*0.05),Zm=blurBox(Zb,cw,ch,U*0.05),Ts=blurBox(T,cw,ch,U*0.012);
+  const Zs=blurBox(Z,cw,ch,U*0.006),Zb=blurBox(Z,cw,ch,U*0.05),Zm=blurBox(Zb,cw,ch,U*0.05),Ts=blurBox(T,cw,ch,U*0.012),reach=blurBox(Ts,cw,ch,U*0.035);
   const samp=(A,x,y)=>{x=Math.max(0,Math.min(cw-1.001,x));y=Math.max(0,Math.min(ch-1.001,y));const i=x|0,j=y|0,fx=x-i,fy=y-j,q=j*cw+i;
     return(A[q]*(1-fx)+A[q+1]*fx)*(1-fy)+(A[q+cw]*(1-fx)+A[q+cw+1]*fx)*fy};
   /* pass 1: warp the outline with noise (less near the flat base) and roughen the surface into small cauliflower bumps */
   const H=new Float32Array(N),HM=new Float32Array(N),TT=new Float32Array(N),AO=new Float32Array(N),sd=o.seed||0,f=1/U;
   for(let j=0;j<ch;j++){const nearBase=Math.min(1,Math.max(0,(YB-j)/(U*0.10)));
-    for(let i=0;i<cw;i++){const nx=i*f,ny=j*f,q=j*cw+i;
+    for(let i=0;i<cw;i++){const nx=i*f,ny=j*f,q=j*cw+i;if(reach[q]<=0.001)continue;   /* nowhere near the cloud */
       const wx=(fbm(nx*11+sd,ny*11,3)-0.5)*U*0.05,wy=(fbm(nx*11+sd+31,ny*11+17,3)-0.5)*U*0.045*nearBase;
       const t=samp(Ts,i+wx,j+wy);TT[q]=t;if(t<=0.01){H[q]=0;AO[q]=0;continue}
       const m=Math.min(1,t/(U*0.05));
       H[q]=samp(Zs,i+wx,j+wy)+(fbm(nx*18+sd,ny*18,3)-0.5)*U*0.014*m;
       AO[q]=samp(Zb,i+wx,j+wy);HM[q]=samp(Zm,i+wx,j+wy)}}
   /* pass 2: light it. Sun up and to the left, a little in front of the cloud */
-  let Lx=-0.55,Ly=-0.62,Lz=0.56;const Ll=Math.hypot(Lx,Ly,Lz);Lx/=Ll;Ly/=Ll;Lz/=Ll;const Lh=Math.hypot(Lx,Ly),sx=Lx/Lh,sy=Ly/Lh,slope=Lz/Lh,step=U*0.018;
+  let Lx=-0.55,Ly=-0.62,Lz=0.56;const Ll=Math.hypot(Lx,Ly,Lz);Lx/=Ll;Ly/=Ll;Lz/=Ll;const Lh=Math.hypot(Lx,Ly),sx=Lx/Lh,sy=Ly/Lh,slope=Lz/Lh,step=U*0.026;
   const img=new ImageData(cw,ch),D=img.data,sky=o.sky||[196,232,240],hz=o.haze||0;
+  const baseY=new Float32Array(cw);for(let i=0;i<cw;i++)baseY[i]=YB+U*0.006+(fbm(i*f*5+sd,3,2)-0.5)*U*0.035;   /* a gently uneven base line */
   const sun=[255,254,250],shd=[166,184,204],bas=[142,158,182];
   for(let j=1;j<ch-1;j++){const v=Math.min(1,Math.max(0,(j-top)/(YB-top)));
-    for(let i=1;i<cw-1;i++){const q=j*cw+i,t=TT[q];if(t<=0.01)continue;const baseCut=Math.min(1,Math.max(0,(YB+U*0.006+(fbm(i*f*5+sd,3,2)-0.5)*U*0.035-j)/(U*0.016)));
+    for(let i=1;i<cw-1;i++){const q=j*cw+i,t=TT[q];if(t<=0.01)continue;const baseCut=Math.min(1,Math.max(0,(baseY[i]-j)/(U*0.016)));
       /* opacity: thick in the middle, thin and broken at the edges */
       let a=1-Math.exp(-t/(U*0.07));const e=0.6*fbm(i*f*12+sd+7,j*f*12,3)+0.4*fbm(i*f*40+sd,j*f*40,2);a=Math.min(1,Math.max(0,(a*(0.55+0.9*e)-0.10)/0.75));a=a*a*(3-2*a)*baseCut;if(a<=0.003)continue;
       const h=H[q],gx=(H[q+1]-H[q-1])*0.5,gy=(H[q+cw]-H[q-cw])*0.5,nl=Math.hypot(gx,gy,1),ndl=(-gx*Lx-gy*Ly+Lz)/nl;
       /* the big form (heavily smoothed): lit on the sun side, in shade away from it */
       const mx=(HM[q+1]-HM[q-1])*0.5*3,my=(HM[q+cw]-HM[q-cw])*0.5*3,ml=Math.hypot(mx,my,1),mdl=(-mx*Lx-my*Ly+Lz)/ml;
       /* self-shadow: march toward the sun over the height field (billows shading their neighbours) */
-      let occ=0;for(let k=1;k<=9;k++){const d=k*step,hh=samp(H,i+sx*d,j+sy*d)-(h+slope*d);if(hh>occ)occ=hh}
+      let occ=0;for(let k=1;k<=6;k++){const d=k*step,hh=samp(H,i+sx*d,j+sy*d)-(h+slope*d);if(hh>occ)occ=hh}
       const shadow=1-0.6*Math.min(1,occ/(U*0.03));
       const ao=Math.min(1,Math.max(0,1-(AO[q]-h)/(U*0.045)));
       const fine=Math.min(1,Math.max(0,(ndl+0.2)/1.1)),big=Math.min(1,Math.max(0,(mdl+0.15)/0.95));
@@ -287,16 +288,21 @@ function cumulus(w,o){
 function drawDayClouds(cv){
   const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
-  const base=Math.min(W,1600)*0.16*(W<700?1.5:1),res=Math.min(1.25,dpr)*0.8;
+  const base=Math.min(W,1600)*0.16*(W<700?1.5:1),res=Math.min(1.4,dpr)*0.7;
   /* [x, y of the base, size, how tall, haze]: big towering clouds high up, flatter and hazier ones toward the horizon */
   const C=[[0.10,0.20,1.15,0.9,0],[0.38,0.11,0.75,0.7,0.02],[0.70,0.23,1.35,1.0,0],[0.93,0.13,0.70,0.65,0.03],
            [0.24,0.40,0.55,0.55,0.12],[0.55,0.44,0.45,0.45,0.16],[0.83,0.41,0.52,0.5,0.14],[0.05,0.52,0.36,0.35,0.24],[0.42,0.57,0.30,0.3,0.3],[0.97,0.56,0.32,0.3,0.3],[0.68,0.60,0.26,0.25,0.34],
            [0.15,0.645,0.30,0.2,0.45],[0.47,0.665,0.26,0.16,0.5],[0.74,0.635,0.24,0.2,0.45],[0.95,0.675,0.22,0.15,0.55]];
   const landTop=1-Math.min(0.28,250/H);
-  C.forEach(([fx,fy,sc,tall,haze],k)=>{if(fy>landTop-0.03)return;rnd=1013+k*7919;const w=base*sc;
+  /* one cloud per task, so painting them never holds up the page; a newer call (a resize) abandons the older one */
+  const gen=cv._gen=(cv._gen||0)+1,todo=C.map((c,k)=>[...c,k]).filter(c=>c[1]<=landTop-0.03);
+  const next=()=>{if(cv._gen!==gen||!todo.length)return;const t0=performance.now();
+    while(todo.length&&performance.now()-t0<40)one(todo.shift());setTimeout(next,0)};
+  const one=([fx,fy,sc,tall,haze,k])=>{rnd=1013+k*7919;const w=base*sc;
     const b=cumulus(w,{tall,res,haze,seed:k*13.7}),sx=1+haze*1.2;   /* distant ones are seen edge-on: flatter */
-    ctx.globalAlpha=0.95-0.4*haze;ctx.filter=haze>0.2?`blur(${(haze*1.6).toFixed(2)}px)`:"none";ctx.drawImage(b.cv,fx*W-b.ax*sx,fy*H-b.ay,b.w*sx,b.h)});
-  ctx.globalAlpha=1;ctx.filter="none"}
+    ctx.globalAlpha=0.95-0.4*haze;ctx.filter=haze>0.2?`blur(${(haze*1.6).toFixed(2)}px)`:"none";ctx.drawImage(b.cv,fx*W-b.ax*sx,fy*H-b.ay,b.w*sx,b.h);
+    ctx.globalAlpha=1;ctx.filter="none"};
+  setTimeout(next,0)}
 
 /* ---------- a few small flocks crossing the day sky, wings beating ---------- */
 function birdsSVG(){const up="M0 0 C-3 -2 -6 -3 -9 -2 C-6 -2.4 -3 -1 0 1 C3 -1 6 -2.4 9 -2 C6 -3 3 -2 0 0Z",dn="M0 0 C-3 1 -6 3 -8 5 C-5 2 -3 1 0 1.2 C3 1 5 2 8 5 C6 3 3 1 0 0Z";

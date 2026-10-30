@@ -31,11 +31,11 @@ function climData(){if(CLIM)return CLIM;if(climP||typeof GLOBE_CLIMATE_IMG==="un
  climP=new Promise(res=>{const im=new Image;im.onload=()=>{try{const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
    CLIM={w:c.width,h:c.height,d:x.getImageData(0,0,c.width,c.height).data,cells:new Map};req()}catch(e){console.error(e)}res()};im.onerror=()=>res();im.src=GLOBE_CLIMATE_IMG});return null}
 const climCol=i=>typeof GLOBE_CLIMATE_COLS!=="undefined"?GLOBE_CLIMATE_COLS[i-1]:null;
-/* the zones as runs of equal cells (one degree, at most six long) inside the box */
-function climCells(box){const C=climData();if(!C)return null;const key=box.join(",");if(C.cells.has(key))return C.cells.get(key);const R=1,out=[];
+/* the zones as runs of equal cells (half a degree, at most six degrees long) inside the box */
+function climCells(box){const C=climData();if(!C)return null;const key=box.join(",");if(C.cells.has(key))return C.cells.get(key);const R=.5,out=[];
  const at=(lon,lat)=>{const x=Math.min(C.w-1,Math.max(0,Math.floor((lon+180)/360*C.w))),y=Math.min(C.h-1,Math.max(0,Math.floor((90-lat)/180*C.h)));return C.d[(y*C.w+x)*4]};
- for(let lat=Math.ceil(box[3]);lat>Math.floor(box[1]);lat-=R){let run=null;
-  for(let lon=Math.floor(box[0]);lon<Math.ceil(box[2]);lon+=R){const i=at(lon+R/2,lat-R/2),col=i?climCol(i):null;
+ for(let lat=Math.ceil(box[3]/R)*R;lat>box[1];lat-=R){let run=null;
+  for(let lon=Math.floor(box[0]/R)*R;lon<box[2];lon+=R){const i=at(lon+R/2,lat-R/2),col=i?climCol(i):null;
    if(run&&run.col===col&&lon+R-run.a<=6){run.b=lon+R;continue}if(run&&run.col)out.push(run);run={a:lon,b:lon+R,col}}
   if(run&&run.col)out.push(run);out.forEach(r=>{if(r.lat==null)r.lat=lat})}
  const e=.06,byCol=new Map;out.forEach(r=>{const ring=[[r.a-e,r.lat+e],[r.b+e,r.lat+e],[r.b+e,r.lat-R-e],[r.a-e,r.lat-R-e],[r.a-e,r.lat+e]];
@@ -60,8 +60,8 @@ function drawOver(ctx,p,gv){if(typeof ps==="undefined"||!ps||!gv||gv!==ps.g)retu
    const txt=name+(o.label===false?"":", "+(o.y<0?(-o.y+1)+" BC":o.y));ctx.lineWidth=4;ctx.strokeStyle="rgba(255,255,255,.92)";ctx.strokeText(txt,q[0],q[1]);ctx.fillStyle="#3b2414";ctx.fillText(txt,q[0],q[1])}
   ctx.restore()})}}
 {const _d=psGlobeDraw;psGlobeDraw=function(ctx,p,gv){try{drawOver(ctx,p,gv)}catch(e){console.error(e)}return _d.apply(this,arguments)}}
-/* data is fetched as soon as a stop that needs it is near, so it is there when the stop opens */
-setInterval(()=>{try{if(typeof ps==="undefined"||!ps)return;const L=psSteps()||[];for(let k=ps.i;k<=ps.i+1&&k<L.length;k++){const S=L[k];if(!S)continue;
+/* the data for every stop of the running tour is fetched at its start, so it is there when a stop opens */
+setInterval(()=>{try{if(typeof ps==="undefined"||!ps)return;const L=psSteps()||[];for(let k=0;k<L.length;k++){const S=L[k];if(!S)continue;
   if(S.gfClimate)climData();if(S.gfEmpire)(Array.isArray(S.gfEmpire)?S.gfEmpire:[S.gfEmpire]).forEach(empire)}}catch(e){}},700);
 window.gfTourOver={empire,climCells};
 })();
