@@ -83,7 +83,15 @@ if(typeof GlobeView!=="undefined"){const P=GlobeView.prototype,_s=P.size;P.size=
 /* 3. full screen: the round buttons stand just outside the globe, under the layer rows */
 function btnsSync(){const g=G();if(!g||!g.host)return;const b=g.host.querySelector(".globe-btns");if(!b)return;
  const clear=()=>{if(b._gfx){["left","top","right"].forEach(k=>b.style.removeProperty(k));b._gfx=0}};
- if(!fs()||!onMaps()||!vis(b)){clear();return}
+ if(!onMaps()||!vis(b)){clear();return}
+ /* not full screen: the globe's canvas is wider than the globe (so its glow is not cut off), which left the buttons far
+    out at the canvas edge; keep them just outside the globe, at their usual height */
+ if(!fs()){if(g._flat){clear();return}const st=b.offsetParent;if(!st)return;let s;try{s=g.size()}catch(e){return}const cv=g.canvas&&g.canvas.getBoundingClientRect();if(!cv)return;
+  const sr=st.getBoundingClientRect(),bw=b.offsetWidth||34,cx=cv.left+s.w/2,cy=cv.top+s.h/2,R=s.r;
+  ["left","right","top"].forEach(k=>b.style.removeProperty(k));const br=b.getBoundingClientRect();
+  const dy=Math.max(0,Math.max(cy-br.bottom,br.top-cy)),half=dy<R+10?Math.sqrt((R+10)**2-dy*dy):0;
+  let x=Math.max(cx+R*0.72,cx+half+10);x=Math.min(x,br.left);
+  b.style.setProperty("left",Math.round(x-sr.left)+"px","important");b.style.setProperty("right","auto","important");b._gfx=1;return}
  const st=b.offsetParent;if(!st)return;const sr=st.getBoundingClientRect();
  const ctl=document.querySelector("#allMapsView .all-maps-controls"),row=document.getElementById("allMapsToggleRow");
  let minTop=8;[row,ctl].forEach(e=>{if(e&&e.getClientRects().length){const r=e.getBoundingClientRect();if(r.height)minTop=Math.max(minTop,r.bottom+8)}});

@@ -27,9 +27,10 @@ function req(){try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())
 const FS=`#version 300 es
 precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
-uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn;
+uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
 out vec4 o;
-/*ICE_DEF*/
+/* sea ice (textures/SEAICE_RGBA.webp: two polar bands, 90°N→50°N then 50°S→90°S): colour from cloud-filtered NASA MODIS
+   pictures (16 days of September 2025 in the north, February 2025 in the south), cover from the NSIDC Sea Ice Index */
 float gmin(float a, float b){ return abs(a) < abs(b) ? a : b; }
 vec3 nrm(float phi, float lam){ return vec3(cos(phi)*cos(lam), cos(phi)*sin(lam), sin(phi)); }
 /* sea colour from depth (metres below sea level), fixed stops, interpolated smoothly between them */
@@ -83,26 +84,15 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
-  /* the sea is coloured entirely from real depth (ETOPO bathymetry, textures/BATHY.webp: sqrt(depth/3000 m) in 0–255),
-     not blended with the satellite picture: light turquoise at the shore through teal and the shelf edge to a flat deep
-     navy below 3000 m; the depth is read with smooth (bilinear) filtering, so the colours run as gradients */
-  float bv = uBathyOn > 0.5 ? texture(uBathy, vec2(u, v)).r : 0.6;
-  vec3 sea = depthColour(bv * bv * 3000.0);
-  /* the sea floor drops from the shelf to the deep within a few kilometres, which would give a hard edge: the colour is
-     averaged over the sea around each point (rings out to about 1.1°, land left out), so shallow turquoise fades
-     gradually into the deep blue */
-  if(uBathyOn > 0.5){ vec3 acc = sea * 2.0; float wt = 2.0;
-    for(int i = 0; i < 10; i++){ float t = float(i) * 0.6283185 + 0.2; vec2 d = vec2(cos(t), sin(t)) * vec2(0.5, 1.0);
-      for(int k = 1; k <= 4; k++){ float r = float(k) * 0.0015; float b = texture(uBathy, vec2(u, v) + d * r).r;
-        float w = (1.25 - float(k) * 0.22) * smoothstep(0.03, 0.09, b); acc += depthColour(b * b * 3000.0) * w; wt += w; } }
-    sea = acc / wt; }
-  /* where the depth data says sea, it is sea: the satellite picture is replaced there, not blended */
-  if(uBathyOn > 0.5) water = max(water, smoothstep(0.03, 0.09, bv));
-  /* lakes (water enclosed by land) are not in the ocean depth data: give them a mid-depth blue */
-  float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0;
-  sea = mix(sea, depthColour(120.0), lake);
-  day = mix(day, sea, water);
-  /*ICE_MIX*/
+  /* the sea, by the palette: 0 the satellite picture as it is, 1 lighter, 2 turquoise (coloured by real depth) */
+  if(uSea > 0.5){
+    vec3 sea = min(day * 1.45 + vec3(0.02, 0.05, 0.08), vec3(1.0));
+    if(uSea > 1.5 && uBathyOn > 0.5){ float bv = texture(uBathy, vec2(u, v)).r; sea = depthColour(bv * bv * 3000.0);
+      water = max(water, smoothstep(0.03, 0.09, bv));
+      float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0; sea = mix(sea, depthColour(120.0), lake); }
+    day = mix(day, sea, water); }
+  if(uIceOn > 0.5){ float lat = 90.0 - v * 180.0; float tv = lat >= 50.0 ? (90.0 - lat) / 80.0 : lat <= -50.0 ? 0.5 + (-50.0 - lat) / 80.0 : -1.0;
+    if(tv >= 0.0){ vec4 ic = texture(uIceT, vec2(u, tv)); day = mix(day, ic.rgb, ic.a * smoothstep(0.0, 0.25, water + 0.15)); } }
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
      Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
      sunset; a gentle tone curve (like a camera exposure, as in real photos from space) keeps the day side bright.
@@ -114,9 +104,9 @@ void main(){
      sunset to full strength around 20° below. */
   /* the satellite picture fades evenly and slowly: 100% where the sun is ~50° up, down to almost nothing ~27° below */
   float t = clamp((s + 0.45) / 1.22, 0.0, 1.0);
-  float light = mix(0.03, 1.0, t);
+  float light = uDayOnly > 0.5 ? 1.0 : mix(0.03, 1.0, t);
   /* the night picture steps in gradually: about 1% where the sun is still ~15° up, rising evenly to 100% at ~25° below */
-  float lights = clamp((0.26 - s) / 0.68, 0.0, 1.0);
+  float lights = uDayOnly > 0.5 ? 0.0 : clamp((0.26 - s) / 0.68, 0.0, 1.0);
   ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
@@ -124,15 +114,15 @@ void main(){
     day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0), cl * 0.95);
     ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; }
   vec3 col = day * light + ngt * lights;
-  if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 2.4) * 0.6 * smoothstep(-0.105, 0.2, s)); }
+  if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 6.0) * 0.5 * (uDayOnly > 0.5 ? 1.0 : smoothstep(-0.105, 0.2, s))); }
   o = vec4(col, 1.0);
 }`;
 const VS="#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
 function prog(G){if(G._dng!==undefined)return G._dng;G._dng=null;const gl=G.gl;
  try{const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
-  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,window.gfSeaIce?gfSeaIce.patch(FS):FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
-  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uCl","uClA","uSun","uGlow","uGlowOn","uBathy","uBathyOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
+  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uCl","uClA","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
  catch(e){console.error("Day & Night globe:",e)}return G._dng}
 /* the coastal glow picture: loaded once, one small GPU texture per globe */
 let GLOW_IMG=null;
@@ -146,22 +136,35 @@ function bathyTex(G){if(G._dngBathy)return G._dngBathy;if(!BATHY_IMG){BATHY_IMG=
  if(!BATHY_IMG.complete||!BATHY_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,BATHY_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngBathy=t}
+/* the sea-ice picture: loaded once, one GPU texture per globe */
+let ICE_IMG=null;
+function iceTex(G){if(G._dngIce)return G._dngIce;if(!ICE_IMG){ICE_IMG=new Image();ICE_IMG.onload=()=>{try{req()}catch(e){}};ICE_IMG.src="textures/SEAICE_RGBA.webp?v=1"}
+ if(!ICE_IMG.complete||!ICE_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,ICE_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngIce=t}
+/* the sea colour on the Satellite globe (toolkit Palette): "normal", "light" or "turq"; unset = lighter in Day & Night,
+   the plain picture in Day */
+const SEA_KEY="gfSatSea";let seaPick=null;try{seaPick=localStorage.getItem(SEA_KEY)}catch(e){}
+function seaMode(){const k=seaPick||(S.on?"light":"normal");return k==="turq"?2:k==="light"?1:0}
+function setSea(k){seaPick=k||null;try{k?localStorage.setItem(SEA_KEY,k):localStorage.removeItem(SEA_KEY)}catch(e){}req()}
 const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):null}catch(e){return null}};
 {const _draw=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){
- try{if(o&&S.on&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
-  const imgs=nightReady(),P=imgs&&prog(this);
-  if(P){const gl=this.gl,u=P.u,N=this.texture("night",imgs);
+ try{if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
+  /* the Satellite globe is always drawn here: in Day & Night with the sun, in Day evenly lit (night picture unused) */
+  const day=!S.on,imgs=day?null:nightReady(),P=(day||imgs)&&prog(this);
+  if(P){const gl=this.gl,u=P.u,N=day?null:this.texture("night",imgs);
    gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(P.pr);
    gl.uniform2f(u.uC,o.cx,o.cy);gl.uniform1f(u.uS,o.s);gl.uniform1f(u.uF,o.frame||1e9);gl.uniform1f(u.uLam0,o.lam0);
    {const g=(o.roll||0)*D2R;gl.uniform2f(u.uRoll,Math.cos(g),Math.sin(g))}gl.uniform1f(u.uSp,Math.sin(o.phi0));gl.uniform1f(u.uCp,Math.cos(o.phi0));gl.uniform1f(u.uSpace,o.space?1:0);
    const la=S.lat*D2R,lo=S.lon*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
-   let ct=null;try{if(cloudsOn()){cloudsLoad();ct=this.cloudTex()}}catch(e){}
-   gl.uniform1f(u.uClA,ct?1:0);gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
+   let ct=null;try{if(day){ct=o.clouds&&this.cloudTex?this.cloudTex():null}else if(cloudsOn()){cloudsLoad();ct=this.cloudTex()}}catch(e){}
+   gl.uniform1f(u.uClA,ct?(day?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
-   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
+   gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
+   {const it=iceTex(this);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0)}
    {const bt=bathyTex(this);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}
    {const gt=glowTex(this);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,gt);gl.uniform1i(u.uGlow,5);gl.uniform1f(u.uGlowOn,gt?1:0)}
-   try{window.gfSeaIce&&gfSeaIce.bind(this,P.pr,4)}catch(e){}
    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return}}}catch(e){console.error(e)}
  return _draw.apply(this,arguments)}}
 /* the night picture's GPU copy is let go on leaving, unless City Lights is the map showing */
@@ -196,7 +199,7 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    '<button type="button" class="gf-dng-btn" data-dng="play" title="Play a day" aria-pressed="false">▶</button><button type="button" class="gf-dng-btn" data-dng="now" title="Put the sun where it is right now">Now</button><button type="button" class="gf-dng-btn" data-dng="reset" title="Reset time and season to now">Reset to now</button></div>'+
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1440" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Season</span><input type="range" min="-23.4" max="23.4" step="0.1" data-dng="lat" aria-label="Season: the latitude where the sun is overhead"><em class="gf-dng-season"></em></label>'+
-   '<p class="gf-dng-note">Enhanced colour: the sea is coloured by its real depth (NOAA ETOPO), from turquoise shallows to the deep navy of the open ocean.</p>';
+   '';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="lat"]');
   t.addEventListener("input",()=>{stop();S.lon=minToLon(+t.value);sunPing();ui(true);req()});
   l.addEventListener("input",()=>{stop();S.lat=+l.value;sunPing();ui(true);req()});
@@ -310,5 +313,5 @@ body.sky-night .gf-dng{ background:#16213a; border-color:rgba(150,175,230,.22); 
 body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.25); }
 @media (max-width:600px){ .gf-dng{ margin:6px 0 4px; padding:8px 10px; } .gf-dng-where{ width:100%; order:9; } .gf-dng-season{ min-width:0; } }`;
 document.head.appendChild(css);
-window.gfDNG={on:()=>S.on,set,state:S,ui,req};
+window.gfDNG={on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode};
 })();
