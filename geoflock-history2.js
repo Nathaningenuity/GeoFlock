@@ -110,7 +110,9 @@ W("histLabelList",()=>labMode()==="off"?[]:labList());
 W("histFill",p=>{if(histFocus&&focusAny(frame())&&!inFocus(p))return p.k===0?"#f1ece2":"#e6e1d6";if(p.k===0||!p.c)return p.k===0?HIST_LAND:"hsl(200,28%,80%)";return p.c});
 W("histDescribe",f=>{const p=f.properties;let s=p.n||"Unnamed";if(p.k===0)return s+" — peoples without a state";const G=p.gk&&HIST_DATA.groups[p.gk];if(G&&G[0]!==p.n&&!KN["g:"+p.gk]&&!/^(Russia|China|India|Persia|Germany|Italy|Japan|Egypt)$/.test(G[0]))s+=" — "+G[0];
  if(p.o){const a=Math.floor(p.s),b=p.e>=9999?null:Math.floor(p.e);s+=" ("+(b==null?"since "+yLabel(a):yLabel(a).replace(/^AD /,"")+"–"+yLabel(b).replace(/^AD /,""))+")"}return s});
-function eraHTML(){return PERIODS.map(P=>{let a=YEARS.findIndex(y=>y>=P[0]),b=YEARS.findIndex(y=>y>=P[1]);if(b<0)b=N-1;const on=curY>=P[0]&&curY<P[1];
+/* the bar shows a few broad eras; the 21 story periods stay in the story card */
+const ERAS=[[-2999,-499,"Ancient world"],[-499,500,"Classical empires"],[500,1450,"Middle Ages"],[1450,1800,"Exploration"],[1800,1914,"Empires"],[1914,1991,"World wars"],[1991,3000,"Now"]];
+function eraHTML(){return ERAS.map(P=>{let a=YEARS.findIndex(y=>y>=P[0]),b=YEARS.findIndex(y=>y>=P[1]);if(b<0)b=N-1;const on=curY>=P[0]&&curY<P[1];
  return`<span class="hist-era${on?" on":""}" style="left:${(a/(N-1)*100).toFixed(2)}%;width:${((b-a)/(N-1)*100).toFixed(2)}%" data-hy="${a}" title="${P[2]}">${P[2]}</span>`}).join("")}
 function ticksHTML(){return[-2999,-1999,-999,1,500,1000,1500,1800,1900,2000].map(y=>{const i=YEARS.findIndex(v=>v>=y);return`<button type="button" class="hist-tick key${i===pos?" on":""}" data-hy="${i}" style="left:${(i/(N-1)*100).toFixed(2)}%" aria-label="${yLabel(YEARS[i])}"><b></b><span>${yLabel(YEARS[i])}</span></button>`}).join("")}
 const playIco=()=>histPlaying?"❚❚":"▶",playLab=()=>histPlaying?"Pause":"Play through history";
@@ -384,7 +386,11 @@ function dockSync(){const h=dockHost();let d=document.querySelector(".hist-dock"
  const pb=d.querySelector(".hist-play");if(pb&&pb.textContent!==playIco()){pb.textContent=playIco();pb.setAttribute("aria-label",playLab())}
  placeDock(d,h)}
 function placeDock(d,h){const fs=document.body.classList.contains("gf-fs"),phone=innerWidth<=640;
- const hr=h.getBoundingClientRect();if(!hr.width)return;const cv=h.querySelector(".globe-stage canvas")||h.querySelector("canvas");const cr=cv?cv.getBoundingClientRect():hr;
+ const hr=h.getBoundingClientRect();if(!hr.width)return;
+ /* full screen: the timeline fills the strip along the bottom, under the toolkit and the GPS box */
+ if(fs&&!phone){if(d.parentNode!==h)h.appendChild(d);d.classList.remove("hd-below");d.classList.add("hd-fs");d.style.position="fixed";d.style.width="calc(100vw - 16px)";d.style.left="8px";d.style.bottom="6px";d.style.marginLeft="";d.style.marginTop="";
+  h.classList.remove("hd-over");return}
+ d.classList.remove("hd-fs");d.style.position="";const cv=h.querySelector(".globe-stage canvas")||h.querySelector("canvas");const cr=cv?cv.getBoundingClientRect():hr;
  /* the map's own rectangle inside the host (the flat map can be narrower than the host) */
  const L0=Math.max(hr.left,cr.left),R0=Math.min(hr.right,cr.right),B0=Math.min(hr.bottom,cr.bottom),mid=(L0+R0)/2,want=Math.min(860,Math.max(260,R0-L0-24));
  if(!phone){if(d.parentNode!==h)h.appendChild(d);d.classList.remove("hd-below");const dh=d.offsetHeight||64;
@@ -421,12 +427,13 @@ document.addEventListener("pointerdown",e=>{const p=e.target.closest&&e.target.c
 /* double-click on its handle puts it back in its corner */
 document.addEventListener("dblclick",e=>{const p=e.target.closest&&e.target.closest(".hist-story");if(!p||!e.target.closest(".hs-head"))return;cardPos=null;try{sessionStorage.removeItem(HS_KEY);histStoryFree=null}catch(err){}p.classList.remove("hs-free","hs-fixed");p.style.left=p.style.top=p.style.width=p.style.maxHeight="";try{histStorySync()}catch(err){}},true);
 
-const st=document.createElement("style");st.textContent=`.hist-track.hist2 .hist-era{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:clip}.hist-track.hist2 .hist-tick span{white-space:nowrap}.hist-cap i{font-style:normal;font-weight:800}.hist-names{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;margin:2px 10px 4px 0;vertical-align:middle}.hist-names button{border:1px solid #c9bda6;background:#fffaf0;border-radius:999px;padding:1px 9px;font:700 11.5px system-ui;cursor:pointer;color:#4a3520}.hist-names button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}body.dark .hist-names button:not(.on),body.sky-night .hist-names button:not(.on){background:#25304a;color:#e6edf7;border-color:#3a4a66}.hist-track.hist2 .hist-era:not(.on){color:transparent}.hist-track.hist2 .hist-era.on{overflow:visible;z-index:2}
+const st=document.createElement("style");st.textContent=`.hist-track.hist2 .hist-era{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:clip}.hist-track.hist2 .hist-tick span{white-space:nowrap}.hist-cap i{font-style:normal;font-weight:800}.hist-names{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:700;margin:2px 10px 4px 0;vertical-align:middle}.hist-names button{border:1px solid #c9bda6;background:#fffaf0;border-radius:999px;padding:1px 9px;font:700 11.5px system-ui;cursor:pointer;color:#4a3520}.hist-names button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}body.dark .hist-names button:not(.on),body.sky-night .hist-names button:not(.on){background:#25304a;color:#e6edf7;border-color:#3a4a66}.hist-track.hist2 .hist-era:not(.on){opacity:.5}.hist-track.hist2 .hist-era.on{overflow:visible;z-index:2}
 #populationLegend.hist-docked > .hist-bar{display:none !important}
 .hist-dock{position:absolute;z-index:6;bottom:8px;left:50%;width:min(860px,calc(100% - 24px));box-sizing:border-box;display:flex;align-items:center;gap:6px;padding:0 10px 0 12px;border-radius:16px;background:rgba(255,253,247,.9);box-shadow:0 6px 20px rgba(20,30,50,.18);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#1d2b3a;touch-action:none}
 .hist-dock .hd-year{flex:none;min-width:66px;font:800 17px/1 'Baloo 2',system-ui,sans-serif;color:#13294b;text-align:center;font-variant-numeric:tabular-nums}
 .hist-dock .hist-bar{flex:1;min-width:0;gap:6px}.hist-dock .hist-btn{width:30px;height:30px;font-size:16px}.hist-dock .hist-play{font-size:11px}
 .hist-dock .hist-track{padding:16px 10px 20px}.hist-dock .hist-ticks{top:36px}.hist-dock .hist-tick span{font-size:10px}
+.hist-dock.hd-fs{z-index:5;padding-left:18px;padding-right:18px}
 .hist-dock.hd-below{position:relative;left:auto;bottom:auto;margin-top:8px;margin-bottom:2px;box-shadow:0 3px 12px rgba(20,30,50,.12)}
 @media (max-width:640px){.hist-dock{padding:0 6px;border-radius:12px}.hist-dock .hd-year{min-width:50px;font-size:14px}.hist-dock .hist-btn{width:28px;height:28px}.hist-dock .hist-tick span{font-size:9px}}
 .globe-host.hd-over > .hist-story:not(.hs-free){max-height:calc(100% - var(--hd-space,80px) - 60px) !important}
