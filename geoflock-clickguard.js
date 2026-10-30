@@ -4,7 +4,7 @@
    (a) no toolkit tool is armed (pins, pens, eraser, shovel, dragger, geometry, ruler) and the cross-section is not drawing;
    (b) the press went down on the map surface (the canvas, the SVG or a country), not on a button, chip, legend, panel,
        tour card, launcher, dialog… and not outside the map;
-   (c) the pointer moved less than ~6 px and the press was shorter than ~600 ms (a drag or pan opens nothing);
+   (c) the pointer moved less than ~6 px and the press was shorter than ~900 ms (a drag or pan opens nothing);
    (d) during a guided tour, presses on the tour's own cards, labels and buttons open nothing;
    (e) no modal was already open when the press began.
    It filters map clicks before the map's own handlers hear them, wraps openFlagZoom (every map → country/biome/story
@@ -12,7 +12,7 @@
 (function(){
 "use strict";
 if(window.gfClickGuard)return;
-const MOVE=6,HOLD=600;
+const MOVE=6,HOLD=900;
 /* things that are UI, not map: a press that starts on any of these is never a map click */
 const UI=["button","a","input","select","textarea","label","option","summary","[role=button]","[role=tab]","[role=menu]","[role=menuitem]",
  "[role=dialog]","[role=listbox]","[contenteditable]",".chip",".ps-launcher",".ps-card","[class^='ps-']","[class*=' ps-']",
