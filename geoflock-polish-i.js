@@ -121,19 +121,31 @@ const NEWQ={
  hg3a:[{at:"Trade carries faith",st:"Trade carries faith",q:"With the shipping lanes switched on, which route best explains how Islam reached Indonesia?",o:["Overland across the Himalayas","Indian Ocean sea routes used by Muslim traders","The Trans-Siberian Railway","Pacific routes from the Americas"],a:1,why:"Muslim merchants sailing from Arabia, Persia and India carried the faith to the ports of Southeast Asia.",kc:"id"}],
  hg3c:[{at:"Indo-European languages",st:"Indo-European languages",q:"English, Hindi and Russian all descend from one ancestor. They belong to the same…",o:["language family","pidgin","creole","lingua franca"],a:0,why:"They are all Indo-European, the family spoken by nearly half of humanity.",kc:"in"}],
  hg4b:[{at:"Size and distance from the capital",st:"Size and distance from the capital",q:"Why can great distance from the capital act as a centrifugal force?",o:["Distant regions can feel neglected and grow their own identity","Distance always unites a state","Far regions have the same time zone as the capital","Distance makes borders shorter"],a:0,why:"Far-off regions are harder to govern, serve and bind into a national identity.",kc:"ru"}],
- hg4c:[{at:"Colonialism and imperialism",st:"Colonialism and imperialism",q:"Drag Belgium onto the Congo. About how many times larger was the colony its king, Leopold II, once owned?",o:["About 2 times","About 10 times","About 76 times","About 500 times"],a:2,why:"The Democratic Republic of the Congo covers about 2.3 million km², Belgium about 30,700 km².",kc:"cd"}],
+ hg4c:[{at:"Choke points",st:"Choke points",q:"About a fifth of the world’s oil passes through which choke point?",o:["The Strait of Hormuz","The Strait of Gibraltar","The Bosphorus","The Panama Canal"],a:0,why:"Tankers from the Gulf states must all pass through Hormuz.",kc:"ir"},{at:"Colonialism and imperialism",st:"Colonialism and imperialism",q:"Drag Belgium onto the Congo. About how many times larger was the colony its king, Leopold II, once owned?",o:["About 2 times","About 10 times","About 76 times","About 500 times"],a:2,why:"The Democratic Republic of the Congo covers about 2.3 million km², Belgium about 30,700 km².",kc:"cd"}],
  hg4d:[{at:"Compact and elongated states",st:"Compact and elongated states",q:"Chile is over 4,000 km long but under 200 km wide on average. Which problem does this shape cause?",o:["Its regions are all close to the capital","Transport and defence are harder","It has no coastline","It is surrounded by one other state"],a:1,why:"Elongated states struggle to link and defend distant ends.",kc:"cl"}],
  hg5b:[{at:"Rent falls with distance",st:"Rent falls with distance",q:"In bid-rent theory, why does market gardening win the land closest to the city?",o:["It earns the most per hectare and its produce spoils quickly","It needs the most land","Its crops are the cheapest to transport","Ranchers prefer cheap land far away"],a:0,why:"Crops that earn a lot per hectare can pay the highest rent, and fresh produce must reach market fast.",kc:"de"}],
  hg5d:[{at:"Draining the water",st:"Draining the water",q:"The Aral Sea once covered about as much as which country?",o:["Luxembourg","Ireland","France","Brazil"],a:1,why:"About 68,000 km² in 1960, a little smaller than the Republic of Ireland.",kc:"uz"}],
  hg6a:[{at:"The gravity model",st:"The gravity model",q:"Use the gravity model. Which pair of cities should interact most?",o:["Two large cities close together","Two small cities far apart","One large and one small city far apart","Two small cities close together"],a:0,why:"Interaction rises with the cities’ populations and falls with the distance between them.",kc:"us"}],
- hg6b:[{at:"The multiple nuclei model",st:"The multiple nuclei model",q:"Los Angeles has business centres around downtown, the airport and the port. Which model fits best?",o:["Concentric zone","Sector","Multiple nuclei","Von Thünen"],a:2,why:"Harris and Ullman’s model has several centres, each drawing related land uses.",kc:"us"}],
+ hg6b:[{at:"The concentric zone model",st:"The concentric zone model",q:"In Burgess’s concentric zone model, where do newcomers to the city usually first live?",o:["The outer commuter zone","The zone of transition next to the CBD","Middle-class homes","On farms beyond the city"],a:1,why:"Cheap, old housing beside the factories and offices drew new arrivals, who moved outward as they got richer.",kc:"us"},
+  {at:"The Latin American city",st:"The Latin American city",q:"In the Griffin–Ford model, where do the richest households live?",o:["In squatter settlements at the edge","Along a commercial spine running from the old plaza","Only in the outer suburbs","Beside the city dump"],a:1,why:"An elite residential sector follows the spine, like Mexico City’s Paseo de la Reforma.",kc:"mx"},{at:"The multiple nuclei model",st:"The multiple nuclei model",q:"Los Angeles has business centres around downtown, the airport and the port. Which model fits best?",o:["Concentric zone","Sector","Multiple nuclei","Von Thünen"],a:2,why:"Harris and Ullman’s model has several centres, each drawing related land uses.",kc:"us"}],
  hg6c:[{at:"Brownfields",st:"Brownfields",q:"London built its 2012 Olympic Park on old rail yards and factory land. Reusing land like this…",o:["is called greenfield development","spares farmland and is part of smart growth","is a kind of redlining","creates a greenbelt"],a:1,why:"Cleaning up brownfields saves open countryside from building.",kc:"gb"}],
  hg6d:[{at:"Cities and climate",st:"Cities and climate",q:"Raise the sea level a few metres. Why is northern Jakarta so exposed?",o:["It sits on high ground","It is low-lying and sinking as groundwater is pumped out","It has no coastline","It is far from the sea"],a:1,why:"Land subsidence plus rising seas puts much of North Jakarta at risk of flooding.",kc:"id"}],
  hg7a:[{at:"Dependency and commodity dependence",st:"Dependency and commodity dependence",q:"Zambia earns most of its export income from copper. When copper prices crash, Zambia…",o:["gains, because copper is cheaper to mine","loses revenue, showing commodity dependence","is unaffected","switches at once to selling cars"],a:1,why:"Relying on one raw material ties a country’s budget to that material’s world price.",kc:"zm"}],
  hg7b:[{at:"Bulk-reducing and bulk-gaining",st:"Bulk-reducing and bulk-gaining",q:"Copper ore is smelted beside the mine, about 1,250 km from Santiago. Why?",o:["Smelting removes most of the weight, so it is cheaper to ship the metal than the ore","Miners prefer to live in the desert","Copper is bulk-gaining","Santiago bans factories"],a:0,why:"Copper smelting is bulk-reducing, so it locates near the raw material.",kc:"cl"}],
  hg7c:[{at:"Trade blocs",st:"Trade blocs",q:"Which group lists only trade blocs?",o:["EU, USMCA, Mercosur","NATO, OPEC, UN","WTO, IMF, World Bank","ASEAN, NATO, African Union"],a:0,why:"Each is a group of neighbouring states that cut trade barriers among themselves.",kc:"be"}],
- hg7d:[{at:"Climate and development",st:"Climate and development",q:"Raise the sea by 1 metre over Bangladesh. What does this show about climate and development?",o:["Countries that emit least can face some of the worst impacts","Bangladesh emits the most CO₂","Rising seas only affect rich countries","Deltas are safe from flooding"],a:0,why:"Bangladesh emits very little, yet much of its crowded delta lies only a few metres above the sea.",kc:"bd"}]};
+ hg7d:[{at:"Did the earlier goals work?",st:"Did the earlier goals work?",q:"Between 1990 and 2015 the share of people in extreme poverty fell from over a third to about…",o:["one in two","one in four","one in ten","one in a hundred"],a:2,why:"Growth in China and India did most to halve extreme poverty early.",kc:"cn"},{at:"Climate and development",st:"Climate and development",q:"Raise the sea by 1 metre over Bangladesh. What does this show about climate and development?",o:["Countries that emit least can face some of the worst impacts","Bangladesh emits the most CO₂","Rising seas only affect rich countries","Deltas are safe from flooding"],a:0,why:"Bangladesh emits very little, yet much of its crowded delta lies only a few metres above the sea.",kc:"bd"}]};
 
+function frame(s){try{const v=s.view;if(!v||v[2]-v[0]>=200||s.card==="right")return;const P=[];
+ const add=a=>{if(Array.isArray(a)&&typeof a[0]==="number"&&typeof a[1]==="number")P.push(a)};
+ (s.pins||[]).forEach(p=>{if(!Array.isArray(p))return;const a=p[0];if(Array.isArray(a)&&Array.isArray(a[0]))a.forEach(add);else add(a)});
+ (s.ghosts||[]).forEach(g=>add(g.at));if(s.gfRuler){add(s.gfRuler.a);add(s.gfRuler.b)}(s.iconPins||[]).forEach(q=>add(q.at));
+ (s.lines||[]).forEach(l=>(l.coords||[]).forEach(add));
+ const L=P.filter(a=>a[0]>=v[0]-20&&a[0]<=v[2]+20).map(a=>a[0]);if(!L.length)return;
+ const w=v[2]-v[0],ew=Math.max(w,(v[3]-v[1])*1.6),cx=(v[0]+v[2])/2,mn=Math.min(...L),mx=Math.max(...L),f=x=>.5+(x-cx)/ew;
+ if(f(mn)>=.45)return;let W0,E0;
+ if(f(mx)+(.46-f(mn))<=.95){const d=(.46-f(mn))*ew;W0=v[0]-d;E0=v[2]-d}
+ else{const nw=Math.max(w,(mx-mn)/.48),c=mn+.04*nw;W0=c-nw/2;E0=c+nw/2}
+ def(s,"view",[+W0.toFixed(2),v[1],+E0.toFixed(2),v[3]]);def(s,"_ff",1);def(s,"card","left")}catch(e){console.error(e)}}
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function photos(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();
  for(const k in CARD){const i=libIdx(CARD[k]);if(i>=0)PS_PHOTO[k]=i}
@@ -452,6 +464,98 @@ if(T("hg7d")&&!T("hg7d").steps._polI){T("hg7d").steps._polI=1;
  set("hg7d","Climate and development",s=>{s.gfSea=1;s.gfSeaUI=true;
   s.body="China, the US and India emit the most carbon dioxide in total. Bangladesh emits very little, yet rising seas and stronger cyclones threaten its low delta: the sea is raised 1 m here, move the slider. It has built thousands of cyclone shelters and cut storm deaths sharply."});
 }
+/* ───────── second pass: more hands-on stops, steadier map modes ───────── */
+if(T("hg1")&&!T("hg1").steps._polI2){T("hg1").steps._polI2=1;
+ set("hg1","Reference and thematic maps",s=>{delete s.mode;delete s.sub;s.on=["hazards"];
+  s.body="This relief map, with its borders, cities and rivers, is a reference map: it shows where things are. A thematic map shows one topic: the earthquake and volcano symbols switched on here are a thematic layer, and later in this tour the population and People maps shade countries by one value each."});
+}
+if(T("hg1b")&&!T("hg1b").steps._polI2){T("hg1b").steps._polI2=1;
+ set("hg1b","Counting everyone",s=>{delete s.mode;s.on=["cities"]});
+}
+if(T("hg2d")&&!T("hg2d").steps._polI2){T("hg2d").steps._polI2=1;
+ set("hg2d","Neo-Malthusians and Boserup",s=>{s.ix="malthus"});
+ set("hg2d","An ageing world",s=>{s.ix="pyramid"});
+}
+if(T("hg3a")&&!T("hg3a").steps._polI2){T("hg3a").steps._polI2=1;
+ set("hg3a","Relocation diffusion",s=>{s.gfRuler={a:[-9.14,38.72],b:[-43.2,-22.9]};
+  s.more="Drag the ruler: Portuguese sailed about 7,700 km from Lisbon to Rio de Janeiro. The hearth keeps the trait too: Portugal still speaks Portuguese. Relocation also explains islands of culture far from home, like Chinatowns."});
+}
+if(T("hg3b")&&!T("hg3b").steps._polI2){T("hg3b").steps._polI2=1;
+ set("hg3b","Ethnic neighbourhoods",s=>{s.view=[70,-8,126,30];s.globe=[110,12,2];delete s.spin;s.gfRuler={a:[103.84,1.28],b:[118.09,24.48]};
+  s.pins=[[[103.84,1.28],"Singapore’s Chinatown","point"],[[118.09,24.48],"Xiamen, Fujian","point"]];
+  s.more="Many of Singapore’s Chinese families came from southern Fujian and Guangdong in the 1800s: drag the ruler, Xiamen is about 3,000 km away. Enclaves help newcomers find work and support; over generations many mix, or become tourist districts."});
+}
+if(T("hg3c")&&!T("hg3c").steps._polI2){T("hg3c").steps._polI2=1;
+ set("hg3c","Sikhism",s=>{s.gfRuler={a:[74.88,31.62],b:[-0.38,51.51]};
+  s.more="Drag the ruler: Amritsar to Southall, in west London, is about 6,300 km, yet chain migration has made Southall one of the largest Punjabi communities outside India."});
+}
+if(T("hg4a")&&!T("hg4a").steps._polI2){T("hg4a").steps._polI2=1;
+ set("hg4a","Multistate nations",s=>{s.lines=[];s.gfRuler={a:[126.1,37.75],b:[128.37,38.61]};
+  s.body="A multistate nation lives in more than one state. Koreans share one language and history but have been split between North and South Korea since 1945; the Demilitarised Zone, about 250 km long (drag the ruler), still divides them. When the Soviet Union broke up in 1991, millions of ethnic Russians were left in neighbouring states."});
+}
+if(T("hg4c")&&!T("hg4c").steps._polI2){T("hg4c").steps._polI2=1;
+ set("hg4c","The end of empires",s=>{s.stat="More than half of today’s states have become independent since 1945"});
+ set("hg4c","Military alliances",s=>{s.gfRuler={a:[27.9,60.55],b:[29.6,69.5]};
+  s.body="NATO, founded in 1949, is a military alliance of North American and European states. Under Article 5, members treat an attack on one as an attack on all. After Russia’s 2022 invasion of Ukraine, Finland joined in 2023 and Sweden in 2024; Finland’s border with Russia, about 1,340 km long, roughly doubled NATO’s land border with Russia. Drag the ruler along it."});
+}
+if(T("hg4d")&&!T("hg4d").steps._polI2){T("hg4d").steps._polI2=1;
+ set("hg4d","Enclaves and exclaves",s=>{s.gfRuler={a:[22.79,54.36],b:[23.5,53.95]};
+  s.more="Drag the ruler: only about 65 km of Polish and Lithuanian land, the Suwałki Gap, separates Kaliningrad from Belarus, Russia’s ally."});
+}
+if(T("hg5a")&&!T("hg5a").steps._polI2){T("hg5a").steps._polI2=1;
+ set("hg5a","Extensive farming",s=>{s.ghosts=[{code:"be",at:[136.3,-28.9],col:"#8a63cf",label:"Belgium, true size"}];
+  s.pins=(s.pins||[]).concat([[[136.34,-28.9],"Anna Creek station","point"]]);
+  s.more="Anna Creek, the world’s largest cattle station, covers about 23,700 km², over three-quarters the size of Belgium: drag Belgium, in purple at its true size, onto it."});
+}
+if(T("hg5b")&&!T("hg5b").steps._polI2){T("hg5b").steps._polI2=1;
+ set("hg5b","Von Thünen’s rings",s=>{s.ix="vonthunen"});
+ set("hg5b","Why the rings bend",s=>{delete s.ix});
+}
+if(T("hg5c")&&!T("hg5c").steps._polI2){T("hg5c").steps._polI2=1;
+ set("hg5c","Fair trade",s=>{s.gfRuler={a:[-75.6,4.8],b:[9.99,53.55]};
+  s.more="Drag the ruler: the beans travel about 9,000 km to roasters in Europe. Fair trade is still a small share of sales, and much of the shop price stays with roasters and retailers."});
+}
+/* Inside the city and Building better cities move to the population map: the satellite and city-lights maps cannot
+   zoom in far enough to show a city's inside, and the city-lights map is not offered in the light theme */
+if(T("hg6b")&&!T("hg6b").steps._polI2){const t=T("hg6b");t.steps._polI2=1;
+ try{def(t,"map",Object.assign({},t.map||{},{mode:"population"}))}catch(e){}
+ set("hg6b","Inside the city",s=>{s.body="Each city is unique, but patterns repeat: business centres, industrial zones, rich and poor districts and suburbs. This tour sets each classic model beside a real city on the population map, where the darkest colours mark the most people per km²; the diagrams and photos show each city’s inside."});
+ set("hg6b","The concentric zone model",s=>{s.gfThr={kind:"pop",v:1000};
+  s.more="It fits older North American cities built around one downtown, less so European cities where the rich live centrally. The map shows only places with over 1,000 people per km²: drag the slider down and Chicago spreads outward in rings."});
+ set("hg6b","The multiple nuclei model",s=>{s.on=["cities"]});
+ set("hg6b","The galactic city",s=>{s.gfThr={kind:"pop",v:250};
+  s.more="Many suburbanites now commute from suburb to suburb and rarely visit downtown. Drag the slider: the Washington area spreads far beyond the old city in every direction."});
+}
+if(T("hg6c")&&!T("hg6c").steps._polI2){const t=T("hg6c");t.steps._polI2=1;
+ try{def(t,"map",Object.assign({},t.map||{},{mode:"population"}))}catch(e){}
+ set("hg6c","Suburbanisation",s=>{s.gfThr={kind:"pop",v:1000};
+  s.more="Many early suburbs sold only to white buyers, fuelling “white flight” from city centres. Drag the slider down to see how far New York’s suburbs spread."});
+ set("hg6c","Edge cities and boomburbs",s=>{s.on=["cities"]});
+ set("hg6c","Greenbelts",s=>{s.gfThr={kind:"pop",v:500};
+  s.more="It has contained sprawl but squeezed housing supply, which many blame for London’s high prices. Drag the slider: towns beyond the belt show up as separate islands of people."});
+}
+if(T("hg6d")&&!T("hg6d").steps._polI2){T("hg6d").steps._polI2=1;
+ set("hg6d","Informal settlements",s=>{s.gfThr={kind:"pop",v:1000};
+  s.more="The informal sector, untaxed work from street trading to small workshops, employs most workers in many of these cities. The map shows only places with over 1,000 people per km²: drag the slider."});
+}
+if(T("hg7a")&&!T("hg7a").steps._polI2){T("hg7a").steps._polI2=1;
+ set("hg7a","World-systems theory",s=>{s.on=["connections"];
+  s.more="Unlike Rostow’s ladder, development depends on a country’s position in the system, and the core gains most from the exchange. The flight paths and cables on the map bunch between core countries."});
+ set("hg7a","Per person and PPP",s=>{s.stat="A dollar buys three to four times as much in India as in the United States"});
+ set("hg7a","Sectors of the economy",s=>{s.sub="farm/w1+w5"});
+}
+if(T("hg7d")&&!T("hg7d").steps._polI2){T("hg7d").steps._polI2=1;
+ set("hg7d","Saving resource wealth",s=>{s.on=["resources"]});
+}
+/* photos that repeated on two stops of one tour, and pictures for the diagram stops */
+Object.assign(CARD,{"hg7c|Trade and the world economy":"Locomotives Tow Container Ship through Miraflores Locks - Panama Canal.jpg",
+ "hg6a|Megacities":"Jakarta skyline 2.jpg","hg5a|Intensive farming":"Can Tho, Vietnam, Floating Market, Boats.jpg",
+ "hg5b|Models of rural land":"Sunset-over-the-wheat-field-featured.jpg","hg5b|Von Thünen’s rings":"Cocktail tomatoes at Campbell farmer's market.jpg",
+ "hg5b|Rent falls with distance":"Westland greenhouse.webp","hg5b|Long lots":"Chateau Frontenac at dusk in Quebec City.jpg",
+ "hg5b|Three agricultural revolutions":"Corncobs.jpg","hg5b|Patterns of rural settlement":"Hopi Village on the Second Mesa.jpg"});
+/* framing: on every zoomed-in stop the card covers the left ~40% of the map, so shift (or widen) the view until
+   everything the stop draws sits in the right part */
+for(const id in OPEN){const t=T(id);if(!t||t.steps._polIF)continue;t.steps._polIF=1;t.steps.forEach(frame)}
 /* ───────── tour questions: a country (kc) for each, plus the new ones ───────── */
 try{if(typeof TOURQ!=="undefined")for(const id in OPEN){const Q=TOURQ[id];if(!Q||!T(id)||Q._polI)continue;Q._polI=1;
  [...(Q.mid||[]),...(Q.recap||[])].forEach(q=>{if(!q.kc&&KC[id]&&KC[id][q.st])q.kc=KC[id][q.st];if(!q.kc&&q.pick&&q.pick.length)q.kc=q.pick[0]});
