@@ -70,7 +70,7 @@ function down(e){if(!on||inUI(e))return;const g=G();if(!g||!g.host.contains(e.ta
 function move(e){if(!drawing||e.pointerId!==drawing.id||drawing.k==="click")return;e.stopImmediatePropagation();e.preventDefault();const p=local(e);
  if(drawing.k==="split")drawing.pts=[drawing.pts[0],p];else{const l=drawing.pts[drawing.pts.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>4)drawing.pts.push(p)}}
 function up(e){if(!drawing||e.pointerId!==drawing.id)return;const D=drawing;drawing=null;const g=G();if(!g)return;const inv=g.projection().invert;
- if(D.k==="click"){if(Math.hypot(e.clientX-D.x,e.clientY-D.y)>5)return;const h=g.hit(e.clientX,e.clientY);const code=h&&h.code;if(!code)return;e.stopImmediatePropagation();e.preventDefault();suppress();
+ if(D.k==="click"){if(Math.hypot(e.clientX-D.x,e.clientY-D.y)>5)return;if(window.gfClickGuard&&!gfClickGuard.ok(e))return;const h=g.hit(e.clientX,e.clientY);const code=h&&h.code;if(!code)return;e.stopImmediatePropagation();e.preventDefault();suppress();
   let rings=[];try{projFeatures().filter(f=>f.geometry&&String(f.properties.c).toLowerCase()===code).forEach(f=>rings=rings.concat(ringsOf(f.geometry)))}catch(_){}if(!rings.length)return;
   const C=(typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[code])||{};let km2=null;try{km2=COUNTRY_AREA_KM2[code]||null}catch(_){}
   shape={rings,name:C.n||code.toUpperCase(),km2,geo:true};split=null;tool="country";load().then(()=>{recount();render()});render();return}
