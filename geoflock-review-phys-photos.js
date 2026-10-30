@@ -22,7 +22,10 @@ window.GF_RVPHYS_PHOTOS2=[/*PHOTOS*/
 {"f":"Mokoshuraiekotoba.jpg","d":"photos/xb1eeff3eb0b12b88.webp","by":"Unknown artist (Mōko Shūrai Ekotoba)","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Mokoshuraiekotoba.jpg"},
 {"f":"Kikuchi Yoosai - Mongol Invasion (mōko shūrai) - Tokyo National Museum.jpg","d":"photos/x40ab27de022eec11.webp","by":"Kikuchi Yōsai (Tokyo National Museum)","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Kikuchi_Yoosai_-_Mongol_Invasion_(m%C5%8Dko_sh%C5%ABrai)_-_Tokyo_National_Museum.jpg"},
 {"f":"MorningGloryCloudBurketownFromPlane.jpg","d":"photos/x7b3ead578dacfdc9.webp","by":"Mick Petroff","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:MorningGloryCloudBurketownFromPlane.jpg"},
-{"f":"Hakkoda Ropeway.jpg","d":"photos/x3913e5ff3b4d5896.webp","by":"Mihai Florin Apostu Oota","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Hakkoda_Ropeway.jpg"}
+{"f":"Hakkoda Ropeway.jpg","d":"photos/x3913e5ff3b4d5896.webp","by":"Mihai Florin Apostu Oota","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Hakkoda_Ropeway.jpg"},
+{"f":"Twisted bridge Skaftafell due to Glacial lake outburst flood.JPG","d":"photos/xc02d37210c19b30b.webp","by":"Chris 73","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Twisted_bridge_Skaftafell_due_to_Glacial_lake_outburst_flood.JPG"},
+{"f":"Dasht-e Lut Desert in Kerman Province 02.jpg","d":"photos/x16ae1275629da344.webp","by":"Ninaras","lic":"CC BY 4.0","page":"https://commons.wikimedia.org/wiki/File:Dasht-e_Lut_Desert_in_Kerman_Province_02.jpg"},
+{"f":"Chesil Beach and the Fleet Lagoon.jpg","d":"photos/xbf338a6b6e7917ba.webp","by":"BennH","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Chesil_Beach_and_the_Fleet_Lagoon.jpg"}
 ];
 /* card photos: "tour|title" → library file name (f) */
 const CARD={/*CARD*/
@@ -43,7 +46,10 @@ const CARD={/*CARD*/
 "weather|The ‘divine wind’":"Mokoshuraiekotoba.jpg",
 "weather|The snowiest city on Earth":"Hakkoda Ropeway.jpg",
 "weather|A cloud 1,000 km long":"MorningGloryCloudBurketownFromPlane.jpg",
-"deserts|Death Valley’s heat trap":"Boardwalk at Badwater Basin, Death Valley National Park, California.jpg"
+"deserts|Death Valley’s heat trap":"Boardwalk at Badwater Basin, Death Valley National Park, California.jpg",
+"ice|When a volcano melts a glacier":"Twisted bridge Skaftafell due to Glacial lake outburst flood.JPG",
+"deserts|Hotter than an oven floor":"Dasht-e Lut Desert in Kerman Province 02.jpg",
+"coasts|Pebbles that tell you where you are":"Chesil Beach and the Fleet Lagoon.jpg"
 };
 /* photo pins to (re)place on a stop: "tour|title" → [[lon,lat],label,file]; replaces a pin of the same label */
 const PINS={/*PINS*/
@@ -55,7 +61,10 @@ const PINS={/*PINS*/
 "weather|The Sahara feeds the Amazon":[[[17.5,17.4],"Dust blowing off the Bodélé, from space","Chad AMO 2004323 lrg.jpg"]],
 "weather|The ‘divine wind’":[[[130.3,33.7],"Samurai and Mongols, a scroll of about 1293","Mokoshuraiekotoba.jpg"],[[129.75,33.42],"Takashima: the storm wrecks the fleet","Kikuchi Yoosai - Mongol Invasion (mōko shūrai) - Tokyo National Museum.jpg"]],
 "weather|The snowiest city on Earth":[[[140.87,40.66],"Hakkōda, in Aomori city, in winter","Hakkoda Ropeway.jpg"]],
-"weather|A cloud 1,000 km long":[[[139.6,-17.6],"The Morning Glory","MorningGloryCloudBurketownFromPlane.jpg"]]
+"weather|A cloud 1,000 km long":[[[139.6,-17.6],"The Morning Glory","MorningGloryCloudBurketownFromPlane.jpg"]],
+"ice|When a volcano melts a glacier":[[[-16.97,64.01],"The bridge girders left by the 1996 flood","Twisted bridge Skaftafell due to Glacial lake outburst flood.JPG"]],
+"deserts|Hotter than an oven floor":[[[59.2,30.4],"The kaluts of the Lut","Dasht-e Lut Desert in Kerman Province 02.jpg"]],
+"coasts|Pebbles that tell you where you are":[[[-2.6,50.65],"Chesil Beach and the Fleet","Chesil Beach and the Fleet Lagoon.jpg"]]
 };
 /* existing photo pins (any stop) whose label gets this picture */
 const SQ={/*SQ*/
@@ -63,7 +72,9 @@ const SQ={/*SQ*/
 "Straits of Mackinac: Michigan and Huron meet":"Mackinac Bridge Walk.jpg",
 "Saint Martin: French north, Dutch south":"Grand Case auf Saint Martin.jpg",
 "Strait of Magellan":"00 2521 Punta Arenas - Chile.jpg",
-"Quito ~2,850 m":"Quito DotM banner.jpg"
+"Quito ~2,850 m":"Quito DotM banner.jpg",
+"Mawsynram: the wettest place":"Living root bridge, Maghalaya, India1.jpg",
+"Brunei, in two pieces":"Kampong Ayer, Brunei in January 2026 (DSCF1416).jpg"
 };
 /* captions for labels the caption rule would get wrong */
 const CAP={/*CAP*/
@@ -76,7 +87,10 @@ const CAP={/*CAP*/
 "Samurai and Mongols, a scroll of about 1293":"Samurai board a Mongol ship",
 "Takashima: the storm wrecks the fleet":"The storm, painted 1847",
 "Hakkōda, in Aomori city, in winter":"Hakkōda Ropeway in winter",
-"The adder, Britain’s native viper":"The adder"
+"The adder, Britain’s native viper":"The adder",
+"The bridge girders left by the 1996 flood":"Skeiðará bridge girders",
+"Mawsynram: the wettest place":"Root bridge, Meghalaya",
+"Brunei, in two pieces":"Kampong Ayer, Brunei"
 };
 
 const OR="#d9682b";
