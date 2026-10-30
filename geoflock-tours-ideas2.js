@@ -308,8 +308,8 @@ S({title:"Now explore",view:W,globe:[40,25,1],
  body:"Open the toolkit: measure with the ruler, drag countries to compare their true sizes, and dig to your antipode with the shovel. Turn on the grid lines and find your own latitude, and the Science tour visits Greenwich, where longitude starts."})];
 
 const TOURS={
- mythology:{name:"Guided tour on myths and legends",short:"Myths and legends",hint:"Olympus, Troy, Thera and Atlantis, the flood, Uluru, Kailash, Norse fire and ice, Loch Ness, Stonehenge, Pele and Teotihuacan",steps:MYTH},
- science:{name:"Guided tour on where science happened",short:"Where science happened",hint:"Zhang Heng, Ibn al-Haytham, Samarkand, Galileo, Greenwich, the Galápagos, Curie, Einstein’s eclipse, CERN and Antarctica",steps:SCI},
+ mythology:{name:"Guided tour on mythology",short:"Mythology",hint:"Olympus, Troy, Thera and Atlantis, the flood, Uluru, Kailash, Norse fire and ice, Loch Ness, Stonehenge, Pele and Teotihuacan",steps:MYTH},
+ science:{name:"Guided tour on science",short:"Science",hint:"Zhang Heng, Ibn al-Haytham, Samarkand, Galileo, Greenwich, the Galápagos, Curie, Einstein’s eclipse, CERN and Antarctica",steps:SCI},
  maths:{name:"Guided tour on maths on the map",short:"Maths on the map",hint:"Counting in sixties, Euclid and Eratosthenes, π and zero, the House of Wisdom, Königsberg, great circles, Mercator and antipodes",steps:MATHS}};
 const IDS=Object.keys(TOURS);
 /* stops with their own map mode use the shared per-stop switch (stopModes); alsoOn keeps the tour running in those modes */

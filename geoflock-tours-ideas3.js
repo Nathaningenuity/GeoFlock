@@ -299,7 +299,7 @@ S({title:"Now explore",view:W,globe:[40,30,1],
  body:"Open the History map and step through the years to watch empires, and their centres of learning, rise and fall. Turn on Connections to trace the cables yourself. The Literature tour follows the books themselves."})];
 
 const TOURS={
- psychology:{name:"Guided tour on mind and place",short:"Mind and place",hint:"WEIRD psychology, rice and wheat, compass languages, colour words, time zones, polar night, happiness and loneliness",steps:PSY},
+ psychology:{name:"Guided tour on psychology",short:"Psychology",hint:"WEIRD psychology, rice and wheat, compass languages, colour words, time zones, polar night, happiness and loneliness",steps:PSY},
  words:{name:"Guided tour on words on the map",short:"Words on the map",hint:"Tea or chá, borrowed words, -by and -chester, the -stans, how countries got their names, scripts, Hangul, Papua New Guinea and Esperanto",steps:WORDS},
  learning:{name:"Guided tour on learning around the world",short:"Learning",hint:"Nalanda, the House of Wisdom, the road of paper, al-Qarawiyyin, Bologna, Alexandria, Timbuktu, printing, literacy and the internet’s cables",steps:LEARN}};
 const IDS=Object.keys(TOURS);

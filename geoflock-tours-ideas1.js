@@ -420,9 +420,9 @@ S({title:"Now explore",view:W,globe:[60,30,1],
 
 const TOURS={
  art:{name:"Guided tour on art and architecture",short:"Art and architecture",hint:"The oldest cave art, pyramids, the Parthenon, Angkor, Gothic glass, the Great Wave and the world’s tallest towers",steps:ART},
- music:{name:"Guided tour on music of the world",short:"Music of the world",hint:"The first flutes, the kora and the steelpan, Vienna, the blues, tango, reggae, gamelan, Afrobeats and K-pop",steps:MUSIC},
+ music:{name:"Guided tour on music",short:"Music",hint:"The first flutes, the kora and the steelpan, Vienna, the blues, tango, reggae, gamelan, Afrobeats and K-pop",steps:MUSIC},
  literature:{name:"Guided tour on literature around the world",short:"Literature",hint:"Gilgamesh, Homer, the first novel, the Nights, Shakespeare, Don Quixote, Gutenberg and Macondo",steps:LIT},
- philosophy:{name:"Guided tour on big ideas and where they began",short:"Big ideas",hint:"Confucius, the Buddha and Socrates, Ibn Sina and Maimonides, Kant, Ubuntu and the rights of every human being",steps:PHIL}};
+ philosophy:{name:"Guided tour on philosophy",short:"Philosophy",hint:"Confucius, the Buddha and Socrates, Ibn Sina and Maimonides, Kant, Ubuntu and the rights of every human being",steps:PHIL}};
 const IDS=Object.keys(TOURS);
 /* stops with their own map mode use the shared per-stop switch (stopModes); alsoOn keeps the tour running in those modes */
 IDS.forEach(id=>{const T=TOURS[id],modes=[...new Set(T.steps.map(s=>s.mode).filter(Boolean))];PS_TOURS[id]={name:T.name,short:T.short,hint:T.hint,map:{mode:"relief"},group:"ideas",col:TL,steps:T.steps,stopModes:modes.length>0,alsoOn:modes}});
