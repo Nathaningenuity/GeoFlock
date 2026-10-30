@@ -12304,7 +12304,7 @@ DG.shrink.cat="people";if(typeof SIM_KEYS!=="undefined"&&!SIM_KEYS.includes("shr
 (function(){const ROUTES=[["tours","appModeToursBtn"],["maps","appModeAllMapsBtn"],["human-geo","appModeApBtn"],["places","appModeMapBtn"],["flags","appModeFlagBtn"],["capitals","appModeCapitalBtn"],["landforms","appModeLandformsBtn"],["trivia","appModeTriviaBtn"],["games","appModeGamesBtn"],["home","appModeHomeBtn"]];
 const BTN=Object.fromEntries(ROUTES);let routing=false;
 const current=()=>{try{if(appMode==="tours")return typeof hugTab!=="undefined"&&hugTab==="aphg"?"human-geo":"tours";const m={allmaps:"maps",map:"places",flag:"flags",capital:"capitals",landforms:"landforms",trivia:"trivia",games:"games",home:"home"}[appMode];return m||null}catch(e){return null}};
-const fromHash=()=>{const h=location.hash.replace(/^#\/?/,"");return h===""?"home":(BTN[h]?h:null)};
+const fromHash=()=>{const h=location.hash.replace(/^#\/?/,"").split(/[\/?&]/)[0];return h===""?"home":(BTN[h]?h:null)};
 const sync=()=>{if(routing)return;const r=current();if(!r||r===fromHash())return;try{history.pushState(null,"",r==="home"?location.pathname+location.search:"#"+r)}catch(e){}};
 const go=r=>{if(!r||r===current())return;const b=document.getElementById(BTN[r]);if(!b)return;routing=true;try{b.click()}finally{routing=false}};
 {const _samR=switchAppMode;switchAppMode=function(){const r=_samR.apply(this,arguments);setTimeout(sync,0);return r}}
@@ -12387,6 +12387,7 @@ if(document.readyState==="complete")setTimeout(start,0);else window.addEventList
 <script src="geoflock-tourload.js?v=202610301000"></script>
 <script src="geoflock-tourhist.js?v=202610301100"></script>
 <script src="geoflock-touralso.js?v=202610301200"></script>
+<script src="geoflock-maplink.js?v=202610301500"></script>
 <script src="geoflock-polish-f.js?v=1"></script><script src="geoflock-polish-d.js?v=202610292330"></script>
 <script src="geoflock-polish-e.js?v=202610300100"></script>
 <script src="geoflock-polish-h.js?v=1"></script>
