@@ -111,7 +111,7 @@ W("histFill",p=>{if(histFocus&&focusAny(frame())&&!inFocus(p))return p.k===0?"#f
 W("histDescribe",f=>{const p=f.properties;let s=p.n||"Unnamed";if(p.k===0)return s+" — peoples without a state";const G=p.gk&&HIST_DATA.groups[p.gk];if(G&&G[0]!==p.n&&!KN["g:"+p.gk]&&!/^(Russia|China|India|Persia|Germany|Italy|Japan|Egypt)$/.test(G[0]))s+=" — "+G[0];
  if(p.o){const a=Math.floor(p.s),b=p.e>=9999?null:Math.floor(p.e);s+=" ("+(b==null?"since "+yLabel(a):yLabel(a).replace(/^AD /,"")+"–"+yLabel(b).replace(/^AD /,""))+")"}return s});
 /* the bar shows a few broad eras; the 21 story periods stay in the story card */
-const ERAS=[[-2999,-499,"Ancient world"],[-499,500,"Classical empires"],[500,1450,"Middle Ages"],[1450,1800,"Exploration"],[1800,1914,"Empires"],[1914,1991,"World wars"],[1991,3000,"Now"]];
+const ERAS=[[-2999,-499,"Ancient world"],[-499,500,"Classical"],[500,1450,"Middle Ages"],[1450,1800,"Exploration"],[1800,1914,"Empires"],[1914,1991,"World wars"],[1991,3000,"Now"]];
 function eraHTML(){return ERAS.map(P=>{let a=YEARS.findIndex(y=>y>=P[0]),b=YEARS.findIndex(y=>y>=P[1]);if(b<0)b=N-1;const on=curY>=P[0]&&curY<P[1];
  return`<span class="hist-era${on?" on":""}" style="left:${(a/(N-1)*100).toFixed(2)}%;width:${((b-a)/(N-1)*100).toFixed(2)}%" data-hy="${a}" title="${P[2]}">${P[2]}</span>`}).join("")}
 function ticksHTML(){return[-2999,-1999,-999,1,500,1000,1500,1800,1900,2000].map(y=>{const i=YEARS.findIndex(v=>v>=y);return`<button type="button" class="hist-tick key${i===pos?" on":""}" data-hy="${i}" style="left:${(i/(N-1)*100).toFixed(2)}%" aria-label="${yLabel(YEARS[i])}"><b></b><span>${yLabel(YEARS[i])}</span></button>`}).join("")}
@@ -393,7 +393,8 @@ function placeDock(d,h){const fs=document.body.classList.contains("gf-fs"),phone
  d.classList.remove("hd-fs");d.style.position="";const cv=h.querySelector(".globe-stage canvas")||h.querySelector("canvas");const cr=cv?cv.getBoundingClientRect():hr;
  /* the map's own rectangle inside the host (the flat map can be narrower than the host) */
  const L0=Math.max(hr.left,cr.left),R0=Math.min(hr.right,cr.right),B0=Math.min(hr.bottom,cr.bottom),mid=(L0+R0)/2,want=Math.min(860,Math.max(260,R0-L0-24));
- if(!phone){if(d.parentNode!==h)h.appendChild(d);d.classList.remove("hd-below");const dh=d.offsetHeight||64;
+ /* outside full screen the timeline always sits just under the map, in one fixed place */
+ if(false){if(d.parentNode!==h)h.appendChild(d);d.classList.remove("hd-below");const dh=d.offsetHeight||64;
   const obs=[...document.querySelectorAll(".gfk-tray, .gfk-coord, .globe-btns, .map-zoom-controls")].filter(x=>(h.contains(x)||getComputedStyle(x).position==="fixed")&&!d.contains(x)&&getComputedStyle(x).visibility!=="hidden").map(x=>x.getBoundingClientRect()).filter(r=>r.width&&r.height);
   let w=want,bottom=hr.bottom-B0+8,ok=true;
   for(let it=0;it<6;it++){let again=false;for(const r of obs){const top=hr.bottom-bottom-dh,bot=hr.bottom-bottom;if(r.bottom<top-2||r.top>bot+2)continue;if(r.right<mid-w/2-4||r.left>mid+w/2+4)continue;
