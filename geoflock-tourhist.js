@@ -13,8 +13,13 @@ function snap(y,K){let best=K[K.length-1],d=1e9;K.forEach(k=>{const e=Math.abs(y
 function yearOf(S){const txt=[S.title,S.stat,S.body].filter(Boolean).join(" ");
  if(/\b(today|now|modern|nowadays)\b/i.test(S.title||""))return null;
  let m=txt.match(/\b(\d{1,2})(?:st|nd|rd|th) centur(?:y|ies)( BC| BCE)?/i);const c=m?((+m[1])-.5)*100*(m[2]?-1:1):null;
- m=txt.match(/\b(?:AD\s*)?(\d{3,4})\s*(BC|BCE)?\b(?!\s*(?:km|m|people|metres|kilometres|miles|%|years))/i);let y=null;
- if(m){const n=+m[1];if(m[2])y=1-n;else if(n>=500&&n<=2030)y=n}
+ /* a year, not a count: four digits (1000–2030) not followed by a unit or a noun such as "characters"; or three digits
+    only after "in", "by", "around", "AD"… ("500 characters" or "980 buildings" are not years) */
+ let y=null;
+ m=txt.match(/\b(1\d{3}|20[0-2]\d)\b(?!\s*(?:km|m\b|people|metres|meters|kilometres|miles|%|years|characters|languages|buildings|species|islands|kinds|words|letters|books|towns|cities|villages|temples|ships|men|soldiers|tonnes|tons|feet))/);
+ if(m)y=+m[1];
+ const m3=txt.match(/\b(?:in|by|from|since|until|around|about|c\.|circa|AD)\s+(\d{3})\b(?!\s*(?:km|m\b|people|metres|kilometres|miles|%|years|BC|BCE))/i);
+ if(y==null&&m3)y=+m3[1];
  m=txt.match(/\b(\d{2,5})\s*(BC|BCE)\b/i);if(m&&(y==null||y>0))y=1-(+m[1]);
  if(c!=null&&(y==null||txt.search(/centur/i)<txt.search(/\d{3,4}/)))return c;return y}
 function convert(T){try{const K=keys();if(!K||!T||!T.steps||T.steps._gfHist)return;const home=T.map&&T.map.mode;
