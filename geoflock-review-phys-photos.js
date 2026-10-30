@@ -8,20 +8,54 @@
 window.GF_RVPHYS_PHOTOS2=[/*PHOTOS*/
 {"f":"Geoid undulation 10k scale.jpg","d":"photos/x2295951e5b7b6742.webp","by":"International Centre for Global Earth Models (ICGEM)","lic":"CC BY 4.0","page":"https://commons.wikimedia.org/wiki/File:Geoid_undulation_10k_scale.jpg"},
 {"f":"Benny Trapp Vipera berus.jpg","d":"photos/xf85117e389d64a27.webp","by":"Benny Trapp","lic":"CC BY 3.0","page":"https://commons.wikimedia.org/wiki/File:Benny_Trapp_Vipera_berus.jpg"},
-{"f":"Salton Sea 01 2013.jpg","d":"photos/x80c8135e428f0d95.webp","by":"Tuxyso","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Salton_Sea_01_2013.jpg"}
+{"f":"Salton Sea 01 2013.jpg","d":"photos/x80c8135e428f0d95.webp","by":"Tuxyso","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Salton_Sea_01_2013.jpg"},
+{"f":"Gorey Harbour at low tide.JPG","d":"photos/xcb4f6f8589cc27b0.webp","by":"FoxyOrange","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Gorey_Harbour_at_low_tide.JPG"},
+{"f":"Pingelap.png","d":"photos/x3578420da9210aac.webp","by":"Smurrayinchester","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Pingelap.png"},
+{"f":"Neskowin Ghost Forest - 2016.jpg","d":"photos/x086245c2b6109825.webp","by":"RocketSams","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Neskowin_Ghost_Forest_-_2016.jpg"},
+{"f":"Reelfoot Lake.jpg","d":"photos/xbde7214a2d5680a5.webp","by":"JeremyA","lic":"CC BY-SA 2.5","page":"https://commons.wikimedia.org/wiki/File:Reelfoot_Lake.jpg"},
+{"f":"Armero aftermath Marso.jpg","d":"photos/xa66e3ebdbd55fe7d.webp","by":"Jeffrey Marso, USGS","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Armero_aftermath_Marso.jpg"},
+{"f":"Arun River of Nepal.JPG","d":"photos/xb40c2fbaaa686e0c.webp","by":"Nirmal Dulal","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Arun_River_of_Nepal.JPG"},
+{"f":"56762-Yunnan, Three Parallel Rivers 02.jpg","d":"photos/x1e91ee253e9c27d7.webp","by":"xiquinhosilva","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:56762-Yunnan,_Three_Parallel_Rivers_02.jpg"},
+{"f":"130707 Glen Coe from east C.jpg","d":"photos/x82d8f079b56d3e04.webp","by":"Dave souza","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:130707_Glen_Coe_from_east_C.jpg"},
+{"f":"Rescue equipment in Tham Luang entrance chamber (cropped).jpg","d":"photos/xcb464cc9fc965d33.webp","by":"NBT (National Broadcasting Services of Thailand)","lic":"CC BY 3.0","page":"https://commons.wikimedia.org/wiki/File:Rescue_equipment_in_Tham_Luang_entrance_chamber_(cropped).jpg"},
+{"f":"Chad AMO 2004323 lrg.jpg","d":"photos/x8dad6344bb155c05.webp","by":"NASA","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Chad_AMO_2004323_lrg.jpg"},
+{"f":"Mokoshuraiekotoba.jpg","d":"photos/xb1eeff3eb0b12b88.webp","by":"Unknown artist (Mōko Shūrai Ekotoba)","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Mokoshuraiekotoba.jpg"},
+{"f":"Kikuchi Yoosai - Mongol Invasion (mōko shūrai) - Tokyo National Museum.jpg","d":"photos/x40ab27de022eec11.webp","by":"Kikuchi Yōsai (Tokyo National Museum)","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Kikuchi_Yoosai_-_Mongol_Invasion_(m%C5%8Dko_sh%C5%ABrai)_-_Tokyo_National_Museum.jpg"},
+{"f":"MorningGloryCloudBurketownFromPlane.jpg","d":"photos/x7b3ead578dacfdc9.webp","by":"Mick Petroff","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:MorningGloryCloudBurketownFromPlane.jpg"},
+{"f":"Hakkoda Ropeway.jpg","d":"photos/x3913e5ff3b4d5896.webp","by":"Mihai Florin Apostu Oota","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Hakkoda_Ropeway.jpg"}
 ];
 /* card photos: "tour|title" → library file name (f) */
 const CARD={/*CARD*/
 "elev|Sea level isn’t level":"Geoid undulation 10k scale.jpg",
-"lakes|A lake made by mistake":"Salton Sea 01 2013.jpg",
-"islands|No snakes in Ireland":"Benny Trapp Vipera berus.jpg",
 "rivers|The Amazon once flowed west":"Aerial view of the Amazon Rainforest.jpg",
+"lakes|A lake made by mistake":"Salton Sea 01 2013.jpg",
+"seas|Two tides a day":"Gorey Harbour at low tide.JPG",
+"islands|No snakes in Ireland":"Benny Trapp Vipera berus.jpg",
+"islands|The island where many see no colour":"Pingelap.png",
+"plates|The earthquake Japan wrote down":"Neskowin Ghost Forest - 2016.jpg",
+"plates|An earthquake in the middle of a plate":"Reelfoot Lake.jpg",
+"hazards|The town that ignored the map":"Armero aftermath Marso.jpg",
+"ranges|A river older than the Himalaya":"Arun River of Nepal.JPG",
+"ranges|Three rivers, three seas":"56762-Yunnan, Three Parallel Rivers 02.jpg",
+"ranges|Scotland’s mountains are in America":"130707 Glen Coe from east C.jpg",
+"caves|Trapped by the monsoon":"Rescue equipment in Tham Luang entrance chamber (cropped).jpg",
+"weather|The Sahara feeds the Amazon":"Chad AMO 2004323 lrg.jpg",
+"weather|The ‘divine wind’":"Mokoshuraiekotoba.jpg",
+"weather|The snowiest city on Earth":"Hakkoda Ropeway.jpg",
+"weather|A cloud 1,000 km long":"MorningGloryCloudBurketownFromPlane.jpg",
 "deserts|Death Valley’s heat trap":"Boardwalk at Badwater Basin, Death Valley National Park, California.jpg"
 };
 /* photo pins to (re)place on a stop: "tour|title" → [[lon,lat],label,file]; replaces a pin of the same label */
 const PINS={/*PINS*/
 "lakes|A lake made by mistake":[[[-115.95,33.4],"The Salton Sea","Salton Sea 01 2013.jpg"]],
-"islands|No snakes in Ireland":[[[-2.5,51.3],"The adder, Britain’s native viper","Benny Trapp Vipera berus.jpg"]]
+"islands|No snakes in Ireland":[[[-2.5,51.3],"The adder, Britain’s native viper","Benny Trapp Vipera berus.jpg"]],
+"hazards|The town that ignored the map":[[[-74.9,4.965],"Armero after the 1985 mudflow","Armero aftermath Marso.jpg"]],
+"ranges|Scotland’s mountains are in America":[[[-5.0,56.67],"Glen Coe, in the Highlands","130707 Glen Coe from east C.jpg"]],
+"caves|Trapped by the monsoon":[[[99.868,20.382],"Inside Tham Luang’s entrance chamber","Rescue equipment in Tham Luang entrance chamber (cropped).jpg"]],
+"weather|The Sahara feeds the Amazon":[[[17.5,17.4],"Dust blowing off the Bodélé, from space","Chad AMO 2004323 lrg.jpg"]],
+"weather|The ‘divine wind’":[[[130.3,33.7],"Samurai and Mongols, a scroll of about 1293","Mokoshuraiekotoba.jpg"],[[129.75,33.42],"Takashima: the storm wrecks the fleet","Kikuchi Yoosai - Mongol Invasion (mōko shūrai) - Tokyo National Museum.jpg"]],
+"weather|The snowiest city on Earth":[[[140.87,40.66],"Hakkōda, in Aomori city, in winter","Hakkoda Ropeway.jpg"]],
+"weather|A cloud 1,000 km long":[[[139.6,-17.6],"The Morning Glory","MorningGloryCloudBurketownFromPlane.jpg"]]
 };
 /* existing photo pins (any stop) whose label gets this picture */
 const SQ={/*SQ*/
@@ -35,7 +69,14 @@ const SQ={/*SQ*/
 const CAP={/*CAP*/
 "Straits of Mackinac: Michigan and Huron meet":"The Straits of Mackinac",
 "Saint Martin: French north, Dutch south":"Grand Case, Saint-Martin",
-"Strait of Magellan":"Punta Arenas on the Strait"
+"Strait of Magellan":"Punta Arenas on the Strait",
+"Armero after the 1985 mudflow":"Armero after the mudflow",
+"Inside Tham Luang’s entrance chamber":"Tham Luang’s entrance",
+"Dust blowing off the Bodélé, from space":"Bodélé dust from space",
+"Samurai and Mongols, a scroll of about 1293":"Samurai board a Mongol ship",
+"Takashima: the storm wrecks the fleet":"The storm, painted 1847",
+"Hakkōda, in Aomori city, in winter":"Hakkōda Ropeway in winter",
+"The adder, Britain’s native viper":"The adder"
 };
 
 const OR="#d9682b";

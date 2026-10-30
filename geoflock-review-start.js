@@ -166,7 +166,7 @@ function space(){const id="space";
   stat:"In southern Spain, greenhouses cover so much land that from space they look like a white sea",
   body:"Almería is one of the driest corners of Europe, but it has sun all year. Since the 1960s farmers have covered over 30,000 hectares with plastic greenhouses, growing tomatoes, peppers and cucumbers for Europe’s winter supermarkets. Zoom in on the coast west of Almería to find the pale patch.",
   more:"The white roofs reflect sunlight back into space: one study found that the area cooled slightly between 1983 and 2006, while the rest of Spain warmed. The greenhouses also drain the water under the ground, and depend on low-paid migrant workers."});
- ins(id,"The Amazon’s edge",{title:"Dust that feeds the Amazon",view:[-78,-16,32,30],globe:[-22,8,1.5],card:"left",
+ ins(id,"The Amazon’s edge",{title:"Dust that feeds the Amazon",view:[-78,-16,32,30],globe:[-22,6,1.05],card:"right",
   lines:[{coords:[[17.5,17],[10,17.5],[0,17],[-10,15.5],[-22,13],[-35,9],[-47,4],[-57,0],[-63,-3]],kind:"flow"}],
   pins:[[[17.5,17],"Bodélé Depression","point"],[[-62,-3.5],"The Amazon","point"],[[18.5,20.5],"Tibesti","point"],[[21.8,16.5],"Ennedi","point"]],
   stat:"Each year, dust from the Sahara carries about 22,000 tonnes of phosphorus across the Atlantic to the Amazon",
