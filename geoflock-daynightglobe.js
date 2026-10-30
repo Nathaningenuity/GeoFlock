@@ -143,9 +143,11 @@ function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)re
 /* play: a day in 24 seconds */
 function play(){let last=performance.now();const step=now=>{if(!S.play)return;const dt=Math.min(100,now-last);last=now;S.lon=((S.lon-dt*.015+540)%360+360)%360-180;ui();req();S.play=requestAnimationFrame(step)};S.play=requestAnimationFrame(step);ui()}
 function stop(){if(S.play){cancelAnimationFrame(S.play);S.play=null;ui()}}
-function chip(){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(!sat)return null;let c=document.getElementById("gfDngChip");
- if(!c){c=document.createElement("button");c.type="button";c.className="chip gf-dng-chip";c.id="gfDngChip";c.title="The satellite globe lit by the sun: day on one half, city lights on the other";c.innerHTML='<span aria-hidden="true">🌗</span> Day &amp; Night';c.onclick=()=>set(!S.on)}
- if(c.previousElementSibling!==sat)sat.after(c);return c}
+/* Day & Night is a third view of the Satellite map, beside Flat map and Globe: it shows only on the Satellite map */
+function chip(){const sw=document.getElementById("amGlobeSwitch");if(!sw)return null;let c=document.getElementById("gfDngChip");
+ if(!c){c=document.createElement("button");c.type="button";c.className="gf-dng-view";c.id="gfDngChip";c.dataset.dng="view";c.title="The satellite globe lit by the sun: day on one half, city lights on the other";
+  c.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></svg>Day &amp; Night';c.onclick=e=>{e.stopPropagation();set(!S.on)}}
+ if(c.parentNode!==sw)sw.appendChild(c);return c}
 function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.night&&!(typeof proj!=="undefined"&&proj.on)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}}
 function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(allMapsColorMode!=="satellite"&&sat)sat.click();}
@@ -156,15 +158,17 @@ function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  sync();req()}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
  if(S.on&&!(allowed()&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
- if(c){c.classList.toggle("active",S.on);c.setAttribute("aria-pressed",String(S.on));c.style.display=GLOBE_TEX.night&&FEATURES.globe?"":"none";
-  const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(sat&&S.on)sat.classList.remove("active");else if(sat&&!S.on&&allMapsColorMode==="satellite"&&!(typeof proj!=="undefined"&&proj.on))sat.classList.add("active")}
+ if(c){const show=GLOBE_TEX.night&&FEATURES.globe&&allMapsColorMode==="satellite"&&allMapsColorModeOn&&!(typeof proj!=="undefined"&&proj.on);c.style.display=show?"":"none";
+  c.classList.toggle("on",S.on);c.setAttribute("aria-pressed",String(S.on));
+  const sw=document.getElementById("amGlobeSwitch");if(sw&&S.on)sw.querySelectorAll("[data-view]").forEach(b=>b.classList.remove("on"))}
  if(view)view.classList.toggle("gf-dng-on",S.on);
  const p=S.on?panel():document.getElementById("gfDngPanel");if(p){p.hidden=!S.on;if(S.on)ui()}}
 /* any other map chip, or the Flat map switch, leaves this view; the checks run after the click has done its work */
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('#allMapsToggleRow [data-allmaps-mode], #allMapsToggleRow [data-view="flat"], #projTabChip');
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('#allMapsToggleRow [data-allmaps-mode], #amGlobeSwitch [data-view], #projTabChip');
  if(t&&S.on){S.on=false;stop();freeNight();
   /* back to the flat map if that is where Day & Night was opened from */
   if(S.wasFlat&&t.matches("[data-allmaps-mode]"))try{globePrefs().allmaps=false;saveStats()}catch(e){}
+  if(t.matches('[data-view="globe"]'))try{globePrefs().allmaps=true;saveStats()}catch(e){}
   S.wasFlat=false;setTimeout(()=>{try{amGlobeSync()}catch(e){}sync();req()},0)}},true);
 {const _s=amGlobeSync;amGlobeSync=function(){const r=_s.apply(this,arguments);try{patchCfg();sync()}catch(e){console.error(e)}return r}}
 if(typeof renderAllMapsView==="function"){const _r=renderAllMapsView;renderAllMapsView=function(){const r=_r.apply(this,arguments);try{sync()}catch(e){}return r}}
