@@ -11,7 +11,9 @@
 (function(){
 if(typeof LANDFORMS==="undefined"||typeof d3==="undefined")return;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
+/* letters that do not split into a base letter and an accent get their usual English spelling too */
+const FOLD={"ø":"o","æ":"ae","œ":"oe","ß":"ss","ł":"l","đ":"d","ð":"d","þ":"th","ı":"i","ħ":"h","ŧ":"t","ŀ":"l","ĳ":"ij","ŉ":"n","ʻ":"","ʼ":"","‘":"","-":" ","–":" ","—":" "};
+const norm=s=>String(s||"").toLowerCase().replace(/[øæœßłđðþıħŧŀĳŉʻʼ‘\-–—]/g,c=>FOLD[c]).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
 const STRIP=/^(the |mount |mt |lake |loch |river |isla |isle of |gulf of |bay of |sea of |strait of |cape )/;
 const COL={regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8"};
 const TYPE={regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall"};
@@ -35,6 +37,16 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
   const pts=IDX.filter(e=>e.cat==="peaks"||e.cat==="volcanoes");(LANDFORM_DATA.peaks||[]).forEach(r=>{const k="peaks|"+norm(r[0]);if(seen.has(k)||seen.has("volcanoes|"+norm(r[0])))return;let ll=P.invert([r[2],r[3]]);if(!ll)return;ll=[((ll[0]-dl+540)%360)-180,ll[1]];if(pts.some(e=>d3.geoDistance(e.ll,ll)<.006))return;seen.add(k);IDX.push({n:r[0],alt:[],cat:"peaks",g:{type:"Point",coordinates:ll},ll,h:r[1],fame:r[4]||3})})}catch(e){console.error(e)}
  try{const P=d3.geoRobinson().scale(318.31).translate([1e3,500.5]),dl=typeof SPIN!=="undefined"?SPIN.A.dl:0;
   (ALLMAPS_CITIES||[]).forEach(r=>{const k="cities|"+norm(r[0]);if(seen.has(k))return;let ll=P.invert([r[3],r[4]]);if(!ll)return;ll=[((ll[0]-dl+540)%360)-180,ll[1]];seen.add(k);IDX.push({n:r[0],alt:[],cat:"cities",g:{type:"Point",coordinates:ll},ll,fame:r[2]||3})})}catch(e){console.error(e)}
+ /* every lake the map itself names (the hover names), so anything you can point at can also be found */
+ try{const P=d3.geoRobinson().scale(318.31).translate([1e3,500.5]),dl=typeof SPIN!=="undefined"?SPIN.A.dl:0,have=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));
+  const rings=d=>{const out=[];let cur=null,x=0,y=0;const re=/([MLlZz])\s*([-\d.,\s]*)/g;let m;while((m=re.exec(d))){const c=m[1],nums=(m[2].match(/-?[\d.]+/g)||[]).map(Number);
+    if(c==="M"){x=nums[0];y=nums[1];cur=[[x,y]];out.push(cur);for(let i=2;i+1<nums.length;i+=2){x=nums[i];y=nums[i+1];cur.push([x,y])}}
+    else if(c==="L"){for(let i=0;i+1<nums.length;i+=2){x=nums[i];y=nums[i+1];cur&&cur.push([x,y])}}
+    else if(c==="l"){for(let i=0;i+1<nums.length;i+=2){x+=nums[i];y+=nums[i+1];cur&&cur.push([x,y])}}}return out};
+  const byName=new Map();[].concat(typeof ALLMAPS_LAKES!=="undefined"?ALLMAPS_LAKES:[],typeof ALLMAPS_LAKES_MINOR!=="undefined"?ALLMAPS_LAKES_MINOR:[]).forEach(r=>{if(!r||!r[0]||!r[1])return;const k=norm(r[0]);if(have.has(k))return;(byName.get(r[0])||byName.set(r[0],[]).get(r[0])).push(r[1])});
+  byName.forEach((paths,name)=>{const polys=[];paths.slice(0,1).forEach(d=>rings(d).forEach(R=>{if(R.length<3)return;let ring=R.map(p=>{const ll=P.invert(p);return ll?[((ll[0]-dl+540)%360)-180,ll[1]]:null}).filter(Boolean);if(ring.length<3)return;ring.push(ring[0]);
+    let g={type:"Polygon",coordinates:[ring]};try{if(d3.geoArea(g)>2*Math.PI){ring=ring.slice().reverse();g={type:"Polygon",coordinates:[ring]}}}catch(e){}polys.push([ring])}));
+   if(!polys.length)return;const g={type:"MultiPolygon",coordinates:polys};let ll;try{ll=d3.geoCentroid(g)}catch(e){}if(!ll||!isFinite(ll[0]))return;IDX.push({n:name,alt:[],cat:"lakes",g,ll,fame:4})})}catch(e){console.error(e)}
  /* landmarks (a landmark that is also a waterfall or a peak replaces that entry, keeping its photo and icon) */
  (window.GF_LANDMARKS||[]).forEach(r=>{const ll=[r[1],r[2]],k=norm(r[0]);IDX=IDX.filter(e=>!(norm(e.n)===k&&e.cat!=="landmarks"&&(e.g.type==="Point")));const LN=(window.GF_LM_LINES||{})[r[0]];IDX.push({n:r[0],alt:r[6]||[],cat:"landmarks",g:LN||{type:"Point",coordinates:ll},ll,fame:1,icon:r[4],phf:r[5],cc:r[3],line:!!LN})});
  /* states and provinces (names and centres; the shape is loaded when one is chosen) */
@@ -47,7 +59,9 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  {const isl=new Set(IDX.filter(e=>e.cat==="islands").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="groups"&&isl.has(norm(e.n))))}
  /* a name that is both a lake and a sea (the Caspian, Aral and Dead Seas) is kept once, as a lake */
  {const lk=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="seas"&&lk.has(norm(e.n))))}
- IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
+ /* local words for lake, reservoir, river… also match the English way of searching: "Manicouagan", "Lake Manicouagan" */
+ const GEN=/^(reservoir|lac|lago|laguna|lagoa|embalse|represa|ozero|vodokhranilishche|jezero|jezioro|see|meer|sjon|jarvi|tonle|danau|hu|ko|gol|nuur|buhayrat|bahr|rio|rivière|riviere|fleuve)\s+(de |du |des |la |le |d |del |di )?/;
+ IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys.slice().forEach(k=>{const m=k.match(GEN);if(m){const rest=k.slice(m[0].length);if(rest){e.keys.push(rest);if(e.cat==="lakes")e.keys.push("lake "+rest);if(e.cat==="rivers")e.keys.push(rest+" river")}}});e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
 /* states and provinces: the name list is small and loaded once; each shape comes with its country's file */
 /* named regions: Natural Earth's geographic regions (public domain: the Sahel, Patagonia, Siberia, plains, plateaus, basins,
    deltas, coasts…), groups of countries (the Maghreb, the Levant, Central Asia…) and the Silk Road */
