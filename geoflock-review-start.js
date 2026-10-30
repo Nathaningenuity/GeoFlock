@@ -226,9 +226,9 @@ function asia(){const id="asia";
   stat:"At its narrowest, Vietnam is only about 50 km wide",
   body:"Vietnamese describe their country as a carrying pole with a basket of rice at each end: the Red River delta around Hanoi in the north and the Mekong delta in the south. Most people live in or near these two flat, flooded deltas, and the thin coastal strip between them, backed by mountains, carries the main road and railway. Drag the ruler across the narrowest part.",
   more:"The shape comes from history: Vietnamese rulers spread south from the Red River along the coast over many centuries, reaching the Mekong delta only in the 1600s and 1700s. That is one reason the north and south have different accents and dishes, and, from 1954 to 1975, had different governments."});
- ins(id,"Deserts and steppe",{title:"Arabia’s monsoon corner",view:[43,9,63,25],globe:[54,17,4],card:"left",hi:["om"],
+ ins(id,"Deserts and steppe",{title:"Arabia’s monsoon corner",view:[33,9,63,25],globe:[54,17,4],card:"left",hi:["om"],
   lines:[{coords:[[50,9.5],[51.8,12.5],[53,15],[54,16.8]],kind:"flow"}],
-  pins:[[[54.09,17.02],"Salalah","point"],[[[50,22],[47,20]],"The Empty Quarter: over 45 °C","area"]],
+  pins:[[[54.09,17.02],"Salalah","point"],[[[51.5,20.5],[50,19.5]],"The Empty Quarter: over 45 °C","area"]],
   stat:"Every summer, one corner of the Arabian desert turns green with mist and drizzle",
   body:"The edge of the Indian Ocean monsoon brushes Dhofar, in southern Oman. From June to September its moist south-west winds (arrow) cross water chilled by currents rising from the deep, then hit the coastal mountains, wrapping them in fog and drizzle. The hills turn green while the rest of Arabia bakes at over 45 °C.",
   more:"People drive here from across the Gulf for the khareef, the monsoon season, to enjoy cool, rainy weather. The dry slopes just behind the mist grow frankincense trees, whose scented resin made southern Arabia rich in ancient times."});
