@@ -29,6 +29,7 @@ function labels(){const n=night();if(n===was)return;const ts=["allMapsShowLabels
  if(n){saved=ts.map(t=>t.checked);ts.forEach(t=>set(t,false))}else if(was&&saved)ts.forEach((t,i)=>{if(saved[i])set(t,true)});was=n}
 const css=document.createElement("style");css.textContent=`
 [data-allmaps-mode="night"]{ position:relative; overflow:visible; }
+html.gf-nl-seen [data-allmaps-mode="night"]::after{ display:none; }
 [data-allmaps-mode="night"]::after{ content:""; position:absolute; top:-5px; right:-3px; width:15px; height:15px; pointer-events:none;
  background:radial-gradient(circle,#fff 0 18%,rgba(255,255,255,.55) 30%,rgba(255,255,255,0) 62%);
  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0l2.6 9.4L24 12l-9.4 2.6L12 24l-2.6-9.4L0 12l9.4-2.6z'/%3E%3C/svg%3E") center/contain no-repeat;
@@ -58,3 +59,6 @@ setInterval(()=>{try{fold();labels();printChip()}catch(e){}},400);
 })();
 /* the City Lights tour plays on the globe, where the night picture is sharpest */
 (function(){const set=()=>{try{const T=PS_TOURS.night;if(T&&T.map&&!T.map.globe){T.map.globe=true;return true}return!!(T&&T.map&&T.map.globe)}catch(e){return false}};if(!set()){let n=0;const t=setInterval(()=>{if(set()||++n>60)clearInterval(t)},500)}})();
+/* the star on the City Lights tab goes away once the map has been opened */
+(function(){const K="gfNightSeen";try{if(localStorage.getItem(K))document.documentElement.classList.add("gf-nl-seen")}catch(e){}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('[data-allmaps-mode="night"]')){document.documentElement.classList.add("gf-nl-seen");try{localStorage.setItem(K,"1")}catch(err){}}},true)})();
