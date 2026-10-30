@@ -151,8 +151,8 @@ function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(allMapsColorMode!=="satellite"&&sat)sat.click();}
  S.on=v;
  if(v){toNow();
-  try{globePrefs().allmaps=true;saveStats()}catch(e){}try{amGlobeSync()}catch(e){console.error(e)}patchCfg();try{if(cloudsOn())cloudsLoad()}catch(e){}nightReady()}
- else{stop();freeNight()}
+  try{S.wasFlat=!globePrefs().allmaps;globePrefs().allmaps=true;saveStats()}catch(e){}try{amGlobeSync()}catch(e){console.error(e)}patchCfg();try{if(cloudsOn())cloudsLoad()}catch(e){}nightReady()}
+ else{stop();freeNight();if(S.wasFlat){S.wasFlat=false;try{globePrefs().allmaps=false;saveStats();amGlobeSync()}catch(e){}}}
  sync();req()}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
  if(S.on&&!(allowed()&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
@@ -162,7 +162,10 @@ function sync(){const c=chip(),view=document.getElementById("allMapsView");
  const p=S.on?panel():document.getElementById("gfDngPanel");if(p){p.hidden=!S.on;if(S.on)ui()}}
 /* any other map chip, or the Flat map switch, leaves this view; the checks run after the click has done its work */
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest('#allMapsToggleRow [data-allmaps-mode], #allMapsToggleRow [data-view="flat"], #projTabChip');
- if(t&&S.on){S.on=false;stop();freeNight();setTimeout(()=>{sync();req()},0)}},true);
+ if(t&&S.on){S.on=false;stop();freeNight();
+  /* back to the flat map if that is where Day & Night was opened from */
+  if(S.wasFlat&&t.matches("[data-allmaps-mode]"))try{globePrefs().allmaps=false;saveStats()}catch(e){}
+  S.wasFlat=false;setTimeout(()=>{try{amGlobeSync()}catch(e){}sync();req()},0)}},true);
 {const _s=amGlobeSync;amGlobeSync=function(){const r=_s.apply(this,arguments);try{patchCfg();sync()}catch(e){console.error(e)}return r}}
 if(typeof renderAllMapsView==="function"){const _r=renderAllMapsView;renderAllMapsView=function(){const r=_r.apply(this,arguments);try{sync()}catch(e){}return r}}
 setInterval(()=>{try{if(document.getElementById("allMapsToggleRow"))sync()}catch(e){}},500);
