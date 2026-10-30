@@ -346,7 +346,7 @@ function antarctica(){const id="antarctica";
  set(id,"The moving South Pole",s=>{rep(s,"more"," The station there keeps New Zealand time, because its flights come from Christchurch.","");
   if(!/winter/.test(s.more||""))s.more=(s.more||"")+" Each year’s new marker is designed and made by the people who spent the winter at the station."});
  set(id,"Coldest, driest, windiest, highest",s=>rep(s,"more","Inland it gets so little snow that it counts as the largest desert on Earth.","Its height, its white surface reflecting sunlight back into space, and months of polar night make it far colder than the Arctic, which is ocean."));
- ins(id,"Antarctic rainforest",{title:"Why Antarctica froze",view:[-180,-90,180,-40],globe:[-60,-65,1.3],
+ ins(id,"Antarctic rainforest",{title:"Why Antarctica froze",view:[-180,-90,180,-40],globe:[-30,-78,0.95],
   lines:[{coords:par(-57,-178,178,4).concat([[178,-57]]),kind:"flow"}],
   pins:[[[-64,-58.5],"Drake Passage","point"],[[146,-50],"Tasmanian Gateway","point"]],
   stat:"Antarctica was green and wooded until the seas opened between it and its last neighbours",
