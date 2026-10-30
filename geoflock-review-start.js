@@ -243,7 +243,7 @@ function africa(){const id="africa";
  set(id,"The Nile",s=>{if(!/tilts/.test(s.more||""))s.more="The Nile flows north through the desert because the land tilts from the East African highlands down to the Mediterranean, and most of the water that reaches Egypt falls as rain on the Ethiopian highlands, over 1,500 km away. "+(s.more||"")});
  set(id,"The Sahara is mostly rock",s=>rep(s,"more","About 8,000 years ago the Sahara was green",GREEN+" the Sahara was green"));
  rm(id,"The roundest and the squarest");          /* a record with no why; its slot goes to the new stops */
- ins(id,"Wild Africa",{title:"The long shadow of the slave trade",view:[-20,-4,18,18],globe:[2,8,3],card:"left",hi:["bj"],
+ ins(id,"Wild Africa",{title:"The long shadow of the slave trade",view:[-30,-4,14,18],globe:[2,8,3],card:"left",hi:["bj"],
   lines:[{coords:[[2.09,6.3],[-2,4.8],[-8,3.6],[-14,3],[-19,2.6]],kind:"flow"}],
   pins:[[[2.09,6.36],"Ouidah","point"],[[[1,7],[4,7.5]],"The “Slave Coast”","area"]],
   stat:"In Africa, people whose ancestors’ groups lost the most people to the slave trade trust others less today",
@@ -256,7 +256,7 @@ function africa(){const id="africa";
   stat:"Nairobi didn’t exist until 1899: it began as a camp on a railway line",
   body:"The British built the Uganda Railway (arrows) from the port of Mombasa to Lake Victoria. Nairobi was a supply depot about halfway along, on flat ground with water, just before the line had to climb the steep highlands towards the Rift Valley. Within a few years it was the colony’s capital; today over 4 million people live there.",
   more:"A 2017 study of Kenya found that towns that grew up around railway stations kept growing even after the trains mattered less, because the people, shops and roads were already there. Look at Africa’s railways: most were built to run from a mine or farmland straight to a port, not between neighbouring countries."});
- ins(id,"Three capitals",{title:"The city that nearly ran dry",view:[14,-36.5,25,-29.5],globe:[18.9,-33.9,6],card:"left",
+ ins(id,"Three capitals",{title:"The city that nearly ran dry",view:[13,-35.6,23,-31],globe:[18.9,-33.9,6],card:"left",
   gfClimate:{alpha:.55,box:[12,-37,30,-28]},
   pins:[[[18.42,-33.92],"Cape Town","point"],[[19.28,-34.08],"Theewaterskloof, its biggest dam","point"]],
   phPins:[ph([18.41,-33.96],"Cape Town and Table Mountain","Cape Town (ZA), Table Mountain -- 2024 -- 2825.jpg")],
@@ -270,11 +270,11 @@ function namerica(){const id="namerica";
  set(id,"Mountains and rivers",s=>rep(s,"more","The Great Plains are some of the flattest farmland on Earth: Kansas really is, measurably, flatter than a pancake.","The Great Plains are flat because they are an old sea floor, later smoothed over by sand and gravel washed down from the Rockies: Kansas really is, as a 2003 joke study measured, flatter than a pancake."));
  ins(id,"Mountains and rivers",{title:"Cities on the waterfall line",view:[-87,31,-72,42],globe:[-78,37,4],card:"left",
   lines:[{coords:[[-74.76,40.22],[-75.16,39.95],[-76.61,39.29],[-77.04,38.9],[-77.44,37.54],[-78.64,35.78],[-81.03,34.0],[-81.97,33.47],[-83.63,32.84],[-84.99,32.46]],kind:"dash"}],
-  pins:[[[-75.16,39.95],"Philadelphia","point"],[[-76.61,39.29],"Baltimore","point"],[[-77.04,38.9],"Washington","point"],[[-77.44,37.54],"Richmond","point"],[[-81.03,34.0],"Columbia","point"],[[-84.99,32.46],"Columbus","point"]],
+  pins:[[[-79.6,35.2],"The Fall Line","point"],[[-77.25,38.99],"Great Falls of the Potomac","point"]],
   stat:"Join up Philadelphia, Baltimore, Washington, Richmond and Columbia, and you have traced a line of waterfalls",
   body:"Along the US East Coast, rivers drop off the hard old rock of the hills onto the soft, flat coastal plain, in falls and rapids. Boats coming up from the sea had to stop there and unload, and the falling water could turn mill wheels. So a chain of cities grew up exactly where the rocks change: the Fall Line (dashed).",
   more:"Washington’s Great Falls on the Potomac and Richmond’s rapids on the James are close to downtown. Geographers call a place where goods must switch from one kind of transport to another a “break-of-bulk point”, and the Fall Line is a textbook case."});
- ins(id,"Cities on the waterfall line",{title:"The ditch that made New York",view:[-81,39.8,-71,45.2],globe:[-75.5,42.5,5],card:"left",
+ ins(id,"Cities on the waterfall line",{title:"The ditch that made New York",view:[-85,39.8,-71,45.2],globe:[-75.5,42.5,5],card:"left",
   lines:[{coords:[[-78.88,42.89],[-78.69,43.17],[-77.61,43.16],[-76.15,43.05],[-75.23,43.1],[-74.6,42.95],[-73.94,42.81],[-73.75,42.65]],kind:"flow"},{coords:[[-73.75,42.65],[-73.9,42.0],[-73.95,41.4],[-74.0,40.75]],kind:"flow"}],
   xsec:{title:"Along the canal: Buffalo to Albany",pts:[[-78.88,42.89,"Buffalo"],[-77.61,43.16,"Rochester"],[-76.15,43.05,"Syracuse"],[-75.23,43.1,"Utica"],[-74.6,42.95,"Mohawk Valley"],[-73.75,42.65,"Albany"]],mark:200,
    note:"The dashed line marks 200 m. The route stays low the whole way: the Mohawk Valley is the one easy gap through the Appalachians. Heights are smoothed."},
@@ -477,7 +477,10 @@ function sahara(){set("climate","When the Sahara was green",s=>{rep(s,"stat","Ab
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function merge(){try{if(typeof gfMergeExtra==="function")gfMergeExtra();if(typeof PS_PHOTO_DATA==="undefined")return;
  const have=new Set(PS_PHOTO_DATA.map(p=>p&&p.f));GF_RVSTART_PHOTOS.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}catch(e){}}
-function reg(s){try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};(s.phPins||[]).forEach(q=>{const f=q&&q._f;if(!f)return;const i=libIdx(f);if(i>=0){q.img=i;PS_SQ_IMG[q.label]=i}})}catch(e){}}
+/* a few older photo pins carry an area's nested coordinates ([[lon,lat],[lon,lat]]), which the map cannot project (a console
+   error on the stop and the next one): give them their first point */
+function fixAt(s){try{(s.phPins||[]).forEach(q=>{if(q&&Array.isArray(q.at)&&Array.isArray(q.at[0]))q.at=q.at[0].slice()})}catch(e){}}
+function reg(s){fixAt(s);try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};(s.phPins||[]).forEach(q=>{const f=q&&q._f;if(!f)return;const i=libIdx(f);if(i>=0){q.img=i;PS_SQ_IMG[q.label]=i}})}catch(e){}}
 const IDS=["pop","geo","time","projections","night","space","europe","asia","africa","namerica","samerica","oceania","antarctica","bprisoners","bggs","bnations","bcollapse"];
 function photos(){try{merge();if(typeof PS_PHOTO!=="undefined")for(const k in CARD){const i=libIdx(CARD[k]);if(i>=0&&PS_PHOTO[k]==null)PS_PHOTO[k]=i}
  IDS.forEach(id=>{const t=T(id);if(t)t.steps.forEach(s=>s&&reg(s))})}catch(e){console.error(e)}}

@@ -30,8 +30,15 @@ function set(id,title,o){const s=st(id,title);if(!s)return null;
  for(const k in o){if(k==="phPins"||k==="pins")lock(s,k,o[k]);else def(s,k,o[k])}
  if(o.view)def(s,"_ff",1);if(o.phPins)s._sqPruned=-1;return s}
 function drop(id,title){const t=T(id);if(!t)return;const i=t.steps.findIndex(s=>s&&s.title===title);if(i>=0)t.steps.splice(i,1)}
+/* the card sits over the left part of the map: widen a new stop's view westwards so that its pins and lines fall in the
+   right-hand 55% of the frame (world-wide and polar views are left alone) */
+function frame(s){try{const v=s.view;if(!v||(s.card&&s.card!=="left")||v[2]-v[0]>=300||v[1]<-70)return;
+ const xs=[];(s.pins||[]).forEach(p=>xs.push(p[0][0]));(s.phPins||[]).forEach(q=>xs.push(q.at[0]));(s.lines||[]).forEach(l=>l.coords.forEach(c=>xs.push(c[0])));
+ if(s.gfRuler){xs.push(s.gfRuler.a[0],s.gfRuler.b[0])}if(!xs.length)return;
+ const lo=Math.min(...xs),hi=Math.max(...xs),w=v[2]-v[0];if(lo>=v[0]+.42*w&&hi<=v[2])return;
+ const W=Math.max(w,(hi-lo)/.53),x0=lo-.42*W;s.view=[Math.max(-180,x0),v[1],Math.min(180,x0+W),v[3]]}catch(e){}}
 function ins(id,after,s){const t=T(id);if(!t||t.steps.some(x=>x&&x.title===s.title))return;let i=t.steps.findIndex(x=>x&&x.title===after);
- if(i<0)i=t.steps.length-2;t.steps.splice(i+1,0,S(s))}
+ if(i<0)i=t.steps.length-2;frame(s);t.steps.splice(i+1,0,S(s))}
 const CAPKEY=(id,t)=>id+"|"+t;
 function rename(id,from,to){const s=st(id,from);if(!s||st(id,to))return;def(s,"title",to);
  try{if(PS_PHOTO[CAPKEY(id,from)]!=null&&PS_PHOTO[CAPKEY(id,to)]==null)PS_PHOTO[CAPKEY(id,to)]=PS_PHOTO[CAPKEY(id,from)]}catch(e){}
@@ -206,14 +213,13 @@ function hafrica(){
   stat:"In the Sahara’s salt-mining town of Taghaza, even the houses and the mosque were built of salt",
   body:"West Africa had gold but little salt, which people in its hot climate badly needed. The Sahara had salt but no gold. So camel caravans carried slabs of salt south to Timbuktu (arrow) and gold north (dashed), and the empires of Ghana and Mali grew rich by taxing the trade in between.",
   more:"Ibn Battuta stayed at Taghaza in 1352. He wrote that its roofs were made of camel skins and that every bit of food had to be brought in. Camel caravans still carry salt slabs from Taoudenni, a later mine further south."});
- ins("hafrica","The Benin Bronzes",{title:"The fly that stopped the horse",sub:"1700",view:[-18,2,16,20],globe:[0,10,3],
-  gfClimate:{alpha:.4,box:[-20,0,18,22]},
+ ins("hafrica","The Benin Bronzes",{title:"The fly that stopped the horse",sub:"1700",view:[-34,0,18,24],globe:[0,10,3],
   lines:[{coords:[[-13,9.6],[-9,8.7],[-5,8.2],[-2,8.2],[1,8.4],[3.5,8.7],[6.5,8.3],[9,7.5],[12,6.8]],kind:"dash"}],
   pins:[P([4.1,8.97],"Old Oyo: horsemen"),P([-0.2,16.27],"Gao: Songhai"),P([-1.62,6.69],"Kumasi: Asante"),P([5.63,6.34],"Benin City")],
   iconPins:[ic([4.1,8.97],"swords")],
   phPins:[ph([2,7.5],"A tsetse fly","TSETSE")],
   stat:"A fly decided where West Africa’s horse-riding empires could go",
-  body:"Tsetse flies, common in Africa’s wet forests (dark green), carry a disease that kills horses and cattle. So the great cavalry empires, such as Mali, Songhai and Oyo, ruled the drier grasslands to the north but stopped near where the forest began (dashed). Forest kingdoms such as Asante and Benin fought on foot.",
+  body:"Tsetse flies, common in the wet forests near the coast (south of the dashed line), carry a disease that kills horses and cattle. So the great cavalry empires, such as Mali, Songhai and Oyo, ruled the drier grasslands to the north but stopped near where the forest began. Forest kingdoms such as Asante and Benin fought on foot.",
   more:"The tsetse also stopped farmers from using oxen to pull ploughs across much of Africa. It infects people too, causing sleeping sickness. Oyo’s rulers even bought their horses from the north, because they could not breed them in the tsetse belt."});
  ins("hafrica","The Atlantic slave trade",{title:"A colony that began as a vegetable garden",sub:"1700/ned",view:[-40,-48,120,58],globe:[18,-20,1.2],
   lines:[{coords:[[4.9,52.37],[-5,45],[-18,25],[-25,5],[-20,-20],[0,-35],[18.42,-33.93]],kind:"flow"},{coords:[[18.42,-33.93],[40,-38],[70,-36],[95,-25],[106.8,-6.2]],kind:"flow"}],

@@ -242,7 +242,7 @@ function crops(){if(!once("crops"))return;
   stat:"Almost every vanilla flower on Earth is pollinated by hand, with a trick found by a 12-year-old enslaved boy in 1841",
   body:"Vanilla is an orchid from Mexico. Taken to islands in the Indian Ocean, the vines flowered but made no pods, because the insects that pollinate them had stayed behind in Mexico. On Réunion, Edmond Albius found he could lift a flap inside the flower with a sliver of bamboo and press the pollen in with his thumb. Each flower opens for just one day, so workers still pollinate them by hand that morning.",
   more:"Madagascar, next to Réunion, now grows most of the world’s vanilla. In 2018 its price passed $500 a kilo, more than silver by weight, and farmers guarded their vines at night. Albius was freed in 1848 and died poor."});
- ins("crops","Vanilla by hand",{title:"How a fungus made Ceylon tea",view:[70,1,90,13],globe:[80.6,7.3,5],card:"left",hiSoft:["lk"],
+ ins("crops","Vanilla by hand",{title:"How a fungus made Ceylon tea",view:[70,1,90,13],globe:[80.6,7.3,5],card:"left",
   pins:[P([80.63,7.29],"Kandy"),P([80.78,6.97],"Nuwara Eliya’s tea hills")],
   xsec:{title:"Sri Lanka from Colombo to the hill country",pts:[[79.86,6.93,"Colombo"],[80.1,6.95],[80.35,6.98],[80.55,6.98],[80.78,6.97,"Nuwara Eliya"]],mark:1200,
    note:"The dashed line marks 1,200 m: the famous ‘high-grown’ teas come from the cool, wet hills above it, the same slopes where the coffee estates once stood. The heights are smoothed."},
