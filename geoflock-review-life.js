@@ -527,12 +527,12 @@ function festivals(){if(!once("festivals"))return;
 function houses(){if(!once("houses"))return;
  set("houses","Snow houses",s=>{const m=String(s.more||"");s.more=m.replace(/\s*In Sweden the Icehotel[^.]*\./,"").trim()});
  ren("houses","Informal settlements","Cities built by their people");
- ins("houses","Building with earth",{title:"Towers that catch the wind",view:[42,24,64,38],globe:[54.4,31.9,3.5],card:"left",hiSoft:["ir"],
+ ins("houses","Building with earth",{title:"Towers that catch the wind",view:[42,24,64,38],globe:[54.4,31.9,3.5],card:"left",
   pins:[P([54.37,31.9],"Yazd")],
   stat:"Yazd’s skyline is full of windcatchers, towers that cooled houses for centuries without electricity",
   body:"In hot, dry Yazd, in the middle of Iran, tall towers called badgirs catch any breeze high above the street and steer it down into the rooms, while warm air escapes out of the top. Some send the air over cool water in underground channels, qanats, before it reaches the house.",
   more:"The same desert builders made yakhchāls, domed ice houses: in winter, water froze in shallow pools at night, and the ice was stored under the thick dome through the summer."});
- ins("houses","Steep roofs for rain and snow",{title:"Houses made of grass",view:[-34,61,-10,68],globe:[-19,65,4],card:"left",hiSoft:["is"],
+ ins("houses","Steep roofs for rain and snow",{title:"Houses made of grass",view:[-34,61,-10,68],globe:[-19,65,4],card:"left",
   pins:[P([-19.51,65.61],"Glaumbær")],
   stat:"For about 1,000 years, most Icelanders lived in houses with walls and roofs of turf",
   body:"Iceland has had little timber since the first settlers cleared its birch woods. So families built thick walls of cut turf on stone footings, around a wooden frame of driftwood or imported logs, with grass growing on the roof. Turf kept out the long, windy winters well.",

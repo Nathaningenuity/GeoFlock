@@ -623,8 +623,8 @@ if(T("hg7c")&&!T("hg7c").steps._rvA){T("hg7c").steps._rvA=1;
  set("hg7c","Containers and global trade",s=>{s.pins=[[[122.06,30.63],"Yangshan deep-water port","point"],[[103.82,1.26],"Singapore","point"]];
   s.stat="Shanghai has been the world’s busiest container port since 2010";
   s.body="The shipping container, introduced in 1956, made moving goods so cheap that distant factories became worthwhile. Shanghai now handles about 50 million standard boxes a year, many at Yangshan, a port built on islands about 30 km offshore and joined to the city by a 32 km bridge, because the Yangtze’s mouth was too shallow for the biggest ships."});
- ins("hg7c","The World Trade Organization",Object.assign({view:[-90,22,30,62],globe:[-30,42,1.4],_ff:1,card:"left"},{title:"The chicken tax",
-  lines:[{coords:[[8,50],[-76.58,39.27]],kind:"dash"}],pins:[[[-76.58,39.27],"Port of Baltimore","point"],[[[8,50]],"Europe: taxed US chicken","area"]],
+ ins("hg7c","The World Trade Organization",Object.assign({view:[-92,20,28,70],globe:[-30,42,1.4],_ff:1,card:"left"},{title:"The chicken tax",
+  lines:[{coords:[[3,45.5],[-76.58,39.27]],kind:"dash"}],pins:[[[-76.58,39.27],"Port of Baltimore","point"],[[[3,45.5]],"Europe: taxed US chicken","area"]],
   stat:"A 1964 trade war over chicken still puts a 25% tariff on imported vans and pickups in the US",
   body:"A tariff is a tax on imports. When Europe taxed American frozen chicken in the early 1960s, the US hit back with tariffs on several European goods, including light trucks. The truck tariff never ended. To dodge it, Ford imported Transit Connect vans with rear seats fitted, so they counted as passenger vehicles, then ripped the seats out in Baltimore.",
   more:"Protectionism shields home industries but invites retaliation. It is one reason big pickups are made in North America and US carmakers dominate that market."}));
