@@ -67,12 +67,12 @@ function geo(){const id="geo";const R={gfMode:"relief",gfOn:["allMapsRiversToggl
  rm(id,"France: the most time zones");          /* the same stop, almost word for word, lives in Time zones */
  set(id,"Further north than you think",s=>{if(!/westerly winds/.test(s.more||""))s.more=(s.more||"")+" How much the Gulf Stream itself does is debated: some climate scientists argue that the westerly winds, warmed by the whole Atlantic, matter more than the current."});
  set(id,"When the Sahara was green",s=>{rep(s,"stat","About 8,000 years ago",GREEN);rep(s,"body","dried out again around 5,000 years ago","dried out again from about 5,000 years ago")});
- ins(id,"A planet of water",Object.assign({title:"The land hemisphere",view:[-80,6,77,88],globe:[-1.55,47.22,1],gfGlobe:true,
+ /* "The land hemisphere" removed at the owner's request */ false&&ins(id,"A planet of water",Object.assign({title:"The land hemisphere",view:[-80,6,77,88],globe:[-1.55,47.22,1],gfGlobe:true,
   pins:[[[-1.55,47.22],"Nantes","point"],[[178,-47],"Opposite: near New Zealand","point"]],
   stat:"Face the globe towards western France, and about four-fifths of all the land is on the half you can see",
   body:"Land is not spread evenly: it bunches up in one half of the planet. The half centred near Nantes, in France, holds about four-fifths of the land and the great majority of the world’s people. Switch to the globe and spin it to the opposite side, near New Zealand: that half is about nine-tenths water.",
   more:"Geographers disagree a little about the exact centre (spots in Brittany and Catalonia have been suggested too), but it always lands in western Europe. It is one small reason Europe sat at the middle of so many sea routes: from its coasts, most of the world’s land is relatively near."},R));
- ins(id,"Africa is splitting",Object.assign({title:"The sea that dried up",view:[-26,28,36,47.5],globe:[8,37,2.6],card:"left",
+ /* "The sea that dried up" removed at the owner's request */ false&&ins(id,"Africa is splitting",Object.assign({title:"The sea that dried up",view:[-26,28,36,47.5],globe:[8,37,2.6],card:"left",
   lines:[{coords:[[-14,35.8],[-9,35.9],[-5.6,35.95],[-2.5,36.2]],kind:"flow"}],
   xsec:{title:"From Gibraltar across the western Mediterranean",pts:[[-5.6,35.95,"Gibraltar"],[-3,36.2],[0,37.4],[3,38.6],[5.5,39.6,"Balearic basin"],[8.1,40.5,"Sardinia"]],
    note:"The floor of the basin is nearly 3 km below the sea. When the Mediterranean dried, this was the bottom of a deep, salty pit."},
@@ -81,7 +81,7 @@ function geo(){const id="geo";const R={gfMode:"relief",gfOn:["allMapsRiversToggl
   stat:"About 6 million years ago the Mediterranean largely dried up, leaving salt more than a kilometre thick on its floor",
   body:"The Mediterranean loses more water to evaporation than its rivers bring in, so it depends on the Atlantic pouring in at Gibraltar (arrow). When plate movements closed that gateway, the sea evaporated into deep, salty basins, kilometres below today’s sea level. Move along the chart to see how far down the floor is.",
   more:"Then, about 5.3 million years ago, the Atlantic broke back through. Some scientists think the refill, the “Zanclean flood”, took only months to a few years, as a giant torrent through the strait; others think it was slower, and it is still argued over. Geologists found the buried salt in 1970, in drill cores from the sea floor."},R));
- ins(id,"The deepest and oldest lake",Object.assign({title:"The bay with weaker gravity",view:[-128,46,-62,68],globe:[-85,59,2.2],card:"left",
+ /* "The bay with weaker gravity" (Hudson Bay) removed at the owner's request */ false&&ins(id,"The deepest and oldest lake",Object.assign({title:"The bay with weaker gravity",view:[-128,46,-62,68],globe:[-85,59,2.2],card:"left",
   lines:[{coords:[[-95,58],[-93,62],[-89,64.5],[-83,65.5],[-78,63.5],[-76.5,59],[-78.5,54.5],[-82,51.5],[-88,52],[-93,54.5],[-95,58]],kind:"dash"}],
   pins:[[[-85,59.5],"Weakest gravity","point"],[[-94.17,58.77],"Churchill","point"]],
   stat:"Gravity around Hudson Bay is a little weaker than almost anywhere else on Earth",
@@ -161,8 +161,8 @@ function night(){const id="night";
 function space(){const id="space";
  set(id,"The colours of the Sahara",s=>rep(s,"more","About 6,000 years ago the Sahara was green",GREEN+" the Sahara was green"));
  ins(id,"A sea that shrank",{title:"The sea of plastic",view:[-6.5,35.3,0.5,39.2],globe:[-2.8,36.75,7],card:"left",
-  pins:[[[-2.46,36.84],"Almería","point"]],
-  phPins:[ph([-2.8,36.75],"Campo de Dalías: the sea of plastic","Plastic sea, Almería Spain.jpg")],
+  lines:[{circle:[-2.75,36.78],km:55,kind:"outline"}],
+  phPins:[Object.assign(ph([-2.75,36.78],"Campo de Dalías: the sea of plastic","Plastic sea, Almería Spain.jpg"),{ringKm:55})],
   stat:"In southern Spain, greenhouses cover so much land that from space they look like a white sea",
   body:"Almería is one of the driest corners of Europe, but it has sun all year. Since the 1960s farmers have covered over 30,000 hectares with plastic greenhouses, growing tomatoes, peppers and cucumbers for Europe’s winter supermarkets. Zoom in on the coast west of Almería to find the pale patch.",
   more:"The white roofs reflect sunlight back into space: one study found that the area cooled slightly between 1983 and 2006, while the rest of Spain warmed. The greenhouses also drain the water under the ground, and depend on low-paid migrant workers."});
@@ -457,7 +457,7 @@ function collapse(){const id="bcollapse";const H=y=>({mode:"history",sub:y,card:
 function questions(){try{if(typeof TOURQ==="undefined")return;const Q=TOURQ;
  const fix=(id,f)=>{const q=Q[id];if(q&&!q._rvStart){try{f(q)}catch(e){console.error(e)}q._rvStart=1}};
  const swap=(arr,st,n)=>{const i=(arr||[]).findIndex(x=>x&&x.st===st);if(i>=0)arr[i]=n;else if(arr)arr.push(n)};
- fix("geo",q=>swap(q.recap,"France: the most time zones",{q:"About 6 million years ago, which sea largely dried up when its gateway to the ocean closed?",o:["The Black Sea","The Mediterranean","The Caspian Sea","The Red Sea"],a:1,why:"With the Strait of Gibraltar closed, the Mediterranean evaporated and left thick salt on its floor.",st:"The sea that dried up",kc:"es"}));
+ false&&fix("geo",q=>swap(q.recap,"France: the most time zones",{q:"About 6 million years ago, which sea largely dried up when its gateway to the ocean closed?",o:["The Black Sea","The Mediterranean","The Caspian Sea","The Red Sea"],a:1,why:"With the Strait of Gibraltar closed, the Mediterranean evaporated and left thick salt on its floor.",st:"The sea that dried up",kc:"es"}));
  fix("night",q=>{(q.mid||[]).forEach(x=>{if(x.at==="An island continent lit at the edges")x.at="Japan’s lit coastline"});
   swap(q.recap,"An island continent lit at the edges",{q:"About how much of its night lights did Syria lose in four years of war?",o:["About a tenth","About a third","About four-fifths","All of them"],a:2,why:"Satellite pictures from 2011 and 2015 showed about four-fifths of the lights gone; Aleppo lost almost all of its.",st:"The lights went out in Syria",kc:"sy"})});
  fix("asia",q=>{(q.recap||[]).forEach(x=>{if(x.st==="The biggest island country")x.st="Islands of fire"});
@@ -487,17 +487,24 @@ function photos(){try{merge();if(typeof PS_PHOTO!=="undefined")for(const k in CA
 if(typeof psGo==="function"&&!psGo._rvStart){const _g=psGo;psGo=function(i){try{if(typeof ps!=="undefined"&&ps&&IDS.includes(ps.tour)){const s=psSteps()[i];if(s)reg(s)}}catch(e){}return _g.apply(this,arguments)};psGo._rvStart=1}
 
 /* ======================================================================= run */
-const FN={pop,geo,time,projections,night,space,europe,asia,africa,namerica,samerica,oceania,antarctica,bprisoners:prisoners,bggs:ggs,bnations:nations,bcollapse:collapse};
+/* the geography tour stays exactly as the owner set it: no review changes to it */
+const FN={pop,time,projections,night,space,europe,asia,africa,namerica,samerica,oceania,antarctica,bprisoners:prisoners,bggs:ggs,bnations:nations,bcollapse:collapse};
 function run(){try{for(const id in FN){const t=T(id);if(!t||t.steps._rvStart)continue;try{FN[id]()}catch(e){console.error("review-start",id,e)}def(t.steps,"_rvStart",1)}
  const c=T("climate");if(c&&!c.steps._rvStartS){sahara();def(c.steps,"_rvStartS",1)}
  questions();photos()}catch(e){console.error(e)}}
 [0,1500,5000,12000].forEach(ms=>setTimeout(run,ms));
+/* the geography tour stays exactly as the owner set it. It copies stops from other tours each time it starts, and the review changed
+   three of those sources: put the owner's originals back into the geography copy (and the icy-desert stop the climate tour renamed). */
+const GEO_KEEP={icy:{"body": "A desert is a place that gets very little rain or snow, not necessarily a hot place. Inland Antarctica gets less precipitation than much of the Sahara.", "clim": ["#666666", "#ff0000"], "gfFrom": "climate|The biggest desert is icy", "gfMode": "climate", "gfOn": [], "globe": [20, -50, 1], "more": "Only ice cap (dark grey) and hot desert (red) are lit. The Antarctic Desert covers about 14 million km², the Arctic about 13.9 million and the Sahara about 9.2 million. The middle of Antarctica gets about 50 mm of snow, measured as water, a year. The ice is thick only because almost none of it melts: the snow has piled up for hundreds of thousands of years. The McMurdo Dry Valleys have had no snow or ice cover for around two million years.", "pins": [[[[60, -78], [0, -80], [120, -75]], "Antarctic Desert, the largest", "area"], [[[-40, 76], [-35, 72]], "Arctic, second", "area"], [[[10, 24], [20, 23]], "Sahara, only third", "area"]], "stat": "The largest desert on Earth is not the Sahara. It’s Antarctica", "title": "The biggest desert is icy", "view": [-180, -90, 180, 85]},after:"Further north than you think",text:{"When the Sahara was green": {"stat": "About 8,000 years ago, the Sahara had lakes, grassland, hippos and crocodiles", "body": "Slow wobbles in Earth’s orbit strengthened the African monsoon and pushed its rain far north. The “Green Sahara” dried out again around 5,000 years ago."}, "The deepest and oldest lake": {"stat": "Lake Baikal holds about 20% of the world’s liquid fresh surface water, more than all five Great Lakes combined", "body": "It is over 1,600 m deep and about 25 million years old, the deepest and oldest lake on Earth. It covers less area than Lake Superior but holds about a fifth of the world’s unfrozen fresh surface water."}}};
+function geoKeep(r){if(!Array.isArray(r))return;
+ for(let i=0;i<r.length;i++){const s=r[i],t=s&&GEO_KEEP.text[s.title];if(t&&(s.stat!==t.stat||s.body!==t.body))r[i]=Object.assign({},s,t)} /* a copy: the source tour keeps its own text */
+ if(!r.some(s=>s&&s.title===GEO_KEEP.icy.title)){const j=r.findIndex(s=>s&&s.title===GEO_KEEP.after);r.splice(j>=0?j+1:r.length-1,0,JSON.parse(JSON.stringify(GEO_KEEP.icy)))}}
 /* the geography tour is rebuilt from its picks every time it starts (geoBuild): patch each new list as it is made */
 if(typeof geoBuild==="function"&&!geoBuild._rvStart){const _gb=geoBuild;geoBuild=function(){
   /* put the removed source stops back for a moment, so the geography tour can still copy them */
   const back=[];for(const k in GONE){const [id,title]=k.split("|");const t=T(id);if(id!=="geo"&&t&&!t.steps.some(x=>x&&x.title===title)){t.steps.push(GONE[k]);back.push([t,GONE[k]])}}
   let r;try{r=_gb.apply(this,arguments)}finally{back.forEach(([t,o])=>{const i=t.steps.indexOf(o);if(i>=0)t.steps.splice(i,1)})}
-  try{const G=PS_TOURS.geo,old=G.steps;G.steps=r;try{geo();def(r,"_rvStart",1)}finally{G.steps=old}photos()}catch(e){console.error(e)}return r};geoBuild._rvStart=1}
+  try{geoKeep(r)}catch(e){console.error(e)}try{photos()}catch(e){console.error(e)}return r};geoBuild._rvStart=1}
 /* any other tour that rebuilds its steps when it starts is patched again straight away */
 if(typeof psStart==="function"&&!psStart._rvStart){const _ps=psStart;psStart=function(){const r=_ps.apply(this,arguments);try{run()}catch(e){}return r};psStart._rvStart=1}
 if(document.readyState!=="complete")addEventListener("load",()=>setTimeout(run,300));

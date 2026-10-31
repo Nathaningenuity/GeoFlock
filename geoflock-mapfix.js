@@ -606,7 +606,11 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 /* 40: the photo pins mark their spot with a small dot (rings were too many and looked strange) */
 (function(){const fix=()=>{if(typeof psPhPinsSync!=="function"||psPhPinsSync._gfRing)return false;const _s=psPhPinsSync;
   psPhPinsSync=function(){const r=_s.apply(this,arguments);try{const box=psContainer&&psContainer(),svg=box&&box.querySelector(".ps-phpins svg.ps-sq-lead");if(svg){const RR=6;
-   svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");c.setAttribute("r",3.4);c.classList.add("ps-dot2");
+   /* a pin with ringKm marks a small area drawn as a circle of that size: no dot, and its line ends at the circle's edge */
+   const rk=[];try{(psSteps()[ps.i].phPins||[]).forEach(q=>{if(q&&q.ringKm){const a=psScreen(q.at),b=psScreen([q.at[0]+q.ringKm/(111.32*Math.cos(q.at[1]*Math.PI/180)),q.at[1]]);if(a&&b)rk.push([a[0],a[1],Math.hypot(b[0]-a[0],b[1]-a[1])])}})}catch(e){}
+   svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");const ring=rk.find(k=>Math.hypot(k[0]-x,k[1]-y)<1.5);
+    if(ring){c.setAttribute("r",0);c.style.display="none";svg.querySelectorAll("line").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y),R=ring[2]+1;if(d>R+2){l.setAttribute("x1",(x+(x2-x)/d*R).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*R).toFixed(1))}else l.style.display="none"}});return}
+    c.setAttribute("r",3.4);c.classList.add("ps-dot2");
     svg.querySelectorAll("line").forEach(l=>{if(Math.abs(+l.getAttribute("x1")-x)<.6&&Math.abs(+l.getAttribute("y1")-y)<.6){const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d>RR+2){l.setAttribute("x1",(x+(x2-x)/d*RR).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*RR).toFixed(1))}}})})}}catch(e){}return r};psPhPinsSync._gfRing=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}
  const st=document.createElement("style");st.textContent=".ps-sq-lead circle.ps-dot2{ stroke:#fff !important; stroke-width:1.4px !important; }";document.head.appendChild(st)})();
