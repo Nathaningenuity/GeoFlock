@@ -337,3 +337,29 @@ body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.2
 document.head.appendChild(css);
 window.gfDNG={on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode};
 })();
+
+/* the blue rim round the globe (drawn by the globe's 2D layer, outside this shader) follows the sun in Day & Night: its
+   brightness at each point of the edge uses the same sun-height value as the surface there (s = dot(normal, sun)), so the
+   rim is dark on the night side, with only a thin dim glow near the day/night line. A conic gradient sampled at 90
+   points round the edge masks the usual rim, so the fade is smooth with no seams. */
+(function(){
+if(typeof GlobeView==="undefined")return;
+let off=null;
+GlobeView.prototype._rimLit=function(ctx,cx,cy,r,outline){
+ const D=window.gfDNG;if(!D||!D.on()||typeof amGlobe==="undefined"||this!==amGlobe||this._flat||!ctx.createConicGradient)return false;
+ const S=D.state,la=S.lat*Math.PI/180,lo=S.lon*Math.PI/180,sun=[Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la)];
+ const pr=this.projection();if(!pr||!pr.invert)return false;
+ const W=ctx.canvas.width,H=ctx.canvas.height;off=off||document.createElement("canvas");if(off.width!==W||off.height!==H){off.width=W;off.height=H}
+ const o=off.getContext("2d"),m=ctx.getTransform();o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,W,H);o.setTransform(m);
+ const a=o.createRadialGradient(cx,cy,r*.985,cx,cy,r+11);a.addColorStop(0,"rgba(140,200,255,0.55)");a.addColorStop(1,"rgba(140,200,255,0)");
+ o.globalCompositeOperation="source-over";o.beginPath();o.arc(cx,cy,r+11,0,2*Math.PI);o.arc(cx,cy,r,0,2*Math.PI,true);o.fillStyle=a;o.fill();
+ if(outline){o.beginPath();o.arc(cx,cy,r,0,2*Math.PI);o.strokeStyle="rgba(255,255,255,0.35)";o.lineWidth=1;o.stroke()}
+ /* mask: rim brightness from the sun's height at each edge point (same curve as the surface's day light, plus ~6% left on the night side) */
+ const N=90,g=o.createConicGradient(0,cx,cy),ss=(e0,e1,x)=>{const t=Math.min(1,Math.max(0,(x-e0)/(e1-e0)));return t*t*(3-2*t)};
+ for(let k=0;k<=N;k++){const th=k/N*2*Math.PI,q=pr.invert([cx+Math.cos(th)*r*.995,cy+Math.sin(th)*r*.995]);let al=1;
+  if(q&&isFinite(q[0])){const p=q[1]*Math.PI/180,l=q[0]*Math.PI/180,s=Math.cos(p)*Math.cos(l)*sun[0]+Math.cos(p)*Math.sin(l)*sun[1]+Math.sin(p)*sun[2];
+   al=0.06+0.94*Math.pow(ss(-0.22,0.65,s),0.8)}
+  g.addColorStop(k/N,"rgba(0,0,0,"+al.toFixed(3)+")")}
+ o.globalCompositeOperation="destination-in";o.setTransform(m);o.fillStyle=g;o.beginPath();o.arc(cx,cy,r+12,0,2*Math.PI);o.fill();o.globalCompositeOperation="source-over";
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(off,0,0);ctx.restore();return true};
+})();
