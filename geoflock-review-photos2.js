@@ -8,15 +8,52 @@
 (function(){
 "use strict";
 window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
+{"f":"Burning Gas Flare Nembe Creek, Nigeria.tif","d":"photos/x65f5d2bb19d0c4bc.webp","by":"Sara Leigh Lewis","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Burning_Gas_Flare_Nembe_Creek,_Nigeria.tif"},
+{"f":"Garment factory in Bangladesh Women working.jpg","d":"photos/x4463effcb1f311a6.webp","by":"Tareq Salahuddin","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Bangladesh_Women_working.jpg"},
+{"f":"Garment factory in Dhaka.jpg","d":"photos/xd4835b38f9586a18.webp","by":"Kroisenbrunner","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Dhaka.jpg"},
+{"f":"An aerial view of new look of Rwanda Parliament Building in Kimihurura, Kigali on May 16, 2019. Emmanuel Kwizera.jpg","d":"photos/xfe0ccaf98fc41202.webp","by":"Emmanuel Kwizera","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:An_aerial_view_of_new_look_of_Rwanda_Parliament_Building_in_Kimihurura,_Kigali_on_May_16,_2019._Emmanuel_Kwizera.jpg"},
+{"f":"The Niger delta.jpg","d":"photos/xee4227e89f91fdfb.webp","by":"European Space Agency (Envisat)","lic":"CC BY-SA 3.0 IGO","page":"https://commons.wikimedia.org/wiki/File:The_Niger_delta.jpg"},
+{"f":"Aldbrough (Mount Pleasant) No Parking! - geograph.org.uk - 239850.jpg","d":"photos/xc47916d824ce2bd5.webp","by":"Paul Anderson","lic":"CC BY-SA 2.0","page":"https://commons.wikimedia.org/wiki/File:Aldbrough_(Mount_Pleasant)_No_Parking!_-_geograph.org.uk_-_239850.jpg"},
+{"f":"Ice road saimaa.JPG","d":"photos/x12955219e75125ad.webp","by":"Becca8383","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Ice_road_saimaa.JPG"},
+{"f":"Denmark-Strait-pack-ice.jpg","d":"photos/x806152cef19477e0.webp","by":"Algkalv","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Denmark-Strait-pack-ice.jpg"},
+{"f":"Desierto florido.jpg","d":"photos/x0962d81c9dfadbc6.webp","by":"Javier Rubilar","lic":"CC BY-SA 2.0","page":"https://commons.wikimedia.org/wiki/File:Desierto_florido.jpg"}
 ];
 /* card photos: "tour|title" → library file name (f) */
 const CARD={/*CARD*/
+"hg7a|Dependency and commodity dependence":"Burning Gas Flare Nembe Creek, Nigeria.tif",
+"hg7a|Women at work":"Garment factory in Bangladesh Women working.jpg",
+"hg7a|Women and development":"An aerial view of new look of Rwanda Parliament Building in Kimihurura, Kigali on May 16, 2019. Emmanuel Kwizera.jpg",
+"hg7c|Comparative advantage":"Garment factory in Bangladesh Women working.jpg",
+"volcanoes|The biggest bang in a century":"ISS-66 Atmospheric plume from 2022 Hunga Tonga eruption (1).jpg",
+"coasts|The coast that eats villages":"Aldbrough (Mount Pleasant) No Parking! - geograph.org.uk - 239850.jpg",
+"ice|Driving on lakes":"Ice road saimaa.JPG",
+"deserts|When the driest desert flowers":"Desierto florido.jpg",
+"seas|The biggest waterfall is underwater":"Denmark-Strait-pack-ice.jpg"
 };
 /* photo-pin pictures: label (zero-width spaces stripped) → library file name */
 const SQ={/*SQ*/
+"Niger Delta: oil":"Burning Gas Flare Nembe Creek, Nigeria.tif",
+"Dhaka: garments for export":"Garment factory in Dhaka.jpg",
+"Dhaka: from six to two":"Garment factory in Bangladesh Women working.jpg",
+"Dhaka: garment jobs":"Garment factory in Bangladesh Women working.jpg",
+"Dhaka: garments":"Garment factory in Dhaka.jpg",
+"Dhaka":"Crowd in shopping before Eid-ul-Fitr 02.jpg",
+"Kigali: women in parliament":"An aerial view of new look of Rwanda Parliament Building in Kimihurura, Kigali on May 16, 2019. Emmanuel Kwizera.jpg",
+"India: about 200 million, more than Egypt":"A large queue of Muslim voters at a polling station near Jama Masjid, Delhi on 14 January 1952.jpg",
+"Duisburg: Mercator’s map, 1569":"Mercator 1569.png",
+"Duisburg: Mercator's map, 1569":"Mercator 1569.png",
+"Mouth, over 4,000 km later":"The Niger delta.jpg"
 };
 /* captions */
 const CAP={/*CAP*/
+"Niger Delta: oil":"Gas flare, Nembe Creek",
+"Dhaka: garments for export":"A garment workshop in Dhaka",
+"Dhaka: from six to two":"Garment workers, Bangladesh",
+"Dhaka: garment jobs":"A garment factory, Bangladesh",
+"Dhaka: garments":"A garment workshop in Dhaka",
+"Kigali: women in parliament":"Rwanda’s parliament, Kigali",
+"India: about 200 million, more than Egypt":"Muslim voters, Delhi, 1952",
+"Mouth, over 4,000 km later":"The Niger delta from space"
 };
 
 const strip=s=>String(s==null?"":s).replace(/​/g,"");
