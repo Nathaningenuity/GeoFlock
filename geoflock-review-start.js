@@ -354,7 +354,7 @@ function antarctica(){const id="antarctica";
   more:"Falling carbon dioxide in the air mattered too, and scientists still argue about which did more. The Antarctic Circumpolar Current still flows around the continent today: it carries more water than any other current on Earth."});
  ins(id,"Life at the edge",{title:"Fish with clear blood",view:[-75,-68,-45,-55],globe:[-58,-62,4],card:"left",
   pins:[[[-58.5,-62],"South Shetland Islands","point"]],
-  iconPins:[{at:[-60,-63],icon:"fish",col:"#3aa0c8"}],
+  phPins:[ph([-60.5,-63.4],"Antarctic icefish")],
   stat:"Antarctic icefish are the only animals with backbones known to live without haemoglobin, the substance that makes blood red",
   body:"Their blood is almost clear, with almost no red blood cells. Ice-cold water holds much more oxygen than warm water, so these fish get by on oxygen dissolved straight into their blood, pumped by extra-large hearts. Many Antarctic fish also make antifreeze proteins that stop ice crystals growing in their bodies.",
   more:"Living without red blood cells works only in the coldest, most oxygen-rich seas on Earth. As the Southern Ocean warms, icefish may be among the first to struggle."});
