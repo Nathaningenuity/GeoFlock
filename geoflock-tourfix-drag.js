@@ -19,7 +19,7 @@ const live=()=>{try{return typeof ps!=="undefined"&&!!ps}catch(e){return false}}
 const stepOf=(t,title)=>{try{const T=PS_TOURS[t];return T&&Array.isArray(T.steps)?T.steps.find(s=>s&&s.title===title):null}catch(e){return null}};
 const cur=()=>{try{return psSteps()[ps.i]}catch(e){return null}};
 const codeOf=f=>String(f&&f.properties&&(f.properties.c||f.properties.dimAs)||"").toLowerCase();
-const isDark=()=>{try{const b=document.body.classList;return b.contains("dark-theme")||b.contains("dark")||document.documentElement.classList.contains("dark")||(typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="night")}catch(e){return false}};
+const isDark=()=>{try{const b=document.body.classList;return b.contains("sky-night")||b.contains("dark-theme")||b.contains("dark")||document.documentElement.classList.contains("dark")||(typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="night")}catch(e){return false}};
 
 /* ---------------- photos ---------------- */
 const DINGO={f:"Canis lupus dingo, Fraser Island.jpg",d:"photos/xffc1b3e520baaf0c.webp",by:"Brian Gratwicke",lic:"CC BY 2.0",page:"https://commons.wikimedia.org/wiki/File:Canis_lupus_dingo,_Fraser_Island.jpg"};
@@ -76,9 +76,9 @@ function patchStops(){
   lock(S,"phPins",S._tfPh)}}
  /* New Zealand: Zealandia drawn, framed whole */
  {const S=stepOf("oceania","New Zealand");if(S){
-  const base=[[[174.76,-36.85],"Auckland","point"],[[[-178.6,-44.6],[176.0,-49.8],[160.8,-31.0]],"Zealandia, mostly under the sea","area"]];
+  const base=[[[174.76,-36.85],"Auckland","point"],[[[163.2,-35.6],[161.0,-30.6],[-178.6,-44.6]],"Zealandia, mostly under the sea","area"]];
   def(S,"_al",1);def(S,"_pins0",base.slice());def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",base.slice());lock(S,"pins",S._tfPins);
-  lock(S,"lines",[{poly:ZEALANDIA,kind:"outline"}]);lock(S,"view",[142,-60,196,-14]);lock(S,"globe",[170,-37,1.75]);def(S,"card","left")}}
+  lock(S,"lines",[{poly:ZEALANDIA,kind:"outline"}]);lock(S,"view",[142,-60,196,-14]);lock(S,"globe",[165.5,-37,1.75]);def(S,"card","left")}}
  /* Big ocean states: Kiribati's own islands lit and ringed; the Tarawa photo sits north-east of its ring, where its line crosses no island */
  {const S=stepOf("oceania","Big ocean states");if(S){def(S,"_tfKi",1);
   const P=S.phPins||[];const q=P.find(x=>x&&/Tarawa/.test(x.label||""));if(q){def(q,"ringKm",KI_RING);def(q,"_tfDir",-40)}}}

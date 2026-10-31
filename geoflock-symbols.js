@@ -1,7 +1,7 @@
 /* GeoFlock: small symbols on tour maps where they help understanding.
-   - Ring of Fire stops: little volcanoes on real volcano summits (Klyuchevskaya, Fuji, Sakurajima, Mayon, Taal, Pinatubo, Merapi,
-     Krakatoa, Tambora, Kelud, Bromo, Sinabung, Agung and more; the Pacific-wide stop also the Andes, Central America, the
-     Cascades, Alaska, Tonga, Vanuatu and New Zealand).
+   - Ring of Fire: little volcanoes on real volcano summits (Klyuchevskaya, Fuji, Sakurajima, Mayon, Taal, Pinatubo, Merapi,
+     Krakatoa, Tambora, Kelud, Bromo, Sinabung, Agung and more). Stops that turn on the Hazards layer already show its volcano
+     symbols, so they get no second one; symbols there also keep clear of the Hazards and Resources layers' own symbols.
    - Silk Road stops: Bactrian camels walk slowly along the stop's own route line, looping and spaced out; they fade near names
      and pins, stop with the stop or the tour, and stand still (spread along the line) with prefers-reduced-motion.
    - Desert stops: the Landforms layer's own desert outlines (geoflock-landforms.js, LANDFORMS) tinted soft sand, plus a few
@@ -11,8 +11,9 @@
      Deception Island one in geoflock-europe-thermo.js); a figure only where the stop's own text gives it and no name on the
      map already shows it.
    - Stops about height without a cross-section get one through the cards' own mechanism (xsec, geoflock-tourxs.js).
-   - Rice stops: many small ears of rice across the rice plains and deltas; megacity stops: a city symbol at each city.
-   Symbols are 14-21 px and grow a little with zoom; each one is placed only where it covers no name, pin, photo pin,
+   - Rice stops: many small ears of rice across the rice plains and deltas; megacity stops: a city symbol at each city;
+     also cyclones where tropical storms are born, elephants in northern Botswana, and volcanoes on single-volcano stops.
+   Symbols are 13-22 px and grow a little with zoom; each one is placed only where it covers no name, pin, photo pin,
    photo leader line, card or other symbol (it may shift a few pixels, never far and never with a leader line), otherwise it
    is left out. Nothing of the stops is changed or removed: the symbols live in their own layer (gfSym on the stop).
    Emoji graphics: Twemoji (CC BY 4.0, by Twitter, Inc. and contributors). Patched by tour id and stop title after window
@@ -66,13 +67,14 @@ function css(){if(document.getElementById("gfSymCss"))return;const st=document.c
  ".gfs-t.l{left:auto;right:100%;transform:translate(-1px,-50%)}.gfs-t.h{color:#a3201f}.gfs-t.c{color:#1d4f96}"+
  ".gfs-w{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity;transition:opacity .4s}"+
  ".gfs-w img{display:block;width:100%;height:100%;filter:drop-shadow(0 0 1.2px #fff) drop-shadow(0 1.5px 1.5px rgba(10,20,40,.4))}"+
+ ".gfs-fill{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:5;mix-blend-mode:multiply}"+
  "path.gfs-sand{fill:rgba(236,178,92,.36)!important;stroke:rgba(176,112,40,.55)!important;stroke-width:1px!important;stroke-dasharray:none!important;vector-effect:non-scaling-stroke}"+
  "@media (prefers-reduced-motion: reduce){.gfs-m.gfs-in{animation:none}}";
  document.head.appendChild(st)}
 
 /* ---------- the active stop ---------- */
 let cur=null,lay=null,raf=0,els=[],walkers=[],t0=0,ppd0=0,lastSig="",lastPlace=0,startT=0;
-function teardown(){cancelAnimationFrame(raf);raf=0;if(lay)lay.remove();lay=null;els=[];walkers=[];if(cur){cur=null;redraw()}}
+function teardown(){cancelAnimationFrame(raf);raf=0;if(lay)lay.remove();lay=null;if(fillCv)fillCv.remove();fillCv=null;fillSig="";els=[];walkers=[];if(cur){cur=null;redraw()}}
 function redraw(){try{if(ps&&ps.g&&ps.mode==="globe"&&(ps.g.request||ps.g.render))(ps.g.request||ps.g.render).call(ps.g);else if(ps&&typeof psDrawFlat==="function"&&ps.mode!=="globe")psDrawFlat()}catch(e){}}
 function anchor(S){const G=S.gfSym;if(G._anc)return G._anc;const v=S.view||[-180,-60,180,80];let a=[(v[0]+v[2])/2,(v[1]+v[3])/2];if(S.globe)a=[S.globe[0],S.globe[1]];G._anc=a;return a}
 function build(S){const G=S.gfSym,box=psContainer&&psContainer();if(!box)return false;css();
@@ -144,7 +146,7 @@ function sig(S){const a=anchor(S),p=psScreen(a),box=lay&&lay.parentNode;let c=""
  return(p?p.map(v=>v.toFixed(1)).join(","):"x")+"|"+(box?box.clientWidth+"x"+box.clientHeight:"")+"|"+c+"|"+n+"|"+(ps.g&&ps.g.zoom||"")}
 let lastOb=null,lastSigT=0;
 function tick(n){if(!cur||!ps||psSteps()[ps.i]!==cur||!lay||!lay.isConnected){teardown();return}
- try{if(n-lastSigT>110){lastSigT=n;const s=sig(cur);if(s!==lastSig||n-lastPlace>1500){lastSig=s;lastPlace=n;lastOb=place(cur)}}if(walkers.length)stepWalkers(n,lastOb)}catch(e){console.error("gfsym",e)}
+ try{if(cur.gfSym.fills)paintFill();if(n-lastSigT>110){lastSigT=n;const s=sig(cur);if(s!==lastSig||n-lastPlace>1500){lastSig=s;lastPlace=n;lastOb=place(cur)}}if(walkers.length)stepWalkers(n,lastOb)}catch(e){console.error("gfsym",e)}
  raf=requestAnimationFrame(tick)}
 function start(S){teardown();if(!S||!S.gfSym)return;cur=S;ppd0=0;startT=performance.now();t0=startT;lastSig="";
  redraw();setTimeout(()=>{if(cur!==S||!ps||psSteps()[ps.i]!==S)return;if(!build(S))return;raf=requestAnimationFrame(tick)},700)}
@@ -153,12 +155,21 @@ function start(S){teardown();if(!S||!S.gfSym)return;cur=S;ppd0=0;startT=performa
    on the flat map it is the first shape in the tour layer */
 function fillsOf(){const S=cur;if(!S||!S.gfSym||!S.gfSym.fills)return null;const G=S.gfSym;if(G._fg)return G._fg;
  const out=[];G.fills.forEach(id=>{const c=LF(id);if(c)c.forEach(r=>out.push(polyGeo(r)))});G._fg=out;return out}
+/* on the globe (and the app's flat map, which is the same view) the tint is its own canvas just above the map and below
+   every pin and name layer, blended "multiply" so it reads as a soft sand wash over the relief (names stay readable) */
+let fillCv=null,fillSig="";
+function paintFill(){try{const box=lay&&lay.parentNode;if(!box||ps.mode!=="globe"||!ps.g||typeof ps.g.projection!=="function")return;const F=fillsOf();if(!F||!F.length)return;
+ if(!fillCv||fillCv.parentNode!==box){fillCv=document.createElement("canvas");fillCv.className="gfs-fill";box.insertBefore(fillCv,box.querySelector(".ps-pins")||lay)}
+ const w=box.clientWidth,h=box.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1),pr=ps.g.projection(),a=psScreen(anchor(cur));
+ const sg=w+"x"+h+"|"+(a?a[0].toFixed(1)+","+a[1].toFixed(1):"x")+"|"+pr.scale().toFixed(2)+"|"+pr.rotate().map(v=>v.toFixed(2)).join(",")+"|"+pr.translate().map(v=>v.toFixed(1)).join(",");
+ if(sg===fillSig)return;fillSig=sg;
+ if(fillCv.width!==Math.round(w*dpr)||fillCv.height!==Math.round(h*dpr)){fillCv.width=Math.round(w*dpr);fillCv.height=Math.round(h*dpr)}
+ const ctx=fillCv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+ const ortho=!ps.g._flat,ca=ortho&&pr.clipAngle?pr.clipAngle():null;if(ortho&&pr.clipAngle)pr.clipAngle(89.5);ctx.save();
+ try{if(ortho){try{const z=ps.g.size();ctx.beginPath();ctx.arc(z.w/2,z.h/2,Math.max(0,z.r-1),0,2*Math.PI);ctx.clip()}catch(e){}}
+  const path=d3.geoPath(pr,ctx);ctx.beginPath();F.forEach(x=>path(x));ctx.fillStyle="rgba(240,176,84,0.42)";ctx.fill();ctx.strokeStyle="rgba(170,105,35,0.55)";ctx.lineWidth=1;ctx.stroke()}
+ finally{ctx.restore();if(ortho&&pr.clipAngle)pr.clipAngle(ca)}}catch(e){console.error("gfsym",e)}}
 function hooks(){
- if(typeof GlobeView!=="undefined"&&!GlobeView.prototype._gfsHook){const P=GlobeView.prototype,_dm=P._drawMeasure;
-  P._drawMeasure=function(ctx,p){try{const F=ps&&this===ps.g&&ps.mode==="globe"?fillsOf():null;if(F&&F.length){const path=d3.geoPath(p,ctx);ctx.save();ctx.globalCompositeOperation="multiply";
-     ctx.beginPath();F.forEach(g=>path(g));ctx.fillStyle="rgba(240,176,84,0.42)";ctx.fill();ctx.restore();
-     ctx.save();ctx.beginPath();F.forEach(g=>path(g));ctx.strokeStyle="rgba(176,112,40,0.5)";ctx.lineWidth=1;ctx.stroke();ctx.restore()}}catch(e){console.error("gfsym",e)}
-   return _dm.apply(this,arguments)};P._gfsHook=1}
  if(typeof psDrawFlat==="function"&&!psDrawFlat._gfs){const _f=psDrawFlat;psDrawFlat=function(){const r=_f.apply(this,arguments);try{const F=fillsOf();if(F&&F.length){const svg=ps.wrap.querySelector("svg"),g=svg&&svg.querySelector("#psLayer");
    if(g){const pth=psPath(),d=F.map(x=>pth(x)||"").join("");if(d){const el=document.createElementNS("http://www.w3.org/2000/svg","path");el.setAttribute("class","gfs-sand");el.setAttribute("d",d);g.insertBefore(el,g.firstChild)}}}}catch(e){console.error("gfsym",e)}return r};psDrawFlat._gfs=1;try{window.psDrawFlat=psDrawFlat}catch(e){}}
  if(!psGo._gfs){const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{const S=ps&&psSteps()[ps.i];if(S&&S.gfSym){if(S!==cur)start(S)}else teardown()}catch(e){console.error("gfsym",e)}return r};psGo._gfs=1;try{window.psGo=psGo}catch(e){}}
@@ -167,9 +178,6 @@ function hooks(){
  /* the map switching between the globe and the flat map rebuilds the container: rebuild the layer */
  if(!window._gfsPoll2)window._gfsPoll2=setInterval(()=>{try{if(cur&&lay&&lay.parentNode!==(psContainer&&psContainer())){const S=cur;teardown();start(S)}}catch(e){}},600);
 }
-function _dbg(){if(!lay)return"nolay";const box=lay.parentNode,ob=obstacles(box);return{nO:ob.O.length,nS:ob.segs.length,w:ob.w,h:ob.h,k:zoomK(cur),els:els.slice(0,8).map(o=>{const xy=psScreen(o.m.at);if(!xy)return"off";const z=o.sz,b={l:xy[0]-z/2,t:xy[1]-z/2,r:xy[0]+z/2,b:xy[1]+z/2};
- return{xy:xy.map(Math.round),disp:o.el.style.display,tr:o.el.style.transform,hits:ob.O.filter(q=>hitBox(b,q)).map(q=>[q.l,q.t,q.r,q.b].map(Math.round)).slice(0,3),seg:ob.segs.filter(s=>hitSeg(b,s)).length}})}}
-function _dbgW(){const box=lay.parentNode,ob=obstacles(box);return walkers.map(v=>{const m=/translate\(([-\d.]+)px, *([-\d.]+)px/.exec(v.el.style.transform);if(!m)return null;const x=+m[1],y=+m[2],z=v.z,b={l:x,t:y,r:x+z,b:y+z};return ob.O.filter(q=>hitBox(b,q)).map(q=>[q.l,q.t,q.r,q.b].map(Math.round))})}
 /* ---------------------------------------------------------------- what goes where
    marks: single symbols at a real place (they may shift a few pixels to clear names and pins, never far, no leader lines);
    scatter: symbols spread inside regions (Landforms desert polygons by id, or rice-growing plains drawn here);
@@ -214,7 +222,7 @@ const PLAN={
  "hancient|Rome and Han China":{camels:[{coords:[[112.45,34.62],[108.94,34.34],[103.8,36.06],[94.66,40.14],[89.2,42.95],[83,41.7],[75.99,39.47],[71.8,40.4],[66.96,39.65],[61.84,37.66],[54.4,36.2],[44.58,33.09],[38.27,34.55],[36.16,36.2]],n:3,e:"camel2"}]},
  "deserts|The Taklamakan":{camels:[{coords:[[75.99,39.47],[80.26,41.17],[82.96,41.72],[86.15,41.76]],n:2,e:"camel2",dur:46000},{coords:[[75.99,39.47],[77.25,38.4],[79.93,37.11],[82.69,37.07],[85.53,38.13],[88.17,39.03]],n:2,e:"camel2",dur:52000}]},
  /* 3. deserts: the Landforms outlines tinted sand, and a few desert symbols inside */
- "asia|Deserts and steppe":{fills:["gobi","taklamakan","karakum","arabian"],scatter:[D_(["gobi","taklamakan"],["camel2","dunes"],{max:4,step:1.6}),D_(["arabian","karakum"],["dunes","camel1"],{max:4,step:1.6})]},
+ "asia|Deserts and steppe":{fills:["gobi","taklamakan","karakum","arabian"],scatter:[D_(["gobi"],["camel2","dunes"],{max:2,step:1.4,gap:16}),D_(["taklamakan"],"dunes",{max:1,step:1}),D_(["arabian","karakum"],["dunes","camel1"],{max:3,step:1.6,gap:14})]},
  "africa|The Sahara is mostly rock":{fills:["sahara"],scatter:[D_(["sahara"],["dunes","camel1"],{max:6,step:2})]},
  "oceania|The red centre":{fills:["great-victoria","great-sandy","gibson","simpson","tanami","strzelecki"],scatter:[D_(["great-sandy","great-victoria","simpson","tanami","gibson"],"dunes",{max:4,step:1.4})]},
  "deserts|When the driest desert flowers":{fills:["atacama"],scatter:[D_(["atacama"],["cactus","desert"],{max:3,step:.45,gap:14})]},
@@ -245,7 +253,7 @@ const PLAN={
  /* 7. other places where a symbol helps */
  "weather|Where the big storms are born":{marks:[V([140,17],"cyclone",{sz:18,reach:1.4}),V([-55,18],"cyclone",{sz:18,reach:1.4}),V([-108,14],"cyclone",{sz:18,reach:1.4}),V([88.5,15.5],"cyclone",{sz:18,reach:1.4}),
    V([65,-14],"cyclone",{sz:18,reach:1.4}),V([118,-15],"cyclone",{sz:18,reach:1.4}),V([172,-16],"cyclone",{sz:18,reach:1.4})]},
- "animals|Elephant country":{marks:[V([24.4,-18.6],"elephant",{sz:19,reach:1}),V([25.1,-18],"elephant",{sz:19,reach:1}),V([23.4,-19.9],"elephant",{sz:19,reach:1})]},
+ "animals|Elephant country":{marks:[V([24.4,-18.6],"elephant",{sz:19,reach:1}),V([25.1,-18],"elephant",{sz:19,reach:1}),V([23.6,-19.3],"elephant",{sz:19,reach:1})]},
  /* volcano stops whose volcanoes had no symbol (stops that turn on the Hazards layer already show them) */
  "volcanoes|The biggest bang in a century":{marks:[V([-175.382,-20.536],0,{sz:18,reach:1.4})]},
  "volcanoes|The prisoner who survived":{marks:[V([-61.165,14.809],0,{sz:19,reach:1.4})]},
@@ -285,5 +293,5 @@ function apply(){if(typeof PS_TOURS==="undefined")return;
 function run(){try{apply()}catch(e){console.error("gfsym",e)}}
 const go=()=>{setTimeout(run,1500);[3000,6500,13500].forEach(ms=>setTimeout(run,ms))};
 if(document.readyState==="complete")go();else window.addEventListener("load",go);
-window.gfSymbols={dbg:()=>_dbg(),dbgW:()=>_dbgW(),plan:PLAN,xsec:XSEC,thermoSVG,start:S=>start(S),stop:()=>teardown()};
+window.gfSymbols={plan:PLAN,xsec:XSEC,thermoSVG,start:S=>start(S),stop:()=>teardown()};
 })();
