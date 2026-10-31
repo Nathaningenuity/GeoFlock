@@ -8,6 +8,7 @@
 (function(){
 "use strict";
 window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
+{"f":"Ice-core drill hg.jpg","d":"photos/x60fbb2774b1c4a60.webp","by":"Hannes Grobe, Alfred Wegener Institute","lic":"CC BY-SA 2.5","page":"https://commons.wikimedia.org/wiki/File:Ice-core_drill_hg.jpg"},
 {"f":"Burning Gas Flare Nembe Creek, Nigeria.tif","d":"photos/x65f5d2bb19d0c4bc.webp","by":"Sara Leigh Lewis","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Burning_Gas_Flare_Nembe_Creek,_Nigeria.tif"},
 {"f":"Garment factory in Bangladesh Women working.jpg","d":"photos/x4463effcb1f311a6.webp","by":"Tareq Salahuddin","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Bangladesh_Women_working.jpg"},
 {"f":"Garment factory in Dhaka.jpg","d":"photos/xd4835b38f9586a18.webp","by":"Kroisenbrunner","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Dhaka.jpg"},
@@ -32,6 +33,7 @@ const CARD={/*CARD*/
 };
 /* photo-pin pictures: label (zero-width spaces stripped) → library file name */
 const SQ={/*SQ*/
+"Little Dome C: the 1.2-million-year core":"Ice-core drill hg.jpg",
 "Niger Delta: oil":"Burning Gas Flare Nembe Creek, Nigeria.tif",
 "Dhaka: garments for export":"Garment factory in Dhaka.jpg",
 "Dhaka: from six to two":"Garment factory in Bangladesh Women working.jpg",
@@ -46,6 +48,7 @@ const SQ={/*SQ*/
 };
 /* captions */
 const CAP={/*CAP*/
+"Little Dome C: the 1.2-million-year core":"An EPICA ice-core drill",
 "Niger Delta: oil":"Gas flare, Nembe Creek",
 "Dhaka: garments for export":"A garment workshop in Dhaka",
 "Dhaka: from six to two":"Garment workers, Bangladesh",
