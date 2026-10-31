@@ -5,7 +5,8 @@
       polygon clipped to the land of the listed countries: one entry for the countries wholly in Europe (a wide box that
       stays clear of Africa, Madeira, the Canaries, Ceuta and Melilla), and the stop's own two entries for the countries the
       boundary splits (Russia's reaching north now to Novaya Zemlya and Franz Josef Land, and south of Crimea).
-      Cyprus is left out: geographically it lies on the Asian side, south of Turkey. Iceland and Svalbard are in.
+      Cyprus is left out: geographically it lies on the Asian side, south of Turkey. Iceland and Svalbard are in (Svalbard
+      through Norway's own outline, which includes it: listing "sj" as well overlaps the two and the clip comes out empty).
    2. Antarctica, "Sail into a volcano": a red thermometer at the warm beach of Pendulum Cove, inside Deception Island's
       caldera. No number: no well-sourced figure for the bathing water was found (expedition reports only say the
       seeping water is hot enough to scald feet and is mixed with ~2 °C bay water to a comfortable warmth).
@@ -21,7 +22,7 @@ const stopOf=(id,title)=>{try{const t=PS_TOURS[id];return t&&Array.isArray(t.ste
 const dense=(pts,step)=>{const o=[];for(let i=0;i<pts.length-1;i++){const[a0,b0]=pts[i],[a1,b1]=pts[i+1],n=Math.max(1,Math.ceil(Math.max(Math.abs(a1-a0),Math.abs(b1-b0))/(step||1)));for(let k=0;k<n;k++)o.push([+(a0+(a1-a0)*k/n).toFixed(3),+(b0+(b1-b0)*k/n).toFixed(3)])}o.push(pts[pts.length-1]);return o};
 
 /* ---------- 1. Where Europe ends ---------- */
-const EU_WHOLE=["is","no","sj","se","fi","ax","dk","fo","gb","ie","im","je","gg","nl","be","lu","de","fr","mc","ad","es","gi","pt",
+const EU_WHOLE=["is","no","se","fi","ax","dk","fo","gb","ie","im","je","gg","nl","be","lu","de","fr","mc","ad","es","gi","pt",
  "it","va","sm","mt","ch","li","at","si","hr","ba","rs","me","xk","al","mk","gr","bg","ro","md","tdr","ua","by","pl","cz","sk","hu","lt","lv","ee"];
 /* the box: north of Madeira, the Canaries, Ceuta and Melilla (the edge runs through the Strait of Gibraltar between Ceuta
    and the Rock), east to 45°E (no country in the list reaches that far); only land of the listed countries is filled */
@@ -45,12 +46,24 @@ const THERMO='<g class="gf-thermo"><path d="M9.6 15.2V4.4a2.4 2.4 0 0 1 4.8 0v10
  '<path d="M14.4 6.6h1.6M14.4 9.4h1.6M14.4 12.2h1.6" stroke="#7d1d1d" stroke-width="1.1" stroke-linecap="round"/></g>';
 function thermoIcon(){try{if(typeof PS_ICONS!=="undefined"&&!PS_ICONS.gfThermo)PS_ICONS.gfThermo=THERMO}catch(e){}
  if(!document.getElementById("gfThermoCss")){const st=document.createElement("style");st.id="gfThermoCss";
-  st.textContent=".ps-ip:has(.gf-thermo){width:30px;height:30px}.ps-ip .gf-thermo{filter:none}";document.head.appendChild(st)}}
-function volcano(){const s=stopOf("antarctica","Sail into a volcano");if(!s)return;thermoIcon();
- const P=Array.isArray(s.iconPins)?s.iconPins:[];if(P.some(q=>q&&q.icon==="gfThermo"))return;
- /* Pendulum Cove, the bathing beach on the caldera's north-east shore (62.93°S, 60.60°W); drawn a little north-east of
-    it so it sits clear of the island's own pin and of the Neptune's Bellows photo, which lean the other way */
- def(s,"iconPins",P.concat([{at:[-60.05,-62.9],icon:"gfThermo",col:"#d62828"}]))}
+  st.textContent=".ps-ip:has(.gf-thermo),.ps-ip:has(.gf-thermo):hover{width:30px;height:30px;transform:translate(calc(-50% + 20px),calc(-50% - 12px))}";document.head.appendChild(st)}}
+/* the icon layer hides an icon within 22 px of another one; the thermometer stands at the beach, right beside the volcano
+   icon, and is drawn shifted 20 px right and 12 px up (CSS above), so it is shown again here, on its own spot */
+function hookIcons(){if(typeof psIconPinsSync!=="function"||psIconPinsSync._gfTh)return;const _f=psIconPinsSync;
+ psIconPinsSync=function(){const r=_f.apply(this,arguments);try{const box=ps&&psContainer&&psContainer(),L=box&&box.querySelector(".ps-iconpins");
+  const S=psSteps()[ps.i],P=S&&S.iconPins||[];if(L)[...L.children].forEach((el,k)=>{if(!el.querySelector(".gf-thermo")||!P[k])return;
+   const xy=psScreen(P[k].at);if(!xy){el.style.display="none";return}el.style.display="";el.style.left=xy[0]+"px";el.style.top=xy[1]+"px"})}catch(e){}return r};
+ psIconPinsSync._gfTh=1}
+function volcano(){const s=stopOf("antarctica","Sail into a volcano");if(!s)return;thermoIcon();hookIcons();
+ const d=Object.getOwnPropertyDescriptor(s,"iconPins");if(d&&d.get&&d.get._gfTh)return;
+ /* the tour resets this stop's icons (the volcano) each time it starts, so the thermometer rides on an accessor that
+    keeps it in whatever list is set. It stands at Pendulum Cove, the bathing beach on the caldera's north-east shore
+    (about 62.935°S, 60.60°W); on screen it sits just right of the volcano icon, clear of the two photo pins, which
+    lean up-left and down-right of the island */
+ const TH={at:[-60.6,-62.935],icon:"gfThermo",col:"#d62828"};
+ const withTh=v=>{const a=Array.isArray(v)?v:[];return a.some(q=>q&&q.icon==="gfThermo")?a:a.concat([TH])};
+ let cur=withTh(s.iconPins);const get=()=>cur;get._gfTh=1;
+ Object.defineProperty(s,"iconPins",{configurable:true,enumerable:true,get,set(v){cur=withTh(v)}})}
 
 /* ---------- 3. Europe's highest mountain: Mont Blanc's photo, one Elbrus photo ---------- */
 const MB_LABEL="Mont Blanc · 4,806 m",MB_FILE="Mont Blanc Massif (2022-08-16).jpg";

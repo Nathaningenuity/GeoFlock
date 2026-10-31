@@ -34,7 +34,7 @@ const ph=(at,label,extra)=>{const q=Object.assign({at:at,label:label,col:OR,icon
 /* Zealandia, after Mortimer et al. 2017 (GSA Today 27:3) and GNS Science's map: the 1,500-2,500 m isobath around the
    Lord Howe Rise, New Caledonia and the Norfolk Ridge, New Zealand, the Challenger and Campbell plateaus and the
    Chatham Rise. About 4.9 million km². */
-const ZEALANDIA=[[155.6,-24.5],[156.8,-21.4],[159.4,-19.3],[162.4,-18.0],[164.2,-19.0],[166.6,-21.6],[167.6,-24.0],[168.6,-27.0],[169.4,-29.5],[171.0,-31.5],[173.0,-33.5],[174.6,-35.2],[176.0,-36.6],[178.0,-37.0],[178.9,-37.7],[178.7,-39.4],[177.6,-41.0],[178.8,-42.3],[-178.5,-42.8],[-176.0,-43.3],[-175.3,-44.0],[-176.2,-44.9],[-179.0,-45.0],[179.5,-46.3],[179.0,-47.8],[178.3,-49.3],[176.3,-50.8],[174.6,-52.8],[172.6,-54.6],[169.8,-55.6],[167.3,-55.0],[165.6,-53.2],[165.2,-51.0],[166.0,-49.0],[165.2,-47.4],[165.8,-46.0],[166.9,-44.6],[167.2,-43.0],[165.6,-41.6],[164.5,-40.0],[163.6,-38.4],[161.6,-37.0],[160.0,-35.2],[158.0,-33.0],[157.1,-30.4],[155.9,-27.6],[155.6,-24.5]];
+const ZEALANDIA=[[154.7,-24.5],[156.4,-21.0],[159.4,-19.3],[162.4,-18.0],[164.2,-19.0],[166.6,-21.6],[167.6,-24.0],[168.6,-27.0],[169.4,-29.5],[171.0,-31.5],[173.0,-33.5],[174.6,-35.2],[176.0,-36.6],[178.0,-37.0],[178.9,-37.7],[178.7,-39.4],[177.6,-41.0],[178.8,-42.3],[-178.5,-42.8],[-176.0,-43.3],[-175.3,-44.0],[-176.2,-44.9],[-179.0,-45.0],[179.5,-46.3],[179.0,-47.8],[178.3,-49.3],[176.6,-51.0],[175.0,-53.2],[172.6,-55.0],[169.8,-56.2],[167.0,-55.6],[165.6,-53.2],[165.2,-51.0],[166.0,-49.0],[165.2,-47.4],[165.8,-46.0],[166.9,-44.6],[167.2,-43.0],[165.6,-41.6],[164.5,-40.0],[163.6,-38.4],[161.6,-37.0],[159.3,-35.4],[157.2,-33.0],[156.1,-30.4],[154.9,-27.6],[154.7,-24.5]];
 const KI_RING=70;/* km: the true-size ring drawn round each Kiribati atoll group */
 const CARIB={
  G:[{t:"Greater Antilles",c:"#0c8599",codes:["cu","ht","do","jm","pr","ky"]},
@@ -51,9 +51,11 @@ function patchStops(){
   if(S._tfG!==c.G){lock(S,"G",c.G);def(S,"_tfG",c.G)}
   lock(S,"hi",[...new Set(c.G.flatMap(g=>g.codes))]);lock(S,"hiSoft",[]);def(S,"legend",null);def(S,"_grpA",[]);def(S,"_grpB",[]);def(S,"_hsMerged",1);
   lock(S,"groups",c.groups);lock(S,"stat",c.stat);lock(S,"body",c.body);
-  /* the legend names the groups: no group labels on the islands; Columbus's landfall is ringed and its photo sits out at sea */
-  def(S,"_al",1);def(S,"_pins0",[]);def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",[]);lock(S,"pins",S._tfPins);lock(S,"iconPins",[]);
-  if(!S._tfPh)def(S,"_tfPh",[ph([-74.5,24.05],"Bahamas: Columbus landed, 1492",{ringKm:28,_tfDir:-40})]);lock(S,"phPins",S._tfPh)}}
+  /* the legend names the groups, so no group labels sit on the islands; Columbus's landfall (San Salvador) is ringed and
+     named by one label out at sea (its old photo pin had no picture of its own) */
+  const col=[{at:[[-74.5,24.05]],text:"Columbus landed, 1492",ringKm:60}];
+  def(S,"_al",1);def(S,"_pins0",col.slice());def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",col.slice());lock(S,"pins",S._tfPins);lock(S,"iconPins",[]);
+  lock(S,"lines",[{circle:[-74.5,24.05],km:60,kind:"outline"}]);lock(S,"phPins",[]);lock(S,"globe",[-69,17.5,2.45])}}
  /* Oceania intro: the Sydney Opera House photo at Sydney, not the middle of Australia */
  {const S=stepOf("oceania","Oceania");if(S&&Array.isArray(S.phPins))S.phPins.forEach(q=>{if(q&&/Sydney Opera House/.test(q.label||"")&&Math.abs(q.at[0]-151.21)>1){q.at=[151.21,-33.86]}})}
  /* Only in Australia: no Wallace Line diagram (the card shows its photo); a dingo photo instead of the text pin */
@@ -69,7 +71,7 @@ function patchStops(){
   def(S,"_al",1);def(S,"_pins0",base.slice());def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",base.slice());lock(S,"pins",S._tfPins);lock(S,"iconPins",[]);
   /* Italy starts inland, clear of the card on the flat map and of the reef's photos */
   (S.ghosts||[]).forEach(G=>{if(G&&G.code==="it"&&!G._tfAt){G.at=[145.2,-22.8];G._tfAt=1}});
-  const H={_tfDir:"here"};
+  const H={_tfDir:"here",off:[0,0]};
   if(!S._tfPh)def(S,"_tfPh",[ph([146.5,-16.3],"Flynn Reef"),ph([146.6,-11.6],"Nudibranch",H),ph([148.9,-14.4],"Clownfish",H),ph([153.0,-17.0],"Manta ray",H),ph([153.9,-21.6],"Green turtle",H)]);
   lock(S,"phPins",S._tfPh)}}
  /* New Zealand: Zealandia drawn, framed whole */
@@ -111,13 +113,13 @@ function placeDirPins(){try{if(!live())return;const S=cur(),P=S&&S.phPins||[];if
  els.forEach((el,k)=>{const q=P[k];if(!q||q._tfDir==null||el.style.display==="none")return;if(L._user&&L._user[k])return;const a=psScreen(q.at);if(!a)return;
   if(q._tfDir==="here"){/* a photo that stands for the sea round it: it sits right there, no line, no dot */
    const w=el.offsetWidth||56,h=el.offsetHeight||72,x=Math.max(w/2+4,Math.min(W-w/2-4,a[0])),y=Math.max(h/2+4,Math.min(H-h/2-4,a[1]));
-   if(card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b)return;el.style.left=x+"px";el.style.top=y+"px";
+   if(card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b)return;el.style.left=x+"px";el.style.top=y+"px";if(Array.isArray(L._off))L._off[k]=[x-a[0],y-a[1]];
    if(svg){svg.querySelectorAll("circle").forEach(c=>{if(Math.hypot(+c.getAttribute("cx")-a[0],+c.getAttribute("cy")-a[1])<3)c.remove()});svg.querySelectorAll("line").forEach(l=>{if(Math.hypot(+l.getAttribute("x1")-a[0],+l.getAttribute("y1")-a[1])<3)l.remove()})}return}
   const R=q.ringKm?kmPx(q.at,q.ringKm):4,w=el.offsetWidth||56,h=el.offsetHeight||72;
   const at=deg=>{const t=deg*Math.PI/180,ux=Math.cos(t),uy=Math.sin(t),half=Math.min(Math.abs(w/2/(ux||1e-9)),Math.abs(h/2/(uy||1e-9)));const d=R+30+half;let x=a[0]+ux*d,y=a[1]+uy*d;x=Math.max(w/2+4,Math.min(W-w/2-4,x));y=Math.max(h/2+4,Math.min(H-h/2-4,y));return[x,y]};
   const bad=([x,y])=>card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b;
   let pos=null;for(const dd of [0,25,-25,50,-50,90,-90,180]){const c=at(q._tfDir+dd);if(!bad(c)){pos=c;break}}if(!pos)return;
-  el.style.left=pos[0]+"px";el.style.top=pos[1]+"px";
+  el.style.left=pos[0]+"px";el.style.top=pos[1]+"px";if(Array.isArray(L._off))L._off[k]=[pos[0]-a[0],pos[1]-a[1]];
   if(svg){svg.querySelectorAll("circle").forEach(c=>{if(Math.hypot(+c.getAttribute("cx")-a[0],+c.getAttribute("cy")-a[1])<R+3)c.remove()});
    svg.querySelectorAll("line").forEach(l=>{const x1=+l.getAttribute("x1"),y1=+l.getAttribute("y1");if(Math.hypot(x1-a[0],y1-a[1])<R+12)l.remove()});
    const dx=pos[0]-a[0],dy=pos[1]-a[1],d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d,half=Math.min(Math.abs(w/2/(ux||1e-9)),Math.abs(h/2/(uy||1e-9)));
@@ -138,7 +140,8 @@ function tagTarget(el){const S=cur();if(!S||!el)return null;if(el.classList.cont
  if(!dragOK(S))return null;if(S.drag.kind==="water")return{kind:el.classList.contains("ps-dragtag2")?"water2":"drag"};return{kind:"drag"}}
 function atOf(h){const S=cur();if(h.kind==="ghost")return psGhostAt(h.G);if(h.kind==="water2"){try{return psWaterAt(S).B}catch(e){return ps.dragAt2}}return ps.dragAt||S.drag.at}
 function setAt(h,v){const S=cur();if(h.kind==="ghost"){psGhostSet(h.G,v);return}ps._dragOwner=S;if(h.kind==="water2")ps.dragAt2=v;else ps.dragAt=v}
-let rq=0;function redraw(h){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{if(!live())return;if(ps.mode==="globe"){ps.g.render();try{psPlaceDragTag()}catch(e){}}else if(h.kind==="ghost")psGhostRedraw();else psDragRedraw()}catch(e){console.error(e)}})}
+/* on the globe and the flat canvas the engine's own scheduled redraw is used (it draws coarser while things move) */
+let rq=0;function redraw(h){if(live()&&ps.mode==="globe"&&ps.g){try{ps.g.request()}catch(e){}}if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{if(!live())return;if(ps.mode==="globe")psPlaceDragTag();else if(h.kind==="ghost")psGhostRedraw();else psDragRedraw()}catch(e){console.error(e)}})}
 let dragging=null,justDragged=0;
 function onMap(t){try{if(!t||!t.closest)return false;if(t.closest(".ps-card,.ps-pp,button,a,input,select,textarea,.globe-btns,.gfk-panel,.gfk-tray"))return false;const host=ps.mode==="globe"?ps.g&&ps.g.host:ps.wrap;return !!host&&host.contains(t)}catch(e){return false}}
 function down(e){try{if(!live()||dragging)return;if(e.button!=null&&e.button!==0)return;const t=e.target,tag=t&&t.closest&&t.closest(".ps-dragtag");let h=null;
@@ -151,7 +154,7 @@ function move(e){if(!dragging){hover(e);return}if(e.pointerId!==dragging.id)retu
  if(!D.ll0){/* the grab started off the map (a tag past the edge of the ball): start from here */if(ll){D.ll0=ll}return}
  if(!ll)return;const v=[normLon(D.at0[0]+normLon(ll[0]-D.ll0[0])),Math.max(-84,Math.min(84,D.at0[1]+ll[1]-D.ll0[1]))];setAt(D.h,v);redraw(D.h)}
 function up(e){if(!dragging||(e.pointerId!=null&&e.pointerId!==dragging.id))return;e.stopImmediatePropagation();if(dragging.moved)justDragged=performance.now();dragging=null;document.documentElement.classList.remove("gf-tf-dragging");
- document.querySelectorAll(".ps-dragtag.dragging").forEach(t=>t.classList.remove("dragging"));try{if(live()){if(ps.mode==="globe")ps.g.render();psPlaceDragTag()}}catch(_){}}
+ document.querySelectorAll(".ps-dragtag.dragging").forEach(t=>t.classList.remove("dragging"));try{if(live()){if(ps.mode==="globe"){ps.g.request();setTimeout(()=>{try{if(live()&&ps.g){ps.g.request();psPlaceDragTag()}}catch(_){}},260)}psPlaceDragTag()}}catch(_){}}
 let hvT=0;function hover(e){if(!live()||ps.mode!=="globe"||e.pointerType&&e.pointerType!=="mouse")return;const now=performance.now();if(now-hvT<40)return;hvT=now;const host=ps.g&&ps.g.host;if(!host)return;
  const S=cur(),any=S&&((S.ghosts&&S.ghosts.length)||dragOK(S));const on=!!(any&&onMap(e.target)&&shapeAt(e.clientX,e.clientY));host.classList.toggle("gf-tf-grab",on)}
 function swallow(e){if(!live()||dragging)return;const t=e.target,tag=t&&t.closest&&t.closest(".ps-dragtag");const pt=e.touches?e.touches[0]:e;if(!pt)return;

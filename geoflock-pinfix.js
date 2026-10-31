@@ -4,8 +4,8 @@
       Sydney Opera House pin sat in the middle of Australia).
    2. The shared photo enrichment puts "Country: landmark" photo pins at the country’s centre, and gives text pins a photo
       of somewhere else in the country (Kaliningrad got St Basil’s in Moscow, Point Roberts got Moraine Lake). For every
-      photo of a known place (LOC: photo file → where it was taken), a pin more than 100 km (300 km when the label names
-      only the country) from that place is:
+      photo of a known place (LOC: photo file → where it was taken), a pin far from that place (50 km when the label names the landmark, 300 km
+      when it names only the country, 100 km otherwise) is:
         - moved to the place, when the label is "Country: …" or names the photo’s landmark and the place is on the map;
         - removed, when it is the enrichment’s own "Country: landmark" pin and the place is off the map;
         - turned back into the plain text pin it was, otherwise (the label stays where it was, without the wrong photo).
@@ -58,7 +58,7 @@ function judge(id,S,q){
  const isC=countries().has(head);
  /* the label names the photo’s subject: "Country: landmark", or a caption that is the landmark */
  const namesIt=!!m&&isC&&cap&&cap!==lab.toLowerCase()&&cap!==head.toLowerCase();
- if(d<=(isC&&!namesIt?300:100))return null;
+ if(d<=(isC&&!namesIt?300:namesIt?50:100))return null;
  if((isC||namesIt)&&inView(S,ll))return["move",ll];
  if(isC&&namesIt)return["remove"];
  return["text"]}
@@ -75,15 +75,16 @@ function fixStop(id,S){
  return changed}
 
 /* ---------- 1. A capital in the bush ---------- */
-/* off: the picture’s offset from its point, in px; each picture sits on the side away from the dashed line */
+/* _gfOff: the picture’s offset from its point, in px (kept like a user’s drag); each picture sits on the side away from the
+   dashed line, so none covers Canberra or the line */
 function canberra(){let S=null;try{S=PS_TOURS.oceania.steps.find(s=>s.title==="A capital in the bush"||s.title==="Canberra, the compromise")}catch(e){}
  if(!S)return false;
  const ok=Array.isArray(S.phPins)&&S.phPins.length===3&&S.phPins.every(q=>q&&q._gfPinFix);if(ok)return false;
  const ip=libIdx("Parliament House at dusk, Canberra ACT.jpg"),io=libIdx("Sydney Opera House - Dec 2008.jpg"),im=libIdx("Clocks at Flinders Street Station.jpg");
  const P=[];
- if(ip>=0)P.push({at:[149.13,-35.31],label:"Canberra: Parliament House",col:OR,icon:"photo",_gfImg:ip,_gfPinFix:1,off:[78,58]});
- if(io>=0)P.push({at:[151.21,-33.86],label:"Sydney: the Opera House",col:OR,icon:"photo",_gfImg:io,_gfPinFix:1,off:[60,-52]});
- if(im>=0)P.push({at:[144.97,-37.82],label:"Melbourne: Flinders Street Station",col:OR,icon:"photo",_gfImg:im,_gfPinFix:1,off:[60,52]});
+ if(ip>=0)P.push({at:[149.13,-35.31],label:"Canberra: Parliament House",col:OR,icon:"photo",_gfImg:ip,_gfPinFix:1,_gfOff:[78,58]});
+ if(io>=0)P.push({at:[151.21,-33.86],label:"Sydney: the Opera House",col:OR,icon:"photo",_gfImg:io,_gfPinFix:1,_gfOff:[60,-52]});
+ if(im>=0)P.push({at:[144.97,-37.82],label:"Melbourne: Flinders Street Station",col:OR,icon:"photo",_gfImg:im,_gfPinFix:1,_gfOff:[60,52]});
  if(P.length<3)return false;
  try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};P.forEach(q=>{PS_SQ_IMG[q.label]=q._gfImg})}catch(e){}
  try{window.GF_PHCAP=window.GF_PHCAP||{};Object.assign(GF_PHCAP,{"Canberra: Parliament House":"Canberra: Parliament House","Sydney: the Opera House":"Sydney Opera House","Melbourne: Flinders Street Station":"Melbourne: Flinders St"})}catch(e){}
@@ -92,20 +93,86 @@ function canberra(){let S=null;try{S=PS_TOURS.oceania.steps.find(s=>s.title==="A
  lock(S,"pins",[]);if(Array.isArray(S._pins0))S._pins0=[];
  S._sqPruned=-1;S._enr=1;LOG.push(["oceania",S.title,"Canberra/Sydney/Melbourne","rebuilt"]);return true}
 
-function all(){let n=0;try{canberra()}catch(e){console.error("pinfix canberra",e)}
+
+/* ---------- 3. missing photos in a list of places of the same kind ----------
+   Where a stop shows some places of one kind (the giant cities, the money cities, the holy cities…) as photo pins and the
+   others as plain labels, the plain ones get a library photo too, at the same point. "tour|stop": [[label, photo file or
+   null (the photo the app already uses for that label), new label (optional)]]. A photo already shown on the stop is not
+   used again. On these stops, a plain label that repeats a photo pin’s label at the same point is dropped (it was printed twice). */
+const FILL={
+ "asia|Asia’s giant cities":[["Delhi","Red Fort in Delhi 03-2016 img3.jpg"],["Dhaka",null]],
+ "cities|The biggest cities":[["Dhaka",null],["New Delhi","India Gate front.jpg"]],
+ "hg6a|Megacities":[["Tokyo",null],["Delhi","Red Fort in Delhi 03-2016 img3.jpg"],["Dhaka",null],["Lagos",null]],
+ "cities|Money cities":[["Hong Kong",null],["Singapore",null],["Tokyo","Minato City, Tokyo, Japan.jpg"]],
+ "cities|Africa’s booming cities":[["Nairobi",null],["Dar es Salaam","The waterfront of Dar es Salaam.JPG"]],
+ "cities|The busiest ports":[["Ningbo","Ningbo skyline viewed on Changfeng Bridge.jpg"],["Qingdao","Qingdao - Drone view city with skyline (Unsplash).jpg"]],
+ "cities|The oldest cities":[["Jericho","Tell es-Sultan, Jericho, Palestine2.jpg","Jericho: Tell es-Sultan"],["Aleppo","Citadel of Aleppo.jpg"],["Byblos",null]],
+ "hg6a|World cities":[["London",null],["Tokyo","Minato City, Tokyo, Japan.jpg"],["Paris",null]],
+ "hg6a|Megalopolis and metacity":[["Boston","Boston Tea Party Ship & Museum, Boston (493623) (11062434853).jpg"],["Philadelphia",null],["Washington","US Capitol west side.JPG"]],
+ "rivers|Ten countries, one river":[["Bratislava","Bratislava Castle R01.jpg"],["Belgrade","Belgrade Fortress, used to be one of the most powerful military strongholds of Europe (13810190784).jpg"]],
+ "seas|The busiest gateways":[["Strait of Hormuz",null],["Strait of Malacca","Ships in the Malacca Strait.jpg"]],
+ "hg4c|Choke points":[["Strait of Hormuz",null],["Strait of Malacca","Ships in the Malacca Strait.jpg"]],
+ "langrel|Holy cities":[["Bodh Gaya",null],["Rome","St Peter's Square, Vatican City - April 2007.jpg","Rome: St Peter’s"],["Amritsar","Golden Temple, Amritsar 01.jpg","Amritsar: the Golden Temple"]],
+ "hg3b|Sacred spaces":[["Mecca",null],["Jerusalem",null]],
+ "transport|The bullet train":[["Osaka","Osaka Castle 03bs3200.jpg"]],
+ "hmodern|The nuclear age begins":[["Nagasaki","Former Dejima Protestant Seminary, Dejima, Nagasaki, 20240815 1453 3707.jpg"]],
+ "musicsport|Three hosts, 48 teams":[["Toronto",null],["Vancouver","Capilano Suspension Bridge, Vancouver, Canada (July 2016) 1.jpg"]],
+ "migration|Built by newcomers":[["Toronto: 47% born abroad","Sunset Toronto Skyline Panorama Crop from Snake Island.jpg"],["Vancouver","Capilano Suspension Bridge, Vancouver, Canada (July 2016) 1.jpg"],["Auckland",null]],
+ "cities|Cities at the extremes":[["Phoenix","Downtown Phoenix Skyline (6974043971).jpg"]],
+ "asia|Two Koreas":[["Seoul",null]],
+ "hmodern|Korea’s unfinished war":[["Seoul",null]],
+ "oceania|Australia is most of it":[["Melbourne","Clocks at Flinders Street Station.jpg"]],
+ "hasia|The first cities":[["Babylon","Processional Way, Babylon - Google Art Project.jpg","Babylon: a lion from its walls"]],
+ "hafrica|The Swahili coast":[["Mombasa","Fort Jesus at the Mombasa Island.jpg","Mombasa: Fort Jesus"]]};
+const FILLCAP={"Jericho: Tell es-Sultan":"Jericho: Tell es-Sultan","Amritsar: the Golden Temple":"Golden Temple, Amritsar","Babylon: a lion from its walls":"Babylon: a lion relief","Mombasa: Fort Jesus":"Fort Jesus, Mombasa","Rome: St Peter’s":"Rome: St Peter’s"};
+/* new pictures (Wikimedia Commons, free licences, credited like the other library photos) */
+window.GF_PINFIX_PHOTOS=[{"f": "Ningbo skyline viewed on Changfeng Bridge.jpg", "d": "photos/xaf09f2906601d08f.webp", "by": "Siyuwj", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Ningbo_skyline_viewed_on_Changfeng_Bridge.jpg"}, {"f": "Qingdao - Drone view city with skyline (Unsplash).jpg", "d": "photos/xba481e607e8e02ef.webp", "by": "CHO EUNSEONG being_es", "lic": "CC0", "page": "https://commons.wikimedia.org/wiki/File:Qingdao_-_Drone_view_city_with_skyline_(Unsplash).jpg"}, {"f": "Tell es-Sultan, Jericho, Palestine2.jpg", "d": "photos/x4a3a90a6a53b983a.webp", "by": "Diego Delso", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Tell_es-Sultan,_Jericho,_Palestine2.jpg"}, {"f": "The waterfront of Dar es Salaam.JPG", "d": "photos/xa6a0bc6a56535a4b.webp", "by": "Chen Hualin", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:The_waterfront_of_Dar_es_Salaam.JPG"}, {"f": "Golden Temple, Amritsar 01.jpg", "d": "photos/xd1f0c09a8628a602.webp", "by": "Bernard Gagnon", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Golden_Temple,_Amritsar_01.jpg"}, {"f": "Ships in the Malacca Strait.jpg", "d": "photos/xdbe651ac81b8b1a9.webp", "by": "ZoschH", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Ships_in_the_Malacca_Strait.jpg"}];
+function mergePhotos(){try{if(typeof gfMergeExtra==="function")gfMergeExtra();if(typeof PS_PHOTO_DATA==="undefined")return;
+ const have=new Set(PS_PHOTO_DATA.map(p=>p&&p.f));GF_PINFIX_PHOTOS.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}catch(e){}}
+const FILLED=window.GF_PINFIX_FILLED=window.GF_PINFIX_FILLED||[];
+function sqImg(lab){try{const i=window.PS_SQ_IMG&&PS_SQ_IMG[lab];return i==null?-1:i}catch(e){return -1}}
+function fillStop(id,S){
+ const L=FILL[id+"|"+S.title];if(!L||!Array.isArray(S.pins))return false;
+ const ph=Array.isArray(S.phPins)?S.phPins.slice():[];
+ const shown=new Set(ph.map(q=>{const P=photoOf(q);return P&&P.f}).filter(Boolean));
+ try{const o=ps;let C=null;ps={tour:id,i:PS_TOURS[id].steps.indexOf(S)};try{C=psPhotoFor(S)}finally{ps=o}if(C&&C.f)shown.add(C.f)}catch(e){}
+ let pins=S.pins.slice(),ch=false;
+ for(const [lab,file,nl] of L){
+  const k=pins.findIndex(p=>Array.isArray(p)&&Array.isArray(p[0])&&typeof p[0][0]==="number"&&strip(p[1])===lab);if(k<0)continue;
+  let idx=file?libIdx(file):sqImg(lab);if(idx<0)continue;const P=PS_PHOTO_DATA[idx];if(!P||!P.d||shown.has(P.f))continue;
+  let name=nl||lab;try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};while(PS_SQ_IMG[name]!=null&&PS_SQ_IMG[name]!==idx)name+="​";PS_SQ_IMG[name]=idx}catch(e){}
+  if(FILLCAP[nl])try{GF_PHCAP[nl]=FILLCAP[nl]}catch(e){}
+  ph.push({at:pins[k][0].slice(),label:name,col:OR,icon:"photo",_gfImg:idx,_gfPinFill:1});shown.add(P.f);
+  pins.splice(k,1);ch=true;FILLED.push([id,S.title,lab,P.f])}
+ if(ch){lock(S,"phPins",ph);lock(S,"pins",pins);if(Array.isArray(S._pins0))S._pins0=S._pins0.filter(p=>pins.includes(p)||!(Array.isArray(p)&&L.some(x=>x[0]===strip(p[1]))));S._sqPruned=-1}
+ return ch}
+/* a plain label that repeats a photo pin’s label at the same point */
+function dedupe(id,S){if(!FILL[id+"|"+S.title]||!Array.isArray(S.pins)||!Array.isArray(S.phPins)||!S.phPins.length)return false;
+ const twin=p=>Array.isArray(p)&&Array.isArray(p[0])&&typeof p[0][0]==="number"&&typeof p[1]==="string"&&S.phPins.some(q=>q&&Array.isArray(q.at)&&strip(q.label)===strip(p[1])&&Math.abs(q.at[0]-p[0][0])<.3&&Math.abs(q.at[1]-p[0][1])<.3);
+ const keep=S.pins.filter(p=>!twin(p));if(keep.length===S.pins.length)return false;
+ S.pins.filter(twin).forEach(p=>LOG.push([id,S.title,strip(p[1]),"duplicate text label dropped",p[0]]));
+ lock(S,"pins",keep);if(Array.isArray(S._pins0))S._pins0=S._pins0.filter(p=>!twin(p));S._sqPruned=-1;return true}
+
+function all(){let n=0;mergePhotos();try{canberra()}catch(e){console.error("pinfix canberra",e)}
  try{for(const id in PS_TOURS){const st=PS_TOURS[id]&&PS_TOURS[id].steps;if(!Array.isArray(st))continue;
-  for(const S of st){try{if(fixStop(id,S))n++}catch(e){console.error("pinfix",id,S&&S.title,e)}}}}catch(e){console.error(e)}
+  for(const S of st){try{if(S&&S.title&&!SKIP.has(id+"|"+S.title)){if(fixStop(id,S))n++;if(id!=="geo"&&fillStop(id,S))n++;if(dedupe(id,S))n++}}catch(e){console.error("pinfix",id,S&&S.title,e)}}}}catch(e){console.error(e)}
  return n}
 
 function hookGo(){if(typeof psGo!=="function"||psGo._gfPinFix)return;const _g=psGo;
  psGo=function(i){let S=null,id=null;
   try{if(typeof ps!=="undefined"&&ps){id=ps.tour;const st=psSteps();S=st[i];
    if(S&&typeof psEnrich==="function")psEnrich(id,S,i,st.length);
-   if(S){if(id==="oceania")canberra();fixStop(id,S)}}}catch(e){}
+   if(S&&!SKIP.has(id+"|"+S.title)){if(id==="oceania")canberra();fixStop(id,S);if(id!=="geo")fillStop(id,S);dedupe(id,S)}}}catch(e){}
   const r=_g.apply(this,arguments);
-  try{if(S&&ps&&ps.tour===id&&!psGo._again){let c=fixStop(id,S);if(id==="oceania"&&canberra())c=true;if(c){psGo._again=1;try{_g.call(this,i)}finally{psGo._again=0}}}}catch(e){}
+  try{if(S&&ps&&ps.tour===id&&!psGo._again){let c=false;if(!SKIP.has(id+"|"+S.title)){c=fixStop(id,S);if(id!=="geo"&&fillStop(id,S))c=true;if(dedupe(id,S))c=true}if(id==="oceania"&&canberra())c=true;if(c){psGo._again=1;try{_g.call(this,i)}finally{psGo._again=0}}}}catch(e){}
   return r};psGo._gfPinFix=1}
-function run(){all();hookGo()}
+/* pictures with a fixed place (_gfOff) are pinned there, as if the user had dragged them */
+function hookSync(){if(typeof psPhPinsSync!=="function"||psPhPinsSync._gfPinFix)return;const _s=psPhPinsSync;
+ const g=function(){const r=_s.apply(this,arguments);try{const box=psContainer&&psContainer(),L=box&&box.querySelector(".ps-phpins"),S=psSteps()[ps.i];
+  if(L&&S&&L._for===S&&Array.isArray(L._off)){let ch=false;L._user=L._user||[];(S.phPins||[]).forEach((q,k)=>{if(q&&q._gfOff&&!L._user[k]){L._off[k]=q._gfOff.slice();L._user[k]=true;ch=true}});
+   if(ch)_s.apply(this,arguments)}}catch(e){}return r};
+ for(const k in _s)try{g[k]=_s[k]}catch(e){}g._gfPinFix=1;psPhPinsSync=g}
+function run(){all();hookGo();hookSync()}
 function boot(){setTimeout(()=>{run();[1500,5000,12000].forEach(ms=>setTimeout(run,ms))},1500)}
 if(document.readyState==="complete")boot();else window.addEventListener("load",boot);
 })();

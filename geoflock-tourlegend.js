@@ -44,31 +44,40 @@ function dragLine(){const s=dng(),P=s&&s.plan;const card=tourOn()&&ps.card;
  const sun=card&&card.querySelector(".psc-sun"),date=sun&&sun.querySelector('.psc-r[data-k="day"]');
  const dg=card&&card.querySelector(".ps-dg .dg-handle");
  return"Drag the <b>Time of day</b>"+(date?" and <b>Date</b>":"")+" sliders in the card"+(dg?" (or the diagram’s date)":"")+" to move the Sun."}
-function tourKey(){const el=typeof flkEl==="function"?flkEl():document.getElementById("flKey"),lg=document.getElementById("populationLegend");if(!el)return;
- const pj=typeof proj!=="undefined"&&proj.on,lit=litNow();
- const items=lg&&lg.querySelector(KEYSEL);
- let want=appMode==="allmaps"&&!pj&&!!lg&&(lit||!!items||(satMap()&&!!lg.querySelector(".legend-title")));
- try{if(allMapsColorMode==="history")want=false}catch(e){}
- if(!want){el.style.display="none";el.classList.remove("gf-tl-on");return}
- el.style.display="";el.classList.add("open","gf-tl-on");
- const title=lit?"Day & Night":((lg.querySelector(".legend-title")||{}).textContent||"Map key");
- const k=[title,lit,lit&&dng().plan.sun,allMapsColorMode,lg.innerHTML.length,(typeof thFocus!=="undefined"&&thFocus)||"",ps.tour,ps.i,!!(ps.card&&ps.card.querySelector(".psc-sun .psc-r"))].join("|");
- if(el._k===k&&el.querySelector(".gf-tl-body,.flk-body"))return;el._k=k;
- let body="";
+/* the key under the map, when its key row is on screen anyway, needs no floating copy */
+function rowOnScreen(lg){if(!lg||!lg.getClientRects().length)return false;const cand=lg.querySelector(KEYSEL);if(!cand||!cand.getClientRects().length)return false;
+ const r=cand.getBoundingClientRect(),l=lg.getBoundingClientRect();if(!r.height)return false;const top=Math.min(r.top,l.top),bot=Math.max(r.bottom,Math.min(l.bottom,r.bottom+60));
+ if(top<56||bot>innerHeight-4)return false;
+ const x=Math.min(innerWidth-2,Math.max(2,r.left+Math.min(20,r.width/2))),y=r.top+Math.min(6,r.height/2),at=document.elementFromPoint(x,y);return!!(at&&lg.contains(at))}
+function keyHTML(lg,lit){let body="";
  if(lit){body='<div class="gf-tl-dn"><span class="gf-tl-sw"><i class="gf-tl-day"></i>Sunlit half: daytime</span><span class="gf-tl-sw"><i class="gf-tl-night"></i>Night side, with city lights</span><span class="gf-tl-sw"><i class="gf-tl-sun"></i>The Sun is overhead here</span></div>'+
   '<p class="gf-tl-drag"><span aria-hidden="true">☀</span> '+dragLine()+"</p>"}
  else{const c=lg.cloneNode(true);c.removeAttribute("id");
   const note=(c.querySelector(".legend-note")||{}).textContent||"";
-  c.querySelectorAll("label, .leg-opts, .ps-legend-btn, .legend-note, .legend-multi, button, input, .relief-under, [data-relief], .faint-sw, .pop-games").forEach(x=>x.remove());
+  c.querySelectorAll("label, .leg-opts, .ps-legend-btn, .legend-note, .legend-multi, button, input, .relief-under, [data-relief], .faint-sw, .pop-games, #gfShadeRow").forEach(x=>x.remove());
   const t=c.querySelector(".legend-title");if(t)t.remove();
   if(c.querySelector(KEYSEL))body='<div class="flk-body '+esc(lg.className)+'">'+c.innerHTML+"</div>";
   else if(note){const first=(note.match(/^[^.]*\./)||[note])[0].trim();body='<p class="gf-tl-txt">'+esc(first)+"</p>"}}
- el.innerHTML='<div class="flk-h"><b>'+esc(title)+'</b><small class="gf-tl-tag">Map key</small></div>'+body}
-function leaveKey(){const el=document.getElementById("flKey");if(!el)return;el.classList.remove("gf-tl-on","gf-tl-left","gf-tl-top","gf-tl-ph");el._k=null;el.innerHTML="";
- ["--gf-tl-b","--gf-tl-mh"].forEach(v=>el.style.removeProperty(v))}
+ return body}
+function tourKey(){const el=typeof flkEl==="function"?flkEl():document.getElementById("flKey"),lg=document.getElementById("populationLegend");if(!el)return;
+ const pj=typeof proj!=="undefined"&&proj.on,lit=litNow(),phone=innerWidth<=760;
+ const items=lg&&lg.querySelector(KEYSEL);
+ let want=appMode==="allmaps"&&!pj&&!!lg&&(lit||!!items||(satMap()&&!!lg.querySelector(".legend-title")));
+ try{if(allMapsColorMode==="history")want=false}catch(e){}
+ const title=want?(lit?"Day & Night":((lg.querySelector(".legend-title")||{}).textContent||"Map key")):"";
+ const k=want?[title,lit,lit&&dng().plan.sun,allMapsColorMode,lg.innerHTML.length,(typeof thFocus!=="undefined"&&thFocus)||"",ps.tour,ps.i,!!(ps.card&&ps.card.querySelector(".psc-sun .psc-r")),!!(ps.card&&ps.card.querySelector(".ps-dg .dg-handle"))].join("|"):"";
+ /* on a phone the card is a sheet over most of the screen: the key goes into the card, at its end */
+ const card=ps.card;let ic=card&&card.querySelector(".gf-tl-incard");
+ if(!want||!phone){if(ic)ic.remove();ic=null}
+ else{if(!ic){ic=document.createElement("div");ic.className="gf-tl-incard";ic.setAttribute("aria-label","Map key");const dots=card.querySelector(".ps-dots,.ps-nav");if(dots&&dots.parentNode)dots.parentNode.insertBefore(ic,dots);else card.appendChild(ic)}
+  if(ic._k!==k){ic._k=k;ic.innerHTML='<div class="gf-tl-h"><b>'+esc(title)+'</b><small class="gf-tl-tag">Map key</small></div>'+keyHTML(lg,lit)}}
+ if(!want||phone||(!lit&&rowOnScreen(lg))){el.style.display="none";el.classList.remove("gf-tl-on");return}
+ el.style.display="";el.classList.add("open","gf-tl-on");
+ if(el._k===k&&el.querySelector(".flk-h"))return;el._k=k;
+ el.innerHTML='<div class="flk-h"><b>'+esc(title)+'</b><small class="gf-tl-tag">Map key</small></div>'+keyHTML(lg,lit)}
+function leaveKey(){document.querySelectorAll(".gf-tl-incard").forEach(x=>x.remove());const el=document.getElementById("flKey");if(!el)return;el.classList.remove("gf-tl-on","gf-tl-left","gf-tl-top");el._k=null;el.innerHTML=""}
 /* keep clear of the card, the stop's own key and banner, and the toolkit tray */
 function place(){const el=document.getElementById("flKey");if(!el||!el.classList.contains("gf-tl-on")||el.style.display==="none")return;
- const phone=innerWidth<=760;el.classList.toggle("gf-tl-ph",phone);
  const hit=(a,b)=>a.left<b.right-2&&a.right>b.left+2&&a.top<b.bottom-2&&a.bottom>b.top+2;
  const obs=[ps&&ps.card,...document.querySelectorAll(".ps-mapkey, .ps-mapbanner, #allMapsView .gfk-tray, #allMapsView .gfk-coord, .ps-launcher")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height);
  const tryAt=cls=>{el.classList.remove("gf-tl-left","gf-tl-top");cls.forEach(c=>el.classList.add(c));const r=el.getBoundingClientRect();return!obs.some(o=>hit(o,r))};
@@ -126,17 +135,23 @@ const css=document.createElement("style");css.textContent=`
 #flKey.gf-tl-on .flk-body{ overflow:auto; }
 #flKey.gf-tl-on.gf-tl-left{ right:auto !important; left:16px !important; }
 #flKey.gf-tl-on.gf-tl-top{ bottom:auto !important; top:calc(var(--gf-hdr,64px) + 8px) !important; }
-#flKey.gf-tl-on.gf-tl-ph{ width:min(230px,calc(100vw - 24px)); max-height:30vh; right:8px; bottom:8px; font-size:12px; padding:7px 10px; }
-#flKey.gf-tl-on.gf-tl-ph.gf-tl-left{ left:8px !important; }
-#flKey .gf-tl-txt{ margin:4px 0 0; font-size:12px; line-height:1.4; opacity:.85; }
-#flKey .gf-tl-dn{ display:flex; flex-direction:column; gap:3px; margin-top:4px; }
-#flKey .gf-tl-sw{ display:flex; align-items:center; gap:7px; font-size:12px; line-height:1.25; padding:2px 4px; }
-#flKey .gf-tl-sw i{ flex:none; width:13px; height:13px; border-radius:3px; border:1px solid rgba(0,0,0,.12); }
-#flKey .gf-tl-day{ background:linear-gradient(135deg,#4f86c6,#7fae5a); }
-#flKey .gf-tl-night{ background:radial-gradient(circle at 35% 40%,#ffd36b 0 1.5px,transparent 2px),radial-gradient(circle at 70% 65%,#ffd36b 0 1.2px,transparent 1.8px),#0b1530; }
-#flKey .gf-tl-sun{ border-radius:50% !important; background:#ffd34d; border:2px solid #fff !important; box-shadow:0 0 0 1px rgba(0,0,0,.2),0 0 6px rgba(255,210,90,.9); }
-#flKey .gf-tl-drag{ margin:7px 0 0; padding:6px 8px; border-radius:10px; font-size:12px; line-height:1.4; background:rgba(255,197,51,.16); border-left:3px solid #ffc533; }
-#flKey .gf-tl-drag b{ font-weight:800; }`;
+#flKey .gf-tl-txt, .gf-tl-incard .gf-tl-txt{ margin:4px 0 0; font-size:12px; line-height:1.4; opacity:.85; }
+.gf-tl-incard{ margin:10px 0 4px; padding:8px 10px; border-radius:12px; border:1px solid rgba(127,140,180,.28); background:rgba(127,140,180,.07); font-size:12px; }
+.gf-tl-incard .gf-tl-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
+.gf-tl-incard .gf-tl-tag{ margin-left:auto; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; opacity:.55; }
+.gf-tl-incard .flk-body .legend-swatches, .gf-tl-incard .flk-body .legend-group{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px; }
+.gf-tl-incard .flk-body .legend-group > b{ flex-basis:100%; }
+.gf-tl-incard .flk-body .legend-scale{ display:block; margin:2px 0 6px; }
+.gf-tl-incard .flk-body .legend-swatch{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; }
+.gf-tl-incard .flk-body .legend-swatch i{ display:inline-block; width:11px; height:11px; border-radius:3px; }
+#flKey .gf-tl-dn, .gf-tl-incard .gf-tl-dn{ display:flex; flex-direction:column; gap:3px; margin-top:4px; }
+#flKey .gf-tl-sw, .gf-tl-incard .gf-tl-sw{ display:flex; align-items:center; gap:7px; font-size:12px; line-height:1.25; padding:2px 4px; }
+#flKey .gf-tl-sw i, .gf-tl-incard .gf-tl-sw i{ flex:none; width:13px; height:13px; border-radius:3px; border:1px solid rgba(0,0,0,.12); }
+#flKey .gf-tl-day, .gf-tl-incard .gf-tl-day{ background:linear-gradient(135deg,#4f86c6,#7fae5a); }
+#flKey .gf-tl-night, .gf-tl-incard .gf-tl-night{ background:radial-gradient(circle at 35% 40%,#ffd36b 0 1.5px,transparent 2px),radial-gradient(circle at 70% 65%,#ffd36b 0 1.2px,transparent 1.8px),#0b1530; }
+#flKey .gf-tl-sun, .gf-tl-incard .gf-tl-sun{ border-radius:50% !important; background:#ffd34d; border:2px solid #fff !important; box-shadow:0 0 0 1px rgba(0,0,0,.2),0 0 6px rgba(255,210,90,.9); }
+#flKey .gf-tl-drag, .gf-tl-incard .gf-tl-drag{ margin:7px 0 0; padding:6px 8px; border-radius:10px; font-size:12px; line-height:1.4; background:rgba(255,197,51,.16); border-left:3px solid #ffc533; }
+#flKey .gf-tl-drag b, .gf-tl-incard .gf-tl-drag b{ font-weight:800; }`;
 document.head.appendChild(css);
 window.gfTourLegend={tick,place,moveSun,toDiagrams,setCardDay};
 try{if(tourOn())tick()}catch(e){}
