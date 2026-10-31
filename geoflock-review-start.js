@@ -211,14 +211,14 @@ function asia(){const id="asia";
    s.stat="Indonesia, the Philippines and Japan are island chains built by the Ring of Fire";
    s.body="Around the edge of the Pacific, ocean plates dive under Asia (the plate edges are drawn on the map). Rock melts as it sinks, and the melt rises to build chains of volcanic islands: Indonesia’s 17,000 islands, the Philippines and Japan. The same plates give the islands rich volcanic soil, and shake them with earthquakes and tsunamis.";
    s.more="Indonesia is the world’s largest island country, stretching over 5,100 km, wider than the United States, and the fourth most populous country on Earth. Its volcanoes have changed world history: Tambora’s eruption in 1815, the biggest in recorded history, chilled Europe’s summer the next year, and Krakatoa’s in 1883 was heard about 4,800 km away. In Japan, the 2011 earthquake and tsunami killed nearly 20,000 people."})}
- ins(id,"The rains that feed Asia",{title:"The Grand Canal",view:[104,22,128,42.5],globe:[117,33,3],card:"left",
+ ins(id,"The monsoon",{title:"The Grand Canal",view:[104,22,128,42.5],globe:[117,33,3],card:"left",
   gfEmpire:{y:610,gk:"chn",name:"Sui China",at:[114,26]},
   lines:[{coords:[[120.16,30.27],[120.62,31.3],[119.45,32.2],[119.43,32.39],[119.0,33.6],[118.3,34.0],[117.2,34.6],[116.6,35.4],[116.0,36.45],[116.3,37.45],[116.85,38.3],[117.2,39.13],[116.66,39.9]],kind:"flow"}],
   pins:[[[120.16,30.27],"Hangzhou","point"],[[119.43,32.39],"Yangzhou","point"],[[116.4,39.9],"Beijing","point"],[[[115,31],[112,29]],"Rice country: the Yangtze","area"]],
   stat:"China dug the world’s longest canal, about 1,800 km, to move rice to its capital",
   body:"China’s rice grew in the warm, wet south, around the Yangtze, but its capitals and armies were in the drier north, facing the steppe. Its great rivers flow east, not north, so in the early 600s the Sui emperors (their empire shaded) linked them with canals, and later dynasties extended the line to Beijing (arrows). Grain barges kept the north fed for over a thousand years.",
   more:"Building it cost the lives of huge numbers of forced labourers, and the Sui dynasty fell soon after. Cities along it, like Yangzhou, grew rich on the traffic, and parts are still busy with barges today. It became a UNESCO World Heritage Site in 2014."});
- ins(id,"The monsoon",{title:"Two rice baskets on a pole",view:[98,7,115,24.5],globe:[106,16,3.5],card:"left",hi:["vn"],
+ ins(id,"The Grand Canal",{title:"Two rice baskets on a pole",view:[98,7,115,24.5],globe:[106,16,3.5],card:"left",hi:["vn"],
   gfRuler:{a:[106.62,17.47],b:[106.17,17.62]},
   pins:[[[105.85,21.03],"Hanoi: the Red River delta","point"],[[105.78,10.03],"The Mekong delta","point"]],
   iconPins:[{at:[106.2,20.6],icon:"wheat",col:"#8a5a2b"},{at:[105.6,9.7],icon:"wheat",col:"#8a5a2b"}],
@@ -226,7 +226,7 @@ function asia(){const id="asia";
   stat:"At its narrowest, Vietnam is only about 50 km wide",
   body:"Vietnamese describe their country as a carrying pole with a basket of rice at each end: the Red River delta around Hanoi in the north and the Mekong delta in the south. Most people live in or near these two flat, flooded deltas, and the thin coastal strip between them, backed by mountains, carries the main road and railway. Drag the ruler across the narrowest part.",
   more:"The shape comes from history: Vietnamese rulers spread south from the Red River along the coast over many centuries, reaching the Mekong delta only in the 1600s and 1700s. That is one reason the north and south have different accents and dishes, and, from 1954 to 1975, had different governments."});
- ins(id,"Deserts and steppe",{title:"Arabia’s monsoon corner",view:[33,9,63,25],globe:[54,17,4],card:"left",hi:["om"],
+ false&&ins(id,"Deserts and steppe",{title:"Arabia’s monsoon corner",view:[33,9,63,25],globe:[54,17,4],card:"left",hi:["om"],
   lines:[{coords:[[50,9.5],[51.8,12.5],[53,15],[54,16.8]],kind:"flow"}],
   pins:[[[54.09,17.02],"Salalah","point"],[[[51.5,20.5],[50,19.5]],"The Empty Quarter: over 45 °C","area"]],
   stat:"Every summer, one corner of the Arabian desert turns green with mist and drizzle",
