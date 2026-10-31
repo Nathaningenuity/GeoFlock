@@ -6,8 +6,7 @@
       (S.drag outlines and the Moon, S.ghosts) or on its "· drag me" tag, on the flat canvas map, on the globe and on the
       old SVG flat map (where only the tag needed it). The tag takes the pointer now, with a grab cursor.
    2. Grouped highlights (stop.G): each country's outline is drawn in its group's legend colour, not white.
-   3. Stops: North America "The Caribbean" (three groups, territories too, new text); Oceania "Oceania" (intro: the
-      Opera House photo sits at Sydney), "Only in Australia" (no Wallace Line diagram, a dingo photo pin), "The Great
+   3. Stops: North America "The Caribbean" (three groups, territories too, new text); Oceania "Only in Australia" (no Wallace Line diagram, a dingo photo pin), "The Great
       Barrier Reef" (reef animals from the Ocean life tour), "New Zealand" (Zealandia drawn), "Big ocean states"
       (Kiribati's islands lit and ringed). Other stops are not changed. */
 (function(){
@@ -56,8 +55,6 @@ function patchStops(){
   const col=[{at:[[-74.5,24.05]],text:"Columbus landed, 1492",ringKm:60}];
   def(S,"_al",1);def(S,"_pins0",col.slice());def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",col.slice());lock(S,"pins",S._tfPins);lock(S,"iconPins",[]);
   lock(S,"lines",[{circle:[-74.5,24.05],km:60,kind:"outline"}]);lock(S,"phPins",[]);lock(S,"globe",[-69,17.5,2.45])}}
- /* Oceania intro: the Sydney Opera House photo at Sydney, not the middle of Australia */
- {const S=stepOf("oceania","Oceania");if(S&&Array.isArray(S.phPins))S.phPins.forEach(q=>{if(q&&/Sydney Opera House/.test(q.label||"")&&Math.abs(q.at[0]-151.21)>1){q.at=[151.21,-33.86]}})}
  /* Only in Australia: no Wallace Line diagram (the card shows its photo); a dingo photo instead of the text pin */
  {const S=stepOf("oceania","Only in Australia");if(S){try{if(typeof PS_DIAG!=="undefined")delete PS_DIAG["oceania|Only in Australia"]}catch(e){}
   const drop=p=>String(Array.isArray(p)?p[1]:p&&p.text||"").indexOf("Dingoes roam")<0;
@@ -78,9 +75,9 @@ function patchStops(){
  {const S=stepOf("oceania","New Zealand");if(S){
   const base=[[[174.76,-36.85],"Auckland","point"],[[[163.2,-35.6],[161.0,-30.6],[-178.6,-44.6]],"Zealandia, mostly under the sea","area"]];
   def(S,"_al",1);def(S,"_pins0",base.slice());def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",base.slice());lock(S,"pins",S._tfPins);
-  lock(S,"lines",[{poly:ZEALANDIA,kind:"outline"}]);lock(S,"view",[142,-60,196,-14]);lock(S,"globe",[165.5,-37,1.75]);def(S,"card","left")}}
+  lock(S,"lines",[{poly:ZEALANDIA,kind:"outline"}]);lock(S,"view",[142,-60,196,-14]);lock(S,"globe",[170,-37,1.75]);/* the flat map frames flatView, centred: shifted west so the card on the left does not cover the Lord Howe Rise */lock(S,"flatView",[132,-59,186,-15]);def(S,"card","left")}}
  /* Big ocean states: Kiribati's own islands lit and ringed; the Tarawa photo sits north-east of its ring, where its line crosses no island */
- {const S=stepOf("oceania","Big ocean states");if(S){def(S,"_tfKi",1);
+ {const S=stepOf("oceania","Big ocean states");if(S){def(S,"_tfKi",1);/* on the flat map the Gilbert Islands sat under the card: frame a little further west */if(!S._tfFV){lock(S,"flatView",[140,-30,210,24]);def(S,"_tfFV",1)}
   const P=S.phPins||[];const q=P.find(x=>x&&/Tarawa/.test(x.label||""));if(q){def(q,"ringKm",KI_RING);def(q,"_tfDir",-40)}}}
 }
 
@@ -107,14 +104,17 @@ function flatExtra(){try{if(!live()||ps.mode!=="flat"||!ps.wrap)return;const S=c
 
 /* ---------------- photo pins told which way to sit (_tfDir, screen degrees: 0 right, 90 down) ---------------- */
 function kmPx(at,km){const a=psScreen(at),b=psScreen([at[0]+km/(111.32*Math.cos(at[1]*Math.PI/180)),at[1]]);return a&&b?Math.hypot(b[0]-a[0],b[1]-a[1]):0}
+/* the photo layer's leader lines are redrawn by several hands; any line or dot that reaches a "here" photo's own point goes */
+function cleanHere(svg,pts){if(!svg||!pts||!pts.length)return;const near=(x,y)=>pts.some(a=>Math.hypot(x-a[0],y-a[1])<9);
+ svg.querySelectorAll("line").forEach(l=>{const g=k=>+l.getAttribute(k);if(near(g("x1"),g("y1"))||near(g("x2"),g("y2")))l.remove()});svg.querySelectorAll("circle").forEach(c=>{if(near(+c.getAttribute("cx"),+c.getAttribute("cy")))c.remove()})}
+function watchHere(L,svg){if(!svg||svg._tfObs)return;try{svg._tfObs=new MutationObserver(()=>{try{if(L._tfHere&&L._tfHere.length)cleanHere(svg,L._tfHere)}catch(e){}});svg._tfObs.observe(svg,{childList:true})}catch(e){}}
 function placeDirPins(){try{if(!live())return;const S=cur(),P=S&&S.phPins||[];if(!P.some(q=>q&&q._tfDir!=null))return;const box=psContainer(),L=box&&box.querySelector(".ps-phpins");if(!L||L._for!==S)return;
- const svg=L.querySelector("svg.ps-sq-lead"),els=[...L.querySelectorAll(".ps-sq")],W=box.clientWidth,H=box.clientHeight,br=box.getBoundingClientRect();
+ L._tfHere=[];const svg=L.querySelector("svg.ps-sq-lead");watchHere(L,svg);const els=[...L.querySelectorAll(".ps-sq")],W=box.clientWidth,H=box.clientHeight,br=box.getBoundingClientRect();
  const cr=ps.card&&ps.card.offsetParent?ps.card.getBoundingClientRect():null,card=cr?{l:cr.left-br.left-8,r:cr.right-br.left+8,t:cr.top-br.top-8,b:cr.bottom-br.top+8}:null;
  els.forEach((el,k)=>{const q=P[k];if(!q||q._tfDir==null||el.style.display==="none")return;if(L._user&&L._user[k])return;const a=psScreen(q.at);if(!a)return;
   if(q._tfDir==="here"){/* a photo that stands for the sea round it: it sits right there, no line, no dot */
    const w=el.offsetWidth||56,h=el.offsetHeight||72,x=Math.max(w/2+4,Math.min(W-w/2-4,a[0])),y=Math.max(h/2+4,Math.min(H-h/2-4,a[1]));
-   if(card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b)return;el.style.left=x+"px";el.style.top=y+"px";if(Array.isArray(L._off))L._off[k]=[x-a[0],y-a[1]];
-   if(svg){svg.querySelectorAll("circle").forEach(c=>{if(Math.hypot(+c.getAttribute("cx")-a[0],+c.getAttribute("cy")-a[1])<3)c.remove()});svg.querySelectorAll("line").forEach(l=>{const g=k=>+l.getAttribute(k);if(Math.hypot(g("x1")-a[0],g("y1")-a[1])<3||Math.hypot(g("x2")-a[0],g("y2")-a[1])<3)l.remove()})}return}
+   if(card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b)return;el.style.left=x+"px";el.style.top=y+"px";if(Array.isArray(L._off))L._off[k]=[x-a[0],y-a[1]];L._tfHere.push([a[0],a[1]]);cleanHere(svg,[[a[0],a[1]]]);return}
   const R=q.ringKm?kmPx(q.at,q.ringKm):4,w=el.offsetWidth||56,h=el.offsetHeight||72;
   const at=deg=>{const t=deg*Math.PI/180,ux=Math.cos(t),uy=Math.sin(t),half=Math.min(Math.abs(w/2/(ux||1e-9)),Math.abs(h/2/(uy||1e-9)));const d=R+30+half;let x=a[0]+ux*d,y=a[1]+uy*d;x=Math.max(w/2+4,Math.min(W-w/2-4,x));y=Math.max(h/2+4,Math.min(H-h/2-4,y));return[x,y]};
   const bad=([x,y])=>card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b;
