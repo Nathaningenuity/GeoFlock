@@ -41,7 +41,7 @@ const ORIG_SUB={
    borders are today's, which the relief's highlights already show) */
 const YEAR={
  bprisoners:{
-  "Lines in the sand":{y:1914,focus:"ott",labels:[{gk:"ott",name:"Ottoman Empire"}]}},
+  "Lines in the sand":{y:1914,focus:"ott",labels:[{gk:"ott",name:"Ottoman Empire",at:[39.2,35.3]}]}},
  bnations:{
   "Silver and forced labour":{y:1650,focus:"spa",labels:[{gk:"spa",name:"Spain’s empire"}]},
   "The Glorious Revolution":{y:1688,labels:[{n:"Kingdom of England",name:"England"},{n:"Republic of the Seven United Netherlands",name:"Dutch Republic"}]},
