@@ -131,3 +131,7 @@ const outer=()=>{if(typeof psSqPhoto!=="function"||psSqPhoto._rvpp)return;const 
 addEventListener("load",()=>setTimeout(outer,2000));if(document.readyState==="complete")setTimeout(outer,2000);
 run();addEventListener("load",()=>setTimeout(run,1500));[0,1500,5000,12000].forEach(t=>setTimeout(run,t));
 })();
+/* "A river that stops short": the card's main photo is the dry Colorado delta (the user's pick), on every tour with that stop */
+(function(){function go(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_TOURS==="undefined")return;const i=(window.PS_SQ_IMG||{})["The river runs dry about here"];if(i==null)return;
+ for(const t in PS_TOURS){const T=PS_TOURS[t];(T.steps||[]).forEach(s=>{if(s&&String(s.title).replace(/​/g,"").trim()==="A river that stops short")PS_PHOTO[t+"|"+s.title]=i})}}catch(e){console.error(e)}}
+ const run=()=>[1500,3000,6500,13500].forEach(ms=>setTimeout(go,ms));if(document.readyState==="complete")run();else addEventListener("load",run)})();
