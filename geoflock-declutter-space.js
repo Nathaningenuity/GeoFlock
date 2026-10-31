@@ -1,5 +1,6 @@
-/* GeoFlock: decluttering the "Earth from space" tour (id "space").
-   Every stop keeps only what its text needs: usually one photo pin and at most one or two short labels.
+/* GeoFlock: decluttering the "Earth from space" tour (id "space"), on the stops the tour review added
+   ("The sea of plastic", "Dust that feeds the Amazon"); the tour's older stops are left exactly as they were.
+   A stop keeps only what its text needs: usually one photo pin and at most one or two short labels.
    - Rivers are no longer hand-drawn arrows: the stop turns the rivers layer on and highlights the river itself
      (rivHi for rivers in the map's river layer; the real river line from LANDFORMS, drawn as kind "river", otherwise).
    - Small areas (a delta, a salt flat, a mangrove forest, a mud plume, a salt lake) get a big true-size circle and one
@@ -26,91 +27,18 @@ const circle=(c,km)=>({circle:c,km:km,kind:"outline"});
 const lfRiver=id=>{try{const it=LANDFORMS.items.find(x=>x&&x.id===id);const g=it&&it.geom;if(!g||g.t!=="line")return[];return g.c.map(p=>({coords:p.map(q=>[q[0],q[1]]),kind:"river"}))}catch(e){return[]}};
 
 function patch(){
- /* 0: a whole-planet overview: six photo pins scattered over the globe → one */
- set("The Earth from space",s=>{const q=keepPh(s,"Grand Erg Oriental: sand sea",{nodot:1});lock(s,"phPins",q?[q]:[])});
+ /* The sea of plastic: circle + one photo pin whose line ends at the circle (as set in geoflock-review-start.js);
+    the circle is made a little bigger and the globe flies closer than the usual cap, so the ring reads (about 45-50 px) */
+ set("The sea of plastic",s=>{
+  lock(s,"lines",[circle([-2.75,36.78],65)]);
+  const q=(s.phPins||[]).find(x=>x&&x.ringKm);
+  if(q)lock(s,"phPins",[Object.assign({},q,{at:[-2.75,36.78],ringKm:65,dir:-30})]);
+  def(s,"globe",[-2.75,36.9,8]);def(s,"gz",12.5);def(s,"view",[-5.6,35.6,0.1,38.4])});
 
- /* 1: the dashed wall and its icon say it; the "about here" label sat on the line, the Gobi photo is not in the text */
- set("You can’t see the Great Wall from space",s=>{lock(s,"pins",[]);const q=keepPh(s,"Great Wall",{nodot:1,dir:60});lock(s,"phPins",q?[q]:[])});
-
- /* 2: the green thread and its delta: a circle round the delta, one photo on the valley with no dot on the thread */
- set("The Nile, a green thread",s=>{
-  lock(s,"lines",[circle([31.05,30.85],160)]);
-  lock(s,"pins",[lab([31.05,30.85],"The delta",{ringKm:160,dir:-20})]);
-  const q=keepPh(s,"The Nile valley",{nodot:1,dir:0});lock(s,"phPins",q?[q]:[])});
-
- /* 3: one photo of a sand sea, plus the two other kinds of desert the text names */
- set("The colours of the Sahara",s=>{
-  lock(s,"pins",[lab([[9.0,24.6],[5.5,23.3]],"The Tassili and Ahaggar: dark rock"),lab([[18.5,17],[20,18]],"Dry lakebeds")]);
-  const q=keepPh(s,"Grand Erg Oriental: sand sea",{nodot:1});lock(s,"phPins",q?[q]:[])});
-
- /* 4: the 1960 shore (orange) and the stranded ship stay; the two rivers the text names are drawn as rivers,
-    instead of a label with a dot on the Amu Darya delta */
- set("A sea that shrank",s=>{
-  const L=(s.lines||[]).filter(l=>l&&l.poly);lock(s,"lines",L.concat(lfRiver("amu-darya"),lfRiver("syr-darya")));
-  lock(s,"on",["rivers"]);
-  lock(s,"pins",[lab([59.6,44.9],"Aralkum: a new desert on the old seabed",{dir:0})])});
-
- /* 5: the sea of plastic (already circle + one photo): framed a little closer so the circle reads */
- set("The sea of plastic",s=>{def(s,"globe",[-2.75,36.85,8]);def(s,"gz",11);(s.phPins||[]).forEach(q=>{if(q&&q.ringKm&&q.dir==null)q.dir=-30})});
-
- /* 6: Everest, the plateau photo and the chart; the plateau text label repeated the photo, the rivers label is not in the text */
- set("The Himalaya from orbit",s=>{lock(s,"pins",[lab([86.93,27.99],"Everest",{area:false,dir:110})]);
-  (s.phPins||[]).forEach(q=>{if(q)q.nodot=1})});
-
- /* 7: the biggest delta: no hand-drawn arrows and no Dhaka; the two rivers highlighted on the rivers layer, the
-    Sundarbans circled with the photo, the mud plume circled with one short label */
- set("The biggest delta on Earth",s=>{
-  lock(s,"on",["rivers"]);lock(s,"rivHi",["Ganges","Brahmaputra"]);
-  lock(s,"lines",[circle([89.15,22.0],105),circle([91.25,20.75],90)]);
-  lock(s,"pins",[lab([91.25,20.75],"Mud from the Himalaya clouds the sea",{ringKm:90,dir:30})]);
-  const q=keepPh(s,"Bangladesh: The Sundarbans",{at:[89.15,22.0],ringKm:105,dir:170});lock(s,"phPins",q?[q]:[]);
-  def(s,"globe",[89.9,22.9,7]);def(s,"gz",7.5);
-  rep(s,"body","From space you can see the dark green Sundarbans mangroves along the coast and the brown plume of mud spreading into the sea.","From space you can see the dark green Sundarbans mangroves along the coast (circled) and the brown plume of mud spreading into the sea.")});
-
- /* 8: the dashed arc and its name; the forest itself needs no label */
- set("The Amazon’s edge",s=>{lock(s,"pins",[lab([-54,-11],"The ‘arc of deforestation’",{dir:100})]);
-  (s.phPins||[]).forEach(q=>{if(q)q.nodot=1})});
-
- /* 9: the dust arrow (the text refers to it) from the Bodélé to the Amazon; Tibesti and Ennedi labels crowded the source */
- set("Dust that feeds the Amazon",s=>{lock(s,"pins",[lab([17.5,17],"Bodélé Depression",{dir:-60}),lab([[-62,-3.5]],"The Amazon",{dir:120})])});
-
- /* 10: a river that dies in the desert: no hand-drawn arrow from Angola and one photo pin (there were three);
-    the Okavango drawn as a river from its source, the delta circled, the Kalahari named well clear of it */
- set("A river that dies in the desert",s=>{
-  lock(s,"on",["rivers"]);
-  lock(s,"lines",lfRiver("okavango").concat([circle([22.85,-19.25],165)]));
-  lock(s,"pins",[lab([[22.8,-23.6],[23.8,-23.2]],"The Kalahari",{dir:90})]);
-  const q=keepPh(s,"Okavango Delta",{at:[22.85,-19.25],ringKm:165,dir:10})||keepPh(s,"The Okavango Delta: up to about 15,000 km² in flood",{at:[22.85,-19.25],ringKm:165,dir:10});
-  lock(s,"phPins",q?[q]:[]);def(s,"globe",[21.0,-17.0,5.5]);def(s,"gz",5.5)});
-
- /* 11: Greenland: the ice label without a dot on the ice */
- set("Greenland from orbit",s=>{lock(s,"pins",[lab([-40,73],"Ice up to about 3 km thick",{dir:-90})]);(s.phPins||[]).forEach(q=>{if(q)q.nodot=1})});
-
- /* 12: shallow seas: today's sea level (the -15 m start turned the turquoise banks into beige land); the slider stays,
-    starting at today's level; one photo and one short label, both over deep water */
- set("Shallow seas, deep seas",s=>{
-  def(s,"gfSea",0);
-  lock(s,"pins",[lab([[-74.2,26.4]],"Thousands of metres deep",{dir:-45})]);
-  lock(s,"phPins",[{at:[-76.45,24.18],label:"Exumas: the swimming pigs",col:"#d9682b",icon:"photo",nodot:1,dir:20}])});
-
- /* 13: the red centre: a continent-wide view, too wide for a circle round Lake Eyre to read: its label gets a plain
-    line with no dot on the white patch; Uluru's photo also without a dot */
- set("Australia’s red centre",s=>{
-  lock(s,"pins",[lab([137.3,-28.6],"Lake Eyre (Kati Thanda): a salt lake, usually dry",{dir:30})]);
-  (s.phPins||[]).forEach(q=>{if(q){q.nodot=1;if(q.dir==null)q.dir=200}})});
-
- /* 14: one big circle round the Salar de Uyuni and one photo placed well away from it; no Titicaca, no lithium ponds
-    (the text names neither), no duplicate photo pin */
- set("A white mirror in the Andes",s=>{
-  lock(s,"pins",[]);lock(s,"lines",[circle([-67.55,-20.2],100)]);
-  const q=keepPh(s,"Salar de Uyuni",{at:[-67.55,-20.2],ringKm:100,dir:0})||keepPh(s,"Salar de Uyuni: about 10,000 km²",{at:[-67.55,-20.2],ringKm:100,dir:0});
-  lock(s,"phPins",q?[q]:[]);def(s,"globe",[-67.0,-20.2,6]);def(s,"gz",9)});
-
- /* 15: the ridge label and the Iceland photo without dots */
- set("The sea floor",s=>{lock(s,"pins",[lab([-30,40],"The Mid-Atlantic Ridge",{dir:180})]);(s.phPins||[]).forEach(q=>{if(q)q.nodot=1})});
-
- /* 16: the two patterns the text explains; the mid-latitude label is not in the text */
- set("Weather patterns from space",s=>{lock(s,"pins",[lab([-30,6],"The storm band near the equator",{dir:90}),lab([[10,23],[20,22]],"Clear skies over the deserts",{dir:-90})])});
+ /* Dust that feeds the Amazon: the arrow stays (the text refers to it); Tibesti and Ennedi crowded the source,
+    so only the start (Bodélé) and the end (the Amazon) are named, with plain lines and no dots */
+ set("Dust that feeds the Amazon",s=>{
+  lock(s,"pins",[lab([17.5,17],"Bodélé Depression",{dir:-60}),lab([-62,-3.5],"The Amazon",{dir:120})])});
 }
 
 function run(){try{const t=T();if(!t||t.steps._dclSpace)return;patch();def(t.steps,"_dclSpace",1)}catch(e){console.error("declutter-space",e)}}
