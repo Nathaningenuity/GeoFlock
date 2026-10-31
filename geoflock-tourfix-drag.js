@@ -76,12 +76,12 @@ function patchStops(){
   lock(S,"phPins",S._tfPh)}}
  /* New Zealand: Zealandia drawn, framed whole */
  {const S=stepOf("oceania","New Zealand");if(S){
-  const base=[[[174.76,-36.85],"Auckland","point"],[[[160.6,-30.2],[161.2,-33.5],[170.5,-52.5]],"Zealandia, mostly under the sea","area"]];
+  const base=[[[174.76,-36.85],"Auckland","point"],[[[-178.6,-44.6],[176.0,-49.8],[160.8,-31.0]],"Zealandia, mostly under the sea","area"]];
   def(S,"_al",1);def(S,"_pins0",base.slice());def(S,"_restored",[]);if(!S._tfPins)def(S,"_tfPins",base.slice());lock(S,"pins",S._tfPins);
-  lock(S,"lines",[{poly:ZEALANDIA,kind:"outline"}]);lock(S,"view",[146,-59,194,-15]);lock(S,"globe",[170,-37,1.75]);def(S,"card","left")}}
- /* Big ocean states: Kiribati's own islands lit and ringed; the Tarawa photo sits west of its ring */
+  lock(S,"lines",[{poly:ZEALANDIA,kind:"outline"}]);lock(S,"view",[142,-60,196,-14]);lock(S,"globe",[170,-37,1.75]);def(S,"card","left")}}
+ /* Big ocean states: Kiribati's own islands lit and ringed; the Tarawa photo sits north-east of its ring, where its line crosses no island */
  {const S=stepOf("oceania","Big ocean states");if(S){def(S,"_tfKi",1);
-  const P=S.phPins||[];const q=P.find(x=>x&&/Tarawa/.test(x.label||""));if(q){def(q,"ringKm",KI_RING);def(q,"_tfDir",195)}}}
+  const P=S.phPins||[];const q=P.find(x=>x&&/Tarawa/.test(x.label||""));if(q){def(q,"ringKm",KI_RING);def(q,"_tfDir",-40)}}}
 }
 
 /* ---------------- drawing: group outlines, Kiribati ---------------- */
@@ -114,7 +114,7 @@ function placeDirPins(){try{if(!live())return;const S=cur(),P=S&&S.phPins||[];if
   if(q._tfDir==="here"){/* a photo that stands for the sea round it: it sits right there, no line, no dot */
    const w=el.offsetWidth||56,h=el.offsetHeight||72,x=Math.max(w/2+4,Math.min(W-w/2-4,a[0])),y=Math.max(h/2+4,Math.min(H-h/2-4,a[1]));
    if(card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b)return;el.style.left=x+"px";el.style.top=y+"px";if(Array.isArray(L._off))L._off[k]=[x-a[0],y-a[1]];
-   if(svg){svg.querySelectorAll("circle").forEach(c=>{if(Math.hypot(+c.getAttribute("cx")-a[0],+c.getAttribute("cy")-a[1])<3)c.remove()});svg.querySelectorAll("line").forEach(l=>{if(Math.hypot(+l.getAttribute("x1")-a[0],+l.getAttribute("y1")-a[1])<3)l.remove()})}return}
+   if(svg){svg.querySelectorAll("circle").forEach(c=>{if(Math.hypot(+c.getAttribute("cx")-a[0],+c.getAttribute("cy")-a[1])<3)c.remove()});svg.querySelectorAll("line").forEach(l=>{const g=k=>+l.getAttribute(k);if(Math.hypot(g("x1")-a[0],g("y1")-a[1])<3||Math.hypot(g("x2")-a[0],g("y2")-a[1])<3)l.remove()})}return}
   const R=q.ringKm?kmPx(q.at,q.ringKm):4,w=el.offsetWidth||56,h=el.offsetHeight||72;
   const at=deg=>{const t=deg*Math.PI/180,ux=Math.cos(t),uy=Math.sin(t),half=Math.min(Math.abs(w/2/(ux||1e-9)),Math.abs(h/2/(uy||1e-9)));const d=R+30+half;let x=a[0]+ux*d,y=a[1]+uy*d;x=Math.max(w/2+4,Math.min(W-w/2-4,x));y=Math.max(h/2+4,Math.min(H-h/2-4,y));return[x,y]};
   const bad=([x,y])=>card&&x+w/2>card.l&&x-w/2<card.r&&y+h/2>card.t&&y-h/2<card.b;

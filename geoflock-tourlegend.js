@@ -48,7 +48,8 @@ function dragLine(){const s=dng(),P=s&&s.plan;const card=tourOn()&&ps.card;
 function rowOnScreen(lg){if(!lg||!lg.getClientRects().length)return false;const cand=lg.querySelector(KEYSEL);if(!cand||!cand.getClientRects().length)return false;
  const r=cand.getBoundingClientRect(),l=lg.getBoundingClientRect();if(!r.height)return false;const top=Math.min(r.top,l.top),bot=Math.max(r.bottom,Math.min(l.bottom,r.bottom+60));
  if(top<56||bot>innerHeight-4)return false;
- const x=Math.min(innerWidth-2,Math.max(2,r.left+Math.min(20,r.width/2))),y=r.top+Math.min(6,r.height/2),at=document.elementFromPoint(x,y);return!!(at&&lg.contains(at))}
+ /* and nothing (the card, the toolkit) lies over it: the left end, the middle and the right end of its first row */
+ const y=r.top+Math.min(6,r.height/2);return[l.left+12,(l.left+l.right)/2,l.right-12].every(x=>{const at=document.elementFromPoint(Math.min(innerWidth-2,Math.max(2,x)),y);return!!(at&&(lg.contains(at)||at===lg))})}
 function keyHTML(lg,lit){let body="";
  if(lit){body='<div class="gf-tl-dn"><span class="gf-tl-sw"><i class="gf-tl-day"></i>Sunlit half: daytime</span><span class="gf-tl-sw"><i class="gf-tl-night"></i>Night side, with city lights</span><span class="gf-tl-sw"><i class="gf-tl-sun"></i>The Sun is overhead here</span></div>'+
   '<p class="gf-tl-drag"><span aria-hidden="true">☀</span> '+dragLine()+"</p>"}
@@ -75,15 +76,25 @@ function tourKey(){const el=typeof flkEl==="function"?flkEl():document.getElemen
  el.style.display="";el.classList.add("open","gf-tl-on");
  if(el._k===k&&el.querySelector(".flk-h"))return;el._k=k;
  el.innerHTML='<div class="flk-h"><b>'+esc(title)+'</b><small class="gf-tl-tag">Map key</small></div>'+keyHTML(lg,lit)}
-function leaveKey(){document.querySelectorAll(".gf-tl-incard").forEach(x=>x.remove());const el=document.getElementById("flKey");if(!el)return;el.classList.remove("gf-tl-on","gf-tl-left","gf-tl-top");el._k=null;el.innerHTML=""}
-/* keep clear of the card, the stop's own key and banner, and the toolkit tray */
+const POS=["left","top","right","bottom"];
+function clearPos(el){if(el._gftlPos&&POS.every(k=>el.style.getPropertyValue(k)===el._gftlPos[k]))POS.forEach(k=>el.style.removeProperty(k));el._gftlPos=null}
+function leaveKey(){document.querySelectorAll(".gf-tl-incard").forEach(x=>x.remove());const el=document.getElementById("flKey");if(!el)return;el.classList.remove("gf-tl-on");el._k=null;el.innerHTML="";clearPos(el)}
+/* where the key stands: the first corner that is clear of the card, the stop's own key and banner, the round map buttons,
+   the toolkit and "Point at the map"; it is placed here (inline), so the general key placement (geoflock-fsfix.js) stands
+   aside during the tour. If the user drags it (geoflock-toolkit.js), it stays where they put it. */
 function place(){const el=document.getElementById("flKey");if(!el||!el.classList.contains("gf-tl-on")||el.style.display==="none")return;
- const hit=(a,b)=>a.left<b.right-2&&a.right>b.left+2&&a.top<b.bottom-2&&a.bottom>b.top+2;
- const obs=[ps&&ps.card,...document.querySelectorAll(".ps-mapkey, .ps-mapbanner, #allMapsView .gfk-tray, #allMapsView .gfk-coord, .ps-launcher")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height);
- const tryAt=cls=>{el.classList.remove("gf-tl-left","gf-tl-top");cls.forEach(c=>el.classList.add(c));const r=el.getBoundingClientRect();return!obs.some(o=>hit(o,r))};
- if(el.style.left||el.style.top)return;/* the user has moved it (toolkit drag): leave it there */
- if(tryAt([]))return;if(tryAt(["gf-tl-left"]))return;if(tryAt(["gf-tl-top"]))return;if(tryAt(["gf-tl-left","gf-tl-top"]))return;
- tryAt([])}
+ if(el._gftlPos&&!POS.every(k=>el.style.getPropertyValue(k)===el._gftlPos[k]))return;/* moved by the user */
+ if(!el._gftlPos&&(el.style.getPropertyValue("left")||el.style.getPropertyValue("top")))return;
+ el.classList.remove("gfx-fit","gfx-w","gfx-r");
+ const W=innerWidth,H=innerHeight,w=el.offsetWidth||250,h=Math.min(el.offsetHeight||200,H-80),m=16;
+ const hit=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+ const obs=[ps&&ps.card,...document.querySelectorAll(".ps-mapkey, .ps-mapbanner, #allMapsView .gfk-tray, #allMapsView .gfk-coord, #allMapsView .globe-btns, #allMapsView .map-zoom-controls, #gfDngPanel.gf-dng-float, #allMapsSubModes, #amGlobeSubs")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.bottom>0&&r.top<H);
+ let top0=70;try{const row=document.querySelector("#allMapsView .all-maps-controls")||document.getElementById("allMapsToggleRow");if(row&&vis(row)){const b=row.getBoundingClientRect().bottom;if(b>0&&b<H*.45)top0=b+8}}catch(e){}
+ const C=[[W-m-w,H-m-h],[m,H-72-h],[W-m-w,top0],[m,top0]].map(([x,y])=>({left:x,top:Math.max(8,y),right:x+w,bottom:Math.max(8,y)+h}));
+ let best=C[0],bs=1e12;for(const c of C){const s=obs.reduce((a,o)=>a+hit(o,c),0);if(s<bs-1){bs=s;best=c}if(!s)break}
+ const want={left:Math.round(best.left)+"px",top:Math.round(best.top)+"px",right:"auto",bottom:"auto"};
+ if(el._gftlPos&&POS.every(k=>el._gftlPos[k]===want[k]))return;
+ POS.forEach(k=>el.style.setProperty(k,want[k],"important"));el._gftlPos=want}
 if(typeof flkSync==="function"){const _f=flkSync;flkSync=function(){
  if(tourOn()){let hist=false;try{hist=allMapsColorMode==="history"}catch(e){}
   if(!hist){try{mine=true;tourKey();place()}catch(e){console.error("tourlegend key",e)}return}}
@@ -133,8 +144,6 @@ const css=document.createElement("style");css.textContent=`
 #flKey.gf-tl-on .flk-h{ display:flex; align-items:baseline; gap:8px; }
 #flKey.gf-tl-on .gf-tl-tag{ margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; opacity:.55; }
 #flKey.gf-tl-on .flk-body{ overflow:auto; }
-#flKey.gf-tl-on.gf-tl-left{ right:auto !important; left:16px !important; }
-#flKey.gf-tl-on.gf-tl-top{ bottom:auto !important; top:calc(var(--gf-hdr,64px) + 8px) !important; }
 #flKey .gf-tl-txt, .gf-tl-incard .gf-tl-txt{ margin:4px 0 0; font-size:12px; line-height:1.4; opacity:.85; }
 .gf-tl-incard{ margin:10px 0 4px; padding:8px 10px; border-radius:12px; border:1px solid rgba(127,140,180,.28); background:rgba(127,140,180,.07); font-size:12px; }
 .gf-tl-incard .gf-tl-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }

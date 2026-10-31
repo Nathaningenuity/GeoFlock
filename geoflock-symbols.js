@@ -66,7 +66,7 @@ function thermoSVG(hot){const col=hot?"#d62828":"#2a78d0",edge=hot?"#7d1d1d":"#1
 function css(){if(document.getElementById("gfSymCss"))return;const st=document.createElement("style");st.id="gfSymCss";st.textContent=
  ".gfs-lay{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden}"+
  ".gfs-m{position:absolute;left:0;top:0;display:none;pointer-events:none;will-change:transform}"+
- ".gfs-m img,.gfs-m svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 1px 1.2px rgba(10,20,40,.35))}"+
+ ".gfs-m img,.gfs-m svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 .6px #fff) drop-shadow(0 1px 1.2px rgba(10,20,40,.55))}"+
  ".gfs-m.gfs-in{animation:gfsIn .35s ease-out backwards}@keyframes gfsIn{from{opacity:0;scale:.5}to{opacity:1;scale:1}}"+
  ".gfs-t{position:absolute;left:100%;top:50%;transform:translate(1px,-50%);white-space:nowrap;font:700 11px/1.25 'Baloo 2',system-ui,sans-serif;padding:0 5px;border-radius:7px;background:rgba(255,255,255,.93);box-shadow:0 1px 2px rgba(10,20,40,.3)}"+
  ".gfs-t.l{left:auto;right:100%;transform:translate(-1px,-50%)}.gfs-t.h{color:#a3201f}.gfs-t.c{color:#1d4f96}"+
@@ -87,7 +87,9 @@ function build(S){const G=S.gfSym,box=psContainer&&psContainer();if(!box)return 
   if(m.thermo){el.innerHTML=thermoSVG(m.thermo==="hot")+(m.txt?'<span class="gfs-t '+(m.thermo==="hot"?"h":"c")+'">'+m.txt+'</span>':"");el.title=m.thermo==="hot"?"Very hot":"Very cold"}
   else el.innerHTML='<img src="'+img(m.e)+'" alt="" draggable="false">';
   lay.appendChild(el);els.push({el,m,kind,sz:m.sz||16,reach:m.reach!=null?m.reach:.8,gap:m.gap||3})};
- (G.marks||[]).forEach(m=>mk(m,"mark"));
+ /* a stop that turns on the Hazards layer already shows its volcanoes: no second volcano symbol there */
+ const haz=Array.isArray(S.on)&&S.on.includes("hazards");
+ (G.marks||[]).forEach(m=>{if(haz&&m.e==="volcano")return;mk(m,"mark")});
  (G.scatter||[]).forEach(sc=>{const rings=[];(sc.lf||[]).forEach(id=>{const c=LF(id);if(c)c.forEach(r=>rings.push(r))});(sc.rings||[]).forEach(r=>rings.push(r));
   const pts=sc._pts||(sc._pts=scatter(rings,sc.step||1.5,sc.inset!=null?sc.inset:(sc.step||1.5)*.35));const E=sc.e;
   const grp={max:sc.max||30,n:0};pts.slice(0,(sc.max||30)*3).forEach((p,i)=>{mk({at:p,e:Array.isArray(E)?E[i%E.length]:E,sz:sc.sz||15,reach:0,gap:sc.gap!=null?sc.gap:5},"scatter");els[els.length-1].grp=grp})});
@@ -139,7 +141,7 @@ function stepWalkers(n,ob){const still=RM();walkers.forEach(v=>{const t=still?v.
   const b={l:s[0]-z/2,t:s[1]-z,r:s[0]+z/2,b:s[1]};let vis=fade;if(ob&&(ob.O.some(q=>hitBox(b,q))))vis=0;
   v.el.style.opacity=vis.toFixed(2);v.el.style.transform="translate("+(s[0]-z/2).toFixed(1)+"px,"+(s[1]-z*.92+bob).toFixed(1)+"px) scaleX("+dir+")"})}
 function sig(S){const a=anchor(S),p=psScreen(a),box=lay&&lay.parentNode;let c="";try{const r=ps.card.getBoundingClientRect();c=Math.round(r.left)+","+Math.round(r.top)+","+Math.round(r.width)}catch(e){}
- const n=box?box.querySelectorAll(".ps-pins > *, .ps-phpins .ps-sq, .ps-iconpins .ps-ip").length:0;
+ let n="";if(box)box.querySelectorAll(".ps-lab, .ps-phpins .ps-sq, .ps-iconpins .ps-ip").forEach(e=>{n+=e.style.left+e.style.top+e.style.display+e.style.transform+";"});
  return(p?p.map(v=>v.toFixed(1)).join(","):"x")+"|"+(box?box.clientWidth+"x"+box.clientHeight:"")+"|"+c+"|"+n+"|"+(ps.g&&ps.g.zoom||"")}
 let lastOb=null,lastSigT=0;
 function tick(n){if(!cur||!ps||psSteps()[ps.i]!==cur||!lay||!lay.isConnected){teardown();return}
@@ -206,8 +208,6 @@ const PLAN={
  /* 1. the Ring of Fire */
  "asia|Islands of fire":{marks:vs(["klyuchevskaya","fuji","sakurajima","mayon","taal","pinatubo","merapi","krakatoa","tambora","kelud","bromo","sinabung","agung",
    "avachinsky","shiveluch","sarychev","kanlaon","kerinci","rinjani","gamalama"])},
- "volcanoes|The Ring of Fire":{marks:vs(["klyuchevskaya","fuji","sakurajima","mayon","pinatubo","merapi","krakatoa","tambora","sinabung","rabaul","yasur","hungaTonga","ruapehu",
-   "redoubt","shishaldin","rainier","shasta","popocatepetl","colima","fuego","arenal","cotopaxi","misti","lascar","villarrica","sarychev","taal","agung","manam"]).map(m=>Object.assign(m,{sz:15}))},
  /* 2. caravans on the Silk Road */
  "asia|The Silk Road":{camels:[{coords:SILK,n:4,e:"camel2"}]},
  "explorers|The envoy who opened the Silk Road":{camels:[{coords:[[108.94,34.27],[103.8,36.06],[100.4,38.9],[94.66,40.14],[89,42.9],[82,41.5],[75.99,39.47],[71.5,40.5],[67,39.65],[66.9,36.76]],n:3,e:"camel2"}]},
@@ -240,33 +240,23 @@ const PLAN={
  "asia|Siberia":{marks:[T([143.15,63.46],false)]},
  /* 6. rice */
  "asia|Two rice baskets on a pole":{scatter:[R_(["redRiver"],{max:24,step:.13,inset:.05,sz:13,gap:-5}),R_(["mekong"],{max:34,step:.15,inset:.05,sz:13,gap:-5})]},
- "food|Rice feeds Asia":{scatter:[R_(["bengal","ganges","mekong","redRiver","chaoPhraya","irrawaddy","yangtze","sichuan","java","luzon"],{max:40,step:.9,inset:.25,sz:14})]},
- "hg5a|Intensive farming":{scatter:[R_(["mekong","bengal","redRiver","chaoPhraya","irrawaddy","ganges"],{max:30,step:.55,inset:.15})]},
- "crops|Rice from the Yangtze":{scatter:[R_(["yangtze","sichuan","mekong","redRiver","chaoPhraya","bengal"],{max:30,step:.6,inset:.18})]},
+ "food|Rice feeds Asia":{scatter:[R_(["bengal","ganges","mekong","redRiver","chaoPhraya","irrawaddy","yangtze","sichuan","java","luzon"],{max:45,step:.6,inset:.2,sz:15,gap:-3})]},
+ "hg5a|Intensive farming":{scatter:[R_(["mekong","bengal","redRiver","chaoPhraya","irrawaddy","ganges"],{max:36,step:.4,inset:.12,gap:-3})]},
+ "crops|Rice from the Yangtze":{scatter:[R_(["yangtze","sichuan","mekong","redRiver","chaoPhraya","bengal"],{max:36,step:.45,inset:.15,gap:-3})]},
  /* 7. other places where a symbol helps */
  "ocean|Upwelling: where the fish are":{marks:[V([-125.5,38.5],"fish",{sz:18,reach:1.2}),V([-80.5,-12.5],"fish",{sz:18,reach:1.2}),V([-19,23.5],"fish",{sz:18,reach:1.2}),V([12,-24.5],"fish",{sz:18,reach:1.2})]},
  "weather|Where the big storms are born":{marks:[V([140,17],"cyclone",{sz:18,reach:1.4}),V([-55,18],"cyclone",{sz:18,reach:1.4}),V([-108,14],"cyclone",{sz:18,reach:1.4}),V([88.5,15.5],"cyclone",{sz:18,reach:1.4}),
    V([65,-14],"cyclone",{sz:18,reach:1.4}),V([118,-15],"cyclone",{sz:18,reach:1.4}),V([172,-16],"cyclone",{sz:18,reach:1.4})]},
  "energy|Ghawar, the biggest oil field":{marks:[V([49.35,24.6],"oil",{sz:19,reach:1.4})]},
  "animals|Elephant country":{marks:[V([24.4,-18.6],"elephant",{sz:19,reach:1}),V([25.1,-18],"elephant",{sz:19,reach:1}),V([23.4,-19.9],"elephant",{sz:19,reach:1})]},
- /* volcano stops whose volcanoes had no symbol */
- "volcanoes|Iceland: fire and ice":{marks:[V([-19.62,63.63],0,{sz:18,reach:1.4}),V([-18.23,64.07],0,{sz:18,reach:1.4})]},
- "volcanoes|Vesuvius and Pompeii":{marks:[V([14.426,40.821],0,{sz:19,reach:1.4})]},
- "volcanoes|Etna, always busy":{marks:[V([14.999,37.751],0,{sz:19,reach:1.4}),V([15.213,38.789],0,{sz:17,reach:1.4}),V([14.962,38.404],0,{sz:17,reach:1.4})]},
- "volcanoes|Pinatubo cools the planet":{marks:[V([120.35,15.13],0,{sz:19,reach:1.4})]},
+ /* volcano stops whose volcanoes had no symbol (stops that turn on the Hazards layer already show them) */
  "volcanoes|The biggest bang in a century":{marks:[V([-175.382,-20.536],0,{sz:18,reach:1.4})]},
- "volcanoes|Mount St Helens":{marks:[V([-122.189,46.191],0,{sz:19,reach:1.4}),V([-121.76,46.853],0,{sz:17,reach:1.4}),V([-121.695,45.374],0,{sz:17,reach:1.4})]},
  "volcanoes|The prisoner who survived":{marks:[V([-61.165,14.809],0,{sz:19,reach:1.4})]},
- "volcanoes|Kilimanjaro and the Rift":{marks:[V([37.355,-3.066],0,{sz:17,reach:1.4}),V([37.308,-0.152],0,{sz:17,reach:1.4}),V([29.25,-1.52],0,{sz:17,reach:1.4}),V([40.67,13.6],0,{sz:17,reach:1.4})]},
- "volcanoes|Black lava: Ol Doinyo Lengai":{marks:[V([35.902,-2.764],0,{sz:19,reach:1.4})]},
  "oceania|The biggest blast in a century":{marks:[V([-175.382,-20.536],0,{sz:19,reach:1.4})]},
  "antarctica|Erebus’s lava lake":{marks:[V([167.17,-77.53],0,{sz:19,reach:1.4})]},
  "hazards|The town that ignored the map":{marks:[V([-75.322,4.892],0,{sz:19,reach:1.4})]},
- "hazards|The loudest sound":{marks:[V([105.423,-6.102],0,{sz:18,reach:1.4})]},
  "islandlife|Krakatoa starts again":{marks:[V([105.423,-6.102],0,{sz:19,reach:1.4})]},
  "ice|When a volcano melts a glacier":{marks:[V([-17.33,64.42],0,{sz:19,reach:1.4})]},
- "mythology|Thera and Atlantis":{marks:[V([25.396,36.404],0,{sz:18,reach:1.4})]},
- "mythology|Pele’s islands":{marks:[V([-155.287,19.421],0,{sz:17,reach:1.4}),V([-155.608,19.475],0,{sz:17,reach:1.4})]},
  "islands|Island born in 1963":{marks:[V([-20.605,63.303],0,{sz:18,reach:1.4})]},
  /* megacities */
  "asia|Asia’s giant cities":{marks:[CITY([106.85,-6.2]),CITY([90.41,23.81]),CITY([139.69,35.69]),CITY([77.21,28.61]),CITY([121.47,31.23])]},

@@ -46,9 +46,9 @@ const THERMO='<g class="gf-thermo"><path d="M9.6 15.2V4.4a2.4 2.4 0 0 1 4.8 0v10
  '<path d="M14.4 6.6h1.6M14.4 9.4h1.6M14.4 12.2h1.6" stroke="#7d1d1d" stroke-width="1.1" stroke-linecap="round"/></g>';
 function thermoIcon(){try{if(typeof PS_ICONS!=="undefined"&&!PS_ICONS.gfThermo)PS_ICONS.gfThermo=THERMO}catch(e){}
  if(!document.getElementById("gfThermoCss")){const st=document.createElement("style");st.id="gfThermoCss";
-  st.textContent=".ps-ip:has(.gf-thermo),.ps-ip:has(.gf-thermo):hover{width:30px;height:30px;transform:translate(calc(-50% + 20px),calc(-50% - 12px))}";document.head.appendChild(st)}}
+  st.textContent=".ps-ip:has(.gf-thermo),.ps-ip:has(.gf-thermo):hover{width:36px;height:36px;animation:none;transform:translate(calc(-50% + 30px),calc(-50% - 6px))}";document.head.appendChild(st)}}
 /* the icon layer hides an icon within 22 px of another one; the thermometer stands at the beach, right beside the volcano
-   icon, and is drawn shifted 20 px right and 12 px up (CSS above), so it is shown again here, on its own spot */
+   icon, and is drawn shifted 30 px right and 6 px up (CSS above), so it is shown again here, on its own spot */
 function hookIcons(){if(typeof psIconPinsSync!=="function"||psIconPinsSync._gfTh)return;const _f=psIconPinsSync;
  psIconPinsSync=function(){const r=_f.apply(this,arguments);try{const box=ps&&psContainer&&psContainer(),L=box&&box.querySelector(".ps-iconpins");
   const S=psSteps()[ps.i],P=S&&S.iconPins||[];if(L)[...L.children].forEach((el,k)=>{if(!el.querySelector(".gf-thermo")||!P[k])return;
