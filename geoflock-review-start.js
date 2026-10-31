@@ -457,7 +457,7 @@ function collapse(){const id="bcollapse";const H=y=>({mode:"history",sub:y,card:
 function questions(){try{if(typeof TOURQ==="undefined")return;const Q=TOURQ;
  const fix=(id,f)=>{const q=Q[id];if(q&&!q._rvStart){try{f(q)}catch(e){console.error(e)}q._rvStart=1}};
  const swap=(arr,st,n)=>{const i=(arr||[]).findIndex(x=>x&&x.st===st);if(i>=0)arr[i]=n;else if(arr)arr.push(n)};
- fix("geo",q=>swap(q.recap,"France: the most time zones",{q:"About 6 million years ago, which sea largely dried up when its gateway to the ocean closed?",o:["The Black Sea","The Mediterranean","The Caspian Sea","The Red Sea"],a:1,why:"With the Strait of Gibraltar closed, the Mediterranean evaporated and left thick salt on its floor.",st:"The sea that dried up",kc:"es"}));
+ false&&fix("geo",q=>swap(q.recap,"France: the most time zones",{q:"About 6 million years ago, which sea largely dried up when its gateway to the ocean closed?",o:["The Black Sea","The Mediterranean","The Caspian Sea","The Red Sea"],a:1,why:"With the Strait of Gibraltar closed, the Mediterranean evaporated and left thick salt on its floor.",st:"The sea that dried up",kc:"es"}));
  fix("night",q=>{(q.mid||[]).forEach(x=>{if(x.at==="An island continent lit at the edges")x.at="Japan’s lit coastline"});
   swap(q.recap,"An island continent lit at the edges",{q:"About how much of its night lights did Syria lose in four years of war?",o:["About a tenth","About a third","About four-fifths","All of them"],a:2,why:"Satellite pictures from 2011 and 2015 showed about four-fifths of the lights gone; Aleppo lost almost all of its.",st:"The lights went out in Syria",kc:"sy"})});
  fix("asia",q=>{(q.recap||[]).forEach(x=>{if(x.st==="The biggest island country")x.st="Islands of fire"});
@@ -487,17 +487,24 @@ function photos(){try{merge();if(typeof PS_PHOTO!=="undefined")for(const k in CA
 if(typeof psGo==="function"&&!psGo._rvStart){const _g=psGo;psGo=function(i){try{if(typeof ps!=="undefined"&&ps&&IDS.includes(ps.tour)){const s=psSteps()[i];if(s)reg(s)}}catch(e){}return _g.apply(this,arguments)};psGo._rvStart=1}
 
 /* ======================================================================= run */
-const FN={pop,geo,time,projections,night,space,europe,asia,africa,namerica,samerica,oceania,antarctica,bprisoners:prisoners,bggs:ggs,bnations:nations,bcollapse:collapse};
+/* the geography tour stays exactly as the owner set it: no review changes to it */
+const FN={pop,time,projections,night,space,europe,asia,africa,namerica,samerica,oceania,antarctica,bprisoners:prisoners,bggs:ggs,bnations:nations,bcollapse:collapse};
 function run(){try{for(const id in FN){const t=T(id);if(!t||t.steps._rvStart)continue;try{FN[id]()}catch(e){console.error("review-start",id,e)}def(t.steps,"_rvStart",1)}
  const c=T("climate");if(c&&!c.steps._rvStartS){sahara();def(c.steps,"_rvStartS",1)}
  questions();photos()}catch(e){console.error(e)}}
 [0,1500,5000,12000].forEach(ms=>setTimeout(run,ms));
+/* the geography tour stays exactly as the owner set it. It copies stops from other tours each time it starts, and the review changed
+   three of those sources: put the owner's originals back into the geography copy (and the icy-desert stop the climate tour renamed). */
+const GEO_KEEP={icy:{"body": "A desert is a place that gets very little rain or snow, not necessarily a hot place. Inland Antarctica gets less precipitation than much of the Sahara.", "clim": ["#666666", "#ff0000"], "gfFrom": "climate|The biggest desert is icy", "gfMode": "climate", "gfOn": [], "globe": [20, -50, 1], "more": "Only ice cap (dark grey) and hot desert (red) are lit. The Antarctic Desert covers about 14 million km², the Arctic about 13.9 million and the Sahara about 9.2 million. The middle of Antarctica gets about 50 mm of snow, measured as water, a year. The ice is thick only because almost none of it melts: the snow has piled up for hundreds of thousands of years. The McMurdo Dry Valleys have had no snow or ice cover for around two million years.", "pins": [[[[60, -78], [0, -80], [120, -75]], "Antarctic Desert, the largest", "area"], [[[-40, 76], [-35, 72]], "Arctic, second", "area"], [[[10, 24], [20, 23]], "Sahara, only third", "area"]], "stat": "The largest desert on Earth is not the Sahara. It’s Antarctica", "title": "The biggest desert is icy", "view": [-180, -90, 180, 85]},after:"Further north than you think",text:{"When the Sahara was green": {"stat": "About 8,000 years ago, the Sahara had lakes, grassland, hippos and crocodiles", "body": "Slow wobbles in Earth’s orbit strengthened the African monsoon and pushed its rain far north. The “Green Sahara” dried out again around 5,000 years ago."}, "The deepest and oldest lake": {"stat": "Lake Baikal holds about 20% of the world’s liquid fresh surface water, more than all five Great Lakes combined", "body": "It is over 1,600 m deep and about 25 million years old, the deepest and oldest lake on Earth. It covers less area than Lake Superior but holds about a fifth of the world’s unfrozen fresh surface water."}}};
+function geoKeep(r){if(!Array.isArray(r))return;
+ for(let i=0;i<r.length;i++){const s=r[i],t=s&&GEO_KEEP.text[s.title];if(t&&(s.stat!==t.stat||s.body!==t.body))r[i]=Object.assign({},s,t)} /* a copy: the source tour keeps its own text */
+ if(!r.some(s=>s&&s.title===GEO_KEEP.icy.title)){const j=r.findIndex(s=>s&&s.title===GEO_KEEP.after);r.splice(j>=0?j+1:r.length-1,0,JSON.parse(JSON.stringify(GEO_KEEP.icy)))}}
 /* the geography tour is rebuilt from its picks every time it starts (geoBuild): patch each new list as it is made */
 if(typeof geoBuild==="function"&&!geoBuild._rvStart){const _gb=geoBuild;geoBuild=function(){
   /* put the removed source stops back for a moment, so the geography tour can still copy them */
   const back=[];for(const k in GONE){const [id,title]=k.split("|");const t=T(id);if(id!=="geo"&&t&&!t.steps.some(x=>x&&x.title===title)){t.steps.push(GONE[k]);back.push([t,GONE[k]])}}
   let r;try{r=_gb.apply(this,arguments)}finally{back.forEach(([t,o])=>{const i=t.steps.indexOf(o);if(i>=0)t.steps.splice(i,1)})}
-  try{const G=PS_TOURS.geo,old=G.steps;G.steps=r;try{geo();def(r,"_rvStart",1)}finally{G.steps=old}photos()}catch(e){console.error(e)}return r};geoBuild._rvStart=1}
+  try{geoKeep(r)}catch(e){console.error(e)}try{photos()}catch(e){console.error(e)}return r};geoBuild._rvStart=1}
 /* any other tour that rebuilds its steps when it starts is patched again straight away */
 if(typeof psStart==="function"&&!psStart._rvStart){const _ps=psStart;psStart=function(){const r=_ps.apply(this,arguments);try{run()}catch(e){}return r};psStart._rvStart=1}
 if(document.readyState!=="complete")addEventListener("load",()=>setTimeout(run,300));
