@@ -138,11 +138,14 @@ function fillStop(id,S){
  try{const o=ps;let C=null;ps={tour:id,i:PS_TOURS[id].steps.indexOf(S)};try{C=psPhotoFor(S)}finally{ps=o}if(C&&C.f)shown.add(C.f)}catch(e){}
  let pins=S.pins.slice(),ch=false;
  /* the photo pins already there keep their picture through the shared pruning: their label must be in PS_SQ_IMG, and
-    must not be a bare country name (Singapore), which the pruning drops when two other photo pins are shown */
+    must not be a bare country name (Singapore), which the pruning drops when two other photo pins are shown (bare
+    place-name labels only) */
  let ctry=null;try{ctry=SQ_CTRY}catch(e){}
- for(let j=0;j<ph.length;j++){const q=ph[j];if(!q||q._gfPinFill)continue;const P=photoOf(q);if(!P)continue;const idx=PS_PHOTO_DATA.indexOf(P);if(idx<0)continue;
-  let name=q.label;try{if(ctry&&ctry.has(String(name).trim().toLowerCase()))name+="\u200b";while(PS_SQ_IMG[name]!=null&&PS_SQ_IMG[name]!==idx)name+="\u200b";
-   if(name!==q.label||PS_SQ_IMG[name]==null){PS_SQ_IMG[name]=idx;ph[j]=Object.assign({},q,{label:name,_gfImg:idx,_gfPinFill:1});ch=true}}catch(e){}}
+ for(let j=0;j<ph.length;j++){const q=ph[j];if(!q||q._gfPinFill||/:/.test(q.label))continue;const P=photoOf(q);if(!P)continue;
+  let idx=-1;try{idx=PS_SQ_IMG[q.label]!=null?PS_SQ_IMG[q.label]:PS_PHOTO_DATA.indexOf(P)}catch(e){}if(idx<0)continue;
+  try{if(PS_SQ_IMG[q.label]==null){PS_SQ_IMG[q.label]=idx;ch=true}
+   if(ctry&&ctry.has(strip(q.label).toLowerCase())){let name=q.label+"\u200b";while(PS_SQ_IMG[name]!=null&&PS_SQ_IMG[name]!==idx)name+="\u200b";
+    PS_SQ_IMG[name]=idx;ph[j]=Object.assign({},q,{label:name,_gfImg:idx,_gfPinFill:1});ch=true}}catch(e){}}
  for(const [lab,file,nl] of L){
   if(ph.length>=5)break;   /* the tours show at most five photo pins on a stop */
   const k=pins.findIndex(p=>Array.isArray(p)&&Array.isArray(p[0])&&typeof p[0][0]==="number"&&strip(p[1])===lab);if(k<0)continue;
@@ -162,7 +165,11 @@ function dedupe(id,S){if(!FILL[id+"|"+S.title]||!Array.isArray(S.pins)||!Array.i
 
 function all(){let n=0;mergePhotos();try{canberra()}catch(e){console.error("pinfix canberra",e)}
  try{for(const id in PS_TOURS){const st=PS_TOURS[id]&&PS_TOURS[id].steps;if(!Array.isArray(st))continue;
-  for(const S of st){try{if(S&&S.title&&!SKIP.has(id+"|"+S.title)){if(fixStop(id,S))n++;if(id!=="geo"&&fillStop(id,S))n++;if(dedupe(id,S))n++}}catch(e){console.error("pinfix",id,S&&S.title,e)}}}}catch(e){console.error(e)}
+  let skipEnr=false;try{skipEnr=PS_ENR_SKIP.has(id)}catch(e){}
+  for(let i=0;i<st.length;i++){const S=st[i];try{
+   /* wait until the shared enrichment has given the stop its photo pins (it runs once per stop, after load or on psGo) */
+   if(S&&!S._enr&&!skipEnr&&i>0&&i<st.length-1&&typeof psEnrich==="function")continue;
+   if(S&&S.title&&!SKIP.has(id+"|"+S.title)){if(fixStop(id,S))n++;if(id!=="geo"&&fillStop(id,S))n++;if(dedupe(id,S))n++}}catch(e){console.error("pinfix",id,S&&S.title,e)}}}}catch(e){console.error(e)}
  return n}
 
 function hookGo(){if(typeof psGo!=="function"||psGo._gfPinFix)return;const _g=psGo;
@@ -170,7 +177,13 @@ function hookGo(){if(typeof psGo!=="function"||psGo._gfPinFix)return;const _g=ps
   try{if(typeof ps!=="undefined"&&ps){id=ps.tour;const st=psSteps();S=st[i];
    if(S&&typeof psEnrich==="function")psEnrich(id,S,i,st.length);
    if(S&&!SKIP.has(id+"|"+S.title)){if(id==="oceania")canberra();fixStop(id,S);if(id!=="geo")fillStop(id,S);dedupe(id,S)}}}catch(e){}
+  /* the cover (first stop) takes photo pins from stops that have three or more (geoflock-covers.js); the stops filled
+     here keep theirs, so their places stay alike */
+  let snap=null;try{if(i===0&&id&&PS_TOURS[id])snap=PS_TOURS[id].steps.filter(St=>FILL[id+"|"+St.title]&&Array.isArray(St.phPins)).map(St=>[St,St.phPins.slice()])}catch(e){}
   const r=_g.apply(this,arguments);
+  try{if(snap){const S0=PS_TOURS[id].steps[0];snap.forEach(([St,was])=>{const now=St.phPins||[];const lost=was.filter(q=>!now.includes(q));if(!lost.length)return;
+   lost.forEach(q=>{now.push(q);if(S0&&Array.isArray(S0.phPins)){const k=S0.phPins.findIndex(x=>x&&strip(x.label)===strip(q.label)&&Array.isArray(x.at)&&x.at[0]===q.at[0]&&x.at[1]===q.at[1]);if(k>=0)S0.phPins.splice(k,1)}});St._sqPruned=-1});
+   if(S0)S0._sqPruned=-1;if(ps&&ps.i===0&&typeof psPlacePins==="function")psPlacePins(true)}}catch(e){}
   try{if(S&&ps&&ps.tour===id&&!psGo._again){let c=false;if(!SKIP.has(id+"|"+S.title)){c=fixStop(id,S);if(id!=="geo"&&fillStop(id,S))c=true;if(dedupe(id,S))c=true}if(id==="oceania"&&canberra())c=true;if(c){psGo._again=1;try{_g.call(this,i)}finally{psGo._again=0}}}}catch(e){}
   return r};psGo._gfPinFix=1}
 /* pictures with a fixed place (_gfOff) are pinned there, as if the user had dragged them */
