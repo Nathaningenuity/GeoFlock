@@ -1,7 +1,7 @@
 /* GeoFlock: the Day & Night globe.
    A second globe view of the Satellite map: the sunlit half shows the satellite picture (seas a little lighter and more
    turquoise), the dark half shows the City Lights picture, lit by real sun geometry: daylight fades with the sun's height (Lambert),
-   a faint twilight reaches 6° past the terminator (the night side is exactly half the globe), and city lights come on from 3° before sunset. The cloud layer is bright white by day and dark and faint by night, dimming the
+   a soft twilight fades from about 40° of sun height to about 13° below the horizon, and city lights fade in over the same band. The cloud layer is bright white by day and dark and faint by night, dimming the
    city lights under it.
    How it works: the globe is drawn by a WebGL fragment shader (GlobeGL). While this view is on and the globe is drawing the
    satellite picture, GlobeGL.draw uses a second shader program, on the same context, that samples the satellite, night and
@@ -75,7 +75,7 @@ void main(){
     float rr = sqrt(r2), t = rr - 1.0; float lx = xx/rr, ly = yy/rr;
     float phi = asin(clamp(ly*uCp, -1.0, 1.0)); float lam = uLam0 + atan(lx, -ly*uSp);
     float s = dot(nrm(phi, lam), uSun);
-    float lit = uDayOnly > 0.5 ? 1.0 : 0.06 + 0.94 * smoothstep(-0.105, 0.1, s); /* night side: ~6% of the day glow, a thin twilight band */
+    float lit = uDayOnly > 0.5 ? 1.0 : 0.06 + 0.94 * smoothstep(-0.22, 0.2, s); /* night side: ~6% of the day glow, fading in with the day light */
     vec3 c = vec3(0.42, 0.66, 1.0);
     o = vec4(c, exp(-t * 30.0) * 0.8 * lit); return;
   }
@@ -119,15 +119,14 @@ void main(){
       day = mix(day, ice, cover * smoothstep(0.0, 0.25, water + 0.15)); } }
   /* light from the real geometry. s = dot(surface normal, direction to the subsolar point) = sine of the sun's height here,
      both in the same geographic frame (the sun's latitude = declination, and its longitude). Blending happens in display
-     (sRGB) space: textures are uploaded as plain RGBA and written straight to the canvas, so the cosine (Lambert) falloff
-     is converted to display brightness with pow(x, 1/2.2). Targets: sun overhead 100%, 30° ~73%, 10° ~45%, 5° ~33%,
-     terminator ~6%, 6° below 0. The night side is exactly half the globe: darkness starts at s = 0 and only a faint
-     6° twilight (s = -0.105) reaches past the terminator. City lights come on from 3° above the horizon (s = 0.052)
-     and are full at 6° below. */
-  float dayLight = pow(clamp(s, 0.0, 1.0), 1.0 / 2.2);
-  float twilight = 0.06 * smoothstep(-0.105, 0.0, s);
-  float light = uDayOnly > 0.5 ? 1.0 : max(dayLight, twilight);
-  float lights = uDayOnly > 0.5 ? 0.0 : 1.0 - smoothstep(-0.105, 0.052, s);
+     (sRGB) space: textures are uploaded as plain RGBA and written straight to the canvas.
+     The owner wants a soft, gradual day/night edge with no cutoff, but a bigger night side than the old very wide fade:
+     the day picture eases in from about 13° below the horizon (s = -0.22) to full light at about 40° up (s = 0.65), on a
+     smooth curve with no kinks (~24% at the terminator, ~50% at 10° up, ~95% at 30° up). City lights fade out over the
+     same band, from full at about 15° below to none at about 6° up. */
+  float dayLight = pow(smoothstep(-0.22, 0.65, s), 0.8);
+  float light = uDayOnly > 0.5 ? 1.0 : dayLight;
+  float lights = uDayOnly > 0.5 ? 0.0 : 1.0 - smoothstep(-0.26, 0.1, s);
   ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
@@ -136,7 +135,7 @@ void main(){
     ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; }
   vec3 col = day * light + ngt * lights;
   /* warm light near the terminator (sun 0–8° up) */
-  if(uDayOnly < 0.5){ float edge = smoothstep(0.14, 0.0, s) * step(0.0, s); col *= mix(vec3(1.0), vec3(1.0, 0.82, 0.65), edge * 0.5); }
+  if(uDayOnly < 0.5){ float edge = smoothstep(0.18, 0.0, s) * smoothstep(-0.12, 0.02, s); col *= mix(vec3(1.0), vec3(1.0, 0.82, 0.65), edge * 0.5); }
   if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 6.0) * 0.5 * (uDayOnly > 0.5 ? 1.0 : smoothstep(-0.105, 0.2, s))); }
   o = vec4(col, 1.0);
 }`;
