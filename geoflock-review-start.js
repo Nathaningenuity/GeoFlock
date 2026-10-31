@@ -161,8 +161,8 @@ function night(){const id="night";
 function space(){const id="space";
  set(id,"The colours of the Sahara",s=>rep(s,"more","About 6,000 years ago the Sahara was green",GREEN+" the Sahara was green"));
  ins(id,"A sea that shrank",{title:"The sea of plastic",view:[-6.5,35.3,0.5,39.2],globe:[-2.8,36.75,7],card:"left",
-  pins:[[[-2.46,36.84],"Almería","point"]],
-  phPins:[ph([-2.8,36.75],"Campo de Dalías: the sea of plastic","Plastic sea, Almería Spain.jpg")],
+  lines:[{circle:[-2.75,36.78],km:55,kind:"outline"}],
+  phPins:[Object.assign(ph([-2.75,36.78],"Campo de Dalías: the sea of plastic","Plastic sea, Almería Spain.jpg"),{ringKm:55})],
   stat:"In southern Spain, greenhouses cover so much land that from space they look like a white sea",
   body:"Almería is one of the driest corners of Europe, but it has sun all year. Since the 1960s farmers have covered over 30,000 hectares with plastic greenhouses, growing tomatoes, peppers and cucumbers for Europe’s winter supermarkets. Zoom in on the coast west of Almería to find the pale patch.",
   more:"The white roofs reflect sunlight back into space: one study found that the area cooled slightly between 1983 and 2006, while the rest of Spain warmed. The greenhouses also drain the water under the ground, and depend on low-paid migrant workers."});
