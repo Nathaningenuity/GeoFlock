@@ -48,17 +48,17 @@ const PLAN={
  "time|Why time zones":{sun:"clock"},
  "time|Paris, nine minutes late":{sun:null},
  "time|The date line":{sun:"clock",at:21},
- "time|The most time zones":{sun:"stop",gfSun:{utc:12,day:80,city:["Paris",1]}},
- "time|Russia: eleven clocks":{sun:"stop"},
- "time|The United States: six zones":{sun:"stop"},
+ "time|The most time zones":{sun:null},
+ "time|Russia: eleven clocks":{sun:"stop",gfSun:{utc:7,day:355}},
+ "time|The United States: six zones":{sun:"stop",gfSun:{utc:16,day:172}},
  "time|When sunset steals your sleep":{sun:"stop"},
- "time|Australia: three zones, five in summer":{sun:"stop",gfSun:{utc:20.5,day:355,city:["Sydney",11]}},
+ "time|Australia: three zones, five in summer":{sun:null},
  "time|One clock for China":{sun:"stop"},
  "time|Half and quarter hours":{sun:null},
  "time|Pyongyang time":{sun:null},
  "time|Spain’s clock is off":{sun:"stop"},
  "time|The day Samoa skipped":{sun:"clock",at:21},
- "time|Daylight saving time":{sun:"stop"},
+ "time|Daylight saving time":{sun:null},
  "time|Arizona’s clock doughnut":{sun:null},
  "time|Where north and west fool you":{sun:null},
  "time|Every time zone at once":{sun:"stop"},
@@ -67,8 +67,7 @@ const PLAN={
  "night|Night moves round the planet":{sun:"stop"},
  "climate|Why we have seasons":{sun:"stop"},
  "europe|Islands of the midnight sun":{sun:"stop"},
- "antarctica|The moving South Pole":{sun:"stop"},
- "hantarctica|The first winter":{sun:"stop"},
+ "hantarctica|The first winter":{sun:"stop",gfSun:{utc:12,day:172}},
  "flags|Suns on flags":{sun:"stop"},
  "hg1|Time–space compression":{sun:"stop"},
  "hg7b|Night shift in Manila":{sun:"stop"},
@@ -87,6 +86,7 @@ const PLAN={
  "maths|Eratosthenes measures the Earth":{sun:"stop"},
  "psychology|Winter in Tromsø":{sun:"stop"}
 };
+/* A stop is lit only when its point is day or night; every other Satellite stop shows the plain daytime picture. */
 /* tours whose every stop is shown on the globe (the Day & Night stops among them are lit) */
 const GLOBE_TOURS=new Set(["time"]);
 const FOUND=[];
