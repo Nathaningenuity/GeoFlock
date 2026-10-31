@@ -50,7 +50,7 @@ function volcano(){const s=stopOf("antarctica","Sail into a volcano");if(!s)retu
  const P=Array.isArray(s.iconPins)?s.iconPins:[];if(P.some(q=>q&&q.icon==="gfThermo"))return;
  /* Pendulum Cove, the bathing beach on the caldera's north-east shore (62.93°S, 60.60°W); drawn a little north-east of
     it so it sits clear of the island's own pin and of the Neptune's Bellows photo, which lean the other way */
- def(s,"iconPins",P.concat([{at:[-60.2,-62.75],icon:"gfThermo",col:"#d62828"}]))}
+ def(s,"iconPins",P.concat([{at:[-60.05,-62.9],icon:"gfThermo",col:"#d62828"}]))}
 
 /* ---------- 3. Europe's highest mountain: Mont Blanc's photo, one Elbrus photo ---------- */
 const MB_LABEL="Mont Blanc · 4,806 m",MB_FILE="Mont Blanc Massif (2022-08-16).jpg";
