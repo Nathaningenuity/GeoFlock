@@ -8,6 +8,7 @@
 (function(){
 "use strict";
 window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
+{"f":"Icefishuk.jpg","d":"photos/x3e38b88d1eefbd55.webp","by":"Uwe Kils","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Icefishuk.jpg"},
 {"f":"Millennium Development Goals, UN Headquarters, New York City, New York - 20080501.jpg","d":"photos/x694a28f90513f0db.webp","by":"Babucke","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Millennium_Development_Goals,_UN_Headquarters,_New_York_City,_New_York_-_20080501.jpg"},
 {"f":"Burning Gas Flare Nembe Creek, Nigeria.tif","d":"photos/x65f5d2bb19d0c4bc.webp","by":"Sara Leigh Lewis","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Burning_Gas_Flare_Nembe_Creek,_Nigeria.tif"},
 {"f":"Garment factory in Bangladesh Women working.jpg","d":"photos/x4463effcb1f311a6.webp","by":"Tareq Salahuddin","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Bangladesh_Women_working.jpg"},
@@ -21,6 +22,7 @@ window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
 ];
 /* card photos: "tour|title" → library file name (f) */
 const CARD={/*CARD*/
+"antarctica|Fish with clear blood":"Icefishuk.jpg",
 "hg7d|From 8 goals to 17":"Millennium Development Goals, UN Headquarters, New York City, New York - 20080501.jpg",
 "hg7a|Dependency and commodity dependence":"Burning Gas Flare Nembe Creek, Nigeria.tif",
 "hg7a|Women at work":"Garment factory in Bangladesh Women working.jpg",
@@ -34,6 +36,7 @@ const CARD={/*CARD*/
 };
 /* photo-pin pictures: label (zero-width spaces stripped) → library file name */
 const SQ={/*SQ*/
+"Antarctic icefish":"Icefishuk.jpg",
 "Little Dome C: the 1.2-million-year core":"Ice-core drill hg.jpg",
 "Niger Delta: oil":"Burning Gas Flare Nembe Creek, Nigeria.tif",
 "Dhaka: garments for export":"Garment factory in Dhaka.jpg",
@@ -49,6 +52,7 @@ const SQ={/*SQ*/
 };
 /* captions */
 const CAP={/*CAP*/
+"Antarctic icefish":"An icefish: almost see-through",
 "Little Dome C: the 1.2-million-year core":"An EPICA ice-core drill",
 "Niger Delta: oil":"Gas flare, Nembe Creek",
 "Dhaka: garments for export":"A garment workshop in Dhaka",
