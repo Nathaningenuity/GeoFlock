@@ -67,12 +67,12 @@ function geo(){const id="geo";const R={gfMode:"relief",gfOn:["allMapsRiversToggl
  rm(id,"France: the most time zones");          /* the same stop, almost word for word, lives in Time zones */
  set(id,"Further north than you think",s=>{if(!/westerly winds/.test(s.more||""))s.more=(s.more||"")+" How much the Gulf Stream itself does is debated: some climate scientists argue that the westerly winds, warmed by the whole Atlantic, matter more than the current."});
  set(id,"When the Sahara was green",s=>{rep(s,"stat","About 8,000 years ago",GREEN);rep(s,"body","dried out again around 5,000 years ago","dried out again from about 5,000 years ago")});
- ins(id,"A planet of water",Object.assign({title:"The land hemisphere",view:[-80,6,77,88],globe:[-1.55,47.22,1],gfGlobe:true,
+ /* "The land hemisphere" removed at the owner's request */ false&&ins(id,"A planet of water",Object.assign({title:"The land hemisphere",view:[-80,6,77,88],globe:[-1.55,47.22,1],gfGlobe:true,
   pins:[[[-1.55,47.22],"Nantes","point"],[[178,-47],"Opposite: near New Zealand","point"]],
   stat:"Face the globe towards western France, and about four-fifths of all the land is on the half you can see",
   body:"Land is not spread evenly: it bunches up in one half of the planet. The half centred near Nantes, in France, holds about four-fifths of the land and the great majority of the world’s people. Switch to the globe and spin it to the opposite side, near New Zealand: that half is about nine-tenths water.",
   more:"Geographers disagree a little about the exact centre (spots in Brittany and Catalonia have been suggested too), but it always lands in western Europe. It is one small reason Europe sat at the middle of so many sea routes: from its coasts, most of the world’s land is relatively near."},R));
- ins(id,"Africa is splitting",Object.assign({title:"The sea that dried up",view:[-26,28,36,47.5],globe:[8,37,2.6],card:"left",
+ /* "The sea that dried up" removed at the owner's request */ false&&ins(id,"Africa is splitting",Object.assign({title:"The sea that dried up",view:[-26,28,36,47.5],globe:[8,37,2.6],card:"left",
   lines:[{coords:[[-14,35.8],[-9,35.9],[-5.6,35.95],[-2.5,36.2]],kind:"flow"}],
   xsec:{title:"From Gibraltar across the western Mediterranean",pts:[[-5.6,35.95,"Gibraltar"],[-3,36.2],[0,37.4],[3,38.6],[5.5,39.6,"Balearic basin"],[8.1,40.5,"Sardinia"]],
    note:"The floor of the basin is nearly 3 km below the sea. When the Mediterranean dried, this was the bottom of a deep, salty pit."},
@@ -81,7 +81,7 @@ function geo(){const id="geo";const R={gfMode:"relief",gfOn:["allMapsRiversToggl
   stat:"About 6 million years ago the Mediterranean largely dried up, leaving salt more than a kilometre thick on its floor",
   body:"The Mediterranean loses more water to evaporation than its rivers bring in, so it depends on the Atlantic pouring in at Gibraltar (arrow). When plate movements closed that gateway, the sea evaporated into deep, salty basins, kilometres below today’s sea level. Move along the chart to see how far down the floor is.",
   more:"Then, about 5.3 million years ago, the Atlantic broke back through. Some scientists think the refill, the “Zanclean flood”, took only months to a few years, as a giant torrent through the strait; others think it was slower, and it is still argued over. Geologists found the buried salt in 1970, in drill cores from the sea floor."},R));
- ins(id,"The deepest and oldest lake",Object.assign({title:"The bay with weaker gravity",view:[-128,46,-62,68],globe:[-85,59,2.2],card:"left",
+ /* "The bay with weaker gravity" (Hudson Bay) removed at the owner's request */ false&&ins(id,"The deepest and oldest lake",Object.assign({title:"The bay with weaker gravity",view:[-128,46,-62,68],globe:[-85,59,2.2],card:"left",
   lines:[{coords:[[-95,58],[-93,62],[-89,64.5],[-83,65.5],[-78,63.5],[-76.5,59],[-78.5,54.5],[-82,51.5],[-88,52],[-93,54.5],[-95,58]],kind:"dash"}],
   pins:[[[-85,59.5],"Weakest gravity","point"],[[-94.17,58.77],"Churchill","point"]],
   stat:"Gravity around Hudson Bay is a little weaker than almost anywhere else on Earth",
