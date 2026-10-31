@@ -29,8 +29,16 @@ precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
 uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
 out vec4 o;
-/* sea ice (textures/SEAICE_RGBA.webp: two polar bands, 90°N→50°N then 50°S→90°S): colour from cloud-filtered NASA MODIS
-   pictures (16 days of September 2025 in the north, February 2025 in the south), cover from the NSIDC Sea Ice Index */
+/* sea ice (textures/SEAICE_POLAR.png): two squares centred on the poles (left Arctic, right Antarctic), azimuthal
+   equidistant out to 50°, so nothing pinches at the pole. R = sea-ice concentration from the NSIDC Sea Ice Index (one month:
+   September 2026 Arctic minimum, February 2026 Antarctic minimum), G = Antarctic ice shelves. The ice is drawn here: a crisp
+   edge at 15% cover (the extent line the NSIDC uses), and inside it floes and cracks (leads) whose open water grows as
+   the concentration falls. */
+float ihash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float inoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(ihash(i), ihash(i + vec3(1,0,0)), f.x), mix(ihash(i + vec3(0,1,0)), ihash(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(ihash(i + vec3(0,0,1)), ihash(i + vec3(1,0,1)), f.x), mix(ihash(i + vec3(0,1,1)), ihash(i + vec3(1,1,1)), f.x), f.y), f.z); }
+float ifbm(vec3 p){ return 0.5 * inoise(p) + 0.27 * inoise(p * 2.07) + 0.15 * inoise(p * 4.31) + 0.08 * inoise(p * 8.9); }
 float gmin(float a, float b){ return abs(a) < abs(b) ? a : b; }
 vec3 nrm(float phi, float lam){ return vec3(cos(phi)*cos(lam), cos(phi)*sin(lam), sin(phi)); }
 /* sea colour from depth (metres below sea level), fixed stops, interpolated smoothly between them */
@@ -84,6 +92,11 @@ void main(){
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
+  /* polar seas: the satellite picture shades the ocean by depth, so the deep Canada Basin north of Alaska comes out almost
+     black and reads as a shadow on the globe. North of about 64° the sea gets one even tone, matched to the sea around it
+     (the ice is drawn on top). The Southern Ocean is left as it is. */
+  { float al = 90.0 - v * 180.0; float k = water * smoothstep(60.0, 68.0, al);
+    if(k > 0.0) day = mix(day, vec3(0.085, 0.215, 0.41) * (0.94 + 0.12 * inoise(nrm(radians(90.0 - v * 180.0), radians(u * 360.0 - 180.0)) * 30.0)), k * 0.9); }
   /* the sea, by the palette: 0 the satellite picture as it is, 1 lighter, 2 turquoise (coloured by real depth) */
   if(uSea > 0.5){
     vec3 sea = min(day * 1.45 + vec3(0.02, 0.05, 0.08), vec3(1.0));
@@ -91,8 +104,19 @@ void main(){
       water = max(water, smoothstep(0.03, 0.09, bv));
       float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0; sea = mix(sea, depthColour(120.0), lake); }
     day = mix(day, sea, water); }
-  if(uIceOn > 0.5){ float lat = 90.0 - v * 180.0; float tv = lat >= 50.0 ? (90.0 - lat) / 80.0 : lat <= -50.0 ? 0.5 + (-50.0 - lat) / 80.0 : -1.0;
-    if(tv >= 0.0){ vec4 ic = texture(uIceT, vec2(u, tv)); day = mix(day, ic.rgb, ic.a * smoothstep(0.0, 0.25, water + 0.15)); } }
+  if(uIceOn > 0.5){ float lat = 90.0 - v * 180.0;
+    if(abs(lat) >= 50.0){ float lon = radians(u * 360.0 - 180.0), r = (90.0 - abs(lat)) / 40.0;
+      vec2 q = lat > 0.0 ? vec2(0.5 + 0.5 * r * sin(lon), 0.5 + 0.5 * r * cos(lon)) : vec2(0.5 + 0.5 * r * sin(lon), 0.5 - 0.5 * r * cos(lon));
+      vec3 ic = texture(uIceT, vec2((q.x + (lat > 0.0 ? 0.0 : 1.0)) * 0.5, q.y)).rgb;
+      float c = ic.r, shelf = ic.g;
+      vec3 P = nrm(radians(lat), lon);
+      float n = ifbm(P * 90.0), fine = ifbm(P * 420.0);
+      float edge = smoothstep(0.13, 0.17, c);                       /* the ice edge: sharp, at 15% cover */
+      float open = clamp(1.0 - c, 0.0, 1.0);                         /* share of open water inside the pack */
+      float floe = smoothstep(open * 1.15 - 0.04, open * 1.15 + 0.04, mix(n, fine, 0.35)); /* floes; leads where the noise is low */
+      float cover = max(edge * floe, smoothstep(0.3, 0.7, shelf));
+      vec3 ice = mix(vec3(0.80, 0.86, 0.91), vec3(0.93, 0.95, 0.97), smoothstep(0.55, 0.95, c)) * (0.92 + 0.12 * fine);
+      day = mix(day, ice, cover * smoothstep(0.0, 0.25, water + 0.15)); } }
   /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
      Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
      sunset; a gentle tone curve (like a camera exposure, as in real photos from space) keeps the day side bright.
@@ -138,11 +162,11 @@ function bathyTex(G){if(G._dngBathy)return G._dngBathy;if(!BATHY_IMG){BATHY_IMG=
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngBathy=t}
 /* the sea-ice picture: loaded once, one GPU texture per globe */
 let ICE_IMG=null;
-function iceTex(G){if(G._dngIce)return G._dngIce;if(!ICE_IMG){ICE_IMG=new Image();ICE_IMG.onload=()=>{try{req()}catch(e){}};ICE_IMG.src="textures/SEAICE_RGBA.webp?v=1"}
+function iceTex(G){if(G._dngIce)return G._dngIce;if(!ICE_IMG){ICE_IMG=new Image();ICE_IMG.onload=()=>{try{req()}catch(e){}};ICE_IMG.src="textures/SEAICE_POLAR.png?v=1"}
  if(!ICE_IMG.complete||!ICE_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,ICE_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
- gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngIce=t}
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngIce=t}
 /* the sea colour on the Satellite globe (toolkit Palette): "normal", "light" or "turq"; unset = lighter in Day & Night,
    the plain picture in Day */
 const SEA_KEY="gfSatSea";let seaPick=null;try{seaPick=localStorage.getItem(SEA_KEY)}catch(e){}
