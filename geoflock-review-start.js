@@ -211,8 +211,8 @@ function asia(){const id="asia";
    s.stat="Indonesia, the Philippines and Japan are island chains built by the Ring of Fire";
    s.body="Around the edge of the Pacific, ocean plates dive under Asia (the plate edges are drawn on the map). Rock melts as it sinks, and the melt rises to build chains of volcanic islands: Indonesia’s 17,000 islands, the Philippines and Japan. The same plates give the islands rich volcanic soil, and shake them with earthquakes and tsunamis.";
    s.more="Indonesia is the world’s largest island country, stretching over 5,100 km, wider than the United States, and the fourth most populous country on Earth. Its volcanoes have changed world history: Tambora’s eruption in 1815, the biggest in recorded history, chilled Europe’s summer the next year, and Krakatoa’s in 1883 was heard about 4,800 km away. In Japan, the 2011 earthquake and tsunami killed nearly 20,000 people."})}
- ins(id,"Asia’s water tower",{title:"The Grand Canal",view:[104,22,128,42.5],globe:[117,33,3],card:"left",
-  gfEmpire:{y:610,gk:"chn",name:"Sui China, 610",at:[114,26]},
+ ins(id,"The rains that feed Asia",{title:"The Grand Canal",view:[104,22,128,42.5],globe:[117,33,3],card:"left",
+  gfEmpire:{y:610,gk:"chn",name:"Sui China",at:[114,26]},
   lines:[{coords:[[120.16,30.27],[120.62,31.3],[119.45,32.2],[119.43,32.39],[119.0,33.6],[118.3,34.0],[117.2,34.6],[116.6,35.4],[116.0,36.45],[116.3,37.45],[116.85,38.3],[117.2,39.13],[116.66,39.9]],kind:"flow"}],
   pins:[[[120.16,30.27],"Hangzhou","point"],[[119.43,32.39],"Yangzhou","point"],[[116.4,39.9],"Beijing","point"],[[[115,31],[112,29]],"Rice country: the Yangtze","area"]],
   stat:"China dug the world’s longest canal, about 1,800 km, to move rice to its capital",
