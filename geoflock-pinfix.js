@@ -10,7 +10,13 @@
         - removed, when it is the enrichment’s own "Country: landmark" pin and the place is off the map;
         - turned back into the plain text pin it was, otherwise (the label stays where it was, without the wrong photo).
       FIX lists the same for photos with no single place (a photo that does not show what its label names).
-   Runs after load (+1.5 s, re-run +1.5/+5/+12 s) and on every psGo, before and after the stop is drawn. */
+   3. Stops that show some places of one kind as photo pins and the others as plain labels (Asia’s giant cities: Jakarta,
+      Tokyo and Shanghai had photos, Delhi and Dhaka did not) give the plain ones a photo too (FILL), at most five photo
+      pins a stop. Library photos where there is one; otherwise a freely licensed Wikimedia Commons photo (GF_PINFIX_PHOTOS,
+      credited with author, licence and page, joined to the photo library the way geoflock-polish-k.js does it).
+   Stops that another pass is editing (SKIP) are left alone. Runs after load (+1.5 s, re-run +1.5/+5/+12 s, each stop once
+   the shared enrichment has run on it) and on every psGo, before and after the stop is drawn. Fields that other patches
+   lock with a getter are replaced with Object.defineProperty. Load it after the other tour patches. */
 (function(){
 "use strict";
 const lock=(o,k,v)=>Object.defineProperty(o,k,{configurable:true,enumerable:true,get(){return v},set(){}});
@@ -112,7 +118,7 @@ const FILL={
  "rivers|Ten countries, one river":[["Bratislava","Bratislava Castle R01.jpg"],["Belgrade","Belgrade Fortress, used to be one of the most powerful military strongholds of Europe (13810190784).jpg"]],
  "seas|The busiest gateways":[["Strait of Hormuz",null],["Strait of Malacca","Ships in the Malacca Strait.jpg"]],
  "hg4c|Choke points":[["Strait of Hormuz",null],["Strait of Malacca","Ships in the Malacca Strait.jpg"]],
- "langrel|Holy cities":[["Bodh Gaya",null],["Rome","St Peter's Square, Vatican City - April 2007.jpg","Rome: St Peter’s"]],
+ "langrel|Holy cities":[["Bodh Gaya",null]],
  "hg3b|Sacred spaces":[["Mecca",null],["Jerusalem",null]],
  "transport|The bullet train":[["Osaka","Osaka Castle 03bs3200.jpg"],["Fukuoka","Office buildings in Otemon, Chuo-ku, Fukuoka, Japan 20170530.jpg"]],
  "hmodern|The nuclear age begins":[["Nagasaki","Former Dejima Protestant Seminary, Dejima, Nagasaki, 20240815 1453 3707.jpg"]],
@@ -124,7 +130,7 @@ const FILL={
  "oceania|Australia is most of it":[["Melbourne","Clocks at Flinders Street Station.jpg"],["Brisbane","Brisbane skyline from Kangaroo Point.jpg"],["Perth","Perth CBD skyline, Western Australia, 2022, 15.jpg"],["Adelaide","Adelaide's changing skyline from Rymill Park.jpg"]],
  "hasia|The first cities":[["Babylon","Processional Way, Babylon - Google Art Project.jpg","Babylon: a lion from its walls"]],
  "hafrica|The Swahili coast":[["Mombasa","Fort Jesus at the Mombasa Island.jpg","Mombasa: Fort Jesus"]]};
-const FILLCAP={"Singapore: Marina Bay":"Singapore","Jericho: Tell es-Sultan":"Jericho: Tell es-Sultan","Babylon: a lion from its walls":"Babylon: a lion relief","Mombasa: Fort Jesus":"Fort Jesus, Mombasa","Rome: St Peter’s":"Rome: St Peter’s"};
+const FILLCAP={"Singapore: Marina Bay":"Singapore","Jericho: Tell es-Sultan":"Jericho: Tell es-Sultan","Babylon: a lion from its walls":"Babylon: a lion relief","Mombasa: Fort Jesus":"Fort Jesus, Mombasa",};
 /* new pictures (Wikimedia Commons, free licences, credited like the other library photos) */
 window.GF_PINFIX_PHOTOS=[{"f": "Ningbo skyline viewed on Changfeng Bridge.jpg", "d": "photos/xaf09f2906601d08f.webp", "by": "Siyuwj", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Ningbo_skyline_viewed_on_Changfeng_Bridge.jpg"}, {"f": "Qingdao - Drone view city with skyline (Unsplash).jpg", "d": "photos/xba481e607e8e02ef.webp", "by": "CHO EUNSEONG being_es", "lic": "CC0", "page": "https://commons.wikimedia.org/wiki/File:Qingdao_-_Drone_view_city_with_skyline_(Unsplash).jpg"}, {"f": "Tell es-Sultan, Jericho, Palestine2.jpg", "d": "photos/x4a3a90a6a53b983a.webp", "by": "Diego Delso", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Tell_es-Sultan,_Jericho,_Palestine2.jpg"}, {"f": "The waterfront of Dar es Salaam.JPG", "d": "photos/xa6a0bc6a56535a4b.webp", "by": "Chen Hualin", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:The_waterfront_of_Dar_es_Salaam.JPG"}, {"f": "Ships in the Malacca Strait.jpg", "d": "photos/xdbe651ac81b8b1a9.webp", "by": "ZoschH", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Ships_in_the_Malacca_Strait.jpg"}, {"f": "Office buildings in Otemon, Chuo-ku, Fukuoka, Japan 20170530.jpg", "d": "photos/xd01b9c30af7e3201.webp", "by": "新幹線", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Office_buildings_in_Otemon,_Chuo-ku,_Fukuoka,_Japan_20170530.jpg"}, {"f": "Brisbane skyline from Kangaroo Point.jpg", "d": "photos/x0a17e74f3bfb09b1.webp", "by": "King Eliot", "lic": "CC0", "page": "https://commons.wikimedia.org/wiki/File:Brisbane_skyline_from_Kangaroo_Point.jpg"}, {"f": "Perth CBD skyline, Western Australia, 2022, 15.jpg", "d": "photos/x10c49e2b2577be31.webp", "by": "Kgbo", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Perth_CBD_skyline,_Western_Australia,_2022,_15.jpg"}, {"f": "Adelaide's changing skyline from Rymill Park.jpg", "d": "photos/x0a63574069374f1c.webp", "by": "Michael Coghlan from Adelaide, Australia", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:Adelaide%27s_changing_skyline_from_Rymill_Park.jpg"}];
 function mergePhotos(){try{if(typeof gfMergeExtra==="function")gfMergeExtra();if(typeof PS_PHOTO_DATA==="undefined")return;
