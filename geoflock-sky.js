@@ -1,9 +1,10 @@
 /* GeoFlock: the Sky theme backgrounds (from the user's sky scenes): night, the Milky Way over a silhouetted landscape;
-   day, cumulus clouds and small flocks over a green alpine valley with a lake. Drawn once per screen size into #skyField. */
+   day, faint cirrus, altocumulus and small fair-weather cumulus, and small flocks, over a green alpine valley with a lake. Drawn once per screen size into #skyField. */
 (function(){const st=document.createElement("style");st.textContent=`
 /* ===== Sky backgrounds: a landscape along the bottom; the Milky Way by night, clouds and a flock by day ===== */
-  body.sky-theme:not(.sky-night) #gfDayClouds{ display:block; position:absolute; inset:0; width:100%; height:100%; pointer-events:none; animation:gfDrift 180s ease-in-out infinite alternate; }
-  @keyframes gfDrift{ from{ transform:translateX(-2.5vw); } to{ transform:translateX(2.5vw); } }
+  /* the cloud layer is a little wider than the screen, so its edges never show while it drifts */
+  body.sky-theme:not(.sky-night) #gfDayClouds{ display:block; position:absolute; top:0; bottom:0; left:-3vw; width:106vw; height:100%; pointer-events:none; animation:gfDrift 240s ease-in-out infinite alternate; will-change:transform; }
+  @keyframes gfDrift{ from{ transform:translate3d(-2vw,0,0); } to{ transform:translate3d(2vw,0,0); } }
   @media (prefers-reduced-motion: reduce){ body.sky-theme:not(.sky-night) #gfDayClouds{ animation:none; } }
   #gfNightLand canvas, #gfDayLand canvas{ display:block; }
   body.sky-theme.sky-night #gfNightGalaxy{ display:block; position:absolute; inset:0; width:100%; height:100%; pointer-events:none; mix-blend-mode:screen; }
@@ -20,7 +21,7 @@
 
 /* GeoFlock sky backgrounds. Two scenes, each drawn once per screen size into #skyField:
    night: the Milky Way over a silhouetted landscape (snow-tipped ranges, misty valleys, a lake and river, forest);
-   day: soft clouds over a green alpine valley (snowy peaks, a waterfall, wooded hills, a winding stream, a meadow). */
+   day: a calm sky (cirrus high up, a few altocumulus, small cumulus over the ranges) above a green alpine valley (snowy peaks, a waterfall, wooded hills, a winding stream, a meadow). */
 (function(){
 /* ---------- Milky Way, generated once per screen size ---------- */
 function hash(x,y){let h=(x*374761393+y*668265263)^0x5bd1e995;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967295}
@@ -198,7 +199,7 @@ function drawDayLand(host){
     ctx.fillStyle="#6aa47f";for(let i=10;i<112;i+=5){if(rand()<0.45)continue;const[x,y,w]=pts[i],side=rand()<0.5?-1:1,h=4+i*0.12,tx=x+side*(w*1.5+4+rand()*6);
       if(inLake(x,y)||inLake(tx,y+1))continue;if(rand()<0.3)poplar(ctx,tx,y+1,h*1.4);else roundTree(ctx,tx,y+1,h)}}   /* the stream emerges from the valley mist */
 }
-/* ---------- day sky: soft stretched clouds in two loose bands, and a low warm glow behind the ranges ---------- */
+/* ---------- day sky: only a thin layer of haze lying low over the ranges; the clouds themselves are drawn in drawDayClouds ---------- */
 function drawDaySky(cv){
   const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);
@@ -206,18 +207,52 @@ function drawDaySky(cv){
 
   const sc=0.35,w=Math.ceil(W*sc),h=Math.ceil(H*sc),off=document.createElement("canvas");off.width=w;off.height=h;
   const oc=off.getContext("2d"),img=oc.createImageData(w,h),D=img.data,k=1/Math.max(W,900);
-  /* high, thin streaks of cirrus, and a hazy layer of stratus lying low over the ranges */
-  const bands=[[0.09,0.05,0.8],[0.20,0.04,0.5]],ls=(landTop/H)-0.035;
-  for(let j=0;j<h;j++){const y=j/sc;let m=0;for(const[c,s,a] of bands)m=Math.max(m,a*Math.exp(-Math.pow((y/H-c)/s,2)));
-    const st=0.75*Math.exp(-Math.pow((y/H-ls)/0.035,2));if(m<0.02&&st<0.02)continue;
-    for(let i=0;i<w;i++){const x=i/sc,p=(j*w+i)*4;let A=0,cr=255,cg=255,cb=255;
-      if(m>=0.02){const n=fbm(x*k*2.2+3,y*k*7.5,5),v=Math.max(0,(n-0.44)/0.26)*m;A=v*v*190}
-      if(st>=0.02){const n=fbm(x*k*1.6+40,y*k*16,4),v=Math.max(0,(n-0.38)/0.30)*st,B=v*150;if(B>A){A=B;cr=236;cg=244;cb=248}}
-      if(A<=0)continue;D[p]=cr;D[p+1]=cg;D[p+2]=cb;D[p+3]=Math.min(255,A)}}
+  /* a hazy layer of stratus lying low over the ranges */
+  const ls=(landTop/H)-0.035;
+  for(let j=0;j<h;j++){const y=j/sc,st=0.6*Math.exp(-Math.pow((y/H-ls)/0.03,2));if(st<0.02)continue;
+    for(let i=0;i<w;i++){const x=i/sc,p=(j*w+i)*4;
+      const n=fbm(x*k*1.6+40,y*k*16,4),v=Math.max(0,(n-0.38)/0.30)*st,A=v*130;
+      if(A<=0)continue;D[p]=236;D[p+1]=244;D[p+2]=248;D[p+3]=Math.min(255,A)}}
   oc.putImageData(img,0,0);ctx.imageSmoothingQuality="high";ctx.drawImage(off,0,0,cv.width,cv.height)}
-/* ---------- day clouds: fair-weather cumulus, each modelled as a heap of spheres (big billows carrying smaller ones),
-   its outline broken up with noise, then lit from the upper left: bright crowns, grey-blue shaded flanks and a flat, darker base.
-   Each cloud is painted once into its own bitmap; the layer then just drifts. ---------- */
+
+/* ---------- day clouds: a calm summer sky, layered by height like the real thing.
+   High up, faint fibrous cirrus (ice crystals combed out by the wind); in the middle, small dappled patches of altocumulus
+   (rows of little cloudlets, smaller the farther away they are); low over the ranges, a few small fair-weather cumulus
+   with flat bases and softly shaded undersides. Everything is kept pale and low in contrast so it stays behind the page.
+   Each cloud or patch is painted once into its own bitmap; the layer then just drifts. ---------- */
+const sstep=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
+/* cirrus: a streaky patch, w×h CSS px. Fibres run along a slightly tilted, gently bent axis, with denser tufts at their heads */
+function cirrus(w,h,o){
+  const s=o.res,cw=Math.ceil(w*s),ch=Math.ceil(h*s),img=new ImageData(cw,ch),D=img.data,sd=o.seed,ca=Math.cos(o.ang),sa=Math.sin(o.ang);
+  for(let j=0;j<ch;j++)for(let i=0;i<cw;i++){const X=i/s-w/2,Y=j/s-h/2,u=X*ca+Y*sa,v=-X*sa+Y*ca,un=u/(w/2),vn=v/(h/2);
+    const vb=vn-o.bend*un*un+(fbm(un*1.3+sd,sd*0.7,2)-0.5)*1.1;                    /* the wind bends the whole patch */
+    let env=Math.exp(-(un*un*1.5+vb*vb*2.4));if(env<0.02)continue;
+    env*=sstep(0.26,0.56,fbm(un*2.2+sd+11,vb*1.6,3));if(env<=0.01)continue;          /* broken into separate wisps */
+    const fib=fbm(u*0.011+sd,(v+(fbm(u*0.006+sd,4,2)-0.5)*h*0.6)*0.21,4);            /* long along the wind, fine across it */
+    const st=sstep(0.36,0.74,fib),tuft=0.45+0.9*fbm(u*0.022+sd+50,v*0.05,3);
+    const a=Math.min(1,env*st*tuft);if(a<=0.004)continue;
+    const q=(j*cw+i)*4;D[q]=255;D[q+1]=255;D[q+2]=255;D[q+3]=a*o.alpha*255}
+  const cv=document.createElement("canvas");cv.width=cw;cv.height=ch;cv.getContext("2d").putImageData(img,0,0);return cv}
+/* altocumulus: a loose patch of small rounded cloudlets in rows, thinning out toward its ragged edge.
+   o.cell is the cloudlet spacing in CSS px; each cloudlet is lit from the upper left, greyer on its lower side */
+function altocumulus(w,h,o){
+  const s=o.res,cw=Math.ceil(w*s),ch=Math.ceil(h*s),img=new ImageData(cw,ch),D=img.data,sd=o.seed,si=Math.round(sd*97),c=o.cell,cy=c*0.62;
+  const sun=[255,255,255],shd=[204,216,230];
+  for(let j=0;j<ch;j++)for(let i=0;i<cw;i++){const x=i/s,y=j/s,nx=x/w*2-1,ny=y/h*2-1;
+    let env=1-Math.hypot(nx,ny)+(fbm(x/w*3.2+sd,y/h*3.2,3)-0.5)*0.9;env=sstep(0,0.45,env);if(env<=0)continue;
+    /* a slow warp so the rows wander, as they do in a real field of altocumulus */
+    const gx=(x+(fbm(x*0.018+sd,y*0.018,2)-0.5)*c*1.8)/c,gy=(y+(fbm(x*0.018+sd+9,y*0.018+5,2)-0.5)*c*1.2+x*0.08)/cy;
+    const cov=fbm(x*0.045+sd+3,y*0.07,3),lump=(fbm(x*0.35/c*8+sd,y*0.35/c*8,2)-0.5)*0.45,ix=Math.floor(gx),iy=Math.floor(gy);let best=0,bx=0,by=0;   /* cov: where the cloudlets crowd together */
+    for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){const a=ix+ox,b=iy+oy;
+      const px=a+0.1+0.8*hash(a+si,b),py=b+0.15+0.7*hash(b+77,a+si),rad=(0.55+0.35*hash(a+31,b+si))*(0.35+0.65*env)*(0.55+0.8*cov);
+      const dx=gx-px,dy=(gy-py)*1.15,d=Math.hypot(dx,dy)+lump,k=1-d/rad;if(k>best){best=k;bx=dx/rad;by=dy/rad}}
+    const veil=0.3*env*sstep(0.35,0.7,cov);if(best<=0&&veil<=0.004)continue;          /* a thin veil joins the crowded cloudlets */
+    const dens=sstep(0,0.7,best)*(0.6+0.7*fbm(x*0.22+sd,y*0.3,3)),a=Math.min(1,Math.max(dens*env,veil));if(a<=0.004)continue;
+    const t=sstep(-0.3,0.9,0.75*by+0.4*bx)*0.85,q=(j*cw+i)*4;
+    for(let k=0;k<3;k++)D[q+k]=sun[k]+(shd[k]-sun[k])*t;D[q+3]=a*o.alpha*255}
+  const cv=document.createElement("canvas");cv.width=cw;cv.height=ch;cv.getContext("2d").putImageData(img,0,0);return cv}
+/* cumulus: each modelled as a heap of spheres (big billows carrying smaller ones), its outline broken up with noise,
+   then lit from the upper left: bright crowns, pale grey-blue shaded flanks and a flat, slightly darker base. */
 function blurBox(a,w,h,r){if(r<1)return a.slice();r=Math.round(r);const t=new Float32Array(a.length),o=new Float32Array(a.length),n=2*r+1;
   for(let y=0;y<h;y++){let s=0;const row=y*w;for(let x=-r;x<=r;x++)s+=a[row+Math.min(w-1,Math.max(0,x))];
     for(let x=0;x<w;x++){t[row+x]=s/n;s+=a[row+Math.min(w-1,x+r+1)]-a[row+Math.max(0,x-r)]}}
@@ -264,9 +299,9 @@ function cumulus(w,o){
   let Lx=-0.55,Ly=-0.62,Lz=0.56;const Ll=Math.hypot(Lx,Ly,Lz);Lx/=Ll;Ly/=Ll;Lz/=Ll;const Lh=Math.hypot(Lx,Ly),sx=Lx/Lh,sy=Ly/Lh,slope=Lz/Lh,step=U*0.026;
   const img=new ImageData(cw,ch),D=img.data,sky=o.sky||[196,232,240],hz=o.haze||0;
   const baseY=new Float32Array(cw);for(let i=0;i<cw;i++)baseY[i]=YB+U*0.006+(fbm(i*f*5+sd,3,2)-0.5)*U*0.035;   /* a gently uneven base line */
-  const sun=[255,254,250],shd=[166,184,204],bas=[142,158,182];
+  const sun=[255,255,253],shd=[198,212,226],bas=[182,196,214];   /* soft: the shade is only a little darker than the sky */
   for(let j=1;j<ch-1;j++){const v=Math.min(1,Math.max(0,(j-top)/(YB-top)));
-    for(let i=1;i<cw-1;i++){const q=j*cw+i,t=TT[q];if(t<=0.01)continue;const baseCut=Math.min(1,Math.max(0,(baseY[i]-j)/(U*0.016)));
+    for(let i=1;i<cw-1;i++){const q=j*cw+i,t=TT[q];if(t<=0.01)continue;const baseCut=Math.min(1,Math.max(0,(baseY[i]-j)/(U*0.03)));
       /* opacity: thick in the middle, thin and broken at the edges */
       let a=1-Math.exp(-t/(U*0.07));const e=0.6*fbm(i*f*12+sd+7,j*f*12,3)+0.4*fbm(i*f*40+sd,j*f*40,2);a=Math.min(1,Math.max(0,(a*(0.55+0.9*e)-0.10)/0.75));a=a*a*(3-2*a)*baseCut;if(a<=0.003)continue;
       const h=H[q],gx=(H[q+1]-H[q-1])*0.5,gy=(H[q+cw]-H[q-cw])*0.5,nl=Math.hypot(gx,gy,1),ndl=(-gx*Lx-gy*Ly+Lz)/nl;
@@ -286,21 +321,36 @@ function cumulus(w,o){
   const cv=document.createElement("canvas");cv.width=cw;cv.height=ch;cv.getContext("2d").putImageData(img,0,0);
   return{cv,w:cw/s,h:ch/s,ax:CX/s,ay:YB/s}}
 function drawDayClouds(cv){
-  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
-  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
-  const base=Math.min(W,1600)*0.16*(W<700?1.5:1),res=Math.min(1.4,dpr)*0.7;
-  /* [x, y of the base, size, how tall, haze]: big towering clouds high up, flatter and hazier ones toward the horizon */
-  const C=[[0.10,0.20,1.15,0.9,0],[0.38,0.11,0.75,0.7,0.02],[0.70,0.23,1.35,1.0,0],[0.93,0.13,0.70,0.65,0.03],
-           [0.24,0.40,0.55,0.55,0.12],[0.55,0.44,0.45,0.45,0.16],[0.83,0.41,0.52,0.5,0.14],[0.05,0.52,0.36,0.35,0.24],[0.42,0.57,0.30,0.3,0.3],[0.97,0.56,0.32,0.3,0.3],[0.68,0.60,0.26,0.25,0.34],
-           [0.15,0.645,0.30,0.2,0.45],[0.47,0.665,0.26,0.16,0.5],[0.74,0.635,0.24,0.2,0.45],[0.95,0.675,0.22,0.15,0.55]];
-  const landTop=1-Math.min(0.28,250/H);
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight,Wd=cv.clientWidth||Math.round(W*1.06),OX=(Wd-W)/2;
+  cv.width=Math.round(Wd*dpr);cv.height=Math.round(H*dpr);
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,Wd,H);
+  const narrow=W<700,landH=Math.min(H*0.28,250),horizon=H-landH*0.68,res=Math.min(2,dpr);   /* horizon: about where the far range rises */
+  /* cirrus [x, y, width and height (of the screen), tilt in degrees, bend]: near the top, very faint */
+  const CI=narrow?[[0.30,0.085,0.95,0.07,-7,0.25],[0.80,0.16,0.70,0.05,-12,-0.2]]
+                 :[[0.22,0.10,0.44,0.10,-8,0.3],[0.70,0.075,0.36,0.07,-4,-0.25],[0.90,0.19,0.24,0.06,-14,0.2]];
+  /* altocumulus [x, y, width, height, cloudlet spacing in px]: two small patches in the middle of the sky */
+  const AC=narrow?[[0.62,0.31,0.6,0.07,11]]:[[0.63,0.30,0.24,0.10,16],[0.17,0.40,0.16,0.06,11]];
+  /* cumulus [x, height of the base above the far range (of the screen), size, how tall, haze]: small and low, the farther ones flatter and hazier */
+  const unit=narrow?W*0.17:Math.min(W,1600)*0.072;
+  const CU=narrow?[[0.12,0.075,1.0,0.45,0.06],[0.56,0.035,0.75,0.35,0.18],[0.90,0.09,0.9,0.4,0.08]]
+                 :[[0.07,0.09,1.2,0.5,0.05],[0.31,0.045,0.85,0.4,0.15],[0.55,0.10,1.0,0.45,0.06],[0.77,0.03,0.7,0.3,0.24],[0.94,0.07,0.95,0.4,0.1],[0.44,0.015,0.55,0.25,0.32]];
+  const todo=[...CI.map((c,k)=>["ci",...c,k]),...AC.map((c,k)=>["ac",...c,k]),...CU.map((c,k)=>["cu",...c,k])];
   /* one cloud per task, so painting them never holds up the page; a newer call (a resize) abandons the older one */
-  const gen=cv._gen=(cv._gen||0)+1,todo=C.map((c,k)=>[...c,k]).filter(c=>c[1]<=landTop-0.03);
+  const gen=cv._gen=(cv._gen||0)+1;
   const next=()=>{if(cv._gen!==gen||!todo.length)return;const t0=performance.now();
-    while(todo.length&&performance.now()-t0<40)one(todo.shift());setTimeout(next,0)};
-  const one=([fx,fy,sc,tall,haze,k])=>{rnd=1013+k*7919;const w=base*sc;
-    const b=cumulus(w,{tall,res,haze,seed:k*13.7}),sx=1+haze*1.2;   /* distant ones are seen edge-on: flatter */
-    ctx.globalAlpha=0.95-0.4*haze;ctx.filter=haze>0.2?`blur(${(haze*1.6).toFixed(2)}px)`:"none";ctx.drawImage(b.cv,fx*W-b.ax*sx,fy*H-b.ay,b.w*sx,b.h);
+    while(todo.length&&performance.now()-t0<30)one(todo.shift());setTimeout(next,0)};
+  const one=([kind,...c])=>{
+    if(kind==="ci"){const[fx,fy,fw,fh,ang,bend,k]=c,w=fw*W,h=fh*H;
+      const b=cirrus(w,h,{res:res*0.6,seed:3.1+k*17.3,ang:ang*Math.PI/180,bend,alpha:0.62});
+      ctx.drawImage(b,OX+fx*W-w/2,fy*H-h/2,w,h);return}
+    if(kind==="ac"){const[fx,fy,fw,fh,cell,k]=c,w=fw*W,h=fh*H;
+      const b=altocumulus(w,h,{res:res*0.85,seed:5.7+k*11.1,cell,alpha:0.55});
+      ctx.drawImage(b,OX+fx*W-w/2,fy*H-h/2,w,h);return}
+    const[fx,fh,sc,tall,haze,k]=c;rnd=1013+k*7919;
+    const b=cumulus(unit*sc,{tall,res,haze,seed:k*13.7,sky:[200,233,242]}),sx=1+haze*1.2;   /* distant ones are seen edge-on: flatter */
+    const x=OX+fx*W-b.ax*sx,y=horizon-fh*H-b.ay,bw=b.w*sx;
+    ctx.globalAlpha=0.30-0.15*haze;ctx.filter=`blur(${(unit*sc*0.035).toFixed(1)}px)`;ctx.drawImage(b.cv,x,y,bw,b.h);   /* a feathered halo: no hard outline */
+    ctx.globalAlpha=0.62-0.35*haze;ctx.filter=`blur(${(0.7+haze*1.2).toFixed(2)}px)`;ctx.drawImage(b.cv,x,y,bw,b.h);    /* the cloud itself, soft-edged */
     ctx.globalAlpha=1;ctx.filter="none"};
   setTimeout(next,0)}
 

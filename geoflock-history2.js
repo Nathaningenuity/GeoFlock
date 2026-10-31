@@ -220,10 +220,10 @@ const ROB0=d3.geoRobinson().scale(1).translate([0,0]),XR=ROB0([180,0])[0],YR=Mat
 /* draws the polities onto a canvas; on the flat map with the ready-made shapes, on the globe through the projection */
 function paint(c,feats,V,ox,oy,g,noLine){g=g||1;c.save();c.lineJoin="round";
  if(V.flat){const k=V.A*V.S*g;c.setTransform(k,0,0,k,ox,oy);const dl=V.dl;
-  feats.forEach(f=>{c.fillStyle=histFill(f.properties);c.fill(fillPath(f,dl));if(!noLine&&f.properties.k!==0){c.lineWidth=(f.properties.o?.55:.45)/V.S;c.strokeStyle="rgba(60,45,30,.42)";c.stroke(linePath(f,dl))}})}
+  feats.forEach(f=>{c.fillStyle=histFill(f.properties);c.fill(fillPath(f,dl));if(!noLine&&f.properties.k!==0){c.lineWidth=(f.properties.o?.55:.45)/V.S;c.strokeStyle=LINE();c.stroke(linePath(f,dl))}})}
  else{c.setTransform(g===1?V.M:new DOMMatrix([g,0,0,g,0,0]).multiply(V.M));const path=gpath(V.p,c),ctr=V.ctr;
   feats.forEach(f=>{const b=f._b;let x1=b[1][0];if(x1<b[0][0])x1+=360;if(x1-b[0][0]<170){const cc=[(b[0][0]+x1)/2,(b[0][1]+b[1][1])/2],r=Math.max(d3.geoDistance(cc,b[0]),d3.geoDistance(cc,b[1]),d3.geoDistance(cc,[b[0][0],b[1][1]]),d3.geoDistance(cc,[x1,b[0][1]]));if(d3.geoDistance(cc,ctr)-r>1.6)return}
-   c.beginPath();path(f);c.fillStyle=histFill(f.properties);c.fill();if(!noLine&&f.properties.k!==0){c.lineWidth=f.properties.o?.55:.45;c.strokeStyle="rgba(60,45,30,.42)";c.stroke()}})}
+   c.beginPath();path(f);c.fillStyle=histFill(f.properties);c.fill();if(!noLine&&f.properties.k!==0){c.lineWidth=f.properties.o?.55:.45;c.strokeStyle=LINE();c.stroke()}})}
  c.restore()}
 /* layer pictures are reused, not made anew for every change */
 const SPARE=[];const getCv=()=>SPARE.pop()||document.createElement("canvas");const putCv=cv=>{if(cv&&SPARE.length<3&&SPARE.indexOf(cv)<0)SPARE.push(cv)};
@@ -250,10 +250,12 @@ function layerFor0(feats,V,rect,old){let L=old&&old.cv&&!old.busy?old:{cv:getCv(
  else{if(L.cv.width!==V.cw||L.cv.height!==V.ch){L.cv.width=V.cw;L.cv.height=V.ch}const c=L.cv.getContext("2d");c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,V.cw,V.ch);paint(c,feats,V);
   Object.assign(L,{R:null,w:V.cw,h:V.ch,key:V.key,feats,fx:fxKey()})}
  return L}
-const fxKey=()=>String(histFocus||"");
+const fxKey=()=>String(histFocus||"")+(window.gfHR?gfHR.fx():"");
+/* the borders' colour (geoflock-histrelief.js darkens it when the map lies over the relief, so it stays readable) */
+const LINE=()=>window.gfHR?gfHR.line():"rgba(60,45,30,.42)";
 /* the picture's place on the canvas (device pixels) for one copy of the world */
 const layerXY=(L,V,k)=>V.flat?[Math.round(V.bx+V.A*k+L.R[0]),Math.round(V.by+L.R[1])]:[0,0];
-let LAY=null,GLB=null,lastS=0,lastSAt=0,crispT=0;
+let LAY=null,GLB=null,GOFF=null,lastS=0,lastSAt=0,crispT=0;
 function blit(ctx,L,V,alpha){DBG.blit++;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=alpha;if(V.flat)V.ks.forEach(k=>{const[x,y]=layerXY(L,V,k);ctx.drawImage(L.cv,x,y)});else ctx.drawImage(L.cv,0,0);ctx.restore()}
 /* while a zoom is under way the last picture is stretched; a sharp one is drawn as soon as the zoom rests */
 function blitScaled(ctx,L,V,alpha){DBG.scaled++;const r=V.S/L.S;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=alpha;ctx.imageSmoothingEnabled=true;V.ks.forEach(k=>{ctx.drawImage(L.cv,V.bx+V.A*k+L.R[0]*r,V.by+L.R[1]*r,L.w*r,L.h*r)});ctx.restore()}
@@ -316,7 +318,7 @@ function drawLabels(ctx,p,set,alpha,skip){ctx.save();ctx.textAlign="center";ctx.
 function labelsFor(feats,V,p,gv,LM,zooming){const key=[feats._id,V.key,LM,fxKey()].join("#");let o=LBL.get(feats._id+"#"+LM+"#"+fxKey());
  if(o&&(o.key===key||zooming&&V.flat&&Math.abs(o.set.k/(gv.ls?gv.ls():1)-1)<.12))return o.set;const set=labelSet(feats,V,p,gv,LM);if(LBL.size>6)LBL.clear();LBL.set(feats._id+"#"+LM+"#"+fxKey(),{key,set});return set}
 /* drawing on the globe and the flat map */
-W("histGlobeDraw",(ctx,p,gv)=>{if(!histOn()||!gv||gv!==amGlobe)return;const t0=performance.now();const feats=frame(),V=viewOf(ctx,p,gv);let alpha=1;try{if(typeof histReliefOn==="function"&&histReliefOn())alpha=.55}catch(e){}
+W("histGlobeDraw",(ctx,p,gv)=>{if(!histOn()||!gv||gv!==amGlobe)return;const t0=performance.now();const feats=frame(),V=viewOf(ctx,p,gv);let alpha=1;try{if(typeof histReliefOn==="function"&&histReliefOn())alpha=window.gfHR?gfHR.alpha():.55}catch(e){}
  const now=performance.now();if(V.flat&&V.S!==lastS){lastS=V.S;lastSAt=now}const zooming=V.flat&&now-lastSAt<160;
  /* a transition is dropped when the view changes under it (the new map is then simply shown) */
  if(TR&&(TR.A.key!==V.key||TR.A.fx!==fxKey()||V.flat&&(V.ks.length>1||!inside(needRect(V),TR.A.R))))endTransition();
@@ -330,7 +332,8 @@ W("histGlobeDraw",(ctx,p,gv)=>{if(!histOn()||!gv||gv!==amGlobe)return;const t0=p
   else{LAY=layerFor(feats,V,null,L&&!L.busy?L:null);blit(ctx,LAY,V,alpha)}}
  else{/* the globe: drawn straight onto the map while it turns; a change of borders on a still globe is a transition */
   const G0=GLB;if(G0&&G0.key===V.key&&G0.fx===fxKey()&&G0.feats!==feats){startTransition(ctx,V,layerFor(G0.feats,V,null,null),feats);if(TR){e=drawTransition(ctx,V,alpha);shown=TR.B.feats;gv.request()}}
-  if(!TR){ctx.save();ctx.globalAlpha=alpha;paint(ctx,feats,V);ctx.restore()}}
+  /* see-through (over the relief): drawn whole into a picture first, so overlapping shapes do not add up */
+  if(!TR){if(alpha<1){GOFF=layerFor(feats,V,null,GOFF);blit(ctx,GOFF,V,alpha)}else{ctx.save();ctx.globalAlpha=alpha;paint(ctx,feats,V);ctx.restore()}}}
  if(!V.flat)GLB={key:V.key,feats:shown,fx:fxKey()};
  if(histHotI!=null&&feats[histHotI]&&!TR){const path=d3.geoPath(p,ctx);ctx.save();ctx.beginPath();path(feats[histHotI]);ctx.lineWidth=2;ctx.strokeStyle="#fff";ctx.stroke();ctx.restore()}
  /* names: well-known places first; "Main" names the others only when the name fits inside them on the screen, "All"
@@ -445,5 +448,5 @@ body.sky-night .hist-dock{background:rgba(29,37,70,.92);color:#e6ebfa}body.sky-n
 .hist-story .hs-grip{position:absolute;left:50%;top:-4px;width:40px;height:10px;margin-left:-20px;cursor:grab;background:radial-gradient(circle,#b9c3cd 1.6px,transparent 2px) 0 0/8px 5px;opacity:.9}
 .hist-story .hs-head::before{display:none}
 .hist-story .hs-head,.hist-story .hs-year{cursor:grab}`;document.head.appendChild(st);
-window.GF_HIST2={loading:()=>Object.keys(LOADING).length>0,years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?N-1:i)},year:()=>curY,setYear:y=>setYear(y),frame:()=>frame(),labels:()=>{const o=LBL.get(frame()._id+"#"+labMode()+"#"+fxKey());return o&&o.set},tr:()=>TR,imp:p=>impOf(p),focusInfo:()=>{const fr=frame();return{focus:histFocus,old:tourOld,y:curY,any:!!histFocus&&focusAny(fr),names:histFocus?[...new Set(fr.filter(f=>inFocus(f.properties)).map(f=>f.properties.n))].slice(0,6):[]}},featsAt:async y=>{for(let i=0;i<200&&!CH[chunkOf(y)];i++){need(y);await new Promise(r=>setTimeout(r,100))}return frameAt(y)||[]}};
+window.GF_HIST2={usesNew:()=>useNew(),loading:()=>Object.keys(LOADING).length>0,years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?N-1:i)},year:()=>curY,setYear:y=>setYear(y),frame:()=>frame(),labels:()=>{const o=LBL.get(frame()._id+"#"+labMode()+"#"+fxKey());return o&&o.set},tr:()=>TR,imp:p=>impOf(p),focusInfo:()=>{const fr=frame();return{focus:histFocus,old:tourOld,y:curY,any:!!histFocus&&focusAny(fr),names:histFocus?[...new Set(fr.filter(f=>inFocus(f.properties)).map(f=>f.properties.n))].slice(0,6):[]}},featsAt:async y=>{for(let i=0;i<200&&!CH[chunkOf(y)];i++){need(y);await new Promise(r=>setTimeout(r,100))}return frameAt(y)||[]}};
 })();
