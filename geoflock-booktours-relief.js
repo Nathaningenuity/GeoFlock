@@ -43,16 +43,16 @@ const YEAR={
  bprisoners:{
   "Lines in the sand":{y:1914,focus:"ott",labels:[{gk:"ott",name:"Ottoman Empire",at:[39.2,35.3]}]}},
  bnations:{
-  "Silver and forced labour":{y:1650,focus:"spa",labels:[{gk:"spa",name:"Spain’s empire"}]},
+  "Silver and forced labour":{y:1650,focus:"spa",labels:[{gk:"spa",name:"Spain’s empire",at:[-74,-10]}]},
   "The Glorious Revolution":{y:1688,labels:[{n:"Kingdom of England",name:"England"},{n:"Republic of the Seven United Netherlands",name:"Dutch Republic"}]},
-  "The convicts who sued":{y:1800,labels:[{n:"Colony of New South Wales",name:"New South Wales (British)"}]},
-  "Venice closes its doors":{y:1297,labels:[{n:/^Republic of Venice$|^Venice$/,name:"Venice"},{n:"Eastern Roman Empire",name:"Byzantine Empire"},{n:"Mamluk Sultanate"}]},
+  "The convicts who sued":{y:1800,labels:[{n:"Colony of New South Wales",name:"New South Wales (British)",at:[148.6,-31.2]}]},
+  "Venice closes its doors":{y:1297,labels:[{n:"Eastern Roman Empire",name:"Byzantine Empire",at:[30.6,40.1]},{n:"Mamluk Sultanate",at:[33.6,29.6]}]},
   "Printing held back":{y:1700,focus:"ott",labels:[{gk:"ott",name:"Ottoman Empire"}]}},
  bcollapse:{
   "The Classic Maya":{y:800,focus:"maya",labels:[{gk:"maya",name:"Maya city-states"}]},
   "Iceland’s blowing soil":{y:1000,labels:[{n:"Icelandic Commonwealth"}]},
   "The Norse in Greenland":{y:1000,labels:[]},
-  "Societies that succeeded":{y:1700,labels:[{n:"Tokugawa Shogunate",name:"Tokugawa Japan"}]}}};
+  "Societies that succeeded":{y:1700,labels:[]}}};
 
 /* ---------- the overlays' strength ---------- */
 function strength(){try{if(window.gfHR&&typeof gfHR.alpha==="function"){const a=+gfHR.alpha();if(a>=.05&&a<=1)return a}}catch(e){}
@@ -121,7 +121,11 @@ function drawYear(ctx,p,gv){if(!live()||!gv||gv!==ps.g)return;const S=(psSteps()
   if(!gv._flat){try{if(d3.geoDistance(at,[-gv.rot[0],-gv.rot[1]])>Math.PI/2-.05)return}catch(e){}}
   const txt=L.name||best.properties.n;if(!txt)return;const s=Math.max(12,Math.min(16,11.5+(gv.zoom||1)*.5));
   ctx.save();ctx.font="800 "+s+"px Inter, system-ui, sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
-  ctx.lineWidth=4;ctx.strokeStyle="rgba(255,255,255,.92)";ctx.strokeText(txt,xy[0],xy[1]);ctx.fillStyle="#3b2414";ctx.fillText(txt,xy[0],xy[1]);ctx.restore()})}
+  /* a name whose point is on screen is kept whole inside the map's edges */
+  const M=ctx.getTransform(),W=ctx.canvas.width/(M.a||1),H=ctx.canvas.height/(M.d||1),x0=-M.e/(M.a||1),y0=-M.f/(M.d||1);let x=xy[0],y=xy[1];
+  if(x<x0||x>x0+W||y<y0||y>y0+H){ctx.restore();return}
+  const tw=ctx.measureText(txt).width/2+8;x=Math.max(x0+tw,Math.min(x0+W-tw,x));y=Math.max(y0+s,Math.min(y0+H-s,y));
+  ctx.lineWidth=4;ctx.strokeStyle="rgba(255,255,255,.92)";ctx.strokeText(txt,x,y);ctx.fillStyle="#3b2414";ctx.fillText(txt,x,y);ctx.restore()})}
 let drawHooked=false;
 function hookDraw(){if(drawHooked||typeof psGlobeDraw!=="function"||typeof d3==="undefined")return;drawHooked=true;
  const _d=psGlobeDraw;psGlobeDraw=function(ctx,p,gv){try{drawYear(ctx,p,gv)}catch(e){console.error(e)}return _d.apply(this,arguments)}}
