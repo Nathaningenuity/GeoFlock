@@ -8,7 +8,7 @@
 (function(){
 "use strict";
 window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
-{"f":"Ice-core drill hg.jpg","d":"photos/x60fbb2774b1c4a60.webp","by":"Hannes Grobe, Alfred Wegener Institute","lic":"CC BY-SA 2.5","page":"https://commons.wikimedia.org/wiki/File:Ice-core_drill_hg.jpg"},
+{"f":"Millennium Development Goals, UN Headquarters, New York City, New York - 20080501.jpg","d":"photos/x694a28f90513f0db.webp","by":"Babucke","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Millennium_Development_Goals,_UN_Headquarters,_New_York_City,_New_York_-_20080501.jpg"},
 {"f":"Burning Gas Flare Nembe Creek, Nigeria.tif","d":"photos/x65f5d2bb19d0c4bc.webp","by":"Sara Leigh Lewis","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Burning_Gas_Flare_Nembe_Creek,_Nigeria.tif"},
 {"f":"Garment factory in Bangladesh Women working.jpg","d":"photos/x4463effcb1f311a6.webp","by":"Tareq Salahuddin","lic":"CC BY 2.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Bangladesh_Women_working.jpg"},
 {"f":"Garment factory in Dhaka.jpg","d":"photos/xd4835b38f9586a18.webp","by":"Kroisenbrunner","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Garment_factory_in_Dhaka.jpg"},
@@ -21,6 +21,7 @@ window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
 ];
 /* card photos: "tour|title" → library file name (f) */
 const CARD={/*CARD*/
+"hg7d|From 8 goals to 17":"Millennium Development Goals, UN Headquarters, New York City, New York - 20080501.jpg",
 "hg7a|Dependency and commodity dependence":"Burning Gas Flare Nembe Creek, Nigeria.tif",
 "hg7a|Women at work":"Garment factory in Bangladesh Women working.jpg",
 "hg7a|Women and development":"An aerial view of new look of Rwanda Parliament Building in Kimihurura, Kigali on May 16, 2019. Emmanuel Kwizera.jpg",
@@ -70,8 +71,8 @@ function cards(){for(const k in CARD){const i=libIdx(CARD[k]);if(i<0)continue;co
 function imgs(){window.PS_SQ_IMG=window.PS_SQ_IMG||{};
  for(const l in SQ){const i=libIdx(SQ[l]);if(i>=0)PS_SQ_IMG[l]=i}
  try{for(const id in PS_TOURS){const t=PS_TOURS[id];if(!t||!Array.isArray(t.steps))continue;t.steps.forEach(s=>{(s&&Array.isArray(s.phPins)?s.phPins:[]).forEach(q=>{
-  const f=q&&SQN[strip(q.label)];if(f){const i=libIdx(f);if(i>=0){PS_SQ_IMG[q.label]=i;try{q.img=i}catch(e){}}}})})}}catch(e){}}
-function run(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;merge();
+  const f=q&&SQN[strip(q.label)];if(f){const i=libIdx(f);if(i>=0){PS_SQ_IMG[q.label]=i;try{q.img=i;q._gfImg=i}catch(e){}}}})})}}catch(e){}}
+function run(){try{outer();if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;merge();
  try{window.GF_PHCAP=window.GF_PHCAP||{};for(const l in CAP){GF_PHCAP[l]=CAP[l];GF_PHCAP[l+"​"]=CAP[l]}}catch(e){}
  cards();imgs()}catch(e){console.error("review-photos2",e)}}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{run()}catch(e){}return _g.apply(this,arguments)}}
@@ -80,6 +81,6 @@ const P=f=>{const i=libIdx(f);const X=i>=0?PS_PHOTO_DATA[i]:null;return X&&X.d?X
 const outer=()=>{
  if(typeof psSqPhoto==="function"&&!psSqPhoto._rvp2){const _p=psSqPhoto;psSqPhoto=function(q){try{const f=q&&SQN[strip(q.label)];if(f){const X=P(f);if(X)return X}}catch(e){}return _p.apply(this,arguments)};psSqPhoto._rvp2=1}
  if(typeof psPhotoFor==="function"&&!psPhotoFor._rvp2){const _f=psPhotoFor;psPhotoFor=function(St){try{if(St&&typeof ps!=="undefined"&&ps){const f=CARD[ps.tour+"|"+strip(St.title)];if(f){const X=P(f);if(X)return X}}}catch(e){}return _f.apply(this,arguments)};psPhotoFor._rvp2=1}};
-addEventListener("load",()=>setTimeout(outer,2500));if(document.readyState==="complete")setTimeout(outer,2500);
+addEventListener("load",()=>setTimeout(outer,2500));if(document.readyState==="complete")setTimeout(outer,2500);[6000,13000,25000].forEach(t=>setTimeout(outer,t));
 run();addEventListener("load",()=>setTimeout(run,1500));[0,1500,5000,12000].forEach(t=>setTimeout(run,t));
 })();

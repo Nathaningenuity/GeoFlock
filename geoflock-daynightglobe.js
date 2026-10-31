@@ -1,7 +1,7 @@
 /* GeoFlock: the Day & Night globe.
    A second globe view of the Satellite map: the sunlit half shows the satellite picture (seas a little lighter and more
    turquoise), the dark half shows the City Lights picture, lit by real sun geometry: daylight fades with the sun's height (Lambert),
-   twilight lasts to 12° below the horizon (nautical dusk), and city lights come on from sunset. The cloud layer is bright white by day and dark and faint by night, dimming the
+   a faint twilight reaches 6° past the terminator (the night side is exactly half the globe), and city lights come on from 3° before sunset. The cloud layer is bright white by day and dark and faint by night, dimming the
    city lights under it.
    How it works: the globe is drawn by a WebGL fragment shader (GlobeGL). While this view is on and the globe is drawing the
    satellite picture, GlobeGL.draw uses a second shader program, on the same context, that samples the satellite, night and
@@ -75,7 +75,7 @@ void main(){
     float rr = sqrt(r2), t = rr - 1.0; float lx = xx/rr, ly = yy/rr;
     float phi = asin(clamp(ly*uCp, -1.0, 1.0)); float lam = uLam0 + atan(lx, -ly*uSp);
     float s = dot(nrm(phi, lam), uSun);
-    float lit = smoothstep(-0.208, 0.15, s);
+    float lit = uDayOnly > 0.5 ? 1.0 : 0.06 + 0.94 * smoothstep(-0.105, 0.1, s); /* night side: ~6% of the day glow, a thin twilight band */
     vec3 c = vec3(0.42, 0.66, 1.0);
     o = vec4(c, exp(-t * 30.0) * 0.8 * lit); return;
   }
@@ -117,20 +117,17 @@ void main(){
       float cover = max(edge * floe, smoothstep(0.3, 0.7, shelf));
       vec3 ice = mix(vec3(0.80, 0.86, 0.91), vec3(0.93, 0.95, 0.97), smoothstep(0.55, 0.95, c)) * (0.92 + 0.12 * fine);
       day = mix(day, ice, cover * smoothstep(0.0, 0.25, water + 0.15)); } }
-  /* light from the real geometry. s is the sine of the sun's height above the horizon at this point.
-     Direct sunlight on the ground scales with sin(height) (Lambert's law), so it fades gradually over the last ~30° before
-     sunset; a gentle tone curve (like a camera exposure, as in real photos from space) keeps the day side bright.
-     After sunset the sky still lights the ground: civil twilight to 6° below the horizon (s = -0.105), nautical to 12°
-     (s = -0.208). City lights show from about sunset and are fully visible by nautical dusk. */
-  /* a deliberately wide, smooth twilight (the owner asked for a much wider gradient than strict physics gives):
-     the satellite picture starts dimming from about 35° of sun height and keeps darkening to about 18° below the
-     horizon (the end of astronomical twilight); the city lights fade in over that same wide band, from just before
-     sunset to full strength around 20° below. */
-  /* the satellite picture fades evenly and slowly: 100% where the sun is ~50° up, down to almost nothing ~27° below */
-  float t = clamp((s + 0.45) / 1.22, 0.0, 1.0);
-  float light = uDayOnly > 0.5 ? 1.0 : mix(0.03, 1.0, t);
-  /* the night picture steps in gradually: about 1% where the sun is still ~15° up, rising evenly to 100% at ~25° below */
-  float lights = uDayOnly > 0.5 ? 0.0 : clamp((0.26 - s) / 0.68, 0.0, 1.0);
+  /* light from the real geometry. s = dot(surface normal, direction to the subsolar point) = sine of the sun's height here,
+     both in the same geographic frame (the sun's latitude = declination, and its longitude). Blending happens in display
+     (sRGB) space: textures are uploaded as plain RGBA and written straight to the canvas, so the cosine (Lambert) falloff
+     is converted to display brightness with pow(x, 1/2.2). Targets: sun overhead 100%, 30° ~73%, 10° ~45%, 5° ~33%,
+     terminator ~6%, 6° below 0. The night side is exactly half the globe: darkness starts at s = 0 and only a faint
+     6° twilight (s = -0.105) reaches past the terminator. City lights come on from 3° above the horizon (s = 0.052)
+     and are full at 6° below. */
+  float dayLight = pow(clamp(s, 0.0, 1.0), 1.0 / 2.2);
+  float twilight = 0.06 * smoothstep(-0.105, 0.0, s);
+  float light = uDayOnly > 0.5 ? 1.0 : max(dayLight, twilight);
+  float lights = uDayOnly > 0.5 ? 0.0 : 1.0 - smoothstep(-0.105, 0.052, s);
   ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
@@ -138,6 +135,8 @@ void main(){
     day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0), cl * 0.95);
     ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; }
   vec3 col = day * light + ngt * lights;
+  /* warm light near the terminator (sun 0–8° up) */
+  if(uDayOnly < 0.5){ float edge = smoothstep(0.14, 0.0, s) * step(0.0, s); col *= mix(vec3(1.0), vec3(1.0, 0.82, 0.65), edge * 0.5); }
   if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 6.0) * 0.5 * (uDayOnly > 0.5 ? 1.0 : smoothstep(-0.105, 0.2, s))); }
   o = vec4(col, 1.0);
 }`;
