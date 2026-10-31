@@ -75,14 +75,15 @@ function fixStop(id,S){
  return changed}
 
 /* ---------- 1. A capital in the bush ---------- */
+/* off: the picture’s offset from its point, in px; each picture sits on the side away from the dashed line */
 function canberra(){let S=null;try{S=PS_TOURS.oceania.steps.find(s=>s.title==="A capital in the bush"||s.title==="Canberra, the compromise")}catch(e){}
  if(!S)return false;
  const ok=Array.isArray(S.phPins)&&S.phPins.length===3&&S.phPins.every(q=>q&&q._gfPinFix);if(ok)return false;
  const ip=libIdx("Parliament House at dusk, Canberra ACT.jpg"),io=libIdx("Sydney Opera House - Dec 2008.jpg"),im=libIdx("Clocks at Flinders Street Station.jpg");
  const P=[];
- if(ip>=0)P.push({at:[149.13,-35.31],label:"Canberra: Parliament House",col:OR,icon:"photo",_gfImg:ip,_gfPinFix:1});
- if(io>=0)P.push({at:[151.21,-33.86],label:"Sydney: the Opera House",col:OR,icon:"photo",_gfImg:io,_gfPinFix:1});
- if(im>=0)P.push({at:[144.97,-37.82],label:"Melbourne: Flinders Street Station",col:OR,icon:"photo",_gfImg:im,_gfPinFix:1});
+ if(ip>=0)P.push({at:[149.13,-35.31],label:"Canberra: Parliament House",col:OR,icon:"photo",_gfImg:ip,_gfPinFix:1,off:[78,58]});
+ if(io>=0)P.push({at:[151.21,-33.86],label:"Sydney: the Opera House",col:OR,icon:"photo",_gfImg:io,_gfPinFix:1,off:[60,-52]});
+ if(im>=0)P.push({at:[144.97,-37.82],label:"Melbourne: Flinders Street Station",col:OR,icon:"photo",_gfImg:im,_gfPinFix:1,off:[60,52]});
  if(P.length<3)return false;
  try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};P.forEach(q=>{PS_SQ_IMG[q.label]=q._gfImg})}catch(e){}
  try{window.GF_PHCAP=window.GF_PHCAP||{};Object.assign(GF_PHCAP,{"Canberra: Parliament House":"Canberra: Parliament House","Sydney: the Opera House":"Sydney Opera House","Melbourne: Flinders Street Station":"Melbourne: Flinders St"})}catch(e){}
