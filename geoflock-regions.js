@@ -174,6 +174,24 @@ function pqRender(){const view=document.getElementById("quizView");if(!view)retu
  if(find&&map)map.addEventListener("click",e=>{const t=e.target.closest("[data-c]");if(!t)return;const k=t.dataset.c;done(k===c,k)})}
 
 
+/* Find on map: the map quiz only lets the 196 countries be clicked, so while the special regions are chosen
+   (or one is asked) their shapes are made clickable too and answer as the region itself (Svalbard, not Norway) */
+const ISLE_NO=new Set(["hk","mo","gi","ncy","xd"]);/* these touch a neighbour on land: a wider edge would take its clicks */
+if(typeof wireMapClicks==="function"){const _wm=wireMapClicks;wireMapClicks=function(target){const x=_wm.apply(this,arguments);try{
+ if(!(target&&target._sp)&&!(typeof activeRegion!=="undefined"&&activeRegion===R))return x;
+ const svg=document.querySelector("#mapWrap svg");if(!svg||typeof handleMapClick!=="function")return x;
+ GF_REG.forEach(r=>{const id=ATLAS_ID[r.c]||r.c,C=COUNTRY_BY_CODE[r.c];if(!C||!C._sp)return;
+  const paths=[...svg.querySelectorAll("path[id]")].filter(p=>p.id.toLowerCase()===id&&!p.classList.contains("tiny-hit-overlay"));
+  paths.forEach(p=>{/* small islands get the same wider invisible hit edge the tiny countries have */
+   if(TINY.has(r.c)&&!ISLE_NO.has(r.c)&&hitTargetFor(p)===p){const o=document.createElementNS("http://www.w3.org/2000/svg","path");o.setAttribute("d",p.getAttribute("d"));o.setAttribute("class","tiny-hit-overlay");p.after(o)}
+   const hit=hitTargetFor(p);hit.classList.add("clickable");hit.onclick=()=>handleMapClick(hit,r.c,target);
+   hit.onmouseenter=()=>{try{showHoverOutline(svg,paths)}catch(e){}};hit.onmouseleave=()=>{try{clearHoverOutline(svg)}catch(e){}}})})}catch(e){console.error(e)}return x}}
+
+/* the globe's Find on map has the same country-only check: a region answers as itself there too */
+if(typeof qzAnswer==="function"){const _qa=qzAnswer;qzAnswer=function(code){try{const t=typeof round!=="undefined"&&round&&round.queue&&round.queue[round.idx];
+ const k=Object.keys(ATLAS_ID).find(c=>ATLAS_ID[c]===code)||code,C=BY[k]&&COUNTRY_BY_CODE[k];
+ if(C&&C._sp&&(t&&t._sp||typeof activeRegion!=="undefined"&&activeRegion===R)){COUNTRIES.push(C);try{return _qa.call(this,k)}finally{const i=COUNTRIES.lastIndexOf(C);if(i>=0)COUNTRIES.splice(i,1)}}}catch(e){console.error(e)}return _qa.apply(this,arguments)}}
+
 const st3=document.createElement("style");st3.textContent=`
 .gf-reg-st-prof{background:rgba(106,79,176,.09);border-radius:10px;padding:8px 10px;margin:6px 0 10px;font-size:14px;text-align:left}
 .gf-pq{max-width:900px;margin:0 auto;text-align:center}
