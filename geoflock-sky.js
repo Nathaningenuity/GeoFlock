@@ -6,6 +6,8 @@
   body.sky-theme:not(.sky-night) #gfDayClouds{ display:block; position:absolute; top:0; bottom:0; left:-3vw; width:106vw; height:100%; pointer-events:none; animation:gfDrift 240s ease-in-out infinite alternate; will-change:transform; }
   @keyframes gfDrift{ from{ transform:translate3d(-2vw,0,0); } to{ transform:translate3d(2vw,0,0); } }
   @media (prefers-reduced-motion: reduce){ body.sky-theme:not(.sky-night) #gfDayClouds{ animation:none; } }
+  /* hidden unless their theme is on, so a scene drawn earlier never shows through the other one after a switch */
+  #gfDayClouds, #gfDaySky, #gfDayLand, #gfNightGalaxy, #gfNightLand{ display:none; }
   #gfNightLand canvas, #gfDayLand canvas{ display:block; }
   body.sky-theme.sky-night #gfNightGalaxy{ display:block; position:absolute; inset:0; width:100%; height:100%; pointer-events:none; mix-blend-mode:screen; }
   body.sky-theme.sky-night #gfNightLand,
