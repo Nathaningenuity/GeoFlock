@@ -5,7 +5,9 @@
 (function(){
 if(typeof ALLMAPS_SUBMODES==="undefined"||typeof TH_THEMES==="undefined"||typeof d3==="undefined")return;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-if(!ALLMAPS_SUBMODES.culture.some(s=>s.id==="larea")){const i=ALLMAPS_SUBMODES.culture.findIndex(s=>s.id==="lang");ALLMAPS_SUBMODES.culture.splice(i+1,0,{id:"larea",label:"Language areas"})}
+/* hidden for now (an ethnic-groups map is planned in its place); set window.GF_SHOW_LAREA=true to bring the tab back */
+if(!window.GF_SHOW_LAREA){try{if(allMapsSubMode.culture==="larea")allMapsSubMode.culture="lang"}catch(e){}}
+if(window.GF_SHOW_LAREA&&!ALLMAPS_SUBMODES.culture.some(s=>s.id==="larea")){const i=ALLMAPS_SUBMODES.culture.findIndex(s=>s.id==="lang");ALLMAPS_SUBMODES.culture.splice(i+1,0,{id:"larea",label:"Language areas"})}
 const on=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="culture"&&allMapsSubMode.culture==="larea"}catch(e){return false}};
 /* family colours: the big families get fixed, well-separated colours (matching the Languages map where they overlap) */
 const FIX={"Indo-European":"#e8a07a","Niger-Congo":"#8fcf9e","Atlantic-Congo":"#8fcf9e","Afro-Asiatic":"#d9b26b","Sino-Tibetan":"#e07b6f","Austronesian":"#d58fb8","Turkic":"#6fc0c0",
