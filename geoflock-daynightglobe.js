@@ -479,7 +479,28 @@ body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.2
 body.sky-night .gf-dng-spin, body.sky-night .gf-dng-speed select{ background:#22304f; border-color:rgba(150,175,230,.25); }
 .gf-dng.gf-dng-float .gf-dng-mode{ flex-basis:100%; margin-left:0; }`;
 document.head.appendChild(css);
-window.gfDNG={on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode,play,stop,setSpin,setT};
+/* the Day & Night look on any other GlobeGL (the Home page globe): satellite by day, city lights by night, lit by the
+   sun at sun=[lon,lat] degrees. o: as GlobeGL.draw (cx, cy, s, frame, lam0, phi0, roll in degrees, space). Returns false
+   until the pictures are loaded, so the caller can draw something else meanwhile. */
+function drawOn(G,o,sun){try{
+ if(!G||!G.gl||!GLOBE_TEX.satellite||!GLOBE_TEX.night)return false;
+ const si=globeImages("satellite",()=>{}),ni=globeImages("night",()=>{});if(!si||!ni)return false;
+ const P=prog(G);if(!P)return false;const gl=G.gl,u=P.u,T=G.texture("satellite",si),N=G.texture("night",ni);
+ gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(P.pr);
+ gl.uniform2f(u.uC,o.cx,o.cy);gl.uniform1f(u.uS,o.s);gl.uniform1f(u.uF,o.frame||1e9);gl.uniform1f(u.uLam0,o.lam0);
+ {const g=(o.roll||0)*D2R;gl.uniform2f(u.uRoll,Math.cos(g),Math.sin(g))}gl.uniform1f(u.uSp,Math.sin(o.phi0));gl.uniform1f(u.uCp,Math.cos(o.phi0));gl.uniform1f(u.uSpace,o.space?1:0);
+ const la=sun[1]*D2R,lo=sun[0]*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
+ gl.uniform1f(u.uClA,0);gl.uniform1f(u.uDayOnly,0);gl.uniform1f(u.uNightOnly,0);gl.uniform1f(u.uSea,1);
+ gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uCl,3);
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,T.list[0]);gl.uniform1i(u.uSat,0);
+ gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
+ gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,0);
+ gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,0);
+ {const it=iceTex(G);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0)}
+ {const bt=bathyTex(G);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}
+ {const gt=glowTex(G);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,gt);gl.uniform1i(u.uGlow,5);gl.uniform1f(u.uGlowOn,gt?1:0)}
+ gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return true}catch(e){console.error("Day & Night drawOn",e);return false}}
+window.gfDNG={drawOn,on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode,play,stop,setSpin,setT};
 })();
 
 /* the blue rim round the globe (drawn by the globe's 2D layer, outside this shader) follows the sun in Day & Night: its
