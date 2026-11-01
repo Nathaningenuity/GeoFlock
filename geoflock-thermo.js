@@ -147,5 +147,5 @@ const css=document.createElement("style");css.textContent=`
 .gfk-thermo.on{ outline:2px solid #e0402f; outline-offset:2px; border-radius:12px; }
 body.sky-night .gfth{ background:#1c2333; color:#e8ecf3; } body.sky-night .gfth-g .mo{ fill:#aab4c6; } body.sky-night .gfth-g .gl{ stroke:#fff; } body.sky-night .gfth-x{ background:rgba(255,255,255,.1); }`;
 document.head.appendChild(css);
-window.gfThermo={start,stop,pick,koppen,load,at:ll=>D?at(ll):null};
+window.gfThermo={start,stop,pick,koppen,load,graph,KN,at:ll=>D?at(ll):null};
 })();
