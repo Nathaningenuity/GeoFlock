@@ -22,10 +22,27 @@
   return h+'</g></svg>'}
  const RAFT='<svg viewBox="0 0 64 48" width="100%" height="100%" overflow="visible"><ellipse cx="32" cy="42" rx="27" ry="4" fill="rgba(20,60,110,.35)"/><path d="M41 33 L45 12" stroke="#5a3d22" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="45" cy="11" rx="9" ry="6" fill="#3f8f46"/><ellipse cx="38" cy="15" rx="6" ry="4" fill="#4fa356"/><ellipse cx="51" cy="16" rx="6" ry="4" fill="#367d3d"/><g stroke="#4a3018" stroke-width="1"><rect x="6" y="31" width="52" height="5.5" rx="2.7" fill="#9b6b3c"/><rect x="9" y="35.5" width="48" height="5.5" rx="2.7" fill="#8a5c31"/><rect x="5" y="27" width="46" height="5.5" rx="2.7" fill="#a8774a"/></g><path d="M18 26 v15 M34 26 v15" stroke="#d9c08a" stroke-width="1.6"/><path d="M17 25 q-6 -2 -5 -9" stroke="#6b4426" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="22" cy="22" rx="5" ry="5.5" fill="#7a4e2b"/><circle cx="23.5" cy="14.5" r="4.2" fill="#7a4e2b"/><circle cx="24.6" cy="15" r="2.3" fill="#d8b48a"/><circle cx="24.4" cy="14.2" r=".6" fill="#222"/></svg>';
  const SAPIENS={skin:"#b98560",dark:"#8f6142",hair:"#241710",cloth:"#7d5332",tool:"spear"};
+ /* the hobbit beside one of us, with a ruler: 1 m = 44 px, figures drawn in a 40×80 box whose feet are at 77 and head top at 5 */
+ const HOB={skin:"#a8784f",dark:"#86603d",hair:"#33241a",wide:1.08,arm:1.12,lean:3,brow:1};
+ const figAt=(o,x,hM)=>{const px=hM*44,bh=px*80/72,bw=bh/2;return'<svg x="'+(x-bw/2).toFixed(1)+'" y="'+(92-px-5*bh/80).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" viewBox="0 0 40 80" overflow="visible">'+fig(o).replace(/^<svg[^>]*>/,"").replace(/<\/svg>$/,"")+'</svg>'};
+ const RULER='<svg viewBox="0 0 132 104" width="100%" height="100%"><rect x="1" y="1" width="130" height="102" rx="10" fill="rgba(255,252,244,.92)" stroke="rgba(60,40,20,.25)"/>'+
+  '<line x1="16" x2="16" y1="92" y2="'+(92-1.75*44)+'" stroke="#5a4632" stroke-width="1.4"/>'+[0,.5,1,1.5].map(m=>'<line x1="12" x2="20" y1="'+(92-m*44)+'" y2="'+(92-m*44)+'" stroke="#5a4632" stroke-width="1.2"/><text x="10" y="'+(92-m*44+3)+'" font-size="7" text-anchor="end" fill="#5a4632" font-family="system-ui,sans-serif">'+(m?m:0)+'</text>').join("")+
+  '<text x="12" y="10" font-size="7" fill="#5a4632" font-family="system-ui,sans-serif" font-weight="700">m</text>'+
+  '<line x1="22" x2="126" y1="92" y2="92" stroke="#5a4632" stroke-width="1"/>'+
+  [1.1,1.75].map((m,i)=>'<line x1="20" x2="'+(i?118:66)+'" y1="'+(92-m*44)+'" y2="'+(92-m*44)+'" stroke="#c0561d" stroke-width=".9" stroke-dasharray="2.5 2"/>').join("")+
+  figAt(HOB,50,1.1)+figAt(Object.assign({},SAPIENS,{tool:null}),98,1.75)+
+  '<text x="50" y="100" font-size="7.2" text-anchor="middle" fill="#3b2a1a" font-family="system-ui,sans-serif" font-weight="800">Hobbit 1.1 m</text><text x="98" y="100" font-size="7.2" text-anchor="middle" fill="#3b2a1a" font-family="system-ui,sans-serif" font-weight="800">Us ≈1.75 m</text></svg>';
+ const NEAN={skin:"#c49a78",dark:"#9c7556",hair:"#6b4a2e",fur:null,cloth:"#6e5236",wide:1.28,arm:.95,lean:2,brow:1,tool:"spear"};
+ const NEANCARD='<div style="display:flex;align-items:center;gap:7px;background:rgba(255,252,244,.94);border-radius:12px;padding:5px 9px 5px 5px;box-shadow:0 2px 8px rgba(0,0,0,.25);font:800 12.5px system-ui,sans-serif;color:#2f2418;white-space:nowrap"><img src="photos/cut-nean.webp" alt="" style="width:40px;height:48px;object-fit:cover;border-radius:9px"><span>Neanderthals<br><span style="font-weight:600;font-size:11px;color:#6b5a48">Spain to Siberia · 400,000–40,000 years ago</span></span></div>';
+ const FEET='<div style="font-size:26px;line-height:1;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">👣</div>';
  const W={"humans|The first to leave Africa":{img:"photos/cut-erectus.webp",name:"Homo erectus",size:46},
   "humans|Out of Africa again":{fig:SAPIENS,name:"Homo sapiens",size:52},
   "humans|Monkeys on rafts":{svg:RAFT,name:"Monkeys rafting across the Atlantic",size:44,wide:1.33,per:1,dur:11000,float:1},
-  "humans|Standing up":{img:"photos/cut-lucy.webp",name:"Lucy’s kind",size:46,lines:[[[40.5,11.1],[37.5,4],[35.35,-3.2]]]},
+  "humans|Standing up":{img:"photos/cut-lucy.webp",name:"Lucy’s kind",size:46,lines:[[[40.5,11.1],[37.5,4],[35.35,-3.2]]],
+   marks:[{ll:[35.35,-3.2],html:FEET,w:34,h:30,title:"Laetoli: footprints in volcanic ash, 3.7 million years ago"}]},
+  "humans|The hobbits":{lines:[],marks:[{ll:[120.45,-8.53],html:RULER,w:132,h:104,title:"Homo floresiensis beside a modern human"}]},
+  "humans|Many kinds of human":{fig:NEAN,name:"Neanderthals",size:46,per:2,dur:16000,lines:[[[-5,40],[2,44],[10,48],[20,47],[30,45],[44,41],[58,40],[70,43],[84.7,51.4]]],
+   marks:[{ll:[64,47],html:NEANCARD,w:250,h:62,title:"Neanderthals"}]},
   "islandlife|Christmas Island’s red crabs":{img:CRAB,name:"Red crabs on their way to the sea",size:18,per:2,dur:6500,lines:coast.map(c=>[CI,c])}};
  window.gfWalkers=W;window.gfWalkerFig=fig;
  let lay=null,raf=0,cur=null;const st=document.createElement("style");st.textContent=".hw-lay{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}.hw-w{position:absolute;left:0;top:0;will-change:transform,opacity;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}.hw-w img{width:100%;height:100%;object-fit:contain;display:block}.hw-w>svg,.hw-w>.hw-in{display:block;width:100%;height:100%}.hw-m{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}";document.head.appendChild(st);
