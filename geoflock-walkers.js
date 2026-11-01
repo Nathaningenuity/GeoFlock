@@ -21,6 +21,8 @@
   if(o.tool==="axe")h+='<path class="ar1t" d="M21.6,'+(24+21*arm-1).toFixed(1)+' l3.2,1.6 l-1,3.4 l-3.2,-1.4 Z" fill="#9c8f78" stroke="#6d624f" stroke-width=".5"/>';
   return h+'</g></svg>'}
  const RAFT='<svg viewBox="0 0 64 48" width="100%" height="100%" overflow="visible"><ellipse cx="32" cy="42" rx="27" ry="4" fill="rgba(20,60,110,.35)"/><path d="M41 33 L45 12" stroke="#5a3d22" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="45" cy="11" rx="9" ry="6" fill="#3f8f46"/><ellipse cx="38" cy="15" rx="6" ry="4" fill="#4fa356"/><ellipse cx="51" cy="16" rx="6" ry="4" fill="#367d3d"/><g stroke="#4a3018" stroke-width="1"><rect x="6" y="31" width="52" height="5.5" rx="2.7" fill="#9b6b3c"/><rect x="9" y="35.5" width="48" height="5.5" rx="2.7" fill="#8a5c31"/><rect x="5" y="27" width="46" height="5.5" rx="2.7" fill="#a8774a"/></g><path d="M18 26 v15 M34 26 v15" stroke="#d9c08a" stroke-width="1.6"/><path d="M17 25 q-6 -2 -5 -9" stroke="#6b4426" stroke-width="1.8" fill="none" stroke-linecap="round"/><ellipse cx="22" cy="22" rx="5" ry="5.5" fill="#7a4e2b"/><circle cx="23.5" cy="14.5" r="4.2" fill="#7a4e2b"/><circle cx="24.6" cy="15" r="2.3" fill="#d8b48a"/><circle cx="24.4" cy="14.2" r=".6" fill="#222"/></svg>';
+ const ERECTUS={skin:"#a87650",dark:"#86603d",hair:"#2a1c12",wide:1.1,arm:1.05,lean:2,brow:1,tool:"axe"};
+ const DENI={skin:"#b0805a",dark:"#8c6342",hair:"#3b2616",wide:1.2,arm:1,lean:1,brow:1,cloth:"#5e4630"};
  const SAPIENS={skin:"#b98560",dark:"#8f6142",hair:"#241710",cloth:"#7d5332",tool:"spear"};
  /* the hobbit beside one of us, with a ruler: 1 m = 44 px, figures drawn in a 40×80 box whose feet are at 77 and head top at 5 */
  const HOB={skin:"#a8784f",dark:"#86603d",hair:"#33241a",wide:1.08,arm:1.12,lean:3,brow:1};
@@ -35,7 +37,7 @@
  const NEAN={skin:"#c49a78",dark:"#9c7556",hair:"#6b4a2e",fur:null,cloth:"#6e5236",wide:1.28,arm:.95,lean:2,brow:1,tool:"spear"};
  const NEANCARD='<div style="display:flex;align-items:center;gap:7px;background:rgba(255,252,244,.94);border-radius:12px;padding:5px 9px 5px 5px;box-shadow:0 2px 8px rgba(0,0,0,.25);font:800 12.5px system-ui,sans-serif;color:#2f2418;white-space:nowrap"><img src="photos/cut-nean.webp" alt="" style="width:40px;height:48px;object-fit:cover;border-radius:9px"><span>Neanderthals<br><span style="font-weight:600;font-size:11px;color:#6b5a48">Spain to Siberia · 400,000–40,000 years ago</span></span></div>';
  const FEET='<div style="font-size:26px;line-height:1;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">👣</div>';
- const W={"humans|The first to leave Africa":{img:"photos/cut-erectus.webp",name:"Homo erectus",size:46},
+ const W={"humans|The first to leave Africa":{fig:ERECTUS,name:"Homo erectus",size:50},
   "humans|Out of Africa again":{fig:SAPIENS,name:"Homo sapiens",size:52},
   "humans|Monkeys on rafts":{svg:RAFT,name:"Monkeys rafting across the Atlantic",size:44,wide:1.33,per:1,dur:11000,float:1},
   "humans|Standing up":{img:"photos/cut-lucy.webp",name:"Lucy’s kind",size:46,lines:[[[40.5,11.1],[37.5,4],[35.35,-3.2]]],
@@ -43,9 +45,58 @@
   "humans|The hobbits":{lines:[],marks:[{ll:[120.45,-8.53],html:RULER,w:132,h:104,title:"Homo floresiensis beside a modern human"}]},
   "humans|Many kinds of human":{fig:NEAN,name:"Neanderthals",size:46,per:2,dur:16000,lines:[[[-5,40],[2,44],[10,48],[20,47],[30,45],[44,41],[58,40],[70,43],[84.7,51.4]]],
    marks:[{ll:[64,47],html:NEANCARD,w:250,h:62,title:"Neanderthals"}]},
+  "humans|Africa joins Asia":{emoji:["🐘","🦧"],name:"Elephants and apes walking out of Africa",size:28,per:2},
+  "humans|Denny, child of two kinds":{fig:[NEAN,DENI],name:"A Neanderthal and a Denisovan",size:46,per:1},
   "islandlife|Christmas Island’s red crabs":{img:CRAB,name:"Red crabs on their way to the sea",size:18,per:2,dur:6500,lines:coast.map(c=>[CI,c])}};
+ /* travellers on other tours: [tour, stop, emoji (or one per route), what it is, options] */
+ const NOFLIP=new Set(["⛵","🦋","🚀","🛶","🛷","🚆"]),SHIP="⛵",STEAM="🚢",CANOE="🛶",CAMEL="🐪";
+ [["amigration","Animals on the move",["🦬","🐦","🦋","🐋","🐟"],"Animals on their yearly journeys",{per:1}],
+  ["amigration","Wildebeest follow the rain","🦬","Wildebeest following the rain",{}],
+  ["amigration","The Arctic tern","🐦","An Arctic tern",{per:1}],
+  ["amigration","The godwit’s non-stop flight","🐦","A bar-tailed godwit",{}],
+  ["amigration","The East Asian–Australasian Flyway","🐦","Shorebirds on the flyway",{per:1}],
+  ["amigration","The falcons of Nagaland","🦅","Amur falcons",{}],
+  ["amigration","Monarch butterflies","🦋","Monarch butterflies",{}],
+  ["amigration","The river of raptors","🦅","Hawks and vultures on the move",{}],
+  ["amigration","Salmon come home","🐟","Salmon swimming home",{per:1}],
+  ["amigration","Humpback whales","🐋","Humpback whales",{float:1}],
+  ["amigration","Caribou on the tundra","🦌","Caribou",{}],
+  ["amigration","Eels to the Sargasso Sea","🐟","Eels heading for the Sargasso Sea",{float:1}],
+  ["amigration","The sardine run","🐟","The sardine run",{float:1}],
+  ["explorers","The great journeys",[SHIP,CAMEL,SHIP,SHIP,CAMEL,SHIP,SHIP,CANOE,"🛷","🚀"],"Explorers on their way",{per:1,float:1}],
+  ["explorers","The envoy who opened the Silk Road",CAMEL,"Zhang Qian’s caravan",{}],
+  ["explorers","Columbus, 1492",SHIP,"Columbus’s ships",{float:1}],
+  ["explorers","The Vikings got there first",SHIP,"A Viking ship",{float:1}],
+  ["explorers","Around Africa to India",SHIP,"Vasco da Gama’s ships",{float:1}],
+  ["explorers","Around the world",SHIP,"Magellan’s ships",{float:1}],
+  ["explorers","Zheng He’s treasure fleets",SHIP,"A treasure ship",{float:1}],
+  ["explorers","Marco Polo",CAMEL,"Marco Polo’s caravan",{}],
+  ["explorers","Ibn Battuta",CAMEL,"Ibn Battuta on the road",{per:1}],
+  ["explorers","Sailing by the stars",CANOE,"A Polynesian voyaging canoe",{per:1,float:1}],
+  ["explorers","Captain Cook",SHIP,"Cook’s Endeavour",{float:1}],
+  ["explorers","The first woman to sail round the world",SHIP,"Jeanne Barret’s ship",{float:1}],
+  ["explorers","Lewis and Clark",CANOE,"Lewis and Clark’s boats",{float:1}],
+  ["explorers","Race to the poles","🛷","A sledge",{per:1}],
+  ["explorers","To the Moon","🚀","Apollo 11",{per:1}],
+  ["hoceania","Voyagers of the open Pacific",CANOE,"Voyaging canoes",{per:1,float:1}],
+  ["hoceania","Tupaia and Captain Cook",SHIP,"The Endeavour",{float:1}],
+  ["hoceania","The First Fleet",SHIP,"The First Fleet",{float:1}],
+  ["heurope","The Vikings",SHIP,"Viking ships",{per:1,float:1}],
+  ["hmedieval","Vikings across the Atlantic",SHIP,"Viking ships",{per:1,float:1}],
+  ["hgunpowder","Round Africa to India",SHIP,"Portuguese ships",{float:1}],
+  ["hgunpowder","1492",SHIP,"Columbus’s ships",{float:1}],
+  ["hgunpowder","Silver and the Manila galleons",SHIP,"A Manila galleon",{per:1,float:1}],
+  ["hgunpowder","The Dutch East India Company",SHIP,"A Dutch East Indiaman",{float:1}],
+  ["hantarctica","Race to the Pole","🛷","A sledge on the way to the Pole",{}],
+  ["hantarctica","Endurance",SHIP,"Shackleton’s Endurance",{float:1}],
+  ["migration","The great Atlantic crossing",STEAM,"An emigrant steamship",{per:1,float:1}],
+  ["migration","More Irish abroad",STEAM,"An emigrant ship",{per:1,float:1}],
+  ["migration","North by railway","🚂","The train north",{per:1}],
+  ["migration","China moves to the cities","🚆","A train to the cities",{per:1}],
+  ["hrevolutions","The great migrations",STEAM,"Emigrant ships",{per:1,float:1}]
+ ].forEach(([t,title,e,name,o])=>{W[t+"|"+title]=Object.assign({emoji:e,name,size:26,per:2},o)});
  window.gfWalkers=W;window.gfWalkerFig=fig;
- let lay=null,raf=0,cur=null;const st=document.createElement("style");st.textContent=".hw-lay{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}.hw-w{position:absolute;left:0;top:0;will-change:transform,opacity;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}.hw-w img{width:100%;height:100%;object-fit:contain;display:block}.hw-w>svg,.hw-w>.hw-in{display:block;width:100%;height:100%}.hw-m{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}";document.head.appendChild(st);
+ let lay=null,raf=0,cur=null;const st=document.createElement("style");st.textContent=".hw-lay{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}.hw-w{position:absolute;left:0;top:0;will-change:transform,opacity;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}.hw-w img{width:100%;height:100%;object-fit:contain;display:block}.hw-w>svg,.hw-w>.hw-in{display:block;width:100%;height:100%}.hw-emo{line-height:1;text-align:center;display:flex!important;align-items:flex-end;justify-content:center}.hw-m{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}";document.head.appendChild(st);
  const stop=()=>{cancelAnimationFrame(raf);raf=0;if(lay)lay.remove();lay=null;cur=null};
  function path(c){const seg=[];let L=0;for(let i=1;i<c.length;i++){const d=Math.hypot(c[i][0]-c[i-1][0],c[i][1]-c[i-1][1]);seg.push(d);L+=d}return{c,seg,L}}
  function at(P,t){let d=t*P.L;for(let i=0;i<P.seg.length;i++){if(d<=P.seg[i]){const f=P.seg[i]?d/P.seg[i]:0,a=P.c[i],b=P.c[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]}d-=P.seg[i]}return P.c[P.c.length-1]}
@@ -53,8 +104,9 @@
  function start(key,S){const w=W[key];if(!w)return;const box=psContainer&&psContainer();if(!box)return;const lines=w.lines||(S.lines||[]).filter(l=>l.kind==="flow"&&l.coords).map(l=>l.coords);if(!lines.length&&!(w.marks||[]).length)return;
   const go=()=>{if(cur!==S)return;lay=document.createElement("div");lay.className="hw-lay";box.appendChild(lay);const z=w.size||46,per=w.per||2,zw=w.fig?z*.5:z*(w.wide||1);
    const walkers=[];lines.forEach((c,i)=>{const P=path(c),dur=w.dur||Math.max(5000,Math.min(14000,P.L*90));for(let k=0;k<per;k++){const el=document.createElement("div");el.className="hw-w";el.style.width=zw+"px";el.style.height=z+"px";el.style.margin=(-z)+"px 0 0 "+(-zw/2)+"px";el.title=w.name;
-     el.innerHTML=w.fig?'<div class="hw-in">'+fig(w.fig)+'</div>':w.svg?'<div class="hw-in">'+w.svg+'</div>':'<img src="'+w.img+'" alt="">';lay.appendChild(el);
-     const q=s=>el.querySelector(s);walkers.push({el,P,dur,off:(k/per+i*.17)%1,in:el.firstChild,lg1:q(".lg1"),lg2:q(".lg2"),ar1:q(".ar1"),ar2:q(".ar2"),ar1t:q(".ar1t"),dir:1,px:null})}});
+     const fg=Array.isArray(w.fig)?w.fig[i%w.fig.length]:w.fig,em=Array.isArray(w.emoji)?w.emoji[i%w.emoji.length]:w.emoji;
+     el.innerHTML=fg?'<div class="hw-in">'+fig(fg)+'</div>':em?'<div class="hw-in hw-emo" style="font-size:'+Math.round(z*.92)+'px">'+em+'</div>':w.svg?'<div class="hw-in">'+w.svg+'</div>':'<img src="'+w.img+'" alt="">';lay.appendChild(el);
+     const q=s=>el.querySelector(s);walkers.push({el,P,dur,off:(k/per+i*.17)%1,in:el.firstChild,flip:fg?"right":em&&!NOFLIP.has(em)?"left":null,lg1:q(".lg1"),lg2:q(".lg2"),ar1:q(".ar1"),ar2:q(".ar2"),ar1t:q(".ar1t"),dir:1,px:null})}});
    /* pictures that stay put on the map: {ll, html, w, h} anchored at their bottom centre */
    const marks=(w.marks||[]).map(m=>{const el=document.createElement("div");el.className="hw-m";el.style.width=m.w+"px";el.style.height=m.h+"px";el.style.margin=(-m.h)+"px 0 0 "+(-m.w/2)+"px";el.innerHTML=m.html;if(m.title)el.title=m.title;lay.appendChild(el);return{el,m}});
    const t0=performance.now();const tick=n=>{if(!lay||!lay.isConnected||cur!==S){stop();return}const calm=still();
@@ -62,7 +114,7 @@
      if(v.px&&Math.abs(s[0]-v.px)>.05)v.dir=s[0]<v.px?-1:1;v.px=s[0];
      const ph=calm?0:(n-t0)/(w.float?520:170)+v.off*9,fade=calm?1:Math.min(1,t*8,(1-t)*8),bob=w.float?Math.sin(ph)*z/14:Math.abs(Math.sin(ph))*-z/(w.fig?16:9),tilt=w.fig?0:Math.sin(ph)*(w.float?4:5);
      if(v.lg1){const a=Math.sin(ph)*24;v.lg1.setAttribute("transform","rotate("+a.toFixed(1)+" 20 45)");v.lg2.setAttribute("transform","rotate("+(-a).toFixed(1)+" 20 45)");v.ar1.setAttribute("transform","rotate("+(-a*.8).toFixed(1)+" 20 24)");v.ar2.setAttribute("transform","rotate("+(a*.8).toFixed(1)+" 20 24)");if(v.ar1t)v.ar1t.setAttribute("transform","rotate("+(-a*.8).toFixed(1)+" 20 24)")}
-     if(v.in&&(w.fig))v.in.style.transform=v.dir<0?"scaleX(-1)":"";
+     if(v.in&&v.flip)v.in.style.transform=(v.flip==="right"?v.dir<0:v.dir>0)?"scaleX(-1)":"";
      v.el.style.opacity=fade.toFixed(2);v.el.style.transform="translate("+s[0].toFixed(1)+"px,"+(s[1]+bob).toFixed(1)+"px) rotate("+tilt.toFixed(1)+"deg)"});
     marks.forEach(({el,m})=>{const s=psScreen(m.ll);if(!s){el.style.opacity=0;return}el.style.opacity=1;el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px)"});
     raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)};
