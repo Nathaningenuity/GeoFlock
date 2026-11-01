@@ -12,7 +12,7 @@
 (function(){
 if(typeof GlobeGL==="undefined"||typeof GlobeView==="undefined"||typeof amGlobeSync!=="function"||typeof GLOBE_TEX==="undefined")return;
 const D2R=Math.PI/180,TILT=23.44;
-const S={on:false,lon:0,lat:0,eot:0,play:null,t:Date.now(),spin:false,speed:3600,dragging:false,dragT:0,needOff:true,off:0};
+const S={on:false,lon:0,lat:0,eot:0,play:null,t:Date.now(),speed:3600};
 const subsolar=t=>{try{return window.gfDayNight.subsolar(t)}catch(e){return[0,0]}};
 /* minutes past 00:00 UTC that a sun longitude stands for; eot carries the gap between the real sun and the mean sun
    so that "now" reads the clock time */
@@ -226,21 +226,20 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    '<button type="button" class="gf-dng-btn" data-dng="now" title="Put the sun where it is right now, keeping the date">Now</button><button type="button" class="gf-dng-btn" data-dng="reset" title="Reset time and date to now">Reset to now</button></div>'+
    '<div class="gf-dng-ctl"><button type="button" class="gf-dng-play" data-dng="play" aria-pressed="false"><span class="gf-dng-pi">▶</span><span class="gf-dng-pl">Play</span></button>'+
    '<button type="button" class="gf-dng-spin" data-dng="spin" aria-pressed="false" title="Spin the globe"><span aria-hidden="true">⟳</span> Spin</button>'+
-   '<label class="gf-dng-speed" title="How fast time runs while playing"><span>Speed</span><select data-dng="speed"><option value="600">10 min / s</option><option value="3600">1 hour / s</option><option value="10800">3 hours / s</option><option value="21600">6 hours / s</option></select></label>'+
+   
    '<em class="gf-dng-mode" aria-live="polite"></em></div>'+
    '<button type="button" class="gf-dng-nudge" data-dng="nudge" hidden>⟳ Turn on <b>Spin</b> too, to watch Earth turn under a still Sun</button>'+
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1439" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Date</span><input type="range" min="1" max="365" step="1" data-dng="doy" aria-label="Date: 1 January to 31 December"><em class="gf-dng-season"></em></label>';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="doy"]');
   /* the sliders move the clock; Play keeps running from the new moment */
-  t.addEventListener("input",()=>{const day=S.t-minOfDay(S.t)*6e4;setT(day+(+t.value)*6e4);S.needOff=true;sunPing();ui(true);req()});
-  l.addEventListener("input",()=>{const y=yearStart(S.t);setT(y+((+l.value)-1)*DAY+minOfDay(S.t)*6e4);S.needOff=true;sunPing();ui(true);req()});
-  el.querySelector('[data-dng="now"]').onclick=()=>{const n=Date.now(),day=S.t-minOfDay(S.t)*6e4;setT(day+minOfDay(n)*6e4);S.needOff=true;ui();req()};
-  el.querySelector('[data-dng="reset"]').onclick=()=>{toNow();S.needOff=true;ui();req()};
+  t.addEventListener("input",()=>{const day=S.t-minOfDay(S.t)*6e4;setT(day+(+t.value)*6e4);sunPing();ui(true);req()});
+  l.addEventListener("input",()=>{const y=yearStart(S.t);setT(y+((+l.value)-1)*DAY+minOfDay(S.t)*6e4);sunPing();ui(true);req()});
+  el.querySelector('[data-dng="now"]').onclick=()=>{const n=Date.now(),day=S.t-minOfDay(S.t)*6e4;setT(day+minOfDay(n)*6e4);ui();req()};
+  el.querySelector('[data-dng="reset"]').onclick=()=>{toNow();ui();req()};
   el.querySelector('[data-dng="play"]').onclick=()=>{if(S.play)stop();else play()};
-  el.querySelector('[data-dng="spin"]').onclick=()=>setSpin(!S.spin);
-  el.querySelector('[data-dng="nudge"]').onclick=()=>setSpin(true);
-  const sp=el.querySelector('[data-dng="speed"]');sp.value=String(S.speed);sp.onchange=()=>{S.speed=+sp.value;ui()}}
+  el.querySelector('[data-dng="spin"]').onclick=()=>setSpin(!spinOn());
+  el.querySelector('[data-dng="nudge"]').onclick=()=>setSpin(true);}
  if(!el._spacer){el._spacer=document.createElement("div");el._spacer.className="gf-dng-spacer"}
  if(el._spacer.previousElementSibling!==host)host.after(el._spacer);if(el.previousElementSibling!==el._spacer)el._spacer.after(el);dragWire(el);return el}
 /* the panel is a legend: in its place under the globe when that is on screen; otherwise it floats at the bottom of the
@@ -258,7 +257,9 @@ function floatSync(){const el=document.getElementById("gfDngPanel");if(!el||el.h
   el.classList.toggle("gf-dng-float",fl);if(!fl||!el._moved){["left","top","right","bottom","transform"].forEach(k=>el.style.removeProperty(k));el._moved=0}}}
 addEventListener("scroll",()=>{try{floatSync()}catch(e){}},{passive:true});addEventListener("resize",()=>{try{floatSync()}catch(e){}});
 const MONL=["January","February","March","April","May","June","July","August","September","October","November","December"];
-function modeName(){return S.play&&S.spin?"View from space":S.play?"Watching the sun move":S.spin?"Flying around Earth":"Still"}
+/* Spin is the globe's own spin, exactly as on every other globe; the panel only shows it and can press its button */
+function spinOn(){try{return typeof amGlobe!=="undefined"&&amGlobe&&gfSpinWanted(amGlobe)}catch(e){return false}}
+function modeName(){const sp=spinOn();return S.play&&sp?"View from space":S.play?"Watching the sun move":sp?"Flying around Earth":"Still"}
 function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)return;const m=minOfDay(S.t),d=new Date(S.t);
  el.querySelector(".gf-dng-time").textContent=fmtMin(Math.floor(m))+" UTC";
  el.querySelector(".gf-dng-where").textContent="Sun overhead at "+fmtLL(S.lat,"N","S")+", "+fmtLL(S.lon,"E","W");
@@ -267,20 +268,25 @@ function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)re
  if(!fromSlider||document.activeElement!==t)t.value=Math.floor(m);if(!fromSlider||document.activeElement!==l)l.value=Math.min(365,doyOf(S.t));
  const p=el.querySelector('[data-dng="play"]');p.querySelector(".gf-dng-pi").textContent=S.play?"❚❚":"▶";p.querySelector(".gf-dng-pl").textContent=S.play?"Pause":"Play";
  p.title=S.play?"Pause time":"Play: watch the Sun move and night sweep across the Earth";p.setAttribute("aria-pressed",String(!!S.play));p.classList.toggle("on",!!S.play);
- const sb=el.querySelector('[data-dng="spin"]');sb.classList.toggle("on",S.spin);sb.setAttribute("aria-pressed",String(S.spin));
+ const sp=spinOn(),sb=el.querySelector('[data-dng="spin"]');sb.classList.toggle("on",sp);sb.setAttribute("aria-pressed",String(sp));
  el.querySelector(".gf-dng-mode").textContent=modeName();
- const n=el.querySelector('[data-dng="nudge"]');n.hidden=!(S.play&&!S.spin);
- try{const b=amGlobe&&amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.classList.toggle("gf-spin-nudge",S.on&&S.play&&!S.spin)}catch(e){}}
-/* play: the clock runs at S.speed simulated seconds per second (1 hour / s = a day in 24 s). With Spin on as well, the
-   globe's turn is read from the same clock: 360° per 24 simulated hours, so the day/night line stands still on screen. */
-const paused=()=>S.dragging||performance.now()-S.dragT<3000;
-function play(){let last=performance.now();const step=now=>{if(!S.play)return;const dt=Math.min(100,now-last);last=now;
-  setT(S.t+dt*S.speed);
-  if(S.spin&&S.on&&typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._flat){if(paused()){S.needOff=true}else{
-   if(S.needOff){S.off=-amGlobe.rot[0]-S.lon;S.needOff=false}let r=-(S.lon+S.off);r=((r+540)%360+360)%360-180;amGlobe.rot[0]=r;amGlobe._movingT=performance.now()}}
-  ui();req();S.play=requestAnimationFrame(step)};S.needOff=true;S.play=requestAnimationFrame(step);holdRoll();ui()}
+ const n=el.querySelector('[data-dng="nudge"]');n.hidden=!(S.play&&!sp);
+ try{const b=amGlobe&&amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.classList.toggle("gf-spin-nudge",S.on&&S.play&&!sp)}catch(e){}}
+/* play: the clock runs at the globe's spin speed. The spin turns the globe SPIN_BASE degrees a second; Play moves the Sun
+   round at the same rate (360° = 24 h), so with both on the day/night line stays still on screen while Earth turns under it.
+   Spin itself is untouched; on this map only, it no longer slows down as you zoom in. */
+const SPIN_BASE=(typeof GFS!=="undefined"&&GFS.degPerS)||6;S.speed=SPIN_BASE/360*86400;
+(function zoomSpin(){try{if(typeof GFS!=="undefined"){const want=S.on&&typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._flat?SPIN_BASE*Math.max(1,amGlobe.zoom):SPIN_BASE;if(GFS.degPerS!==want)GFS.degPerS=want}}catch(e){}requestAnimationFrame(zoomSpin)})();
+
+function play(){let last=performance.now(),r0=null;const step=now=>{if(!S.play)return;const dt=Math.min(200,now-last);last=now;
+  /* while the globe is spinning, the Sun moves by exactly the angle the spin turned it this frame (the same source, so the
+     two can never drift apart); otherwise the clock runs at the spin's speed */
+  const g=typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._flat?amGlobe:null,r=g?g.rot[0]:null;
+  const spinning=g&&r0!=null&&!g._gfDown&&g._gfSpinning&&now-g._gfSpinning<250&&gfSpinWanted(g);
+  if(spinning){let d=r-r0;d=((d+540)%360+360)%360-180;setT(S.t+d/360*DAY)}else setT(S.t+dt*S.speed);
+  r0=r;ui();req();S.play=requestAnimationFrame(step)};S.play=requestAnimationFrame(step);ui()}
 function stop(){if(S.play){cancelAnimationFrame(S.play);S.play=null;ui()}}
-function setSpin(v){S.spin=!!v;S.needOff=true;try{if(amGlobe){amGlobe._gfT=0}}catch(e){}holdRoll();ui();req()}
+function setSpin(v){try{if(!!v!==spinOn()){const b=amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.click()}}catch(e){}setTimeout(ui,0)}
 /* Day & Night sits in the Satellite map's own measure row (like GDP / GDP per person): "Day & Night" (the default on
    the globe), "Day" (the plain satellite picture) or "Night" (the City Lights map, which needs the dark theme) */
 function toNight(){const go=()=>{const n=document.querySelector('#allMapsToggleRow [data-allmaps-mode="night"]');if(n)n.click()};
@@ -311,7 +317,7 @@ function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.n
 function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(!litMode()&&sat)sat.click();}
  S.on=v;
- if(v){toNow();S.spin=false;rollCur=null;rollHeld=null;
+ if(v){toNow();
   try{S.wasFlat=!globePrefs().allmaps;globePrefs().allmaps=true;saveStats()}catch(e){}try{amGlobeSync()}catch(e){console.error(e)}patchCfg();try{if(cloudsOn())cloudsLoad()}catch(e){}nightReady()}
  else{stop();freeNight();if(S.wasFlat){S.wasFlat=false;try{globePrefs().allmaps=false;saveStats();amGlobeSync()}catch(e){}}}
  sync();req();if(v&&!S.play&&!(typeof ps!=="undefined"&&ps))play()}
@@ -394,33 +400,6 @@ body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.2
 body.sky-night .gf-dng-spin, body.sky-night .gf-dng-speed select{ background:#22304f; border-color:rgba(150,175,230,.25); }
 .gf-dng.gf-dng-float .gf-dng-mode{ flex-basis:100%; margin-left:0; }`;
 document.head.appendChild(css);
-/* ---------- tilt and spin on the lit globe ----------
-   Tilt: the globe is turned on screen so that the plane of Earth's orbit is level (the ecliptic's north pole straight up), as
-   seen from a spacecraft out in that plane. Then the axis leans the way the clock's sun says: in November the North Pole
-   leans away from the Sun, in June towards it. While only Play runs the tilt is held, so the globe stays still on screen;
-   changes ease in, so nothing jumps. */
-function sunRA(t){const n=t/DAY-10957.5,L=(280.46+.9856474*n)*D2R,g=(357.528+.9856003*n)*D2R,lam=L+(1.915*Math.sin(g)+.02*Math.sin(2*g))*D2R,eps=TILT*D2R;
- return Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))/D2R}
-function rollTarget(g){try{const c=[-g.rot[0],-g.rot[1]],pe=[((270-sunRA(S.t)+S.lon)%360+540)%360-180,90-TILT],q=d3.geoInterpolate(c,pe)(.05);
-  const pr=d3.geoOrthographic().scale(100).translate([0,0]).rotate([g.rot[0],g.rot[1],0]),xy=pr(q);if(!xy)return null;
-  const a=Math.atan2(xy[0],-xy[1])/D2R;const test=gm=>{const v=d3.geoOrthographic().scale(100).translate([0,0]).rotate([g.rot[0],g.rot[1],gm])(q);return v?Math.abs(v[0])+(v[1]>0?999:0):999};
-  let r=test(a)<test(-a)?a:-a;return Math.max(-40,Math.min(40,r))}catch(e){return null}}
-let rollCur=null,rollHeld=null,rollT=0;
-function holdRoll(){rollHeld=S.play&&!S.spin&&rollCur!=null?rollCur:null}
-const litGlobe=g=>S.on&&typeof amGlobe!=="undefined"&&g===amGlobe&&!g._flat;
-{const _roll=GlobeView.prototype.roll;GlobeView.prototype.roll=function(){const base=_roll.apply(this,arguments);if(!litGlobe(this)||this.cfg.noSpin||this.cfg.compact)return base;
- /* lit globes always lean (even where the plain globes stand upright), fading out as you zoom in */
- const k=Math.max(0,Math.min(1,(2.4-this.zoom)/1.2)),now=performance.now(),dt=rollT?Math.min(.25,(now-rollT)/1000):1;rollT=now;
- let tgt=rollHeld!=null?rollHeld:rollTarget(this);if(tgt==null)tgt=-23.44;
- rollCur=rollCur==null?tgt:rollCur+(tgt-rollCur)*Math.min(1,dt*2.5);if(rollHeld==null&&S.play&&!S.spin)rollHeld=rollCur;return rollCur*k}}
-/* Spin on the lit globe: the globe's own spin runs only when Play is off ("Flying around Earth"); with Play on, the clock
-   turns the globe (see play). A drag pauses Spin, never Play; Spin comes back after 3 s without touching. */
-if(typeof gfSpinWanted==="function"){const _w=gfSpinWanted;gfSpinWanted=function(g){if(litGlobe(g))return S.spin&&!S.play&&!paused();return _w.apply(this,arguments)}}
-if(typeof gfSpinBtnSync==="function"){const _b=gfSpinBtnSync;gfSpinBtnSync=function(g){const r=_b.apply(this,arguments);try{if(litGlobe(g)){const b=g.host.querySelector('[data-g="spin"]');if(b){b.classList.toggle("on",S.spin);b.title=S.spin?"Spinning: click to stop":"Spin the globe";b.setAttribute("aria-pressed",S.spin)}}}catch(e){}return r}}
-addEventListener("click",e=>{const b=e.target.closest&&e.target.closest('.globe-btns [data-g="spin"]');if(!b)return;try{if(!litGlobe(amGlobe)||!amGlobe.host.contains(b))return}catch(x){return}
- e.preventDefault();e.stopImmediatePropagation();setSpin(!S.spin)},true);
-addEventListener("pointerdown",e=>{try{if(litGlobe(amGlobe)&&e.target.closest&&e.target.closest(".globe-canvas,.globe-gl")&&amGlobe.host.contains(e.target)){S.dragging=true;S.dragT=performance.now();S.needOff=true}}catch(x){}},true);
-["pointerup","pointercancel"].forEach(ev=>addEventListener(ev,()=>{if(S.dragging){S.dragging=false;S.dragT=performance.now();S.needOff=true;holdRoll()}},true));
 window.gfDNG={on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode,play,stop,setSpin,setT};
 })();
 
