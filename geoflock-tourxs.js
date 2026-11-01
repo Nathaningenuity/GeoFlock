@@ -36,7 +36,9 @@ function draw(box,S){const X=S.xsec,svg=box.querySelector("svg");if(!svg||!XS())
    const k=Math.round(d/tot*(out.length-1)),p=out[k];cur.setAttribute("x1",x(p.d));cur.setAttribute("x2",x(p.d));cd.setAttribute("cx",x(p.d));cd.setAttribute("cy",y(p.h));
    let near="";X.pts.forEach((q,i)=>{if(q[2]&&Math.abs(at[i]-p.d)<tot*.04)near=q[2]+" · "});
    v.textContent=near+Math.round(p.h).toLocaleString("en-GB")+" m up · "+Math.round(p.d)+" km along";mapDot(p.ll)};
-  hit.addEventListener("pointermove",show);hit.addEventListener("pointerdown",show);hit.addEventListener("pointerleave",()=>{mapDot(null)});
+  hit.addEventListener("pointermove",show);
+  /* pressing on the chart takes the marker (not the card) and follows the pointer until let go, like the simulations' sliders */
+  hit.style.touchAction="none";hit.addEventListener("pointerdown",e=>{e.stopPropagation();e.preventDefault();try{hit.setPointerCapture(e.pointerId)}catch(_){}show(e)});hit.addEventListener("pointerleave",()=>{mapDot(null)});
  }).catch(()=>{box.querySelector(".psx-v").textContent="Heights could not load"})}
 /* a tour with a height chart starts loading the height grid at once, so the chart is ready when its stop comes */
 let pre=null;const prefetch=()=>{try{if(!ps||pre===ps.tour)return;pre=ps.tour;if(XS()&&(psSteps()||[]).some(q=>q&&q.xsec))XS().loadDEM().catch(()=>{})}catch(e){}};
