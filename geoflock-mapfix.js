@@ -654,3 +654,15 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
    if(h.style.getPropertyValue("margin-top")!==MT+"px"||h.style.getPropertyPriority("margin-top")!=="important")h.style.setProperty("margin-top",MT+"px","important")});
   const h=document.getElementById("amGlobeHost");if(h&&h!==cur){cur=h;if(obs)obs.disconnect();obs=new MutationObserver(()=>fix());obs.observe(h,{attributes:true,attributeFilter:["style"]})}}catch(e){}}
  setInterval(fix,300);document.addEventListener("click",()=>setTimeout(fix,0),true)})();
+/* the flat map's round buttons sit inside the map's empty corners (the map is an oval): zoom in, zoom out and reset in
+   the top right; full screen, lock, relief underneath and clouds in the bottom right. Spin is for the globe only. */
+(function(){const st=document.createElement("style");st.textContent=`
+#allMapsView .globe-host.gf-flat .globe-btns, #allMapsView.globe-on #amGlobeHost.gf-flat .globe-btns{ right:8px !important; left:auto !important; top:8px !important; bottom:52px !important; height:auto !important; margin-top:0 !important;
+  display:flex !important; flex-direction:column; justify-content:flex-start; gap:8px; }
+#allMapsView .globe-host.gf-flat .globe-btns > *{ margin:0 !important; }
+#allMapsView .globe-host.gf-flat .globe-btns [data-g="in"]{ order:1; } #allMapsView .globe-host.gf-flat .globe-btns [data-g="out"]{ order:2; }
+#allMapsView .globe-host.gf-flat .globe-btns [data-g="reset"]{ order:3; }
+#allMapsView .globe-host.gf-flat .globe-btns .gf-fsb{ order:10; margin-top:auto !important; }
+#allMapsView .globe-host.gf-flat .globe-btns .gf-lock{ order:11; }
+#allMapsView .globe-host.gf-flat .globe-btns [data-g="gfrelief"]{ order:12; } #allMapsView .globe-host.gf-flat .globe-btns [data-g="gfclouds"]{ order:13; }
+#allMapsView .globe-host.gf-flat .globe-btns [data-g="spin"]{ display:none !important; }`;document.head.appendChild(st)})();
