@@ -335,3 +335,5 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
 window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem,lfAt,loadLF,get armed(){return on&&armed},get drawing(){return!!drawing}};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
+/* the cross-section panel stays a compact size: on a full-screen map it no longer stretches across the whole screen */
+(function(){const st=document.createElement("style");st.textContent=".gf-xs{ max-width:min(860px, calc(100% - 68px)); }";document.head.appendChild(st)})();
