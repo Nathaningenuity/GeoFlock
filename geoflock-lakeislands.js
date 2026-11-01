@@ -96,8 +96,9 @@ function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g
    /* size on screen: the island's radius in pixels */
    const e=p([I.c[0]+I.r*180/Math.PI/Math.max(.2,Math.cos(I.c[1]*Math.PI/180)),I.c[1]]),px=e?Math.abs(e[0]-c[0]):0;
    if(!lakeOn&&!(raster&&px*2>=BIG_ALONE_PX))continue;
+   /* an island too small to see at this zoom is not hovered */if(px*2<(sat()?10:6))continue;
    const inside=d3.geoContains(I.g,ll);if(!inside&&!(px*2<16&&d<=HOVER_PX))continue;const s=inside?-1:d;if(s<bd){bd=s;best=I}}
-  else{if(!lakeOn||d>HOVER_PX)continue;if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
+  else{if(!lakeOn||d>HOVER_PX||sat())continue;/* on the satellite picture these islands are not drawn: nothing to hover */if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
  return best}
 /* small islands the lake is painted over show as a dot of land once the map is zoomed in far enough to see them
    (not on the satellite picture, which is left as it is) */
