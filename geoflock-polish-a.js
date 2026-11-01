@@ -46,8 +46,10 @@ if(T("space")&&!T("space")._polA){T("space")._polA=1;
  set("space","The roof of the world",s=>{s.xsec={title:"From the Ganges plain over Everest to Tibet",pts:[[85.1,25.6,"Patna"],[86.0,27.0],[86.93,27.99,"Everest"],[87.6,29.3],[88.6,31.0,"Tibet"],[89.6,32.5]],mark:4500,
   note:"The dashed line marks 4,500 m, the plateau’s average height. The heights are smoothed: Everest’s real summit is 8,849 m."};
   s.body="Move along the chart: from the flat Ganges plain the land leaps up the Himalaya and then stays high. Behind the snowy peaks, the brown Tibetan Plateau averages over 4,500 m for more than 1,000 km."});
- set("space","Shallow seas, deep seas",s=>{s.gfSea=-15;s.gfSeaUI=true;
-  s.body="The Bahamas sit on flat underwater platforms of white sand only a few metres deep, which sunlight lights up in pale blue. Lower the sea by just 15 m and most of the banks become dry land; beside them the floor drops to thousands of metres.";
+ set("space","Shallow seas, deep seas",s=>{delete s.gfSea;delete s.gfSeaUI;/* no sea-level slider here: it hides the pale blue that is the point */
+  s.xsec={title:"From Florida across the Bahama banks",pts:[[-80.15,25.77,"Miami"],[-79.75,25.7],[-79.45,25.68,"Straits of Florida"],[-79.15,25.6],[-78.7,25.3],[-78.2,25.0,"Great Bahama Bank"],[-77.75,24.7,"Tongue of the Ocean"],[-77.3,24.35],[-76.8,24.1,"Exumas"]],mark:0,
+   note:"The banks sit only a few metres under the sea; the Straits of Florida and the Tongue of the Ocean drop to over 800 m and 1,000 m. Height is stretched far more than length."};
+  s.body="The Bahamas sit on flat underwater platforms of white sand only a few metres deep, which sunlight lights up in pale blue. Right beside them the floor drops to thousands of metres.";
   s.more="In the last ice age the sea was about 120 m lower and the banks really were dry land. They are made of limestone built up by sea creatures over millions of years; the deep channel called the Tongue of the Ocean, over 1,000 m deep, cuts into them."});
  /* two of the tour's questions pointed at a stop ("The Great Barrier Reef") that is no longer in the tour */
  try{const Q=typeof TOURQ!=="undefined"&&TOURQ.space;if(Q){(Q.mid||[]).forEach(q=>{if(q.at==="The Great Barrier Reef")q.at="Shallow seas, deep seas"});
