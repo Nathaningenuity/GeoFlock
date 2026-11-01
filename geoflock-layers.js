@@ -213,8 +213,8 @@ const st=document.createElement("style");st.textContent=`
 body.gf-menu-open .flk{ opacity:0 !important; pointer-events:none !important; transition:opacity .15s; }
 
 #allMapsView.globe-on .all-maps-label-controls .switch-label{ text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px rgba(255,255,255,.9); }
-.globe-btns [data-g="gfclouds"]{ display:inline-flex; align-items:center; justify-content:center; background:#fff4d6 !important; color:#b07a10 !important; border:1.5px solid #f0c860 !important; }
-.globe-btns [data-g="gfclouds"].on{ background:#f2b632 !important; color:#fff !important; border-color:#f2b632 !important; }
+.globe-btns [data-g="gfclouds"]{ display:inline-flex; align-items:center; justify-content:center; color:#e0a526 !important; border:1.5px dashed #e0a526 !important; }
+.globe-btns [data-g="gfclouds"].on{ background:#f2b632 !important; color:#fff !important; border:1.5px solid #f2b632 !important; }
 .globe-btns [data-g="gfclouds"] svg{ width:18px; height:18px; }
 /* Deep Time: the search row of other pages stays hidden on the Maps page */
 body:has(#allMapsView:not([hidden]):not([style*="display: none"])) #mainContent > .stat-search-row{ display:none !important; }
