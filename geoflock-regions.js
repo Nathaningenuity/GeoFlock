@@ -181,36 +181,52 @@ const ISLE_NO=new Set(["hk","mo","gi","ncy","xd"]);/* these touch a neighbour on
 const regionOn=t=>t&&t._sp||typeof activeRegion!=="undefined"&&activeRegion===R;
 const regPaths=(svg,c)=>{const id=ATLAS_ID[c]||c;return[...svg.querySelectorAll("path[id]")].filter(p=>p.id.toLowerCase()===id&&!p.classList.contains("tiny-hit-overlay"))};
 const liveBox=(svg,c)=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;regPaths(svg,c).forEach(p=>{try{const b=p.getBBox();if(!b.width&&!b.height)return;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height)}catch(e){}});return x1>x0||y1>y0?[x0,y0,x1,y1]:null};
-/* rings: every small possible answer gets a thin ring (all of them, so it gives nothing away: it only shows something is there).
-   An answer counts as small when every piece of its land is under RING_MAX map units; it gets one ring, on its biggest piece.
-   A ring answers like its shape. */
+/* rings: every small possible answer of the chosen chip gets one thin ring, on its biggest piece of land (all of them, so it gives
+   nothing away: it only shows something is there). The ring is only a picture: it never lights up and takes no clicks itself.
+   Instead, a press or hover inside a ring counts for its country, and when the press is on another country's land (or in
+   another tiny island's wider edge) the correct answer wins if it is any of them. Rings grow a little as you zoom in, and
+   each one drops out once its country is big enough on screen to point at directly. */
 const RING_MAX=9,NS="http://www.w3.org/2000/svg",RCACHE=new Map;
 function piecesOf(svg,p){/* each separate island of a path, as boxes in map units (turned map included) */
  const d=p.getAttribute("d")||"",key=d.length+"|"+d.slice(0,40)+"|"+d.slice(-40);if(RCACHE.has(key))return RCACHE.get(key);
  let out=[];const parts=/m/.test(d)?[d]:d.split(/(?=M)/).filter(x=>x.trim());const tmp=document.createElementNS(NS,"path");svg.appendChild(tmp);
  try{parts.forEach(q=>{tmp.setAttribute("d",q);const b=tmp.getBBox();if(b.width||b.height)out.push([b.x,b.y,b.x+b.width,b.y+b.height])})}catch(e){out=[]}tmp.remove();RCACHE.set(key,out);return out}
-const RING_PX=7;/* ring radius on screen, the same at every zoom */
-function ringsDraw(svg){const g=svg.querySelector("g.gf-reg-rings");if(!g)return;const vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),px=svg.getBoundingClientRect().width||1,r=RING_PX*(vb[2]||2000)/px;
- const cs=[...g.children],P=cs.map(cl=>[+cl.getAttribute("cx"),+cl.getAttribute("cy")]);
- cs.forEach((cl,i)=>{cl.setAttribute("r",r.toFixed(3));/* where rings overlap at this zoom, neither takes clicks (zoom in to pick one) */
-  let clash=false;for(let j=0;j<cs.length&&!clash;j++)if(j!==i&&Math.hypot(P[j][0]-P[i][0],P[j][1]-P[i][1])<2*r)clash=true;cl.classList.toggle("gf-ring-mute",clash)})}
+const ringScale=svg=>{const vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),px=svg.getBoundingClientRect().width||1;return(vb[2]||2000)/px};/* map units per screen pixel */
+const ringPx=svg=>{const vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),z=Math.log2(2000/(vb[2]||2000));return Math.max(4,Math.min(6.5,4+z*1.1))};/* 4 px fully zoomed out, 6.5 px zoomed in */
+function ringsDraw(svg){const g=svg.querySelector("g.gf-reg-rings");if(!g)return;const k=ringScale(svg),r=ringPx(svg)*k;
+ g.querySelectorAll("circle").forEach(cl=>{cl.setAttribute("r",r.toFixed(3));/* drop the ring once the land itself is easy to point at */
+  cl.style.display=(+cl.dataset.sz)/k>=16?"none":""})}
+const ringsAt=(svg,x,y,slack)=>{const g=svg.querySelector("g.gf-reg-rings");if(!g)return[];const out=[];g.querySelectorAll("circle").forEach(cl=>{if(cl.style.display==="none")return;const r=+cl.getAttribute("r")*(slack||1),d=Math.hypot(+cl.getAttribute("cx")-x,+cl.getAttribute("cy")-y);if(d<=r)out.push([d,cl.dataset.c])});return out.sort((a,b)=>a[0]-b[0]).map(q=>q[1])};
+const svgPt=(svg,e)=>{const rc=svg.getBoundingClientRect(),vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),s=Math.max(vb[2]/rc.width,vb[3]/rc.height),ox=(rc.width*s-vb[2])/2,oy=(rc.height*s-vb[3])/2;return[vb[0]+(e.clientX-rc.left)*s-ox,vb[1]+(e.clientY-rc.top)*s-oy]};
 function answerRings(svg,target){svg.querySelectorAll("g.gf-reg-rings").forEach(g=>g.remove());
  /* the answers this question accepts: every clickable shape, grouped by the answer it gives */
  const groups=new Map;svg.querySelectorAll("path[id]").forEach(p=>{if(p.classList.contains("tiny-hit-overlay"))return;const h=hitTargetFor(p);if(!h.classList.contains("clickable")||!h.onclick)return;
   const id=p.id.toLowerCase(),reg=GF_REG.find(r=>(ATLAS_ID[r.c]||r.c)===id),ti=typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[id],code=reg&&regionOn(target)?reg.c:ti&&ti.countsAs||id;
-  if(!groups.has(code))groups.set(code,{paths:[],hit:h});groups.get(code).paths.push(p)});
+  h._gfCode=code;if(h!==p)p._gfCode=code;if(!groups.has(code))groups.set(code,{paths:[],hits:[]});const G=groups.get(code);G.paths.push(p);G.hits.push(h)});
+ svg._gfGroups=groups;svg._gfTarget=target;
  /* only the answers this quiz can ask (the chosen chip), not every clickable country */
  let pool=null;try{const l=poolFor(activeRegion,typeof activeSub!=="undefined"?activeSub:undefined);if(l&&l.length)pool=new Set(l.map(c=>c.c))}catch(e){}
- const g=document.createElementNS(NS,"g");g.setAttribute("class","gf-reg-rings");g.setAttribute("data-spin","no");
- groups.forEach((G,code)=>{const pcs=G.paths.flatMap(p=>piecesOf(svg,p));if(!pcs.length)return;if(pool&&!pool.has(code))return;
+ const g=document.createElementNS(NS,"g");g.setAttribute("class","gf-reg-rings");g.setAttribute("data-spin","no");g.setAttribute("pointer-events","none");
+ groups.forEach((G,code)=>{if(pool&&!pool.has(code))return;const pcs=G.paths.flatMap(p=>piecesOf(svg,p));if(!pcs.length)return;
   if(pcs.some(b=>Math.max(b[2]-b[0],b[3]-b[1])>RING_MAX))return;
-  /* one ring per answer, on its biggest piece of land */
   const b=pcs.reduce((m,q)=>(q[2]-q[0])*(q[3]-q[1])>(m[2]-m[0])*(m[3]-m[1])?q:m,pcs[0]);
-  {const cl=document.createElementNS(NS,"circle");cl.setAttribute("class","gf-reg-ring");cl.dataset.c=code;cl.setAttribute("cx",((b[0]+b[2])/2).toFixed(2));cl.setAttribute("cy",((b[1]+b[3])/2).toFixed(2));
-   cl.onclick=e=>{e.stopPropagation();handleMapClick(cl,code,target)};cl.onmouseenter=()=>{try{showHoverOutline(svg,G.paths)}catch(e){}};cl.onmouseleave=()=>{try{clearHoverOutline(svg)}catch(e){}};g.appendChild(cl)}});
- if(!g.children.length)return;
+  const cl=document.createElementNS(NS,"circle");cl.setAttribute("class","gf-reg-ring");cl.dataset.c=code;cl.dataset.sz=Math.max(b[2]-b[0],b[3]-b[1]).toFixed(2);
+  cl.setAttribute("cx",((b[0]+b[2])/2).toFixed(2));cl.setAttribute("cy",((b[1]+b[3])/2).toFixed(2));g.appendChild(cl)});
  svg.appendChild(g);ringsDraw(svg);
- if(!svg._gfRingObs){svg._gfRingObs=new MutationObserver(()=>ringsDraw(svg));svg._gfRingObs.observe(svg,{attributes:true,attributeFilter:["viewBox"]})}}
+ if(!svg._gfRingObs){svg._gfRingObs=new MutationObserver(()=>ringsDraw(svg));svg._gfRingObs.observe(svg,{attributes:true,attributeFilter:["viewBox"]})}
+ if(!svg._gfRingWired){svg._gfRingWired=true;
+  /* every answer under the pointer: rings around it first, then the land and wider island edges at that spot */
+  const under=e=>{const[x,y]=svgPt(svg,e),G=svg._gfGroups||new Map,codes=ringsAt(svg,x,y,1.15);let land=null;
+   document.elementsFromPoint(e.clientX,e.clientY).forEach(el=>{if(!svg.contains(el))return;const c=el._gfCode;if(!c||!G.has(c)||!el.classList.contains("clickable")||!el.onclick)return;const edge=el.classList.contains("tiny-hit-overlay");
+    if(!edge){if(land)return;land=c}if(!codes.includes(c))codes.push(c)});return{codes,land}};/* only the top land counts, plus the wider island edges */
+  let lit=null;const unlight=()=>{if(!lit)return;(svg._gfGroups.get(lit)||{hits:[]}).hits.forEach(h=>h.classList.remove("linked-hover"));lit=null;try{clearHoverOutline(svg)}catch(e){}};
+  svg.addEventListener("pointermove",e=>{try{if(typeof round!=="undefined"&&round.answered){unlight();return}const[x,y]=svgPt(svg,e),r=ringsAt(svg,x,y,1.15)[0];
+   if(r===lit)return;unlight();if(!r){const el=document.elementFromPoint(e.clientX,e.clientY);if(el&&el.onmouseenter&&svg.contains(el))el.onmouseenter(e);return}
+   const G=svg._gfGroups.get(r);if(!G)return;lit=r;G.hits.forEach(h=>h.classList.add("linked-hover"));try{showHoverOutline(svg,G.paths)}catch(err){}}catch(err){}});
+  svg.addEventListener("pointerleave",unlight);
+  svg.addEventListener("click",e=>{try{const t=svg._gfTarget;if(!t||typeof round==="undefined"||round.answered)return;const{codes,land}=under(e);if(!codes.length)return;
+   const pick=codes.includes(t.c)?t.c:land||codes[0];if(pick===land&&pick!==t.c)return;/* plain miss on land: the map's own handler answers */
+   const G=svg._gfGroups.get(pick);if(!G)return;e.stopPropagation();e.preventDefault();unlight();handleMapClick(G.hits[0],pick,t)}catch(err){console.error(err)}},true)}}
 if(typeof wireMapClicks==="function"){const _wm=wireMapClicks;wireMapClicks=function(target){const x=_wm.apply(this,arguments);const svg=document.querySelector("#mapWrap svg");if(!svg)return x;
  try{if(regionOn(target)&&typeof handleMapClick==="function"){
  const only=typeof activeRegion!=="undefined"&&activeRegion===R,regIds=new Set(GF_REG.map(r=>ATLAS_ID[r.c]||r.c));
@@ -228,7 +244,7 @@ if(typeof wireMapClicks==="function"){const _wm=wireMapClicks;wireMapClicks=func
 if(typeof revealCorrectCountryOnQuizMap==="function"){const _rv=revealCorrectCountryOnQuizMap;revealCorrectCountryOnQuizMap=function(target){if(!(target&&target._sp&&BY[target.c]))return _rv.apply(this,arguments);try{
  const w=document.getElementById("mapWrap"),svg=w&&w.querySelector("svg");if(!svg)return;const b=liveBox(svg,target.c);
  if(b&&w._panZoom)pzFly(w,clampBoxStatic(enforceMinFrame(boxFromBounds(b,.6),60)));
- const parts=regPaths(svg,target.c).map(hitTargetFor).concat([...svg.querySelectorAll('circle.gf-reg-ring[data-c="'+target.c+'"]')]);
+ const parts=regPaths(svg,target.c).map(hitTargetFor);
  setTimeout(()=>parts.forEach(p=>p.classList.add("correct")),300)}catch(e){console.error(e)}}}
 /* the globe's Find on map has the same country-only check: a region answers as itself there too */
 if(typeof qzAnswer==="function"){const _qa=qzAnswer;qzAnswer=function(code){try{const t=typeof round!=="undefined"&&round&&round.queue&&round.queue[round.idx];
@@ -248,8 +264,8 @@ const st3=document.createElement("style");st3.textContent=`
 .gf-pq-outline{height:340px;display:flex;align-items:center;justify-content:center;color:#3b4b5c}.gf-pq-outline svg{height:100%;width:auto;max-width:100%}
 .gf-pq-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin:14px auto 0}.gf-pq-opts .opt-btn{min-height:46px;font-size:15px}
 .gf-pq-opts .opt-btn.correct{background:#2c9a5a !important;color:#fff !important}.gf-pq-opts .opt-btn.wrong{background:#c94b3b !important;color:#fff !important}
-.map-wrap svg .gf-reg-ring{fill:rgba(255,255,255,.01);stroke:#3d4b5c;stroke-opacity:.75;stroke-width:1.1;vector-effect:non-scaling-stroke;cursor:pointer;pointer-events:all}
-.map-wrap svg .gf-reg-ring.gf-ring-mute{pointer-events:none}.map-wrap svg .gf-reg-ring:hover{fill:rgba(240,190,80,.35)}.map-wrap svg .gf-reg-ring.correct{fill:rgba(59,122,87,.35);stroke:var(--green,#3b7a57);stroke-width:2.4}.map-wrap svg .gf-reg-ring.wrong{fill:rgba(193,68,60,.3);stroke:#c1443c}
+.map-wrap svg .gf-reg-ring{fill:none;stroke:#7b8a99;stroke-opacity:.55;stroke-width:.75;vector-effect:non-scaling-stroke;pointer-events:none}
+
 .gf-pq-fb{min-height:24px;margin:12px auto 0;max-width:640px;font-size:14px}.gf-pq-end{padding:40px 0}.gf-pq-end h3{font-size:28px;margin:6px 0}
 @media (max-width:600px){.gf-pq-q{font-size:16px}.gf-pq-outline{height:240px}}
 `;document.head.appendChild(st3);
