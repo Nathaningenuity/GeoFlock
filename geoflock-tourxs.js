@@ -20,6 +20,8 @@ function mapDot(ll){try{const host=ps&&ps.g&&ps.g.host;if(!host)return;if(!ll){i
  if(!dot||dot.parentNode!==host){dot=document.createElement("div");dot.className="psx-dot";host.appendChild(dot)}
  const q=typeof psScreen==="function"?psScreen(ll):null;if(!q){dot.style.display="none";return}dot.style.display="";dot.style.left=q[0]+"px";dot.style.top=q[1]+"px"}catch(e){}}
 function draw(box,S){const X=S.xsec,svg=box.querySelector("svg");if(!svg||!XS())return;box._done=1;
+ /* the height grid is a large file: say so while it loads, instead of an empty chart */
+ if(!svg.innerHTML.trim())svg.innerHTML='<text x="160" y="70" text-anchor="middle" class="psx-yl psx-wait">Loading heights…</text>';
  XS().loadDEM().then(()=>{const{out,tot,at}=sample(X.pts,180);const fl=X.below?-1e5:0;out.forEach(p=>p.h=Math.max(fl,XS().elevAt(p.ll[0],p.ll[1])));
   const W=320,H=132,l=34,r=8,t=14,b=22,top=Math.max(500,Math.ceil(Math.max(...out.map(p=>p.h))/500)*500),bot=(m=>m>=0?0:X.below?Math.floor(m/100)*100:m>-300?0:Math.floor(m/500)*500)(Math.min(...out.map(p=>p.h)));
   const x=d=>l+(W-l-r)*d/tot,y=h=>t+(H-t-b)*(top-h)/(top-bot);
@@ -36,7 +38,9 @@ function draw(box,S){const X=S.xsec,svg=box.querySelector("svg");if(!svg||!XS())
    v.textContent=near+Math.round(p.h).toLocaleString("en-GB")+" m up · "+Math.round(p.d)+" km along";mapDot(p.ll)};
   hit.addEventListener("pointermove",show);hit.addEventListener("pointerdown",show);hit.addEventListener("pointerleave",()=>{mapDot(null)});
  }).catch(()=>{box.querySelector(".psx-v").textContent="Heights could not load"})}
-setInterval(()=>{try{const S=stop();if(!S||!S.xsec){mapDot(null);return}const box=ps.card&&ps.card.querySelector("[data-psx]");if(box&&!box._done)draw(box,S)}catch(e){}},250);
+/* a tour with a height chart starts loading the height grid at once, so the chart is ready when its stop comes */
+let pre=null;const prefetch=()=>{try{if(!ps||pre===ps.tour)return;pre=ps.tour;if(XS()&&(psSteps()||[]).some(q=>q&&q.xsec))XS().loadDEM().catch(()=>{})}catch(e){}};
+setInterval(()=>{try{prefetch();const S=stop();if(!S||!S.xsec){mapDot(null);return}const box=ps.card&&ps.card.querySelector("[data-psx]");if(box&&!box._done)draw(box,S)}catch(e){}},250);
 const css=document.createElement("style");css.textContent=`
 .psx{ margin:10px 0 4px; padding:10px 12px 8px; border-radius:14px; background:rgba(22,50,79,.05); border:1px solid rgba(22,50,79,.08); }
 .psx-h{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:13px; } .psx-v{ font-size:12px; color:#1f6f9f; font-weight:700; text-align:right; }
@@ -45,6 +49,7 @@ const css=document.createElement("style");css.textContent=`
 .psx-mk{ stroke:#e8701a; stroke-width:1; stroke-dasharray:3 2; } .psx-mkl{ font:700 7.5px system-ui,sans-serif; fill:#c25a10; text-anchor:end; }
 .psx-pl line{ stroke:#16324f; stroke-width:.6; stroke-dasharray:2 2; opacity:.55; } .psx-pl circle{ fill:#16324f; } .psx-pl text{ font:700 7.5px system-ui,sans-serif; fill:#16324f; }
 .psx-cur{ stroke:#16324f; stroke-width:1; } .psx-cd{ fill:#fff; stroke:#16324f; stroke-width:1.4; }
+.psx-wait{ font-size:10px; text-anchor:middle; }
 .psx-n{ display:block; font-size:11.5px; opacity:.7; margin-top:2px; }
 .psx-dot{ position:absolute; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:#fff; border:3px solid #e8701a; box-shadow:0 1px 6px rgba(0,0,0,.35); pointer-events:none; z-index:30; }
 body.sky-night .psx{ background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.1); } body.sky-night .psx-pl text, body.sky-night .psx-yl{ fill:#dfe6f5; } body.sky-night .psx-pl line, body.sky-night .psx-cur{ stroke:#dfe6f5; } body.sky-night .psx-pl circle{ fill:#dfe6f5; } body.sky-night .psx-v{ color:#8fd0ff; }`;
