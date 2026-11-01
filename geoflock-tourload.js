@@ -36,7 +36,7 @@ setInterval(()=>{try{
    else show("Opening "+esc(nameOf(want))+"…")}
   else if(age>90000){want=null;hide()}}
  if(!want){
-  const busy=on()&&(window.gfMapLoading===true||(psStepMode()==="history"&&window.GF_HIST2&&GF_HIST2.loading&&GF_HIST2.loading())||(typeof allMapsColorMode!=="undefined"&&psStepMode()&&psStepMode()!==allMapsColorMode));
+  const busy=on()&&((window.gfMapLoading===true&&Date.now()-(window.gfMapLoadingAt||0)<1500)||(psStepMode()==="history"&&window.GF_HIST2&&GF_HIST2.loading&&GF_HIST2.loading())||(typeof allMapsColorMode!=="undefined"&&psStepMode()&&psStepMode()!==allMapsColorMode));
   if(busy){if(!busySince)busySince=Date.now();if(Date.now()-busySince>500)show("Loading the map…")}
   else{busySince=0;if(chip&&!chip.hidden&&!chip.querySelector(".gftl-btn"))hide()}}
  /* the address follows the tour */
