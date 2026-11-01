@@ -374,6 +374,11 @@ function stop(){if(S.play){cancelAnimationFrame(S.play);S.play=null;ui()}}
 function setSpin(v){try{if(!!v!==spinOn()){const b=amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.click()}}catch(e){}setTimeout(ui,0)}
 /* Day & Night sits in the Satellite map's own measure row (like GDP / GDP per person): "Day & Night" (the default on
    the globe), "Day" (the plain satellite picture) or "Night" (the City Lights map, which needs the dark theme) */
+/* Day & Night picked on the flat map: it needs the globe */
+function toGlobe(){const m=document.createElement("div");m.className="gf-nightask";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");
+ m.innerHTML='<div><div class="ico">🌍</div><h3>Day &amp; Night is on the globe</h3><p>The Sun lights one half of the Earth at a time, so Day &amp; Night shows on the <b>globe</b>. Switch to the globe now?</p><div class="row"><button type="button" class="pri" data-y>Switch to the globe</button><button type="button" data-n>Not now</button></div></div>';
+ document.body.appendChild(m);const done=()=>m.remove();
+ m.querySelector("[data-y]").onclick=()=>{done();S.userDay=false;set(true)};m.querySelector("[data-n]").onclick=done;m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus()}
 function toNight(){const go=()=>{const n=document.querySelector('#allMapsToggleRow [data-allmaps-mode="night"]');if(n)n.click()};
  const dark=document.body.classList.contains("sky-night");if(dark){go();return}
  const m=document.createElement("div");m.className="gf-nightask";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");
@@ -381,7 +386,7 @@ function toNight(){const go=()=>{const n=document.querySelector('#allMapsToggleR
  document.body.appendChild(m);const done=()=>m.remove();
  m.querySelector("[data-y]").onclick=()=>{done();try{stats.theme="night";applyTheme();saveStats()}catch(e){}setTimeout(go,250)};
  m.querySelector("[data-n]").onclick=done;m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus()}
-function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn(),host=document.getElementById(gOn?"amGlobeSubs":"allMapsSubModes");if(!host)return null;
+function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn()&&!(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat),host=document.getElementById(gOn?"amGlobeSubs":"allMapsSubModes");if(!host)return null;
  /* only our own chips are taken away: the host may hold another map's chips by now */
  const clear=o=>o.querySelectorAll("[data-dng-sub]").forEach(x=>x.remove());
  ["amGlobeSubs","allMapsSubModes"].forEach(id=>{const o=document.getElementById(id);if(o&&o!==host)clear(o)});
@@ -395,7 +400,7 @@ function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn(),host=docume
    '<button type="button" class="chip sub-chip" data-dng-sub="sat" title="The satellite picture in full daylight everywhere">Day</button>'+
    '<button type="button" class="chip sub-chip" data-dng-sub="night" title="City lights at night (needs the dark Starlight theme)">Night</button>');
   host.querySelectorAll("[data-dng-sub]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.dngSub;
-   if(k==="night"){toNight();return}S.userDay=k==="sat"||k==="nightonly";set(k==="dn")});c=document.getElementById("gfDngChip")}
+   if(k==="night"){toNight();return}if(k==="dn"&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat){toGlobe();return}S.userDay=k==="sat"||k==="nightonly";set(k==="dn")});c=document.getElementById("gfDngChip")}
  return c}
 const litMode=()=>{try{return allMapsColorModeOn&&(allMapsColorMode==="satellite"||allMapsColorMode==="night")}catch(e){return false}};
 function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.night&&!(typeof proj!=="undefined"&&proj.on)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}}
@@ -409,7 +414,9 @@ function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
  /* Day & Night is the default view of the Satellite globe: each time the Satellite map is opened on the globe */
  try{const satNow=litMode()&&amGlobeOn()&&!(amGlobe&&amGlobe._flat);
-  const key=satNow?allMapsColorMode:null;if(key&&S.wasSat!==key){S.wasSat=key;S.userDay=false;if(!S.on&&allowed()){setTimeout(()=>set(true),0)}}else if(!key&&!S.on){S.wasSat=null;S.userDay=false}}catch(e){}
+  const key=satNow?allMapsColorMode:null;if(key&&S.wasSat!==key){S.wasSat=key;S.userDay=false;
+    /* City Lights opens on Night only (Day & Night is its second option) */
+    if(key==="night"){if(S.on){S.on=false;stop();freeNight();req()}}else if(!S.on&&allowed()){setTimeout(()=>set(true),0)}}else if(!key&&!S.on){S.wasSat=null;S.userDay=false}}catch(e){}
  if(S.on&&!(allowed()&&litMode()&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
  document.querySelectorAll("[data-dng-sub]").forEach(b=>{const k=b.dataset.dngSub;b.classList.toggle("active",k==="dn"?!!S.on:k==="sat"||k==="nightonly"?!S.on:false)});
  if(c)c.setAttribute("aria-pressed",String(S.on));

@@ -32,18 +32,20 @@ const lblEls=()=>["allMapsShowLabelsToggle","allMapsSeaLabelsToggle"].map(id=>do
 const setChk=(t,v)=>{if(t&&t.checked!==v){t.checked=v;t.dispatchEvent(new Event("change",{bubbles:true}))}};
 const globeOn=()=>{try{return!!globePrefs().allmaps}catch(e){return false}};
 const setGlobe=v=>{try{if(!!globePrefs().allmaps!==v){globePrefs().allmaps=v;try{saveStats()}catch(e){}amGlobeSync()}}catch(e){}};
-let wasL=null,wasG=null,otherL=null,otherG=null;
+let wasL=null,wasG=null,wasN=null,otherL=null,otherG=null;
 function labels(){
  /* names: Satellite and City Lights */
  const nL=onMode(["satellite","night"]);
  if(nL!==wasL){if(nL){otherL=lblEls().map(t=>t?t.checked:null);lblEls().forEach((t,i)=>setChk(t,!!LIT.labels[i]))}
   else if(wasL&&otherL){lblEls().forEach((t,i)=>{if(otherL[i]!=null)setChk(t,otherL[i])});otherL=null}wasL=nL}
  else if(nL){const L=lblEls().map(t=>t?t.checked:false);if(L[0]!==LIT.labels[0]||L[1]!==LIT.labels[1]){LIT.labels=L;saveLit()}}
- /* globe or flat: Satellite has its own (the globe by default). City Lights keeps whatever view it is opened in, so
-    from Satellite it stays on the globe; the other maps get their own choice back when you leave both. */
+ /* globe or flat: Satellite has its own (the globe by default); City Lights opens on the globe; the other maps get their
+    own choice back when you leave both. */
  const nG=onMode(["satellite"]),inLit=nL;
  if(nG!==wasG){if(nG){if(otherG==null)otherG=globeOn();setGlobe(LIT.globe!==false)}wasG=nG}
  else if(nG){const g=globeOn();if(g!==LIT.globe){LIT.globe=g;saveLit()}}
+ /* City Lights opens on the globe each time (the flat map stays one click away) */
+ const nN=onMode(["night"]);if(nN!==wasN){if(nN){if(otherG==null)otherG=globeOn();setGlobe(true)}wasN=nN}
  if(!inLit&&otherG!=null&&!(typeof ps!=="undefined"&&ps)){setGlobe(otherG);otherG=null}}
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-allmaps-mode]"))setTimeout(()=>{try{labels()}catch(x){}},0)},true);
 const css=document.createElement("style");css.textContent=`
