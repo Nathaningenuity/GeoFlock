@@ -1,5 +1,5 @@
 /* GeoFlock: City Lights and grid lines.
-   1. City Lights is a night-only map: a small star on its tab, place names off when it opens (back as they were on leaving),
+   1. City Lights is a night-only map: a small star on its tab; Satellite and City Lights keep their own labels and globe settings,
       and its guided tour first asks to switch to the Starlight (dark) theme.
    2. Grid lines get a ▾: everywhere, over land only, or over the sea only; softer at night. */
 (function(){
@@ -22,11 +22,30 @@ function fold(){const inp=document.getElementById("allMapsGraticuleToggle");if(!
  document.addEventListener("click",e=>{if(!g.contains(e.target)){pop.hidden=true;car.setAttribute("aria-expanded","false")}});
  pop.querySelectorAll("[data-gm]").forEach(b=>b.onclick=e=>{e.stopPropagation();GM=b.dataset.gm;try{localStorage.setItem("gfGratMode",GM)}catch(_){}mark();
   if(!inp.checked){inp.checked=true;inp.dispatchEvent(new Event("change",{bubbles:true}))}redraw()})}
-/* City Lights: names off on the way in, back on the way out */
-let was=null,saved=null;
-function labels(){const n=night();if(n===was)return;const ts=["allMapsShowLabelsToggle","allMapsSeaLabelsToggle"].map(id=>document.getElementById(id)).filter(Boolean);
- const set=(t,v)=>{if(t.checked!==v){t.checked=v;t.dispatchEvent(new Event("change",{bubbles:true}))}};
- if(n){saved=ts.map(t=>t.checked);ts.forEach(t=>set(t,false))}else if(was&&saved)ts.forEach((t,i)=>{if(saved[i])set(t,true)});was=n}
+/* Satellite and City Lights keep their own names setting (place and sea labels, off by default), and Satellite its own
+   globe/flat choice (the globe by default; City Lights goes with the other maps). What you change while on them is remembered
+   for them (localStorage gfLitView), and the other maps get their own settings back on the way out. Tours are left alone. */
+const LITK="gfLitView";let LIT={labels:[false,false],globe:true};try{const v=JSON.parse(localStorage.getItem(LITK)||"null");if(v&&Array.isArray(v.labels))LIT=Object.assign(LIT,v)}catch(e){}
+const saveLit=()=>{try{localStorage.setItem(LITK,JSON.stringify(LIT))}catch(e){}};
+const onMode=ms=>{try{return appMode==="allmaps"&&allMapsColorModeOn&&ms.includes(allMapsColorMode)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}};
+const lblEls=()=>["allMapsShowLabelsToggle","allMapsSeaLabelsToggle"].map(id=>document.getElementById(id));
+const setChk=(t,v)=>{if(t&&t.checked!==v){t.checked=v;t.dispatchEvent(new Event("change",{bubbles:true}))}};
+const globeOn=()=>{try{return!!globePrefs().allmaps}catch(e){return false}};
+const setGlobe=v=>{try{if(!!globePrefs().allmaps!==v){globePrefs().allmaps=v;try{saveStats()}catch(e){}amGlobeSync()}}catch(e){}};
+let wasL=null,wasG=null,otherL=null,otherG=null;
+function labels(){
+ /* names: Satellite and City Lights */
+ const nL=onMode(["satellite","night"]);
+ if(nL!==wasL){if(nL){otherL=lblEls().map(t=>t?t.checked:null);lblEls().forEach((t,i)=>setChk(t,!!LIT.labels[i]))}
+  else if(wasL&&otherL){lblEls().forEach((t,i)=>{if(otherL[i]!=null)setChk(t,otherL[i])});otherL=null}wasL=nL}
+ else if(nL){const L=lblEls().map(t=>t?t.checked:false);if(L[0]!==LIT.labels[0]||L[1]!==LIT.labels[1]){LIT.labels=L;saveLit()}}
+ /* globe or flat: Satellite has its own (the globe by default). City Lights keeps whatever view it is opened in, so
+    from Satellite it stays on the globe; the other maps get their own choice back when you leave both. */
+ const nG=onMode(["satellite"]),inLit=nL;
+ if(nG!==wasG){if(nG){if(otherG==null)otherG=globeOn();setGlobe(LIT.globe!==false)}wasG=nG}
+ else if(nG){const g=globeOn();if(g!==LIT.globe){LIT.globe=g;saveLit()}}
+ if(!inLit&&otherG!=null&&!(typeof ps!=="undefined"&&ps)){setGlobe(otherG);otherG=null}}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-allmaps-mode]"))setTimeout(()=>{try{labels()}catch(x){}},0)},true);
 const css=document.createElement("style");css.textContent=`
 [data-allmaps-mode="night"]{ position:relative; overflow:visible; }
 html.gf-nl-seen [data-allmaps-mode="night"]::after{ display:none; }
