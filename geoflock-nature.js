@@ -128,11 +128,14 @@ function legend(){const t=allMapsSubMode.nature;
  if(t==="footprint")return'<span class="legend-title">Human footprint</span><span class="legend-swatches th-swatches">'+FOOT.map(c=>'<span class="legend-swatch gf-nat-sw'+(focus===c[0]?" is-on":"")+'" data-nf="'+c[0]+'" role="button" tabindex="0"><i style="background:'+c[2]+'"></i>'+esc(c[1])+"</span>").join("")+'</span><span class="legend-note">How much people have changed the land: cities, farms, roads, mines and power lines. Green areas are still wild. '+esc(N.footCredit||"")+"</span>";
  return""}
 {const _lg=allMapsLegendHTML;allMapsLegendHTML=function(){if(vecOn())return legend();return _lg.apply(this,arguments)}}
-document.addEventListener("click",e=>{if(!vecOn())return;const t=e.target;if(!t.closest||!t.closest("#populationLegend"))return;
+document.addEventListener("click",e=>{if(!vecOn())return;const t=e.target;if(!t.closest||!t.closest("#populationLegend, #flKey"))return;if(t.closest("#flKey"))e.stopPropagation();
  const r=t.closest("[data-rank]");if(r){e.preventDefault();rank=r.dataset.rank||null;focus=null;refresh();return}
  if(t.closest(".gf-nat-clear")){e.preventDefault();focus=null;refresh();return}
  const s=t.closest(".gf-nat-sw");if(!s)return;const v=s.dataset.nb!=null?+s.dataset.nb:s.dataset.nf!=null?+s.dataset.nf:s.dataset.nr;
- if(rank&&s.dataset.nb!=null){const c=CARD[v];if(c)card({kind:"biome",d:c});return}focus=focus===v?null:v;refresh()});
+ if(rank&&s.dataset.nb!=null){const c=CARD[v];if(c)card({kind:"biome",d:c});return}
+ /* a biome in the key: picked out on the map, and its card opens */
+ if(s.dataset.nb!=null){focus=v;refresh();const c=CARD[v];if(c)card({kind:"biome",d:c});return}
+ focus=focus===v?null:v;refresh()},true);
 function refresh(){try{const w=wrapEl();applyAllMapsColorMode(w)}catch(e){}drawFlat(true);globe()}
 
 const st=document.createElement("style");st.textContent=`

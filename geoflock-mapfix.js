@@ -666,3 +666,6 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 #allMapsView .globe-host.gf-flat .globe-btns .gf-lock{ order:11; }
 #allMapsView .globe-host.gf-flat .globe-btns [data-g="gfrelief"]{ order:12; } #allMapsView .globe-host.gf-flat .globe-btns [data-g="gfclouds"]{ order:13; }
 #allMapsView .globe-host.gf-flat .globe-btns [data-g="spin"]{ display:none !important; }`;document.head.appendChild(st)})();
+/* the map key on the right opens with every map (folding it away lasts until the next map) */
+(function(){let last=null;setInterval(()=>{try{if(appMode!=="allmaps")return;const m=allMapsColorMode+"|"+(typeof allMapsSubMode!=="undefined"?JSON.stringify(allMapsSubMode[allMapsColorMode]||""):"");
+ if(last!==null&&m!==last&&stats.prefs&&stats.prefs.flkFold){stats.prefs.flkFold=false;try{saveStats()}catch(e){}try{flkSync(true)}catch(e){}}last=m}catch(e){}},400)})();
