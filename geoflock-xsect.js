@@ -85,6 +85,8 @@ const css=document.createElement("style");css.textContent=`
 body.dark .gf-xs{ background:#1c2333; color:#e8ecf3; }
 .gf-xs-hctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px; }
 .gf-xs-hz button{ font-size:11px !important; }
+/* "Dig through" is hidden for now (the owner's call); the code stays */
+.gf-xs-dig{ display:none !important; }
 .gf-xs-dig{ border:1px solid #d9cdb8; background:#fffaf0; border-radius:999px; padding:4px 10px; font:700 12px system-ui; cursor:pointer; color:#5b3a17; }
 .gf-xs-up{ border:1px solid #d9cdb8; background:#fffaf0; border-radius:999px; padding:2px 9px; font:700 11px system-ui; cursor:pointer; color:#4a3520; }
 .gf-xs-pick{ display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
@@ -338,6 +340,10 @@ function pick(v,keepView){head=null;if(!v)return;armed=false;loadDEM().then(()=>
  compute();frameTo([].concat(...lines.map(L=>L.ll)));renderPanel()})}
 /* listen before the map does (it handles presses at the document level) */
 if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G();if(g&&g.host.contains(e.target))down(e)},true);addEventListener("pointermove",move,true);addEventListener("pointerup",up,true);addEventListener("pointercancel",up,true)}
+/* while drawing, the pointer over the map is a pen (its tip is the point being drawn) */
+{const PEN="url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M3 25l2.2-7.4L19.6 3.2a2.4 2.4 0 0 1 3.4 0l1.8 1.8a2.4 2.4 0 0 1 0 3.4L10.4 22.8z" fill="#fff" stroke="#3b2a17" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.2 17.6l5.2 5.2" stroke="#3b2a17" stroke-width="1.6"/><path d="M16.8 6l5.2 5.2" stroke="#3b2a17" stroke-width="1.4"/><path d="M3 25l1.2-4 2.8 2.8z" fill="#c0392b"/></svg>')+"\") 3 25, crosshair";
+ const st=document.createElement("style");st.textContent=".gf-xs-pen,.gf-xs-pen *{cursor:"+PEN+" !important}";document.head.appendChild(st);
+ let last=null;setInterval(()=>{try{const g=G(),h=g&&g.host,w=!!(on&&armed&&h);if(last&&last!==h)last.classList.remove("gf-xs-pen");if(h)h.classList.toggle("gf-xs-pen",w);last=h}catch(e){}},150)}
 window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
