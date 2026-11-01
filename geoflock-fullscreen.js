@@ -36,6 +36,9 @@ body.gf-fs #topbar, body.gf-fs .masthead, body.gf-fs footer, body.gf-fs .site-fo
 body.gf-fs #allMapsView{ position:fixed !important; inset:0 !important; z-index:60; overflow:hidden auto; padding:4px 4px 0 !important; margin:0 !important; max-width:none !important; width:auto !important;
  background:linear-gradient(160deg,#d7eef4,#e6f1fb 55%,#efe9f7); }
 body.sky-night.gf-fs #allMapsView{ background:radial-gradient(ellipse at 30% 20%,#232c58,#0e1328 70%); }
+/* with a sky theme, full screen keeps the page's own artistic background (the sky scene) instead of a plain fill */
+body.sky-theme.gf-fs #allMapsView:not(.gf-fs-sky){ background:transparent !important; }
+body.sky-theme.gf-fs #skyField{ position:fixed !important; inset:0 !important; height:auto !important; }
 body.gf-fs #allMapsToggleRow{ flex-wrap:nowrap !important; overflow-x:auto; justify-content:flex-start !important; gap:5px !important; margin:0 0 4px !important; padding:2px 52px 4px 2px !important; scrollbar-width:none; }
 body.gf-fs #allMapsToggleRow::-webkit-scrollbar{ display:none; }
 body.gf-fs #allMapsToggleRow > *{ flex:none !important; }
