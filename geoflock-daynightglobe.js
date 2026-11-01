@@ -233,6 +233,7 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1439" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Date</span><input type="range" min="1" max="365" step="1" data-dng="doy" aria-label="Date: 1 January to 31 December"><em class="gf-dng-season"></em></label>';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="doy"]');
+  el.querySelectorAll('input[type=range]').forEach(r=>{r.addEventListener("pointerdown",()=>{r._held=true});const up=()=>{r._held=false};["pointerup","pointercancel","lostpointercapture","blur"].forEach(ev=>r.addEventListener(ev,up));addEventListener("pointerup",up)});
   /* the sliders move the clock; Play keeps running from the new moment */
   t.addEventListener("input",()=>{const day=S.t-minOfDay(S.t)*6e4;setT(day+(+t.value)*6e4);sunPing();ui(true);req()});
   l.addEventListener("input",()=>{const y=yearStart(S.t);setT(y+((+l.value)-1)*DAY+minOfDay(S.t)*6e4);sunPing();ui(true);req()});
@@ -267,14 +268,16 @@ function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)re
  el.querySelector(".gf-dng-where").textContent="Sun overhead at "+fmtLL(S.lat,"N","S")+", "+fmtLL(S.lon,"E","W");
  el.querySelector(".gf-dng-season").textContent=d.getUTCDate()+" "+MONL[d.getUTCMonth()]+(Math.abs(S.lat)>23.2?(S.lat>0?" · June solstice":" · December solstice"):Math.abs(S.lat)<.4?" · equinox":"");
  const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="doy"]');
- if(!fromSlider||document.activeElement!==t)t.value=Math.floor(m);if(!fromSlider||document.activeElement!==l)l.value=Math.min(365,doyOf(S.t));
+ /* a slider held by the pointer is never moved under it (Play redraws the panel every frame) */
+ const held=e=>e._held||(fromSlider&&document.activeElement===e);
+ if(!held(t))t.value=Math.floor(m);if(!held(l))l.value=Math.min(365,doyOf(S.t));
  const p=el.querySelector('[data-dng="play"]');p.querySelector(".gf-dng-pi").textContent=S.play?"❚❚":"▶";p.querySelector(".gf-dng-pl").textContent=S.play?"Pause":"Play";
  p.title=S.play?"Pause time":"Play: watch the Sun move and night sweep across the Earth";p.setAttribute("aria-pressed",String(!!S.play));p.classList.toggle("on",!!S.play);
  const sp=spinOn(),sb=el.querySelector('[data-dng="spin"]');sb.classList.toggle("on",sp);sb.setAttribute("aria-pressed",String(sp));
  el.querySelector(".gf-dng-mode").textContent=modeName();
  const n=el.querySelector('[data-dng="nudge"]');n.hidden=!(S.play&&!sp);
  const sr=el.querySelector(".gf-dng-speedrow");sr.hidden=!S.play;el.querySelector(".gf-dng-speedtxt").textContent=speedTxt(S.speed);
- const sv=el.querySelector('[data-dng="speed"]');if(!fromSlider||document.activeElement!==sv)sv.value=speedToPos(S.speed);
+ const sv=el.querySelector('[data-dng="speed"]');if(!held(sv))sv.value=speedToPos(S.speed);
  try{const b=amGlobe&&amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.classList.toggle("gf-spin-nudge",S.on&&S.play&&!sp)}catch(e){}}
 /* play: the clock runs at the globe's spin speed. The spin turns the globe SPIN_BASE degrees a second; Play moves the Sun
    round at the same rate (360° = 24 h), so with both on the day/night line stays still on screen while Earth turns under it.
