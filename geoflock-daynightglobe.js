@@ -229,6 +229,7 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    
    '<em class="gf-dng-mode" aria-live="polite"></em></div>'+
    '<button type="button" class="gf-dng-nudge" data-dng="nudge" hidden>⟳ Turn on <b>Spin</b> too, to watch Earth turn under a still Sun</button>'+
+   '<label class="gf-dng-row gf-dng-speedrow" hidden><span>Speed</span><input type="range" min="0" max="1000" step="1" data-dng="speed" aria-label="Speed: how fast time runs and the globe turns"><em class="gf-dng-speedtxt"></em></label>'+
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1439" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Date</span><input type="range" min="1" max="365" step="1" data-dng="doy" aria-label="Date: 1 January to 31 December"><em class="gf-dng-season"></em></label>';
   const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="doy"]');
@@ -239,7 +240,8 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
   el.querySelector('[data-dng="reset"]').onclick=()=>{toNow();ui();req()};
   el.querySelector('[data-dng="play"]').onclick=()=>{if(S.play)stop();else play()};
   el.querySelector('[data-dng="spin"]').onclick=()=>setSpin(!spinOn());
-  el.querySelector('[data-dng="nudge"]').onclick=()=>setSpin(true);}
+  el.querySelector('[data-dng="nudge"]').onclick=()=>setSpin(true);
+  const sv=el.querySelector('[data-dng="speed"]');sv.value=speedToPos(S.speed);sv.addEventListener("input",()=>{S.speed=posToSpeed(+sv.value);ui(true)});}
  if(!el._spacer){el._spacer=document.createElement("div");el._spacer.className="gf-dng-spacer"}
  if(el._spacer.previousElementSibling!==host)host.after(el._spacer);if(el.previousElementSibling!==el._spacer)el._spacer.after(el);dragWire(el);return el}
 /* the panel is a legend: in its place under the globe when that is on screen; otherwise it floats at the bottom of the
@@ -271,12 +273,20 @@ function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)re
  const sp=spinOn(),sb=el.querySelector('[data-dng="spin"]');sb.classList.toggle("on",sp);sb.setAttribute("aria-pressed",String(sp));
  el.querySelector(".gf-dng-mode").textContent=modeName();
  const n=el.querySelector('[data-dng="nudge"]');n.hidden=!(S.play&&!sp);
+ const sr=el.querySelector(".gf-dng-speedrow");sr.hidden=!S.play;el.querySelector(".gf-dng-speedtxt").textContent=speedTxt(S.speed);
+ const sv=el.querySelector('[data-dng="speed"]');if(!fromSlider||document.activeElement!==sv)sv.value=speedToPos(S.speed);
  try{const b=amGlobe&&amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.classList.toggle("gf-spin-nudge",S.on&&S.play&&!sp)}catch(e){}}
 /* play: the clock runs at the globe's spin speed. The spin turns the globe SPIN_BASE degrees a second; Play moves the Sun
    round at the same rate (360° = 24 h), so with both on the day/night line stays still on screen while Earth turns under it.
    Spin itself is untouched; on this map only, it no longer slows down as you zoom in. */
-const SPIN_BASE=(typeof GFS!=="undefined"&&GFS.degPerS)||6;S.speed=SPIN_BASE/360*86400;
-(function zoomSpin(){try{if(typeof GFS!=="undefined"){const want=S.on&&typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._flat?SPIN_BASE*Math.max(1,amGlobe.zoom):SPIN_BASE;if(GFS.degPerS!==want)GFS.degPerS=want}}catch(e){}requestAnimationFrame(zoomSpin)})();
+const SPIN_BASE=(typeof GFS!=="undefined"&&GFS.degPerS)||6;
+/* while playing, the spin speeds up to the Play speed (default 1 hour a second: a day in 24 s, 15° a second); the Speed
+   slider (log scale, 5 minutes to 6 hours a second) sets both. Not playing, the spin is the globe's usual one. */
+const SP_MIN=300,SP_MAX=21600;S.speed=3600;
+const posToSpeed=v=>SP_MIN*Math.pow(SP_MAX/SP_MIN,v/1000),speedToPos=sp=>Math.round(1000*Math.log(sp/SP_MIN)/Math.log(SP_MAX/SP_MIN));
+const speedTxt=sp=>{const d=86400/sp,per=sp>=3600?(Math.round(sp/360)/10)+" h":Math.round(sp/60)+" min";return per+" a second · a day in "+(d>=60?(Math.round(d/6)/10)+" min":Math.round(d)+" s")};
+(function zoomSpin(){try{if(typeof GFS!=="undefined"){const lit=S.on&&typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._flat;
+  const want=lit?(S.play?S.speed*360/86400:SPIN_BASE)*Math.max(1,amGlobe.zoom):SPIN_BASE;if(GFS.degPerS!==want)GFS.degPerS=want}}catch(e){}requestAnimationFrame(zoomSpin)})();
 
 function play(){let last=performance.now(),r0=null;const step=now=>{if(!S.play)return;const dt=Math.min(200,now-last);last=now;
   /* while the globe is spinning, the Sun moves by exactly the angle the spin turned it this frame (the same source, so the
@@ -393,6 +403,10 @@ body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.2
 .gf-dng-nudge{ display:block; width:100%; text-align:left; margin:2px 0 4px; border:1px dashed rgba(47,143,107,.7); background:rgba(47,143,107,.12); color:inherit; border-radius:10px; padding:6px 10px; font:600 12px system-ui,sans-serif; cursor:pointer; animation:gfNudge 2.2s ease-in-out infinite; }
 .gf-dng-nudge:hover{ background:rgba(47,143,107,.24); }
 .gf-dng-nudge[hidden]{ display:none; }
+.gf-dng-speedrow[hidden]{ display:none; } .gf-dng-speedrow{ flex-wrap:wrap; row-gap:0; animation:gfPop .25s ease-out; }
+.gf-dng-speedrow .gf-dng-speedtxt{ flex-basis:100%; font-style:normal; font-size:11.5px; opacity:.75; text-align:right; margin:-2px 0 0; }
+.gf-dng-speedrow input{ accent-color:#ff8a2a; }
+@keyframes gfPop{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
 @keyframes gfNudge{ 0%,100%{ border-color:rgba(47,143,107,.5); } 50%{ border-color:rgba(47,200,140,1); } }
 .globe-btns [data-g="spin"].gf-spin-nudge{ animation:gfSpinNudge 1.8s ease-in-out infinite; }
 @keyframes gfSpinNudge{ 0%,100%{ box-shadow:0 0 0 0 rgba(47,200,140,.6); } 50%{ box-shadow:0 0 0 7px rgba(47,200,140,0); } }
