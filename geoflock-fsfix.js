@@ -61,7 +61,7 @@ body.gf-fs.gfx-sky .gfx-arr.l{ background:linear-gradient(270deg,rgba(3,6,15,0),
 body:not(.sky-night) .globe-stage.gf-sky::before{
  -webkit-mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-rs,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-rs,200px) * .32), #000 calc(var(--gf-rs,200px) * 1.0), transparent calc(var(--gf-rs,200px) * 1.16));
  mask-image:radial-gradient(circle at calc(var(--gf-cx,400px) + var(--gf-rs,200px) * .32) calc(var(--gf-cy,400px) + var(--gf-rs,200px) * .32), #000 calc(var(--gf-rs,200px) * 1.0), transparent calc(var(--gf-rs,200px) * 1.16)); }
-body:not(.sky-night):not(.gf-fs) #allMapsView.sat-on.globe-on .all-maps-controls .switch-label{ background:rgba(255,255,255,.82); border-radius:6px; padding:1px 5px; }
+/* (the switch names keep the same look as on the other maps: no backing) */
 /* 9. dark theme: dim labels */
 body.sky-night .hist-era{ color:#aeb9dc !important; opacity:1 !important; }
 body.sky-night .hist-era.on{ color:#ffd98a !important; }

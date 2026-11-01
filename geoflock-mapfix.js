@@ -626,11 +626,31 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
    the tabs sit in the controls row or on the map, so they never push it down. Other scripts set the top margin inline
    (22 px with tabs, -48 px with tabs on the globe), so it is set here inline too, and again whenever that changes. */
 (function(){const GAP=78;let obs=null,cur=null;
+ const secondRowTop=()=>{const tops=[...document.querySelectorAll("#allMapsView .all-maps-label-controls .switch")].filter(e=>e.offsetParent).map(e=>Math.round(e.getBoundingClientRect().top));const u=[...new Set(tops)].sort((a,b)=>a-b);return u.length>1?u[1]:null};
+ {const st=document.createElement("style");st.textContent=`
+#allMapsView{ --gf-up:0px; }
+#allMapsView.globe-on .all-maps-label-controls{ position:relative; z-index:6; }
+`;document.head.appendChild(st)}
  /* the map's top: a fixed distance below the row of map buttons (Relief Map … Deep Time), whatever is in between */
  function fix(){try{if(appMode!=="allmaps")return;const row=document.getElementById("allMapsToggleRow");
   ["amGlobeHost","allMapsWrap"].forEach(id=>{const h=document.getElementById(id);if(!h||!h.offsetParent)return;
    let MT=10;if(row&&row.offsetParent&&id==="amGlobeHost"){const now=parseFloat(h.style.getPropertyValue("margin-top"))||parseFloat(getComputedStyle(h).marginTop)||0;
-     const d=Math.round(row.getBoundingClientRect().bottom+GAP-h.getBoundingClientRect().top);MT=Math.abs(d)<=1?now:Math.max(-80,Math.min(60,now+d))}
+     let want=row.getBoundingClientRect().bottom+GAP;
+     /* the globe sits higher: the top of the ball just above the second row of switches (its tour button, sub-map chips
+        and round buttons are moved back down by the same amount, so they stay where they were) */
+     const g=typeof amGlobe!=="undefined"&&amGlobe;let up=0;
+     if(g&&g.host===h&&!g._flat&&typeof amGlobeOn==="function"&&amGlobeOn()){const r2=secondRowTop();if(r2!=null){const pr=g.projection(),c=g.canvas.getBoundingClientRect(),sTop=c.top+pr.translate()[1]-pr.scale(),off=sTop-h.getBoundingClientRect().top;
+       up=Math.max(0,Math.round(want-(r2-12-off)));want-=up}}
+     const d=Math.round(want-h.getBoundingClientRect().top);MT=Math.abs(d)<=1?now:Math.max(-160,Math.min(60,now+d));
+     /* the tour button and the round buttons sit where they do on the flat map (12 and 60 px below the map's usual top) */
+     const std=row.getBoundingClientRect().bottom+GAP;[h.querySelector(":scope > .ps-launcher, :scope > .ps-launch"),h.querySelector(".globe-btns")].forEach(el=>{if(!el||!el.offsetParent)return;
+      const mt=parseFloat(el.style.getPropertyValue("margin-top"))||0,base=el.classList.contains("globe-btns")?60:12;
+      const goal=up?std+base:null;if(goal==null){if(mt)el.style.removeProperty("margin-top");return}
+      const dd=Math.round(goal-el.getBoundingClientRect().top);if(Math.abs(dd)>1)el.style.setProperty("margin-top",(mt+dd)+"px","important")});
+     /* the globe's sub-map chips: just under the tour button, as before */
+     {const sb=document.getElementById("amGlobeSubs"),L=h.querySelector(":scope > .ps-launcher, :scope > .ps-launch");if(sb){const mt=parseFloat(sb.style.getPropertyValue("margin-top"))||0;
+       if(!up||!sb.offsetParent||!sb.children.length){if(mt)sb.style.removeProperty("margin-top")}
+       else{const goal=(L&&L.offsetParent?L.getBoundingClientRect().bottom:std+12)+10,dd=Math.round(goal-sb.getBoundingClientRect().top);if(Math.abs(dd)>1)sb.style.setProperty("margin-top",(mt+dd)+"px","important")}}}}
    if(h.style.getPropertyValue("margin-top")!==MT+"px"||h.style.getPropertyPriority("margin-top")!=="important")h.style.setProperty("margin-top",MT+"px","important")});
   const h=document.getElementById("amGlobeHost");if(h&&h!==cur){cur=h;if(obs)obs.disconnect();obs=new MutationObserver(()=>fix());obs.observe(h,{attributes:true,attributeFilter:["style"]})}}catch(e){}}
  setInterval(fix,300);document.addEventListener("click",()=>setTimeout(fix,0),true)})();
