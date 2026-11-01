@@ -837,7 +837,7 @@ function elevStats(r){const X=window.gfCrossSection;if(!X)return null;let x0=1e9
  if(!sw)return null;return{avg:sum/sw,hi,lo,hiAt,loAt}}
 const fmtM=m=>Math.round(m).toLocaleString()+" m";
 const popMode=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="population"}catch(e){return false}};
-function labelShape(s){if(!s||!s.p||s.p.length<2)return;
+function labelShape(s){if(!s||!s.p||s.p.length<2)return;if(s.cty){if(s.lab){delete s.lab;delete s.at}return}
  if(closedOf(s)){const pm=popMode(),em=elevMode(),key=s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length>>1]+"|"+(pm?"P":"")+(em?"E":"");if(s._lk===key&&s.lab===s._lv)return;const o=ringOf(s.p);if(!o)return;
   let lab=fmtKm2(o.A*KM*KM);
   if(pm&&window.gfPopCount){if(s._pk===key&&s._pp!=null)lab+=" · "+fmtPpl(s._pp);else{const k0=key;gfPopCount.load().then(()=>{const c=gfPopCount.count([o.r]);if(c){s._pk=k0;s._pp=c.tot;s._lk=null;render()}}).catch(()=>{})}}
@@ -1120,5 +1120,5 @@ setInterval(()=>{try{const t=S.tray;if(!t||!t.isConnected)return;let b=t.querySe
   b.onclick=()=>{if(!K().ink.length)return;if(!confirm("Clear all your drawings and shapes from the map?"))return;hist();K().ink=[];GEO.sel=-1;GEO.sels=[];save();render();geoList();toast("Drawings cleared. Undo in the Geometry set brings them back")};t.appendChild(b)}}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=`.gfk-clearall{position:absolute;left:148px;top:2px;z-index:2;border:1px solid rgba(0,0,0,.12);background:rgba(255,250,240,.95);color:#8a2a1a;border-radius:999px;padding:3px 10px;font:700 11.5px system-ui;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18);white-space:nowrap}.gfk-clearall:hover{background:#fff}.gfk-tray.closed .gfk-clearall{left:132px}body.dark-theme .gfk-clearall,body.sky-night .gfk-clearall{background:#1d2638;color:#ff9a8f;border-color:#3a4a66}`;document.head.appendChild(st)}
 /* for the details card (geoflock-shapeinfo.js) */
-Object.assign(window.gfToolkit,{GEO,keep,ringOf,elevStats,fmtKm2,fmtPpl,fmtM,kmTxt,closedOf,fillRing,hav,KM,cities,geoSelect,selList});
+Object.assign(window.gfToolkit,{GEO,keep,ringAt,polyFrom,ringOf,elevStats,fmtKm2,fmtPpl,fmtM,kmTxt,closedOf,fillRing,hav,KM,cities,geoSelect,selList});
 })();
