@@ -80,7 +80,7 @@ const TW={
  zebra:"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#E1E8ED\" d=\"M23.283 23.275s1.374 1.635 2.733 10.047c.143.883.201 1.775.217 2.678H36V7.448C31.613 3.975 25.601 3.259 18.322 5.69c0 0-5.408-3-6.147-3.739-.719-.72-1.857-1.556-1.235.35.364 1.112.764 2.373 2.358 4.862-3.436 2.036-4.513 4.68-8.558 13.341C1.652 27.12.08 29.269.937 31.797c1.13 3.337 5.316 5.595 8.844 3.021 1.919-1.4 2.246-3.913 6.225-6.223 3.653-.065 7.277-1.604 7.277-5.32z\"/><path fill=\"#292F33\" d=\"M36 6.012C27.665.301 14.354 1.473 15.909 6.19 25.51 4.328 31.77 7.731 36 13.358V6.012z\"/><path fill=\"#292F33\" d=\"M19.663 5.763c-2.878.233-7.28 1.765-9.42 4.137 0 0-.005-5.317 3.689-5.784 6.172-.779 5.809.363 5.809.363l-.078 1.284z\"/><path fill=\"#E1E8ED\" d=\"M16.357 1.056c.558 1.155 4.006 1.79 5.056 6.029 1.051 4.24-3.134 2.951-4.356.855-1.361-2.334-1.828-4.162-1.867-5.679-.021-.801.039-3.538 1.167-1.205z\"/><path fill=\"#66757F\" d=\"M16.596 2.838c1.103.968 2.448 2.472 2.65 3.955.202 1.483-1.125.988-1.736-.372-.612-1.359-.753-2.779-1.134-3.233-.38-.454.22-.35.22-.35z\"/><path fill=\"#292F33\" d=\"M16.94 15.525c0 .687-.557 1.244-1.245 1.244-.687 0-1.244-.557-1.244-1.244 0-.688.557-1.245 1.244-1.245.688.001 1.245.558 1.245 1.245z\"/><path fill=\"#E1E8ED\" d=\"M10.354 9.924c-.033-.017-.075-.014-.111-.024-1.543 2.033-2.92 5.102-5.49 10.604-1.356 2.903-2.42 4.946-3.116 6.538 1.628.226 3.285-1.442 3.945-3.271.673-1.866 3.215-5.652 4.927-7.778 1.712-2.127 1.561-5.144-.155-6.069z\"/><path fill=\"#292F33\" d=\"M28.188 6.312s-2.296 6.947-2.302 8.947c-.011 3.803-2.687 7.801-2.687 7.801l1.342 3.422s3.25-3.04 3.938-10.228c.571-5.973 2.566-7.667 2.566-7.667l-2.857-2.275zm5.874 3.126S31.056 13.073 30 19c-1.438 8.062-4.857 9.746-4.857 9.746l.482 2.441s5.281-3.056 6.632-9.115C33.875 14.812 36 13.358 36 13.358l-1.938-3.92zm-30.812 14c.688-.714 3.017 3.808 4.53 4.884 1.589 1.13 5.469.935 5.701 2.162-1.668 1.704-2.763 4.273-4.84 4.988-2.078.716-5.71.677-7.238-2.647-1.528-3.325-.403-4.7.222-6.137s1.458-2.938 1.625-3.25z\"/><path fill=\"#66757F\" d=\"M4.222 29.917c0 .881-.532 1.594-1.187 1.594s-1.187-.713-1.187-1.594c0-.882.532-1.596 1.187-1.596s1.187.714 1.187 1.596z\"/><path fill=\"#292F33\" d=\"M25.954 32.945s4.608-1.57 6.108-3.383S36 24 36 24v6.375S34.812 32 32.312 33.313c-1.586.832-6.092 2.251-6.092 2.251l-.266-2.619zM25.01 6.08S24.063 9 23.813 12s-1.125 4.875-1.938 6.188c.312-4.25-.688-5.875-.125-8.125s.87-4.32.87-4.32.63-.368 1.255-.305 1.135.642 1.135.642zM4.753 20.504s3.934-.379 5.747.871 5.332 7.323 5.332 7.323l-1.134.753s-1.697-4.639-4.76-6.076-6-1.188-6-1.188l.815-1.683z\"/><path fill=\"#292F33\" d=\"M5.605 18.678s5.516-.358 6.958 1.509c2.75 3.562 3.831 5.01 4.447 8.349l1.785-.307c-.794-2.917-2.607-8.104-5.919-10.292s-6.25-1.688-6.25-1.688l-1.021 2.429zm12.27-5.99c-.625.688 2 3.312 1.125 5.5s-.375 5.25.125 6.625 1.26 2.839 1.26 2.839l1.622-1.146S21.75 25 21 22.813s-.688-2.25-.375-4.438S18.5 12 17.875 12.688zm-2.83-5.859s1.142 2.046 1.08 3.046-.062 2.688-.625 3.062-.812-2-1.188-3.062-1.064-2.258-1.064-2.258 1.469-1.428 1.797-.788zm-3.544 1.79s1.793 1.398 1.73 2.398 1.144 2.607.581 2.982-1.938-1.25-2.312-2.312S10.243 9.9 10.243 9.9s.929-1.921 1.258-1.281zm-2.563 3.193s1.522.981 1.938 1.75c.415.768 2.11 1.387 1.938 1.875-.173.488-1.977-.098-2.688-.75-.711-.652-2.345-.579-2.345-.579l1.157-2.296z\"/></svg>"
 };
 /* new photos (Wikimedia Commons): key → file name, and their credits */
-const NEW={muskox:"Muskox (Ovibos moschatus) male Dovrefjell 4.jpg",amurtiger:"P.t.altaica Tomak Male.jpg",brownbear:"2010-kodiak-bear-1.jpg",reddeer:"Cervus elaphus Luc Viatour 6.jpg",bison:"American bison k5680-1.jpg",rhea:"Nandu Rhea americana Tierpark Hellabrunn-1.jpg",iblynx:"Lince ibérico (Lynx pardinus), Almuradiel, Ciudad Real, España, 2021-12-19, DD 07.jpg",quokka:"Setonix brachyurus on Rottnest Island 1.jpg",sugarbird:"Cape Sugarbird (Promerops cafer).jpg",fennec:"Fennec Fox Vulpes zerda.jpg",oryx:"Arabian oryx (oryx leucoryx).jpg",lion:"020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg",hyacinth:"008 Hyacinth macaw couple kissing under Pink Ipê tree in Encontro das Águas State Park Photo by Giles Laurent.jpg",jabiru:"002 Jabiru feeding its babies in their nest in Encontro das Águas State Park Photo by Giles Laurent.jpg",caiman:"Yacare Caiman (Caiman Yacare) - Flickr - berniedup.jpg",seaotter:"Sea Otter (Enhydra lutris) (25169790524) crop.jpg",tubeworm:"Campagne HOT - Vers géants (Riftia pachyptila) (Ifremer 00530-64223 - 52381).jpg",bluewhale:"Anim1754 - Flickr - NOAA Photo Library.jpg",adelie:"Hope Bay-2016-Trinity Peninsula–Adélie penguin (Pygoscelis adeliae) 04.jpg",przewalski:"Przewalskis horse 02.jpg",cheetah:"Male cheetah facing left in South Africa.jpg",nilecroc:"NileCrocodile.jpg",furseal:"Arctocephalus pusillus - SE Tasmania.jpg",humboldt:"Humboldt Penguin, Chiloé, CL-LL, CL imported from iNaturalist photo 384752139.jpg",crabeater:"Lobodon carcinophagus on sea ice (cropped).jpg",sargfish:"Histrio histrio.jpg",spiritbear:"Spiritbear.jpg",baldeagle:"Bald eagle about to fly in Alaska (2016).jpg",saltie:"SaltwaterCrocodile('Maximo').jpg",dumbo:"Dumbo-hires (cropped).jpg",yeti:"Yeti crab.jpg",lynx:"Lynx Nationalpark Bayerischer Wald 01.jpg"};
+const NEW={muskox:"Muskox (Ovibos moschatus) male Dovrefjell 4.jpg",amurtiger:"P.t.altaica Tomak Male.jpg",brownbear:"2010-kodiak-bear-1.jpg",reddeer:"Cervus elaphus Luc Viatour 6.jpg",bison:"American bison k5680-1.jpg",rhea:"Nandu Rhea americana Tierpark Hellabrunn-1.jpg",iblynx:"Lince ibérico (Lynx pardinus), Almuradiel, Ciudad Real, España, 2021-12-19, DD 07.jpg",quokka:"Setonix brachyurus on Rottnest Island 1.jpg",sugarbird:"Cape Sugarbird (Promerops cafer).jpg",fennec:"Fennec Fox Vulpes zerda.jpg",oryx:"Arabian oryx (oryx leucoryx).jpg",lion:"020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg",hyacinth:"008 Hyacinth macaw couple kissing under Pink Ipê tree in Encontro das Águas State Park Photo by Giles Laurent.jpg",jabiru:"002 Jabiru feeding its babies in their nest in Encontro das Águas State Park Photo by Giles Laurent.jpg",caiman:"Yacare Caiman (Caiman Yacare) - Flickr - berniedup.jpg",seaotter:"Sea Otter (Enhydra lutris) (25169790524) crop.jpg",tubeworm:"Campagne HOT - Vers géants (Riftia pachyptila) (Ifremer 00530-64223 - 52381).jpg",bluewhale:"Anim1754 - Flickr - NOAA Photo Library.jpg",adelie:"Hope Bay-2016-Trinity Peninsula–Adélie penguin (Pygoscelis adeliae) 04.jpg",przewalski:"Przewalskis horse 02.jpg",cheetah:"Male cheetah facing left in South Africa.jpg",nilecroc:"NileCrocodile.jpg",furseal:"Arctocephalus pusillus - SE Tasmania.jpg",humboldt:"Humboldt Penguin, Chiloé, CL-LL, CL imported from iNaturalist photo 384752139.jpg",crabeater:"Lobodon carcinophagus on sea ice (cropped).jpg",sargfish:"Histrio histrio.jpg",spiritbear:"Spiritbear.jpg",baldeagle:"Bald eagle about to fly in Alaska (2016).jpg",saltie:"SaltwaterCrocodile('Maximo').jpg",dumbo:"Dumbo-hires (cropped).jpg",yeti:"Yeti crab.jpg",lynx:"Lynx Nationalpark Bayerischer Wald 01.jpg",weddell:"Mikkelsen Harbour-2016-Trinity Island (D'Hainaut Island)–Weddell seal (Leptonychotes weddellii) 03.jpg",casealion:"California Sea Lion, Monterey, California, United States imported from iNaturalist photo 203598492.jpg",eel:"Anguilla anguilla.jpg",relk:"Roosevelt Elk at Northwest Trek.jpg",urchin:"Urchin (9398869414).jpg",deepjelly:"Atolla wyvillei (Operation Deep Scope 2004).jpg",ventshrimp:"Rimicaris exoculata (MNHN-IU-2014-22822).jpeg",chital:"066 Chital in Ranthambore National Park Photo by Giles Laurent.jpg"};
 window.GF_WILD_PHOTOS=[
 {"f": "Muskox (Ovibos moschatus) male Dovrefjell 4.jpg", "d": "photos/x9d560a23ab2c3df5.webp", "by": "Charles J. Sharp", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Muskox_%28Ovibos_moschatus%29_male_Dovrefjell_4.jpg"},
 {"f": "P.t.altaica Tomak Male.jpg", "d": "photos/xefbb3c875808ca73.webp", "by": "Appaloosa", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:P.t.altaica_Tomak_Male.jpg"},
@@ -113,7 +113,15 @@ window.GF_WILD_PHOTOS=[
 {"f": "SaltwaterCrocodile('Maximo').jpg", "d": "photos/x43904437a2f297a5.webp", "by": "Molly Ebersold, St. Augustine Alligator Farm", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:SaltwaterCrocodile%28%27Maximo%27%29.jpg"},
 {"f": "Dumbo-hires (cropped).jpg", "d": "photos/x6332d96e60c2cfaa.webp", "by": "NOAA Okeanos Explorer", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Dumbo-hires_%28cropped%29.jpg"},
 {"f": "Yeti crab.jpg", "d": "photos/x52840197c9704d93.webp", "by": "Andrew Thurber, Oregon State University", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:Yeti_crab.jpg"},
-{"f": "Lynx Nationalpark Bayerischer Wald 01.jpg", "d": "photos/xb5a26eb2e2b250d7.webp", "by": "Aconcagua ( talk )", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Lynx_Nationalpark_Bayerischer_Wald_01.jpg"}
+{"f": "Lynx Nationalpark Bayerischer Wald 01.jpg", "d": "photos/xb5a26eb2e2b250d7.webp", "by": "Aconcagua", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Lynx_Nationalpark_Bayerischer_Wald_01.jpg"},
+{"f": "Mikkelsen Harbour-2016-Trinity Island (D'Hainaut Island)–Weddell seal (Leptonychotes weddellii) 03.jpg", "d": "photos/x9991a98b18e136e8.webp", "by": "Godot13", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Mikkelsen_Harbour-2016-Trinity_Island_%28D%27Hainaut_Island%29%E2%80%93Weddell_seal_%28Leptonychotes_weddellii%29_03.jpg"},
+{"f": "California Sea Lion, Monterey, California, United States imported from iNaturalist photo 203598492.jpg", "d": "photos/x61b08b43ed15f35c.webp", "by": "Jonathan Eisen", "lic": "CC BY 4.0", "page": "https://commons.wikimedia.org/wiki/File:California_Sea_Lion%2C_Monterey%2C_California%2C_United_States_imported_from_iNaturalist_photo_203598492.jpg"},
+{"f": "Anguilla anguilla.jpg", "d": "photos/xa6cd8de9941ca36b.webp", "by": "GerardM", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Anguilla_anguilla.jpg"},
+{"f": "Roosevelt Elk at Northwest Trek.jpg", "d": "photos/xda20c3795f0fc6d4.webp", "by": "pnwnature", "lic": "CC BY 3.0", "page": "https://commons.wikimedia.org/wiki/File:Roosevelt_Elk_at_Northwest_Trek.jpg"},
+{"f": "Urchin (9398869414).jpg", "d": "photos/x780b57bdd44da4b0.webp", "by": "Ed Bierman", "lic": "CC BY 2.0", "page": "https://commons.wikimedia.org/wiki/File:Urchin_%289398869414%29.jpg"},
+{"f": "Atolla wyvillei (Operation Deep Scope 2004).jpg", "d": "photos/x6ff4663183867a7e.webp", "by": "NOAA Ocean Explorer from USA", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:Atolla_wyvillei_%28Operation_Deep_Scope_2004%29.jpg"},
+{"f": "Rimicaris exoculata (MNHN-IU-2014-22822).jpeg", "d": "photos/x90dee6248363f975.webp", "by": "Laura Flamme", "lic": "CC BY 4.0", "page": "https://commons.wikimedia.org/wiki/File:Rimicaris_exoculata_%28MNHN-IU-2014-22822%29.jpeg"},
+{"f": "066 Chital in Ranthambore National Park Photo by Giles Laurent.jpg", "d": "photos/x61a1aaadfd1add2d.webp", "by": "Giles Laurent", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:066_Chital_in_Ranthambore_National_Park_Photo_by_Giles_Laurent.jpg"}
 ];
 /* tour|stop → p: photo pins [label, [lon,lat], library file or @new], s: symbols [animal, [lon,lat], name] */
 const PLAN={
@@ -142,8 +150,8 @@ const PLAN={
 "biomes|Temperate forest":{p:[
   ["Red deer",[24.6,47.6],"@reddeer"],
   ["Brown bear",[25.4,45.6],"@brownbear"]],
- s:[["owl",[-1.4,51.8],"Tawny owl"],["boar",[6.4,50.3],"Wild boar"],["wolf",[22.4,49.3],"Grey wolf"],
-  ["deer",[12.8,48.9],"Roe deer"],["squirrel",[2.7,48.4],"Red squirrel"],["fox",[-2.4,52.6],"Red fox"],["beaver",[28,53.4],"Eurasian beaver"]]},
+ s:[["owl",[26,50.6],"Tawny owl"],["boar",[17.6,48.6],"Wild boar"],["wolf",[22.4,49.3],"Grey wolf"],
+  ["deer",[12.8,48.9],"Roe deer"],["squirrel",[31,55.6],"Red squirrel"],["fox",[36.5,53.6],"Red fox"],["beaver",[28,53.4],"Eurasian beaver"],["owl",[-1.4,51.8],"Tawny owl"]]},
 "biomes|Grasslands: steppe, prairie and pampas":{p:[
   ["American bison",[-96.4,37.2],"@bison"],
   ["Saiga",[51,49.2],"Saiga antelope at the Stepnoi Sanctuary.jpg"],
@@ -173,9 +181,9 @@ const PLAN={
  s:[["snake",[-57.6,-20.7],"Yellow anaconda"],["otter",[-56.6,-15.9],"Giant otter"],["monkey",[-55.6,-20.6],"Black howler monkey"],
   ["deer",[-55.2,-18.6],"Marsh deer"],["fish",[-58.9,-19.4],"Piranha"]]},
 "biomes|Tropical rainforest":{p:[
-  ["Three-toed sloth",[-66,-6],"Three-toed sloth mother and baby.jpg"],
+  ["Western gorilla",[13.2,1.6],"Western gorilla.jpg"],
   ["Bornean orangutan",[113,-1.0],"Bornean orangutan.jpg"]],
- s:[["gorilla",[15.5,0.8],"Western gorilla"],["elephant",[22,-2.8],"Forest elephant"],["parrot",[-70,-3.6],"Scarlet macaw"],
+ s:[["sloth",[-66,-6],"Three-toed sloth"],["elephant",[102.6,4.6],"Asian elephant"],["elephant",[22,-2.8],"Forest elephant"],["parrot",[-70,-3.6],"Scarlet macaw"],
   ["leopard",[-56,-8.5],"Jaguar"],["tiger",[101.6,-1.6],"Sumatran tiger"],["bird",[143.5,-6],"Bird-of-paradise"],["monkey",[-75,-8],"Spider monkey"],["frog",[11,4.6],"Goliath frog"]]},
 /* ---- Forests ---- */
 "forests|The taiga: the biggest forest":{p:[
@@ -224,7 +232,6 @@ const PLAN={
   ["dolphin",[119.4,-8.5],"Spinner dolphin"],["coral",[150.5,-10.5],"Coral"],["jelly",[134.4,7.16],"Golden jellyfish"]]},
 "ocean|Kelp forests":{p:[
   ["Sea otter",[-121.9,36.6],"@seaotter"],
-  ["Garibaldi",[-118.4,33.4],"@garibaldi"],
   ["Purple sea urchin",[-123.8,39.3],"@urchin"],
   ["Brown fur seal",[18.3,-34.1],"@furseal"]],
  s:[["otter",[-152,59.4],"Sea otter"],["fish",[-124.3,44.6],"Rockfish"],["seal",[-73.8,-41.8],"South American sea lion"],
@@ -236,10 +243,11 @@ const PLAN={
   ["jelly",[130.5,10],"Comb jelly"],["shrimp",[148.5,8],"Deep-sea shrimp"],["fish",[152,26],"Lanternfish"]]},
 "ocean|Life without sunlight":{p:[
   ["Giant tubeworms",[-86.2,0.6],"@tubeworm"],
-  ["Vent shrimp",[-44.9,23.4],"@ventshrimp"],
+  ["Vent shrimp",[-44.83,26.13],"@ventshrimp"],
   ["Yeti crab",[-84.6,8.8],"@yeti"]],
  s:[["worm",[-104.3,9.8],"Pompeii worm"],["crab",[-104.0,13.0],"Vent crab"],["octopus",[-108.8,19.0],"Vent octopus"],
-  ["fish",[-129.4,47.9],"Eelpout"],["snail",[70.0,-25.3],"Scaly-foot snail"],["shrimp",[-33.2,37.2],"Vent shrimp"]]},
+  ["fish",[-129.4,47.9],"Eelpout"],["snail",[70.0,-25.3],"Scaly-foot snail"],["shrimp",[-33.2,37.2],"Vent shrimp"],
+  ["crab",[143.7,18.2],"Vent crab"],["shrimp",[126.9,27.6],"Vent shrimp"],["snail",[151.7,-3.7],"Vent snail"],["crab",[-30,-57.5],"Yeti crab"],["shrimp",[-81.7,18.4],"Vent shrimp"]]},
 "ocean|Krill and the polar seas":{p:[
   ["Antarctic krill",[-42,-58.6],"Antarctic krill (Euphausia superba).jpg"],
   ["Blue whale",[-30,-55.5],"@bluewhale"],
@@ -257,8 +265,9 @@ const PLAN={
   ["Humboldt penguin",[-76.3,-13.8],"@humboldt"],
   ["Brown fur seal",[13.95,-21.8],"@furseal"],
   ["California sea lion",[-120.4,34.0],"@casealion"]],
- s:[["whale",[-124,37.4],"Blue whale"],["bird",[-80.6,-7.4],"Peruvian booby"],["dolphin",[-17.6,20.6],"Common dolphin"],
-  ["penguin",[15.1,-26.7],"African penguin"],["fish",[-17.9,13.5],"Sardinella"],["fish",[-79.5,-10.5],"Anchoveta"]]},
+ s:[["whale",[-124,37.4],"Blue whale"],["bird",[-80.6,-7.4],"Peruvian booby"],["dolphin",[-18.6,18.6],"Common dolphin"],
+  ["penguin",[15.1,-26.7],"African penguin"],["fish",[-17.9,13.5],"Sardinella"],["fish",[-79.5,-10.5],"Anchoveta"],
+  ["bird",[18.0,-32.1],"Cape gannet"],["octopus",[-16.6,23.6],"Common octopus"],["seal",[-17.2,21.2],"Monk seal"]]},
 /* ---- Island life ---- */
 "islandlife|The Galápagos":{p:[
   ["Marine iguana",[-90.16,-0.58],"Marine iguana, Plaza island, July 13, 2025.jpg"]],
@@ -382,20 +391,25 @@ function watch(){try{const box=typeof psContainer==="function"&&psContainer();if
 function outer(){if(typeof psSqPhoto!=="function"||psSqPhoto._gfWild)return;const _p=psSqPhoto;
  const g=function(q){try{if(q&&q._gfWild&&q._gfImg!=null){const P=PS_PHOTO_DATA[q._gfImg];if(P&&P.d&&P.f===q._gfF)return P}}catch(e){}return _p.apply(this,arguments)};
  for(const k in _p)try{g[k]=_p[k]}catch(e){}g._gfWild=1;psSqPhoto=g;try{window.psSqPhoto=g}catch(e){}}
+/* the shared enrichment gives a stop its own photo pins once (after load, or on psGo) and gives fewer to a stop that already
+   has some: ours come after it, so the stop keeps every pin it would have had */
+function enriched(id,S){try{if(S._enr||typeof psEnrich!=="function")return true;let skip=false;try{skip=PS_ENR_SKIP.has(id)}catch(e){}if(skip)return true;
+ const st=PS_TOURS[id].steps,i=st.indexOf(S);if(i<=0||i>=st.length-1)return true;
+ if(typeof ps!=="undefined"&&ps&&ps.tour===id){psEnrich(id,S,i,st.length);return true}return false}catch(e){return true}}
 function cardOf(id,S){try{if(typeof ps!=="undefined"&&ps&&ps.tour===id&&typeof psPhotoFor==="function"){const P=psPhotoFor(S);return P&&P.f||null}}catch(e){}return null}
 /* some tours put back their own list of photo pins as each stop is drawn (geoflock-tours-living.js): ours are added again
    just before the photo pins are drawn */
 function hookSync(){if(typeof psPhPinsSync!=="function"||psPhPinsSync._gfWild)return;const _s=psPhPinsSync;
- const g=function(){try{if(typeof ps!=="undefined"&&ps&&ps.tour!=="geo"){const S=psSteps()[ps.i];if(S&&PLAN[ps.tour+"|"+strip(S.title)])photos(ps.tour,S,cardOf(ps.tour,S))}}catch(e){}
+ const g=function(){try{if(typeof ps!=="undefined"&&ps&&ps.tour!=="geo"){const S=psSteps()[ps.i];if(S&&PLAN[ps.tour+"|"+strip(S.title)]&&enriched(ps.tour,S))photos(ps.tour,S,cardOf(ps.tour,S))}}catch(e){}
   return _s.apply(this,arguments)};
  for(const k in _s)try{g[k]=_s[k]}catch(e){}g._gfWild=1;psPhPinsSync=g;try{window.psPhPinsSync=g}catch(e){}}
 function all(){if(typeof PS_TOURS==="undefined"||typeof PS_PHOTO_DATA==="undefined")return;merge();outer();
  for(const key in PLAN){const i=key.indexOf("|"),id=key.slice(0,i),title=key.slice(i+1);if(id==="geo")continue;const S=stopOf(id,title);if(!S)continue;
-  try{photos(id,S,null);symbols(id,S)}catch(e){console.error("gfwild",key,e)}}
+  try{symbols(id,S);if(enriched(id,S))photos(id,S,null)}catch(e){console.error("gfwild",key,e)}}
  hook();hookSync();watch();paint()}
 function hook(){if(typeof psGo!=="function"||psGo._gfWild)return;const _g=psGo;
  const g=function(i){try{if(typeof ps!=="undefined"&&ps&&ps.tour!=="geo"){const st=psSteps(),S=st&&st[Math.max(0,Math.min(st.length-1,i|0))];
-   if(S&&PLAN[ps.tour+"|"+strip(S.title)]){photos(ps.tour,S,cardOf(ps.tour,S));symbols(ps.tour,S)}}}catch(e){}
+   if(S&&PLAN[ps.tour+"|"+strip(S.title)]){symbols(ps.tour,S);if(enriched(ps.tour,S))photos(ps.tour,S,cardOf(ps.tour,S))}}}catch(e){}
   const r=_g.apply(this,arguments);try{watch();paint();setTimeout(paint,800);setTimeout(paint,1600)}catch(e){}return r};
  for(const k in _g)try{g[k]=_g[k]}catch(e){}g._gfWild=1;psGo=g;try{window.psGo=g}catch(e){}}
 if(!window._gfWildPoll)window._gfWildPoll=setInterval(()=>{watch();paint()},700);
