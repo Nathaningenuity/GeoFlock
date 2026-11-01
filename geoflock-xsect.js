@@ -191,6 +191,11 @@ function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cu
    3 controlled lake), area (km²), outline. Where the line crosses one, its water is drawn up to that level and named;
    where the height data has the lake bed (the Great Lakes, for one) the water is shown full depth, elsewhere the height
    data only knows the surface, and just the surface line is drawn (no invented lake bed). */
+/* the world's land depressions (below sea level, not under a lake): name, lowest point lon/lat, how far round it counts (km) */
+const DEPRESSIONS=[["Qattara Depression",27.1,29.6,260],["Faiyum Depression",30.6,29.45,50],["Danakil Depression",40.3,14.2,150],["Turpan Depression",89.3,42.6,120],["Death Valley",-116.83,36.25,80],
+ ["Caspian Depression",50,46.5,700],["Karagiye Depression",51.4,43.5,80],["Akdzhakaya Depression",57.4,40.7,120],["Lake Assal basin",42.4,11.6,40],["Laguna del Carbón",-68.4,-49.6,60],
+ ["Salton Trough",-115.8,33.2,120],["Chott Melrhir",6.3,34.2,120],["Sebkha Tah",-12.8,27.6,60],["Jordan Rift",35.5,32.2,150],["Kuttanad",76.4,9.4,40],["Netherlands polders",4.9,52.2,180],
+ ["Lammefjord",11.5,55.8,30],["Lake Eyre basin",137.3,-28.4,200]];
 let LAKES=null,lakeP=null;
 function loadLakes(){if(lakeP)return lakeP;lakeP=fetch("textures/LAKES.json").then(r=>r.ok?r.json():[]).catch(()=>[]).then(d=>{
  const dec=a=>{const r=[];let x=0,y=0;for(let i=0;i+1<a.length;i+=2){x+=a[i];y+=a[i+1];r.push([x/100,y/100])}if(r.length&&(r[0][0]!==r[r.length-1][0]||r[0][1]!==r[r.length-1][1]))r.push(r[0].slice());return r};
@@ -206,7 +211,7 @@ function lakeify(L){L.lk=null;if(!LAKES){loadLakes();return}const P=L.P;if(!P||P
  L.lk=out}
 function compute(){lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
  /* every sample, so small islands (Guadeloupe, Dominica...) on a long line are not skipped */
- for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
+ for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);L.P[i].c=c||null;if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
 /* detailed heights for a drawn line (not the rivers): AWS Terrain Tiles (Terrarium; SRTM, GMTED2010, ETOPO1 and other
    open sources), fetched only for the tiles the line crosses, at a zoom that matches the line's length */
 const TILES=new Map();let refineId=0;
@@ -224,7 +229,7 @@ async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)retu
   const v=(X,Y)=>{const tx=((Math.floor(X/256)%n)+n)%n,ty=Math.max(0,Math.min(n-1,Math.floor(Y/256))),d=T0[z+"/"+tx+"/"+ty];if(!d)return null;const i=(((Y%256)+256)%256*256+(((X%256)+256)%256))*4;return d[i]*256+d[i+1]+d[i+2]/256-32768};
   const a=v(x0,y0),b=v(x0+1,y0),c=v(x0,y0+1),d=v(x0+1,y0+1);if([a,b,c,d].some(x=>x==null))return null;return(a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy};
  const P=[];let km=0;for(let i=0;i<pts.length;i++){if(i)km+=d3.geoDistance(pts[i-1],pts[i])*R_KM;const e=at(pts[i]);P.push({km,ll:pts[i],e:e==null?elevAt(pts[i][0],pts[i][1]):Math.round(e)})}
- L.P=P;lakeify(L);L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
+ if(lines.length===1)P.forEach(p=>{p.c=countryAt(p.ll)||null});L.P=P;lakeify(L);L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
 {const _c=compute;compute=function(){const r=_c.apply(this,arguments);try{lines.forEach(L=>{if(!L.river)refine(L)})}catch(e){}return r}}
 const STOPS=[[-11000,"#0b1d4d"],[-6000,"#123a7a"],[-3000,"#1f63a8"],[-200,"#4ea6d6"],[0,"#8fd3e8"],[1,"#4f9d52"],[300,"#8fbf5a"],[800,"#d8c86d"],[1600,"#c18f4f"],[3000,"#8d5a34"],[4500,"#a7a2a0"],[6000,"#ffffff"]];
 /* ---------- rivers: one height window for every river (scroll up for the high sources), the story of each river, and a
@@ -265,12 +270,20 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
   return'<path d="M'+(x-5).toFixed(1)+','+(mt+11)+' l5,-7 l5,7z" fill="'+(col||"#8a5a2b")+'"/>'+lbl(x+(comp?-8:8),mt+11,"up to "+fmtE(mx)+(comp?"":" — scroll up to see it"),{c:col||"#5b3a17",fs:10.5})};
  if(!comp){const L=Ps[0],P=L.P,St=L.river&&STORY[L.name];
   const inLake=new Set();(L.lk||[]).forEach(k=>{for(let i=k.i;i<=k.j;i++)inLake.add(i)});
-  if(e0<0){let w="M"+X(0)+","+yz;P.forEach((p,i)=>{w+="L"+X(p.km).toFixed(1)+","+Y(inLake.has(i)?0:Math.min(0,p.e)).toFixed(1)});w+="L"+X(P[P.length-1].km)+","+yz+"Z";s+='<path d="'+w+'" fill="url(#gfxsSea)" clip-path="url(#gfxsClip)"/>'}
+  if(e0<0){let w="M"+X(0)+","+yz;P.forEach((p,i)=>{w+="L"+X(p.km).toFixed(1)+","+Y(inLake.has(i)||p.c?0:Math.min(0,p.e)).toFixed(1)});w+="L"+X(P[P.length-1].km)+","+yz+"Z";s+='<path d="'+w+'" fill="url(#gfxsSea)" clip-path="url(#gfxsClip)"/>'}
   let top="";P.forEach((p,i)=>{top+=(i?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1)});
   s+='<g clip-path="url(#gfxsClip)"><path d="'+top+"L"+X(P[P.length-1].km)+","+(H-mb)+"L"+X(0)+","+(H-mb)+'Z" fill="url(#gfxsRock)"/>';
   /* the coloured land edge only where the ground is above the sea: no green on a sea floor at -2 m */
-  {let land="",run=false;P.forEach((p,i)=>{if(p.e>=0&&!inLake.has(i)){land+=(run?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1);run=true}else run=false});
-   s+=(land?'<path d="'+land+'" fill="none" stroke="url(#gfxsLand)" stroke-width="4" stroke-linejoin="round"/>':"")+'<path d="'+top+'" fill="none" stroke="#2a1c10" stroke-width=".8" stroke-opacity=".6"/></g>'};
+  {let land="",run=false,dep="",dr=false;P.forEach((p,i)=>{if(p.e>=0&&!inLake.has(i)){land+=(run?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1);run=true}else run=false;
+    /* land below sea level (a depression): a plain land-green edge, not the colour scale's below-sea blue */
+    const lo=p.e<0&&p.c&&!inLake.has(i),nb=i>0&&P[i-1].e<0&&P[i-1].c&&!inLake.has(i-1);if(lo||(p.e>=0&&nb)){dep+=(dr?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1);dr=lo}else dr=false});
+   s+=(land?'<path d="'+land+'" fill="none" stroke="url(#gfxsLand)" stroke-width="4" stroke-linejoin="round"/>':"")+(dep?'<path d="'+dep+'" fill="none" stroke="#6f9a4a" stroke-width="4" stroke-linejoin="round"/>':"")+'<path d="'+top+'" fill="none" stroke="#2a1c10" stroke-width=".8" stroke-opacity=".6"/></g>'};
+  /* depressions: each stretch of land below sea level, named where it is a known one, with its lowest point */
+  {const runs=[];let cur=null;P.forEach((p,i)=>{const lo=p.e<0&&p.c&&!inLake.has(i);if(lo){if(!cur){cur={i,j:i,lo:i};runs.push(cur)}else{cur.j=i;if(p.e<P[cur.lo].e)cur.lo=i}}else cur=null});
+   runs.forEach(r=>{const q=P[r.lo];if(q.e>-5||X(P[r.j].km)-X(P[r.i].km)<6||!inWin(q.e))return;let nm="",best=1e9;
+    DEPRESSIONS.forEach(([n,lon,lat,rad])=>{const d=d3.geoDistance(q.ll,[lon,lat])*R_KM;if(d<rad&&d<best){best=d;nm=n}});
+    const t=(nm||"Land below sea level")+" · "+fmtE(q.e),xm=X(q.km),yy=Y(q.e)+14;
+    s+='<circle cx="'+xm.toFixed(1)+'" cy="'+Y(q.e).toFixed(1)+'" r="2.6" fill="#5b3a17"/>'+lbl(xm,Math.min(H-mb-4,yy),t,{c:"#5b3a17",fs:10.5,fw:800})})}
   /* lakes: the water up to the lake's level, its surface, and its name and height */
   if(L.lk&&L.lk.length){s+='<g clip-path="url(#gfxsClip)">';const LX=[];
    L.lk.forEach(k=>{const yl=Y(k.lv),xa=X(P[k.i].km),xb=X(P[k.j].km),pad=(xb-xa<2)?1:0;
