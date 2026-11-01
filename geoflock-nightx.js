@@ -82,3 +82,25 @@ setInterval(()=>{try{if(typeof ps!=="undefined"&&ps&&ps.tour==="night"&&typeof p
 /* the star on the City Lights tab goes away once the map has been opened */
 (function(){const K="gfNightSeen";try{if(localStorage.getItem(K))document.documentElement.classList.add("gf-nl-seen")}catch(e){}
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('[data-allmaps-mode="night"]')){document.documentElement.classList.add("gf-nl-seen");try{localStorage.setItem(K,"1")}catch(err){}}},true)})();
+
+/* the India–Pakistan border, now that the sharp NASA tiles show it: back as its own stop, after "India: the most people" */
+(function(){const go=()=>{try{const T=PS_TOURS.night;if(!T||!T.steps)return false;const S=T.steps;if(S.some(s=>s&&s.title==="A border you can see from space"))return true;
+ const i=S.findIndex(s=>s&&s.title==="India: the most people");if(i<0)return false;const IN=S[i];
+ if(typeof IN.more==="string"&&/India–Pakistan border/.test(IN.more))IN.more="India passed China as the country with the most people in 2023. At night its railways and highways show up too, as strings of lit towns running across the plains.";
+ S.splice(i+1,0,{title:"A border you can see from space",view:[66,22,78,32],globe:[71,27,9],hi:[],_enr:1,
+  pins:[[[70.9,26.9],"The floodlit border","point"],[[74.33,31.55],"Lahore","point"],[[68.37,25.4],"Hyderabad (Pakistan)","point"],[[73.02,26.24],"Jodhpur","point"],[[[70.2,25.6],[71.6,25.9],[69.8,26.6]],"The Thar Desert: dark","area"]],
+  stat:"Floodlights along the India–Pakistan border make a line you can see from space",
+  body:"Look closely: the thin orange thread winding through the dark Thar Desert is the border itself. India lit most of its 3,300 km length with tens of thousands of floodlights, so it glows even where no one lives.",
+  more:"India fenced and floodlit the border in the 1990s and 2000s to stop smuggling and armed infiltration. Astronauts on the Space Station photograph it as an orange line between the lights of Pakistan’s Indus valley and India’s towns. It is one of very few borders you can see at night."});return true}catch(e){return false}};
+ if(!go()){let n=0;const t=setInterval(()=>{if(go()||++n>60)clearInterval(t)},500)}
+ /* the old stop's Mumbai skyline photo does not fit it */
+ let m=0;const ph=setInterval(()=>{try{if(typeof PS_PHOTO!=="undefined"&&PS_PHOTO["night|A border you can see from space"]!=null){delete PS_PHOTO["night|A border you can see from space"]}}catch(e){}if(++m>40)clearInterval(ph)},500)})();
+/* that stop: tours keep the globe further out than the border needs, so once there it eases in close (the sharp tiles load
+   at that zoom); the tour's own sideways shift for its card is kept */
+(function(){const T="A border you can see from space";let done="";
+ setInterval(()=>{try{if(typeof ps==="undefined"||!ps||ps.tour!=="night")return;const S=psSteps()[ps.i],k=ps.tour+"|"+ps.i;if(!S||S.title!==T){done="";return}
+  const g=amGlobe;if(done===k||!g||g._flat||g._flying||g._gfDown)return;done=k;
+  const z0=g.zoom,r0=g.rot.slice(),z1=12,off=(r0[0]-(-71))*z0/z1,r1=[-71+off,-27],t0=performance.now(),D=1800;
+  const step=n=>{if(typeof ps==="undefined"||!ps||psSteps()[ps.i]!==S||g._gfDown)return;const t=Math.min(1,(n-t0)/D),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+   g.zoom=z0+(z1-z0)*e;g.rot=[r0[0]+(r1[0]-r0[0])*e,r0[1]+(r1[1]-r0[1])*e];g.render();if(t<1)requestAnimationFrame(step)};requestAnimationFrame(step)}catch(e){}},700)})();
+

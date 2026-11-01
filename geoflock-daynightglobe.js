@@ -29,17 +29,17 @@ function req(){try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())
    Zoomed in past the night picture's detail (8192 px for the world), the part of the world in view is built from NASA's
    tiles (window.gfGibs, geoflock-nightsharp.js) once the globe is still, uploaded as one picture with its bounds, and
    used on the night side there. The old patch stays while a new one loads; zoomed out it is let go. */
-let PATCH=null,pjob=0,pkey="",pT=0,pView="",pViewT=0;
+let PATCH=null,pjob=0,pkey="",pT=0,pView="",pViewT=0,PDBG="";window.gfNightPatchDbg=()=>PDBG;
 function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){const q=pr.invert([w*i/8,h*j/8]);if(q&&isFinite(q[0])&&isFinite(q[1])&&d3.geoDistance(q,[-g.rot[0],-g.rot[1]])<Math.PI/2)pts.push(q)}
  if(pts.length<4)return null;const c=-g.rot[0];let a=Infinity,b=-Infinity,n=90,s=-90;pts.forEach(([lo,la])=>{let d=((lo-c+540)%360)-180;a=Math.min(a,d);b=Math.max(b,d);n=Math.max(n===90?-90:n,la);s=Math.min(s===-90?90:s,la)});
  let W=c+a,E=c+b;if(E-W>170)return null;const N=Math.min(85,Math.max(...pts.map(p=>p[1]))+.5),Sx=Math.max(-85,Math.min(...pts.map(p=>p[1]))-.5);W-=.5;E+=.5;
  if(W<-180||E>180){/* across the date line: keep the larger side */if(W<-180){if(-180-W>E+180)return null;W=-180}if(E>180){if(E-180>180-W)return null;E=180}}return[W,N,E,Sx]}catch(e){return null}}
-function patchFor(G){try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){return null}
+function patchFor(G){PDBG="called";try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){PDBG="not globe";return null}
  const dpr=Math.min(2,devicePixelRatio||1),ppdNeed=g.projection().scale()*Math.PI/180*dpr,z=gfGibs.level(ppdNeed);
  if(z==null){if(PATCH){try{G.gl.deleteTexture(PATCH.t)}catch(e){}PATCH=null}return null}
  const vk=g.rot[0].toFixed(3)+","+g.rot[1].toFixed(3)+","+g.zoom.toFixed(3),now=performance.now();if(vk!==pView){pView=vk;pViewT=now}
  const moving=g._gfDown||g._flying||now-pViewT<200;
- if(!moving){const b=viewBounds(g);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
+ PDBG="z"+z+(moving?" moving":"");if(!moving){const b=viewBounds(g);PDBG+=" b="+JSON.stringify(b);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
    const inside=PATCH&&PATCH.z===z&&b[0]>=PATCH.b[0]&&b[2]<=PATCH.b[2]&&b[1]<=PATCH.b[1]&&b[3]>=PATCH.b[3];
    if(!inside&&key!==pkey){pkey=key;clearTimeout(pT);pT=setTimeout(()=>build(G,z,b),220)}}}
  /* still moving: look again once it settles (the globe may not draw again by itself) */
@@ -58,7 +58,7 @@ window.gfNightPatch=()=>PATCH&&{b:PATCH.b,z:PATCH.z};
 const FS=`#version 300 es
 precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
-uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uPatch; uniform vec4 uPB; uniform float uPatchOn; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
+uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uPatch; uniform vec4 uPB; uniform float uPatchOn; uniform float uNightOnly; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
 out vec4 o;
 /* sea ice (textures/SEAICE_POLAR.png): two squares centred on the poles (left Arctic, right Antarctic), azimuthal
    equidistant out to 50°, so nothing pinches at the pole. R = sea-ice concentration from the NSIDC Sea Ice Index (one month:
@@ -124,6 +124,7 @@ void main(){
     vec2 pv = vec2((ld - uPB.x) / (uPB.z - uPB.x), (uPB.y - pd) / (uPB.y - uPB.w));
     if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uPatch, pv); ngt = mix(ngt, pc.rgb, pc.a); } }
   float s = dot(nrm(phi, lam), uSun);
+  if(uNightOnly > 0.5) s = -1.0;
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
   float lum = dot(day, vec3(0.3, 0.55, 0.15));
   float water = smoothstep(0.015, 0.07, day.b - max(day.r, day.g*0.82)) * (1.0 - smoothstep(0.28, 0.5, lum));
@@ -179,7 +180,7 @@ function prog(G){if(G._dng!==undefined)return G._dng;G._dng=null;const gl=G.gl;
  try{const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
   const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
-  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uPatch","uPB","uPatchOn","uCl","uClA","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
+  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uPatch","uPB","uPatchOn","uNightOnly","uCl","uClA","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
  catch(e){console.error("Day & Night globe:",e)}return G._dng}
 /* the coastal glow picture: loaded once, one small GPU texture per globe */
 let GLOW_IMG=null;
@@ -210,16 +211,20 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
  try{if(S.on&&o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&allMapsColorMode==="night"&&o.tex!==this.tex.satellite&&GLOBE_TEX.satellite){
   /* City Lights lit by the sun: the day half is the satellite picture, the night half the city lights */
   const im=globeImages("satellite",req);if(im)o=Object.assign({},o,{tex:this.texture("satellite",im)})}
+  /* City Lights without the sun (a tour, or "Night only"), zoomed in far enough for the sharp tiles: drawn here as night
+     everywhere, so the tiles can be used */
+  if(!S.on&&o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.night&&o.tex===this.tex.night&&window.gfGibs&&GLOBE_TEX.satellite){
+   const dpr=Math.min(2,devicePixelRatio||1);if(gfGibs.level(amGlobe.projection().scale()*Math.PI/180*dpr)!=null){const im=globeImages("satellite",req);if(im)o=Object.assign({},o,{tex:this.texture("satellite",im),_nightOnly:1})}}
   if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
   /* the Satellite globe is always drawn here: in Day & Night with the sun, in Day evenly lit (night picture unused) */
-  const day=!S.on,imgs=day?null:nightReady(),P=(day||imgs)&&prog(this);
+  const day=!S.on&&!o._nightOnly,imgs=day?null:nightReady(),P=(day||imgs)&&prog(this);
   if(P){const gl=this.gl,u=P.u,N=day?null:this.texture("night",imgs);
    gl.viewport(0,0,gl.canvas.width,gl.canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(P.pr);
    gl.uniform2f(u.uC,o.cx,o.cy);gl.uniform1f(u.uS,o.s);gl.uniform1f(u.uF,o.frame||1e9);gl.uniform1f(u.uLam0,o.lam0);
    {const g=(o.roll||0)*D2R;gl.uniform2f(u.uRoll,Math.cos(g),Math.sin(g))}gl.uniform1f(u.uSp,Math.sin(o.phi0));gl.uniform1f(u.uCp,Math.cos(o.phi0));gl.uniform1f(u.uSpace,o.space?1:0);
    const la=S.lat*D2R,lo=S.lon*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
    let ct=null;try{if(day){ct=o.clouds&&this.cloudTex?this.cloudTex():null}else if(cloudsOn()){cloudsLoad();ct=this.cloudTex()}}catch(e){}
-   gl.uniform1f(u.uClA,ct?(day?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
+   gl.uniform1f(u.uClA,ct?(day?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
    {const pt=day?null:patchFor(this);gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,pt?pt.t:null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,pt?1:0);if(pt)gl.uniform4f(u.uPB,pt.b[0],pt.b[1],pt.b[2],pt.b[3])}
