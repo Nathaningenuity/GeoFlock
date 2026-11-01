@@ -480,7 +480,7 @@ body.sky-night .gf-dng-spin, body.sky-night .gf-dng-speed select{ background:#22
 .gf-dng.gf-dng-float .gf-dng-mode{ flex-basis:100%; margin-left:0; }`;
 document.head.appendChild(css);
 /* the Day & Night look on any other GlobeGL (the Home page globe): satellite by day, city lights by night, lit by the
-   sun at sun=[lon,lat] degrees. o: as GlobeGL.draw (cx, cy, s, frame, lam0, phi0, roll in degrees, space). Returns false
+   sun at sun=[lon,lat] degrees. o: as GlobeGL.draw (cx, cy, s, frame, lam0, phi0, roll in degrees, space, clouds). Returns false
    until the pictures are loaded, so the caller can draw something else meanwhile. */
 function drawOn(G,o,sun){try{
  if(!G||!G.gl||!GLOBE_TEX.satellite||!GLOBE_TEX.night)return false;
@@ -490,8 +490,10 @@ function drawOn(G,o,sun){try{
  gl.uniform2f(u.uC,o.cx,o.cy);gl.uniform1f(u.uS,o.s);gl.uniform1f(u.uF,o.frame||1e9);gl.uniform1f(u.uLam0,o.lam0);
  {const g=(o.roll||0)*D2R;gl.uniform2f(u.uRoll,Math.cos(g),Math.sin(g))}gl.uniform1f(u.uSp,Math.sin(o.phi0));gl.uniform1f(u.uCp,Math.cos(o.phi0));gl.uniform1f(u.uSpace,o.space?1:0);
  const la=sun[1]*D2R,lo=sun[0]*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
- gl.uniform1f(u.uClA,0);gl.uniform1f(u.uDayOnly,0);gl.uniform1f(u.uNightOnly,0);gl.uniform1f(u.uSea,1);
- gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uCl,3);
+ /* clouds (o.clouds): white by day, dark and faint by night, as on the Maps globe */
+ let ct=null;if(o.clouds){try{cloudsLoad();ct=G.cloudTex()}catch(e){ct=null}}
+ gl.uniform1f(u.uClA,ct?1:0);gl.uniform1f(u.uDayOnly,0);gl.uniform1f(u.uNightOnly,0);gl.uniform1f(u.uSea,1);
+ gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct);gl.uniform1i(u.uCl,3);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,T.list[0]);gl.uniform1i(u.uSat,0);
  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
  gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,0);

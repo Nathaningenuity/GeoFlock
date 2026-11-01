@@ -8230,7 +8230,7 @@ function hiGlobe(cv){
         const sx=Math.cos(sun[1]*R)*Math.cos(sun[0]*R),sy=Math.cos(sun[1]*R)*Math.sin(sun[0]*R),sz=Math.sin(sun[1]*R);
         const wl=Math.hypot(sy,sx)||1,wx=-sy/wl,wy=sx/wl,A=55*R,ca=Math.cos(A),sa=Math.sin(A);
         const cx=ca*sx+sa*wx,cy=ca*sy+sa*wy,cz=ca*sz;
-        const rs=N/2/1.05-1;if(gfDNG.drawOn(G,{cx:N/2,cy:N/2,s:rs,frame:rs,lam0:Math.atan2(cy,cx),phi0:Math.asin(Math.max(-1,Math.min(1,cz))),roll:-23.44,space:true},sun)){cv.parentElement.classList.add("hi-dn");return}}
+        const rs=N/2/1.05-1;if(gfDNG.drawOn(G,{cx:N/2,cy:N/2,s:rs,frame:rs,lam0:Math.atan2(cy,cx),phi0:Math.asin(Math.max(-1,Math.min(1,cz))),roll:-23.44,space:true,clouds:true},sun)){cv.parentElement.classList.add("hi-dn");return}}
       const lam=still?-1.4:-1.4-(performance.now()-HI_T0)*.00012;
       G.draw({tex:TX,cx:N/2,cy:N/2,s:N/2-1,frame:N/2-1,lam0:lam,phi0:.32,roll:0,ocean:[87,151,207],lut:null,space:false,clouds:0})};
     try{globeImages("satellite",()=>{});globeImages("night",()=>{})}catch(e){}
