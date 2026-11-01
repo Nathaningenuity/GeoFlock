@@ -12,7 +12,7 @@
    (as in geoflock-polish-k.js). Card photos are keyed "tour|title" in PS_PHOTO, so renamed stops keep theirs.
    New photos: Wikimedia Commons, free licences only (listed in GF_RVLIFE_PHOTOS with author, licence and page); the rest
    come from the shared library. Load after the other tour files and polish patches. */
-window.GF_RVLIFE_PHOTOS=[{"f": "Vaquita6 Olson NOAA.jpg", "d": "photos/x946d64dc4b6c4969.webp", "by": "Paula Olson, NOAA", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Vaquita6_Olson_NOAA.jpg"}, {"f": "Saiga antelope at the Stepnoi Sanctuary.jpg", "d": "photos/xa10a5245138fafea.webp", "by": "Andrey Giljov", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Saiga_antelope_at_the_Stepnoi_Sanctuary.jpg"}];
+window.GF_RVLIFE_PHOTOS=[{"f": "Bourbon vanilla beans - extra noire - +20cm.JPG", "d": "photos/x08bc14b76d26469d.webp", "by": "Alphaomega1010", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Bourbon_vanilla_beans_-_extra_noire_-_+20cm.JPG"},{"f": "Sambava - grading vanilla beans.jpg", "d": "photos/x5bbcc3ddbb4a032f.webp", "by": "WRI Staff", "lic": "CC BY 2.0", "page": "https://commons.wikimedia.org/wiki/File:Sambava_-_grading_vanilla_beans.jpg"},{"f": "Fécondation de la vanille à Madagascar - Emile Prudhomme - btv1b10103461d.jpg", "d": "photos/xf725824884162f29.webp", "by": "Émile Prudhomme", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Fécondation_de_la_vanille_à_Madagascar_-_Emile_Prudhomme_-_btv1b10103461d.jpg"},{"f": "Gousse de vanille verte.jpg", "d": "photos/x6a7c434b01406ba6.webp", "by": "RAJOELIMBOLOLONA Maryo Sébastieni", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Gousse_de_vanille_verte.jpg"},{"f": "Vaquita6 Olson NOAA.jpg", "d": "photos/x946d64dc4b6c4969.webp", "by": "Paula Olson, NOAA", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Vaquita6_Olson_NOAA.jpg"}, {"f": "Saiga antelope at the Stepnoi Sanctuary.jpg", "d": "photos/xa10a5245138fafea.webp", "by": "Andrey Giljov", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Saiga_antelope_at_the_Stepnoi_Sanctuary.jpg"}];
 (function(){
 if(typeof PS_TOURS==="undefined")return;
 const W=[-180,-58,180,80];
@@ -113,7 +113,7 @@ function animals(){if(!once("animals"))return;
    s.phPins=[ph([35.03,-1.55],"Wildebeest crossing the Mara River","Western white-bearded wildebeest (Connochaetes taurinus mearnsi) Mara River crossing 2c.jpg"),
     ph([-100.27,19.6],"Monarchs wintering in Michoacán","Monarc Butterfly Reserve4, Michoacan, Mexico.JPG"),
     ph([-20,74],"An Arctic tern","Arctic tern (Sterna paradisaea) attacking, Amsterdam island, Svalbard.jpg")]});
-  CARD["animals|Great journeys"]="Serengeti wildebeest migration JF.jpg"}
+  CARD["crops|Vanilla by hand"]="Bourbon vanilla beans - extra noire - +20cm.JPG";CARD["animals|Great journeys"]="Serengeti wildebeest migration JF.jpg"}
  rm("animals","Monarch butterflies");rm("animals","Pole to pole");
  /* same figure and same bleaching point as the Ocean life tour's coral stop */
  rm("animals","The Coral Triangle");
@@ -239,6 +239,7 @@ function crops(){if(!once("crops"))return;
  ren("crops","Potatoes from the Andes","Four thousand potatoes");
  ins("crops","Crops far from home",{title:"Vanilla by hand",view:[40,-27,62,-8],globe:[50,-17,3],card:"left",hiSoft:["mg"],
   pins:[P([50.17,-14.27],"Sava: most of the world’s vanilla"),P([55.53,-21.11],"Réunion: Albius, 1841")],
+  phPins:[ph([50.17,-14.27],"Grading vanilla in Sambava, Sava","Sambava - grading vanilla beans.jpg"),ph([55.53,-21.11],"Pollinating by hand, Albius’s trick","Fécondation de la vanille à Madagascar - Emile Prudhomme - btv1b10103461d.jpg"),ph([50.28,-14.88],"Green pods on the vine","Gousse de vanille verte.jpg")],
   stat:"Almost every vanilla flower on Earth is pollinated by hand, with a trick found by a 12-year-old enslaved boy in 1841",
   body:"Vanilla is an orchid from Mexico. Taken to islands in the Indian Ocean, the vines flowered but made no pods, because the insects that pollinate them had stayed behind in Mexico. On Réunion, Edmond Albius found he could lift a flap inside the flower with a sliver of bamboo and press the pollen in with his thumb. Each flower opens for just one day, so workers still pollinate them by hand that morning.",
   more:"Madagascar, next to Réunion, now grows most of the world’s vanilla. In 2018 its price passed $500 a kilo, more than silver by weight, and farmers guarded their vines at night. Albius was freed in 1848 and died poor."});
