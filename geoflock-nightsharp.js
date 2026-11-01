@@ -17,7 +17,7 @@
    (about 0.5 MB), never as a whole decoded picture. Hooked from geoflock-flatglobe.js (_flatPictures). */
 /* NASA GIBS tiles, 512 px in plain latitude/longitude (EPSG:4326); level z tiles are 288/2^z degrees square, down to about
    500 m a pixel at level 7. Used where the view needs more detail than the 8192-px globe pictures.
-   - night: VIIRS Black Marble 2016, brightened to match the night picture.
+   - night: VIIRS Black Marble 2016, through the same colour table the night picture was made with.
    - sat: Blue Marble Next Generation, processed exactly as the satellite picture was made from it (see below).
    A tile that fails just leaves the picture underneath. */
 (function(){
@@ -31,10 +31,15 @@ const ppd=z=>512*Math.pow(2,z)/288,tdeg=z=>288/Math.pow(2,z);
    shows); a coarse land mask (textures/SAT_LAND_MASK.png) also clears the summer sea ice, which has its own layer. */
 const LUT=["0d1113141515161617171718181819191a1b1c1d1e2021232526282a2c2d2f30323334353738393a3b3c3d3e3f4041424343444546474849494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f60626364656667696a6b6c6e6f70727374757778797b7c7d7e80818284858688898a8c8d8e909193949697989a9c9d9fa0a2a4a5a7a9aaacaeafb1b3b5b6b8babcbdbfc1c2c4c6c7c9cacccecfd1d2d4d5d6d8d9dbdcdedfe1e2e4e5e6e7e8e8e9e9eaeaebebebececececededededeeeeeeeeeeeeefefefefeff0f0f0f0f0f0f1f1f1f1f1f1f1f1f2f2f2f2f2f2f2f2f2f2f3f3f3f3f4f4f4f5f6f7f9fafbfcfdfdfefefefefeffffffffffffffffffff","09181a1b1b1b1c1d1e1f202021232425262728292a2a2b2c2d2d2e2f30323334353637393a3b3c3e3f41424344454647484a4b4c4d4e4f505152535455565758595a5b5c5d5e5f6061626465666768696b6c6d6e6f71727374757678797a7b7c7d7f80818283858687898a8c8d8f9092939596989a9b9d9ea0a1a3a5a6a8a9aaacadafb0b2b3b5b6b8b9bbbcbebfc0c2c3c5c6c8c9cbcdced0d2d3d5d6d8dadbdddee0e1e3e4e6e7e8e9eaebebececedededeeeeeeeeeeeeeeeeeeeeeeeeeeeeefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefeff0f0f0f0f0f0f0f0f1f1f3f4f6f8fafbfcfcfdfdfefefefefeff","00000102030405060708090b0c0d0f1113141618191a1c1d1e1f20222324252728292b2c2e2f3132343537383a3c3d3f404243454647494a4c4d4e50515253555658595a5c5d5f6062636567686a6b6d6e707273747677787a7b7c7d7e7f81828384858788898a8c8d8e90919294959798999b9c9e9fa1a2a4a5a7a9aaacadafb0b2b3b4b6b7b8b9babcbdbebfc0c1c1c2c3c4c4c5c5c6c6c7c7c8c8c9c9c9cacacacbcbcbcccccccdcdcdcdcecececfcfcfcfd0d0d0d1d1d1d2d2d2d3d3d4d4d4d5d5d6d6d7d7d7d8d8d9dadadbdbdcdcdddededfe0e0e1e2e3e3e4e5e6e7e7e8e9eaeaebebececededeeeeefefeff0f1f2f2f3f4f5f6f7f8f9fafbfcfdfefe"].map(h=>{const a=new Uint8Array(256);for(let i=0;i<256;i++)a[i]=parseInt(h.substr(i*2,2),16);return a});
 const cache=new Map();
+/* night: the night picture (textures/GLOBE_NIGHT_IMG, NIGHT_FLAT_IMG) was made from these tiles with this table */
+const LUTN=["000000000304040404040405050505060606060707070808090a0a0a0b0b0b0c0c0c0d0d0d0d0e0e0e0e0f101d202327282b2b2c2e2e303232333738383939393c3c3e3f4040444445454949494a4a4d4d4e4e4e50505454545456585858585e5e5e5f5f606060636364696969696969696b6d6d6d6d6d72727272727375767779797979797a7a7a7e7e7e8181828484848585858587878c8c8c8c8d8d909191919797979898989d9d9da0a0a0a1a1a1a1a1a2a6a7a7a7a7a7a8acacacacadadaeafafafafb1b1b7b7b7b7b8b8b8b8b8bcbcbcbdbdc2c2c8c8c8c8c8c9c9c9c9cecfd0d0d0d1d1d1d8d9dadadadbdbdddde0e0e0e0e6e7e9e9eaeaeef3f4fafc","00000000000506060606060606070707080809090a0a0b0b0b0c0c0d0d0d0e0e0f0f101011111111111212131313131516161b1c282c3236383b3b3c3e3f42424444464748484b4b4b4f4f525252525255555858585c5c5d5d5e5e5e636365656666676969696a6a6d6f747474747476767676797a7a7b81818181818282828484898989898c8c8c8e8e9090909090959595959798989899999d9d9d9e9ea1a1a1a1a1a1a1a2a2a7ababababacacb6b6b6b7b7b7b7b7b7b7b7b7b7b7b9bbbcbcc1c1c4c4c4c4c5c5c6c6c7cbcbcccccdcdcdd4d4d4d4d4d4d9d9d9dadadadadae0e0e0e0e0e2e2e2e2e2e3e5e5e6e7e8e9e9ebebebebefeff2f2f3f3f3f8f9fa","0000000000000000000000000000111315151515151515151515151515151515161616161717171717181818181818181819191a1a1a1b1b1b1b1b1b1c1c1c1d1d1e1e1f2021222323242424242424242424242424243b41464e545c606464646868686d6d6d6d717171727274767679797a80808082828284888888888c8c8c8c8c8c8f8f9091939395999b9b9b9d9d9e9e9f9fa2a2a2a2a2a2a3a7a7a7abababacadadadadafafafb2b5b5b8b8b8b8b8b9bababbbdbdbfbfbfc2c2c2c2c2c2c2c2c2c2c2c3c5c8c8c8c8c8cacacacacacacacacacacfcfcfcfcfcfcfcfcfcfd0d0d0d0d4d4d4d4d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d7d8d8d8d8da"].map(h=>{const a=new Uint8Array(256);for(let i=0;i<256;i++)a[i]=parseInt(h.substr(i*2,2),16);return a});
 let MASK=null;function mask(){if(MASK)return MASK;MASK=new Promise(res=>{const im=new Image();im.onload=()=>{try{const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;
  const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);const d=x.getImageData(0,0,c.width,c.height).data,W=c.width,H=c.height,m=new Uint8Array(W*H);for(let i=0;i<W*H;i++)m[i]=d[i*4];c.width=0;res({m,W,H})}catch(e){res(null)}};
  im.onerror=()=>res(null);im.src="textures/SAT_LAND_MASK.png"});return MASK}
-function fix(im,kind,M,z,ty,tx){if(kind!=="sat")return im;try{const n=im.naturalWidth||512,c=document.createElement("canvas");c.width=c.height=n;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
+function fixNight(im){try{const n=im.naturalWidth||512,c=document.createElement("canvas");c.width=c.height=n;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
+ const D=x.getImageData(0,0,n,n),d=D.data,R=LUTN[0],G=LUTN[1],B=LUTN[2];for(let q=0;q<d.length;q+=4){d[q]=R[d[q]];d[q+1]=G[d[q+1]];d[q+2]=B[d[q+2]];d[q+3]=255}
+ x.putImageData(D,0,0);return c}catch(e){return null}}
+function fix(im,kind,M,z,ty,tx){if(kind!=="sat")return fixNight(im);try{const n=im.naturalWidth||512,c=document.createElement("canvas");c.width=c.height=n;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
  const D=x.getImageData(0,0,n,n),d=D.data,td=tdeg(z),R=LUT[0],Gc=LUT[1],B=LUT[2];
  for(let j=0;j<n;j++){const lat=90-(ty+(j+.5)/n)*td;let mrow=null,my=0,fy=0;
   if(M){const yy=(90-lat)/180*M.H-.5;my=Math.max(0,Math.min(M.H-2,Math.floor(yy)));fy=Math.max(0,Math.min(1,yy-my))}
@@ -55,7 +60,7 @@ function crop(z,cx,cy,cw,ch,rw,rh,TW,TH,kind){kind=kind||"night";if(kind==="sat"
  const c=document.createElement("canvas");c.width=rw;c.height=rh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
  const sx=rw/(lon1-lon0),sy=rh/(lat0-lat1),jobs=[];
  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const Lo=-180+tx*td,T=90-ty*td;
-  jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im)return;if(kind==="night")x.filter="brightness(1.35) saturate(1.08)";x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
+  jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im)return;x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
  return Promise.all(jobs).then(()=>c)}
 window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0};
 })();

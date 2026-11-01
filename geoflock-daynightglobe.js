@@ -33,7 +33,9 @@ function req(){try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())
 const PS={night:{P:null,job:0,key:"",T:0},sat:{P:null,job:0,key:"",T:0}};let pView="",pViewT=0,PDBG="";window.gfNightPatchDbg=()=>PDBG;
 function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){const q=pr.invert([w*i/8,h*j/8]);if(q&&isFinite(q[0])&&isFinite(q[1])&&d3.geoDistance(q,[-g.rot[0],-g.rot[1]])<Math.PI/2)pts.push(q)}
  if(pts.length<4)return null;const c=-g.rot[0];let a=Infinity,b=-Infinity,n=90,s=-90;pts.forEach(([lo,la])=>{let d=((lo-c+540)%360)-180;a=Math.min(a,d);b=Math.max(b,d);n=Math.max(n===90?-90:n,la);s=Math.min(s===-90?90:s,la)});
- let W=c+a,E=c+b;if(E-W>170)return null;const N=Math.min(85,Math.max(...pts.map(p=>p[1]))+.5),Sx=Math.max(-85,Math.min(...pts.map(p=>p[1]))-.5);W-=.5;E+=.5;
+ let W=c+a,E=c+b;if(E-W>170)return null;let N=Math.max(...pts.map(p=>p[1])),Sx=Math.min(...pts.map(p=>p[1]));
+ /* a margin wider than the fade at the patch's edge, so the fade stays off screen */
+ const mx=Math.max(.5,(E-W)*.08),my=Math.max(.5,(N-Sx)*.08);N=Math.min(85,N+my);Sx=Math.max(-85,Sx-my);W-=mx;E+=mx;
  if(W<-180||E>180){/* across the date line: keep the larger side */if(W<-180){if(-180-W>E+180)return null;W=-180}if(E>180){if(E-180>180-W)return null;E=180}}return[W,N,E,Sx]}catch(e){return null}}
 function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){PDBG="not globe";return null}
  const dpr=Math.min(2,devicePixelRatio||1),ppdNeed=g.projection().scale()*Math.PI/180*dpr,z=gfGibs.level(ppdNeed);
@@ -76,6 +78,8 @@ float inoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * 
              mix(mix(ihash(i + vec3(0,0,1)), ihash(i + vec3(1,0,1)), f.x), mix(ihash(i + vec3(0,1,1)), ihash(i + vec3(1,1,1)), f.x), f.y), f.z); }
 float ifbm(vec3 p){ return 0.5 * inoise(p) + 0.27 * inoise(p * 2.07) + 0.15 * inoise(p * 4.31) + 0.08 * inoise(p * 8.9); }
 float gmin(float a, float b){ return abs(a) < abs(b) ? a : b; }
+/* a sharp patch fades out over its outer 6%, so a patch (or an old one while the next loads) never shows as a box */
+float pedge(vec2 p){ return smoothstep(0.0, 0.06, min(min(p.x, 1.0 - p.x), min(p.y, 1.0 - p.y))); }
 vec3 nrm(float phi, float lam){ return vec3(cos(phi)*cos(lam), cos(phi)*sin(lam), sin(phi)); }
 /* sea colour from depth (metres below sea level), fixed stops, interpolated smoothly between them */
 vec3 depthColour(float d){
@@ -127,11 +131,11 @@ void main(){
   /* sharper daylight picture where a patch of NASA tiles covers the view; the tiles' sea is clear, so our sea stays */
   if(uDPatchOn > 0.5){ float ld = mod(degrees(lam) + 180.0, 360.0) - 180.0, pd = degrees(phi);
     vec2 pv = vec2((ld - uDPB.x) / (uDPB.z - uDPB.x), (uDPB.y - pd) / (uDPB.y - uDPB.w));
-    if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uDPatch, pv); day = mix(day, pc.rgb, pc.a); } }
+    if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uDPatch, pv); day = mix(day, pc.rgb, pc.a * pedge(pv)); } }
   /* sharper night lights where a patch of NASA tiles covers the view (uPB: west, north, east, south in degrees) */
   if(uPatchOn > 0.5){ float ld = mod(degrees(lam) + 180.0, 360.0) - 180.0, pd = degrees(phi);
     vec2 pv = vec2((ld - uPB.x) / (uPB.z - uPB.x), (uPB.y - pd) / (uPB.y - uPB.w));
-    if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uPatch, pv); ngt = mix(ngt, pc.rgb, pc.a); } }
+    if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uPatch, pv); ngt = mix(ngt, pc.rgb, pc.a * pedge(pv)); } }
   float s = dot(nrm(phi, lam), uSun);
   if(uNightOnly > 0.5) s = -1.0;
   /* the sea by day: blue-dominant, dark, low-saturation pixels get lighter and more turquoise */
