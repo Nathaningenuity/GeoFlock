@@ -50,8 +50,9 @@ function fix(im,kind,M,z,ty,tx){if(kind!=="sat")return fixNight(im);try{const n=
    d[q]=R[r];d[q+1]=Gc[g];d[q+2]=B[b];d[q+3]=a*255}}
  x.putImageData(D,0,0);return c}catch(e){return null}}
 function tile(z,y,x,kind){kind=kind||"night";const k=kind+"/"+z+"/"+y+"/"+x;let t=cache.get(k);if(t){cache.delete(k);cache.set(k,t);return t}
- t=new Promise(res=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>{if(kind==="sat")mask().then(M=>res(fix(i,kind,M,z,y,x)));else res(fix(i,kind))};i.onerror=()=>res(null);i.src=BASE+L[kind].path+z+"/"+y+"/"+x+L[kind].ext});
- cache.set(k,t);if(cache.size>160){const old=cache.keys().next().value;const o=cache.get(old);cache.delete(old);o&&o.then&&o.then(c=>{if(c&&c.getContext){c.width=0;c.height=0}})}return t}
+ t=new Promise(res=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>{if(kind==="sat")mask().then(M=>res(fix(i,kind,M,z,y,x)));else res(fix(i,kind))};i.onerror=()=>{/* not remembered: a tile that failed (busy server, a dropped connection) is asked for again next time */
+  setTimeout(()=>{if(cache.get(k)===t)cache.delete(k)},0);res(null)};i.src=BASE+L[kind].path+z+"/"+y+"/"+x+L[kind].ext});
+ cache.set(k,t);if(cache.size>160){const old=cache.keys().next().value;const o=cache.get(old);cache.delete(old);/* left to be garbage-collected: a picture still being put together may be using it */}return t}
 /* the detail level for a view showing need device pixels per degree, or null when the 8192-px picture is enough */
 function level(need){if(!(need>8192/360*1.08))return null;for(let z=ZMIN;z<=ZMAX;z++)if(ppd(z)>=need*.9)return z;return ZMAX}
 /* a piece of the world (x,y,w,h in a virtual picture TW×TH of the whole world) drawn at rw×rh from level-z tiles */
@@ -60,7 +61,7 @@ function crop(z,cx,cy,cw,ch,rw,rh,TW,TH,kind){kind=kind||"night";if(kind==="sat"
  const c=document.createElement("canvas");c.width=rw;c.height=rh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
  const sx=rw/(lon1-lon0),sy=rh/(lat0-lat1),jobs=[];
  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const Lo=-180+tx*td,T=90-ty*td;
-  jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im)return;x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
+  jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im){c._gfMiss=(c._gfMiss||0)+1;return}x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
  return Promise.all(jobs).then(()=>c)}
 window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0};
 })();
@@ -101,12 +102,14 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
  if(O&&O.dl===V.dl&&O.dpr===V.dpr&&O.kind===V.kind){const a=V.S/O.S;if(O.key===V.key||a<=mag){ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality=Math.abs(a-1)>.01?"high":"medium";
    ctx.setTransform(a,0,0,a,dpr*(V.t[0]-a*O.t[0]),dpr*(V.t[1]-a*O.t[1]));ctx.drawImage(O.cv,O.x,O.y);ctx.restore()}}
  if(job&&job.V.key!==V.key)kill(job);
- if(O&&O.key===V.key)return;
+ /* done, unless some tiles failed: then it is made again a few seconds later (tiles that loaded are kept) */
+ if(O&&O.key===V.key&&!(O.miss&&Date.now()-O.at>4000))return;
+ if(O&&O.key===V.key&&O.miss){O.at=Date.now();if(!job){want=V;start(g,true)}return}
  /* a new view: make its sharp picture once the map has been still for a moment */
  want=V;if(V.key!==lastKey||!timer&&!job){lastKey=V.key;clearTimeout(timer);timer=setTimeout(()=>{timer=0;start(g)},IDLE)}};
 
 const later=cb=>window.requestIdleCallback?requestIdleCallback(cb,{timeout:150}):setTimeout(cb,16);
-function start(g){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key)return;
+function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key&&!again)return;
  if(g._moving||g._flying||g._gfOx){timer=setTimeout(()=>{timer=0;start(g)},IDLE);return}
  const {S,t,dl,w,h,dpr}=V,q0=d3.geoRobinson().scale(S).translate(t);
  /* the map's rows and columns on screen (device pixels) */
@@ -150,10 +153,10 @@ function start(g){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key)r
      if(++k>=H){stage=2;break}}}}
    catch(e){console.error(e);kill(me);return}
    if(stage<2){later(step);return}
-   free(E);me.E=null;me.O=null;job=null;const old=O;O={cv:NO,key:V.key,S,t,dl,dpr,x:XL,y:ya,kind:V.kind};if(old)free(old.cv);
+   free(E);me.E=null;me.O=null;job=null;const old=O;O={cv:NO,key:V.key,S,t,dl,dpr,x:XL,y:ya,kind:V.kind,miss:B.some(b=>b&&b._gfMiss),at:Date.now()};if(old)free(old.cv);if(O.miss)setTimeout(()=>{try{g.request()}catch(e){}},4300);
    try{g.request()}catch(e){}};
   later(step)}).catch(e=>{console.error(e);kill(me)})}
-window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.height]:null,building:!!job,kind:O&&O.kind});
+window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.height]:null,building:!!job,kind:O&&O.kind,miss:!!(O&&O.miss)});
 })();
 /* a clean redraw once the City Lights flat map settles (after opening, zooming or panning): otherwise the last frame
    could stay a scaled, blurred stand-in until the next interaction */
@@ -162,3 +165,7 @@ window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.heigh
   const p=amGlobe.projection(),t=p.translate(),k=[p.scale().toFixed(2),t[0].toFixed(1),t[1].toFixed(1),amGlobe._gfDl||0].join("|");
   if(k!==key){key=k;since=Date.now();return}
   if(done!==k&&Date.now()-since>450&&!amGlobe._moving&&!amGlobe._flying){done=k;const r=()=>{try{if(key===k&&(allMapsColorMode==="night"||allMapsColorMode==="satellite")&&amGlobe._flat)(amGlobe.render?amGlobe.render():amGlobe.request())}catch(e){}};[0,1200,3500].forEach(ms=>setTimeout(r,ms))}}catch(e){}},150)})();
+/* safety: map flights last under 2 s; if one never reported its end (cut off mid-way), "flying" is cleared, so the sharp
+   pictures (which wait for the map to stop) are not held back for good */
+(function(){let since=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g._flying){since=0;return}
+ if(!since)since=Date.now();else if(Date.now()-since>6000){g._flyId=(g._flyId||0)+1;g._flying=false;since=0;try{g.request?g.request():g.render()}catch(e){}}}catch(e){}},1000)})();
