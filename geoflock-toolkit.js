@@ -316,7 +316,12 @@ function penStart(id){S.pen=id;S.dragging=false;pinArm(false);sync();
  capture(true,id==="eraser"?"cell":cursorFor(id,S.penCol),{
   down:e=>{const ll=toLL(e.clientX,e.clientY);if(S.pen==="eraser"){erase(e);S.erasing=true;return}if(!ll)return;S.stroke={t:S.pen,c:S.pen==="pencil"&&S.penCol==="#1d1b18"?"#4a4a48":S.penCol,w:S.penW||1,p:[ll.map(v=>+v.toFixed(3))],sx:e.clientX,sy:e.clientY};render()},
   move:e=>{if(S.erasing){erase(e);return}const s=S.stroke;if(!s)return;if(Math.hypot(e.clientX-s.sx,e.clientY-s.sy)<2.5)return;const ll=toLL(e.clientX,e.clientY);if(!ll)return;s.sx=e.clientX;s.sy=e.clientY;s.p.push(ll.map(v=>+v.toFixed(3)));render()},
-  up:()=>{S.erasing=false;const s=S.stroke;S.stroke=null;if(s&&s.p.length>1){const k=K();try{hist()}catch(e){}k.ink.push(Object.assign({t:s.t,c:s.c,p:s.p},s.w&&s.w!==1?{w:s.w}:{}));if(k.ink.length>400)k.ink.shift();save()}render()}})}
+  up:()=>{S.erasing=false;const s=S.stroke;S.stroke=null;if(s&&s.p.length>1){const k=K();try{hist()}catch(e){}k.ink.push(Object.assign({t:s.t,c:s.c,p:s.p},s.w&&s.w!==1?{w:s.w}:{}));if(k.ink.length>400)k.ink.shift();save();
+    /* a drawing that ends back where it began is a closed shape: it becomes a shape with handles, to stretch in any
+       direction, turn or move (the Geometry set opens with it picked) */
+    try{const a=toScreen(s.p[0]),b=toScreen(s.p[s.p.length-1]);let len=0,pv=null;s.p.forEach(ll=>{const q=toScreen(ll);if(q&&pv)len+=Math.hypot(q[0]-pv[0],q[1]-pv[1]);pv=q});
+     if(a&&b&&s.p.length>=8&&len>90&&Math.hypot(a[0]-b[0],a[1]-b[1])<Math.max(22,len*.08)){const o=k.ink[k.ink.length-1];o.p=o.p.concat([o.p[0].slice()]);o.g=polyFrom(o.p,1);o.f=1;o.fo=0;o.pen=1;save();
+      penStop();setTimeout(()=>{try{geoPanel();geoSelect(k.ink.length-1);toast("A closed shape: drag its white dots to stretch it, the top dot to turn it")}catch(e){}},0)}}catch(e){console.error(e)}}render()}})}
 function erase(e){const k=K();const before=k.ink.length;k.ink=k.ink.filter(s=>!s.p.some(ll=>{const q=toScreen(ll);return q&&Math.hypot(q[0]-e.clientX,q[1]-e.clientY)<12}));if(k.ink.length!==before){save();render()}}
 function penStop(){S.pen=null;S.stroke=null;capture(false);sync()}
 
@@ -796,12 +801,28 @@ function shape(mode,a,b,shift,A,B){/* a,b: screen points; A,B: their places */
  return null}
 function ringAt(A){const ring=d3.geoCircle().center(A).radius(GEO.km/KM/RAD).precision(1.5)().coordinates[0];const top=A[1]+GEO.km/KM/RAD<84?dest(A,0,GEO.km/KM):dest(A,180,GEO.km/KM);return{p:fix(ring),f:1,lab:kmTxt(GEO.km),at:top}}
 function keep(o){if(!o||!o.p||o.p.length<2)return;hist();const k=K();k.ink.push(Object.assign({t:o.t||"geo",c:GEO.col},o));if(k.ink.length>400)k.ink.shift();save();render();geoList()}
+/* free shapes ("poly"): a closed pen drawing, or any shape once it is stretched or turned. Its outline is kept as
+   points on a flat sheet laid on the ground round its centre A (an azimuthal map in km), with a stretch across (sx),
+   a stretch up and down (sy) and a turn (rot, degrees clockwise); so it can be moved, stretched in any direction and
+   spun on the flat map and on the globe alike */
+const AEQ=C=>d3.geoAzimuthalEquidistant().rotate([-C[0],-C[1]]).scale(KM).translate([0,0]).precision(.1);
+function polyFrom(p,keepClosed){let C;try{C=d3.geoCentroid({type:"LineString",coordinates:p})}catch(e){C=p[0]}if(!C||!isFinite(C[0]))C=p[0];const P=AEQ(C);
+ return{m:"poly",A:[+C[0].toFixed(4),+C[1].toFixed(4)],L:p.map(q=>{const v=P(q);return[+v[0].toFixed(2),+v[1].toFixed(2)]}),sx:1,sy:1,rot:0,cl:keepClosed?1:0}}
+function polyXY(g,x,y){const c=Math.cos(g.rot*RAD),n=Math.sin(g.rot*RAD);x*=g.sx;y*=g.sy;return[x*c-y*n,x*n+y*c]}
+function polyBox(g){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;g.L.forEach(([x,y])=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)});return{x0,x1,y0,y1}}
+function polyLL(g,x,y){const P=AEQ(g.A),q=P.invert(polyXY(g,x,y));return q?[wrapLon(q[0]),clampLat(q[1])]:null}
 /* every shape keeps how it was made (g), so it can be rebuilt when it is moved or resized */
-function build(g){if(g.m==="text")return{p:[g.A.slice(),g.A.slice()]};const T=GEO.tru,K0=GEO.km;GEO.tru=!!g.tru;try{if(g.m==="ring"){GEO.km=g.km;return ringAt(g.A)}const a=toScreen(g.A),b=toScreen(g.B);if(!g.tru&&(!a||!b))return null;return shape(g.m,a||[0,0],b||[0,0],!!g.sh,g.A,g.B)}finally{GEO.tru=T;GEO.km=K0}}
+function build(g){if(g.m==="poly"){const P=AEQ(g.A);return{p:fix(g.L.map(([x,y])=>P.invert(polyXY(g,x,y)))),f:g.cl?1:0}}if(g.m==="text")return{p:[g.A.slice(),g.A.slice()]};const T=GEO.tru,K0=GEO.km;GEO.tru=!!g.tru;try{if(g.m==="ring"){GEO.km=g.km;return ringAt(g.A)}const a=toScreen(g.A),b=toScreen(g.B);if(!g.tru&&(!a||!b))return null;return shape(g.m,a||[0,0],b||[0,0],!!g.sh,g.A,g.B)}finally{GEO.tru=T;GEO.km=K0}}
 function rebuild(s){if(!s||!s.g)return;const o=build(s.g);if(!o||!o.p||o.p.length<2)return;s.p=o.p;if(o.f)s.f=1;else delete s.f;if(o.lab){s.lab=o.lab;s.at=o.at}else{delete s.lab;delete s.at}}
 const hav=(p,q)=>{const a=Math.sin((q[1]-p[1])*RAD/2)**2+Math.cos(p[1]*RAD)*Math.cos(q[1]*RAD)*Math.sin((q[0]-p[0])*RAD/2)**2;return 2*Math.asin(Math.min(1,Math.sqrt(a)))};
 /* the handles of a shape: c = centre (moves it), r = edge (resizes it), a/b = its two ends or corners */
-function handles(s){const g=s&&s.g;if(!g)return[];if(g.m==="text")return[{k:"c",ll:g.A}];if(g.m==="ring")return[{k:"c",ll:g.A},{k:"r",ll:dest(g.A,90,g.km/KM)}];if(g.m==="compass")return[{k:"c",ll:g.A},{k:"r",ll:g.B}];return[{k:"a",ll:g.A},{k:"b",ll:g.B}]}
+const BOXABLE=g=>g&&(g.m==="poly"&&g.cl||g.m==="rect"||g.m==="oval"||g.m==="compass");
+function boxHandles(s){const g=s.g.m==="poly"?s.g:polyFrom(s.p,1),b=polyBox(g),mx=(b.x0+b.x1)/2,my=(b.y0+b.y1)/2,out=[];
+ for(const hy of[-1,0,1])for(const hx of[-1,0,1]){if(!hx&&!hy)continue;const ll=polyLL(g,hx<0?b.x0:hx>0?b.x1:mx,hy<0?b.y0:hy>0?b.y1:my);if(ll)out.push({k:"bx"+hx+","+hy,ll})}
+ const top=polyLL(g,mx,b.y0-Math.max(8,(b.y1-b.y0)*.22)/Math.max(.05,g.sy));if(top)out.push({k:"rot",ll:top});return out}
+function handles(s){const g=s&&s.g;if(!g)return[];if(g.m==="poly")return[{k:"c",ll:g.A}].concat(g.cl?boxHandles(s):[]);
+ if(BOXABLE(g))return handlesOld(s).concat(boxHandles(s));return handlesOld(s)}
+function handlesOld(s){const g=s&&s.g;if(!g)return[];if(g.m==="text")return[{k:"c",ll:g.A}];if(g.m==="ring")return[{k:"c",ll:g.A},{k:"r",ll:dest(g.A,90,g.km/KM)}];if(g.m==="compass")return[{k:"c",ll:g.A},{k:"r",ll:g.B}];return[{k:"a",ll:g.A},{k:"b",ll:g.B}]}
 function segD(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
 /* what is under the pointer: a handle of a chosen shape, else the edge, label or text of any shape.
    only=handles: while drawing, only the white dots answer, so new shapes can be drawn on top of old ones */
@@ -841,7 +862,17 @@ function geoDrag(hit,e){const L0=toLL(e.clientX,e.clientY);if(!L0)return;const i
  geoBusy=true;let moved=false;
  const mv=ev=>{const L=toLL(ev.clientX,ev.clientY);if(!L)return;if(!moved&&Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)<3)return;if(!moved)hist();moved=true;ev.preventDefault();
   const one=st.find(o=>o.s===ink[hit.i])||st[0],g=one.g;
-  if(hit.h==="r"){if(g.m==="ring")g.km=Math.max(1,Math.round(hav(g.A,L)*KM));else g.B=L;rebuild(one.s)}
+  if(hit.h==="rot"||/^bx/.test(hit.h)){
+   /* first stretch or turn of a ruled shape: it becomes a free shape (its measured label no longer applies) */
+   if(g.m!=="poly"){one.s.g=polyFrom(one.s.p,1);one.g=one.s.g;delete one.s.lab;delete one.s.at}
+   const G2=one.s.g,P=AEQ(G2.A),v=P(L);if(!v)return;
+   if(hit.h==="rot"){let a=Math.atan2(v[0],-v[1])/RAD;if(ev.shiftKey)a=Math.round(a/15)*15;G2.rot=+a.toFixed(1)}
+   else{const[hx,hy]=hit.h.slice(2).split(",").map(Number),c=Math.cos(G2.rot*RAD),n=Math.sin(G2.rot*RAD),ux=v[0]*c+v[1]*n,uy=-v[0]*n+v[1]*c,b=polyBox(G2);
+    if(hx){const e=hx>0?b.x1:b.x0;if(Math.abs(e)>1e-6)G2.sx=Math.max(.05,Math.min(40,ux/e))}if(hy){const e=hy>0?b.y1:b.y0;if(Math.abs(e)>1e-6)G2.sy=Math.max(.05,Math.min(40,uy/e))}
+    /* a corner with Shift keeps the proportions */
+    if(hx&&hy&&ev.shiftKey){const k=Math.max(G2.sx,G2.sy);G2.sx=G2.sy=k}}
+   rebuild(one.s)}
+  else if(hit.h==="r"){if(g.m==="ring")g.km=Math.max(1,Math.round(hav(g.A,L)*KM));else g.B=L;rebuild(one.s)}
   else if(hit.h==="a"){g.A=L;rebuild(one.s)}else if(hit.h==="b"){g.B=L;rebuild(one.s)}
   else{let dx=((L[0]-L0[0]+540)%360)-180,dy=L[1]-L0[1];if(ev.shiftKey){if(Math.abs(dx)>Math.abs(dy))dy=0;else dx=0}/* Shift keeps the move straight across or straight up */st.forEach(o=>{moveG(o.g,o.A0,o.B0,dx,dy);rebuild(o.s)})}
   render();geoInfo()};
@@ -875,7 +906,7 @@ document.addEventListener("keydown",e=>{if(!document.getElementById("gfkGeo")||(
  if(mod&&k==="d"){e.preventDefault();copySel();pasteShapes(CLIP,24);return}
  const AR={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]}[k];if(AR){e.preventDefault();const st=e.shiftKey?12:2;nudge(AR[0]*st,AR[1]*st)}},true);
 const KIND={compass:"Circle",ring:"Range ring",line:"Straight line",rect:"Rectangle",oval:"Oval",text:"Text"};
-function kindOf(s){if(s.g)return s.g.m==="compass"&&s.g.sh?"Square":s.g.m==="rect"&&s.g.sh?"Square":s.g.m==="oval"&&s.g.sh?"Circle":KIND[s.g.m]||"Shape";if(s.t==="geoDash")return s.lab?"Latitude line":"Longitude line";if(s.t==="geo")return"Shape";return"Pen drawing"}
+function kindOf(s){if(s.g&&s.g.m==="poly")return s.pen?"Pen shape":"Free shape";if(s.g)return s.g.m==="compass"&&s.g.sh?"Square":s.g.m==="rect"&&s.g.sh?"Square":s.g.m==="oval"&&s.g.sh?"Circle":KIND[s.g.m]||"Shape";if(s.t==="geoDash")return s.lab?"Latitude line":"Longitude line";if(s.t==="geo")return"Shape";return"Pen drawing"}
 /* the list of shapes: pick one (Shift adds), or remove just that one */
 function geoList(){const box=document.querySelector("#gfkGeoMore .gfk-shapes");if(!box){geoInfo();return}const ink=K().ink,L=selList();
  if(!ink.length){box.innerHTML='<p class="gfk-hint">No shapes yet.</p>';geoInfo();return}
