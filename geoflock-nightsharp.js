@@ -54,7 +54,9 @@ function tile(z,y,x,kind){kind=kind||"night";const k=kind+"/"+z+"/"+y+"/"+x;let 
   setTimeout(()=>{if(cache.get(k)===t)cache.delete(k)},0);res(null)};i.src=BASE+L[kind].path+z+"/"+y+"/"+x+L[kind].ext});
  cache.set(k,t);if(cache.size>160){const old=cache.keys().next().value;const o=cache.get(old);cache.delete(old);/* left to be garbage-collected: a picture still being put together may be using it */}return t}
 /* the detail level for a view showing need device pixels per degree, or null when the 8192-px picture is enough */
-function level(need){if(!(need>8192/360*1.08))return null;for(let z=ZMIN;z<=ZMAX;z++)if(ppd(z)>=need*.9)return z;return ZMAX}
+/* from about half the built-in picture's detail: the NASA tiles are sharper than the (compressed) picture well before the
+   screen needs more pixels than it has */
+function level(need){if(!(need>8192/360*.55))return null;for(let z=ZMIN;z<=ZMAX;z++)if(ppd(z)>=need*.9)return z;return ZMAX}
 /* a piece of the world (x,y,w,h in a virtual picture TW×TH of the whole world) drawn at rw×rh from level-z tiles */
 function crop(z,cx,cy,cw,ch,rw,rh,TW,TH,kind){kind=kind||"night";if(kind==="sat")mask();const lon0=cx/TW*360-180,lon1=(cx+cw)/TW*360-180,lat0=90-cy/TH*180,lat1=90-(cy+ch)/TH*180,td=tdeg(z);
  const nx=Math.ceil(360/td),ny=Math.ceil(180/td),x0=Math.max(0,Math.floor((lon0+180)/td)),x1=Math.min(nx-1,Math.floor((lon1+180-1e-9)/td)),y0=Math.max(0,Math.floor((90-lat0)/td)),y1=Math.min(ny-1,Math.floor((90-lat1-1e-9)/td));
@@ -63,11 +65,15 @@ function crop(z,cx,cy,cw,ch,rw,rh,TW,TH,kind){kind=kind||"night";if(kind==="sat"
  for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const Lo=-180+tx*td,T=90-ty*td;
   jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im){c._gfMiss=(c._gfMiss||0)+1;return}x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
  return Promise.all(jobs).then(()=>c)}
-window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0};
+/* fetch (only) the tiles of a view ahead of time, e.g. while the map is still moving, so the sharp picture is quick once
+   it stops; at most max tiles */
+function prefetch(z,b,kind,max){const td=tdeg(z),nx=Math.ceil(360/td),ny=Math.ceil(180/td),[W,N,E,S]=b,x0=Math.max(0,Math.floor((W+180)/td)),x1=Math.min(nx-1,Math.floor((E+180-1e-9)/td)),y0=Math.max(0,Math.floor((90-N)/td)),y1=Math.min(ny-1,Math.floor((90-S-1e-9)/td));
+ if((x1-x0+1)*(y1-y0+1)>(max||60))return;if(kind==="sat")mask();for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)tile(z,y,x,kind)}
+window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0,prefetch};
 })();
 (function(){
 if(typeof GlobeView==="undefined"||typeof d3==="undefined"||!d3.geoRobinson)return;
-const IDLE=280,SLICE=8,BAND=8,MINMAG=1.05;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
+const IDLE=120,SLICE=8,BAND=8,MINMAG=.75;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
 let TEX={},texUnused=0,O=null,job=null,timer=0,want=null,lastKey="";
 const free=cv=>{try{if(cv&&cv.close)cv.close();else if(cv){cv.width=0;cv.height=0}}catch(e){}};
 /* which picture the flat map shows: the night picture or (the same way) the satellite one */
@@ -108,9 +114,14 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
  /* a new view: make its sharp picture once the map has been still for a moment */
  want=V;if(V.key!==lastKey||!timer&&!job){lastKey=V.key;clearTimeout(timer);timer=setTimeout(()=>{timer=0;start(g)},IDLE)}};
 
+/* while the flat map moves: fetch the NASA tiles of the view meanwhile (at most every 300 ms) */
+let pfAt=0;function prefetchView(g,V){try{const now=Date.now();if(now-pfAt<300||!gfGibs.prefetch)return;pfAt=now;const pr=g.projection(),{w,h}=g.size(),q=[];
+ for(let i=0;i<=4;i++)for(let j=0;j<=4;j++){const ll=pr.invert([w*i/4,h*j/4]);if(ll&&isFinite(ll[0])&&isFinite(ll[1]))q.push(ll)}if(q.length<4)return;
+ const lo=q.map(x=>x[0]),la=q.map(x=>x[1]),W=Math.min(...lo),E=Math.max(...lo);if(E-W>120)return;
+ const z=gfGibs.level(V.S*Math.PI/180*V.dpr*.85);if(z!=null)gfGibs.prefetch(z,[W,Math.max(...la),E,Math.min(...la)],V.kind,40)}catch(e){}}
 const later=cb=>window.requestIdleCallback?requestIdleCallback(cb,{timeout:150}):setTimeout(cb,16);
 function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key&&!again)return;
- if(g._moving||g._flying||g._gfOx){timer=setTimeout(()=>{timer=0;start(g)},IDLE);return}
+ if(g._moving||g._flying||g._gfOx){prefetchView(g,V);timer=setTimeout(()=>{timer=0;start(g)},IDLE);return}
  const {S,t,dl,w,h,dpr}=V,q0=d3.geoRobinson().scale(S).translate(t);
  /* the map's rows and columns on screen (device pixels) */
  const top=q0([0,90])[1],bot=q0([0,-90])[1],ya=Math.max(0,Math.floor(top*dpr)),yb=Math.min(Math.round(h*dpr),Math.ceil(bot*dpr));

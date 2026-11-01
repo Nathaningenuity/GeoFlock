@@ -33,7 +33,10 @@ function req(){try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())
 const PS={night:{P:null,job:0,key:"",T:0},sat:{P:null,job:0,key:"",T:0}};let pView="",pViewT=0,PDBG="";window.gfNightPatchDbg=()=>PDBG;
 function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let i=0;i<=8;i++)for(let j=0;j<=8;j++){const q=pr.invert([w*i/8,h*j/8]);if(q&&isFinite(q[0])&&isFinite(q[1])&&d3.geoDistance(q,[-g.rot[0],-g.rot[1]])<Math.PI/2)pts.push(q)}
  if(pts.length<4)return null;const c=-g.rot[0];let a=Infinity,b=-Infinity,n=90,s=-90;pts.forEach(([lo,la])=>{let d=((lo-c+540)%360)-180;a=Math.min(a,d);b=Math.max(b,d);n=Math.max(n===90?-90:n,la);s=Math.min(s===-90?90:s,la)});
- let W=c+a,E=c+b;if(E-W>170)return null;let N=Math.max(...pts.map(p=>p[1])),Sx=Math.min(...pts.map(p=>p[1]));
+ let W=c+a,E=c+b;let N=Math.max(...pts.map(p=>p[1])),Sx=Math.min(...pts.map(p=>p[1]));
+ /* zoomed out, only the middle of the view (about 110° × 80°): near the rim the globe squashes the land, and the patch's
+    soft edge blends into the rest */
+ {const c0=c,cy=-g.rot[1];if(E-W>110){W=Math.max(W,c0-55);E=Math.min(E,c0+55)}if(N-Sx>80){N=Math.min(N,cy+40);Sx=Math.max(Sx,cy-40)}}
  /* a margin wider than the fade at the patch's edge, so the fade stays off screen */
  const mx=Math.max(.5,(E-W)*.08),my=Math.max(.5,(N-Sx)*.08);N=Math.min(85,N+my);Sx=Math.max(-85,Sx-my);W-=mx;E+=mx;
  if(W<-180||E>180){/* across the date line: keep the larger side */if(W<-180){if(-180-W>E+180)return null;W=-180}if(E>180){if(E-180>180-W)return null;E=180}}return[W,N,E,Sx]}catch(e){return null}}
@@ -43,16 +46,18 @@ function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amG
  /* the gentle auto-spin alone does not count as moving: the patch is made wider instead, to cover ~30 s of it */
  let spin=false;try{spin=typeof gfSpinWanted==="function"&&gfSpinWanted(g)&&!g._gfDown&&!g._flying}catch(e){}
  const vk=(spin?"":g.rot[0].toFixed(3)+",")+g.rot[1].toFixed(3)+","+g.zoom.toFixed(3),now=performance.now();if(vk!==pView){pView=vk;pViewT=now}
- const moving=g._gfDown||g._flying||now-pViewT<200;
+ const moving=g._gfDown||g._flying||now-pViewT<120;
  PDBG="z"+z+(moving?" moving":"")+(spin?" spin":"");if(!moving){let b=viewBounds(g);
    /* a fast spin (more than a view's width in 30 s) gets no patch: it would be gone before it loaded */
    if(b&&spin){const d=((window.GFS&&GFS.degPerS)||6)*30/Math.max(1,g.zoom);if(d>b[2]-b[0])b=null;else b=[Math.max(-180,b[0]-d),b[1],Math.min(180,b[2]+d),b[3]]}PDBG+=" b="+JSON.stringify(b);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
    /* a patch counts only if it is for this globe and none of its tiles failed (else it is made again after a few seconds) */
    if(st.P&&st.P.miss&&performance.now()-st.P.at>4000&&st.key===key){st.key="";st.P.at=performance.now()}
    const P=st.P&&st.P.G===G&&!st.P.miss?st.P:null,v=spin?viewBounds(g)||b:b,inside=P&&P.z===z&&v[0]>=P.b[0]&&v[2]<=P.b[2]&&v[1]<=P.b[1]&&v[3]>=P.b[3];
-   if(!inside&&key!==st.key&&!st.T){st.key=key;st.T=setTimeout(()=>{st.T=0;build(G,z,b,kind)},220)}}}
- /* still moving: look again once it settles (the globe may not draw again by itself) */
- else{clearTimeout(st.T);st.T=setTimeout(()=>{st.T=0;st.key="";try{g.render()}catch(e){}},320)}
+   if(!inside&&key!==st.key&&!st.T){st.key=key;st.T=setTimeout(()=>{st.T=0;build(G,z,b,kind)},60)}}}
+ /* still moving: the tiles of the view are fetched meanwhile (at most every 300 ms), and it looks again once it settles
+    (the globe may not draw again by itself) */
+ else{if(now-(st.pf||0)>300){st.pf=now;const b=viewBounds(g);if(b&&gfGibs.prefetch)gfGibs.prefetch(z,b,kind,40)}
+  clearTimeout(st.T);st.T=setTimeout(()=>{st.T=0;st.key="";try{g.render()}catch(e){}},200)}
  return st.P&&st.P.G===G?st.P:null}catch(e){return null}}
 function build(G,z,b,kind){const st=PS[kind],id=++st.job,pp=gfGibs.ppd(z);let [W,N,E,Sx]=b;
  /* at most 4096 px a side: widen the degrees per pixel if the view needs more */
