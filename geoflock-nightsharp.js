@@ -15,6 +15,28 @@
    Memory: one screen-sized canvas is kept (plus, while a new one is made, a second one and screen-sized working copies);
    all freed when the map is zoomed out or leaves City Lights. The globe picture is kept only as its compressed file
    (about 0.5 MB), never as a whole decoded picture. Hooked from geoflock-flatglobe.js (_flatPictures). */
+/* NASA GIBS night lights: VIIRS Black Marble 2016, 512-px tiles in plain latitude/longitude (EPSG:4326), level z tiles are
+   288/2^z degrees square, down to about 500 m a pixel at level 7. Used where the view needs more detail than the 8192-px
+   globe picture. Tiles are brightened to match that picture; one that fails just leaves the picture underneath. */
+(function(){
+const URL0="https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/VIIRS_Black_Marble/default/2016-01-01/500m/",BASE=8192/360,ZMIN=4,ZMAX=7;
+const ppd=z=>512*Math.pow(2,z)/288,tdeg=z=>288/Math.pow(2,z);
+const cache=new Map();
+function tile(z,y,x){const k=z+"/"+y+"/"+x;let t=cache.get(k);if(t){cache.delete(k);cache.set(k,t);return t}
+ t=new Promise(res=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>res(i);i.onerror=()=>res(null);i.src=URL0+k+".png"});
+ cache.set(k,t);if(cache.size>260)cache.delete(cache.keys().next().value);return t}
+/* the detail level for a view showing ppdNeed device pixels per degree, or null when the globe picture is enough */
+function level(need){if(!(need>BASE*1.08))return null;for(let z=ZMIN;z<=ZMAX;z++)if(ppd(z)>=need*.9)return z;return ZMAX}
+/* a piece of the world (x,y,w,h in a virtual picture TW×TH of the whole world) drawn at rw×rh from level-z tiles */
+function crop(z,cx,cy,cw,ch,rw,rh,TW,TH){const lon0=cx/TW*360-180,lon1=(cx+cw)/TW*360-180,lat0=90-cy/TH*180,lat1=90-(cy+ch)/TH*180,td=tdeg(z);
+ const nx=Math.ceil(360/td),ny=Math.ceil(180/td),x0=Math.max(0,Math.floor((lon0+180)/td)),x1=Math.min(nx-1,Math.floor((lon1+180-1e-9)/td)),y0=Math.max(0,Math.floor((90-lat0)/td)),y1=Math.min(ny-1,Math.floor((90-lat1-1e-9)/td));
+ const c=document.createElement("canvas");c.width=rw;c.height=rh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
+ const sx=rw/(lon1-lon0),sy=rh/(lat0-lat1),jobs=[];
+ for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const L=-180+tx*td,T=90-ty*td;
+  jobs.push(tile(z,ty,tx).then(im=>{if(!im)return;x.filter="brightness(1.35) saturate(1.08)";x.drawImage(im,(L-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
+ return Promise.all(jobs).then(()=>c)}
+window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0};
+})();
 (function(){
 if(typeof GlobeView==="undefined"||typeof d3==="undefined"||!d3.geoRobinson)return;
 const IDLE=280,SLICE=8,BAND=8,MINMAG=1.05;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
@@ -58,8 +80,7 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
 const later=cb=>window.requestIdleCallback?requestIdleCallback(cb,{timeout:150}):setTimeout(cb,16);
 function start(g){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key)return;
  if(g._moving||g._flying||g._gfOx){timer=setTimeout(()=>{timer=0;start(g)},IDLE);return}
- const T=texture();if(!T)return;if(!T.ok){T.p.then(()=>{try{g.request()}catch(e){}});return}
- const TW=T.W,TH=T.H,{S,t,dl,w,h,dpr}=V,q0=d3.geoRobinson().scale(S).translate(t);
+ const {S,t,dl,w,h,dpr}=V,q0=d3.geoRobinson().scale(S).translate(t);
  /* the map's rows and columns on screen (device pixels) */
  const top=q0([0,90])[1],bot=q0([0,-90])[1],ya=Math.max(0,Math.floor(top*dpr)),yb=Math.min(Math.round(h*dpr),Math.ceil(bot*dpr));
  const half=q0([180,0])[0]-t[0],XL=Math.max(0,Math.floor((t[0]-half)*dpr)),XR=Math.min(Math.round(w*dpr),Math.ceil((t[0]+half)*dpr));
@@ -71,6 +92,10 @@ function start(g){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key)r
  for(let k=0;k<H;k++){const hw=q0([180,latAt(ya+k+.5)])[0]-t[0];hwC[k]=hw;if(!(hw>0))continue;
   const a=Math.max(-180,(XL/dpr-t[0])/hw*180),b=Math.min(180,(XR/dpr-t[0])/hw*180);if(b>a){L0=Math.min(L0,a);L1=Math.max(L1,b)}ppd=Math.max(ppd,hw*dpr/180)}
  if(!(L1>L0))return;
+ /* zoomed in past the globe picture's detail: NASA's tiles (GIBS) at the level the screen needs; otherwise the picture */
+ const Z=window.gfGibs?gfGibs.level(ppd):null;let T=null,TW,TH;
+ if(Z!=null){TW=360*gfGibs.ppd(Z);TH=180*gfGibs.ppd(Z)}
+ else{T=texture();if(!T)return;if(!T.ok){T.p.then(()=>{try{g.request()}catch(e){}});return}TW=T.W;TH=T.H}
  const span=L1-L0,res=Math.min(TW/360,ppd),EW=Math.max(2,Math.min(8192,Math.ceil(span*res)));
  /* the rows of the globe picture in view, and its one or two pieces across the ±180° seam (in this east–west frame) */
  const syA=Math.max(0,Math.floor((90-latE[0])/180*TH)-1),syB=Math.min(TH,Math.ceil((90-latE[H])/180*TH)+1),cropH=syB-syA;if(cropH<1)return;
@@ -80,7 +105,7 @@ function start(g){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key)r
    return{sx,sw,cx,cw,rw,dx:off/span*EW,dw}}).filter(p=>p.cw>0&&p.sw>0);
  const me=job={V,dead:false,B:[],E:null,O:null};
  /* only the piece in view is decoded, off the main thread, already scaled to about screen size */
- Promise.all(parts.map(p=>createImageBitmap(T.blob,p.cx,syA,p.cw,cropH,{resizeWidth:p.rw,resizeHeight:rh,resizeQuality:"high"}))).then(B=>{
+ Promise.all(parts.map(p=>Z!=null?gfGibs.crop(Z,p.cx,syA,p.cw,cropH,p.rw,rh,TW,TH):createImageBitmap(T.blob,p.cx,syA,p.cw,cropH,{resizeWidth:p.rw,resizeHeight:rh,resizeQuality:"high"}))).then(B=>{
   if(me.dead||job!==me){B.forEach(free);return}me.B=B;
   const E=me.E=document.createElement("canvas");E.width=EW;E.height=H;const ex=E.getContext("2d");ex.imageSmoothingEnabled=true;ex.imageSmoothingQuality="high";
   const NO=me.O=document.createElement("canvas");NO.width=W;NO.height=H;const ox=NO.getContext("2d");ox.imageSmoothingEnabled=true;ox.imageSmoothingQuality="high";
