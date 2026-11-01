@@ -178,7 +178,7 @@ function loadLF(){if(lfP)return lfP;lfP=fetch("textures/GF_REGIONS.json").then(r
 const inB=(b,ll)=>!(ll[1]<b[0][1]||ll[1]>b[1][1]||(b[0][0]<=b[1][0]?(ll[0]<b[0][0]||ll[0]>b[1][0]):(ll[0]<b[0][0]&&ll[0]>b[1][0])));
 /* minA: on a long line the bigger feature reads better (the Andes, not one of its cordilleras); on a short line the specific one */
 function lfAt(ll,e,minA){if(e<-4000){for(const T of TRENCH)if(T.pts.some(q=>d3.geoDistance(q,ll)*R_KM<170))return{n:T.n,k:"trench"}}if(!LFD)return null;const hit=[];
- for(const o of LFD){if(o.sea||o.lake){if(e>5&&!o.lake)continue}else if(e<-20)continue;if(!inB(o.b,ll))continue;try{if(!d3.geoContains(o.g,ll))continue}catch(er){continue}hit.push(o)}
+ for(const o of LFD){if(o.lake&&LAKES)continue;if(o.sea||o.lake){if(e>5&&!o.lake)continue}else if(e<-20)continue;if(!inB(o.b,ll))continue;try{if(!d3.geoContains(o.g,ll))continue}catch(er){continue}hit.push(o)}
  if(!hit.length)return null;const pr=o=>o.sea||o.lake?5:o.p,p0=Math.min(...hit.map(pr)),C=hit.filter(o=>pr(o)===p0);
  const big=C.filter(o=>o.a>=(minA||0)).sort((x,y)=>x.a-y.a)[0]||C.sort((x,y)=>y.a-x.a)[0];return{n:big.n,k:big.sea?"sea":big.lake?"lake":"land"}}
 function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cur=null;
@@ -186,9 +186,27 @@ function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cu
  for(let i=0;i<P.length;i+=step){const p=P[i],h=lfAt(p.ll,p.e,minA),n=h&&h.n;if(cur&&cur.n===n){cur.b=p.km;cur.hi=Math.max(cur.hi,p.e);cur.lo=Math.min(cur.lo,p.e)}else{cur={n,k:h&&h.k,a:p.km,b:p.km,hi:p.e,lo:p.e};out.push(cur)}}
  return out.filter(g=>g.n)}
 /* ---------- profiles and the chart ---------- */
+/* ---------- lakes (HydroLAKES v1.0, Messager et al. 2016, CC BY 4.0: lakes and reservoirs of 50 km² or more) ----------
+   each lake: name, surface height (m above sea level, a long-term average), mean depth, type (1 lake, 2 reservoir,
+   3 controlled lake), area (km²), outline. Where the line crosses one, its water is drawn up to that level and named;
+   where the height data has the lake bed (the Great Lakes, for one) the water is shown full depth, elsewhere the height
+   data only knows the surface, and just the surface line is drawn (no invented lake bed). */
+let LAKES=null,lakeP=null;
+function loadLakes(){if(lakeP)return lakeP;lakeP=fetch("textures/LAKES.json").then(r=>r.ok?r.json():[]).catch(()=>[]).then(d=>{
+ const dec=a=>{const r=[];let x=0,y=0;for(let i=0;i+1<a.length;i+=2){x+=a[i];y+=a[i+1];r.push([x/100,y/100])}if(r.length&&(r[0][0]!==r[r.length-1][0]||r[0][1]!==r[r.length-1][1]))r.push(r[0].slice());return r};
+ LAKES=[];(d||[]).forEach(([n,lv,dep,t,ar,polys])=>{try{const g={type:"MultiPolygon",coordinates:polys.map(P=>P.map(dec))};
+  g.coordinates.forEach(P=>{if(d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI)P.forEach(r=>r.reverse())});LAKES.push({n,lv,dep,t,ar,g,b:d3.geoBounds(g)})}catch(e){}});
+ if(on&&lines.length){lines.forEach(L=>{if(!L.river&&L.P)lakeify(L)});renderPanel()}return LAKES});return lakeP}
+function lakeAt(ll){if(!LAKES)return null;let best=null;for(const o of LAKES){if(!inB(o.b,ll))continue;try{if(d3.geoContains(o.g,ll)&&(!best||o.ar<best.ar))best=o}catch(e){}}return best}
+function lakeify(L){L.lk=null;if(!LAKES){loadLakes();return}const P=L.P;if(!P||P.length<2)return;const out=[];let cur=null;
+ for(let i=0;i<P.length;i++){const o=lakeAt(P[i].ll);if(o){/* the detailed tiles mostly know only the water surface; the NOAA grid has the bed of many big lakes (the Great
+   Lakes, Baikal, the Caspian...): the deeper of the two is used, and never above the lake's own level */
+   P[i].e=Math.min(P[i].e,Math.round(elevAt(P[i].ll[0],P[i].ll[1])),o.lv);
+   if(cur&&cur.o===o&&cur.j===i-1){cur.b=P[i].km;cur.j=i;cur.lo=Math.min(cur.lo,P[i].e)}else{cur={o,n:o.n,lv:o.lv,a:P[i].km,b:P[i].km,i,j:i,lo:P[i].e};out.push(cur)}}}
+ L.lk=out}
 function compute(){lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
  /* every sample, so small islands (Guadeloupe, Dominica...) on a long line are not skipped */
- for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}})}
+ for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
 /* detailed heights for a drawn line (not the rivers): AWS Terrain Tiles (Terrarium; SRTM, GMTED2010, ETOPO1 and other
    open sources), fetched only for the tiles the line crosses, at a zoom that matches the line's length */
 const TILES=new Map();let refineId=0;
@@ -206,7 +224,7 @@ async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)retu
   const v=(X,Y)=>{const tx=((Math.floor(X/256)%n)+n)%n,ty=Math.max(0,Math.min(n-1,Math.floor(Y/256))),d=T0[z+"/"+tx+"/"+ty];if(!d)return null;const i=(((Y%256)+256)%256*256+(((X%256)+256)%256))*4;return d[i]*256+d[i+1]+d[i+2]/256-32768};
   const a=v(x0,y0),b=v(x0+1,y0),c=v(x0,y0+1),d=v(x0+1,y0+1);if([a,b,c,d].some(x=>x==null))return null;return(a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy};
  const P=[];let km=0;for(let i=0;i<pts.length;i++){if(i)km+=d3.geoDistance(pts[i-1],pts[i])*R_KM;const e=at(pts[i]);P.push({km,ll:pts[i],e:e==null?elevAt(pts[i][0],pts[i][1]):Math.round(e)})}
- L.P=P;L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
+ L.P=P;lakeify(L);L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
 {const _c=compute;compute=function(){const r=_c.apply(this,arguments);try{lines.forEach(L=>{if(!L.river)refine(L)})}catch(e){}return r}}
 const STOPS=[[-11000,"#0b1d4d"],[-6000,"#123a7a"],[-3000,"#1f63a8"],[-200,"#4ea6d6"],[0,"#8fd3e8"],[1,"#4f9d52"],[300,"#8fbf5a"],[800,"#d8c86d"],[1600,"#c18f4f"],[3000,"#8d5a34"],[4500,"#a7a2a0"],[6000,"#ffffff"]];
 /* ---------- rivers: one height window for every river (scroll up for the high sources), the story of each river, and a
@@ -246,12 +264,22 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
  const overTop=(L,col)=>{const P=L.P;if(!rv||yv.span==="all")return"";const mx=Math.max(...P.map(p=>p.e));if(mx<=e1)return"";let i=P.findIndex(p=>p.e<=e1);if(i<0)i=P.length-1;const x=X(xKey(P[i]));
   return'<path d="M'+(x-5).toFixed(1)+','+(mt+11)+' l5,-7 l5,7z" fill="'+(col||"#8a5a2b")+'"/>'+lbl(x+(comp?-8:8),mt+11,"up to "+fmtE(mx)+(comp?"":" — scroll up to see it"),{c:col||"#5b3a17",fs:10.5})};
  if(!comp){const L=Ps[0],P=L.P,St=L.river&&STORY[L.name];
-  if(e0<0){let w="M"+X(0)+","+yz;P.forEach(p=>{w+="L"+X(p.km).toFixed(1)+","+Y(Math.min(0,p.e)).toFixed(1)});w+="L"+X(P[P.length-1].km)+","+yz+"Z";s+='<path d="'+w+'" fill="url(#gfxsSea)" clip-path="url(#gfxsClip)"/>'}
+  const inLake=new Set();(L.lk||[]).forEach(k=>{for(let i=k.i;i<=k.j;i++)inLake.add(i)});
+  if(e0<0){let w="M"+X(0)+","+yz;P.forEach((p,i)=>{w+="L"+X(p.km).toFixed(1)+","+Y(inLake.has(i)?0:Math.min(0,p.e)).toFixed(1)});w+="L"+X(P[P.length-1].km)+","+yz+"Z";s+='<path d="'+w+'" fill="url(#gfxsSea)" clip-path="url(#gfxsClip)"/>'}
   let top="";P.forEach((p,i)=>{top+=(i?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1)});
   s+='<g clip-path="url(#gfxsClip)"><path d="'+top+"L"+X(P[P.length-1].km)+","+(H-mb)+"L"+X(0)+","+(H-mb)+'Z" fill="url(#gfxsRock)"/>';
   /* the coloured land edge only where the ground is above the sea: no green on a sea floor at -2 m */
-  {let land="",run=false;P.forEach(p=>{if(p.e>=0){land+=(run?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1);run=true}else run=false});
+  {let land="",run=false;P.forEach((p,i)=>{if(p.e>=0&&!inLake.has(i)){land+=(run?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1);run=true}else run=false});
    s+=(land?'<path d="'+land+'" fill="none" stroke="url(#gfxsLand)" stroke-width="4" stroke-linejoin="round"/>':"")+'<path d="'+top+'" fill="none" stroke="#2a1c10" stroke-width=".8" stroke-opacity=".6"/></g>'};
+  /* lakes: the water up to the lake's level, its surface, and its name and height */
+  if(L.lk&&L.lk.length){s+='<g clip-path="url(#gfxsClip)">';const LX=[];
+   L.lk.forEach(k=>{const yl=Y(k.lv),xa=X(P[k.i].km),xb=X(P[k.j].km),pad=(xb-xa<2)?1:0;
+    let w="M"+(xa-pad).toFixed(1)+","+yl.toFixed(1);for(let i=k.i;i<=k.j;i++)w+="L"+X(P[i].km).toFixed(1)+","+Y(Math.min(P[i].e,k.lv)).toFixed(1);w+="L"+(xb+pad).toFixed(1)+","+yl.toFixed(1)+"Z";
+    s+='<path d="'+w+'" fill="#3d8fd6" fill-opacity=".72"/><line x1="'+(xa-pad).toFixed(1)+'" x2="'+(xb+pad).toFixed(1)+'" y1="'+yl.toFixed(1)+'" y2="'+yl.toFixed(1)+'" stroke="#1f6fb8" stroke-width="2"/>'});
+   s+='</g>';
+   L.lk.slice().sort((p,q)=>(q.b-q.a)-(p.b-p.a)).forEach(k=>{if(!k.n||!inWin(k.lv))return;const xa=X(k.a),xb=X(k.b),xm=(xa+xb)/2,t=k.n+" · "+fmtE(k.lv),tw=t.length*5.4;
+    const L0=xm-tw/2,R0=xm+tw/2;if(LX.some(q=>L0<q[1]+6&&R0>q[0]-6))return;LX.push([L0,R0]);
+    s+=lbl(xm,Y(k.lv)-6,t,{c:"#1f5f9e",fs:10.5,fw:800})})}
   /* navigable stretches: a pale band along the bottom and a short note */
   if(St&&St.nav)St.nav.forEach(([a,b,t])=>{const A=findPt(P,a),B=findPt(P,b);if(!A||!B)return;const xa=X(A.km),xb=X(B.km);s+='<line x1="'+xa.toFixed(1)+'" x2="'+xa.toFixed(1)+'" y1="'+(Y(e0+(e1-e0)*.42)+4)+'" y2="'+(H-mb-7)+'" stroke="#2f7fd0" stroke-dasharray="3 3" stroke-opacity=".6"/><rect x="'+xa.toFixed(1)+'" y="'+(H-mb-7)+'" width="'+Math.max(2,xb-xa).toFixed(1)+'" height="7" fill="#2f7fd0" fill-opacity=".55" rx="2"/>'+(xb-xa>60?lbl(xa+4,Y(e0+(e1-e0)*.42),"⛴ "+t+" →",{c:"#1f5f9e",fs:10.5,fw:800}):"")});
   const placed=[];const free=(x,w)=>{if(placed.some(q=>Math.abs(q-x)<w))return false;placed.push(x);return true};
@@ -301,7 +329,7 @@ function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready
  const drawUI=armed||!lines.length;
  panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
   (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><select class="gf-xs-pre">'+presetOpts+'</select><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
-  '<div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Height is stretched far more than length.</div></div>';
+  '<div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level; the lake bed is shown only where the height data has it). Height is stretched far more than length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
@@ -346,7 +374,9 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
 {const PEN="url(\"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M3 25l2.2-7.4L19.6 3.2a2.4 2.4 0 0 1 3.4 0l1.8 1.8a2.4 2.4 0 0 1 0 3.4L10.4 22.8z" fill="#fff" stroke="#3b2a17" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.2 17.6l5.2 5.2" stroke="#3b2a17" stroke-width="1.6"/><path d="M16.8 6l5.2 5.2" stroke="#3b2a17" stroke-width="1.4"/><path d="M3 25l1.2-4 2.8 2.8z" fill="#c0392b"/></svg>')+"\") 3 25, crosshair";
  const st=document.createElement("style");st.textContent=".gf-xs-pen,.gf-xs-pen *{cursor:"+PEN+" !important}";document.head.appendChild(st);
  let last=null;setInterval(()=>{try{const g=G(),h=g&&g.host,w=!!(on&&armed&&h);if(last&&last!==h)last.classList.remove("gf-xs-pen");if(h)h.classList.toggle("gf-xs-pen",w);last=h}catch(e){}},150)}
-window.gfCrossSection={start,stop,pick,elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
+/* a straight line between two places (for tours and checks): gfCrossSection.line([lon,lat],[lon,lat],"title") */
+function line(a,b,t){if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify([a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
+window.gfCrossSection={start,stop,pick,line,elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
 /* the cross-section panel stays a compact size: on a full-screen map it no longer stretches across the whole screen */
