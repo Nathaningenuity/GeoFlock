@@ -193,7 +193,7 @@ function renderGlobe(ctx,p){const path=d3.geoPath(p,ctx);ctx.save();
   if(pn.n){const ly=hgt?y-hgt/2-2:y-17;ctx.font="800 11px system-ui";ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.lineWidth=3;ctx.strokeStyle="#fff";ctx.strokeText(pn.n,x+(hgt?14:10),ly);ctx.fillStyle="#1d2a3a";ctx.fillText(pn.n,x+(hgt?14:10),ly)}});
  ctx.restore()}
 if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){try{if(typeof amGlobe!=="undefined"&&this===amGlobe)renderGlobe(ctx,p)}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
-let rq=0;function render(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{if(onGlobe())redrawGlobe();else renderFlat()}catch(e){console.error(e)}placeObjects();ghostButtons()})}
+let rq=0;function render(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{K().ink.forEach(labelShape)}catch(e){}try{if(onGlobe())redrawGlobe();else renderFlat()}catch(e){console.error(e)}placeObjects();ghostButtons()})}
 /* one button puts all the lifted countries back */
 function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forEach(x=>{if(!h||x.parentNode!==h||+x.dataset.gi>=S.ghosts.length)x.remove()});let all=h&&h.querySelector(":scope > .gfk-gall");
  if(!h||!S.ghosts.length){if(all)all.remove();return}
@@ -811,6 +811,23 @@ function polyFrom(p,keepClosed){let C;try{C=d3.geoCentroid({type:"LineString",co
 function polyXY(g,x,y){const c=Math.cos(g.rot*RAD),n=Math.sin(g.rot*RAD);x*=g.sx;y*=g.sy;return[x*c-y*n,x*n+y*c]}
 function polyBox(g){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;g.L.forEach(([x,y])=>{x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)});return{x0,x1,y0,y1}}
 function polyLL(g,x,y){const P=AEQ(g.A),q=P.invert(polyXY(g,x,y));return q?[wrapLon(q[0]),clampLat(q[1])]:null}
+/* every closed shape is labelled with its area (on the Population map also the people living inside it, GHS-POP 2025
+   over 0.1° cells through geoflock-popcount.js); a line drawn with the Geometry set's pen, with its length */
+const fmtKm2=a=>a>=1e6?(a/1e6).toFixed(a>=1e7?0:1)+" million km²":a>=100?Math.round(a).toLocaleString()+" km²":a.toFixed(1)+" km²";
+const fmtPpl=n=>(n>=1e9?(n/1e9).toFixed(2)+" billion":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+" million":n>=1e3?Math.round(n/1e3).toLocaleString()+" thousand":Math.round(n).toLocaleString())+" people";
+function closedOf(s){const g=s&&s.g;if(!g||s.t==="geoText")return false;if(g.m==="poly")return!!g.cl;return g.m==="compass"||g.m==="rect"||g.m==="oval"||g.m==="ring"}
+function ringOf(p){let r=p.slice();if(r.length<3)return null;const a=r[0],z=r[r.length-1];if(a[0]!==z[0]||a[1]!==z[1])r=r.concat([a.slice()]);let A;try{A=d3.geoArea({type:"Polygon",coordinates:[r]})}catch(e){return null}if(A>2*Math.PI){r=r.slice().reverse();A=4*Math.PI-A}return{r,A}}
+const popMode=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="population"}catch(e){return false}};
+function labelShape(s){if(!s||!s.p||s.p.length<2)return;
+ if(closedOf(s)){const pm=popMode(),key=s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length>>1]+"|"+(pm?"P":"");if(s._lk===key&&s.lab===s._lv)return;const o=ringOf(s.p);if(!o)return;
+  let lab=fmtKm2(o.A*KM*KM);
+  if(pm&&window.gfPopCount){if(s._pk===key&&s._pp!=null)lab+=" · "+fmtPpl(s._pp);else{const k0=key;gfPopCount.load().then(()=>{const c=gfPopCount.count([o.r]);if(c){s._pk=k0;s._pp=c.tot;s._lk=null;render()}}).catch(()=>{})}}
+  s._lk=key;s.lab=s._lv=lab;try{s.at=d3.geoCentroid({type:"Polygon",coordinates:[o.r]})}catch(e){}return}
+ if(s.g&&s.g.m==="poly"&&!s.g.cl&&s.mp){const key="L"+s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length-1];if(s._lk===key&&s.lab===s._lv)return;let L=0;for(let i=1;i<s.p.length;i++)L+=hav(s.p[i-1],s.p[i]);L*=KM;
+  let acc=0,at=s.p[0];for(let i=1;i<s.p.length;i++){const d=hav(s.p[i-1],s.p[i])*KM;if(acc+d>=L/2){at=d3.geoInterpolate(s.p[i-1],s.p[i])((L/2-acc)/(d||1));break}acc+=d}
+  s._lk=key;s.lab=s._lv=kmTxt(L);s.at=at}}
+/* the labels depend on which map is open: relabel when it changes */
+{let lastMap="";setInterval(()=>{let m="";try{m=appMode+"|"+allMapsColorMode}catch(e){}if(m!==lastMap){lastMap=m;try{if(K().ink.length)render()}catch(e){}}},600)}
 /* every shape keeps how it was made (g), so it can be rebuilt when it is moved or resized */
 function build(g){if(g.m==="poly"){const P=AEQ(g.A);return{p:fix(g.L.map(([x,y])=>P.invert(polyXY(g,x,y)))),f:g.cl?1:0}}if(g.m==="text")return{p:[g.A.slice(),g.A.slice()]};const T=GEO.tru,K0=GEO.km;GEO.tru=!!g.tru;try{if(g.m==="ring"){GEO.km=g.km;return ringAt(g.A)}const a=toScreen(g.A),b=toScreen(g.B);if(!g.tru&&(!a||!b))return null;return shape(g.m,a||[0,0],b||[0,0],!!g.sh,g.A,g.B)}finally{GEO.tru=T;GEO.km=K0}}
 function rebuild(s){if(!s||!s.g)return;const o=build(s.g);if(!o||!o.p||o.p.length<2)return;s.p=o.p;if(o.f)s.f=1;else delete s.f;if(o.lab){s.lab=o.lab;s.at=o.at}else{delete s.lab;delete s.at}}
@@ -906,7 +923,7 @@ document.addEventListener("keydown",e=>{if(!document.getElementById("gfkGeo")||(
  if(mod&&k==="d"){e.preventDefault();copySel();pasteShapes(CLIP,24);return}
  const AR={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]}[k];if(AR){e.preventDefault();const st=e.shiftKey?12:2;nudge(AR[0]*st,AR[1]*st)}},true);
 const KIND={compass:"Circle",ring:"Range ring",line:"Straight line",rect:"Rectangle",oval:"Oval",text:"Text"};
-function kindOf(s){if(s.g&&s.g.m==="poly")return s.pen?"Pen shape":"Free shape";if(s.g)return s.g.m==="compass"&&s.g.sh?"Square":s.g.m==="rect"&&s.g.sh?"Square":s.g.m==="oval"&&s.g.sh?"Circle":KIND[s.g.m]||"Shape";if(s.t==="geoDash")return s.lab?"Latitude line":"Longitude line";if(s.t==="geo")return"Shape";return"Pen drawing"}
+function kindOf(s){if(s.g&&s.g.m==="poly")return s.mp?(s.g.cl?"Measured shape":"Measured line"):s.pen?"Pen shape":"Free shape";if(s.g)return s.g.m==="compass"&&s.g.sh?"Square":s.g.m==="rect"&&s.g.sh?"Square":s.g.m==="oval"&&s.g.sh?"Circle":KIND[s.g.m]||"Shape";if(s.t==="geoDash")return s.lab?"Latitude line":"Longitude line";if(s.t==="geo")return"Shape";return"Pen drawing"}
 /* the list of shapes: pick one (Shift adds), or remove just that one */
 function geoList(){const box=document.querySelector("#gfkGeoMore .gfk-shapes");if(!box){geoInfo();return}const ink=K().ink,L=selList();
  if(!ink.length){box.innerHTML='<p class="gfk-hint">No shapes yet.</p>';geoInfo();return}
@@ -971,7 +988,7 @@ function lineUp(ll,name){const C=cities();if(!name){let best=null,bd=60/KM;C.for
  const box=document.querySelector("#gfkGeo .gfk-lu");if(box)box.innerHTML='<p><b>'+esc(name||"This place")+'</b> is at '+fmtLat(lat)+', '+fmtLon(lon)+'.</p>'+
   (lv.length?'<p class="gfk-hint">Level with it (the same latitude):</p><ul class="gfk-lul">'+lv.map(c=>li(c,"lat")).join("")+'</ul>':'')+(ln.length?'<p class="gfk-hint">Due north and south (the same longitude):</p><ul class="gfk-lul">'+ln.map(c=>li(c,"lon")).join("")+'</ul>':'')}
 const MODES=[["select",'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 3.5v15.2l4.1-3.9 2.7 6 2.6-1.2-2.7-5.9 5.6-.3z"/></svg>',"Select","Click a shape to pick it (Shift-click to pick several), drag it to move it, drag its white dots to resize it. The map still pans"],["ruler","📏","Ruler","Measure the distance between two places"],["compass",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.2" r="1.9"/><path d="M11 6 6.2 21M13 6l4.8 15M7.8 15.6c2.6 1.3 5.8 1.3 8.4 0"/></svg>',"Compass","Drag from the centre outwards to draw a circle. Hold Shift for a square"],["ring","◎","Range ring","Click a place: a ring shows everything within that distance. Click the same centre again (it snaps) to add rings around it"],
- ["line","╱","Straight line","Drag from one place to another"],["rect","▭","Rectangle","Drag a box. Hold Shift for a square"],["oval","⬭","Oval","Drag a box. Hold Shift for a circle"],["text","<b style=\"font:800 16px Georgia,serif\">T</b>","Text","Click the map to put a text box there, then type"],["lineup","✛","Line up","Click a place (or type a city) to draw its latitude and longitude around the world"]];
+ ["line","╱","Straight line","Drag from one place to another"],["rect","▭","Rectangle","Drag a box. Hold Shift for a square"],["oval","⬭","Oval","Drag a box. Hold Shift for a circle"],["text","<b style=\"font:800 16px Georgia,serif\">T</b>","Text","Click the map to put a text box there, then type"],["mpen",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.2-4.4L16.5 4.3a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.4 18.8z"/><path d="M14.5 6.3l3.2 3.2"/><path d="M3 22h7" stroke-dasharray="1.5 2"/></svg>',"Pen","Draw freely. A line shows its length; close the shape (end where you started) to see its area"],["lineup","✛","Line up","Click a place (or type a city) to draw its latitude and longitude around the world"]];
 const GCOLS=["#c8281c","#2a3f8f","#1e8c8a","#2f8f3e","#e8762a","#7a3fb0","#1d1b18"];
 function geoPanel(){const M=MODES.find(m=>m[0]===GEO.mode);
  const p=panel("gfkGeo",'<b class="gfk-ph">Geometry set</b><div class="gfk-geom">'+MODES.map(m=>'<button type="button" data-gm="'+m[0]+'" class="'+(m[0]===GEO.mode?"on":"")+'" title="'+esc(m[3])+'"><i>'+m[1]+'</i>'+m[2]+'</button>').join("")+'</div>'+
@@ -993,10 +1010,13 @@ function geoPanel(){const M=MODES.find(m=>m[0]===GEO.mode);
  if(S.pen){S.pen=null;sync()}pinArm(false);
  let a=null,A=null;capture(true,"crosshair",{
   down:e=>{const hit=geoHit(e.clientX,e.clientY,"handles");if(hit){a=null;geoDrag(hit,e);return}if(GEO.sel>=0){GEO.sel=-1;GEO.sels=[];geoList()}
-   a=[e.clientX,e.clientY];A=toLL(e.clientX,e.clientY);if(!A){a=null;return}{const sn=GEO.mode!=="lineup"&&GEO.mode!=="text"&&snapAt(e.clientX,e.clientY);if(sn){A=sn.ll;a=sn.q}}
+   a=[e.clientX,e.clientY];A=toLL(e.clientX,e.clientY);if(!A){a=null;return}if(GEO.mode==="mpen"){GEO._mp=[A];GEO._mq=a.slice();GEO._ma=a.slice();return}{const sn=GEO.mode!=="lineup"&&GEO.mode!=="text"&&snapAt(e.clientX,e.clientY);if(sn){A=sn.ll;a=sn.q}}
    if(GEO.mode==="text"){keep({t:"geoText",c:GEO.col,p:[A.slice(),A.slice()],tx:"Text",fs:14,g:{m:"text",A:A.slice()}});GEO.mode="select";geoSave();GEO._focusText=true;GEO.sel=K().ink.length-1;GEO.sels=[GEO.sel];geoPanel();render();a=null;return}if(GEO.mode==="ring"){const o=ringAt(A);o.g={m:"ring",A,km:GEO.km};keep(o);geoSelect(K().ink.length-1);a=null}else if(GEO.mode==="lineup"){lineUp(A);a=null}},
-  move:e=>{if(!a)return;const B=toLL(e.clientX,e.clientY);if(!B)return;const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);S.stroke=o?{t:"geo",c:GEO.col,p:o.p}:null;render()},
-  up:e=>{if(!a)return;S.stroke=null;const B=toLL(e.clientX,e.clientY);if(B&&Math.hypot(e.clientX-a[0],e.clientY-a[1])>5){const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);if(o){o.g={m:GEO.mode,A,B,sh:e.shiftKey?1:0,tru:GEO.tru?1:0};keep(o);geoSelect(K().ink.length-1)}}a=null;render()}});
+  move:e=>{if(!a)return;if(GEO.mode==="mpen"){const q=[e.clientX,e.clientY],z=GEO._mq;if(z&&Math.hypot(q[0]-z[0],q[1]-z[1])<3)return;const B=toLL(q[0],q[1]);if(!B)return;GEO._mq=q;GEO._mp.push(B);S.stroke={t:"geo",c:GEO.col,p:GEO._mp.slice()};render();return}const B=toLL(e.clientX,e.clientY);if(!B)return;const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);S.stroke=o?{t:"geo",c:GEO.col,p:o.p}:null;render()},
+  up:e=>{if(!a)return;S.stroke=null;if(GEO.mode==="mpen"){const p=GEO._mp||[];GEO._mp=null;a=null;if(p.length<2){render();return}
+    let len=0,pr=null;p.forEach(q=>{const v=toScreen(q);if(v&&pr)len+=Math.hypot(v[0]-pr[0],v[1]-pr[1]);if(v)pr=v});const v0=toScreen(p[0]),v1=toScreen(p[p.length-1]);
+    const cl=p.length>=8&&len>60&&v0&&v1&&Math.hypot(v0[0]-v1[0],v0[1]-v1[1])<Math.max(22,len*.08);const pp=cl?p.concat([p[0].slice()]):p;
+    const o={t:"geo",c:GEO.col,p:pp,g:polyFrom(pp,cl?1:0),mp:1};if(cl){o.f=1;o.fo=0}keep(o);geoSelect(K().ink.length-1);render();return}const B=toLL(e.clientX,e.clientY);if(B&&Math.hypot(e.clientX-a[0],e.clientY-a[1])>5){const o=shape(GEO.mode,a,[e.clientX,e.clientY],e.shiftKey,A,B);if(o){o.g={m:GEO.mode,A,B,sh:e.shiftKey?1:0,tru:GEO.tru?1:0};keep(o);geoSelect(K().ink.length-1)}}a=null;render()}});
  /* closing the set puts the drawing tool away */
  clearInterval(geoPanel._t);geoPanel._t=setInterval(()=>{if(!document.getElementById("gfkGeo")){clearInterval(geoPanel._t);GEO.sel=-1;if(!S.pen)capture(false);render()}},400)}
 /* the chosen shape: a halo and its handles */
