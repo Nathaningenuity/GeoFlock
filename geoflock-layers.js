@@ -244,3 +244,8 @@ function PIC_RESET(){setTimeout(()=>{try{amGlobe.request()}catch(e){}},120)}
 function sync2(){try{cloudBtn()}catch(e){}}
 setInterval(()=>{try{document.body.classList.toggle("gf-menu-open",[...document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop")].some(p=>!p.hidden&&p.offsetParent));document.querySelectorAll("#allMapsView .all-maps-label-controls .gf-ly-fold, #allMapsView .all-maps-label-controls .gf-fold, #gfEimCtl").forEach(hoverMenu);sync2()}catch(e){}},250);
 })();
+/* the Satellite map always opens with its clouds on (switching them off lasts until the map is left) */
+(function(){let last=null;setInterval(()=>{try{const m=typeof appMode!=="undefined"&&appMode==="allmaps"&&typeof allMapsColorMode!=="undefined"?allMapsColorMode:null;
+ if(m==="satellite"&&last!=="satellite"&&typeof cloudsOn==="function"&&!cloudsOn()){const i=document.getElementById("amCloudsToggle");
+  if(i){i.checked=true;i.dispatchEvent(new Event("change",{bubbles:true}))}else{globePrefs().clouds=true;try{saveStats()}catch(e){}try{cloudsLoad()}catch(e){}try{cloudFlatSync()}catch(e){}try{amGlobe.request()}catch(e){}}}
+ last=m}catch(e){}},300)})();
