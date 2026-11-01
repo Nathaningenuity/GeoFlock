@@ -12,14 +12,16 @@
 (function(){
 if(typeof GlobeGL==="undefined"||typeof GlobeView==="undefined"||typeof amGlobeSync!=="function"||typeof GLOBE_TEX==="undefined")return;
 const D2R=Math.PI/180,TILT=23.44;
-const S={on:false,lon:0,lat:0,eot:0,play:null};
+const S={on:false,lon:0,lat:0,eot:0,play:null,t:Date.now(),spin:false,speed:3600,dragging:false,dragT:0,needOff:true,off:0};
 const subsolar=t=>{try{return window.gfDayNight.subsolar(t)}catch(e){return[0,0]}};
 /* minutes past 00:00 UTC that a sun longitude stands for; eot carries the gap between the real sun and the mean sun
    so that "now" reads the clock time */
 const lonToMin=lon=>{let m=(12-(lon-S.eot)/15)*60;return((m%1440)+1440)%1440};
 const minToLon=m=>{let l=(12-m/60)*15+S.eot;return((l+540)%360+360)%360-180};
-function toNow(){const now=Date.now(),s=subsolar(now),d=new Date(now),mins=d.getUTCHours()*60+d.getUTCMinutes()+d.getUTCSeconds()/60;
- let e=s[0]-(12-mins/60)*15;e=((e+540)%360+360)%360-180;S.eot=e;S.lon=s[0];S.lat=s[1]}
+/* the simulated clock is the one source of the sun: S.t (UTC ms) → the subsolar point (gfDayNight.subsolar) */
+function setT(t){S.t=t;const s=subsolar(t);S.lon=s[0];S.lat=s[1]}
+function toNow(){setT(Date.now())}
+const DAY=864e5,minOfDay=t=>((t%DAY)+DAY)%DAY/6e4,yearStart=t=>Date.UTC(new Date(t).getUTCFullYear(),0,1),doyOf=t=>Math.floor((t-yearStart(t))/DAY)+1;
 toNow();
 function req(){try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}}
 
@@ -172,7 +174,10 @@ function seaMode(){const k=seaPick||(S.on?"light":"normal");return k==="turq"?2:
 function setSea(k){seaPick=k||null;try{k?localStorage.setItem(SEA_KEY,k):localStorage.removeItem(SEA_KEY)}catch(e){}req()}
 const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):null}catch(e){return null}};
 {const _draw=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){
- try{if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
+ try{if(S.on&&o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&allMapsColorMode==="night"&&o.tex!==this.tex.satellite&&GLOBE_TEX.satellite){
+  /* City Lights lit by the sun: the day half is the satellite picture, the night half the city lights */
+  const im=globeImages("satellite",req);if(im)o=Object.assign({},o,{tex:this.texture("satellite",im)})}
+  if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
   /* the Satellite globe is always drawn here: in Day & Night with the sun, in Day evenly lit (night picture unused) */
   const day=!S.on,imgs=day?null:nightReady(),P=(day||imgs)&&prog(this);
   if(P){const gl=this.gl,u=P.u,N=day?null:this.texture("night",imgs);
@@ -217,17 +222,25 @@ function season(lat){if(Math.abs(lat)>23.2)return lat>0?"June solstice":"Decembe
 const SUN_SVG='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="4.6" fill="#ffc533"/><g stroke="#ffb020" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></svg>';
 function panel(){let el=document.getElementById("gfDngPanel");const host=document.getElementById("amGlobeHost");if(!host)return null;
  if(!el){el=document.createElement("div");el.id="gfDngPanel";el.className="gf-dng";el.setAttribute("role","group");el.setAttribute("aria-label","Day and night: move the sun");
-  el.innerHTML='<div class="gf-dng-top"><span class="gf-dng-ico">'+SUN_SVG+'</span><b class="gf-dng-time" aria-live="polite"></b><span class="gf-dng-where"></span><span class="gf-dng-sp"></span>'+
-   '<button type="button" class="gf-dng-btn" data-dng="play" title="Play a day" aria-pressed="false">▶</button><button type="button" class="gf-dng-btn" data-dng="now" title="Put the sun where it is right now">Now</button><button type="button" class="gf-dng-btn" data-dng="reset" title="Reset time and season to now">Reset to now</button></div>'+
-   '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1440" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
-   '<label class="gf-dng-row"><span>Season</span><input type="range" min="-23.4" max="23.4" step="0.1" data-dng="lat" aria-label="Season: the latitude where the sun is overhead"><em class="gf-dng-season"></em></label>'+
-   '';
-  const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="lat"]');
-  t.addEventListener("input",()=>{stop();S.lon=minToLon(+t.value);sunPing();ui(true);req()});
-  l.addEventListener("input",()=>{stop();S.lat=+l.value;sunPing();ui(true);req()});
-  el.querySelector('[data-dng="now"]').onclick=()=>{stop();const lat=S.lat;toNow();S.lat=lat;ui();req()};
-  el.querySelector('[data-dng="reset"]').onclick=()=>{stop();toNow();ui();req()};
-  el.querySelector('[data-dng="play"]').onclick=()=>{if(S.play)stop();else play()}}
+  el.innerHTML='<div class="gf-dng-top"><span class="gf-dng-ico">'+SUN_SVG+'</span><b class="gf-dng-time" aria-live="off"></b><span class="gf-dng-where"></span><span class="gf-dng-sp"></span>'+
+   '<button type="button" class="gf-dng-btn" data-dng="now" title="Put the sun where it is right now, keeping the date">Now</button><button type="button" class="gf-dng-btn" data-dng="reset" title="Reset time and date to now">Reset to now</button></div>'+
+   '<div class="gf-dng-ctl"><button type="button" class="gf-dng-play" data-dng="play" aria-pressed="false"><span class="gf-dng-pi">▶</span><span class="gf-dng-pl">Play</span></button>'+
+   '<button type="button" class="gf-dng-spin" data-dng="spin" aria-pressed="false" title="Spin the globe"><span aria-hidden="true">⟳</span> Spin</button>'+
+   '<label class="gf-dng-speed" title="How fast time runs while playing"><span>Speed</span><select data-dng="speed"><option value="600">10 min / s</option><option value="3600">1 hour / s</option><option value="10800">3 hours / s</option><option value="21600">6 hours / s</option></select></label>'+
+   '<em class="gf-dng-mode" aria-live="polite"></em></div>'+
+   '<button type="button" class="gf-dng-nudge" data-dng="nudge" hidden>⟳ Turn on <b>Spin</b> too, to watch Earth turn under a still Sun</button>'+
+   '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1439" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
+   '<label class="gf-dng-row"><span>Date</span><input type="range" min="1" max="365" step="1" data-dng="doy" aria-label="Date: 1 January to 31 December"><em class="gf-dng-season"></em></label>';
+  const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="doy"]');
+  /* the sliders move the clock; Play keeps running from the new moment */
+  t.addEventListener("input",()=>{const day=S.t-minOfDay(S.t)*6e4;setT(day+(+t.value)*6e4);S.needOff=true;sunPing();ui(true);req()});
+  l.addEventListener("input",()=>{const y=yearStart(S.t);setT(y+((+l.value)-1)*DAY+minOfDay(S.t)*6e4);S.needOff=true;sunPing();ui(true);req()});
+  el.querySelector('[data-dng="now"]').onclick=()=>{const n=Date.now(),day=S.t-minOfDay(S.t)*6e4;setT(day+minOfDay(n)*6e4);S.needOff=true;ui();req()};
+  el.querySelector('[data-dng="reset"]').onclick=()=>{toNow();S.needOff=true;ui();req()};
+  el.querySelector('[data-dng="play"]').onclick=()=>{if(S.play)stop();else play()};
+  el.querySelector('[data-dng="spin"]').onclick=()=>setSpin(!S.spin);
+  el.querySelector('[data-dng="nudge"]').onclick=()=>setSpin(true);
+  const sp=el.querySelector('[data-dng="speed"]');sp.value=String(S.speed);sp.onchange=()=>{S.speed=+sp.value;ui()}}
  if(!el._spacer){el._spacer=document.createElement("div");el._spacer.className="gf-dng-spacer"}
  if(el._spacer.previousElementSibling!==host)host.after(el._spacer);if(el.previousElementSibling!==el._spacer)el._spacer.after(el);dragWire(el);return el}
 /* the panel is a legend: in its place under the globe when that is on screen; otherwise it floats at the bottom of the
@@ -244,16 +257,30 @@ function floatSync(){const el=document.getElementById("gfDngPanel");if(!el||el.h
  if(fl!==el.classList.contains("gf-dng-float")){if(fl&&sp){sp._h=el.offsetHeight;sp.style.height=sp._h+"px"}else if(sp){sp.style.height="0px"}
   el.classList.toggle("gf-dng-float",fl);if(!fl||!el._moved){["left","top","right","bottom","transform"].forEach(k=>el.style.removeProperty(k));el._moved=0}}}
 addEventListener("scroll",()=>{try{floatSync()}catch(e){}},{passive:true});addEventListener("resize",()=>{try{floatSync()}catch(e){}});
-function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)return;const m=lonToMin(S.lon);
- el.querySelector(".gf-dng-time").textContent=fmtMin(m)+" UTC";
+const MONL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function modeName(){return S.play&&S.spin?"View from space":S.play?"Watching the sun move":S.spin?"Flying around Earth":"Still"}
+function ui(fromSlider){const el=document.getElementById("gfDngPanel");if(!el)return;const m=minOfDay(S.t),d=new Date(S.t);
+ el.querySelector(".gf-dng-time").textContent=fmtMin(Math.floor(m))+" UTC";
  el.querySelector(".gf-dng-where").textContent="Sun overhead at "+fmtLL(S.lat,"N","S")+", "+fmtLL(S.lon,"E","W");
- el.querySelector(".gf-dng-season").textContent=season(S.lat);
- const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="lat"]');
- if(!fromSlider||document.activeElement!==t)t.value=m;if(!fromSlider||document.activeElement!==l)l.value=S.lat.toFixed(1);
- const p=el.querySelector('[data-dng="play"]');p.textContent=S.play?"❚❚":"▶";p.setAttribute("aria-pressed",String(!!S.play))}
-/* play: a day in 24 seconds */
-function play(){let last=performance.now();const step=now=>{if(!S.play)return;const dt=Math.min(100,now-last);last=now;S.lon=((S.lon-dt*.015+540)%360+360)%360-180;ui();req();S.play=requestAnimationFrame(step)};S.play=requestAnimationFrame(step);ui()}
+ el.querySelector(".gf-dng-season").textContent=d.getUTCDate()+" "+MONL[d.getUTCMonth()]+(Math.abs(S.lat)>23.2?(S.lat>0?" · June solstice":" · December solstice"):Math.abs(S.lat)<.4?" · equinox":"");
+ const t=el.querySelector('[data-dng="time"]'),l=el.querySelector('[data-dng="doy"]');
+ if(!fromSlider||document.activeElement!==t)t.value=Math.floor(m);if(!fromSlider||document.activeElement!==l)l.value=Math.min(365,doyOf(S.t));
+ const p=el.querySelector('[data-dng="play"]');p.querySelector(".gf-dng-pi").textContent=S.play?"❚❚":"▶";p.querySelector(".gf-dng-pl").textContent=S.play?"Pause":"Play";
+ p.title=S.play?"Pause time":"Play: watch the Sun move and night sweep across the Earth";p.setAttribute("aria-pressed",String(!!S.play));p.classList.toggle("on",!!S.play);
+ const sb=el.querySelector('[data-dng="spin"]');sb.classList.toggle("on",S.spin);sb.setAttribute("aria-pressed",String(S.spin));
+ el.querySelector(".gf-dng-mode").textContent=modeName();
+ const n=el.querySelector('[data-dng="nudge"]');n.hidden=!(S.play&&!S.spin);
+ try{const b=amGlobe&&amGlobe.host.querySelector('.globe-btns [data-g="spin"]');if(b)b.classList.toggle("gf-spin-nudge",S.on&&S.play&&!S.spin)}catch(e){}}
+/* play: the clock runs at S.speed simulated seconds per second (1 hour / s = a day in 24 s). With Spin on as well, the
+   globe's turn is read from the same clock: 360° per 24 simulated hours, so the day/night line stands still on screen. */
+const paused=()=>S.dragging||performance.now()-S.dragT<3000;
+function play(){let last=performance.now();const step=now=>{if(!S.play)return;const dt=Math.min(100,now-last);last=now;
+  setT(S.t+dt*S.speed);
+  if(S.spin&&S.on&&typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._flat){if(paused()){S.needOff=true}else{
+   if(S.needOff){S.off=-amGlobe.rot[0]-S.lon;S.needOff=false}let r=-(S.lon+S.off);r=((r+540)%360+360)%360-180;amGlobe.rot[0]=r;amGlobe._movingT=performance.now()}}
+  ui();req();S.play=requestAnimationFrame(step)};S.needOff=true;S.play=requestAnimationFrame(step);holdRoll();ui()}
 function stop(){if(S.play){cancelAnimationFrame(S.play);S.play=null;ui()}}
+function setSpin(v){S.spin=!!v;S.needOff=true;try{if(amGlobe){amGlobe._gfT=0}}catch(e){}holdRoll();ui();req()}
 /* Day & Night sits in the Satellite map's own measure row (like GDP / GDP per person): "Day & Night" (the default on
    the globe), "Day" (the plain satellite picture) or "Night" (the City Lights map, which needs the dark theme) */
 function toNight(){const go=()=>{const n=document.querySelector('#allMapsToggleRow [data-allmaps-mode="night"]');if(n)n.click()};
@@ -264,30 +291,36 @@ function toNight(){const go=()=>{const n=document.querySelector('#allMapsToggleR
  m.querySelector("[data-y]").onclick=()=>{done();try{stats.theme="night";applyTheme();saveStats()}catch(e){}setTimeout(go,250)};
  m.querySelector("[data-n]").onclick=done;m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus()}
 function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn(),host=document.getElementById(gOn?"amGlobeSubs":"allMapsSubModes");if(!host)return null;
- ["amGlobeSubs","allMapsSubModes"].forEach(id=>{const o=document.getElementById(id);if(o&&o!==host&&o.querySelector("[data-dng-sub]"))o.innerHTML=""});
- const want=typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite"&&allMapsColorModeOn&&GLOBE_TEX.night&&FEATURES.globe&&!(typeof proj!=="undefined"&&proj.on);
+ /* only our own chips are taken away: the host may hold another map's chips by now */
+ const clear=o=>o.querySelectorAll("[data-dng-sub]").forEach(x=>x.remove());
+ ["amGlobeSubs","allMapsSubModes"].forEach(id=>{const o=document.getElementById(id);if(o&&o!==host)clear(o)});
+ const want=litMode()&&GLOBE_TEX.night&&FEATURES.globe&&!(typeof proj!=="undefined"&&proj.on),nm=allMapsColorMode==="night";
  let c=document.getElementById("gfDngChip");
- if(!want){if(c&&c.parentNode===host)host.innerHTML="";return c}
- if(!c||c.parentNode!==host){host.innerHTML='<button type="button" class="chip sub-chip" id="gfDngChip" data-dng-sub="dn" title="The satellite globe lit by the sun: day on one half, city lights on the other">Day &amp; Night</button>'+
+ if(!want){clear(host);return c}
+ if(!c||c.parentNode!==host||(host.dataset.dngFor||"")!==(nm?"night":"sat")){clear(host);host.dataset.dngFor=nm?"night":"sat";host.insertAdjacentHTML("afterbegin",nm?
+   '<button type="button" class="chip sub-chip" id="gfDngChip" data-dng-sub="dn" title="Lit by the sun: day on one half, city lights on the other">Day &amp; Night</button>'+
+   '<button type="button" class="chip sub-chip" data-dng-sub="nightonly" title="City lights everywhere, as if it were night all over the world">Night only</button>':
+   '<button type="button" class="chip sub-chip" id="gfDngChip" data-dng-sub="dn" title="The satellite globe lit by the sun: day on one half, city lights on the other">Day &amp; Night</button>'+
    '<button type="button" class="chip sub-chip" data-dng-sub="sat" title="The satellite picture in full daylight everywhere">Day</button>'+
-   '<button type="button" class="chip sub-chip" data-dng-sub="night" title="City lights at night (needs the dark Starlight theme)">Night</button>';
+   '<button type="button" class="chip sub-chip" data-dng-sub="night" title="City lights at night (needs the dark Starlight theme)">Night</button>');
   host.querySelectorAll("[data-dng-sub]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.dngSub;
-   if(k==="night"){toNight();return}S.userDay=k==="sat";set(k==="dn")});c=document.getElementById("gfDngChip")}
+   if(k==="night"){toNight();return}S.userDay=k==="sat"||k==="nightonly";set(k==="dn")});c=document.getElementById("gfDngChip")}
  return c}
+const litMode=()=>{try{return allMapsColorModeOn&&(allMapsColorMode==="satellite"||allMapsColorMode==="night")}catch(e){return false}};
 function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.night&&!(typeof proj!=="undefined"&&proj.on)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}}
 function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
- if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(allMapsColorMode!=="satellite"&&sat)sat.click();}
+ if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(!litMode()&&sat)sat.click();}
  S.on=v;
- if(v){toNow();
+ if(v){toNow();S.spin=false;rollCur=null;rollHeld=null;
   try{S.wasFlat=!globePrefs().allmaps;globePrefs().allmaps=true;saveStats()}catch(e){}try{amGlobeSync()}catch(e){console.error(e)}patchCfg();try{if(cloudsOn())cloudsLoad()}catch(e){}nightReady()}
  else{stop();freeNight();if(S.wasFlat){S.wasFlat=false;try{globePrefs().allmaps=false;saveStats();amGlobeSync()}catch(e){}}}
- sync();req()}
+ sync();req();if(v&&!S.play&&!(typeof ps!=="undefined"&&ps))play()}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
  /* Day & Night is the default view of the Satellite globe: each time the Satellite map is opened on the globe */
- try{const satNow=allMapsColorModeOn&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat);
-  if(satNow&&!S.wasSat){S.wasSat=true;if(!S.on&&!S.userDay&&allowed()){setTimeout(()=>set(true),0)}}else if(!satNow&&!S.on){S.wasSat=false;S.userDay=false}}catch(e){}
- if(S.on&&!(allowed()&&allMapsColorMode==="satellite"&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
- document.querySelectorAll("[data-dng-sub]").forEach(b=>{const k=b.dataset.dngSub;b.classList.toggle("active",k==="dn"?!!S.on:k==="sat"?!S.on:false)});
+ try{const satNow=litMode()&&amGlobeOn()&&!(amGlobe&&amGlobe._flat);
+  const key=satNow?allMapsColorMode:null;if(key&&S.wasSat!==key){S.wasSat=key;S.userDay=false;if(!S.on&&allowed()){setTimeout(()=>set(true),0)}}else if(!key&&!S.on){S.wasSat=null;S.userDay=false}}catch(e){}
+ if(S.on&&!(allowed()&&litMode()&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
+ document.querySelectorAll("[data-dng-sub]").forEach(b=>{const k=b.dataset.dngSub;b.classList.toggle("active",k==="dn"?!!S.on:k==="sat"||k==="nightonly"?!S.on:false)});
  if(c)c.setAttribute("aria-pressed",String(S.on));
  if(view)view.classList.toggle("gf-dng-on",S.on);
  const p=S.on?panel():document.getElementById("gfDngPanel");if(p){p.hidden=!S.on;if(p._spacer&&!S.on)p._spacer.style.height="0px";if(S.on){ui();floatSync()}}}
@@ -333,9 +366,62 @@ body.gf-fs .gf-dng.gf-dng-float{ bottom:auto; top:50%; transform:translateY(-50%
 .gf-dng-row:has(.gf-dng-season){ flex-wrap:wrap; row-gap:0; } .gf-dng-row .gf-dng-season{ flex-basis:100%; margin:-2px 0 0; }
 body.sky-night .gf-dng{ background:#16213a; border-color:rgba(150,175,230,.22); box-shadow:0 4px 22px rgba(0,0,0,.45); }
 body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.25); }
-@media (max-width:600px){ .gf-dng{ margin:6px 0 4px; padding:8px 10px; } .gf-dng-where{ width:100%; order:9; } .gf-dng-season{ min-width:0; } }`;
+@media (max-width:600px){ .gf-dng{ margin:6px 0 4px; padding:8px 10px; } .gf-dng-where{ width:100%; order:9; } .gf-dng-season{ min-width:0; } }
+/* Play: the big obvious control; Spin beside it; the mode in words; a nudge to add Spin while only Play runs */
+.gf-dng-ctl{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:6px 0 4px; }
+.gf-dng-play{ display:inline-flex; align-items:center; gap:7px; border:0; border-radius:999px; padding:7px 16px 7px 12px; cursor:pointer;
+ font:800 14px system-ui,sans-serif; color:#fff; background:linear-gradient(135deg,#ff9a3c,#e8641a); box-shadow:0 3px 12px rgba(232,100,26,.45);
+ transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+.gf-dng-play .gf-dng-pi{ display:inline-flex; width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.25); align-items:center; justify-content:center; font-size:11px; }
+.gf-dng-play:not(.on){ animation:gfPlayCall 2.4s ease-in-out infinite; }
+.gf-dng-play:hover{ transform:translateY(-1px) scale(1.05); box-shadow:0 6px 22px rgba(255,140,40,.7), 0 0 0 4px rgba(255,170,60,.25); filter:brightness(1.06); }
+.gf-dng-play:hover:not(.on)::after{ content:"watch night sweep across the Earth"; position:absolute; transform:translate(-8px,32px); font:600 11px system-ui,sans-serif; color:#ffcf8a; white-space:nowrap; pointer-events:none; }
+.gf-dng-play.on{ background:linear-gradient(135deg,#3b6fd6,#2a4fa8); box-shadow:0 3px 12px rgba(42,79,168,.45); }
+@keyframes gfPlayCall{ 0%,100%{ box-shadow:0 3px 12px rgba(232,100,26,.45), 0 0 0 0 rgba(255,150,60,.5); } 50%{ box-shadow:0 3px 12px rgba(232,100,26,.45), 0 0 0 8px rgba(255,150,60,0); } }
+.gf-dng-spin{ border:1px solid var(--line); background:var(--raised); color:inherit; border-radius:999px; padding:6px 13px; font:700 13px system-ui,sans-serif; cursor:pointer; transition:transform .15s ease, border-color .15s ease; }
+.gf-dng-spin:hover{ border-color:var(--gold); transform:translateY(-1px); }
+.gf-dng-spin.on{ background:#2f8f6b; border-color:#2f8f6b; color:#fff; }
+.gf-dng-speed{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; opacity:.85; }
+.gf-dng-speed select{ border:1px solid var(--line); background:var(--raised); color:inherit; border-radius:8px; padding:3px 4px; font:600 12px system-ui,sans-serif; }
+.gf-dng-mode{ font-style:normal; font-size:12px; font-weight:700; opacity:.8; margin-left:auto; }
+.gf-dng-nudge{ display:block; width:100%; text-align:left; margin:2px 0 4px; border:1px dashed rgba(47,143,107,.7); background:rgba(47,143,107,.12); color:inherit; border-radius:10px; padding:6px 10px; font:600 12px system-ui,sans-serif; cursor:pointer; animation:gfNudge 2.2s ease-in-out infinite; }
+.gf-dng-nudge:hover{ background:rgba(47,143,107,.24); }
+.gf-dng-nudge[hidden]{ display:none; }
+@keyframes gfNudge{ 0%,100%{ border-color:rgba(47,143,107,.5); } 50%{ border-color:rgba(47,200,140,1); } }
+.globe-btns [data-g="spin"].gf-spin-nudge{ animation:gfSpinNudge 1.8s ease-in-out infinite; }
+@keyframes gfSpinNudge{ 0%,100%{ box-shadow:0 0 0 0 rgba(47,200,140,.6); } 50%{ box-shadow:0 0 0 7px rgba(47,200,140,0); } }
+@media (prefers-reduced-motion: reduce){ .gf-dng-play,.gf-dng-nudge,.globe-btns [data-g="spin"].gf-spin-nudge{ animation:none !important; } }
+body.sky-night .gf-dng-spin, body.sky-night .gf-dng-speed select{ background:#22304f; border-color:rgba(150,175,230,.25); }
+.gf-dng.gf-dng-float .gf-dng-mode{ flex-basis:100%; margin-left:0; }`;
 document.head.appendChild(css);
-window.gfDNG={on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode};
+/* ---------- tilt and spin on the lit globe ----------
+   Tilt: the globe is turned on screen so that the plane of Earth's orbit is level (the ecliptic's north pole straight up), as
+   seen from a spacecraft out in that plane. Then the axis leans the way the clock's sun says: in November the North Pole
+   leans away from the Sun, in June towards it. While only Play runs the tilt is held, so the globe stays still on screen;
+   changes ease in, so nothing jumps. */
+function sunRA(t){const n=t/DAY-10957.5,L=(280.46+.9856474*n)*D2R,g=(357.528+.9856003*n)*D2R,lam=L+(1.915*Math.sin(g)+.02*Math.sin(2*g))*D2R,eps=TILT*D2R;
+ return Math.atan2(Math.cos(eps)*Math.sin(lam),Math.cos(lam))/D2R}
+function rollTarget(g){try{const c=[-g.rot[0],-g.rot[1]],pe=[((270-sunRA(S.t)+S.lon)%360+540)%360-180,90-TILT],q=d3.geoInterpolate(c,pe)(.05);
+  const pr=d3.geoOrthographic().scale(100).translate([0,0]).rotate([g.rot[0],g.rot[1],0]),xy=pr(q);if(!xy)return null;
+  const a=Math.atan2(xy[0],-xy[1])/D2R;const test=gm=>{const v=d3.geoOrthographic().scale(100).translate([0,0]).rotate([g.rot[0],g.rot[1],gm])(q);return v?Math.abs(v[0])+(v[1]>0?999:0):999};
+  let r=test(a)<test(-a)?a:-a;return Math.max(-40,Math.min(40,r))}catch(e){return null}}
+let rollCur=null,rollHeld=null,rollT=0;
+function holdRoll(){rollHeld=S.play&&!S.spin&&rollCur!=null?rollCur:null}
+const litGlobe=g=>S.on&&typeof amGlobe!=="undefined"&&g===amGlobe&&!g._flat;
+{const _roll=GlobeView.prototype.roll;GlobeView.prototype.roll=function(){const base=_roll.apply(this,arguments);if(!litGlobe(this)||this.cfg.noSpin||this.cfg.compact)return base;
+ /* lit globes always lean (even where the plain globes stand upright), fading out as you zoom in */
+ const k=Math.max(0,Math.min(1,(2.4-this.zoom)/1.2)),now=performance.now(),dt=rollT?Math.min(.25,(now-rollT)/1000):1;rollT=now;
+ let tgt=rollHeld!=null?rollHeld:rollTarget(this);if(tgt==null)tgt=-23.44;
+ rollCur=rollCur==null?tgt:rollCur+(tgt-rollCur)*Math.min(1,dt*2.5);if(rollHeld==null&&S.play&&!S.spin)rollHeld=rollCur;return rollCur*k}}
+/* Spin on the lit globe: the globe's own spin runs only when Play is off ("Flying around Earth"); with Play on, the clock
+   turns the globe (see play). A drag pauses Spin, never Play; Spin comes back after 3 s without touching. */
+if(typeof gfSpinWanted==="function"){const _w=gfSpinWanted;gfSpinWanted=function(g){if(litGlobe(g))return S.spin&&!S.play&&!paused();return _w.apply(this,arguments)}}
+if(typeof gfSpinBtnSync==="function"){const _b=gfSpinBtnSync;gfSpinBtnSync=function(g){const r=_b.apply(this,arguments);try{if(litGlobe(g)){const b=g.host.querySelector('[data-g="spin"]');if(b){b.classList.toggle("on",S.spin);b.title=S.spin?"Spinning: click to stop":"Spin the globe";b.setAttribute("aria-pressed",S.spin)}}}catch(e){}return r}}
+addEventListener("click",e=>{const b=e.target.closest&&e.target.closest('.globe-btns [data-g="spin"]');if(!b)return;try{if(!litGlobe(amGlobe)||!amGlobe.host.contains(b))return}catch(x){return}
+ e.preventDefault();e.stopImmediatePropagation();setSpin(!S.spin)},true);
+addEventListener("pointerdown",e=>{try{if(litGlobe(amGlobe)&&e.target.closest&&e.target.closest(".globe-canvas,.globe-gl")&&amGlobe.host.contains(e.target)){S.dragging=true;S.dragT=performance.now();S.needOff=true}}catch(x){}},true);
+["pointerup","pointercancel"].forEach(ev=>addEventListener(ev,()=>{if(S.dragging){S.dragging=false;S.dragT=performance.now();S.needOff=true;holdRoll()}},true));
+window.gfDNG={on:()=>S.on,set,state:S,ui,req,setSea,seaPick:()=>seaPick,seaMode,play,stop,setSpin,setT};
 })();
 
 /* the blue rim round the globe (drawn by the globe's 2D layer, outside this shader) follows the sun in Day & Night: its
