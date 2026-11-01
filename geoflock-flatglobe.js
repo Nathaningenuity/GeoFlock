@@ -87,7 +87,7 @@ function composite(list,D){let COMP=COMPS[D.key];const key=list.map(o=>o.h.slice
 P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,D=defOf(this)||{key:"am",svg:"#allMapsWrap > svg",f:()=>({s:1,bx:0,by:0})},list=pictures(D);if(!list.length)return 0;
  let C=composite(list,D);ctx.save();
  /* a new mode's pictures still loading: keep showing the last finished picture for a few seconds instead of a bare map */
- window.gfMapLoading=!C;if(C)LASTOK[D.key]=Date.now();else if(COMPS[D.key]&&Date.now()-(LASTOK[D.key]||0)<8000)C=COMPS[D.key];
+ window.gfMapLoading=!C;window.gfMapLoadingAt=Date.now();if(C)LASTOK[D.key]=Date.now();else if(COMPS[D.key]&&Date.now()-(LASTOK[D.key]||0)<8000)C=COMPS[D.key];
  if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;/* "medium" shrinks a large picture through blurred half-size copies; "high" keeps it sharp (cheap enough once still) */ctx.imageSmoothingQuality=k>3||!(this._moving||this._fastMove)?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}
  /* zoomed in on City Lights: a sharp picture of the view from the globe's picture over it (geoflock-nightsharp.js) */
  if(window.gfNightSharp)try{window.gfNightSharp(this,ctx,dpr,list,C)}catch(e){console.error(e)}ctx.restore();return 1}
