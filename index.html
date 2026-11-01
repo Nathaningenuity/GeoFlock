@@ -10567,8 +10567,8 @@ function space(){
   ed("space","The Nile, a green thread",S=>{P(S,[phP([32.88,23.97],"Aswan High Dam")]);
     S.pins=(S.pins||[]).concat([[[32.4,22.6],"Lake Nasser: a reservoir 500 km long","point"]])});
   ed("space","The colours of the Sahara",S=>{S.view=[-17,12,35,36];
-    P(S,[phP([8.0,30.5],"Grand Erg Oriental: sand sea"),phP([-11.4,21.12],"The Eye of the Sahara: rock rings 40 km wide","Richat Structure - SRTM.jpg")]);
-    S.more=(S.more||"")+" In Mauritania, the Richat Structure, a bull’s-eye of rock rings about 40 km across, is too small to pick out on this map, but astronauts have used it as a landmark since the 1960s. It is not a meteor crater but a dome of rock layers pushed up from below and worn flat, so the hard layers show as rings."});
+    P(S,[phP([8.0,30.5],"Grand Erg Oriental: sand sea")]);/* the Eye of the Sahara is circled and shown close up by geoflock-eyezoom.js */
+    S.more=(S.more||"")+" In Mauritania, the Richat Structure, a bull’s-eye of rock rings about 40 km across, is too small to pick out on this map (the orange circle marks it, with a close-up from the space station), but astronauts have used it as a landmark since the 1960s. It is not a meteor crater but a dome of rock layers pushed up from below and worn flat, so the hard layers show as rings."});
   ed("space","A sea that shrank",S=>{
     S.lines=(S.lines||[]).concat([{poly:[[58.3,45.6],[58.6,46.2],[59.4,46.4],[60.0,46.7],[61.0,46.9],[61.7,46.75],[61.5,46.3],[61.1,45.6],[61.2,45.0],[60.8,44.4],[60.2,43.9],[59.5,43.6],[58.9,43.55],[58.3,43.8],[58.2,44.5],[58.3,45.6]],kind:"outline"}]);
     S.pins=(S.pins||[]).filter(p=>p[1]!=="The Aral Sea").concat([[[59.6,44.9],"Aralkum: a new desert on the old seabed","point"],[[61.67,46.8],"Aralsk: once a fishing port","point"]]);
@@ -12416,5 +12416,6 @@ if(document.readyState==="complete")setTimeout(start,0);else window.addEventList
 <script src="geoflock-clickguard.js?v=202610301600"></script>
 <script>/* credit for the Earth-from-space cover photo; added after every other photo so the numbered photo list keeps its order */window.addEventListener("load",function(){try{PS_PHOTO_DATA.push({d:"@cebf0180e8b473c7",by:"NASA (STS-82 crew photo of the Hubble Space Telescope, 1997)",lic:"Public domain",page:"https://images.nasa.gov/details/sts082-763-015",f:"sts082-763-015.jpg"})}catch(e){}})</script>
 <script src="geoflock-niagara.js?v=1"></script>
+<script src="geoflock-eyezoom.js?v=1"></script>
 </body>
 </html>
