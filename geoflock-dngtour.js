@@ -97,7 +97,8 @@ for(const k in PLAN){const [t,title]=k.split("|"),S=stopOf(t,title),P=PLAN[k];if
   /* the live night overlay (on:["daynight"]) would darken the night side twice */
   if(P.sun&&Array.isArray(S.on)&&S.on.includes("daynight"))def(S,"on",S.on.filter(x=>x!=="daynight"));
   const T=PS_TOURS[t];
-  if(P.sun&&(S.mode||T.map.mode)!=="satellite"){def(S,"mode","satellite");T.stopModes=true}
+  /* the City Lights tour stays on City Lights: its night side already is the lights, so the stop is lit right there, no map jump */
+  if(P.sun&&t!=="night"&&(S.mode||T.map.mode)!=="satellite"){def(S,"mode","satellite");T.stopModes=true}
   S._dngt=P}catch(e){console.error("dngtour plan",k,e)}}
 window.gfDngTourPlan=FOUND;
 /* any other stop on the Satellite map with the old day-and-night gadget, or the world clock, gets the same treatment */
@@ -113,6 +114,7 @@ const tourOn=()=>typeof ps!=="undefined"&&!!ps;
 const switching=()=>{try{return typeof psSwitching!=="undefined"&&!!psSwitching}catch(e){return false}};
 const curStop=()=>{try{return tourOn()?psSteps()[ps.i]:null}catch(e){return null}};
 const satMap=()=>{try{return appMode==="allmaps"&&allMapsColorModeOn&&allMapsColorMode==="satellite"}catch(e){return false}};
+const nightTourMap=()=>{try{return appMode==="allmaps"&&allMapsColorModeOn&&allMapsColorMode==="night"&&tourOn()&&ps.tour==="night"}catch(e){return false}};
 const isFlat=()=>{try{return!globePrefs().allmaps}catch(e){return false}};
 const globeGL=()=>{try{return typeof amGlobe!=="undefined"&&amGlobe?amGlobe:null}catch(e){return null}};
 const lit=()=>!!(ST.F&&!ST.userDay);
@@ -131,6 +133,10 @@ function scoped(fn,test){return function(){if(!lit()||!test(this))return fn.appl
 const isGL=g=>{const a=globeGL();return!!(a&&a.gl===g&&!a._flat)};
 const isGV=v=>{const a=globeGL();return!!(a&&a===v&&!v._flat)};
 GlobeGL.prototype.draw=scoped(GlobeGL.prototype.draw,isGL);
+/* the City Lights tour's lit stop stays on City Lights: the Day & Night shader only lights the Satellite picture, so it is
+   handed the satellite texture for the day side (its night side is the same City Lights picture the tour shows) */
+{const _d=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){try{if(lit()&&nightTourMap()&&isGL(this)&&o&&o.tex&&o.tex!==this.tex.satellite&&GLOBE_TEX.satellite){
+ const im=globeImages("satellite",req);if(im){const T=this.texture("satellite",im);return _d.call(this,Object.assign({},o,{tex:T}))}}}catch(e){console.error(e)}return _d.apply(this,arguments)}}
 if(GlobeView.prototype._rimLit)GlobeView.prototype._rimLit=scoped(GlobeView.prototype._rimLit,isGV);
 {const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=scoped(function(ctx,p){const r=_dm.apply(this,arguments);
  /* the Sun: a small yellow sun where it stands overhead (when that side faces us) */
@@ -182,7 +188,7 @@ function reconcile(i){
  else if(ST.flatPrev!=null){
   /* a stop with a Pacific view keeps the globe: hand it to the tours' own switch, which goes back to the flat map later */
   if(S&&(S.pacific||S.autoGlobe)&&ST.flatPrev===true&&!isFlat()){try{ps._autoGlobe="allmaps"}catch(e){}ST.flatPrev=null}else backToFlat()}
- const on=!!(P&&P.sun&&satMap()&&!isFlat());
+ const on=!!(P&&P.sun&&(satMap()||nightTourMap())&&!isFlat());
  if(!on){if(ST.F){ST.F=null;req()}note();return}
  /* the world clock starts at the hour that makes the point */
  if(P.sun==="clock"&&P.at!=null&&ST.clockSet!==key){const svg=ps.card&&ps.card.querySelector('[data-dg="worldclock"] svg');
