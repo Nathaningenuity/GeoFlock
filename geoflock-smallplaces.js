@@ -24,15 +24,19 @@ function prep(S){try{
  if(S._gfSm&&S._gfSm.P===P&&S._gfSm.T===T)return;
  const vk=viewKm(S),rk=Math.max(15,Math.min(260,vk*.07)),near=Math.max(80,vk*.15);
  /* 3: duplicates */
- const keep=[];P.forEach(q=>{if(!q||!isPt(q.at))return;if(keep.some(k=>km(k.at,q.at)<near&&(sameThing(k.label,q.label)||(k._gfImg!=null&&k._gfImg===q._gfImg))))return;keep.push(q)});
+ /* the same picture twice on one stop: keep the first (a different photo of the same place stays, under its own name) */
+ const pic=q=>{try{const P=typeof psSqPhoto==="function"?psSqPhoto(q):null;return P&&P.d||null}catch(e){return null}};
+ const capOf=q=>{const l=strip(q.label),c=(window.GF_PHCAP&&(GF_PHCAP[l]||GF_PHCAP[q.label]))||l;return shortCap(c).toLowerCase().replace(/^the\s+/,"")};
+ const keep=[];P.forEach(q=>{if(!q||!isPt(q.at))return;const d=pic(q),c=capOf(q);if(keep.some(k=>(d&&pic(k)===d)||(capOf(k)===c&&km(k.at,q.at)<near)))return;keep.push(q)});
  let P2=keep;
  /* text pins that only repeat a photo pin's place */
  let T2=T.filter(p=>{const a=at(p);if(!isPt(a)||(Array.isArray(p)&&p[2]&&p[2]!=="point"))return true;return!P2.some(q=>km(q.at,a)<near*.6&&sameThing(q.label,lab(p)))});
  /* 1: rings */
  const circles=[];const addC=(a,r)=>{if(!circles.some(c=>km(c[0],a)<r*.8))circles.push([a,r])};
- P2=P2.map(q=>{if(q.ringKm){addC(q.at,q.ringKm);return q}if(!TERR.test(strip(q.label)))return q;const n=Object.assign({},q,{ringKm:rk});addC(q.at,rk);return n});
+ const share=a=>circles.find(c=>km(c[0],a)<c[1]*2);
+ P2=P2.map(q=>{if(q.ringKm){addC(q.at,q.ringKm);return q}if(!TERR.test(strip(q.label)))return q;const c=share(q.at);if(c)return Object.assign({},q,{at:c[0],ringKm:c[1]});const n=Object.assign({},q,{ringKm:rk});addC(q.at,rk);return n});
  /* a photo of something inside a ringed place (the tiger in the Sundarbans) shares that circle */
- P2=P2.map(q=>{if(q.ringKm)return q;const c=circles.find(c=>km(c[0],q.at)<c[1]*1.3);return c?Object.assign({},q,{at:c[0],ringKm:c[1]}):q});
+ P2=P2.map(q=>{if(q.ringKm)return q;const c=circles.find(c=>km(c[0],q.at)<c[1]*1.6);return c?Object.assign({},q,{at:c[0],ringKm:c[1]}):q});
  T2=T2.map(p=>{const a=at(p);if(!isPt(a)||!Array.isArray(p)||(p[2]&&p[2]!=="point")||!TERR.test(strip(p[1])))return p;const n=p.slice();n._gfRk=rk;addC(a,rk);return n});
  const L=Array.isArray(S.lines)?S.lines:[];const have=L.filter(l=>l&&l.circle).map(l=>[l.circle,l.km||0]);
  const add=circles.filter(c=>!have.some(h=>km(h[0],c[0])<Math.max(c[1],h[1])*.8)).map(c=>({circle:c[0],km:c[1],kind:"outline",_gfSm:1}));
@@ -43,6 +47,11 @@ function prep(S){try{
  S._gfSm={P:S.phPins||P,T:S.pins||T};
 }catch(e){console.error("smallplaces",e)}}
 const cur=()=>{try{return typeof ps!=="undefined"&&ps?psSteps()[ps.i]:null}catch(e){return null}};
+const STOPW=new Set(["of","the","in","a","an","and","to","for","at","on","by","from","with","hardly","most","still","now","is","are","was","were","its","their","one","once","where","when","that","who","not","than","more","less","over","under","about","into","up"]);
+function shortCap(t){t=strip(t).replace(/\u2026|\.\.\.$/g,"").trim();let seg=t.split(/\s*[:;,(–—]\s*|\s+-\s+/)[0].trim().replace(/^the\s+/i,"");
+ if(seg.length<=20)return seg.charAt(0).toUpperCase()+seg.slice(1);const w=seg.split(/\s+/),out=[];
+ for(const x of w){if((out.join(" ")+" "+x).trim().length>20)break;out.push(x)}
+ while(out.length>1&&STOPW.has(out[out.length-1].toLowerCase()))out.pop();const r=out.join(" ")||w[0];return r.charAt(0).toUpperCase()+r.slice(1)}
 function ringPx(a,k){try{const p=psScreen(a),q=psScreen([a[0]+k/(111.32*Math.cos(a[1]*Math.PI/180)),a[1]]);return p&&q?Math.hypot(q[0]-p[0],q[1]-p[1]):0}catch(e){return 0}}
 
 function install(){
@@ -70,7 +79,12 @@ function install(){
     const ux=(x-a[0]),uy=(y-a[1]),ud=Math.hypot(ux,uy)||1;
     if(R){lines+=`<line x1="${(a[0]+ux/ud*(R+1)).toFixed(1)}" y1="${(a[1]+uy/ud*(R+1)).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}
     else{lines+=`<line x1="${(a[0]+ux/ud*6).toFixed(1)}" y1="${(a[1]+uy/ud*6).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="ps-dot2" cx="${a[0].toFixed(1)}" cy="${a[1].toFixed(1)}" r="3.4"/>`}});
-   const svg=L.querySelector("svg.ps-sq-lead");if(svg)svg.innerHTML=lines}catch(e){console.error("smallplaces ph",e)}return r};
+   const svg=L.querySelector("svg.ps-sq-lead");if(svg)svg.innerHTML=lines;
+   /* captions short enough to read in full on the map; the whole name stays in the tooltip and the opened photo */
+   const used=new Set(els.map(el=>{const sp=el.querySelector("span");return sp&&sp.textContent.length<=22?sp.textContent.toLowerCase():null}).filter(Boolean));
+   els.forEach(el=>{const sp=el.querySelector("span");if(!sp)return;const t=sp.textContent;if(t.length<=22||sp._gfShort===t)return;let n=shortCap(t);
+    if(used.has(n.toLowerCase())){const parts=strip(t).split(/\s*:\s*/);if(parts.length>1){const m=shortCap(parts.slice(1).join(" "));n=m&&!used.has(m.toLowerCase())?m+", "+n:n}}used.add(n.toLowerCase());if(n&&n!==t){if(!el.title||el.title.indexOf(t)<0)el.title=t;sp.textContent=n;sp._gfShort=n}})
+  }catch(e){console.error("smallplaces ph",e)}return r};
  psPhPinsSync._gfSm=1;
  /* 2: text labels keep their distance from their place (and from its circle) */
  const _lay=psLayout;psLayout=function(cands,pins,sizes,W,H,blocks){const S=cur();prep(S);const r=_lay.apply(this,arguments);
