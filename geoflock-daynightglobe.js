@@ -226,7 +226,9 @@ function iceTex(G){if(G._dngIce)return G._dngIce;if(!ICE_IMG){ICE_IMG=new Image(
 /* the sea colour on the Satellite globe (toolkit Palette): "normal", "light" or "turq"; unset = lighter in Day & Night,
    the plain picture in Day */
 const SEA_KEY="gfSatSea";let seaPick=null;try{seaPick=localStorage.getItem(SEA_KEY)}catch(e){}
-function seaMode(){const k=seaPick||(S.on?"light":"normal");return k==="turq"?2:k==="light"?1:0}
+/* the satellite ocean: Light (the default, Day and Day & Night alike) or Natural (the picture as photographed); an older
+   saved choice (Automatic, Turquoise) now reads as Light */
+function seaMode(){return seaPick==="normal"?0:1}
 function setSea(k){seaPick=k||null;try{k?localStorage.setItem(SEA_KEY,k):localStorage.removeItem(SEA_KEY)}catch(e){}req()}
 const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):null}catch(e){return null}};
 {const _draw=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){
@@ -530,3 +532,9 @@ GlobeView.prototype._rimLit=function(ctx,cx,cy,r,outline){
  o.globalCompositeOperation="destination-in";o.setTransform(m);o.fillStyle=g;o.beginPath();o.arc(cx,cy,r+12,0,2*Math.PI);o.fill();o.globalCompositeOperation="source-over";
  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(off,0,0);ctx.restore();return true};
 })();
+/* the flat satellite map with the Light ocean (the default): the same lightening as on the globe, made beforehand as a
+   picture of how much each sea pixel brightens (textures/SAT_FLAT_SEALIGHT.webp) and added on top ("plus-lighter") */
+(function(){setInterval(()=>{try{const sat=document.getElementById("allMapsSatLayer");if(!sat)return;let L=document.getElementById("allMapsSatSea");
+ if(!L){L=document.createElementNS("http://www.w3.org/2000/svg","image");L.id="allMapsSatSea";L.setAttribute("href","textures/SAT_FLAT_SEALIGHT.webp?v=1");
+  ["x","y","width","height","preserveAspectRatio"].forEach(k=>L.setAttribute(k,sat.getAttribute(k)));L.style.pointerEvents="none";L.style.mixBlendMode="plus-lighter";sat.after(L)}
+ const want=sat.style.display!=="none"&&getComputedStyle(sat).display!=="none"&&window.gfDNG&&gfDNG.seaMode()===1?"":"none";if(L.style.display!==want){L.style.display=want;try{gfDNG.req()}catch(e){}}}catch(e){}},300)})();

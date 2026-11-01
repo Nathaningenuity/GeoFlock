@@ -82,7 +82,7 @@ function composite(list,D){let COMP=COMPS[D.key];const key=list.map(o=>o.h.slice
  /* the picture being replaced goes to the keep list (a fresh canvas for the new one) */
  if(COMP){const L=COMPS[D.key+"#"];L.unshift(COMP);if(L.length>KEEP-1)L.length=KEEP-1}
  const F=2,cv=document.createElement("canvas");cv.width=2000*F;cv.height=Math.round(1001*F);const x=cv.getContext("2d");const ff=D.f();/* the old map's own coordinates → the plain Robinson ones */x.setTransform(F/ff.s,0,0,F/ff.s,-F*ff.bx/ff.s,-F*ff.by/ff.s);x.imageSmoothingQuality="high";
- list.forEach(o=>{const im=img(o.h);x.globalAlpha=o.op;x.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;x.save();if(o.tf)x.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(x,im,o);x.restore()});
+ list.forEach(o=>{const im=img(o.h);x.globalAlpha=o.op;x.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend==="plus-lighter"?"lighter":o.blend;x.save();if(o.tf)x.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(x,im,o);x.restore()});
  x.globalAlpha=1;x.globalCompositeOperation="source-over";COMP=COMPS[D.key]={cv,key,F};return COMP}
 P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.translate(),k=S/318.31,D=defOf(this)||{key:"am",svg:"#allMapsWrap > svg",f:()=>({s:1,bx:0,by:0})},list=pictures(D);if(!list.length)return 0;
  let C=composite(list,D);ctx.save();
@@ -96,7 +96,7 @@ P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.tran
  /* never the shading layers (multiply, screen) on their own: without the colour picture under them the map turns a washed-out white */
  {const base=list.find(o=>o.blend==="normal"),bi=base&&img(base.h);if(!bi||!bi.complete||!bi.naturalWidth){ctx.restore();return 0}}
  {const ff=D.f(),kk=k/ff.s;ctx.setTransform(dpr*kk,0,0,dpr*kk,dpr*(t[0]-1e3*k-ff.bx*kk),dpr*(t[1]-500.5*k-ff.by*kk))}let drew=0;
- list.forEach(o=>{const im=img(o.h);if(!im.complete||!im.naturalWidth)return;ctx.globalAlpha=o.op;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend;
+ list.forEach(o=>{const im=img(o.h);if(!im.complete||!im.naturalWidth)return;ctx.globalAlpha=o.op;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend==="plus-lighter"?"lighter":o.blend;
   ctx.save();if(o.tf)ctx.transform(o.tf.a,o.tf.b,o.tf.c,o.tf.d,o.tf.e,o.tf.f);drawFit(ctx,im,o);ctx.restore();drew++});
  ctx.restore();return drew};
 /* the ball's drawing calls, turned into the flat map's: the round clip and sea become the map's outline; the shading,
