@@ -401,7 +401,7 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
  const st=document.createElement("style");st.textContent=".gf-xs-pen,.gf-xs-pen *{cursor:"+PEN+" !important} .gf-xs-pen .gf-xs, .gf-xs-pen .gf-xs *{cursor:auto !important} .gf-xs-pen .gf-xs :is(button,select,a,label,.gf-xs-hit){cursor:pointer !important} .gf-xs-pen .gf-xs .gf-xs-top{cursor:move !important}";document.head.appendChild(st);
  let last=null;setInterval(()=>{try{const g=G(),h=g&&g.host,w=!!(on&&armed&&h);if(last&&last!==h)last.classList.remove("gf-xs-pen");if(h)h.classList.toggle("gf-xs-pen",w);last=h}catch(e){}},150)}
 /* a straight line between two places (for tours and checks): gfCrossSection.line([lon,lat],[lon,lat],"title") */
-function line(a,b,t){if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify([a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
+function line(a,b,t,pts){if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify(pts&&pts.length>1?pts:[a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
 /* Esc: out of drawing at once (a stroke in progress is dropped), the pen goes; a second Esc closes the panel */
 addEventListener("keydown",e=>{if(e.key!=="Escape"||!on)return;if(armed||drawing){armed=false;drawing=null;try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(er){}renderPanel();e.preventDefault();e.stopImmediatePropagation()}},true);
 window.gfCrossSection={start,stop,pick,line,elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};

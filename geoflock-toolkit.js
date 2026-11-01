@@ -801,7 +801,9 @@ function shape(mode,a,b,shift,A,B){/* a,b: screen points; A,B: their places */
   const cx=(x0+x1)/2,cy=(y0+y1)/2,rx=Math.abs(x1-x0)/2,ry=Math.abs(y1-y0)/2;return{p:scr([...Array(73)].map((_,i)=>[cx+rx*Math.cos(i/72*2*Math.PI),cy+ry*Math.sin(i/72*2*Math.PI)])),f:1}}
  return null}
 function ringAt(A){const ring=d3.geoCircle().center(A).radius(GEO.km/KM/RAD).precision(1.5)().coordinates[0];const top=A[1]+GEO.km/KM/RAD<84?dest(A,0,GEO.km/KM):dest(A,180,GEO.km/KM);return{p:fix(ring),f:1,lab:kmTxt(GEO.km),at:top}}
-function keep(o){if(!o||!o.p||o.p.length<2)return;hist();const k=K();k.ink.push(Object.assign({t:o.t||"geo",c:GEO.col},o));if(k.ink.length>400)k.ink.shift();save();render();geoList()}
+function keep(o){if(!o||!o.p||o.p.length<2)return;hist();const k=K();k.ink.push(Object.assign({t:o.t||"geo",c:GEO.col},o));if(k.ink.length>400)k.ink.shift();save();render();geoList();
+ /* a line drawn on the Elevation map shows its cross-section straight away */
+ try{const g=o.g;if(elevMode()&&g&&(g.m==="line"||(g.m==="poly"&&!g.cl))&&window.gfCrossSection)gfCrossSection.line(o.p[0],o.p[o.p.length-1],"Your line",o.p)}catch(e){}}
 /* free shapes ("poly"): a closed pen drawing, or any shape once it is stretched or turned. Its outline is kept as
    points on a flat sheet laid on the ground round its centre A (an azimuthal map in km), with a stretch across (sx),
    a stretch up and down (sy) and a turn (rot, degrees clockwise); so it can be moved, stretched in any direction and
@@ -818,11 +820,19 @@ const fmtKm2=a=>a>=1e6?(a/1e6).toFixed(a>=1e7?0:1)+" million km²":a>=100?Math.r
 const fmtPpl=n=>(n>=1e9?(n/1e9).toFixed(2)+" billion":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+" million":n>=1e3?Math.round(n/1e3).toLocaleString()+" thousand":Math.round(n).toLocaleString())+" people";
 function closedOf(s){const g=s&&s.g;if(!g||s.t==="geoText")return false;if(g.m==="poly")return!!g.cl;return g.m==="compass"||g.m==="rect"||g.m==="oval"||g.m==="ring"}
 function ringOf(p){let r=p.slice();if(r.length<3)return null;const a=r[0],z=r[r.length-1];if(a[0]!==z[0]||a[1]!==z[1])r=r.concat([a.slice()]);let A;try{A=d3.geoArea({type:"Polygon",coordinates:[r]})}catch(e){return null}if(A>2*Math.PI){r=r.slice().reverse();A=4*Math.PI-A}return{r,A}}
+const elevMode=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="elevation"}catch(e){return false}};
+/* height inside a ring: samples on an even grid over its box (weighted by cos latitude), from the cross-section's elevation grid */
+function elevStats(r){const X=window.gfCrossSection;if(!X)return null;let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;r.forEach(([lo,la])=>{x0=Math.min(x0,lo);x1=Math.max(x1,lo);y0=Math.min(y0,la);y1=Math.max(y1,la)});
+ const poly={type:"Polygon",coordinates:[r]},n=60,dx=(x1-x0)/n||.01,dy=(y1-y0)/n||.01;let sw=0,sum=0,hi=-1e9,lo=1e9,hiAt=null,loAt=null;
+ for(let j=0;j<=n;j++){const la=y0+j*dy,w=Math.cos(la*RAD);for(let i=0;i<=n;i++){const ll=[x0+i*dx,la];if(!d3.geoContains(poly,ll))continue;const e=X.elevAt(ll[0],ll[1]);sw+=w;sum+=e*w;if(e>hi){hi=e;hiAt=ll}if(e<lo){lo=e;loAt=ll}}}
+ if(!sw)return null;return{avg:sum/sw,hi,lo,hiAt,loAt}}
+const fmtM=m=>Math.round(m).toLocaleString()+" m";
 const popMode=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="population"}catch(e){return false}};
 function labelShape(s){if(!s||!s.p||s.p.length<2)return;
- if(closedOf(s)){const pm=popMode(),key=s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length>>1]+"|"+(pm?"P":"");if(s._lk===key&&s.lab===s._lv)return;const o=ringOf(s.p);if(!o)return;
+ if(closedOf(s)){const pm=popMode(),em=elevMode(),key=s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length>>1]+"|"+(pm?"P":"")+(em?"E":"");if(s._lk===key&&s.lab===s._lv)return;const o=ringOf(s.p);if(!o)return;
   let lab=fmtKm2(o.A*KM*KM);
   if(pm&&window.gfPopCount){if(s._pk===key&&s._pp!=null)lab+=" · "+fmtPpl(s._pp);else{const k0=key;gfPopCount.load().then(()=>{const c=gfPopCount.count([o.r]);if(c){s._pk=k0;s._pp=c.tot;s._lk=null;render()}}).catch(()=>{})}}
+  if(em&&window.gfCrossSection){if(s._ek===key&&s._ev!=null)lab+=" · average "+fmtM(s._ev);else{const k0=key;gfCrossSection.loadDEM().then(()=>{const st=elevStats(o.r);if(st){s._ek=k0;s._ev=st.avg;s._lk=null;render()}}).catch(()=>{})}}
   s._lk=key;s.lab=s._lv=lab;try{s.at=d3.geoCentroid({type:"Polygon",coordinates:[o.r]})}catch(e){}return}
  if(s.g&&s.g.m==="poly"&&!s.g.cl&&s.mp){const key="L"+s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length-1];if(s._lk===key&&s.lab===s._lv)return;let L=0;for(let i=1;i<s.p.length;i++)L+=hav(s.p[i-1],s.p[i]);L*=KM;
   let acc=0,at=s.p[0];for(let i=1;i<s.p.length;i++){const d=hav(s.p[i-1],s.p[i])*KM;if(acc+d>=L/2){at=d3.geoInterpolate(s.p[i-1],s.p[i])((L/2-acc)/(d||1));break}acc+=d}
