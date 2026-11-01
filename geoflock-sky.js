@@ -50,16 +50,39 @@ function drawGalaxy(cv){
     const warm=core*Math.exp(-(d*d)/(2*(ww*0.6)**2));
     const r=150+80*warm,gg=150+55*warm-10*(1-warm),b=225-45*warm,p=(j*w+i)*4;
     D[p]=r;D[p+1]=gg;D[p+2]=b;D[p+3]=Math.min(255,I*112)}
-  oc.putImageData(img,0,0);ctx.imageSmoothingQuality="high";ctx.drawImage(off,0,0,cv.width,cv.height);
-  /* stars, crowded into the band */
-  ctx.save();ctx.scale(dpr,dpr);rnd=12345;const N=Math.round(W*H/520);
+  oc.putImageData(img,0,0);
+  /* stars, crowded into the band: kept as a list so the sky can lose them to light pollution (window.gfSkyPollution) */
+  rnd=12345;const N=Math.round(W*H/520),stars=[];
   for(let s=0;s<N;s++){const x=rand()*W,y=rand()*H,[,d]=band(x,y),g=Math.exp(-(d*d)/(2*(wid*1.25)**2));
     if(rand()>0.18+0.82*g)continue;
     const m=rand(),r=m<0.92?0.35+rand()*0.6:0.9+rand()*0.9,a=0.25+rand()*0.6,tint=rand();
-    const col=tint<0.12?`rgba(255,226,196,${a})`:tint<0.3?`rgba(196,212,255,${a})`:`rgba(255,255,255,${a})`;
-    if(r>1.2){const gr=ctx.createRadialGradient(x,y,0,x,y,r*5);gr.addColorStop(0,`rgba(220,226,255,${a*0.35})`);gr.addColorStop(1,"rgba(220,226,255,0)");ctx.fillStyle=gr;ctx.beginPath();ctx.arc(x,y,r*5,0,7);ctx.fill()}
-    ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()}
+    stars.push({x,y,r,a,rgb:tint<0.12?"255,226,196":tint<0.3?"196,212,255":"255,255,255",q:r*a})}
+  /* brightness rank: 0 = the brightest star, 1 = the faintest */
+  stars.slice().sort((p,q)=>q.q-p.q).forEach((t,i,l)=>t.rank=i/Math.max(1,l.length-1));
+  GAL={cv,off,stars,W,H,dpr};skyPaint()}
+/* ---------- light pollution: 0 = a truly dark sky … 8 = a city centre (Bortle-like steps, as in the stars simulation);
+   the faint stars shrink and fade first, the Milky Way goes, and an orange glow rises from the horizon. Changes ease in. ---------- */
+let GAL=null,POL=0,POLT=0,polRAF=0,polLast=0;
+const BCOUNT=[2500,2200,1600,900,400,200,100,50,20],BMW=[1,.9,.7,.4,.15,0,0,0,0];
+const lerpB=(A,x)=>{const i=Math.max(0,Math.min(7,Math.floor(x))),f=Math.max(0,Math.min(1,x-i));return A[i]+(A[i+1]-A[i])*f};
+function skyPaint(){if(!GAL)return;const{cv,off,stars,W,H,dpr}=GAL,ctx=cv.getContext("2d"),x=POL;
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
+  const mw=lerpB(BMW,x);if(mw>0.002){ctx.globalAlpha=mw;ctx.imageSmoothingQuality="high";ctx.drawImage(off,0,0,cv.width,cv.height);ctx.globalAlpha=1}
+  ctx.save();ctx.scale(dpr,dpr);
+  const F=lerpB(BCOUNT,x)/2500,soft=0.05,dim=1-0.25*Math.min(1,x/8);
+  for(const t of stars){let v=1;if(F<1){const u=(t.rank-(F-soft))/(2*soft);v=u<=0?1:u>=1?0:1-u*u*(3-2*u)}if(v<0.01)continue;
+    const r=t.r*(0.25+0.75*v),a=t.a*v*dim;
+    if(t.r>1.2){const gr=ctx.createRadialGradient(t.x,t.y,0,t.x,t.y,r*5);gr.addColorStop(0,`rgba(220,226,255,${a*0.35})`);gr.addColorStop(1,"rgba(220,226,255,0)");ctx.fillStyle=gr;ctx.beginPath();ctx.arc(t.x,t.y,r*5,0,7);ctx.fill()}
+    ctx.fillStyle=`rgba(${t.rgb},${a})`;ctx.beginPath();ctx.arc(t.x,t.y,r,0,7);ctx.fill()}
+  /* sky glow over the towns: rises from the horizon as the light grows */
+  const gl=Math.max(0,Math.min(1,(x-2)/6));if(gl>0){const g=ctx.createLinearGradient(0,H,0,H*0.25);g.addColorStop(0,`rgba(255,150,70,${0.42*gl})`);g.addColorStop(0.45,`rgba(205,120,80,${0.16*gl})`);g.addColorStop(1,"rgba(160,110,110,0)");ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
   ctx.restore()}
+function polStep(ts){const dt=Math.min(0.1,polLast?(ts-polLast)/1000:0.016);polLast=ts;
+  const d=POLT-POL;POL=Math.abs(d)<0.01?POLT:POL+d*Math.min(1,dt*1.3);skyPaint();
+  if(POL!==POLT)polRAF=requestAnimationFrame(polStep);else{polRAF=0;polLast=0}}
+window.gfSkyPollution=function(level){const v=Math.max(0,Math.min(8,+level||0));if(v===POLT)return;POLT=v;
+  if(matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches){POL=v;skyPaint();return}
+  if(!polRAF)polRAF=requestAnimationFrame(polStep)};
 
 /* ---------- a silhouetted night landscape: ranges fading into haze, misty valleys, a lake, pines ---------- */
 function n1(x,seed){return vnoise(x,seed*7.13)}
@@ -380,3 +403,8 @@ new MutationObserver(sync).observe(document.body,{attributes:true,attributeFilte
 let t;addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(sync,250)});
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",sync);else sync();
 })();
+/* the "How many stars can you see?" simulation drives the real night sky behind the page: dragging towards the city centre
+   makes the background stars shrink and fade, faint ones first; leaving it brings the dark sky back */
+(function(){let last=-1;setInterval(()=>{try{if(typeof window.gfSkyPollution!=="function")return;let b=0;
+ document.querySelectorAll("svg g.st-s").forEach(g=>{const svg=g.ownerSVGElement;if(svg&&svg._s&&svg.isConnected&&svg.getClientRects().length)b=Math.max(b,+svg._s.b||0)});
+ if(b!==last){last=b;window.gfSkyPollution(b)}}catch(e){}},120)})();
