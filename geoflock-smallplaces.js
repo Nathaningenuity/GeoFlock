@@ -6,7 +6,9 @@
    Load after every other tour patch: its wrappers must be the outermost. */
 (function(){
 "use strict";
-const TERR=/\b(delta|sundarbans|mangroves?|reefs?|atolls?|lakes?|lagoons?|islands?|isles?|archipelago|patch|plastic|wetlands?|swamps?|marsh(es)?|pantanal|salar|salt (flat|pan)s?|caldera|crater|oasis|bay|glaciers?|ice ?field|forests?|national park|reserve|fjord|gorge|sinkhole|basin|estuary|dunes?|erg|sea of|everglades|okavango|uyuni|galápagos|galapagos)\b/i;
+const TERR=/\b(delta|sundarbans|mangroves?|reefs?|atolls?|patch|plastic|wetlands?|swamps?|marsh(es)?|pantanal|salar|caldera|crater|sinkhole|everglades|okavango|uyuni|salt lakes?|salt (flat|pan)s?|lake eyre|kati thanda)\b/i;
+/* where the circle goes for well-known small places (the place's middle, and a size that surrounds it) */
+const CENTRE=[[/okavango/i,[22.85,-19.25],150],[/sundarbans/i,[89.25,21.95],95],[/nile delta/i,[31.0,30.85],110],[/uyuni/i,[-67.55,-20.2],80],[/lake eyre|kati thanda/i,[137.3,-28.45],90]];
 const SKIP=new Set(["geo"]);
 const strip=s=>String(s==null?"":s).replace(/​/g,"");
 const lab=p=>Array.isArray(p)?p[1]:(p&&p.label);
@@ -34,10 +36,17 @@ function prep(S){try{
  /* 1: rings */
  const circles=[];const addC=(a,r)=>{if(!circles.some(c=>km(c[0],a)<r*.8))circles.push([a,r])};
  const share=a=>circles.find(c=>km(c[0],a)<c[1]*2);
- P2=P2.map(q=>{if(q.ringKm){addC(q.at,q.ringKm);return q}if(!TERR.test(strip(q.label)))return q;const c=share(q.at);if(c)return Object.assign({},q,{at:c[0],ringKm:c[1]});const n=Object.assign({},q,{ringKm:rk});addC(q.at,rk);return n});
+ P2=P2.map(q=>{if(q.ringKm){addC(q.at,q.ringKm);return q}if(!TERR.test(strip(q.label)))return q;
+  const C=CENTRE.find(c=>c[0].test(strip(q.label)));if(C){const ex=share(C[1]);if(ex)return Object.assign({},q,{at:ex[0],ringKm:ex[1]});const r2=Math.max(rk,C[2]);addC(C[1],r2);return Object.assign({},q,{at:C[1],ringKm:r2})}
+  const c=share(q.at);if(c)return Object.assign({},q,{at:c[0],ringKm:c[1]});const n=Object.assign({},q,{ringKm:rk});addC(q.at,rk);return n});
  /* a photo of something inside a ringed place (the tiger in the Sundarbans) shares that circle */
- P2=P2.map(q=>{if(q.ringKm)return q;const c=circles.find(c=>km(c[0],q.at)<c[1]*1.6);return c?Object.assign({},q,{at:c[0],ringKm:c[1]}):q});
- T2=T2.map(p=>{const a=at(p);if(!isPt(a)||!Array.isArray(p)||(p[2]&&p[2]!=="point")||!TERR.test(strip(p[1])))return p;const n=p.slice();n._gfRk=rk;addC(a,rk);return n});
+ P2=P2.map(q=>{if(q.ringKm)return q;const c=circles.find(c=>km(c[0],q.at)<c[1]*1.1);return c?Object.assign({},q,{at:c[0],ringKm:c[1]}):q});
+ /* a text label on a small place (a salt lake, a delta...) gets the circle too; other labels keep plain lines */
+ T2=T2.map(p=>{if(!Array.isArray(p)||!TERR.test(strip(p[1])))return p;let a=at(p);
+  /* an "area" label on a small place becomes a ringed point in its middle */
+  if(p[2]==="area"&&Array.isArray(a)&&a.length===2&&isPt(a[0])&&isPt(a[1])){a=[(a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2];p=[a,p[1],"point"]}
+  if(!isPt(a)||(p[2]&&p[2]!=="point"))return p;
+  const C=CENTRE.find(c=>c[0].test(strip(p[1])));const n=p.slice();if(C){n[0]=C[1];n._gfRk=Math.max(rk,C[2])}else n._gfRk=rk;addC(n[0],n._gfRk);return n});
  const L=Array.isArray(S.lines)?S.lines:[];const have=L.filter(l=>l&&l.circle).map(l=>[l.circle,l.km||0]);
  const add=circles.filter(c=>!have.some(h=>km(h[0],c[0])<Math.max(c[1],h[1])*.8)).map(c=>({circle:c[0],km:c[1],kind:"outline",_gfSm:1}));
  const set=(k,v)=>{try{Object.defineProperty(S,k,{configurable:true,enumerable:true,writable:true,value:v})}catch(e){try{S[k]=v}catch(x){}}};
@@ -68,11 +77,12 @@ function install(){
    els.forEach((el,k)=>{const q=P[k];if(!q||el.style.display==="none")return;const a=psScreen(q.at);if(!a)return;
     const w=el.offsetWidth||62,h=el.offsetHeight||80,R=q.ringKm?ringPx(q.at,q.ringKm):0;
     let x=parseFloat(el.style.left),y=parseFloat(el.style.top);if(!isFinite(x)||!isFinite(y))return;
-    const need=R+Math.hypot(w,h)/2+34;let dx=x-a[0],dy=y-a[1],d=Math.hypot(dx,dy);
-    if(d<need){if(d<1){dx=a[0]<bw/2?1:-1;dy=-.6;d=Math.hypot(dx,dy)}
+    const edge=(X,Y)=>Math.hypot(Math.max(0,Math.abs(X-a[0])-w/2),Math.max(0,Math.abs(Y-a[1])-h/2));
+    let dx=x-a[0],dy=y-a[1],d=Math.hypot(dx,dy);const G=R+52;
+    if(edge(x,y)<G){const need=d+(G-edge(x,y))+4;if(d<1){dx=a[0]<bw/2?1:-1;dy=-.6;d=Math.hypot(dx,dy)}
      const hit=(X,Y)=>(card&&X+w/2>card.l&&X-w/2<card.r&&Y+h/2>card.t&&Y-h/2<card.b)||placed.some(p=>Math.abs(p[0]-X)<w+6&&Math.abs(p[1]-Y)<h+6)||X<w/2+4||X>bw-w/2-4||Y<h/2+4||Y>bh-h/2-4;
      const base=Math.atan2(dy,dx);let best=null;
-     for(const off of [0,.5,-.5,1,-1,1.6,-1.6,2.3,-2.3,Math.PI]){const t=base+off,X=a[0]+Math.cos(t)*need,Y=a[1]+Math.sin(t)*need;if(!hit(X,Y)){best=[X,Y];break}}
+     for(const off of [0,.5,-.5,1,-1,1.6,-1.6,2.3,-2.3,Math.PI]){const t=base+off;let X=a[0]+Math.cos(t)*need,Y=a[1]+Math.sin(t)*need;for(let n=0;n<6&&edge(X,Y)<G;n++){X+=Math.cos(t)*12;Y+=Math.sin(t)*12}if(!hit(X,Y)){best=[X,Y];break}}
      if(!best)best=[Math.max(w/2+4,Math.min(bw-w/2-4,a[0]+dx/d*need)),Math.max(h/2+4,Math.min(bh-h/2-4,a[1]+dy/d*need))];
      x=best[0];y=best[1];el.style.left=x+"px";el.style.top=y+"px"}
     placed.push([x,y]);
@@ -91,9 +101,11 @@ function install(){
   try{if(!S||SKIP.has(ps.tour)||!Array.isArray(r))return r;
    const TS=(S.pins||[]).filter(p=>Array.isArray(p)&&isPt(p[0])&&(!p[2]||p[2]==="point"||p[2]==="ring")).map(p=>[p,psScreen(p[0])]).filter(x=>x[1]);
    r.forEach(q=>{if(!q||q.ax==null)return;const m=TS.find(x=>Math.hypot(x[1][0]-q.ax,x[1][1]-q.ay)<3);if(!m)return;const p=m[0];
-    const R=p&&p._gfRk?ringPx(at(p),p._gfRk):0,cx=q.x+q.w/2,cy=q.y+q.h/2,need=R+Math.hypot(q.w,q.h)/2+26;
-    let dx=cx-q.ax,dy=cy-q.ay,d=Math.hypot(dx,dy);if(d>=need)return;if(d<1){dx=q.ax<W/2?1:-1;dy=-.5;d=Math.hypot(dx,dy)}
-    let X=q.ax+dx/d*need-q.w/2,Y=q.ay+dy/d*need-q.h/2;X=Math.max(4,Math.min(W-q.w-4,X));Y=Math.max(4,Math.min(H-q.h-4,Y));
+    const R=p&&p._gfRk?ringPx(p[0],p._gfRk):0,cx=q.x+q.w/2,cy=q.y+q.h/2,G=R+48;
+    const edge=(X,Y)=>Math.hypot(Math.max(0,Math.abs(X-q.ax)-q.w/2),Math.max(0,Math.abs(Y-q.ay)-q.h/2));
+    if(edge(cx,cy)>=G)return;let dx=cx-q.ax,dy=cy-q.ay,d=Math.hypot(dx,dy);if(d<1){dx=q.ax<W/2?1:-1;dy=-.5;d=Math.hypot(dx,dy)}
+    let ux=dx/d,uy=dy/d,CX=cx,CY=cy;for(let n=0;n<40&&edge(CX,CY)<G;n++){CX+=ux*8;CY+=uy*8}
+    let X=CX-q.w/2,Y=CY-q.h/2;X=Math.max(4,Math.min(W-q.w-4,X));Y=Math.max(4,Math.min(H-q.h-4,Y));
     q.x=X;q.y=Y;q.ex=Math.max(q.x,Math.min(q.x+q.w,q.ax));q.ey=Math.max(q.y,Math.min(q.y+q.h,q.ay));q.gap=Math.max(q.gap||0,9)})}catch(e){console.error("smallplaces lay",e)}return r};
  /* 1: a ringed text pin: no dot, its line ends at the circle */
  const _ld=psLeaders;psLeaders=function(pinsEl,rects){const r=_ld.apply(this,arguments);
