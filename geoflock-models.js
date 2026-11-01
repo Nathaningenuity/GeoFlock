@@ -218,17 +218,30 @@ function card(id,num,kind){const T=PS_TOURS[id],col=T.col||"#2b7bb5",done=isDone
  const resume=!done&&at>0?' data-gfm-at="'+at+'"':"";
  if(kind==="cont")return'<button type="button" class="gfm-tc gfm-cont" data-gfm-tour="'+id+'"'+resume+' style="--tc:'+col+'"><span class="gfm-pic">'+(th?'<img src="'+th+'" alt="" loading="lazy">':"")+'</span><span class="gfm-tx"><span class="gfm-k">Continue</span><b>'+esc(tourName(id))+', stop '+at+' of '+n+'</b>'+(stopTitle(id,at)?'<small>You were at: '+esc(stopTitle(id,at))+'</small>':"")+'<span class="gfm-bar"><i style="width:'+pct+'%"></i></span><span class="gfm-go">Continue →</span></span></button>';
  return'<button type="button" class="gfm-tc'+(done?" done":"")+(kind==="next"?" gfm-next":"")+'" data-gfm-tour="'+id+'"'+resume+' style="--tc:'+col+'" aria-label="'+esc(num+". "+tourName(id)+": "+hint)+'"><span class="gfm-pic">'+(th?'<img src="'+th+'" alt="" loading="lazy">':"")+'<span class="gfm-num">'+num+'</span>'+(done?'<span class="gfm-tick" aria-hidden="true">✓</span>':"")+'</span><span class="gfm-tx">'+(kind==="next"?'<span class="gfm-k">Next on the path</span>':"")+'<b>'+esc(tourName(id))+'</b><small>'+hint+'</small><span class="gfm-bar"><i style="width:'+pct+'%"></i></span></span></button>'}
+/* the suggestion is one thin strip (the owner's call): the tour you were on, to continue where you left off, or else the
+   next tour on the path (Geography → Population → Tectonics → Climate → Explorers → History) */
 function suggestedHTML(){const path=SUGG.filter(([id])=>PS_TOURS[id]);if(!path.length)return"";
- const any=Object.values((typeof stats!=="undefined"&&stats.tourProg)||{}).some(p=>p&&((p.max||0)>0||p.done));
- const cur=lastOpen(),ndone=path.filter(([id])=>isDone(id)).length;
- let row,sub;
- if(any&&cur){const nxt=path.find(([id])=>id!==cur&&!isDone(id));const ni=nxt?path.indexOf(nxt)+1:0;
-  row=card(cur,0,"cont")+(nxt?'<span class="gfm-arr" aria-hidden="true">→</span>'+card(nxt[0],ni,"next"):"");
-  sub="Pick up where you left off, then the next tour on the path";
-  row+='</div><div class="gfm-dots" aria-label="The suggested path"><span>Path:</span>'+path.map(([id],i)=>'<button type="button" data-gfm-tour="'+id+'"'+(started(id)?' data-gfm-at="'+atOf(id)+'"':"")+' class="'+(isDone(id)?"done":"")+(id===cur?" on":"")+'" style="--tc:'+(PS_TOURS[id].col||"#2b7bb5")+'" title="'+esc(tourName(id)+(isDone(id)?": finished":started(id)?": stop "+atOf(id)+" of "+stopsOf(id):""))+'">'+(isDone(id)?"✓ ":(i+1)+" ")+esc(tourName(id))+'</button>').join("")+'<span>'+ndone+' of '+path.length+' done</span>'}
- else{row=path.map(([id],i)=>(i?'<span class="gfm-arr" aria-hidden="true">→</span>':"")+card(id,i+1)).join("");
-  sub=ndone===path.length?"You’ve done the whole path: every tour below is yours to explore":any?ndone+" of "+path.length+" done. Carry on along the path":"New here? Six tours that cover the big picture, in this order"}
- return'<section class="gfm-sug" id="gfmSuggested" aria-label="Suggested tours"><div class="tr-sec-h"><h3>Suggested</h3><span>'+sub+'</span></div><div class="gfm-row">'+row+'</div></section>'}
+ const cur=lastOpen(),nxt=path.find(([id])=>!isDone(id)),id=cur||(nxt&&nxt[0]);if(!id)return"";
+ const T=PS_TOURS[id],col=T.col||"#2b7bb5",th=thumbOf(id),n=stopsOf(id),at=cur?atOf(id):0,pct=Math.round(at/n*100),st=cur?stopTitle(id,at):"";
+ const k=cur?"Continue":path.findIndex(x=>x[0]===id)===0?"Start here":"Suggested next";
+ const line='<b>'+esc(tourName(id))+'</b>'+(cur?'<span> · stop '+at+' of '+n+(st?' · '+esc(st):'')+'</span>':'<span> · '+n+' stops</span>');
+ return'<section class="gfm-sug gfm-strip" id="gfmSuggested" aria-label="Suggested tour"><button type="button" class="gfm-st" data-gfm-tour="'+id+'"'+(at?' data-gfm-at="'+at+'"':"")+' style="--tc:'+col+'">'+
+  '<span class="gfm-st-pic">'+(th?'<img src="'+th+'" alt="" loading="lazy">':"")+'</span>'+
+  '<span class="gfm-st-tx"><span class="gfm-st-k">'+k+'</span><span class="gfm-st-l">'+line+'</span>'+(cur?'<span class="gfm-st-bar"><i style="width:'+pct+'%"></i></span>':"")+'</span>'+
+  '<span class="gfm-st-go">'+(cur?"Continue":"Start")+' →</span></button></section>'}
+{const st=document.createElement("style");st.textContent=`
+.gfm-strip{ margin:6px 0 14px; }
+.gfm-st{ display:flex; align-items:center; gap:12px; width:100%; max-width:860px; padding:6px 8px 6px 6px; border:2px solid #fff; border-radius:14px; background:rgba(255,255,255,.9);
+  box-shadow:0 4px 14px rgba(20,70,110,.14); cursor:pointer; text-align:left; font:inherit; color:#16324f; }
+.gfm-st:hover{ box-shadow:0 6px 18px rgba(20,70,110,.22); }
+.gfm-st-pic{ flex:none; width:64px; height:40px; border-radius:9px; overflow:hidden; background:#dfe8ef; }
+.gfm-st-pic img{ width:100%; height:100%; object-fit:cover; display:block; }
+.gfm-st-tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.gfm-st-k{ font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--tc); }
+.gfm-st-l{ font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .gfm-st-l span{ opacity:.75; }
+.gfm-st-bar{ display:block; height:3px; border-radius:2px; background:rgba(22,50,79,.12); max-width:260px; } .gfm-st-bar i{ display:block; height:100%; border-radius:2px; background:var(--tc); }
+.gfm-st-go{ flex:none; padding:7px 14px; border-radius:999px; background:var(--tc); color:#fff; font-weight:800; font-size:13px; }
+body.sky-night .gfm-st{ background:rgba(30,36,60,.82); border-color:rgba(255,255,255,.18); color:#e8ecf6; }`;document.head.appendChild(st)}
 function wireTours(root){root.querySelectorAll("[data-gfm-tour]").forEach(b=>b.onclick=()=>{const id=b.dataset.gfmTour,at=+b.dataset.gfmAt||0;try{psLaunchTour(id);if(at&&typeof toursResumeAt==="function")toursResumeAt(id,at)}catch(e){console.error(e)}})}
 function addSuggested(){const v=document.getElementById("toursView"),w=v&&v.querySelector(".tr-wrap");if(!w)return;
  const old=w.querySelector("#gfmSuggested");if(old)old.remove();
