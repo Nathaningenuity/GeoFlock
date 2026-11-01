@@ -64,7 +64,7 @@ const PLAN={
  "time|Every time zone at once":{sun:"stop"},
  "time|Now explore":{sun:"live"},
  /* other tours: the stops whose point is the Sun, the season or the time of day (their map switches to Satellite) */
- "night|Night moves round the planet":{sun:"stop"},
+ "night|Night moves round the planet":{sun:"stop",clouds:true},/* real clouds, always on for this stop */
  "climate|Why we have seasons":{sun:"stop"},
  "europe|Islands of the midnight sun":{sun:"stop"},
  "hantarctica|The first winter":{sun:"stop",gfSun:{utc:12,day:172}},
@@ -133,6 +133,11 @@ function scoped(fn,test){return function(){if(!lit()||!test(this))return fn.appl
 const isGL=g=>{const a=globeGL();return!!(a&&a.gl===g&&!a._flat)};
 const isGV=v=>{const a=globeGL();return!!(a&&a===v&&!v._flat)};
 GlobeGL.prototype.draw=scoped(GlobeGL.prototype.draw,isGL);
+/* a stop with clouds:true shows the real clouds and they cannot be switched off there (the switch is hidden for the stop) */
+const cloudStop=()=>!!(tourOn()&&ST.plan&&ST.plan.clouds);
+if(typeof cloudsOn==="function"){const _co=cloudsOn;cloudsOn=function(){try{if(cloudStop())return true}catch(e){}return _co.apply(this,arguments)}}
+setInterval(()=>{try{const f=cloudStop();document.body.classList.toggle("gf-dngt-clouds",f);if(f&&typeof cloudsLoad==="function")cloudsLoad()}catch(e){}},300);
+document.addEventListener("change",e=>{try{if(cloudStop()&&e.target&&e.target.id==="amCloudsToggle"){e.target.checked=true;e.stopImmediatePropagation();req()}}catch(x){}},true);
 /* the City Lights tour's lit stop stays on City Lights: the Day & Night shader only lights the Satellite picture, so it is
    handed the satellite texture for the day side (its night side is the same City Lights picture the tour shows) */
 {const _d=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){try{if(lit()&&nightTourMap()&&isGL(this)&&o&&o.tex&&o.tex!==this.tex.satellite&&GLOBE_TEX.satellite){
@@ -218,6 +223,7 @@ document.addEventListener("click",e=>{try{const b=e.target.closest&&e.target.clo
  setTimeout(()=>{reconcile();req()},0)}catch(x){}},true);
 
 const css=document.createElement("style");css.textContent=`
+body.gf-dngt-clouds .am-clouds-sw, body.gf-dngt-clouds #amCloudsSw{ display:none !important; }
 .ps-card.gf-dngt-clock .psc-sun{ display:none; }
 .ps-card .gf-dngt-note{ margin:6px 0 2px; padding:6px 10px; border-radius:10px; font-size:12.5px; line-height:1.4; background:rgba(255,197,51,.13); border-left:3px solid #ffc533; }
 body.sky-night .ps-card .gf-dngt-note{ background:rgba(255,197,51,.1); }`;
