@@ -80,7 +80,7 @@ const TW={
  zebra:"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 36 36\"><path fill=\"#E1E8ED\" d=\"M23.283 23.275s1.374 1.635 2.733 10.047c.143.883.201 1.775.217 2.678H36V7.448C31.613 3.975 25.601 3.259 18.322 5.69c0 0-5.408-3-6.147-3.739-.719-.72-1.857-1.556-1.235.35.364 1.112.764 2.373 2.358 4.862-3.436 2.036-4.513 4.68-8.558 13.341C1.652 27.12.08 29.269.937 31.797c1.13 3.337 5.316 5.595 8.844 3.021 1.919-1.4 2.246-3.913 6.225-6.223 3.653-.065 7.277-1.604 7.277-5.32z\"/><path fill=\"#292F33\" d=\"M36 6.012C27.665.301 14.354 1.473 15.909 6.19 25.51 4.328 31.77 7.731 36 13.358V6.012z\"/><path fill=\"#292F33\" d=\"M19.663 5.763c-2.878.233-7.28 1.765-9.42 4.137 0 0-.005-5.317 3.689-5.784 6.172-.779 5.809.363 5.809.363l-.078 1.284z\"/><path fill=\"#E1E8ED\" d=\"M16.357 1.056c.558 1.155 4.006 1.79 5.056 6.029 1.051 4.24-3.134 2.951-4.356.855-1.361-2.334-1.828-4.162-1.867-5.679-.021-.801.039-3.538 1.167-1.205z\"/><path fill=\"#66757F\" d=\"M16.596 2.838c1.103.968 2.448 2.472 2.65 3.955.202 1.483-1.125.988-1.736-.372-.612-1.359-.753-2.779-1.134-3.233-.38-.454.22-.35.22-.35z\"/><path fill=\"#292F33\" d=\"M16.94 15.525c0 .687-.557 1.244-1.245 1.244-.687 0-1.244-.557-1.244-1.244 0-.688.557-1.245 1.244-1.245.688.001 1.245.558 1.245 1.245z\"/><path fill=\"#E1E8ED\" d=\"M10.354 9.924c-.033-.017-.075-.014-.111-.024-1.543 2.033-2.92 5.102-5.49 10.604-1.356 2.903-2.42 4.946-3.116 6.538 1.628.226 3.285-1.442 3.945-3.271.673-1.866 3.215-5.652 4.927-7.778 1.712-2.127 1.561-5.144-.155-6.069z\"/><path fill=\"#292F33\" d=\"M28.188 6.312s-2.296 6.947-2.302 8.947c-.011 3.803-2.687 7.801-2.687 7.801l1.342 3.422s3.25-3.04 3.938-10.228c.571-5.973 2.566-7.667 2.566-7.667l-2.857-2.275zm5.874 3.126S31.056 13.073 30 19c-1.438 8.062-4.857 9.746-4.857 9.746l.482 2.441s5.281-3.056 6.632-9.115C33.875 14.812 36 13.358 36 13.358l-1.938-3.92zm-30.812 14c.688-.714 3.017 3.808 4.53 4.884 1.589 1.13 5.469.935 5.701 2.162-1.668 1.704-2.763 4.273-4.84 4.988-2.078.716-5.71.677-7.238-2.647-1.528-3.325-.403-4.7.222-6.137s1.458-2.938 1.625-3.25z\"/><path fill=\"#66757F\" d=\"M4.222 29.917c0 .881-.532 1.594-1.187 1.594s-1.187-.713-1.187-1.594c0-.882.532-1.596 1.187-1.596s1.187.714 1.187 1.596z\"/><path fill=\"#292F33\" d=\"M25.954 32.945s4.608-1.57 6.108-3.383S36 24 36 24v6.375S34.812 32 32.312 33.313c-1.586.832-6.092 2.251-6.092 2.251l-.266-2.619zM25.01 6.08S24.063 9 23.813 12s-1.125 4.875-1.938 6.188c.312-4.25-.688-5.875-.125-8.125s.87-4.32.87-4.32.63-.368 1.255-.305 1.135.642 1.135.642zM4.753 20.504s3.934-.379 5.747.871 5.332 7.323 5.332 7.323l-1.134.753s-1.697-4.639-4.76-6.076-6-1.188-6-1.188l.815-1.683z\"/><path fill=\"#292F33\" d=\"M5.605 18.678s5.516-.358 6.958 1.509c2.75 3.562 3.831 5.01 4.447 8.349l1.785-.307c-.794-2.917-2.607-8.104-5.919-10.292s-6.25-1.688-6.25-1.688l-1.021 2.429zm12.27-5.99c-.625.688 2 3.312 1.125 5.5s-.375 5.25.125 6.625 1.26 2.839 1.26 2.839l1.622-1.146S21.75 25 21 22.813s-.688-2.25-.375-4.438S18.5 12 17.875 12.688zm-2.83-5.859s1.142 2.046 1.08 3.046-.062 2.688-.625 3.062-.812-2-1.188-3.062-1.064-2.258-1.064-2.258 1.469-1.428 1.797-.788zm-3.544 1.79s1.793 1.398 1.73 2.398 1.144 2.607.581 2.982-1.938-1.25-2.312-2.312S10.243 9.9 10.243 9.9s.929-1.921 1.258-1.281zm-2.563 3.193s1.522.981 1.938 1.75c.415.768 2.11 1.387 1.938 1.875-.173.488-1.977-.098-2.688-.75-.711-.652-2.345-.579-2.345-.579l1.157-2.296z\"/></svg>"
 };
 /* new photos (Wikimedia Commons): key → file name, and their credits */
-const NEW={muskox:"Muskox (Ovibos moschatus) male Dovrefjell 4.jpg",amurtiger:"P.t.altaica Tomak Male.jpg",brownbear:"2010-kodiak-bear-1.jpg",reddeer:"Cervus elaphus Luc Viatour 6.jpg",bison:"American bison k5680-1.jpg",rhea:"Nandu Rhea americana Tierpark Hellabrunn-1.jpg",iblynx:"Lince ibérico (Lynx pardinus), Almuradiel, Ciudad Real, España, 2021-12-19, DD 07.jpg",quokka:"Setonix brachyurus on Rottnest Island 1.jpg",sugarbird:"Cape Sugarbird (Promerops cafer).jpg",fennec:"Fennec Fox Vulpes zerda.jpg",oryx:"Arabian oryx (oryx leucoryx).jpg",lion:"020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg",hyacinth:"008 Hyacinth macaw couple kissing under Pink Ipê tree in Encontro das Águas State Park Photo by Giles Laurent.jpg",jabiru:"002 Jabiru feeding its babies in their nest in Encontro das Águas State Park Photo by Giles Laurent.jpg",caiman:"Yacare Caiman (Caiman Yacare) - Flickr - berniedup.jpg"};
+const NEW={muskox:"Muskox (Ovibos moschatus) male Dovrefjell 4.jpg",amurtiger:"P.t.altaica Tomak Male.jpg",brownbear:"2010-kodiak-bear-1.jpg",reddeer:"Cervus elaphus Luc Viatour 6.jpg",bison:"American bison k5680-1.jpg",rhea:"Nandu Rhea americana Tierpark Hellabrunn-1.jpg",iblynx:"Lince ibérico (Lynx pardinus), Almuradiel, Ciudad Real, España, 2021-12-19, DD 07.jpg",quokka:"Setonix brachyurus on Rottnest Island 1.jpg",sugarbird:"Cape Sugarbird (Promerops cafer).jpg",fennec:"Fennec Fox Vulpes zerda.jpg",oryx:"Arabian oryx (oryx leucoryx).jpg",lion:"020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg",hyacinth:"008 Hyacinth macaw couple kissing under Pink Ipê tree in Encontro das Águas State Park Photo by Giles Laurent.jpg",jabiru:"002 Jabiru feeding its babies in their nest in Encontro das Águas State Park Photo by Giles Laurent.jpg",caiman:"Yacare Caiman (Caiman Yacare) - Flickr - berniedup.jpg",seaotter:"Sea Otter (Enhydra lutris) (25169790524) crop.jpg",tubeworm:"Campagne HOT - Vers géants (Riftia pachyptila) (Ifremer 00530-64223 - 52381).jpg",bluewhale:"Anim1754 - Flickr - NOAA Photo Library.jpg",adelie:"Hope Bay-2016-Trinity Peninsula–Adélie penguin (Pygoscelis adeliae) 04.jpg",przewalski:"Przewalskis horse 02.jpg",cheetah:"Male cheetah facing left in South Africa.jpg",nilecroc:"NileCrocodile.jpg",furseal:"Arctocephalus pusillus - SE Tasmania.jpg",humboldt:"Humboldt Penguin, Chiloé, CL-LL, CL imported from iNaturalist photo 384752139.jpg"};
 window.GF_WILD_PHOTOS=[
 {"f": "Muskox (Ovibos moschatus) male Dovrefjell 4.jpg", "d": "photos/x9d560a23ab2c3df5.webp", "by": "Charles J. Sharp", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Muskox_%28Ovibos_moschatus%29_male_Dovrefjell_4.jpg"},
 {"f": "P.t.altaica Tomak Male.jpg", "d": "photos/xefbb3c875808ca73.webp", "by": "Appaloosa", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:P.t.altaica_Tomak_Male.jpg"},
@@ -96,7 +96,16 @@ window.GF_WILD_PHOTOS=[
 {"f": "020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg", "d": "photos/x45b3f62f495ed55f.webp", "by": "Giles Laurent", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg"},
 {"f": "008 Hyacinth macaw couple kissing under Pink Ipê tree in Encontro das Águas State Park Photo by Giles Laurent.jpg", "d": "photos/xff4b54370b592113.webp", "by": "Giles Laurent", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:008_Hyacinth_macaw_couple_kissing_under_Pink_Ip%C3%AA_tree_in_Encontro_das_%C3%81guas_State_Park_Photo_by_Giles_Laurent.jpg"},
 {"f": "002 Jabiru feeding its babies in their nest in Encontro das Águas State Park Photo by Giles Laurent.jpg", "d": "photos/x1ed18d464896f52a.webp", "by": "Giles Laurent", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:002_Jabiru_feeding_its_babies_in_their_nest_in_Encontro_das_%C3%81guas_State_Park_Photo_by_Giles_Laurent.jpg"},
-{"f": "Yacare Caiman (Caiman Yacare) - Flickr - berniedup.jpg", "d": "photos/x401662d9b12895f9.webp", "by": "Bernard DUPONT from FRANCE", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:Yacare_Caiman_%28Caiman_Yacare%29_-_Flickr_-_berniedup.jpg"}
+{"f": "Yacare Caiman (Caiman Yacare) - Flickr - berniedup.jpg", "d": "photos/x401662d9b12895f9.webp", "by": "Bernard DUPONT from FRANCE", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:Yacare_Caiman_%28Caiman_Yacare%29_-_Flickr_-_berniedup.jpg"},
+{"f": "Sea Otter (Enhydra lutris) (25169790524) crop.jpg", "d": "photos/xbabc7fc897478a90.webp", "by": "Marshal Hedin from San Diego", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:Sea_Otter_%28Enhydra_lutris%29_%2825169790524%29_crop.jpg"},
+{"f": "Campagne HOT - Vers géants (Riftia pachyptila) (Ifremer 00530-64223 - 52381).jpg", "d": "photos/xf28802716cbcd8fe.webp", "by": "Ifremer", "lic": "CC BY 4.0", "page": "https://commons.wikimedia.org/wiki/File:Campagne_HOT_-_Vers_g%C3%A9ants_%28Riftia_pachyptila%29_%28Ifremer_00530-64223_-_52381%29.jpg"},
+{"f": "Anim1754 - Flickr - NOAA Photo Library.jpg", "d": "photos/xdb3eeb28a0cf3e92.webp", "by": "NOAA Photo Library", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Anim1754_-_Flickr_-_NOAA_Photo_Library.jpg"},
+{"f": "Hope Bay-2016-Trinity Peninsula–Adélie penguin (Pygoscelis adeliae) 04.jpg", "d": "photos/xfd5c36ed61d53001.webp", "by": "Godot13", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Hope_Bay-2016-Trinity_Peninsula%E2%80%93Ad%C3%A9lie_penguin_%28Pygoscelis_adeliae%29_04.jpg"},
+{"f": "Przewalskis horse 02.jpg", "d": "photos/x1e3822843015be2c.webp", "by": "Claudia Feh", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Przewalskis_horse_02.jpg"},
+{"f": "Male cheetah facing left in South Africa.jpg", "d": "photos/xc9fa8f6c830dbbec.webp", "by": "AfricanConservation", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Male_cheetah_facing_left_in_South_Africa.jpg"},
+{"f": "NileCrocodile.jpg", "d": "photos/x818cc6570badeff8.webp", "by": "Dewet", "lic": "CC BY-SA 2.0", "page": "https://commons.wikimedia.org/wiki/File:NileCrocodile.jpg"},
+{"f": "Arctocephalus pusillus - SE Tasmania.jpg", "d": "photos/x059edbe50e5e442d.webp", "by": "JJ Harrison", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Arctocephalus_pusillus_-_SE_Tasmania.jpg"},
+{"f": "Humboldt Penguin, Chiloé, CL-LL, CL imported from iNaturalist photo 384752139.jpg", "d": "photos/x8c3fc03f0f1ca73f.webp", "by": "Christoph Moning", "lic": "CC BY 4.0", "page": "https://commons.wikimedia.org/wiki/File:Humboldt_Penguin%2C_Chilo%C3%A9%2C_CL-LL%2C_CL_imported_from_iNaturalist_photo_384752139.jpg"}
 ];
 /* tour|stop → p: photo pins [label, [lon,lat], library file or @new], s: symbols [animal, [lon,lat], name] */
 const PLAN={
@@ -177,8 +186,8 @@ const PLAN={
 "forests|The Congo":{p:[
   ["Okapi",[28.5,1.7],"Giraffidae Okapia johnstoni 3.2.jpg"],
   ["Chimpanzee",[24.5,4.0],"Chimpanzee.jpg"]],
- s:[["parrot",[12.4,-1.0],"African grey parrot"],["croc",[18.2,-0.6],"Dwarf crocodile"],["leopard",[20.6,-4.6],"Leopard"],
-  ["snake",[11.2,-2.2],"Gaboon viper"],["boar",[14.2,1.4],"Red river hog"],["monkey",[27.4,-1.6],"Red-tailed monkey"]]},
+ s:[["parrot",[22.4,1.3],"African grey parrot"],["croc",[19.0,-0.2],"Dwarf crocodile"],["leopard",[23.4,-4.3],"Leopard"],
+  ["snake",[24.6,-2.0],"Gaboon viper"],["boar",[20.8,3.0],"Red river hog"],["monkey",[27.4,-1.6],"Red-tailed monkey"]]},
 "forests|Borneo and New Guinea":{p:[],
  s:[["bird",[113.6,0.4],"Rhinoceros hornbill"],["monkey",[111.6,-1.8],"Bornean gibbon"],["leopard",[116.3,3.2],"Sunda clouded leopard"],
   ["butterfly",[148.2,-8.8],"Queen Alexandra’s birdwing"],["croc",[138.2,-6.6],"Saltwater crocodile"],["parrot",[142.6,-4.2],"Palm cockatoo"]]},
@@ -192,8 +201,8 @@ const PLAN={
 "forests|Mangroves":{p:[
   ["Spotted deer",[89.6,21.9],"@chital"],
   ["Saltwater crocodile",[89.0,21.75],"@saltie"]],
- s:[["monkey",[88.8,22.05],"Rhesus macaque"],["dolphin",[89.75,22.4],"Ganges river dolphin"],["crab",[89.35,21.68],"Fiddler crab"],
-  ["snake",[89.15,22.2],"King cobra"],["bird",[88.95,21.92],"Kingfisher"],["boar",[89.5,22.05],"Wild boar"],["turtle",[89.7,21.8],"River terrapin"]]},
+ s:[["monkey",[88.55,22.1],"Rhesus macaque"],["dolphin",[89.8,22.45],"Ganges river dolphin"],["crab",[89.3,21.62],"Fiddler crab"],
+  ["snake",[89.2,22.35],"King cobra"]]},
 "forests|Cloud forests":{p:[
   ["Resplendent quetzal",[-83.95,9.6],"058 Male Resplendent quetzal in Los Quetzales National Park Photo by Giles Laurent.jpg"]],
  s:[["bird",[-84.78,10.27],"Hummingbird"],["monkey",[-85.95,11.83],"Howler monkey"],["sloth",[-84.2,10.2],"Two-toed sloth"],
@@ -209,7 +218,7 @@ const PLAN={
   ["Sea otter",[-121.9,36.6],"@seaotter"],
   ["Garibaldi",[-118.4,33.4],"@garibaldi"],
   ["Purple sea urchin",[-123.8,39.3],"@urchin"],
-  ["Cape fur seal",[18.3,-34.1],"@furseal"]],
+  ["Brown fur seal",[18.3,-34.1],"@furseal"]],
  s:[["otter",[-152,59.4],"Sea otter"],["fish",[-124.3,44.6],"Rockfish"],["seal",[-73.8,-41.8],"South American sea lion"],
   ["octopus",[-125.6,49.4],"Giant Pacific octopus"],["crab",[-71.6,-30.2],"Kelp crab"],["fish",[147.9,-42.9],"Weedy seadragon"],["shark",[19.4,-34.6],"Great white shark"]]},
 "ocean|Into the deep":{p:[
@@ -238,7 +247,7 @@ const PLAN={
   ["fish",[-40,24],"Flying fish"],["whale",[-63.5,30.4],"Humpback whale"]]},
 "ocean|Upwelling: where the fish are":{p:[
   ["Humboldt penguin",[-76.3,-13.8],"@humboldt"],
-  ["Cape fur seal",[13.95,-21.8],"@furseal"],
+  ["Brown fur seal",[13.95,-21.8],"@furseal"],
   ["California sea lion",[-120.4,34.0],"@casealion"]],
  s:[["whale",[-124,37.4],"Blue whale"],["bird",[-80.6,-7.4],"Peruvian booby"],["dolphin",[-17.6,20.6],"Common dolphin"],
   ["penguin",[15.1,-26.7],"African penguin"],["fish",[-17.9,13.5],"Sardinella"],["fish",[-79.5,-10.5],"Anchoveta"]]},
@@ -275,9 +284,9 @@ const PLAN={
   ["gorilla",[29.55,-1.45],"Mountain gorilla"],["hippo",[31.2,-6.8],"Hippo"],["leopard",[31.8,-13.1],"Leopard"],["flamingo",[36.1,0.25],"Flamingo"]]},
 "oceania|The Great Barrier Reef":{p:[],
  s:[["shark",[147.3,-14.1],"Reef shark"],["tfish",[145.45,-14.7],"Reef fish"],["whale",[149.6,-20.6],"Humpback whale"],
-  ["octopus",[151.9,-23.45],"Octopus"],["coral",[146.9,-18.6],"Coral"]]},
+  ["octopus",[151.9,-23.45],"Octopus"],["coral",[147.8,-18.2],"Coral"]]},
 "oceania|Only in Australia":{p:[
-  ["Red kangaroo",[141.9,-29.0],"Red Kangaroos at Sturt National Park NSW.jpg"],
+  ["Common wombat",[148.07,-42.6],"Common wombat (Vombatus ursinus tasmaniensis) juvenile Maria Island.jpg"],
   ["Koala",[143.6,-38.7],"Koala climbing tree.jpg"]],
  s:[["lizard",[123.5,-27],"Thorny devil"],["snake",[140.4,-26],"Inland taipan"],["parrot",[117.6,-31],"Galah"],
   ["croc",[132.4,-12.8],"Saltwater crocodile"],["bird",[151,-33.4],"Kookaburra"],["rabbit",[136.6,-33.4],"Rabbit (brought in)"]]},
@@ -310,7 +319,7 @@ const PLAN={
   ["Grey wolf",[29.4,51.9],"Radio collared gray wolf on snow.jpg"],
   ["European bison",[29.8,51.75],"European bison (Bison bonasus) male Białowieza.jpg"],
   ["Elk (moose)",[30.4,51.2],"Bull Moose (Alces alces) (29771391948).jpg"]],
- s:[["boar",[30.2,51.5],"Wild boar"],["deer",[29.6,51.2],"Roe deer"],["beaver",[30.0,51.95],"Eurasian beaver"],["eagle",[29.2,51.4],"White-tailed eagle"]]},
+ s:[["boar",[30.55,51.25],"Wild boar"],["beaver",[29.7,51.95],"Eurasian beaver"],["eagle",[29.25,51.45],"White-tailed eagle"]]},
 "coasts|A coast built by animals":{p:[
   ["Clownfish",[145.5,-14.7],"Clownfish in an anemone.jpg"],
   ["Green turtle",[151.9,-23.45],"Green turtle on a reef.jpg"]],
@@ -340,7 +349,11 @@ function photos(id,S,card){const plan=PLAN[id+"|"+strip(S.title)];if(!plan||!pla
   const old=mine.find(q=>strip(q.label)===lab);
   want.push(old&&old._gfImg===i?old:{at:at.slice(),label:lab,col:(others.find(q=>q&&q.icon==="photo"&&q.col)||{}).col||COL,icon:"photo",_gfWild:1,_gfImg:i,_gfF:file})}
  const next=others.concat(want);if(next.length===cur.length&&next.every((q,k)=>q===cur[k]))return false;
- def(S,"phPins",next);S._sqPruned=-1;return true}
+ /* a field another patch has locked (a getter that ignores writes, as in geoflock-polish-l.js) stays locked, so the pins it
+    protects are not lost to a later write; otherwise it stays a plain writable field */
+ let d=null;try{d=Object.getOwnPropertyDescriptor(S,"phPins")}catch(e){}
+ if(d&&d.get){try{Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,get(){return next},set(){}})}catch(e){def(S,"phPins",next)}}else def(S,"phPins",next);
+ S._sqPruned=-1;return true}
 /* the symbols of one stop (only a stop with no symbols of its own) */
 function symbols(id,S){const plan=PLAN[id+"|"+strip(S.title)];if(!plan||!plan.s.length)return false;
  if(S.gfSym)return false;
