@@ -167,15 +167,22 @@ body:not(.light-theme) .gfm-x{ background:rgba(255,255,255,.1); }
 @media (max-width:600px){ .gfm-modal{ padding:0; align-items:flex-end; } .gfm-modal-in{ width:100%; max-height:92vh; border-radius:18px 18px 0 0; } .gfm-grid{ grid-template-columns:1fr; } }
 
 /* --- one model, in a floating panel (like the cross-section panel) --- */
-.gfm-panel{ position:fixed; z-index:9600; width:min(540px, calc(100vw - 24px)); max-width:860px; max-height:calc(100vh - 20px); display:flex; flex-direction:column; background:#fff; color:#1d2433; border-radius:14px; box-shadow:0 10px 34px rgba(0,0,0,.3); font:13px/1.35 system-ui,sans-serif; overflow:hidden; }
-.gfm-panel.wide{ width:min(860px, calc(100vw - 24px)); }
+.gfm-panel{ position:fixed; z-index:9600; width:min(460px, calc(100vw - 24px)); max-width:860px; max-height:calc(100vh - 20px); display:flex; flex-direction:column; background:#fff; color:#1d2433; border-radius:14px; box-shadow:0 10px 34px rgba(0,0,0,.3); font:13px/1.35 system-ui,sans-serif; overflow:hidden; }
+.gfm-panel.wide{ width:min(720px, calc(100vw - 24px)); }
+/* the edges can be dragged to make the panel narrower or wider (and the bottom, shorter or taller) */
+.gfm-rz{ position:absolute; z-index:3; touch-action:none; }
+.gfm-rz.l{ left:0; top:40px; bottom:14px; width:7px; cursor:ew-resize; } .gfm-rz.r{ right:0; top:40px; bottom:14px; width:7px; cursor:ew-resize; }
+.gfm-rz.b{ bottom:0; left:14px; right:14px; height:7px; cursor:ns-resize; }
+.gfm-rz.bl{ left:0; bottom:0; width:14px; height:14px; cursor:nesw-resize; } .gfm-rz.br{ right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize; }
+.gfm-panel.sized{ max-width:none; }
+.gfm-panel.sized .gfm-pb{ flex:1; min-height:0; }
 .gfm-ph{ display:flex; align-items:center; gap:8px; padding:7px 8px 7px 12px; cursor:move; user-select:none; touch-action:none; background:linear-gradient(#f4f7fb,#e9eef5); border-bottom:1px solid rgba(20,40,70,.08); }
 .gfm-ph .gfm-grip{ width:18px; height:12px; flex:none; opacity:.35; background:radial-gradient(circle,currentColor 1.2px,transparent 1.6px) 0 0/6px 6px; }
 .gfm-ph b{ flex:1; min-width:0; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .gfm-ph small{ flex:none; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:#c75c12; }
 .gfm-ph button{ flex:none; width:28px; height:28px; border:0; border-radius:50%; background:rgba(20,40,70,.07); color:inherit; font:700 17px/1 system-ui,sans-serif; cursor:pointer; }
 .gfm-ph button:hover{ background:rgba(20,40,70,.16); }
-.gfm-pb{ overflow:auto; padding:8px 10px 10px; overscroll-behavior:contain; }
+.gfm-pb{ overflow:auto; padding:6px 8px 8px; overscroll-behavior:contain; }
 .gfm-pb .ps-dg{ margin:0; max-width:none; }
 .gfm-pb .ps-dg > .ps-dg-h{ display:none; }
 .gfm-pb .ps-dg-svg{ cursor:default; }
@@ -336,14 +343,35 @@ function openModel(key){if(!DG[key])return;closeModel();closeList();
  ["pointerdown","mousedown","wheel","dblclick","touchstart","contextmenu"].forEach(t=>p.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
  p.addEventListener("click",e=>e.stopPropagation());
  p.querySelector(".gfm-close").onclick=closeModel;
- p.querySelector(".gfm-wide").onclick=()=>{POS.wide=!POS.wide;p.classList.toggle("wide",POS.wide);fillBody(p,key);clampP(p)};
+ p.querySelector(".gfm-wide").onclick=()=>{POS.size=null;p.classList.remove("sized");p.style.width="";p.style.height="";p.style.maxHeight="";POS.wide=!POS.wide;p.classList.toggle("wide",POS.wide);fillBody(p,key);clampP(p)};
  const bar=p.querySelector(".gfm-ph");
  bar.addEventListener("pointerdown",e=>{if(e.button||e.target.closest("button")||innerWidth<=600)return;e.preventDefault();const r=p.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;p.classList.add("moving");
   const mv=ev=>{p.style.left=(ev.clientX-dx)+"px";p.style.top=(ev.clientY-dy)+"px";clampP(p)};
   const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);p.classList.remove("moving");POS.at=[parseFloat(p.style.left),parseFloat(p.style.top)]};
   addEventListener("pointermove",mv);addEventListener("pointerup",up);addEventListener("pointercancel",up)});
- fillBody(p,key,0);placeP(p);
+ fillBody(p,key,0);placeP(p);resizable(p);
+ if(DARK_SIMS.includes(key))askDark();
  try{p.querySelector(".gfm-close").focus({preventScroll:true})}catch(e){}}
+/* drag an edge or a bottom corner to resize; the size is kept for the next model */
+function resizable(p){if(innerWidth<=600)return;["l","r","b","bl","br"].forEach(k=>{const h=document.createElement("div");h.className="gfm-rz "+k;h.setAttribute("aria-hidden","true");p.appendChild(h);
+  h.addEventListener("pointerdown",e=>{if(e.button)return;e.preventDefault();e.stopPropagation();const r=p.getBoundingClientRect(),x0=e.clientX,y0=e.clientY;p.classList.add("moving","sized");
+   const mv=ev=>{const dx=ev.clientX-x0,dy=ev.clientY-y0;let w=r.width,hh=r.height,l=r.left;
+    if(k.includes("r"))w=r.width+dx;if(k.includes("l")){w=r.width-dx;l=r.left+dx}if(k.includes("b"))hh=r.height+dy;
+    w=Math.max(300,Math.min(innerWidth-16,w));hh=Math.max(220,Math.min(innerHeight-16,hh));if(k.includes("l"))l=r.right-w;
+    p.style.width=w+"px";p.style.left=l+"px";if(k.includes("b")){p.style.height=hh+"px";p.style.maxHeight="none"}};
+   const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);p.classList.remove("moving");
+    POS.size=[parseFloat(p.style.width),p.style.height?parseFloat(p.style.height):null];POS.at=[parseFloat(p.style.left),parseFloat(p.style.top)];clampP(p)};
+   addEventListener("pointermove",mv);addEventListener("pointerup",up);addEventListener("pointercancel",up)})});
+ if(POS.size){p.classList.add("sized");p.style.width=POS.size[0]+"px";if(POS.size[1]){p.style.height=POS.size[1]+"px";p.style.maxHeight="none"}clampP(p)}}
+/* night-sky simulations only make sense in the dark theme: opened in the light one, they offer to switch */
+const DARK_SIMS=["stars","polaris"];
+function askDark(){if(document.body.classList.contains("sky-night")||document.querySelector(".gf-nightask"))return;
+ const m=document.createElement("div");m.className="gf-nightask";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");
+ m.innerHTML='<div><div class="ico">🌙</div><h3>This one is a night sky</h3><p>It is drawn for the dark <b>Starlight</b> theme. Switch to dark mode now? You can switch back with the button at the top.</p><div class="row"><button type="button" class="pri" data-y>Turn on dark mode</button><button type="button" data-n>Not now</button></div></div>';
+ document.body.appendChild(m);const done=()=>m.remove();
+ ["pointerdown","mousedown","click"].forEach(t=>m.addEventListener(t,e=>e.stopPropagation()));
+ m.querySelector("[data-y]").onclick=()=>{done();try{stats.theme="night";applyTheme();saveStats()}catch(e){}};m.querySelector("[data-n]").onclick=done;
+ m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus()}
 addEventListener("resize",()=>{if(PANEL)clampP(PANEL)});
 /* Esc closes the list, then the panel, before anything else (a tour, full screen, the toolkit) hears it */
 addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.querySelector(".dg-lightbox,.flag-zoom-overlay.show"))return;
