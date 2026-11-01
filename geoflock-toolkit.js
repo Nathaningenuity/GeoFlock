@@ -202,7 +202,7 @@ function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forE
 /* ================= the tray ================= */
 const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there"],["geometry","Geometry set","Ruler, drawing compass, range rings, straight lines, shapes, and a place's latitude and longitude around the world"],
  ["pens","Pens","Pick a pen and colour, then draw on the map"],["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Roll for somewhere random"],
- ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"],["shovel","Shovel","Dig straight through the Earth, or cut a cross-section of the land"]];
+ ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"],["shovel","Shovel","Cut a cross-section of the land and sea floor"]];
 function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):t==="shovel"?ART.shovel(u):t==="geometry"?ART.geometry(u):ART.sea(u)}
 function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.className="gfk-tray";
  tr.innerHTML='<button type="button" class="gfk-tab" aria-expanded="true" title="Show or hide the toolkit"><span>Toolkit</span><i>▾</i></button><div class="gfk-felt">'+
@@ -255,6 +255,8 @@ const TOOLPANEL={pens:"gfkPens",pins:"gfkPins",palette:"gfkPal",sea:"gfkSea",sho
 function allOff(){try{if(HOLES&&HOLES.length)holes([])}catch(e){}S.shovelArm=false;if(S.pen)penStop();if(S.pinArm)pinArm(false);if(S.dragging)dragOn(false);capture(false);try{GEO.sel=-1}catch(e){}render();sync()}
 function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClientRect();
  if(TOOLPANEL[t]&&document.getElementById(TOOLPANEL[t])){closePanels();allOff();return}
+ /* the shovel is the cross-section now: a second press puts it away */
+ if(t==="shovel"&&document.querySelector(".gf-xs-top")){try{gfCrossSection.stop()}catch(e){}return}
  if(t==="dragger"&&S.dragging){dragOn(false);closePanels();return}
  if(t==="compass"||t==="ruler"){if(S.place[t])putAway(t);else dropTool(t,r.left+r.width*(t==="compass"?.18:.5),r.top+r.height*(t==="compass"?.55:.8))}
  else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelOpen();else if(t==="geometry")geoPanel()}
@@ -264,7 +266,7 @@ function dropTool(t,cx,cy){if(t==="compass")placeAt("compass",cx,cy);
  else if(t==="dice")roll(null,cx,cy);
  else if(t==="dragger"){const f=countryAt(cx,cy);dragOn(true);if(f&&f.properties.c!=="aq")lift(f,toLL(cx,cy))}
  else if(t==="geometry"){geoPanel();const ll=toLL(cx,cy);if(ll&&GEO.mode==="lineup")lineUp(ll)}
- else if(t==="pens")penPicker();else if(t==="palette")openPalette();else if(t==="sea")seaPanel();else if(t==="shovel"){const ll=toLL(cx,cy);if(ll)dig(ll);else shovelPanel()}}
+ else if(t==="pens")penPicker();else if(t==="palette")openPalette();else if(t==="sea")seaPanel();else if(t==="shovel")shovelOpen()}
 function clickPlaced(t){if(t==="ruler")measure(true)}
 function putAway(t){const o=S.place[t];if(o){o.el.remove();delete S.place[t]}if(t==="ruler")measure(false);if(t==="pens")penStop();if(t==="pins")pinArm(false);if(t==="dragger")dragOn(false);sync()}
 function measure(on){try{if(onGlobe()){if(!!amGlobe._measure!==on)amGlobe.toggleMeasure()}else amtToggleMeasure(on)}catch(e){}}
@@ -739,8 +741,9 @@ function dig(ll){if(!ll)return;const B=anti(ll),PA=digPlace(ll),PB=digPlace(B);S
  holes([ll,B]);p.querySelector("[data-go]").onclick=()=>flyTo(B);p.querySelector("[data-again]").onclick=()=>{S.shovelArm=true;toast("Click anywhere on the map to dig")}}
 function segHTML(m){const cut=window.gfCutaway&&gfCutaway.ok();return'<div class="gfk-seg"><button type="button" data-sm="xs" class="'+(m==="xs"?"on":"")+'">✂ Cross-section</button><button type="button" data-sm="dig" class="'+(m==="dig"?"on":"")+'">⛏ Dig through</button>'+(cut?'<button type="button" data-sm="cut" class="'+(gfCutaway.isOn()?"on":"")+'">🌋 Inside the Earth</button>':'')+'</div>'}
 /* the shovel opens the cross-section first (on the flat map); Dig through is one click away */
-function shovelOpen(){try{if(window.gfCrossSection&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat){closePanels();S.shovelArm=false;gfCrossSection.start();return}}catch(e){}shovelPanel()}
-window.gfShovelDig=()=>{try{gfCrossSection.stop()}catch(e){}shovelPanel()};
+/* the shovel opens the cross-section (flat map or globe); "dig through" is hidden for now (the owner's call; its code stays) */
+function shovelOpen(){try{if(window.gfCrossSection){closePanels();S.shovelArm=false;gfCrossSection.start();return}}catch(e){}}
+window.gfShovelDigHidden=()=>{try{gfCrossSection.stop()}catch(e){}shovelPanel()};
 function wireSeg(p){p.querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{if(b.dataset.sm==="cut"){try{gfCutaway.toggle()}catch(e){}b.classList.toggle("on",gfCutaway.isOn());if(gfCutaway.isOn())closePanels();return}if(b.dataset.sm==="xs"){closePanels();S.shovelArm=false;try{gfCrossSection.start()}catch(e){toast("Cross-sections need the flat map or globe")}}else shovelPanel()})}
 function shovelPanel(){const p=panel("gfkShovel",'<b class="gfk-ph">Shovel</b>'+segHTML("dig")+'<p class="gfk-hint">Click a place on the map (or drag the shovel onto it) and dig straight through the middle of the Earth. Where do you come out?</p>');if(!p)return;wireSeg(p);S.shovelArm=true}
 /* the two holes, kept on the map */

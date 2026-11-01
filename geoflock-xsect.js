@@ -147,7 +147,9 @@ function up(e){if(!drawing||e.pointerId!==drawing.id)return;e.stopImmediatePropa
 function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov){return}
  const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
  if(ov.width!==Math.round(r.width*dpr)||ov.height!==Math.round(r.height*dpr)){ov.width=Math.round(r.width*dpr);ov.height=Math.round(r.height*dpr);ov.style.width=r.width+"px";ov.style.height=r.height+"px"}
- ov.style.left=(r.left-hr.left)+"px";ov.style.top=(r.top-hr.top)+"px";const x=ov.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);const pr=g.projection();
+ ov.style.left=(r.left-hr.left)+"px";ov.style.top=(r.top-hr.top)+"px";const x=ov.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);const pr0=g.projection();
+ /* on the globe, points on the far side are not drawn (the projection would mirror them onto the near side) */
+ const ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]],ctr=[-ro[0],-ro[1]],pr=ll=>g._flat||d3.geoDistance(ll,ctr)<Math.PI/2-1e-3?pr0(ll):null;
  const stroke=(pts,col)=>{x.lineJoin=x.lineCap="round";x.beginPath();let pen=false,last=null;pts.forEach(p=>{if(!p){pen=false;return}if(pen&&last&&Math.abs(p[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);pen=true;last=p});
   x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=6;x.stroke();x.strokeStyle=col;x.lineWidth=3;x.stroke()};
  lines.forEach(L=>{const pts=L.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null});stroke(pts,L.c);
