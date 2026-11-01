@@ -56,14 +56,18 @@ function tile(z,y,x,kind){kind=kind||"night";const k=kind+"/"+z+"/"+y+"/"+x;let 
 /* the detail level for a view showing need device pixels per degree, or null when the 8192-px picture is enough */
 /* from about half the built-in picture's detail: the NASA tiles are sharper than the (compressed) picture well before the
    screen needs more pixels than it has */
-function level(need){if(!(need>8192/360*.55))return null;for(let z=ZMIN;z<=ZMAX;z++)if(ppd(z)>=need*.9)return z;return ZMAX}
+function level(need){if(!(need>8192/360*.3))return null;for(let z=ZMIN;z<=ZMAX;z++)if(ppd(z)>=need*.9)return z;return ZMAX}
 /* a piece of the world (x,y,w,h in a virtual picture TW×TH of the whole world) drawn at rw×rh from level-z tiles */
-function crop(z,cx,cy,cw,ch,rw,rh,TW,TH,kind){kind=kind||"night";if(kind==="sat")mask();const lon0=cx/TW*360-180,lon1=(cx+cw)/TW*360-180,lat0=90-cy/TH*180,lat1=90-(cy+ch)/TH*180,td=tdeg(z);
+/* prog (optional): called with the picture so far, at most every 250 ms, as tiles arrive (the middle ones are asked for first) */
+function crop(z,cx,cy,cw,ch,rw,rh,TW,TH,kind,prog){kind=kind||"night";if(kind==="sat")mask();const lon0=cx/TW*360-180,lon1=(cx+cw)/TW*360-180,lat0=90-cy/TH*180,lat1=90-(cy+ch)/TH*180,td=tdeg(z);
  const nx=Math.ceil(360/td),ny=Math.ceil(180/td),x0=Math.max(0,Math.floor((lon0+180)/td)),x1=Math.min(nx-1,Math.floor((lon1+180-1e-9)/td)),y0=Math.max(0,Math.floor((90-lat0)/td)),y1=Math.min(ny-1,Math.floor((90-lat1-1e-9)/td));
  const c=document.createElement("canvas");c.width=rw;c.height=rh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
- const sx=rw/(lon1-lon0),sy=rh/(lat0-lat1),jobs=[];
- for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const Lo=-180+tx*td,T=90-ty*td;
-  jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im){c._gfMiss=(c._gfMiss||0)+1;return}x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none"}))}
+ const sx=rw/(lon1-lon0),sy=rh/(lat0-lat1),jobs=[],L=[];let last=0,pend=0;
+ const tick=()=>{if(!prog)return;const now=performance.now();if(now-last>=250){last=now;try{prog(c)}catch(e){}}else if(!pend)pend=setTimeout(()=>{pend=0;last=performance.now();try{prog(c)}catch(e){}},250-(now-last))};
+ const mx=(x0+x1)/2,my=(y0+y1)/2;for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)L.push([tx,ty]);L.sort((a,b)=>Math.hypot(a[0]-mx,a[1]-my)-Math.hypot(b[0]-mx,b[1]-my));
+ for(const [tx,ty] of L){const Lo=-180+tx*td,T=90-ty*td;
+  jobs.push(tile(z,ty,tx,kind).then(im=>{if(!im){c._gfMiss=(c._gfMiss||0)+1;return}x.drawImage(im,(Lo-lon0)*sx,(lat0-T)*sy,td*sx+.6,td*sy+.6);x.filter="none";tick()}))}
+ if(prog)return Promise.all(jobs).then(()=>{clearTimeout(pend);return c});
  return Promise.all(jobs).then(()=>c)}
 /* fetch (only) the tiles of a view ahead of time, e.g. while the map is still moving, so the sharp picture is quick once
    it stops; at most max tiles */
@@ -73,7 +77,7 @@ window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0,prefetch};
 })();
 (function(){
 if(typeof GlobeView==="undefined"||typeof d3==="undefined"||!d3.geoRobinson)return;
-const IDLE=120,SLICE=8,BAND=8,MINMAG=.75;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
+const IDLE=120,SLICE=8,BAND=8,MINMAG=.4;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
 let TEX={},texUnused=0,O=null,job=null,timer=0,want=null,lastKey="";
 const free=cv=>{try{if(cv&&cv.close)cv.close();else if(cv){cv.width=0;cv.height=0}}catch(e){}};
 /* which picture the flat map shows: the night picture or (the same way) the satellite one */
@@ -180,3 +184,12 @@ window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.heigh
    pictures (which wait for the map to stop) are not held back for good */
 (function(){let since=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g._flying){since=0;return}
  if(!since)since=Date.now();else if(Date.now()-since>6000){g._flyId=(g._flyId||0)+1;g._flying=false;since=0;try{g.request?g.request():g.render()}catch(e){}}}catch(e){}},1000)})();
+/* warm-up: on Satellite or City Lights, the first detail level's tiles round the middle of the view are fetched quietly
+   (every few seconds, only while the map is still), so a little zoom in finds them already loaded */
+(function(){let lastKey="";setInterval(()=>{try{if(typeof amGlobe==="undefined"||!amGlobe||appMode!=="allmaps"||document.hidden)return;const m=allMapsColorMode;if(m!=="satellite"&&m!=="night")return;
+ const g=amGlobe;if(g._moving||g._flying||g._gfDown||!g.host||!g.host.offsetParent)return;
+ let c;if(g._flat){const pr=g.projection(),{w,h}=g.size();c=pr.invert([w/2,h/2])}else c=[-g.rot[0],-g.rot[1]];if(!c||!isFinite(c[0])||!isFinite(c[1]))return;
+ if(!window.gfGibs)return;const z=4,td=gfGibs.tdeg(z),key=m+"|"+Math.round(c[0]/td)+"|"+Math.round(c[1]/td);if(key===lastKey)return;lastKey=key;
+ const b=[c[0]-40,Math.min(85,c[1]+27),c[0]+40,Math.max(-85,c[1]-27)].map((v,i)=>i%2?v:Math.max(-180,Math.min(180,v)));
+ const kinds=m==="satellite"?["sat"]:["night"];try{if(window.gfDNG&&gfDNG.on())kinds.push(m==="satellite"?"night":"sat")}catch(e){}
+ kinds.forEach(k=>gfGibs.prefetch(z,b,k,40))}catch(e){}},3000)})();

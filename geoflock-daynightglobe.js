@@ -51,7 +51,7 @@ function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amG
    /* a fast spin (more than a view's width in 30 s) gets no patch: it would be gone before it loaded */
    if(b&&spin){const d=((window.GFS&&GFS.degPerS)||6)*30/Math.max(1,g.zoom);if(d>b[2]-b[0])b=null;else b=[Math.max(-180,b[0]-d),b[1],Math.min(180,b[2]+d),b[3]]}PDBG+=" b="+JSON.stringify(b);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
    /* a patch counts only if it is for this globe and none of its tiles failed (else it is made again after a few seconds) */
-   if(st.P&&st.P.miss&&performance.now()-st.P.at>4000&&st.key===key){st.key="";st.P.at=performance.now()}
+   if(st.P&&st.P.miss&&!st.P.part&&performance.now()-st.P.at>4000&&st.key===key){st.key="";st.P.at=performance.now()}
    const P=st.P&&st.P.G===G&&!st.P.miss?st.P:null,v=spin?viewBounds(g)||b:b,inside=P&&P.z===z&&v[0]>=P.b[0]&&v[2]<=P.b[2]&&v[1]<=P.b[1]&&v[3]>=P.b[3];
    if(!inside&&key!==st.key&&!st.T){st.key=key;st.T=setTimeout(()=>{st.T=0;build(G,z,b,kind)},60)}}}
  /* still moving: the tiles of the view are fetched meanwhile (at most every 300 ms), and it looks again once it settles
@@ -62,11 +62,14 @@ function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amG
 function build(G,z,b,kind){const st=PS[kind],id=++st.job,pp=gfGibs.ppd(z);let [W,N,E,Sx]=b;
  /* at most 4096 px a side: widen the degrees per pixel if the view needs more */
  let pw=Math.ceil((E-W)*pp),ph=Math.ceil((N-Sx)*pp);const k=Math.max(1,pw/4096,ph/4096);pw=Math.round(pw/k);ph=Math.round(ph/k);
- const TW=360*pp,TH=180*pp;gfGibs.crop(z,(W+180)/360*TW,(90-N)/180*TH,(E-W)/360*TW,(N-Sx)/180*TH,pw,ph,TW,TH,kind).then(c=>{if(id!==st.job)return;
-  try{const gl=G.gl,t=st.P&&st.P.G===G?st.P.t:gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+ const TW=360*pp,TH=180*pp;
+ /* the patch is shown as its tiles arrive (middle first), then once more when all are in */
+ const up=(c,fin)=>{if(id!==st.job)return;try{const gl=G.gl,t=st.P&&st.P.G===G?st.P.t:gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-   st.P={G,t,b:[W,N,E,Sx],z,miss:!!c._gfMiss,at:performance.now()};if(c._gfMiss)setTimeout(()=>{try{req()}catch(e){}},4300);c.width=0;req()}catch(e){console.error(e)}}).catch(e=>{console.error(e);if(id===st.job)st.key=""})}
+   /* while loading it counts as having holes, so it is not taken as finished */
+   st.P={G,t,b:[W,N,E,Sx],z,miss:fin?!!c._gfMiss:true,part:!fin,at:performance.now()};if(fin){if(c._gfMiss)setTimeout(()=>{try{req()}catch(e){}},4300);c.width=0}req()}catch(e){console.error(e)}};
+ gfGibs.crop(z,(W+180)/360*TW,(90-N)/180*TH,(E-W)/360*TW,(N-Sx)/180*TH,pw,ph,TW,TH,kind,c=>up(c,false)).then(c=>up(c,true)).catch(e=>{console.error(e);if(id===st.job)st.key=""})}
 window.gfNightPatch=()=>PS.night.P&&{b:PS.night.P.b,z:PS.night.P.z};window.gfDayPatch=()=>PS.sat.P&&{b:PS.sat.P.b,z:PS.sat.P.z};
 /* ---------- the shader ---------- */
 const FS=`#version 300 es
