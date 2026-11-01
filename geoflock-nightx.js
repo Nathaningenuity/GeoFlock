@@ -108,3 +108,10 @@ document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('[da
   const step=n=>{if(typeof ps==="undefined"||!ps||psSteps()[ps.i]!==S||g._gfDown)return;const t=Math.min(1,(n-t0)/D),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
    g.zoom=z0+(z1-z0)*e;g.rot=[r0[0]+(r1[0]-r0[0])*e,r0[1]+(r1[1]-r0[1])*e];g.render();if(t<1)requestAnimationFrame(step)};requestAnimationFrame(step)}catch(e){}},700)})();
 
+/* the City Lights tour runs on the City Lights map only: offered in other maps' tour lists too, it switches to City
+   Lights when started from one (psLaunchTour puts the map on, then starts the tour) */
+(function(){let at=0;const hook=()=>{if(typeof psStart!=="function"||typeof psLaunchTour!=="function")return false;if(psStart._gfNightOwn)return true;
+ const _s=psStart;psStart=function(want){try{if(want==="night"&&!(appMode==="allmaps"&&allMapsColorModeOn&&allMapsColorMode==="night")){
+   if(Date.now()-at>15000){at=Date.now();psLaunchTour("night")}return}}catch(e){console.error(e)}return _s.apply(this,arguments)};psStart._gfNightOwn=1;
+ const _l=psLaunchTour;psLaunchTour=function(id){if(id==="night")at=Date.now();return _l.apply(this,arguments)};return true};
+ if(!hook()){let n=0;const t=setInterval(()=>{if(hook()||++n>60)clearInterval(t)},500)}})();
