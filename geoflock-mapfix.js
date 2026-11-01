@@ -408,6 +408,9 @@ body.dark-theme .gf-fold-pop, body.sky-night .gf-fold-pop{ background:#1f2b3a; }
 #allMapsView.globe-on #allMapsSubModes{ display:none !important; }
 #allMapsView.globe-on #amGlobeSubs.globe-subs{ position:absolute !important; left:10px; top:62px; z-index:5; display:flex; flex-direction:column; align-items:flex-start; gap:6px; margin:0 !important; justify-content:flex-start; }
 #allMapsView.globe-on #amGlobeSubs.globe-subs:empty{ display:none !important; }
+/* on the globe its own sub-map chips always show (Day & Night / Day / Night, Night only, a map's measures): the rule that
+   hides this row once the flat map's chips have moved up to the controls row must not hide them here, where that row is hidden */
+#allMapsView.globe-on.am-sub-moved #amGlobeSubs.globe-subs:not(:empty){ display:flex !important; }
 #allMapsView.globe-on #amGlobeSubs .chip{ white-space:nowrap; background:rgba(255,255,255,.88); box-shadow:0 1px 4px rgba(20,40,70,.12); }
 #allMapsView.globe-on #amGlobeSubs .chip.active{ background:var(--accent,#2f8a7a); color:#fff; }
 @media (max-width:760px){ #allMapsView.globe-on #amGlobeSubs.globe-subs{ position:static !important; flex-direction:row; flex-wrap:wrap; justify-content:center; } }`;document.head.appendChild(st)})();
