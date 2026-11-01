@@ -176,16 +176,23 @@ void main(){
   float dayLight = pow(smoothstep(-0.22, 0.65, s), 0.8);
   float light = uDayOnly > 0.5 ? 1.0 : dayLight;
   float lights = uDayOnly > 0.5 ? 0.0 : 1.0 - smoothstep(-0.26, 0.1, s);
-  ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
+  /* Night only (City Lights zoomed in): the night picture as the ordinary globe draws it, so zooming in changes nothing */
+  if(uNightOnly < 0.5) ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
     float cs = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc + 0.0018, v - 0.0014), gx, gy).r) * uClA;
-    day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0), cl * 0.95);
-    ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; }
+    if(uNightOnly > 0.5){ /* as the ordinary globe draws clouds over the night picture */
+      ngt *= 1.0 - 0.3 * cs * uClA; ngt = mix(ngt, vec3(0.97, 0.98, 1.0), cl * 0.95 * uClA); }
+    else { day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0), cl * 0.95);
+    ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; } }
   vec3 col = day * light + ngt * lights;
   /* warm light near the terminator (sun 0–8° up) */
   if(uDayOnly < 0.5){ float edge = smoothstep(0.18, 0.0, s) * smoothstep(-0.12, 0.02, s); col *= mix(vec3(1.0), vec3(1.0, 0.82, 0.65), edge * 0.5); }
-  if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 6.0) * 0.5 * (uDayOnly > 0.5 ? 1.0 : smoothstep(-0.105, 0.2, s))); }
+  if(uNightOnly > 0.5){ col = ngt;
+    /* the ordinary globe's shading in space, so City Lights looks the same zoomed in (here) and out (there) */
+    if(uSpace > 0.5){ vec3 n = vec3(xx, yy, z); float d = max(dot(n, normalize(vec3(-0.42, 0.5, 0.76))), 0.0);
+      col *= 0.5 + 0.62 * d; col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 2.4) * 0.6); } }
+  else if(uSpace > 0.5){ col = mix(col, vec3(0.45, 0.68, 1.0), pow(1.0 - z, 6.0) * 0.5 * (uDayOnly > 0.5 ? 1.0 : smoothstep(-0.105, 0.2, s))); }
   o = vec4(col, 1.0);
 }`;
 const VS="#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
@@ -237,7 +244,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    {const g=(o.roll||0)*D2R;gl.uniform2f(u.uRoll,Math.cos(g),Math.sin(g))}gl.uniform1f(u.uSp,Math.sin(o.phi0));gl.uniform1f(u.uCp,Math.cos(o.phi0));gl.uniform1f(u.uSpace,o.space?1:0);
    const la=S.lat*D2R,lo=S.lon*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
    let ct=null;try{if(day){ct=o.clouds&&this.cloudTex?this.cloudTex():null}else if(cloudsOn()){cloudsLoad();ct=this.cloudTex()}}catch(e){}
-   gl.uniform1f(u.uClA,ct?(day?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
+   gl.uniform1f(u.uClA,ct?(day||o._nightOnly?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
    {const dp=o._nightOnly?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
