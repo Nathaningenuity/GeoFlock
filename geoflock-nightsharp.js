@@ -191,5 +191,5 @@ window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.heigh
  let c;if(g._flat){const pr=g.projection(),{w,h}=g.size();c=pr.invert([w/2,h/2])}else c=[-g.rot[0],-g.rot[1]];if(!c||!isFinite(c[0])||!isFinite(c[1]))return;
  if(!window.gfGibs)return;const z=4,td=gfGibs.tdeg(z),key=m+"|"+Math.round(c[0]/td)+"|"+Math.round(c[1]/td);if(key===lastKey)return;lastKey=key;
  const b=[c[0]-40,Math.min(85,c[1]+27),c[0]+40,Math.max(-85,c[1]-27)].map((v,i)=>i%2?v:Math.max(-180,Math.min(180,v)));
- const kinds=m==="satellite"?["sat"]:["night"];try{if(window.gfDNG&&gfDNG.on())kinds.push(m==="satellite"?"night":"sat")}catch(e){}
+ let lit=false;try{lit=!g._flat&&window.gfDNG&&gfDNG.on()}catch(e){}if(lit)return;/* the Day & Night globe keeps the built-in pictures */const kinds=m==="satellite"?["sat"]:["night"];
  kinds.forEach(k=>gfGibs.prefetch(z,b,k,40))}catch(e){}},3000)})();

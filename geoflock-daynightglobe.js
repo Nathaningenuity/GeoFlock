@@ -259,8 +259,8 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    gl.uniform1f(u.uClA,ct?(day||o._nightOnly?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
-   {const dp=o._nightOnly?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
-   {const pt=day?null:patchFor(this,"night");gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,pt?pt.t:null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,pt?1:0);if(pt)gl.uniform4f(u.uPB,pt.b[0],pt.b[1],pt.b[2],pt.b[3])}
+   /* the Day & Night globe (lit by the Sun) keeps the built-in pictures: no sharp tiles there (the owner's call) */{const dp=o._nightOnly||S.on?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
+   {const pt=day||S.on?null:patchFor(this,"night");gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,pt?pt.t:null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,pt?1:0);if(pt)gl.uniform4f(u.uPB,pt.b[0],pt.b[1],pt.b[2],pt.b[3])}
    {const it=iceTex(this);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0)}
    {const bt=bathyTex(this);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}
    {const gt=glowTex(this);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,gt);gl.uniform1i(u.uGlow,5);gl.uniform1f(u.uGlowOn,gt?1:0)}
