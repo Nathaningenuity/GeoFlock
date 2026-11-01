@@ -110,6 +110,8 @@ body.dark .gf-xs-up, body.dark .gf-xs-pick button:not(.on){ background:#25304a; 
 .gf-xs.mini .gf-xs-body{ display:none; }
 .gf-xs-note{ font-size:12px; opacity:.8; margin:0 0 4px; }
 .gf-xs svg{ display:block; width:100%; height:190px; border-radius:10px; }
+.gf-xs-srcbox{ display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.gf-xs-tabs button small{ font-size:10px; opacity:.75; margin-left:2px; }
 .gf-xs-help{ font-size:12px; opacity:.75; padding:6px 6px 2px; text-align:center; }
 .gf-xs-src{ font-size:10.5px; opacity:.55; margin-top:3px; }
 .gf-xs.gf-xs-empty .gf-xs-src{ display:none; }`;document.head.appendChild(css);
@@ -340,20 +342,24 @@ const fmtE=e=>(e<0?"−":"")+Math.abs(Math.round(e)).toLocaleString()+" m";
 /* lines drawn with the pens or the geometry set can be cut too */
 const KINDS={compass:"Circle",ring:"Range ring",line:"Straight line",rect:"Rectangle",oval:"Oval"};
 function myInk(){try{return(stats.kit&&stats.kit.ink||[]).map((s,i)=>({s,i})).filter(o=>o.s.p&&o.s.p.length>1&&o.s.t!=="geoText")}catch(e){return[]}}
-function myLinesOpts(){const L=myInk();if(!L.length)return"";return'<optgroup label="Your drawings">'+L.slice(-20).reverse().map(o=>{const g=o.s.g,k=g?KINDS[g.m]||"Shape":o.s.t==="geoDash"?"Latitude / longitude line":"Pen line";return'<option value="d'+o.i+'">'+esc(k+(o.s.lab?" · "+o.s.lab:"")+(o.s.tx?" · "+o.s.tx:""))+'</option>'}).join("")+'</optgroup>'}
-function renderPanel(){if(!panel)return;const presetOpts='<option value="">Ready-made lines…</option>'+PRESETS.map((p,i)=>'<option value="p'+i+'">'+esc(p.n)+'</option>').join("")+'<optgroup label="Rivers, source to sea">'+Object.keys(RIVERS).map(k=>'<option value="r'+k+'">'+k+'</option>').join("")+'</optgroup><option value="cmp">Compare rivers (pick which)</option>'+myLinesOpts();
+function myLinesOpts(){const L=myInk();if(!L.length)return'<option value="">No drawings yet: draw one with the Pens or the Geometry set</option>';return'<option value="">Pick one of your drawings…</option>'+L.slice(-20).reverse().map(o=>{const g=o.s.g,k=g?(g.m==="poly"?(o.s.pen?"Pen shape":"Free shape"):KINDS[g.m]||"Shape"):o.s.t==="geoDash"?"Latitude / longitude line":"Pen line";return'<option value="d'+o.i+'">'+esc(k+(o.s.lab?" · "+o.s.lab:"")+(o.s.tx?" · "+o.s.tx:""))+'</option>'}).join("")}
+/* the two lists of lines to cut along: ready-made ones, and the user's own drawings */
+let SRC="pre";
+function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetOpts=SRC==="mine"?myLinesOpts():'<option value="">Pick a ready-made line…</option>'+PRESETS.map((p,i)=>'<option value="p'+i+'">'+esc(p.n)+'</option>').join("")+'<optgroup label="Rivers, source to sea">'+Object.keys(RIVERS).map(k=>'<option value="r'+k+'">'+k+'</option>').join("")+'</optgroup><option value="cmp">Compare rivers (pick which)</option>';
+ const srcTabs='<span class="gf-xs-seg gf-xs-tabs"><button type="button" data-src="pre" class="'+(SRC==="pre"?"on":"")+'">Ready-made lines</button><button type="button" data-src="mine" class="'+(SRC==="mine"?"on":"")+'">Your drawings'+(nMine?' <small>'+nMine+'</small>':'')+'</button></span>';
  const rvNow=lines.some(L=>L.river),cmpNow=lines.length>1||title==="Rivers compared";
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
  const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+(cmpNow?cmpTable():''):'<div class="gf-xs-help">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
  panel.classList.toggle("gf-xs-empty",!(lines.length&&lines[0].P));panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
-  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><select class="gf-xs-pre">'+presetOpts+'</select><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
+  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
   '<div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can use. At a dam, 🔒 boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level; the lake bed is shown only where the height data has it). Height is stretched far more than length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
- panel.querySelector(".gf-xs-pre").onchange=e=>{pick(e.target.value)};
+ panel.querySelector(".gf-xs-pre").onchange=e=>{if(e.target.value)pick(e.target.value)};
+ panel.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{SRC=b.dataset.src;renderPanel();const sel=panel.querySelector(".gf-xs-pre");if(sel&&(myInk().length||SRC==="pre"))try{sel.focus()}catch(e){}});
  panel.querySelectorAll("[data-hz]").forEach(b=>b.onclick=()=>{const v=b.dataset.hz;yv={span:v==="all"?"all":+v,base:0};renderPanel()});
  const scroll=dir=>{if(yv.span==="all")return;const mx=chartSVG.dmax||0;yv.base=Math.max(0,Math.min(Math.max(0,mx-yv.span*.6),yv.base+dir*yv.span*.25));renderPanel()};
  panel.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>scroll(+b.dataset.sc));
@@ -381,7 +387,7 @@ function frameTo(llAll){const g=G();if(!g||!llAll.length)return;if(!g._flat){try
  const xs=q.map(p=>p[0]/z0),ys=q.map(p=>p[1]/z0),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
  const zt=Math.max(1,Math.min(12,Math.min(w/((x1-x0)*1.25||1),h*.48/((y1-y0)*1.25||1)))),cx=(x0+x1)/2,cy=(y0+y1)/2+(h*.5-h*.27)/zt;
  const c=b.invert([cx*z0,cy*z0]);if(c&&isFinite(c[0])){g.zoom=zt;g.rot=[-c[0],-c[1]];g.request()}}catch(e){}}
-function pick(v,keepView){head=null;if(!v)return;armed=false;loadDEM().then(()=>{
+function pick(v,keepView){head=null;if(!v)return;if(v[0]==="d")SRC="mine";else SRC="pre";armed=false;loadDEM().then(()=>{
  if(v[0]==="d"){const o=myInk().find(x=>x.i===+v.slice(1));if(!o){renderPanel();return}const g=o.s.g;title="Your "+(g?(KINDS[g.m]||"shape").toLowerCase():"line");note=g&&(g.m==="compass"||g.m==="ring"||g.m==="rect"||g.m==="oval")?"Round the outline of your shape, starting where it begins.":"Along the line you drew, from where you started it.";lines=[{ll:densify(o.s.p,600),c:o.s.c||"#c0392b"}]}
  else if(v[0]==="p"){const P=PRESETS[+v.slice(1)];title=P.n;note=P.t;head=null;lines=[{ll:densify([P.a,P.b],500),c:"#c0392b"}]}
  else if(v[0]==="r"){const k=v.slice(1),s=stem(k);if(!s){note="";title=k;lines=[];renderPanel();return}title=k+": source to sea";note=(STORY[k]||{}).h||"";yv={span:YSPAN,base:0};lines=[{ll:s,c:RIVERS[k].c,river:1,name:k}]}
