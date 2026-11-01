@@ -16,7 +16,7 @@ const DENS={};function densKey(){const k=dark()?"densitySeaD":"densitySeaL";if(t
   for(let i=0;i<d.length;i+=4){const dr=d[i]-111,dg=d[i+1]-168,db=d[i+2]-201,e=dr*dr+dg*dg+db*db;if(e<900){const f=e<200?1:1-(e-200)/700;d[i]=d[i]+(t[0]-d[i])*f;d[i+1]=d[i+1]+(t[1]-d[i+1])*f;d[i+2]=d[i+2]+(t[2]-d[i+2])*f}}
   x.putImageData(D,0,0);c.toBlob(bl=>{GLOBE_TEX[k]={kind:GLOBE_TEX.density.kind,src:[URL.createObjectURL(bl)]};try{amGlobe.request()}catch(e){}},"image/png")}catch(e){console.error(e)}};im.src=GLOBE_TEX.density.src[0];return null}
 function globe(){try{if(typeof amGlobe==="undefined"||!amGlobe||amGlobe._gfSea)return;amGlobe._gfSea=1;const o=amGlobe.cfg.ocean,r=amGlobe.cfg.raster;
- amGlobe.cfg.ocean=function(){if(on())return dark()?SEA_D:SEA_L;return o?o.apply(this,arguments):"#5797cf"};
+ amGlobe.cfg.ocean=function(){if(on())return amGlobe._flat?"rgba(0,0,0,0)":dark()?SEA_D:SEA_L;return o?o.apply(this,arguments):"#5797cf"};
  if(r)amGlobe.cfg.raster=function(){const v=r.apply(this,arguments);if(v==="density"&&on()){const k=densKey();if(k)return k}return v}}catch(e){}}
 if(typeof applyAllMapsColorMode==="function"){const _a=applyAllMapsColorMode;applyAllMapsColorMode=function(){const r=_a.apply(this,arguments);try{flat()}catch(e){}return r}}
 if(typeof amGlobeSync==="function"){const _s=amGlobeSync;amGlobeSync=function(){const r=_s.apply(this,arguments);try{globe()}catch(e){}return r}}
