@@ -98,14 +98,20 @@ function find(q,all){q=norm(q);if(q.length<2)return[];const out=[];build().forEa
 const active=()=>typeof appMode!=="undefined"&&appMode==="allmaps"&&!(typeof proj!=="undefined"&&proj.on)&&!(()=>{const d=document.getElementById("gfDeep");return d&&!d.hidden})();
 const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof amGlobe!=="undefined"&&!!amGlobe}catch(e){return false}};
 /* ---------- the current result ---------- */
-let CUR=null,t0=0,raf=0;
-function clear(){CUR=null;cancelAnimationFrame(raf);document.querySelectorAll(".gfs-leash,.gfs-spotpin").forEach(x=>x.remove());const l=document.querySelector("#allMapsWrap svg #gfSearchLayer");if(l)l.remove();document.querySelectorAll(".gfs-pin").forEach(x=>x.remove());try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
-function show(e){clear();if(!active())return;
+/* up to five things found stay on the map together (search one, then another, without clearing); the oldest goes when a
+   sixth is added. Each keeps its own highlight, pin and photo card; a list under the search box names them */
+let LIST=[],raf=0;const MAXN=5;const same=(a,b)=>a.n===b.n&&a.cat===b.cat;
+function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
+function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
+function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.splice(i,1);try{if(onGlobe())amGlobe.request()}catch(er){}xBtn()}
+function show(e){if(!active())return;
  if(e.cat==="provinces"&&!e.shape){const c=e;if(window.gfProvinces)gfProvinces.load(c.cc).then(d=>{const it=d.items.find(x=>x.n===c.n);if(it){c.g=it.g;c.ll=it.c||c.ll;c.shape=1}show(c)}).catch(()=>{c.shape=1;show(c)});return}
- e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];CUR=e;t0=performance.now();fly(e);draw();xBtn();
- const tick=()=>{if(!CUR)return;draw();if(performance.now()-t0<2600)raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
+ e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];
+ const old=LIST.find(x=>same(x,e));if(old)e=old;else{LIST.push(e);while(LIST.length>MAXN)removeOne(LIST[0])}
+ e._t0=performance.now();fly(e);draw();xBtn();cancelAnimationFrame(raf);
+ const tick=()=>{if(!LIST.length)return;draw();if(LIST.some(x=>performance.now()-x._t0<2600))raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
 /* flash: three pulses, then settle to a steady level */
-function alpha(){const t=(performance.now()-t0)/1000;if(t>2.4)return 1;return .45+.55*Math.abs(Math.sin(t*Math.PI*1.25))}
+function alpha(e){const t=(performance.now()-(e&&e._t0||0))/1000;if(t>2.4)return 1;return .45+.55*Math.abs(Math.sin(t*Math.PI*1.25))}
 function fly(e){const pt=e.g.type==="Point";
  if(onGlobe()){/* frame the main body: the biggest piece and the pieces near it (Portugal without the Azores and Madeira) */
   let gb=e.g;try{if(!pt&&e.g.type==="MultiPolygon"&&e.g.coordinates.length>1){const parts=e.g.coordinates.map(c=>{const g={type:"Polygon",coordinates:c};return{c,a:d3.geoArea(g),m:d3.geoCentroid(g)}}).sort((x,y)=>y.a-x.a),big=parts[0],R=Math.sqrt(big.a/Math.PI);
@@ -123,16 +129,18 @@ function fly(e){const pt=e.g.type==="Point";
   const cx=(x0+x1)/2,cy=(y0+y1)/2;let ww=Math.max(140,(x1-x0)*1.5),hh=Math.max(70,(y1-y0)*1.5);if(ww<hh*2)ww=hh*2;else hh=ww/2;x0=cx-ww/2;x1=cx+ww/2;y0=cy-hh/2;y1=cy+hh/2}
  const box={x:x0,y:y0,w:x1-x0,h:y1-y0};try{typeof pzFly==="function"?pzFly(w,box):w._panZoom.setBox(box)}catch(err){w._panZoom.setBox(box)}}
 /* ---------- drawing ---------- */
-function draw(){if(!CUR)return;const e=CUR,mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha();
+function draw(){LIST.forEach(drawOne);if(onGlobe()){try{amGlobe.request()}catch(err){}}}
+function drawOne(e){const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha(e);
  if(mode==="icon"||mode==="city"||mode==="photo"||phFor(e))pin(e);
- if(onGlobe()){try{amGlobe.request()}catch(err){}return}
+ if(onGlobe()){if(e._g){e._g.remove();e._g=null}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
- let g=svg.querySelector("#gfSearchLayer");if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=document.createElementNS("http://www.w3.org/2000/svg","g");g.id="gfSearchLayer";g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
+ let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
  const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=(a<1?a*.8:keep);
  if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
-function globeDraw(ctx,p){if(!CUR||!active())return;const e=CUR,mode=SHOW[e.cat];if(mode==="icon"||mode==="city")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
+function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
+function globeDrawOne(ctx,p,e){const mode=SHOW[e.cat];if(mode==="icon"||mode==="city")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(e.g);if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
  else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
@@ -144,41 +152,49 @@ const SPOT_SVG={"fuji": "<svg viewBox=\"0 0 36 36\"><path fill=\"#4B545D\" d=\"M
 const SPOT_BY_NAME={"pyramids of giza":"pyramid","teotihuacan":"pyramid","great wall of china":"wall","eiffel tower":"eiffel","mount fuji":"fuji","tokyo tower":"tokyotower","fushimi inari shrine":"torii","fushimi inari-taisha":"torii","itsukushima shrine":"torii","himeji castle":"jcastle","osaka castle":"jcastle","matsumoto castle":"jcastle","masjid al-haram":"kaaba","kaaba":"kaaba","london eye":"ferris","moai of easter island":"moai","moai":"moai","colosseum":"stadium","acropolis of athens":"classic","parthenon":"classic","neuschwanstein castle":"castle","mount everest":"mountain","matterhorn":"mountain","mount kilimanjaro":"volcano","mount kenya":"mountain","k2":"mountain","iguazu falls":"waterfall","angel falls":"waterfall","niagara falls":"waterfall","victoria falls":"waterfall","gullfoss":"waterfall","mount vesuvius":"volcano","mount etna":"volcano"};
 function spotFor(e){const k=e.cat==="volcanoes"?"volcano":e.cat==="peaks"?"mountain":e.cat==="waterfalls"?"waterfall":SPOT_BY_NAME[String(e.n||"").toLowerCase()];if(!k)return"";
  const svg=SPOT_SVG[k]||(typeof psIconSVG==="function"&&typeof PS_ICONS!=="undefined"&&PS_ICONS[k]?psIconSVG(k):"");return svg?'<span class="gfs-spot'+(k==="waterfall"?" gfs-flip":"")+'">'+svg+"</span>":""}
-function pin(e,labelOnly){const wrap=document.getElementById("allMapsWrap")&&document.getElementById("allMapsView")||document.body;const host=document.getElementById("allMapsView")||document.body;
- const mode=SHOW[e.cat];if(labelOnly&&mode!=="icon"&&mode!=="city"&&mode!=="photo"&&!phFor(e))return;let el=document.querySelector(".gfs-pin");
+/* each thing found has its own pin (and photo card, and the line from a moved card); they sit over the map in screen
+   position (fixed), follow it as it moves, and are hidden while their place is out of the map's view */
+function pin(e,labelOnly){const mode=SHOW[e.cat];if(labelOnly&&mode!=="icon"&&mode!=="city"&&mode!=="photo"&&!phFor(e))return;e._els=e._els||[];let el=e._pin;
  const P=photoOf(phFor(e));
  if(!el&&P){/* the photo card, like the tours' photo pins: photo and name; click for the big photo */
-  el=document.createElement("div");el.className="gfs-pin gfs-photo";const ic="";
-  el.innerHTML='<button type="button" class="gfs-card" aria-label="Photo of '+esc(e.n)+'"><img src="'+esc(typeof gfSrc==="function"?gfSrc(P.d):P.d)+'" alt="">'+ic+'</button><span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span><span class="gfs-tip"></span>';
+  el=e._pin=document.createElement("div");el.className="gfs-pin gfs-photo";
+  el.innerHTML='<button type="button" class="gfs-card" aria-label="Photo of '+esc(e.n)+'"><img src="'+esc(typeof gfSrc==="function"?gfSrc(P.d):P.d)+'" alt=""></button><span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span><span class="gfs-tip"></span>';
   /* drag the card anywhere (a line keeps it tied to the place); a click without dragging opens the big photo */
-  const card=el.querySelector(".gfs-card");card.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._off||[0,0],x0=ev.clientX,y0=ev.clientY;let moved=false;try{card.setPointerCapture(ev.pointerId)}catch(err){}
+  const card=el.querySelector(".gfs-card");card.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._off||e._base||[0,0],x0=ev.clientX,y0=ev.clientY;let moved=false;try{card.setPointerCapture(ev.pointerId)}catch(err){}
    const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;e._off=[o[0]+dx,o[1]+dy];pin(e)};
    const up=()=>{card.removeEventListener("pointermove",mv);card.removeEventListener("pointerup",up);card.removeEventListener("pointercancel",up);if(!moved){try{psPhotoOpen(P,e.n)}catch(err){}}};
    card.addEventListener("pointermove",mv);card.addEventListener("pointerup",up);card.addEventListener("pointercancel",up)});
-  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el);
-  const sp=spotFor(e);if(sp){const s2=document.createElement("div");s2.className="gfs-spotpin";s2.innerHTML=sp;document.body.appendChild(s2);e._base=[0,-34]}else e._base=[0,0]}
- if(!el){el=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
-  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el)}
- const s=screenOf(e.ll);if(!s){el.style.display="none";{const sp=document.querySelector(".gfs-spotpin");if(sp)sp.style.display="none"}return}const wr=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();
- if(s[0]<wr.left||s[0]>wr.right||s[1]<wr.top||s[1]>wr.bottom){el.style.display="none";{const sp=document.querySelector(".gfs-spotpin");if(sp)sp.style.display="none"}return}el.style.display="";const isPh=el.classList.contains("gfs-photo"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
- {const sp=document.querySelector(".gfs-spotpin");if(sp){sp.style.left=(s[0]+scrollX)+"px";sp.style.top=(s[1]+scrollY)+"px";sp.style.display=""}}el.style.left=(s[0]+scrollX+off[0])+"px";el.style.top=(s[1]+scrollY+off[1])+"px";
+  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el);e._els.push(el);
+  const sp=spotFor(e);if(sp){const s2=e._spot=document.createElement("div");s2.className="gfs-spotpin";s2.innerHTML=sp;document.body.appendChild(s2);e._els.push(s2);e._base=[0,-34]}else e._base=[0,0]}
+ if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
+  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el)}
+ const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
+ const s0=screenOf(e.ll);if(!s0){hide();return}const wr=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();
+ if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
+ if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
- if(el.classList.contains("gfs-photo")){let ln=document.querySelector(".gfs-leash");const far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;if(!far){if(ln)ln.remove();el.classList.remove("gfs-moved")}else{if(!ln){ln=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln)}el.classList.add("gfs-moved");
-  const x1=s[0]+scrollX,y1=s[1]+scrollY,x2=x1+off[0],y2=y1+off[1]-4,len=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
+ if(isPh){let ln=e._leash;const far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;if(!far){if(ln){ln.style.display="none"}el.classList.remove("gfs-moved")}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
+  const x1=s0[0],y1=s0[1],x2=x1+off[0],y2=y1+off[1]-4,len=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
 /* the map adds its own layers after a search is drawn; keep the search highlight on top of them */
-setInterval(()=>{if(!CUR)return;const svg=document.querySelector("#allMapsWrap svg"),g=svg&&svg.querySelector("#gfSearchLayer");if(g&&g!==svg.lastElementChild)svg.appendChild(g)},400);
+setInterval(()=>{if(!LIST.length)return;const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;LIST.forEach(e=>{const g=e._g;if(g&&g.ownerSVGElement===svg&&g!==svg.lastElementChild)svg.appendChild(g)})},400);
 /* keep things in place as the map moves */
-function follow(){if(!CUR)return;try{if(!active()){clear();return}const m=SHOW[CUR.cat];if(m==="icon"||m==="city"||m==="photo"||phFor(CUR))pin(CUR);if(m!=="icon"&&m!=="city"&&m!=="photo"&&!onGlobe())draw()}catch(e){}}
+function follow(){if(!LIST.length)return;try{if(!active()){clear();return}LIST.forEach(e=>{const m=SHOW[e.cat];if(m==="icon"||m==="city"||m==="photo"||phFor(e))pin(e);if(m!=="icon"&&m!=="city"&&m!=="photo"&&!onGlobe())drawOne(e)})}catch(e){}}
 new MutationObserver(follow).observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:["viewBox"]});
 addEventListener("scroll",follow,{passive:true});addEventListener("resize",follow);
 if(typeof GlobeView!=="undefined"){const _r=GlobeView.prototype.render;GlobeView.prototype.render=function(){const cfg=this.cfg;if(typeof amGlobe!=="undefined"&&this===amGlobe&&cfg&&!cfg._gfs){cfg._gfs=1;const d0=cfg.drawExtra;cfg.drawExtra=(ctx,p,g)=>{if(d0)d0(ctx,p,g);globeDraw(ctx,p)}}return _r.apply(this,arguments)}}
-if(typeof spinTo==="function"){const _s=spinTo;spinTo=function(){const r=_s.apply(this,arguments);try{if(CUR){const l=document.querySelector("#allMapsWrap svg #gfSearchLayer");if(l)l._d=null;setTimeout(()=>{draw();follow()},30)}}catch(e){}return r}}
-if(typeof renderAllMapsView==="function"){const _ra=renderAllMapsView;renderAllMapsView=function(){const r=_ra.apply(this,arguments);try{if(CUR){setTimeout(()=>{const l=document.querySelector("#allMapsWrap svg #gfSearchLayer");if(l)l._d=null;draw();follow()},60)}}catch(e){}return r}}
-if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=function(){const r=_sm.apply(this,arguments);try{if(CUR&&!active())clear()}catch(e){}return r}}
+if(typeof spinTo==="function"){const _s=spinTo;spinTo=function(){const r=_s.apply(this,arguments);try{if(LIST.length){LIST.forEach(e=>{if(e._g)e._g._d=null});setTimeout(()=>{draw();follow()},30)}}catch(e){}return r}}
+if(typeof renderAllMapsView==="function"){const _ra=renderAllMapsView;renderAllMapsView=function(){const r=_ra.apply(this,arguments);try{if(LIST.length){setTimeout(()=>{LIST.forEach(e=>{if(e._g){e._g.remove();e._g=null}});draw();follow()},60)}}catch(e){}return r}}
+if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=function(){const r=_sm.apply(this,arguments);try{if(LIST.length&&!active())clear()}catch(e){}return r}}
 /* ---------- the search box ---------- */
+/* the list of things found, under the search box: click one to fly back to it, × removes it; "Clear all" for the lot */
 function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)return;let b=document.getElementById("gfsX");
- if(!CUR){if(b)b.remove();return}if(!b){b=document.createElement("button");b.type="button";b.id="gfsX";b.setAttribute("aria-label","Clear the search");b.onclick=e=>{e.stopPropagation();const i=document.getElementById("globalSearchInput");if(i)i.value="";clear()};wrap.appendChild(b)}
- b.innerHTML='<span>'+EMO[CUR.cat]+' '+esc(CUR.n)+'</span><b>×</b>'}
+ if(!LIST.length){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="gfsX";b.setAttribute("role","list");wrap.appendChild(b);
+  ["pointerdown","mousedown","click"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation()));
+  b.addEventListener("click",ev=>{const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
+   if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
+   if(x){const e=LIST[+x.dataset.gx];if(e)removeOne(e);draw();return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+EMO[e.cat]+' '+esc(e.n)+'</span><b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+  (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
 function wire(){loadProv();loadRegs();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
   /* the site's own country suggestions are kept, but scored the same way as places, and weak guesses are dropped */
@@ -190,16 +206,16 @@ function wire(){loadProv();loadRegs();const input=document.getElementById("globa
   box.innerHTML="";const shown=[];keep.forEach(x=>{if(x.el){box.appendChild(x.el);return}const k=shown.push(x.e)-1;box.insertAdjacentHTML("beforeend",'<div class="global-search-result gfs-res" data-i="'+k+'"><span class="gfs-emo">'+EMO[x.e.cat]+'</span><span>'+esc(x.e.n)+'</span><span class="gsr-cap">'+(x.e.typ||TYPE[x.e.cat])+'</span></div>')});
   if(best>=4&&keep.length)box.insertAdjacentHTML("afterbegin",'<div class="gfs-did">Did you mean…</div>');
   box.querySelectorAll(".gfs-res").forEach(el=>el.onclick=()=>{const e=shown[+el.dataset.i];input.value="";box.innerHTML="";show(e)})});
- input.addEventListener("keydown",e=>{if(e.key==="Escape"&&CUR)clear()})}
+ input.addEventListener("keydown",e=>{if(e.key==="Escape"&&LIST.length)clear()})}
 wire();document.addEventListener("DOMContentLoaded",wire);setTimeout(wire,1500);
 if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{wire();const i=document.getElementById("globalSearchInput");if(i&&active())i.placeholder="Search a country, city, river, mountain…";else if(i&&i.placeholder.startsWith("Search a country, city"))i.placeholder="Search for a country…";xBtn()}catch(e){}return r}}
 const css=document.createElement("style");css.textContent=`
-#gfSearchLayer path{ vector-effect:non-scaling-stroke; }
-#gfSearchLayer .gfs-fill{ fill:var(--gfs) !important; fill-opacity:var(--gfa,.3) !important; stroke:none !important; }
-#gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3px !important; stroke-linejoin:round; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
-#gfSearchLayer .gfs-case{ fill:none !important; stroke:#fff !important; stroke-opacity:.9; stroke-width:6px !important; stroke-linecap:round; stroke-linejoin:round; }
-#gfSearchLayer .gfs-line{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3.4px !important; stroke-linecap:round; stroke-linejoin:round; }
-.gfs-pin{ position:absolute; z-index:40; pointer-events:none; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; animation:gfsIn .4s cubic-bezier(.2,1.4,.4,1); }
+.gfSearchLayer path{ vector-effect:non-scaling-stroke; }
+.gfSearchLayer .gfs-fill{ fill:var(--gfs) !important; fill-opacity:var(--gfa,.3) !important; stroke:none !important; }
+.gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3px !important; stroke-linejoin:round; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
+.gfSearchLayer .gfs-case{ fill:none !important; stroke:#fff !important; stroke-opacity:.9; stroke-width:6px !important; stroke-linecap:round; stroke-linejoin:round; }
+.gfSearchLayer .gfs-line{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3.4px !important; stroke-linecap:round; stroke-linejoin:round; }
+.gfs-pin{ position:fixed; z-index:40; pointer-events:none; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; animation:gfsIn .4s cubic-bezier(.2,1.4,.4,1); }
 .gfs-pin.gfs-city{ transform:translate(-50%,-50%); flex-direction:row; gap:6px; }
 @keyframes gfsIn{ from{ opacity:0; margin-top:-10px } to{ opacity:1; margin-top:0 } }
 .gfs-ic{ width:34px; height:34px; display:block; color:var(--ipc); filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
@@ -216,22 +232,25 @@ const css=document.createElement("style");css.textContent=`
 .gfs-pic svg{ width:100%; height:100%; display:block; } .gfs-pic svg *{ fill:var(--ipc); }
 .gfs-photo .gfs-lab{ margin-top:6px; }
 .gfs-card{ cursor:grab; touch-action:none; }
-.gfs-spotpin{ position:absolute; z-index:39; transform:translate(-50%,-92%); pointer-events:none; }
+.gfs-spotpin{ position:fixed; z-index:39; transform:translate(-50%,-92%); pointer-events:none; }
 .gfs-spot{ display:block; width:34px; height:34px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 .gfs-spot svg{ width:100%; height:100%; display:block; } .gfs-spot.gfs-flip svg{ transform:scaleX(-1); }
 .gfs-pin.gfs-icon .gfs-spot{ width:38px; height:38px; } .gfs-card:active{ cursor:grabbing; }
-.gfs-leash{ position:absolute; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
+.gfs-leash{ position:fixed; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
 .gfs-leash::before{ content:""; position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:#c0392b; border:2px solid #fff; }
 .gfs-photo.gfs-moved .gfs-tip{ visibility:hidden; }
 .gfs-tip{ width:0; height:0; border:7px solid transparent; border-top-color:rgba(16,28,48,.9); margin-top:-1px; }
 @media (max-width:600px){ .gfs-card{ width:72px; height:72px; } }
-#gfsX{ position:absolute; left:0; top:calc(100% + 6px); display:flex; gap:8px; align-items:center; border:0; border-radius:999px; padding:5px 6px 5px 12px; background:rgba(16,28,48,.88); color:#fff; font:600 12.5px/1 system-ui,sans-serif; cursor:pointer; z-index:30; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.25); }
-#gfsX b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.18); align-items:center; justify-content:center; font-size:15px; }
-#gfsX:hover b{ background:#e8701a; }
+#gfsX{ position:absolute; right:0; left:auto; top:calc(100% + 6px); display:flex; flex-direction:column; align-items:flex-end; gap:4px; z-index:45; }
+#gfsX .gfs-row{ display:flex; gap:8px; align-items:center; border-radius:999px; padding:5px 6px 5px 12px; background:rgba(16,28,48,.88); color:#fff; font:600 12.5px/1 system-ui,sans-serif; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+#gfsX .gfs-row b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.18); align-items:center; justify-content:center; font-size:15px; }
+#gfsX .gfs-row b:hover{ background:#e8701a; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
+#gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
+#gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
 .gfs-res .gfs-emo{ width:28px; text-align:center; font-size:18px; }`;
 document.head.appendChild(css);
-window.gfSearch={find,show,clear,build};
+window.gfSearch={find,show,clear,build,list:()=>LIST.slice(),remove:removeOne};
 })();
 /* What the Maps search can find: shown under the empty search box when it gets the focus; each example fills it in */
 (function(){
