@@ -622,13 +622,15 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
    (they keep their white outline) */
 (function(){const fix=()=>{if(typeof psDimFill!=="function"||psDimFill._gfTime)return false;const _d=psDimFill;psDimFill=function(){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="time")return"rgba(0,0,0,0)"}catch(e){}return _d.apply(this,arguments)};psDimFill._gfTime=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
-/* maps with sub-map tabs (Economy, Culture, …): the map starts just below the tabs instead of under them. Another script sets
-   the map's top margin inline, so it is set here inline too, and again whenever that changes. */
-(function(){const MT=22;let obs=null,cur=null;
- function fix(){try{const view=document.getElementById("allMapsView"),sub=document.getElementById("allMapsSubModes");
-  const subs=!!(view&&sub&&sub.classList.contains("gf-sub-inrow")&&sub.querySelector(".chip")&&getComputedStyle(sub).display!=="none");
-  ["amGlobeHost","allMapsWrap"].forEach(id=>{const h=document.getElementById(id);if(!h)return;
-   if(subs){if(h.style.getPropertyValue("margin-top")!==MT+"px"||h.style.getPropertyPriority("margin-top")!=="important"){h.style.setProperty("margin-top",MT+"px","important");h._gfMt=1}}
-   else if(h._gfMt){h.style.removeProperty("margin-top");h.style.marginTop="10px";h._gfMt=0}});
+/* the map sits at the same height on every map, with or without sub-map tabs (Economy, Culture, Satellite's Day & Night…):
+   the tabs sit in the controls row or on the map, so they never push it down. Other scripts set the top margin inline
+   (22 px with tabs, -48 px with tabs on the globe), so it is set here inline too, and again whenever that changes. */
+(function(){const GAP=78;let obs=null,cur=null;
+ /* the map's top: a fixed distance below the row of map buttons (Relief Map … Deep Time), whatever is in between */
+ function fix(){try{if(appMode!=="allmaps")return;const row=document.getElementById("allMapsToggleRow");
+  ["amGlobeHost","allMapsWrap"].forEach(id=>{const h=document.getElementById(id);if(!h||!h.offsetParent)return;
+   let MT=10;if(row&&row.offsetParent&&id==="amGlobeHost"){const now=parseFloat(h.style.getPropertyValue("margin-top"))||parseFloat(getComputedStyle(h).marginTop)||0;
+     const d=Math.round(row.getBoundingClientRect().bottom+GAP-h.getBoundingClientRect().top);MT=Math.abs(d)<=1?now:Math.max(-80,Math.min(60,now+d))}
+   if(h.style.getPropertyValue("margin-top")!==MT+"px"||h.style.getPropertyPriority("margin-top")!=="important")h.style.setProperty("margin-top",MT+"px","important")});
   const h=document.getElementById("amGlobeHost");if(h&&h!==cur){cur=h;if(obs)obs.disconnect();obs=new MutationObserver(()=>fix());obs.observe(h,{attributes:true,attributeFilter:["style"]})}}catch(e){}}
  setInterval(fix,300);document.addEventListener("click",()=>setTimeout(fix,0),true)})();
