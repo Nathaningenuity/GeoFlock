@@ -77,6 +77,7 @@ function printChip(){const b=document.getElementById("gfPrintChip");if(!b)return
 setInterval(()=>{try{fold();labels();printChip()}catch(e){}},400);
 })();
 /* the City Lights tour plays on the globe, where the night picture is sharpest */
+setInterval(()=>{try{if(typeof ps!=="undefined"&&ps&&ps.tour==="night"&&typeof psSwitching!=="undefined"&&!psSwitching&&appMode==="allmaps"&&!globePrefs().allmaps){globePrefs().allmaps=true;amGlobeSync()}}catch(e){}},500);
 (function(){const set=()=>{try{const T=PS_TOURS.night;if(T&&T.map&&!T.map.globe){T.map.globe=true;return true}return!!(T&&T.map&&T.map.globe)}catch(e){return false}};if(!set()){let n=0;const t=setInterval(()=>{if(set()||++n>60)clearInterval(t)},500)}})();
 /* the star on the City Lights tab goes away once the map has been opened */
 (function(){const K="gfNightSeen";try{if(localStorage.getItem(K))document.documentElement.classList.add("gf-nl-seen")}catch(e){}

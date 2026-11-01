@@ -52,6 +52,15 @@ setInterval(()=>{try{if(sess&&!live()&&!starting)finish()}catch(e){}},1000);
 /* a layer of the viewer's that a stop needed (so it stayed on) goes off again at the next stop that does not need it */
 let lastStop="";setInterval(()=>{try{if(!sess||!live()||!onMaps())return;const k=ps.tour+"|"+ps.i;if(k===lastStop)return;lastStop=k;const need=needed(PS_TOURS[ps.tour]);
  sess.off.forEach(n=>{if(!need.has(n))set(input(n),false)})}catch(e){}},350);
+/* safety net: every switch that was off when the viewer started touring is off again when the tour ends, is closed, or
+   another tour is picked (a tour may have turned it on in some way the code above does not see) */
+const BASIC=["allMapsBordersToggle","allMapsCitiesToggle","allMapsGraticuleToggle","allMapsLakesToggle","allMapsLandformsToggle","allMapsPlatesToggle","allMapsRiversToggle","allMapsSeaLabelsToggle","allMapsShowLabelsToggle","allMapsTimeZonesToggle"];
+const allInputs=()=>{const m=new Map();BASIC.forEach(id=>{const i=document.getElementById(id);if(i)m.set(id,i)});OPT.forEach(n=>{const i=input(n);if(i)m.set("L:"+n,i)});return m};
+let offAtStart=null;
+function restoreOffs(){if(!offAtStart||!onMaps())return;const m=allInputs();offAtStart.forEach(k=>{const i=m.get(k);if(i&&i.checked)set(i,false)})}
+{const _l2=psLaunchTour;psLaunchTour=function(){try{if(!live()){if(onMaps()){offAtStart=new Set();allInputs().forEach((i,k)=>{if(!i.checked)offAtStart.add(k)})}}else restoreOffs()}catch(e){}return _l2.apply(this,arguments)}}
+{const _e2=psEnd;psEnd=function(){const was=live();const r=_e2.apply(this,arguments);if(was&&!starting&&!live()){setTimeout(()=>{try{if(!live()){restoreOffs();offAtStart=null}}catch(e){}},900)}return r}}
+setInterval(()=>{try{if(offAtStart&&!live()&&!starting){restoreOffs();offAtStart=null}}catch(e){}},1200);
 window.gfTourLayers={wantsRelief,state:()=>({sess:sess&&[...sess.off],pending})};
 
 /* ---------- 1. the round Relief button ---------- */
