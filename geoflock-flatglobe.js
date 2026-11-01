@@ -210,6 +210,9 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
   const big=new Set;(g.features||[]).forEach(f=>{const c=f.properties&&f.properties.c,G=f.geometry;if(!c||!G)return;(G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:[]).forEach(Q=>{try{if(d3.geoArea({type:"Polygon",coordinates:Q})>AMAX)big.add(c)}catch(e){}})});
   out.forEach(q=>q.px=big.has(q.code)?6:10);return g._gfParts=out}
  P.hit=function(clientX,clientY){const h=_hit.apply(this,arguments);try{if(!h||h.code||!h.ll||(this._boostOff&&this._boostOff()))return h;
+  /* this wide, screen-sized catch round small islands is for the quizzes only; on the Maps page small places keep just the
+     boost measured on the map itself, so it shrinks as you zoom out */
+  if(typeof amGlobe!=="undefined"&&this===amGlobe)return h;
   const s=(this._flat?this.projection().scale():this.size().r*this.zoom),u=180/(Math.PI*Math.max(1,s)),rr=10*u*Math.PI/180,ll=h.ll;let best=null,bd=Infinity;
   for(const q of parts(this)){if(d3.geoDistance(ll,q.c)>q.rad+rr*1.6)continue;const d=globeDistToRings(ll,[q.ring]);if(d<=q.px*u&&d/q.px<bd){bd=d/q.px;best=q}}
   if(!best)return h;try{const w=this.waterAt(ll,clientX,clientY);if(w&&w.water)return h}catch(e){}/* the note names the island itself (Canary Islands, Spain), so it is looked up at a point on the island */
