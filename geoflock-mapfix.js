@@ -657,14 +657,22 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 /* the flat map's round buttons sit inside the map's empty corners (the map is an oval): zoom in, zoom out and reset in
    the top right; full screen, lock, relief underneath and clouds in the bottom right. Spin is for the globe only. */
 (function(){const st=document.createElement("style");st.textContent=`
-#allMapsView .globe-host.gf-flat .globe-btns, #allMapsView.globe-on #amGlobeHost.gf-flat .globe-btns{ right:8px !important; left:auto !important; top:8px !important; bottom:52px !important; height:auto !important; margin-top:0 !important;
-  display:flex !important; flex-direction:column; justify-content:flex-start; gap:8px; }
+#allMapsView .globe-host.gf-flat .globe-btns, #allMapsView.globe-on #amGlobeHost.gf-flat .globe-btns{ right:8px !important; left:auto !important; top:8px !important; bottom:8px !important; height:auto !important; margin-top:0 !important;
+  display:flex !important; flex-direction:column; justify-content:flex-start; gap:6px; }
 #allMapsView .globe-host.gf-flat .globe-btns > *{ margin:0 !important; }
 #allMapsView .globe-host.gf-flat .globe-btns [data-g="in"]{ order:1; } #allMapsView .globe-host.gf-flat .globe-btns [data-g="out"]{ order:2; }
-#allMapsView .globe-host.gf-flat .globe-btns [data-g="reset"]{ order:3; }
-#allMapsView .globe-host.gf-flat .globe-btns .gf-fsb{ order:10; margin-top:auto !important; }
-#allMapsView .globe-host.gf-flat .globe-btns .gf-lock{ order:11; }
-#allMapsView .globe-host.gf-flat .globe-btns [data-g="gfrelief"]{ order:12; } #allMapsView .globe-host.gf-flat .globe-btns [data-g="gfclouds"]{ order:13; }
+#allMapsView .globe-host.gf-flat .globe-btns [data-g="reset"]{ order:3; margin-bottom:auto !important; }
+/* the bottom of the column, from the top down: relief, clouds, lock, and full screen last */
+#allMapsView .globe-host.gf-flat .globe-btns [data-g="gfrelief"]{ order:10; } #allMapsView .globe-host.gf-flat .globe-btns [data-g="gfclouds"]{ order:11; }
+#allMapsView .globe-host.gf-flat .globe-btns .gf-lock{ order:12; }
+#allMapsView .globe-host.gf-flat .globe-btns .gf-fsb{ order:13; }
+/* a little smaller, a little closer together */
+#allMapsView .globe-host.gf-flat .globe-btns > button{ width:31px !important; height:31px !important; min-width:0 !important; }
+#allMapsView .globe-host.gf-flat .globe-btns > button svg{ width:15px; height:15px; }
+/* "Point at the map" sits under the map, so the buttons have the whole right edge */
+#allMapsView #amGlobeHost.gf-flat{ overflow:visible !important; }
+#allMapsView #amGlobeHost.gf-flat > .gfk-coord{ top:calc(100% + 6px) !important; bottom:auto !important; right:8px !important; }
+#allMapsView #amGlobeHost.gf-flat{ margin-bottom:40px !important; }
 #allMapsView .globe-host.gf-flat .globe-btns [data-g="spin"]{ display:none !important; }`;document.head.appendChild(st)})();
 /* the map key on the right opens with every map (folding it away lasts until the next map) */
 (function(){let last=null;setInterval(()=>{try{if(appMode!=="allmaps")return;const m=allMapsColorMode+"|"+(typeof allMapsSubMode!=="undefined"?JSON.stringify(allMapsSubMode[allMapsColorMode]||""):"");

@@ -319,37 +319,42 @@ function openList(){closeList();const m=document.createElement("div");m.classNam
  setTimeout(()=>{const q=m.querySelector(".gfm-q");if(q&&innerWidth>700)try{q.focus({preventScroll:true})}catch(e){}},30)}
 
 /* ================= 3c. one model in a floating panel ================= */
-let PANEL=null;const POS={};
-function closeModel(){if(PANEL){PANEL.remove();PANEL=null}try{if(typeof DGI!=="undefined"){if(DGI.tip)DGI.tip.style.display="none";DGI.drag=null;DGI.hov=null}}catch(e){}}
+/* up to three models open at once; a fourth closes the oldest. PANEL is the newest one */
+let PANEL=null,PANELS=[],ZTOP=9600;const POS={},MAXP=3;
+function front(p){p.style.zIndex=++ZTOP;PANEL=p}
+function closeModel(p){const t=p&&p.nodeType?p:PANEL;
+ if(t){t.remove();PANELS=PANELS.filter(x=>x!==t);PANEL=PANELS[PANELS.length-1]||null}try{if(typeof DGI!=="undefined"){if(DGI.tip)DGI.tip.style.display="none";DGI.drag=null;DGI.hov=null}}catch(e){}}
 function clampP(p){if(innerWidth<=600)return;const r=p.getBoundingClientRect();let l=parseFloat(p.style.left)||0,t=parseFloat(p.style.top)||0;
  l=Math.max(60-r.width,Math.min(innerWidth-60,l));t=Math.max(4,Math.min(innerHeight-44,t));p.style.left=l+"px";p.style.top=t+"px"}
 function placeP(p){if(innerWidth<=600)return;if(POS.at){p.style.left=POS.at[0]+"px";p.style.top=POS.at[1]+"px";clampP(p);return}
  const r=p.getBoundingClientRect(),top=Math.max(64,Math.min(innerHeight-r.height-14,Math.round(innerHeight*.14)));p.style.left=Math.max(8,Math.round(innerWidth-r.width-24))+"px";p.style.top=top+"px";clampP(p)}
 function fillBody(p,key,tries){const b=p.querySelector(".gfm-pb");if(!b)return;let fig="";try{fig=dgFigure(key,innerWidth>600&&p.classList.contains("wide"))}catch(e){console.error(e)}
  if(!fig){if(!b.querySelector(".gfm-wait"))b.innerHTML='<p class="gfm-wait">Working it out from the map…</p>';try{if(typeof GFE!=="undefined"&&!GFE.ready&&typeof gfElev==="function")gfElev()}catch(e){}
-  if((tries||0)<30)setTimeout(()=>{if(PANEL===p)fillBody(p,key,(tries||0)+1)},1000);return}
+  if((tries||0)<30)setTimeout(()=>{if(PANELS.includes(p))fillBody(p,key,(tries||0)+1)},1000);return}
  const uses=usesOf(key);
  b.innerHTML=fig+(uses.length?'<div class="gfm-uses"><span>In the tours:</span>'+uses.map(u=>'<button type="button" data-gfm-tour="'+u.t+'" data-gfm-at="'+u.at+'" style="--tc:'+(u.T.col||"#2b7bb5")+'">'+esc(u.T.short||u.T.name)+' · '+esc(u.title)+' →</button>').join("")+'</div>':"");
  /* the panel is already the big view: clicking the drawing does not open the enlarge window on top */
  b.querySelectorAll("[data-dg-open]").forEach(x=>{x.removeAttribute("data-dg-open");x.removeAttribute("role");x.removeAttribute("tabindex")});
- b.querySelectorAll("[data-gfm-tour]").forEach(x=>x.onclick=()=>{const id=x.dataset.gfmTour,at=+x.dataset.gfmAt||0;closeModel();try{psLaunchTour(id);if(at)toursResumeAt(id,at)}catch(e){console.error(e)}});
+ b.querySelectorAll("[data-gfm-tour]").forEach(x=>x.onclick=()=>{const id=x.dataset.gfmTour,at=+x.dataset.gfmAt||0;PANELS.slice().forEach(q=>closeModel(q));try{psLaunchTour(id);if(at)toursResumeAt(id,at)}catch(e){console.error(e)}});
  try{if(typeof dgInitAll==="function")dgInitAll(b)}catch(e){}
- requestAnimationFrame(()=>{if(PANEL===p)clampP(p)})}
-function openModel(key){if(!DG[key])return;closeModel();closeList();
+ requestAnimationFrame(()=>{if(PANELS.includes(p))clampP(p)})}
+function openModel(key){if(!DG[key])return;closeList();
+ {const had=PANELS.find(q=>q.dataset.model===key);if(had){front(had);return}}
+ while(PANELS.length>=MAXP)closeModel(PANELS[0]);
  const D=DG[key],p=document.createElement("div");p.className="gfm-panel"+(POS.wide?" wide":"");p.setAttribute("role","dialog");p.setAttribute("aria-label",D.title);p.dataset.model=key;
  p.innerHTML='<div class="gfm-ph" title="Drag to move"><span class="gfm-grip" aria-hidden="true"></span><b>'+esc(D.title)+'</b>'+(isSim(key)?'<small>Simulation</small>':'')+'<button type="button" class="gfm-wide" aria-label="Bigger or smaller" title="Bigger / smaller">⤢</button><button type="button" class="gfm-close" aria-label="Close">×</button></div><div class="gfm-pb"></div>';
- document.body.appendChild(p);PANEL=p;
+ document.body.appendChild(p);PANELS.push(p);front(p);p.addEventListener("pointerdown",()=>{if(PANEL!==p)front(p)},true);
  /* the map underneath does not see presses, clicks or the wheel inside the panel (the models' own handlers listen on the document first) */
  ["pointerdown","mousedown","wheel","dblclick","touchstart","contextmenu"].forEach(t=>p.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
  p.addEventListener("click",e=>e.stopPropagation());
- p.querySelector(".gfm-close").onclick=closeModel;
+ p.querySelector(".gfm-close").onclick=()=>closeModel(p);
  p.querySelector(".gfm-wide").onclick=()=>{POS.size=null;p.classList.remove("sized");p.style.width="";p.style.height="";p.style.maxHeight="";POS.wide=!POS.wide;p.classList.toggle("wide",POS.wide);fillBody(p,key);clampP(p)};
  const bar=p.querySelector(".gfm-ph");
  bar.addEventListener("pointerdown",e=>{if(e.button||e.target.closest("button")||innerWidth<=600)return;e.preventDefault();const r=p.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;p.classList.add("moving");
   const mv=ev=>{p.style.left=(ev.clientX-dx)+"px";p.style.top=(ev.clientY-dy)+"px";clampP(p)};
   const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);p.classList.remove("moving");POS.at=[parseFloat(p.style.left),parseFloat(p.style.top)]};
   addEventListener("pointermove",mv);addEventListener("pointerup",up);addEventListener("pointercancel",up)});
- fillBody(p,key,0);placeP(p);resizable(p);
+ fillBody(p,key,0);placeP(p);{const n=PANELS.length-1;if(n>0&&innerWidth>600){const pr=PANELS[n-1].getBoundingClientRect();p.style.left=(pr.left-36)+"px";p.style.top=(pr.top+36)+"px";clampP(p)}}resizable(p);
  if(DARK_SIMS.includes(key))askDark();
  try{p.querySelector(".gfm-close").focus({preventScroll:true})}catch(e){}}
 /* drag an edge or a bottom corner to resize; the size is kept for the next model */
@@ -372,7 +377,7 @@ function askDark(){if(document.body.classList.contains("sky-night")||document.qu
  ["pointerdown","mousedown","click"].forEach(t=>m.addEventListener(t,e=>e.stopPropagation()));
  m.querySelector("[data-y]").onclick=()=>{done();try{stats.theme="night";applyTheme();saveStats()}catch(e){}};m.querySelector("[data-n]").onclick=done;
  m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus()}
-addEventListener("resize",()=>{if(PANEL)clampP(PANEL)});
+addEventListener("resize",()=>{PANELS.forEach(clampP)});
 /* Esc closes the list, then the panel, before anything else (a tour, full screen, the toolkit) hears it */
 addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.querySelector(".dg-lightbox,.flag-zoom-overlay.show"))return;
  if(document.querySelector(".gfm-modal")){closeList();e.preventDefault();e.stopImmediatePropagation();return}
