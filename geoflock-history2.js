@@ -56,7 +56,9 @@ const yLabel=y=>y<=0?(1-y)+" BC":y<1000?"AD "+y:String(y);
 const yKey=y=>y<=0?"bc"+(1-y):String(y);
 const period=y=>PERIODS.find(p=>y>=p[0]&&y<p[1])||PERIODS[PERIODS.length-1];
 function yearObj(){const y=curY,P=period(y);return{y:yKey(y),label:yLabel(y),cap:P[2]+". "+P[3],era:P[2],labs:labList(),yr:y}}
-fetch(BASE+"h2-index.json").then(r=>r.ok?r.json():null).then(j=>{if(!j)return;IDX=j;need(curY);try{if(histOn())applyAllMapsColorMode(document.getElementById("allMapsWrap"))}catch(e){}}).catch(()=>{});
+/* the borders are fetched once you leave Home (Maps, tours, games), not while the Home page is getting going */
+let _idxP=null;function ensureIdx(){if(_idxP)return;_idxP=fetch(BASE+"h2-index.json").then(r=>r.ok?r.json():null).then(j=>{if(!j){_idxP=null;return}IDX=j;need(curY);try{if(histOn())applyAllMapsColorMode(document.getElementById("allMapsWrap"))}catch(e){}}).catch(()=>{_idxP=null})}
+{const _t=setInterval(()=>{try{if(typeof appMode!=="undefined"&&appMode==="home"&&!histOn())return}catch(e){}clearInterval(_t);ensureIdx()},700)}
 function chunkOf(y){if(!IDX)return-1;return IDX.chunks.findIndex(c=>y>=c[0]&&y<c[1])}
 function dens(r){const o=[];for(let k=0;k<r.length;k++){const a=r[k];o.push(a);const b=r[k+1];if(!b)continue;const n=Math.floor(Math.max(Math.abs(b[0]-a[0]),Math.abs(b[1]-a[1])));for(let j=1;j<n;j++)o.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n])}return o}
 function load(k){if(k<0||!IDX||k>=IDX.chunks.length||CH[k]||LOADING[k])return;LOADING[k]=fetch(BASE+IDX.chunks[k][2]).then(r=>r.json()).then(topo=>{
@@ -66,7 +68,7 @@ function load(k){if(k<0||!IDX||k>=IDX.chunks.length||CH[k]||LOADING[k])return;LO
   f.geometry={type:"MultiPolygon",coordinates:P};f._b=d3.geoBounds(f);f.properties.imp=impOf(f.properties);out.push(f)});
  out.sort((a,b)=>(a.properties.o?1:0)-(b.properties.o?1:0)||b.properties.a-a.properties.a);
  CH[k]=out;delete LOADING[k];FC.clear();warm(out);if(useNew()&&histOn()&&chunkOf(curY)===k){histShown=-1;setYear(curY,false,tourOn())}}).catch(()=>{delete LOADING[k]})}
-function need(y){const k=chunkOf(y);load(k);load(k+1);if(k>0)load(k-1)}
+function need(y){if(!IDX){ensureIdx();return}const k=chunkOf(y);load(k);load(k+1);if(k>0)load(k-1)}
 /* the polities alive in the shown year. The same set of polities is always the same array, so a change of borders
    can be told by the array alone. */
 const FC=new Map,SIG=new Map;let lastFrame=[],frameId=0;

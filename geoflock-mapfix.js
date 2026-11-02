@@ -352,7 +352,12 @@ if(typeof partsBreakHTML==="function"&&typeof poolFor==="function"){
 /* 18. Sideways drags turn the flat map like the globe. The picture used while dragging only includes images that have
    already been loaded, so every image on the maps (relief, shading, sea level) is loaded as soon as it appears. */
 (function(){if(typeof spinImg!=="function")return;const seen=new Set;
- const pre=()=>{document.querySelectorAll("#allMapsWrap svg image, #atlasStudyMapWrap svg image, #mapWrap svg image").forEach(el=>{const h=el.getAttribute("href")||el.getAttribute("xlink:href");if(!h||seen.has(h))return;seen.add(h);try{const p=spinImg(h);if(p&&p.catch)p.catch(()=>{})}catch(e){}})};
+ /* only pictures that are showing, one at a time when the page is idle: preparing every layer of every map (about 65
+    pictures of 4000 px, most of them hidden) took over a minute on a phone the first time Maps was opened */
+ const shown=el=>{try{return el.checkVisibility?el.checkVisibility({opacityProperty:true,visibilityProperty:true}):!!el.getClientRects().length}catch(e){return true}};
+ let busy=false;const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:1500}):setTimeout(f,50);
+ const pre=()=>{if(busy||document.hidden)return;let h=null;for(const el of document.querySelectorAll("#allMapsWrap svg image, #atlasStudyMapWrap svg image, #mapWrap svg image")){const v=el.getAttribute("href")||el.getAttribute("xlink:href");if(!v||seen.has(v)||!shown(el))continue;h=v;break}
+  if(!h)return;seen.add(h);busy=true;idle(()=>{try{const p=spinImg(h);if(p&&p.then)p.then(()=>{busy=false},()=>{busy=false});else busy=false}catch(e){busy=false}})};
  setInterval(pre,700);pre()})();
 /* the picture used while dragging is made ahead of time, when the map has been still for a moment, and reused until
    the map changes, so a drag starts at once */
