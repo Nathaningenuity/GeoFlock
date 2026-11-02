@@ -137,7 +137,12 @@ body.dark .gf-xs-up, body.dark .gf-xs-pick button:not(.on){ background:#25304a; 
 @keyframes gfXsPulse{ 0%{ box-shadow:0 0 0 0 rgba(192,57,43,.6); } 70%{ box-shadow:0 0 0 10px rgba(192,57,43,0); } 100%{ box-shadow:0 0 0 0 rgba(192,57,43,0); } }
 @keyframes gfXsPulseG{ 0%{ box-shadow:0 0 0 0 rgba(46,125,50,.6); } 70%{ box-shadow:0 0 0 10px rgba(46,125,50,0); } 100%{ box-shadow:0 0 0 0 rgba(46,125,50,0); } }
 .gf-xs-help.armed{ font-size:13.5px; opacity:1; font-weight:700; color:#2e7d32; }
-.globe-host.gf-xs-armed canvas{ cursor:crosshair !important; }`;document.head.appendChild(css);
+.globe-host.gf-xs-armed canvas{ cursor:crosshair !important; }
+/* the country names under the chart sit on the panel itself: light in the dark themes */
+:is(body.dark,body.dark-theme,body.sky-night) .gf-xs .gf-xs-cty{ fill:#ecc894; }
+.gf-xs-exit,.gf-xs-clear{ border:1px solid rgba(0,0,0,.18); border-radius:999px; padding:5px 12px; font:700 12px system-ui; background:#fff; color:#1d3047; cursor:pointer; }
+:is(body.dark,body.dark-theme,body.sky-night) .gf-xs-exit,:is(body.dark,body.dark-theme,body.sky-night) .gf-xs-clear{ background:#25304a; color:#e8ecf3; border-color:#3a4a66; }
+.gf-xs-edhint{ font-size:12px; opacity:.75; margin:2px 0 4px; }`;document.head.appendChild(css);
 /* the chip next to the map's sub-modes */
 const ICO='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20h20"/><path d="M2 17l5-7 4 4 4-8 7 11"/></svg>';
 function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".globe-btns");if(btns)spots.push([btns,"gf-xs-ico gf-xs-ico-col"]);
@@ -168,15 +173,36 @@ function mount(){const g=G();if(!g)return;const h=g.host;if(getComputedStyle(h).
 /* ---------- drawing on the map ---------- */
 const inPanel=e=>e.target.closest&&e.target.closest(".gf-xs,.globe-btns,.gfk-tray,.gfk-panel,button,a,input,select");
 function local(e){const g=G();const r=g.canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
-function down(e){if(!on||!armed||inPanel(e))return;const g=G();if(!g)return;e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}
- const p=local(e);drawing={pts:[p],id:e.pointerId}}
+/* what is drawn is kept as places (longitude, latitude), so it stays on the map when you zoom or pan while drawing;
+   a finished line keeps its control points (the two ends of a straight line, the points of a freehand path) to edit */
+const inv=p=>{try{const q=G().projection().invert(p);return q&&isFinite(q[0])&&isFinite(q[1])?q:null}catch(e){return null}};
+function scr(ll){const g=G();if(!g)return null;const pr0=g.projection(),ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]];if(!g._flat&&d3.geoDistance(ll,[-ro[0],-ro[1]])>=Math.PI/2-1e-3)return null;const q=pr0(ll);return q&&isFinite(q[0])?q:null}
+let editing=null;
+function handleAt(e){const L=lines.length===1&&lines[0].edit;if(!L)return-1;const p=local(e);let best=-1,bd=13;L.pts.forEach((ll,i)=>{const q=scr(ll);if(!q)return;const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;best=i}});return best}
+function down(e){if(!on||inPanel(e))return;const g=G();if(!g)return;
+ if(!armed){const i=handleAt(e);if(i<0)return;e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}editing={i,id:e.pointerId};return}
+ if(e.button||drawing)return;/* a second finger: left to the map (pinch to zoom while drawing) */e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}
+ const q=inv(local(e));if(!q)return;drawing={ll:[q],id:e.pointerId,last:local(e)}}
 function move(e){if(!on)return;const g=G();if(!g)return;
- if(drawing&&e.pointerId===drawing.id){e.stopImmediatePropagation();e.preventDefault();const p=local(e);if(shape==="line")drawing.pts=[drawing.pts[0],p];else{const l=drawing.pts[drawing.pts.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>3)drawing.pts.push(p)}return}}
-function up(e){if(!drawing||e.pointerId!==drawing.id)return;e.stopImmediatePropagation();const g=G(),pts=drawing.pts;drawing=null;if(!g||pts.length<2)return;
- /* even steps along what was drawn on screen, turned into places */
- let tot=0;for(let i=1;i<pts.length;i++)tot+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(tot<8)return;const n=500,inv=g.projection().invert,ll=[];let acc=0,k=0;
- for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(k<=n&&k*tot/n<=acc+d+1e-9){const t=d?(k*tot/n-acc)/d:0,q=inv([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);if(q&&isFinite(q[0]))ll.push(q);k++}acc+=d}
- if(ll.length<2)return;armed=false;title=shape==="line"?"Your line":"Your path";note="";head=null;lines=[{ll,c:"#c0392b",P:null}];compute();renderPanel()}
+ if(editing&&e.pointerId===editing.id){e.stopImmediatePropagation();e.preventDefault();const q=inv(local(e));if(q){lines[0].edit.pts[editing.i]=q;lines[0].ll=lines[0].edit.pts.slice();lines[0]._prev=1}return}
+ if(drawing&&e.pointerId===drawing.id){e.stopImmediatePropagation();e.preventDefault();const p=local(e),q=inv(p);if(!q)return;if(shape==="line")drawing.ll=[drawing.ll[0],q];else{const l=drawing.last;if(Math.hypot(p[0]-l[0],p[1]-l[1])>3){drawing.ll.push(q);drawing.last=p}}return}
+ /* over a handle of a finished line: a hand to drag it */
+ if(!armed&&lines.length===1&&lines[0].edit){const h=handleAt(e)>=0;if(h!==!!move._h){move._h=h;g.host.style.cursor=h?"grab":""}}}
+/* a path through the control points, sampled evenly along the screen (as drawn) into 500 places */
+function build(ctrl){const g=G();if(!g)return null;const pts=ctrl.map(scr);
+ if(pts.some(p=>!p))return densify(ctrl,500);
+ let tot=0;for(let i=1;i<pts.length;i++)tot+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(tot<1)return null;const n=500,iv=g.projection().invert,ll=[];let acc=0,k=0;
+ for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(k<=n&&k*tot/n<=acc+d+1e-9){const t=d?(k*tot/n-acc)/d:0,q=iv([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);if(q&&isFinite(q[0]))ll.push(q);k++}acc+=d}
+ return ll.length>1?ll:null}
+/* a freehand path's editable points: about one every 22 px along what was drawn */
+function thin(ctrl){const out=[ctrl[0]];let last=scr(ctrl[0]);for(let i=1;i<ctrl.length-1;i++){const q=scr(ctrl[i]);if(!q||!last||Math.hypot(q[0]-last[0],q[1]-last[1])>=22){out.push(ctrl[i]);last=q}}out.push(ctrl[ctrl.length-1]);return out}
+function clearLine(){lines=[];head=null;hover=null;title="";note="";editing=null;drawing=null;renderPanel()}
+function up(e){
+ if(editing&&e.pointerId===editing.id){e.stopImmediatePropagation();editing=null;const L=lines[0];if(L&&L.edit){const ll=build(L.edit.pts);if(ll){L.ll=ll;L._prev=0;L.P=null;head=null;yl={lo:null,hi:null};compute();renderPanel()}}return}
+ if(!drawing||e.pointerId!==drawing.id)return;e.stopImmediatePropagation();const g=G(),ctrl=drawing.ll;drawing=null;if(!g||ctrl.length<2)return;
+ {const a=scr(ctrl[0]),b=scr(ctrl[ctrl.length-1]);let tot=0;for(let i=1;i<ctrl.length;i++){const p=scr(ctrl[i-1]),q=scr(ctrl[i]);if(p&&q)tot+=Math.hypot(q[0]-p[0],q[1]-p[1])}if(tot<8&&!(a&&b&&Math.hypot(a[0]-b[0],a[1]-b[1])>=8))return}
+ const ed=shape==="line"?[ctrl[0],ctrl[ctrl.length-1]]:thin(ctrl);const ll=build(shape==="line"?ed:ctrl);if(!ll)return;
+ armed=false;title=shape==="line"?"Your line":"Your path";note="";head=null;lines=[{ll,c:"#c0392b",P:null,edit:{kind:shape,pts:ed}}];compute();renderPanel()}
 /* ---------- the map overlay ---------- */
 function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov){return}
  const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
@@ -185,11 +211,13 @@ function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFram
  /* on the globe, points on the far side are not drawn (the projection would mirror them onto the near side) */
  const ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]],ctr=[-ro[0],-ro[1]],pr=ll=>g._flat||d3.geoDistance(ll,ctr)<Math.PI/2-1e-3?pr0(ll):null;
  const stroke=(pts,col)=>{x.lineJoin=x.lineCap="round";x.beginPath();let pen=false,last=null;pts.forEach(p=>{if(!p){pen=false;return}if(pen&&last&&Math.abs(p[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);pen=true;last=p});
-  x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=6;x.stroke();x.strokeStyle=col;x.lineWidth=3;x.stroke()};
+  x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=4;x.stroke();x.strokeStyle=col;x.lineWidth=2;x.stroke()};
  lines.forEach(L=>{const pts=L.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null});stroke(pts,L.c);
   const lab=(q,t)=>{if(!q)return;x.fillStyle="#fff";x.strokeStyle=L.c;x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],9,0,7);x.fill();x.stroke();x.fillStyle=L.c;x.font="800 11px system-ui";x.textAlign="center";x.textBaseline="middle";x.fillText(t,q[0],q[1]+.5)};
+  /* the points you can drag: the ends of a straight line, every point of a freehand path */
+  if(lines.length===1&&L.edit&&!armed){const E=L.edit.pts;E.forEach((ll,i)=>{if(L.edit.kind==="line"||i===0||i===E.length-1)return;const q=pr(ll);if(!q)return;x.fillStyle="#fff";x.strokeStyle=L.c;x.lineWidth=1.6;x.beginPath();x.arc(q[0],q[1],4.2,0,7);x.fill();x.stroke()})}
   if(lines.length===1){lab(pts[0],"A");lab(pts[pts.length-1],"B")}});
- if(drawing){stroke(drawing.pts,"#c0392b")}
+ if(drawing){stroke(drawing.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null}),"#c0392b")}
  if(hover){const q=pr(hover.ll);if(q){x.fillStyle=hover.c||"#c0392b";x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],6,0,7);x.fill();x.stroke()}}}
 /* ---------- named landforms along a line ----------
    mountain ranges, plateaus, plains, basins and deserts (the outlines the map search uses), the map's own seas and lakes,
@@ -374,7 +402,7 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
   {const rowEnd=[-1e9,-1e9];(L.segs||[]).forEach(g=>{if(!g.c)return;const a=X(g.a),b=Math.max(X(g.b),a+2),nm=cname(g.c);if(!nm)return;
    s+='<rect x="'+a.toFixed(1)+'" y="'+(H-mb+15)+'" width="'+(b-a).toFixed(1)+'" height="3" fill="#8a5a2b" fill-opacity=".45"/>';
    const w=nm.length*5.6+6,xm=Math.max(w/2,(a+b)/2);let r=rowEnd.findIndex(e=>xm-w/2>e+4);if(r<0)return;rowEnd[r]=xm+w/2;
-   s+='<text x="'+xm.toFixed(1)+'" y="'+(H-mb+28+r*12)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b3a17">'+esc(nm)+'</text>'})}}
+   s+='<text class="gf-xs-cty" x="'+xm.toFixed(1)+'" y="'+(H-mb+28+r*12)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b3a17">'+esc(nm)+'</text>'})}}
  else{s+='<g clip-path="url(#gfxsClip)">';Ps.forEach(L=>{let d="";L.P.forEach((p,i)=>{d+=(i?"L":"M")+X(xKey(p)).toFixed(1)+","+Y(p.e).toFixed(1)});s+='<path d="'+d+'" fill="none" stroke="'+L.c+'" stroke-width="2.6"/>'});s+='</g>';
   /* each river's name where its line enters the window, and its biggest drop */
   Ps.forEach(L=>{const i=Math.max(0,L.P.findIndex(p=>p.e<=e1)),p=L.P[i];s+=lbl(X(xKey(p))+4,Math.max(mt+22,Y(p.e)-4),L.name,{c:L.c,fs:11,fw:800});s+=overTop(L,L.c);
@@ -399,13 +427,14 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
  const yctl=!rvNow&&!cmpNow&&lines.length&&lines[0].P?'<div class="gf-xs-yctl"><span>Height from</span><input type="number" step="100" data-yl="lo" placeholder="auto" value="'+(yl.lo==null?'':yl.lo)+'"><span>to</span><input type="number" step="100" data-yl="hi" placeholder="auto" value="'+(yl.hi==null?'':yl.hi)+'"><span>m</span><button type="button" data-yf="fit" title="Start the chart just below the lowest point, so small ups and downs show">Fit to the land</button><button type="button" data-yf="sea" title="From sea level up">From sea level</button></div>':'';
- const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake depths and lake beds are approximate.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
+ const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+(lines.length===1&&lines[0].edit?'<p class="gf-xs-edhint">'+(lines[0].edit.kind==="line"?"Drag A or B on the map to move an end.":"Drag any point of your path on the map to reshape it.")+'</p>':'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake depths and lake beds are approximate.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
  {const em=!(lines.length&&lines[0].P),was=panel.classList.contains("gf-xs-empty");if(was&&!em&&panel.style.width){const hw=panel.parentNode.getBoundingClientRect().width,l=parseFloat(panel.style.left)||10;panel.style.width=Math.max(panel.getBoundingClientRect().width,Math.min(860,hw-68,hw-l-10))+"px"}panel.classList.toggle("gf-xs-empty",em);try{G().host.classList.toggle("gf-xs-armed",!!armed)}catch(e){}}panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
-  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
+  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button>'+(armed?'<button type="button" class="gf-xs-exit" title="Stop drawing (Esc)">✕ Exit</button>':'')+(!armed&&lines.length?'<button type="button" class="gf-xs-clear" title="Clear the chart and remove the line from the map">✕ Clear line</button>':'')+'<span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
   '<span class="gf-xs-rz w" title="Drag to make it wider or narrower"></span><span class="gf-xs-rz h" title="Drag to make the chart taller or shorter"></span><div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can use. At a dam, 🔒 boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level). Where the height data has no lake bed, the bed is an approximate bowl (dashed) as deep as the lake\'s published greatest depth, or twice its mean depth. Height is stretched far more than length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
+ {const ex=panel.querySelector(".gf-xs-exit");if(ex)ex.onclick=()=>{armed=false;drawing=null;renderPanel()};const cl=panel.querySelector(".gf-xs-clear");if(cl)cl.onclick=clearLine}
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
  panel.querySelector(".gf-xs-pre").onchange=e=>{if(e.target.value)pick(e.target.value)};
  panel.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{SRC=b.dataset.src;renderPanel();const sel=panel.querySelector(".gf-xs-pre");if(sel&&(myInk().length||SRC==="pre"))try{sel.focus()}catch(e){}});
@@ -455,7 +484,7 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
 function line(a,b,t,pts){if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify(pts&&pts.length>1?pts:[a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
 /* Esc: out of drawing at once (a stroke in progress is dropped), the pen goes; a second Esc closes the panel */
 addEventListener("keydown",e=>{if(e.key!=="Escape"||!on)return;if(armed||drawing){armed=false;drawing=null;try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(er){}renderPanel();e.preventDefault();e.stopImmediatePropagation()}},true);
-window.gfCrossSection={start,stop,pick,line,elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
+window.gfCrossSection={start,stop,pick,line,clear:()=>clearLine(),editPoints:()=>{const L=lines.length===1&&lines[0].edit;if(!L)return null;const r=G().canvas.getBoundingClientRect();return L.pts.map(ll=>{const q=scr(ll);return q?[q[0]+r.left,q[1]+r.top]:null})},get lineCount(){return lines.length},elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
 /* the cross-section panel stays a compact size: on a full-screen map it no longer stretches across the whole screen */
