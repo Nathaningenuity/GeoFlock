@@ -7290,6 +7290,8 @@ body:not(.light-theme) .hg-tqbtn{ background:rgba(31,138,125,.15) !important; co
   .gf-help-coach{ border:1.5px solid rgba(47,154,134,.45) !important; }
   .hi button{ font-family:inherit; color:inherit; cursor:pointer; }
   .hi-card,.hi-pitch,.hi-you,.hi-tc,.hi-tile,.hi-chal,.hi-more{ background:var(--hi-card); border:1px solid var(--hi-line); box-shadow:var(--hi-shadow); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  /* the tour tiles sit over the spinning globe: a frosted-glass blur there is redone for every frame of the spin, which made it judder on phones; the tiles are pictures, so the blur did not show anyway */
+  .hi-tile{ backdrop-filter:none; -webkit-backdrop-filter:none; }
   .hi-loading{ padding:28px; border-radius:20px; text-align:center; }
   .hi-h2{ font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--hi-sub); font-weight:700; margin:26px 4px 10px; }
   .hi-h2 small{ text-transform:none; letter-spacing:0; font-weight:500; margin-left:8px; font-size:13px; }
