@@ -5,6 +5,9 @@
    before the globe sees it; the globe keeps spinning with what it has meanwhile. */
 (function(){
 if(typeof globeImages!=="function"||typeof _globeImgs==="undefined"||typeof createImageBitmap!=="function")return;
+/* Safari (and every browser on iPhone and iPad, all WebKit) draws these pre-decoded pictures on the globe as black: there the
+   globe keeps the plain pictures */
+try{if(/Apple/.test(navigator.vendor||"")||/iP(hone|ad|od)/.test(navigator.userAgent)&&!window.chrome)return}catch(e){}
 const KEYS={relief:1,satellite:1,night:1,elevation:1};
 let MX=0;
 function maxTex(){if(MX)return MX;try{const c=document.createElement("canvas"),g=c.getContext("webgl")||c.getContext("experimental-webgl");MX=g&&g.getParameter(g.MAX_TEXTURE_SIZE)||4096;

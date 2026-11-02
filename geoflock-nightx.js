@@ -22,31 +22,23 @@ function fold(){const inp=document.getElementById("allMapsGraticuleToggle");if(!
  document.addEventListener("click",e=>{if(!g.contains(e.target)){pop.hidden=true;car.setAttribute("aria-expanded","false")}});
  pop.querySelectorAll("[data-gm]").forEach(b=>b.onclick=e=>{e.stopPropagation();GM=b.dataset.gm;try{localStorage.setItem("gfGratMode",GM)}catch(_){}mark();
   if(!inp.checked){inp.checked=true;inp.dispatchEvent(new Event("change",{bubbles:true}))}redraw()})}
-/* Satellite and City Lights keep their own names setting (place and sea labels, off by default), and Satellite its own
-   globe/flat choice (the globe by default; City Lights goes with the other maps). What you change while on them is remembered
+/* Satellite and City Lights keep their own names setting (place and sea labels, off by default). What you change while on them is remembered
    for them (localStorage gfLitView), and the other maps get their own settings back on the way out. Tours are left alone. */
 const LITK="gfLitView";let LIT={labels:[false,false],globe:true};try{const v=JSON.parse(localStorage.getItem(LITK)||"null");if(v&&Array.isArray(v.labels))LIT=Object.assign(LIT,v)}catch(e){}
 const saveLit=()=>{try{localStorage.setItem(LITK,JSON.stringify(LIT))}catch(e){}};
 const onMode=ms=>{try{return appMode==="allmaps"&&allMapsColorModeOn&&ms.includes(allMapsColorMode)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}};
 const lblEls=()=>["allMapsShowLabelsToggle","allMapsSeaLabelsToggle"].map(id=>document.getElementById(id));
 const setChk=(t,v)=>{if(t&&t.checked!==v){t.checked=v;t.dispatchEvent(new Event("change",{bubbles:true}))}};
-const globeOn=()=>{try{return!!globePrefs().allmaps}catch(e){return false}};
-const setGlobe=v=>{try{if(!!globePrefs().allmaps!==v){globePrefs().allmaps=v;try{saveStats()}catch(e){}amGlobeSync()}}catch(e){}};
-let wasL=null,wasG=null,wasN=null,otherL=null,otherG=null;
+try{const G=globePrefs();if(!G.flatDef1){G.flatDef1=1;G.allmaps=false;saveStats()}}catch(e){}
+let wasL=null,otherL=null;
 function labels(){
  /* names: Satellite and City Lights */
  const nL=onMode(["satellite","night"]);
  if(nL!==wasL){if(nL){otherL=lblEls().map(t=>t?t.checked:null);lblEls().forEach((t,i)=>setChk(t,!!LIT.labels[i]))}
   else if(wasL&&otherL){lblEls().forEach((t,i)=>{if(otherL[i]!=null)setChk(t,otherL[i])});otherL=null}wasL=nL}
  else if(nL){const L=lblEls().map(t=>t?t.checked:false);if(L[0]!==LIT.labels[0]||L[1]!==LIT.labels[1]){LIT.labels=L;saveLit()}}
- /* globe or flat: Satellite has its own (the globe by default); City Lights opens on the globe; the other maps get their
-    own choice back when you leave both. */
- const nG=onMode(["satellite"]),inLit=nL;
- if(nG!==wasG){if(nG){if(otherG==null)otherG=globeOn();setGlobe(LIT.globe!==false)}wasG=nG}
- else if(nG){const g=globeOn();if(g!==LIT.globe){LIT.globe=g;saveLit()}}
- /* City Lights opens on the globe each time (the flat map stays one click away) */
- const nN=onMode(["night"]);if(nN!==wasN){if(nN){if(otherG==null)otherG=globeOn();setGlobe(true)}wasN=nN}
- if(!inLit&&otherG!=null&&!(typeof ps!=="undefined"&&ps)){setGlobe(otherG);otherG=null}}
+ /* globe or flat: one switch for every map (Satellite and City Lights included); flat by default */
+}
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-allmaps-mode]"))setTimeout(()=>{try{labels()}catch(x){}},0)},true);
 const css=document.createElement("style");css.textContent=`
 [data-allmaps-mode="night"]{ position:relative; overflow:visible; }
