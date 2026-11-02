@@ -62,12 +62,16 @@ function graph(T,P){const W=340,H=170,l=34,r=36,t=12,b=22;
 /* ---------- the panel, the pin, the clicks ---------- */
 let on=false,panel=null,pin=null,last=null;
 function mount(){const g=G();if(!g)return null;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
- if(!panel||panel.parentNode!==h){if(panel)panel.remove();panel=document.createElement("div");panel.className="gfth";h.appendChild(panel);
+ if(!panel||(panel.parentNode!==h&&!panel._float)){if(panel)panel.remove();panel=document.createElement("div");panel.className="gfth";h.appendChild(panel);
   ["pointerdown","mousedown","wheel","click","dblclick"].forEach(t=>panel.addEventListener(t,e=>e.stopPropagation()));drag(panel)}
  if(!pin||pin.parentNode!==h){if(pin)pin.remove();pin=document.createElement("div");pin.className="gfth-pin";pin.innerHTML=ICON;h.appendChild(pin)}return panel}
-function drag(p){p.addEventListener("pointerdown",e=>{const hd=e.target.closest(".gfth-h");if(!hd||e.target.closest("button"))return;e.preventDefault();
- const r=p.getBoundingClientRect(),pr=p.offsetParent.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;
- const mv=ev=>{p.style.left=Math.max(0,Math.min(pr.width-r.width,ev.clientX-pr.left-dx))+"px";p.style.top=Math.max(0,Math.min(pr.height-40,ev.clientY-pr.top-dy))+"px";p.style.bottom="auto"};
+function drag(p){p.addEventListener("pointerdown",e=>{if(e.button||e.target.closest("button,a,input,select,textarea,summary"))return;
+ const r=p.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top,x0=e.clientX,y0=e.clientY;let moved=false;
+ const mv=ev=>{if(!moved){if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4)return;moved=true;
+   /* lift the card out of the map so it can go anywhere on the screen */
+   if(!p._float){p._float=1;document.body.appendChild(p);p.classList.add("gfth-float")}}
+  ev.preventDefault();const w=p.offsetWidth,h=p.offsetHeight;
+  p.style.left=Math.max(0,Math.min(innerWidth-Math.min(w,60),ev.clientX-dx))+"px";p.style.top=Math.max(0,Math.min(innerHeight-30,ev.clientY-dy))+"px";p.style.bottom="auto";p.style.right="auto"};
  const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up)})}
 function render(){const p=mount();if(!p)return;let body;
  if(!last)body='<p class="gfth-help">Click anywhere on land to see its climate: temperature and rainfall, month by month.</p>';
@@ -75,15 +79,19 @@ function render(){const p=mount();if(!p)return;let body;
  else if(!last.c)body='<p class="gfth-help"><b>'+fmtLL(last.ll)+'</b>: open sea. Climate graphs are for places on land; click on land.</p>';
  else{const{T,P}=last.c,k=koppen(T,P,last.ll[1]),MAT=T.reduce((a,b)=>a+b)/12,MAP=P.reduce((a,b)=>a+b);
   body='<div class="gfth-where"><b>'+esc(last.name||fmtLL(last.ll))+'</b>'+(last.name?'<small>'+fmtLL(last.ll)+'</small>':'')+'</div>'+
-   '<div class="gfth-k"><span class="kc">'+k+'</span>'+esc(KN[k]||"")+'</div>'+graph(T,P)+
+   '<div class="gfth-now">Today ('+new Date().toLocaleDateString(undefined,{day:"numeric",month:"long"})+'): usually about <b>'+todayT(T).toFixed(1).replace("-","−")+' °C</b></div><div class="gfth-k"><span class="kc">'+k+'</span>'+esc(KN[k]||"")+'</div>'+graph(T,P)+
    '<div class="gfth-sum"><span><i class="tc"></i>Average '+MAT.toFixed(1)+' °C · warmest '+Math.max(...T).toFixed(1)+' °C · coldest '+Math.min(...T).toFixed(1)+' °C</span><span><i class="pc"></i>Rain and snow '+Math.round(MAP).toLocaleString()+' mm a year</span></div>'}
  p.innerHTML='<div class="gfth-h" title="Drag to move"><span class="gfth-ic">'+ICON+'</span><b>Thermometer</b><button type="button" class="gfth-x" aria-label="Close">×</button></div>'+body+
   '<p class="gfth-src">WorldClim 2.1 monthly averages, 1970–2000 (CC BY 4.0), at about 55 km; the Köppen type is worked out from the same numbers.</p>';
  p.querySelector(".gfth-x").onclick=()=>stop();place()}
 function place(){const g=G();if(!pin||!g)return;if(!last||!on){pin.style.display="none";return}
  const pr=g.projection(),q=pr(last.ll);let vis=!!q&&isFinite(q[0]);if(vis&&!g._flat){try{const ro=pr.rotate();vis=d3.geoDistance(last.ll,[-ro[0],-ro[1]])<Math.PI/2}catch(e){}}
- const c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();if(!vis){pin.style.display="none";return}
+ const c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();if(!tag||tag.parentNode!==g.host){if(tag)tag.remove();tag=document.createElement("div");tag.className="gfth-tag";g.host.appendChild(tag)}
+ if(!vis){pin.style.display="none";tag.style.display="none";return}
+ if(last.c){const t=todayT(last.c.T);tag.textContent=(t<0&&Math.round(t)!==0?"−":"")+Math.abs(Math.round(t))+" °C";tag.title="Usual temperature for today's date";tag.style.display="";tag.style.left=(c.left-h.left+q[0]+14)+"px";tag.style.top=(c.top-h.top+q[1]-22)+"px"}else tag.style.display="none";
  pin.style.display="";pin.style.left=(c.left-h.left+q[0])+"px";pin.style.top=(c.top-h.top+q[1])+"px"}
+function todayT(T,d){d=d||new Date();const y=d.getFullYear(),doy=(d-new Date(y,0,1))/864e5,L=(y%4?365:366),m=doy/L*12-.5,i=Math.floor(m),f=m-i,a=(i+12)%12,b=(i+13)%12;return T[a]*(1-f)+T[b]*f}
+let tag=null;
 function pick(ll){last={ll,c:null,name:null};render();load().then(()=>{if(!last||last.ll!==ll)return;last.c=at(ll);const cc=countryAt(ll);last.name=cname(cc);render()})}
 let down=null;
 function onDown(e){if(!on)return;const g=G();if(!g||e.button)return;const c=g.canvas.getBoundingClientRect();if(e.clientX<c.left||e.clientX>c.right||e.clientY<c.top||e.clientY>c.bottom)return;
@@ -91,7 +99,9 @@ function onDown(e){if(!on)return;const g=G();if(!g||e.button)return;const c=g.ca
  /* the place is worked out now, before the map can react to the press */
  /* the place: from the last pointer position before the press (other handlers can shift the map's frame on the press itself) */
  let ll=hov&&Math.hypot(hov.x-e.clientX,hov.y-e.clientY)<3?hov.ll:llAt(g,e.clientX,e.clientY);
- down={x:e.clientX,y:e.clientY,t:performance.now(),ll}}
+ down={x:e.clientX,y:e.clientY,t:performance.now(),ll};e.stopPropagation()}
+/* like the pins: while the thermometer is on, a press on the map picks a place and never spins or drags the map */
+["mousedown","touchstart"].forEach(t=>addEventListener(t,e=>{if(down)e.stopPropagation()},true));
 function onUp(e){if(!on||!down)return;const d=down;down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5||performance.now()-d.t>700)return;
  const ll=d.ll;if(!ll||!isFinite(ll[0])||!isFinite(ll[1]))return;
  e.stopImmediatePropagation();e.preventDefault();pick([((ll[0]+540)%360)-180,ll[1]]);swallow=performance.now()}
@@ -103,8 +113,8 @@ addEventListener("pointerdown",onDown,true);addEventListener("pointerup",onUp,tr
 /* the click that placed the pin does not also open a country card */
 addEventListener("click",e=>{if(performance.now()-swallow<400){e.stopImmediatePropagation();e.preventDefault()}},true);
 function start(){on=true;load();mount();render();sync()}
-function stop(){on=false;if(panel){panel.remove();panel=null}if(pin){pin.remove();pin=null}sync()}
-(function loop(){try{if(on){if(appMode!=="allmaps")stop();else if(G()){if(!panel||!panel.isConnected||panel.parentNode!==G().host)render();place()}}}catch(e){}requestAnimationFrame(loop)})();
+function stop(){on=false;if(panel){panel.remove();panel=null}if(tag){tag.remove();tag=null}if(pin){pin.remove();pin=null}sync()}
+(function loop(){try{if(on){if(appMode!=="allmaps")stop();else if(G()){if(!panel||!panel.isConnected||(panel.parentNode!==G().host&&!panel._float))render();place()}}}catch(e){}requestAnimationFrame(loop)})();
 function sync(){try{const g=G();if(g)g.host.classList.toggle("gfth-on",on)}catch(e){}document.querySelectorAll(".gfk-thermo").forEach(b=>b.classList.toggle("on",on))}
 
 /* ---------- the Toolkit slot ---------- */
@@ -141,6 +151,10 @@ const css=document.createElement("style");css.textContent=`
 .gfth-g .pb{ fill:#4b97d8; fill-opacity:.75; } .gfth-g .tl{ fill:none; stroke:#d6402f; stroke-width:2.2; stroke-linejoin:round; } .gfth-g .td{ fill:#fff; stroke:#d6402f; stroke-width:1.6; }
 .gfth-sum{ display:flex; flex-direction:column; gap:2px; font-size:11.5px; } .gfth-sum i{ display:inline-block; width:10px; height:3px; border-radius:2px; margin-right:5px; vertical-align:middle; } .gfth-sum i.tc{ background:#d6402f; } .gfth-sum i.pc{ background:#4b97d8; height:8px; }
 .gfth-src{ margin:5px 0 0; font-size:10px; opacity:.55; }
+.gfth.gfth-float{ position:fixed; z-index:9000; }
+.gfth{ cursor:grab; } .gfth button{ cursor:pointer; }
+.gfth-now{ margin:2px 0 6px; font-size:12.5px; } .gfth-now b{ color:#d2452c; font-size:14px; }
+.gfth-tag{ position:absolute; z-index:8; pointer-events:none; background:#d2452c; color:#fff; font:700 12px/1 system-ui,sans-serif; padding:4px 7px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.35); white-space:nowrap; }
 .gfth-pin{ position:absolute; z-index:8; transform:translate(-50%,-100%); pointer-events:none; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
 .gfth-pin svg{ width:26px; height:26px; }
 .globe-host.gfth-on canvas{ cursor:crosshair; }
