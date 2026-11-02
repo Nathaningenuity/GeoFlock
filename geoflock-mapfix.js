@@ -639,7 +639,7 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
      /* the globe sits higher: the top of the ball just above the second row of switches (its tour button, sub-map chips
         and round buttons are moved back down by the same amount, so they stay where they were) */
      const g=typeof amGlobe!=="undefined"&&amGlobe;let up=0;
-     if(g&&g.host===h&&!g._flat&&typeof amGlobeOn==="function"&&amGlobeOn()){const r2=secondRowTop();if(r2!=null){const pr=g.projection(),c=g.canvas.getBoundingClientRect(),sTop=c.top+pr.translate()[1]-pr.scale(),off=sTop-h.getBoundingClientRect().top;
+     if(g&&g.host===h&&!g._flat&&typeof amGlobeOn==="function"&&amGlobeOn()){const r2=secondRowTop();if(r2!=null){const pr=g.projection(),c=g.canvas.getBoundingClientRect(),sz=g.size(),sTop=c.top+sz.h/2-sz.r/* the ball at its normal size and place: zooming in must not move the map */,off=sTop-h.getBoundingClientRect().top;
        up=Math.max(0,Math.round(want-(r2-12-off)));want-=up}}
      const d=Math.round(want-h.getBoundingClientRect().top);MT=Math.abs(d)<=1?now:Math.max(-160,Math.min(60,now+d));
      /* the tour button and the round buttons sit where they do on the flat map (12 and 60 px below the map's usual top) */

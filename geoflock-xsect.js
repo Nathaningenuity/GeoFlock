@@ -114,7 +114,25 @@ body.dark .gf-xs-up, body.dark .gf-xs-pick button:not(.on){ background:#25304a; 
 .gf-xs-tabs button small{ font-size:10px; opacity:.75; margin-left:2px; }
 .gf-xs-help{ font-size:12px; opacity:.75; padding:6px 6px 2px; text-align:center; }
 .gf-xs-src{ font-size:10.5px; opacity:.55; margin-top:3px; }
-.gf-xs.gf-xs-empty .gf-xs-src{ display:none; }`;document.head.appendChild(css);
+.gf-xs.gf-xs-empty .gf-xs-src{ display:none; }
+/* short while there is nothing to show; wider once a profile is drawn; the corner handle resizes it either way */
+.gf-xs.gf-xs-empty{ right:auto; width:min(470px, calc(100% - 68px)); }
+.gf-xs svg{ height:var(--xs-h,190px); }
+.gf-xs-rz{ position:absolute; z-index:2; touch-action:none; }
+.gf-xs-rz.w{ right:-3px; top:14px; bottom:14px; width:9px; cursor:ew-resize; }
+.gf-xs-rz.h{ left:14px; right:14px; top:-3px; height:9px; cursor:ns-resize; }
+.gf-xs-rz.w::after{ content:""; position:absolute; left:3px; top:50%; height:34px; margin-top:-17px; width:3px; border-radius:2px; background:currentColor; opacity:.25; }
+.gf-xs-rz.h::after{ content:""; position:absolute; top:3px; left:50%; width:34px; margin-left:-17px; height:3px; border-radius:2px; background:currentColor; opacity:.25; }
+.gf-xs-rz:hover::after{ opacity:.6; }
+.gf-xs.gf-xs-empty .gf-xs-rz.h{ display:none; }
+/* the Draw button stands out so it's clear where to start */
+.gf-xs-go{ font-size:13px !important; padding:7px 16px !important; box-shadow:0 0 0 0 rgba(192,57,43,.55); animation:gfXsPulse 1.6s ease-out infinite; }
+.gf-xs-go.on{ box-shadow:0 0 0 0 rgba(46,125,50,.55); animation-name:gfXsPulseG; }
+.gf-xs:not(.gf-xs-empty) .gf-xs-go:not(.on){ animation:none; font-size:12px !important; padding:5px 12px !important; }
+@keyframes gfXsPulse{ 0%{ box-shadow:0 0 0 0 rgba(192,57,43,.6); } 70%{ box-shadow:0 0 0 10px rgba(192,57,43,0); } 100%{ box-shadow:0 0 0 0 rgba(192,57,43,0); } }
+@keyframes gfXsPulseG{ 0%{ box-shadow:0 0 0 0 rgba(46,125,50,.6); } 70%{ box-shadow:0 0 0 10px rgba(46,125,50,0); } 100%{ box-shadow:0 0 0 0 rgba(46,125,50,0); } }
+.gf-xs-help.armed{ font-size:13.5px; opacity:1; font-weight:700; color:#2e7d32; }
+.globe-host.gf-xs-armed canvas{ cursor:crosshair !important; }`;document.head.appendChild(css);
 /* the chip next to the map's sub-modes */
 const ICO='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20h20"/><path d="M2 17l5-7 4 4 4-8 7 11"/></svg>';
 function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".globe-btns");if(btns)spots.push([btns,"gf-xs-ico gf-xs-ico-col"]);
@@ -125,7 +143,15 @@ function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".g
 /* the way in: a round button in the map's right-hand column (and the Shovel gadget in the toolkit) */
 function chip(){icons(mode()==="elevation")}
 function start(){const g=G();if(!g)return;on=true;loadDEM().then(()=>{renderPanel()}).catch(()=>{});mount();renderPanel();if(!lines.length)armed=true;renderPanel();loop()}
-function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
+function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(e.target.closest(".gf-xs-rz")){e.preventDefault();e.stopPropagation();
+  const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),sv=panel.querySelector("svg"),sh=sv?sv.getBoundingClientRect().height:190,x0=e.clientX,y0=e.clientY;
+  panel.style.left=(r.left-h.left)+"px";panel.style.top=(r.top-h.top)+"px";panel.style.right="auto";panel.style.bottom="auto";
+  const W=e.target.closest(".gf-xs-rz").classList.contains("w"),top0=panel.style.top;
+  /* the top edge: the panel keeps its bottom where it is and the chart grows upward */
+  if(!W){panel.style.top="auto";panel.style.bottom=(h.bottom-r.bottom)+"px"}
+  const mv=ev=>{if(W)panel.style.width=Math.max(300,Math.min(innerWidth-20,r.width+ev.clientX-x0))+"px";else if(sv)panel.style.setProperty("--xs-h",Math.max(90,Math.min(innerHeight*.7,sh-(ev.clientY-y0)))+"px")};
+  const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up);return}
+ if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
  const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
  const mv=ev=>{panel.style.left=Math.max(-r.width+80,Math.min(h.width-80,ev.clientX-h.left-dx))+"px";panel.style.top=Math.max(0,Math.min(h.height-40,ev.clientY-h.top-dy))+"px"};
  const upx=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",upx,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",upx,true)},true)}
@@ -350,11 +376,11 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  const rvNow=lines.some(L=>L.river),cmpNow=lines.length>1||title==="Rivers compared";
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
- const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+(cmpNow?cmpTable():''):'<div class="gf-xs-help">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
+ const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
- panel.classList.toggle("gf-xs-empty",!(lines.length&&lines[0].P));panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
+ {const em=!(lines.length&&lines[0].P),was=panel.classList.contains("gf-xs-empty");if(was&&!em&&panel.style.width){const hw=panel.parentNode.getBoundingClientRect().width,l=parseFloat(panel.style.left)||10;panel.style.width=Math.max(panel.getBoundingClientRect().width,Math.min(860,hw-68,hw-l-10))+"px"}panel.classList.toggle("gf-xs-empty",em);try{G().host.classList.toggle("gf-xs-armed",!!armed)}catch(e){}}panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
   (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
-  '<div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can use. At a dam, 🔒 boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level; the lake bed is shown only where the height data has it). Height is stretched far more than length.</div></div>';
+  '<span class="gf-xs-rz w" title="Drag to make it wider or narrower"></span><span class="gf-xs-rz h" title="Drag to make the chart taller or shorter"></span><div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can use. At a dam, 🔒 boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level; the lake bed is shown only where the height data has it). Height is stretched far more than length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
