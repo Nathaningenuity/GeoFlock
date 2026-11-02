@@ -85,6 +85,10 @@ const css=document.createElement("style");css.textContent=`
 body.dark .gf-xs{ background:#1c2333; color:#e8ecf3; }
 .gf-xs-hctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px; }
 .gf-xs-hz button{ font-size:11px !important; }
+.gf-xs-yctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:5px 0 2px; font-size:11.5px; }
+.gf-xs-yctl input{ width:78px; font:12px system-ui; border:1px solid #ccb; border-radius:7px; padding:2px 6px; background:inherit; color:inherit; }
+.gf-xs-yctl button{ border:1px solid #d9cdb8; background:#fffaf0; border-radius:999px; padding:2px 9px; font:700 11px system-ui; cursor:pointer; color:#4a3520; }
+body.dark .gf-xs-yctl button, body.sky-night .gf-xs-yctl button{ background:#25304a; color:#e8ecf3; border-color:#3a4a66; }
 /* "Dig through" is hidden for now (the owner's call); the code stays */
 .gf-xs-dig{ display:none !important; }
 .gf-xs-dig{ border:1px solid #d9cdb8; background:#fffaf0; border-radius:999px; padding:4px 10px; font:700 12px system-ui; cursor:pointer; color:#5b3a17; }
@@ -238,7 +242,7 @@ function lakeify(L){L.lk=null;if(!LAKES){loadLakes();return}const P=L.P;if(!P||P
    P[i].e=Math.min(P[i].e,Math.round(elevAt(P[i].ll[0],P[i].ll[1])),o.lv);
    if(cur&&cur.o===o&&cur.j===i-1){cur.b=P[i].km;cur.j=i;cur.lo=Math.min(cur.lo,P[i].e)}else{cur={o,n:o.n,lv:o.lv,a:P[i].km,b:P[i].km,i,j:i,lo:P[i].e};out.push(cur)}}}
  L.lk=out}
-function compute(){lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
+function compute(){yl={lo:null,hi:null};lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
  /* every sample, so small islands (Guadeloupe, Dominica...) on a long line are not skipped */
  for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);L.P[i].c=c||null;if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
 /* detailed heights for a drawn line (not the rivers): AWS Terrain Tiles (Terrarium; SRTM, GMTED2010, ETOPO1 and other
@@ -263,6 +267,7 @@ async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)retu
 const STOPS=[[-11000,"#0b1d4d"],[-6000,"#123a7a"],[-3000,"#1f63a8"],[-200,"#4ea6d6"],[0,"#8fd3e8"],[1,"#4f9d52"],[300,"#8fbf5a"],[800,"#d8c86d"],[1600,"#c18f4f"],[3000,"#8d5a34"],[4500,"#a7a2a0"],[6000,"#ffffff"]];
 /* ---------- rivers: one height window for every river (scroll up for the high sources), the story of each river, and a
    comparison of the rivers you pick ---------- */
+/* the height scale picked by hand (null: automatic) */let yl={lo:null,hi:null};
 const YSPAN=1700;let yv={span:YSPAN,base:0},picks=["Amazon","Congo","Zambezi","Mississippi"];
 const STORY={
  Amazon:{h:"The Amazon drops about 5,000 m in the Andes, then only about 110 m over the 3,600 km from Iquitos to the sea. That gentle slope is why ocean-going ships can sail all the way up to Iquitos in Peru.",nav:[["Iquitos","Amazon mouth","Ocean-going ships reach Iquitos"]],lab:[["Pucallpa","Pucallpa"],["Iquitos","Iquitos 110 m"],["Manaus","Manaus 20 m · Meeting of the Waters"]]},
@@ -290,6 +295,8 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
  const comp=lines.length>1,xKey=p=>comp?p.fromSea:p.km;if(comp)Ps.forEach(L=>{const T=L.P[L.P.length-1].km;L.P.forEach(p=>p.fromSea=T-p.km)});
  let e0=Infinity,e1=-Infinity,kmax=0,dmax=-Infinity;Ps.forEach(L=>L.P.forEach(p=>{e0=Math.min(e0,p.e);e1=Math.max(e1,p.e);kmax=Math.max(kmax,xKey(p))}));dmax=e1;
  if(rv&&yv.span!=="all"){e0=yv.base;e1=yv.base+yv.span}else{e0=Math.min(0,e0);e1=Math.max(e1,e0+200);const pad=(e1-e0)*.08;e1+=pad;if(e0<0)e0-=pad*.5}
+ {let dmin=Infinity;Ps.forEach(L=>L.P.forEach(p=>{dmin=Math.min(dmin,p.e)}));chartSVG.dmin=dmin}
+ if(!rv&&!comp){if(yl.lo!=null)e0=yl.lo;if(yl.hi!=null)e1=yl.hi;if(e1<e0+50)e1=e0+50}
  chartSVG.dmax=dmax;
  const X=k=>ml+(comp?(1-k/kmax):k/kmax)*(W-ml-mr),Y=e=>mt+(1-(e-e0)/(e1-e0))*(H-mt-mb);
  const yz=Y(0);let defs='<defs><clipPath id="gfxsClip"><rect x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'"/></clipPath><linearGradient id="gfxsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe8fb"/><stop offset="1" stop-color="#f4fbff"/></linearGradient>';
@@ -376,7 +383,8 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  const rvNow=lines.some(L=>L.river),cmpNow=lines.length>1||title==="Rivers compared";
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
- const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
+ const yctl=!rvNow&&!cmpNow&&lines.length&&lines[0].P?'<div class="gf-xs-yctl"><span>Height from</span><input type="number" step="100" data-yl="lo" placeholder="auto" value="'+(yl.lo==null?'':yl.lo)+'"><span>to</span><input type="number" step="100" data-yl="hi" placeholder="auto" value="'+(yl.hi==null?'':yl.hi)+'"><span>m</span><button type="button" data-yf="fit" title="Start the chart just below the lowest point, so small ups and downs show">Fit to the land</button><button type="button" data-yf="sea" title="From sea level up">From sea level</button></div>':'';
+ const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+chips+hctl+chartSVG()+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
  {const em=!(lines.length&&lines[0].P),was=panel.classList.contains("gf-xs-empty");if(was&&!em&&panel.style.width){const hw=panel.parentNode.getBoundingClientRect().width,l=parseFloat(panel.style.left)||10;panel.style.width=Math.max(panel.getBoundingClientRect().width,Math.min(860,hw-68,hw-l-10))+"px"}panel.classList.toggle("gf-xs-empty",em);try{G().host.classList.toggle("gf-xs-armed",!!armed)}catch(e){}}panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
   (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button><span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
@@ -386,6 +394,8 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
  panel.querySelector(".gf-xs-pre").onchange=e=>{if(e.target.value)pick(e.target.value)};
  panel.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{SRC=b.dataset.src;renderPanel();const sel=panel.querySelector(".gf-xs-pre");if(sel&&(myInk().length||SRC==="pre"))try{sel.focus()}catch(e){}});
+ panel.querySelectorAll("[data-yl]").forEach(inp=>{["keydown","keyup","keypress"].forEach(t=>inp.addEventListener(t,ev=>ev.stopPropagation()));inp.onchange=()=>{const v=inp.value.trim()===""?null:+inp.value;yl[inp.dataset.yl]=v!=null&&isFinite(v)?v:null;renderPanel()}});
+ panel.querySelectorAll("[data-yf]").forEach(b=>b.onclick=()=>{if(b.dataset.yf==="sea"){yl={lo:Math.min(0,Math.floor((chartSVG.dmin||0)/100)*100),hi:null}}else{const lo=chartSVG.dmin||0,hi=chartSVG.dmax||0,pad=Math.max(50,(hi-lo)*.08);yl={lo:Math.floor((lo-pad)/100)*100,hi:Math.ceil((hi+pad)/100)*100}}renderPanel()});
  panel.querySelectorAll("[data-hz]").forEach(b=>b.onclick=()=>{const v=b.dataset.hz;yv={span:v==="all"?"all":+v,base:0};renderPanel()});
  const scroll=dir=>{if(yv.span==="all")return;const mx=chartSVG.dmax||0;yv.base=Math.max(0,Math.min(Math.max(0,mx-yv.span*.6),yv.base+dir*yv.span*.25));renderPanel()};
  panel.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>scroll(+b.dataset.sc));

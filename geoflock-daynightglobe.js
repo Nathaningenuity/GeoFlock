@@ -553,3 +553,9 @@ GlobeView.prototype._rimLit=function(ctx,cx,cy,r,outline){
  if(!L){L=document.createElementNS("http://www.w3.org/2000/svg","image");L.id="allMapsSatSea";L.setAttribute("href","textures/SAT_FLAT_SEALIGHT.webp?v=1");
   ["x","y","width","height","preserveAspectRatio"].forEach(k=>L.setAttribute(k,sat.getAttribute(k)));L.style.pointerEvents="none";L.style.mixBlendMode="plus-lighter";sat.after(L)}
  const want=sat.style.display!=="none"&&getComputedStyle(sat).display!=="none"&&window.gfDNG&&gfDNG.seaMode()===1?"":"none";if(L.style.display!==want){L.style.display=want;try{gfDNG.req()}catch(e){}}}catch(e){}},300)})();
+/* a very large canvas (full screen on a big high-density screen) can be bigger than the drawing area the browser gives
+   WebGL; the globe was then cut off on the right and at the bottom. Draw it to the size actually given (the page
+   stretches that to the canvas) */
+(function(){if(typeof GlobeGL==="undefined")return;const _d=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){try{const gl=this.gl,c=gl&&gl.canvas;
+ if(o&&c&&gl.drawingBufferWidth&&(gl.drawingBufferWidth<c.width||gl.drawingBufferHeight<c.height)){const kx=gl.drawingBufferWidth/c.width,ky=gl.drawingBufferHeight/c.height,k=Math.min(kx,ky);
+  o=Object.assign({},o,{cx:o.cx*kx,cy:o.cy*ky,s:o.s*k,frame:(o.frame||1e9)*k})}}catch(e){}return _d.call(this,o)}})();
