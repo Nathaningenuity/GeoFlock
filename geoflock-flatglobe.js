@@ -88,9 +88,14 @@ P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.tran
  let C=composite(list,D);ctx.save();
  /* a new mode's pictures still loading: keep showing the last finished picture for a few seconds instead of a bare map */
  window.gfMapLoading=!C;window.gfMapLoadingAt=Date.now();if(C)LASTOK[D.key]=Date.now();else if(COMPS[D.key]&&Date.now()-(LASTOK[D.key]||0)<8000)C=COMPS[D.key];
- if(C){const src=spun(C,this._gfDl||0),Wd=2*Math.PI*S,vw=this.size().w;/* "medium" shrinks a large picture through blurred half-size copies; "high" keeps it sharp (cheap enough once still) */ctx.imageSmoothingQuality=k>3||!(this._moving||this._fastMove)?"high":"medium";for(let n=-2;n<=2;n++){if(n&&!this._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/C.F,0,0,dpr*k/C.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}
+ if(C){/* the sharp picture (below) replaces only the bottom picture: when it is drawn, the pictures above it (the
+   Satellite map's sea light and clouds) are drawn again over it, each blended on its own, so they show at every zoom */
+ let top=null;try{if(list.length>1&&window.gfNightSharp&&gfNightSharp.covers&&gfNightSharp.covers(this,dpr,list,C)){const Cb=composite([list[0]],{key:D.key+"~0",f:D.f}),T=Cb&&list.slice(1).map((o,i)=>[o,composite([o],{key:D.key+"~"+(i+1),f:D.f})]);if(Cb&&T.every(q=>q[1])){C=Cb;top=T}}}catch(e){console.error(e)}
+ const Wd=2*Math.PI*S,vw=this.size().w,self=this;/* "medium" shrinks a large picture through blurred half-size copies; "high" keeps it sharp (cheap enough once still) */ctx.imageSmoothingQuality=k>3||!(this._moving||this._fastMove)?"high":"medium";
+ const put=Cx=>{const src=spun(Cx,self._gfDl||0);for(let n=-2;n<=2;n++){if(n&&!self._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/Cx.F,0,0,dpr*k/Cx.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}};put(C);
  /* zoomed in on City Lights: a sharp picture of the view from the globe's picture over it (geoflock-nightsharp.js) */
- if(window.gfNightSharp)try{window.gfNightSharp(this,ctx,dpr,list,C)}catch(e){console.error(e)}ctx.restore();return 1}
+ if(window.gfNightSharp)try{window.gfNightSharp(this,ctx,dpr,list,C)}catch(e){console.error(e)}
+ if(top){ctx.imageSmoothingEnabled=true;top.forEach(([o,Cx])=>{ctx.globalAlpha=1;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend==="plus-lighter"?"lighter":o.blend;put(Cx)});ctx.globalCompositeOperation="source-over"}ctx.restore();return 1}
  /* pictures still loading: draw them one by one (only in the usual frame) */
  if(this._gfDl){ctx.restore();return 0}
  /* never the shading layers (multiply, screen) on their own: without the colour picture under them the map turns a washed-out white */
@@ -179,6 +184,8 @@ const st=document.createElement("style");st.textContent=`
 .globe-host.gf-flat .globe-stage{ margin:0 auto; }
 .globe-host.gf-flat .globe-btns [data-g="spin"]{ display:none !important; }
 .globe-host.gf-flat canvas.globe-gl{ visibility:hidden; }
+/* the map's canvases keep the frame's rounded corners (Satellite: 20px), instead of square black corners sticking out */
+.globe-host.gf-flat .globe-stage > canvas{ border-radius:inherit; }
 .globe-host.gf-flat canvas.globe-canvas{ cursor:grab; }
 .globe-host.gf-flat canvas.globe-canvas:active{ cursor:grabbing; }
 `;document.head.appendChild(st);

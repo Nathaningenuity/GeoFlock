@@ -118,6 +118,12 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
  /* a new view: make its sharp picture once the map has been still for a moment */
  want=V;if(V.key!==lastKey||!timer&&!job){lastKey=V.key;clearTimeout(timer);timer=setTimeout(()=>{timer=0;start(g)},IDLE)}};
 
+/* whether the call above will lay a finished sharp picture over the flat one (the flat map then draws the pictures above
+   the bottom one, e.g. the Satellite map's clouds, again over it) */
+window.gfNightSharp.covers=function(g,dpr,list,C){try{const kind=list&&list.length>=1?kindOf(list[0].h):null;
+ if(!(O&&typeof amGlobe!=="undefined"&&g===amGlobe&&g._flat&&!g._gfOx&&kind&&(list.length===1||kind==="sat")&&list[0].blend==="normal"&&!list[0].tf&&list[0].op>.99&&C))return false;
+ const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<MINMAG||O.dl!==V.dl||O.dpr!==V.dpr||O.kind!==V.kind)return false;return O.key===V.key||V.S/O.S<=mag}catch(e){return false}};
+
 /* while the flat map moves: fetch the NASA tiles of the view meanwhile (at most every 300 ms) */
 let pfAt=0;function prefetchView(g,V){try{const now=Date.now();if(now-pfAt<300||!gfGibs.prefetch)return;pfAt=now;const pr=g.projection(),{w,h}=g.size(),q=[];
  for(let i=0;i<=4;i++)for(let j=0;j<=4;j++){const ll=pr.invert([w*i/4,h*j/4]);if(ll&&isFinite(ll[0])&&isFinite(ll[1]))q.push(ll)}if(q.length<4)return;
