@@ -582,7 +582,7 @@ function sync(){const h=host();const tour=typeof ps!=="undefined"&&!!ps;
  const show=h&&appMode==="allmaps"&&!document.querySelector("#gfDeep:not([hidden])")&&!(typeof proj!=="undefined"&&proj.on);
  if(!show){if(S.tray)S.tray.remove();if(S.pen||S.pinArm||S.dragging){penStop();S.pinArm=false;S.dragging=false}closePanels();Object.values(S.place).forEach(o=>o.el.remove());return}
  if(!S.tray)S.tray=buildTray();if(S.tray.parentNode!==h)h.appendChild(S.tray);
- S.tray.classList.toggle("closed",!S.open);S.tray.querySelector(".gfk-tab").setAttribute("aria-expanded",S.open);
+ S.tray.classList.toggle("closed",!S.open);{/* folded, the tab still says which tool is on (it stays on) */const nm=S.dragging?"Dragger":S.pinArm?"Pins":S.pen?"Pens":S.shovelArm?"Shovel":"",sp=S.tray.querySelector(".gfk-tab span"),tx="Toolkit"+(!S.open&&nm?" · "+nm+" on":"");if(sp&&sp.textContent!==tx)sp.textContent=tx}S.tray.querySelector(".gfk-tab").setAttribute("aria-expanded",S.open);
  ["compass","ruler"].forEach(t=>{const sl=S.tray.querySelector(".gfk-"+t);if(sl)sl.classList.toggle("gfk-out",!!S.place[t])});
  const pen=S.tray.querySelector(".gfk-pens");if(pen)pen.classList.toggle("gfk-active",!!S.pen);const pin=S.tray.querySelector(".gfk-pins");if(pin)pin.classList.toggle("gfk-active",!!S.pinArm);const dg=S.tray.querySelector(".gfk-dragger");if(dg)dg.classList.toggle("gfk-active",!!S.dragging);
  if(cap&&cap.parentNode!==h)h.appendChild(cap);h.classList.toggle("gfk-pinning",!!S.pinArm);h.classList.toggle("gfk-dragmode",!!S.dragging);coordSwitch();placeObjects()}
