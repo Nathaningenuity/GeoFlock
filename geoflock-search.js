@@ -48,7 +48,8 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
     let g={type:"Polygon",coordinates:[ring]};try{if(d3.geoArea(g)>2*Math.PI){ring=ring.slice().reverse();g={type:"Polygon",coordinates:[ring]}}}catch(e){}polys.push([ring])}));
    if(!polys.length)return;const g={type:"MultiPolygon",coordinates:polys};let ll;try{ll=d3.geoCentroid(g)}catch(e){}if(!ll||!isFinite(ll[0]))return;IDX.push({n:name,alt:[],cat:"lakes",g,ll,fame:4})})}catch(e){console.error(e)}
  /* landmarks (a landmark that is also a waterfall or a peak replaces that entry, keeping its photo and icon) */
- (window.GF_LANDMARKS||[]).forEach(r=>{const ll=[r[1],r[2]],k=norm(r[0]);IDX=IDX.filter(e=>!(norm(e.n)===k&&e.cat!=="landmarks"&&(e.g.type==="Point")));const LN=(window.GF_LM_LINES||{})[r[0]];IDX.push({n:r[0],alt:r[6]||[],cat:"landmarks",g:LN||{type:"Point",coordinates:ll},ll,fame:1,icon:r[4],phf:r[5],cc:r[3],line:!!LN})});
+ {const LK=new Set((window.GF_LANDMARKS||[]).map(r=>norm(r[0])));IDX=IDX.filter(e=>!(e.cat!=="landmarks"&&e.g.type==="Point"&&LK.has(norm(e.n))))}/* once, not a pass over the whole list per landmark (that froze the page for seconds) */
+ (window.GF_LANDMARKS||[]).forEach(r=>{const ll=[r[1],r[2]];const LN=(window.GF_LM_LINES||{})[r[0]];IDX.push({n:r[0],alt:r[6]||[],cat:"landmarks",g:LN||{type:"Point",coordinates:ll},ll,fame:1,icon:r[4],phf:r[5],cc:r[3],line:!!LN})});
  /* states and provinces (names and centres; the shape is loaded when one is chosen) */
  (PROV||[]).forEach(r=>{IDX.push({n:r[0],alt:[],cat:"provinces",cc:r[1],g:{type:"Point",coordinates:[r[2],r[3]]},ll:[r[2],r[3]],fame:2,typ:provKind(r[1])})});
  /* regions: only those the map doesn't already have (a range, desert or island already listed keeps its own entry) */

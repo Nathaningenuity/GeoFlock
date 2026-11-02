@@ -408,8 +408,12 @@ function homeCard(sec){
  d.querySelector(".vy-home-map").onclick=()=>open();d.querySelector(".vy-home-log").onclick=()=>open();
  const go=d.querySelector(".vy-home-go");if(go)go.onclick=()=>launch(nq[1],nq[0]);
  const cv=d.querySelector("canvas");
- const pr=()=>{const r=cv.parentNode.getBoundingClientRect();if(!r.width)return;sizeCanvas(cv,r.width,Math.round(r.width*.52));try{draw(cv,{mini:r.width<520,noCart:true,fast:r.width<520})}catch(e){console.error(e)}};
- requestAnimationFrame(pr);loadPaper(pr);whenFonts(pr);
+ const pr0=()=>{const r=cv.parentNode&&cv.parentNode.getBoundingClientRect();if(!r||!r.width)return;sizeCanvas(cv,r.width,Math.round(r.width*.52));try{draw(cv,{mini:r.width<520,noCart:true,fast:r.width<520})}catch(e){console.error(e)}};
+ /* one drawing once the paper and the fonts are in (or after 2.5 s), when the page is idle: drawing it three times as each
+    arrived stalled the spinning globe on a first visit */
+ let need=2,pend=false;const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:1500}):setTimeout(f,60);
+ const pr=()=>{if(pend)return;pend=true;idle(()=>{pend=false;pr0()})};const one=()=>{need--;if(need===0||need<-9)pr()};
+ loadPaper(one);whenFonts(one);setTimeout(()=>{if(need>0){need=-9;pr()}},2500);
 }
 function refreshHome(){const s=document.getElementById("hxRoute");if(s){delete s.dataset.vy;try{homeCard(s)}catch(e){console.error(e)}}}
 /* the old route's buttons (top bar route pill, XP pill) open and name the voyage */

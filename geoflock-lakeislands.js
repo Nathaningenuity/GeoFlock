@@ -136,13 +136,16 @@ function addSearch(){const S=window.gfSearch;if(!S||!S.build)return;const FOLD={
  const norm=s=>String(s||"").toLowerCase().replace(/[øæœßłđðþı\-–—]/g,c=>FOLD[c]).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
  const _b=S.build;let done=false;
  const add=IDX=>{if(done||!IDX||!IDX.push)return;done=true;prep();
+  /* the search's islands by name, once (looking each island up in the whole list froze the page for seconds) */
+  const BY=new Map();IDX.forEach(e=>{if(e&&e.cat==="islands"){const k=norm(e.n);if(!BY.has(k))BY.set(k,e)}});
   ISLES.forEach(I=>{const g=I.g||{type:"Point",coordinates:I.ll},keys=[I.n].concat(I.alt).map(norm);
-   const old=IDX.find(e=>e.cat==="islands"&&keys.includes(norm(e.n)));
+   let old=null;for(const k of keys){old=BY.get(k);if(old)break}
    if(old){old.alt=(old.alt||[]).concat(I.alt.filter(a=>!(old.alt||[]).includes(a)));old.keys=Array.from(new Set((old.keys||[]).concat(keys)));return}
-   IDX.push({n:I.n,alt:I.alt.slice(),cat:"islands",typ:"island in "+I.lake,g,ll:I.g?I.c:I.ll,fame:2,cc:I.cc,keys})})};
+   const ne={n:I.n,alt:I.alt.slice(),cat:"islands",typ:"island in "+I.lake,g,ll:I.g?I.c:I.ll,fame:2,cc:I.cc,keys};IDX.push(ne);const k0=norm(I.n);if(!BY.has(k0))BY.set(k0,ne)})};
  S.build=function(){const r=_b.apply(this,arguments);add(r);return r};
  /* find() uses the search's own build(): fill the shared list now so typed searches see the islands */
- try{add(_b())}catch(e){}}
+ const idle=f=>window.requestIdleCallback?requestIdleCallback(f,{timeout:4000}):setTimeout(f,200);
+ idle(()=>{try{add(_b())}catch(e){}})}
 /* installed after every other script, so these wrappers are the outermost */
 const go=()=>setTimeout(()=>{try{install()}catch(e){console.error(e)}},0);
 if(document.readyState==="complete")go();else addEventListener("load",go);
