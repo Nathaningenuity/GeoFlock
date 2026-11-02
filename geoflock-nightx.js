@@ -74,8 +74,8 @@ if(typeof psLaunchTour==="function"){const _l=psLaunchTour;psLaunchTour=function
   m.querySelector("[data-y]").onclick=()=>{done();stats.theme="night";try{applyTheme();saveStats()}catch(e){}_l.apply(self,args)};
   m.querySelector("[data-n]").onclick=done;m.addEventListener("click",e=>{if(e.target===m)done()});m.querySelector("[data-y]").focus();return}}catch(e){console.error(e)}
  return _l.apply(this,arguments)}}
-/* with the City Lights tab the map tabs still fit two rows in Starlight: Printable maps becomes just its icon */
-function printChip(){const b=document.getElementById("gfPrintChip");if(!b)return;const want=document.body.classList.contains("sky-night")?"🖨":"🖨 Printable maps";if(b.textContent!==want){b.textContent=want;b.setAttribute("aria-label","Printable maps")}}
+/* Printable maps is only ever its symbol (light and dark), so the map tabs stay on two rows */
+function printChip(){const b=document.getElementById("gfPrintChip");if(!b)return;if(b.textContent!=="🖨"){b.textContent="🖨";b.setAttribute("aria-label","Printable maps")}}
 setInterval(()=>{try{fold();labels();printChip()}catch(e){}},400);
 })();
 /* the City Lights tour plays on the globe, where the night picture is sharpest */
