@@ -626,7 +626,7 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
    the tabs sit in the controls row or on the map, so they never push it down. Other scripts set the top margin inline
    (22 px with tabs, -48 px with tabs on the globe), so it is set here inline too, and again whenever that changes. */
 (function(){const GAP=78;let obs=null,cur=null;
- const secondRowTop=()=>{const tops=[...document.querySelectorAll("#allMapsView .all-maps-label-controls .switch")].filter(e=>e.offsetParent).map(e=>Math.round(e.getBoundingClientRect().top));const u=[...new Set(tops)].sort((a,b)=>a-b);return u.length>1?u[1]:null};
+ const secondRowTop=()=>{const tops=[...document.querySelectorAll("#allMapsView .all-maps-label-controls .switch")].filter(e=>e.offsetParent).map(e=>Math.round(e.getBoundingClientRect().top));const u=[...new Set(tops)].sort((a,b)=>a-b);/* full screen: the switches fit on one row (or are hidden) — the ball reaches into that row, or just under the map buttons */if(u.length>1)return u[1];if(u.length===1)return u[0]+14;const r=document.getElementById("allMapsToggleRow");return document.body.classList.contains("gf-fs")&&r&&r.offsetParent?r.getBoundingClientRect().bottom+16:null};
  {const st=document.createElement("style");st.textContent=`
 #allMapsView{ --gf-up:0px; }
 #allMapsView.globe-on .all-maps-label-controls{ position:relative; z-index:6; }
@@ -645,7 +645,7 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
      /* the tour button and the round buttons sit where they do on the flat map (12 and 60 px below the map's usual top) */
      const std=row.getBoundingClientRect().bottom+GAP;[h.querySelector(":scope > .ps-launcher, :scope > .ps-launch"),h.querySelector(".globe-btns")].forEach(el=>{if(!el||!el.offsetParent)return;
       const mt=parseFloat(el.style.getPropertyValue("margin-top"))||0,base=el.classList.contains("globe-btns")?60:12;
-      const goal=up?std+base:null;if(goal==null){if(mt)el.style.removeProperty("margin-top");return}
+      /* the tour button: just under the last row of switches (no empty band); the round buttons stay put */const sw=[...document.querySelectorAll("#allMapsView .all-maps-controls")].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect().bottom),top0=sw.length?Math.max(...sw):row.getBoundingClientRect().bottom,goal=up?(base===12?Math.min(std+base,top0+10):std+base):null;if(goal==null){if(mt)el.style.removeProperty("margin-top");return}
       const dd=Math.round(goal-el.getBoundingClientRect().top);if(Math.abs(dd)>1)el.style.setProperty("margin-top",(mt+dd)+"px","important")});
      /* the globe's sub-map chips: just under the tour button, as before */
      {const sb=document.getElementById("amGlobeSubs"),L=h.querySelector(":scope > .ps-launcher, :scope > .ps-launch");if(sb){const mt=parseFloat(sb.style.getPropertyValue("margin-top"))||0;
