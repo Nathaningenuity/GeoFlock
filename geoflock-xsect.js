@@ -75,12 +75,20 @@ function countryAt(ll){for(const o of feats()){const b=o.b;if(b[0][0]<=b[1][0]?(
 const cname=c=>c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[c]?COUNTRY_BY_CODE[c].n:null;
 /* ---------- state ---------- */
 let head=null,on=false,armed=false,shape="line",lines=[],hover=null,panel=null,ov=null,raf=0,drawing=null,title="",note="";
+/* the lines you draw stay on the map (up to MAXL, the oldest goes first); the card shows one, and you switch between them */
+const MAXL=6,HCOL=["#c0392b","#2e6fd0","#8e44ad","#138a72","#d35400","#4a5568"];let hist=[],badges=[];
+function renum(){hist.forEach((h,i)=>{h.n=i+1;h.title=(h.edit.kind==="line"?"Your line ":"Your path ")+(i+1)})}
+function showHist(i){const L=hist[i];if(!L)return;armed=false;drawing=null;editing=null;head=null;note="";title=L.title;lines=[L];yl={lo:null,hi:null};if(!L.P)compute();renderPanel()}
 const css=document.createElement("style");css.textContent=`
 .gf-xs-chip.active{ background:#7a4b1f !important; color:#fff !important; }
 .gf-xs-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#5b3a17; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); flex:none; }
 .gf-xs-ico.on{ background:#8a5a2b; color:#fff; } .gf-xs-ico-top{ margin-right:8px; align-self:center; }
 .gf-xs-top{ cursor:move; } .gf-xs-top button,.gf-xs-top select{ cursor:pointer; }
 .gf-xs-ov{ position:absolute; left:0; top:0; pointer-events:none; z-index:30; }
+.gf-xs-hist{ display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin:2px 0 6px; font-size:12px; } .gf-xs-hist>span{ font-weight:700; margin-right:2px; } .gf-xs-hist small{ opacity:.6; margin-left:4px; }
+.gf-xs-hist button{ border:1.5px solid rgba(0,0,0,.12); background:transparent; color:inherit; border-radius:999px; padding:2px 9px; font:700 12px system-ui; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+.gf-xs-hist button i{ width:9px; height:9px; border-radius:50%; background:var(--c); } .gf-xs-hist button.on{ border-color:var(--c); background:color-mix(in srgb,var(--c) 14%,transparent); }
+:is(body.dark,body.dark-theme,body.sky-night) .gf-xs-hist button{ border-color:rgba(255,255,255,.18); }
 .gf-xs{ position:absolute; left:10px; right:58px; bottom:10px; z-index:41; background:#fff; border-radius:14px; box-shadow:0 6px 24px rgba(0,0,0,.25); padding:10px 12px 8px; font:13px/1.35 system-ui,sans-serif; color:#1d2433; }
 body.dark .gf-xs{ background:#1c2333; color:#e8ecf3; }
 .gf-xs-hctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px; }
@@ -152,7 +160,7 @@ function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".g
    if(cl.includes("col"))el.appendChild(b);else el.parentNode.insertBefore(b,el)}b.classList.toggle("on",on)})}
 /* the way in: a round button in the map's right-hand column (and the Shovel gadget in the toolkit) */
 function chip(){icons(mode()==="elevation")}
-function start(){const g=G();if(!g)return;on=true;loadDEM().then(()=>{renderPanel()}).catch(()=>{});mount();renderPanel();if(!lines.length)armed=true;renderPanel();loop()}
+function start(){const g=G();if(!g)return;on=true;loadDEM().then(()=>{if(!lines.length&&hist.length)showHist(hist.length-1);else renderPanel()}).catch(()=>{});mount();if(!lines.length&&hist.length){lines=[hist[hist.length-1]];title=lines[0].title}renderPanel();if(!lines.length)armed=true;renderPanel();loop()}
 function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(e.target.closest(".gf-xs-rz")){e.preventDefault();e.stopPropagation();
   const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),sv=panel.querySelector("svg"),sh=sv?sv.getBoundingClientRect().height:190,x0=e.clientX,y0=e.clientY;
   panel.style.left=(r.left-h.left)+"px";panel.style.top=(r.top-h.top)+"px";panel.style.right="auto";panel.style.bottom="auto";
@@ -165,7 +173,7 @@ function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventL
  const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
  const mv=ev=>{panel.style.left=Math.max(-r.width+80,Math.min(h.width-80,ev.clientX-h.left-dx))+"px";panel.style.top=Math.max(0,Math.min(h.height-40,ev.clientY-h.top-dy))+"px"};
  const upx=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",upx,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",upx,true)},true)}
-function stop(){on=false;armed=false;drawing=null;lines=[];hover=null;try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(e){}if(panel){panel.remove();panel=null}if(ov){ov.remove();ov=null}cancelAnimationFrame(raf);chip()}
+function stop(){on=false;armed=false;drawing=null;lines=[];hover=null;badges=[];try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(e){}if(panel){panel.remove();panel=null}if(ov){ov.remove();ov=null}cancelAnimationFrame(raf);chip()}
 function mount(){const g=G();if(!g)return;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
  if(!ov||ov.parentNode!==h){ov=document.createElement("canvas");ov.className="gf-xs-ov";h.appendChild(ov)}
  if(!panel||panel.parentNode!==h){panel=document.createElement("div");panel.className="gf-xs";h.appendChild(panel)}dragPanel();
@@ -182,7 +190,7 @@ function scr(ll){const g=G();if(!g)return null;const pr0=g.projection(),ro=pr0.r
 let editing=null;
 function handleAt(e){const L=lines.length===1&&lines[0].edit;if(!L)return-1;const p=local(e);let best=-1,bd=13;L.pts.forEach((ll,i)=>{const q=scr(ll);if(!q)return;const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;best=i}});return best}
 function down(e){if(!on||inPanel(e))return;const g=G();if(!g)return;
- if(!armed){const i=handleAt(e);if(i<0)return;e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}editing={i,id:e.pointerId};return}
+ if(!armed){{const p=local(e),b=badges.find(b=>Math.hypot(b.x-p[0],b.y-p[1])<12);if(b){e.stopImmediatePropagation();e.preventDefault();showHist(b.i);return}}const i=handleAt(e);if(i<0)return;e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}editing={i,id:e.pointerId};return}
  if(e.button||drawing)return;/* a second finger: left to the map (pinch to zoom while drawing) */e.stopImmediatePropagation();e.preventDefault();try{g.host.setPointerCapture(e.pointerId)}catch(_){}
  const q=inv(local(e));if(!q)return;drawing={ll:[q],id:e.pointerId,last:local(e)}}
 function move(e){if(!on)return;const g=G();if(!g)return;
@@ -198,13 +206,13 @@ function build(ctrl){const g=G();if(!g)return null;const pts=ctrl.map(scr);
  return ll.length>1?ll:null}
 /* a freehand path's editable points: about one every 22 px along what was drawn */
 function thin(ctrl){const out=[ctrl[0]];let last=scr(ctrl[0]);for(let i=1;i<ctrl.length-1;i++){const q=scr(ctrl[i]);if(!q||!last||Math.hypot(q[0]-last[0],q[1]-last[1])>=22){out.push(ctrl[i]);last=q}}out.push(ctrl[ctrl.length-1]);return out}
-function clearLine(){lines=[];head=null;hover=null;title="";note="";editing=null;drawing=null;renderPanel()}
+function clearLine(){const cur=lines.length===1?hist.indexOf(lines[0]):-1;if(cur>=0){hist.splice(cur,1);renum()}lines=[];head=null;hover=null;title="";note="";editing=null;drawing=null;if(cur>=0&&hist.length){showHist(Math.min(cur,hist.length)-1<0?0:Math.min(cur,hist.length)-1);return}renderPanel()}
 function up(e){
  if(editing&&e.pointerId===editing.id){e.stopImmediatePropagation();editing=null;const L=lines[0];if(L&&L.edit){const ll=build(L.edit.pts);if(ll){L.ll=ll;L._prev=0;L.P=null;head=null;yl={lo:null,hi:null};compute();renderPanel()}}return}
  if(!drawing||e.pointerId!==drawing.id)return;e.stopImmediatePropagation();const g=G(),ctrl=drawing.ll;drawing=null;if(!g||ctrl.length<2)return;
  {const a=scr(ctrl[0]),b=scr(ctrl[ctrl.length-1]);let tot=0;for(let i=1;i<ctrl.length;i++){const p=scr(ctrl[i-1]),q=scr(ctrl[i]);if(p&&q)tot+=Math.hypot(q[0]-p[0],q[1]-p[1])}if(tot<8&&!(a&&b&&Math.hypot(a[0]-b[0],a[1]-b[1])>=8))return}
  const ed=shape==="line"?[ctrl[0],ctrl[ctrl.length-1]]:thin(ctrl);const ll=build(shape==="line"?ed:ctrl);if(!ll)return;
- armed=false;title=shape==="line"?"Your line":"Your path";note="";head=null;lines=[{ll,c:"#c0392b",P:null,edit:{kind:shape,pts:ed}}];compute();renderPanel()}
+ armed=false;title=shape==="line"?"Your line":"Your path";note="";head=null;const used=new Set(hist.map(h=>h.c)),col=HCOL.find(c=>!used.has(c))||HCOL[0];if(hist.length>=MAXL)hist.shift();const nL={ll,c:col,P:null,edit:{kind:shape,pts:ed},title,n:0};hist.push(nL);renum();title=nL.title;lines=[nL];compute();renderPanel()}
 /* ---------- the map overlay ---------- */
 function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov){return}
  const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
@@ -218,6 +226,9 @@ function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFram
  const ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]],ctr=[-ro[0],-ro[1]],pr=ll=>{if(!(g._flat||d3.geoDistance(ll,ctr)<Math.PI/2-1e-3))return null;const q=pr0(ll);return q&&(!disc||Math.hypot(q[0]-disc[0],q[1]-disc[1])<=disc[2])?q:null};
  const stroke=(pts,col)=>{x.lineJoin=x.lineCap="round";x.beginPath();let pen=false,last=null;pts.forEach(p=>{if(!p){pen=false;return}if(pen&&last&&Math.abs(p[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);pen=true;last=p});
   x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=4;x.stroke();x.strokeStyle=col;x.lineWidth=2;x.stroke()};
+ badges=[];hist.forEach((H,i)=>{if(lines.includes(H))return;const pts=H.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null});x.globalAlpha=.55;stroke(pts,H.c);x.globalAlpha=1;
+  const vis=pts.filter(Boolean);if(!vis.length)return;const q=vis[Math.floor(vis.length/2)];x.fillStyle=H.c;x.strokeStyle="#fff";x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],9,0,7);x.fill();x.stroke();
+  x.fillStyle="#fff";x.font="800 11px system-ui";x.textAlign="center";x.textBaseline="middle";x.fillText(String(i+1),q[0],q[1]+.5);badges.push({i,x:q[0],y:q[1]})});
  lines.forEach(L=>{const pts=L.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null});stroke(pts,L.c);
   const lab=(q,t)=>{if(!q)return;x.fillStyle="#fff";x.strokeStyle=L.c;x.lineWidth=2;x.beginPath();x.arc(q[0],q[1],9,0,7);x.fill();x.stroke();x.fillStyle=L.c;x.font="800 11px system-ui";x.textAlign="center";x.textBaseline="middle";x.fillText(t,q[0],q[1]+.5)};
   /* the points you can drag: the ends of a straight line, every point of a freehand path */
@@ -433,16 +444,19 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
  const yctl=!rvNow&&!cmpNow&&lines.length&&lines[0].P?'<div class="gf-xs-yctl"><span>Height from</span><input type="number" step="100" data-yl="lo" placeholder="auto" value="'+(yl.lo==null?'':yl.lo)+'"><span>to</span><input type="number" step="100" data-yl="hi" placeholder="auto" value="'+(yl.hi==null?'':yl.hi)+'"><span>m</span><button type="button" data-yf="fit" title="Start the chart just below the lowest point, so small ups and downs show">Fit to the land</button><button type="button" data-yf="sea" title="From sea level up">From sea level</button></div>':'';
+ const hsw=hist.length?'<div class="gf-xs-hist"><span>Your lines</span>'+hist.map((h,i)=>'<button type="button" data-hi="'+i+'" class="'+(lines.includes(h)?'on':'')+'" style="--c:'+h.c+'" title="'+esc(h.title)+'"><i></i>'+(i+1)+'</button>').join('')+(hist.length>1?'<button type="button" data-hstep="-1" title="Previous line">‹</button><button type="button" data-hstep="1" title="Next line">›</button>':'')+'<small>'+hist.length+' of '+MAXL+(hist.length>=MAXL?' · a new line replaces the oldest':'')+'</small></div>':'';
  const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+(lines.length===1&&lines[0].edit?'<p class="gf-xs-edhint">'+(lines[0].edit.kind==="line"?"Drag A or B on the map to move an end.":"Drag any point of your path on the map to reshape it.")+'</p>':'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake depths and lake beds are approximate.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
  {const em=!(lines.length&&lines[0].P),was=panel.classList.contains("gf-xs-empty");if(was&&!em&&panel.style.width){const hw=panel.parentNode.getBoundingClientRect().width,l=parseFloat(panel.style.left)||10;panel.style.width=Math.max(panel.getBoundingClientRect().width,Math.min(860,hw-68,hw-l-10))+"px"}panel.classList.toggle("gf-xs-empty",em);try{G().host.classList.toggle("gf-xs-armed",!!armed)}catch(e){}}panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
-  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button>'+(armed?'<button type="button" class="gf-xs-exit" title="Stop drawing (Esc)">✕ Exit</button>':'')+(!armed&&lines.length?'<button type="button" class="gf-xs-clear" title="Clear the chart and remove the line from the map">✕ Clear line</button>':'')+'<span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+body+
+  (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button>'+(armed?'<button type="button" class="gf-xs-exit" title="Stop drawing (Esc)">✕ Exit</button>':'')+(!armed&&lines.length?'<button type="button" class="gf-xs-clear" title="Clear the chart and remove the line from the map">✕ Clear line</button>':'')+'<span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+hsw+body+
   '<span class="gf-xs-rz w" title="Drag to make it wider or narrower"></span><span class="gf-xs-rz h" title="Drag to make the chart taller or shorter"></span><div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can use. At a dam, 🔒 boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level). Where the height data has no lake bed, the bed is an approximate bowl (dashed) as deep as the lake\'s published greatest depth, or twice its mean depth. Height is stretched far more than length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;renderPanel()});
  panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;renderPanel()};
  {const ex=panel.querySelector(".gf-xs-exit");if(ex)ex.onclick=()=>{armed=false;drawing=null;renderPanel()};const cl=panel.querySelector(".gf-xs-clear");if(cl)cl.onclick=clearLine}
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
  panel.querySelector(".gf-xs-pre").onchange=e=>{if(e.target.value)pick(e.target.value)};
+ panel.querySelectorAll("[data-hi]").forEach(b=>b.onclick=()=>showHist(+b.dataset.hi));
+ panel.querySelectorAll("[data-hstep]").forEach(b=>b.onclick=()=>{const c=lines.length===1?hist.indexOf(lines[0]):hist.length;const n=hist.length;showHist(((c<0?n-1:c)+(+b.dataset.hstep)+n)%n)});
  panel.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{SRC=b.dataset.src;renderPanel();const sel=panel.querySelector(".gf-xs-pre");if(sel&&(myInk().length||SRC==="pre"))try{sel.focus()}catch(e){}});
  panel.querySelectorAll("[data-yl]").forEach(inp=>{["keydown","keyup","keypress"].forEach(t=>inp.addEventListener(t,ev=>ev.stopPropagation()));inp.onchange=()=>{const v=inp.value.trim()===""?null:+inp.value;yl[inp.dataset.yl]=v!=null&&isFinite(v)?v:null;renderPanel()}});
  panel.querySelectorAll("[data-yf]").forEach(b=>b.onclick=()=>{if(b.dataset.yf==="sea"){yl={lo:Math.min(0,Math.floor((chartSVG.dmin||0)/100)*100),hi:null}}else{const lo=chartSVG.dmin||0,hi=chartSVG.dmax||0,pad=Math.max(50,(hi-lo)*.08);yl={lo:Math.floor((lo-pad)/100)*100,hi:Math.ceil((hi+pad)/100)*100}}renderPanel()});

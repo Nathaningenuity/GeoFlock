@@ -1,6 +1,6 @@
 /* GeoFlock: the Thermometer, a Toolkit gadget. Turn it on, click any place on land (flat map or globe) and a climate graph
    opens: average temperature month by month (red line) and rainfall (blue bars), with the Köppen climate type worked out
-   from the same numbers, the yearly average temperature and the yearly rainfall. Clicking again moves the pin.
+   from the same numbers, the yearly average temperature and the yearly rainfall. Each click places another thermometer (up to 8).
    Data: WorldClim 2.1 monthly averages 1970–2000 (Fick & Hijmans 2017, CC BY 4.0), averaged to 0.5° (about 55 km) and
    packed into textures/CLIMATE_MONTHLY.png: 24 strips of 720×360, the 12 temperatures ((t+70)×2) then the 12 rainfalls
    (√mm×5); 0 = sea or ice-free data missing. The Climate map opens with the Thermometer on; the Elevation map with the
@@ -59,12 +59,14 @@ function graph(T,P){const W=340,H=170,l=34,r=36,t=12,b=22;
  MON.forEach((m,i)=>{s+='<text x="'+X(i)+'" y="'+(H-7)+'" class="mo">'+m+'</text>'});
  s+='<text x="4" y="10" class="ax tc">°C</text><text x="'+(W-2)+'" y="10" class="ax pc" text-anchor="end">mm</text></svg>';return s}
 
-/* ---------- the panel, the pin, the clicks ---------- */
-let on=false,panel=null,pin=null,last=null;
+/* ---------- the panel, the pins, the clicks ----------
+   Up to MAXT thermometers stay on the map (a new one past that replaces the oldest). The card shows the newest; click a
+   thermometer's icon on the map, or its tab in the card, to show that one. Each icon is a little gauge: a red bar rising
+   from the zero mark for today's usual temperature above 0 °C, a blue bar dropping below it for one below 0 °C. */
+const MAXT=8;let on=false,panel=null,items=[],last=null,tag=null,pin=null;
 function mount(){const g=G();if(!g)return null;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
  if(!panel||(panel.parentNode!==h&&!panel._float)){if(panel)panel.remove();panel=document.createElement("div");panel.className="gfth";h.appendChild(panel);
-  ["pointerdown","mousedown","wheel","click","dblclick"].forEach(t=>panel.addEventListener(t,e=>e.stopPropagation()));drag(panel)}
- if(!pin||pin.parentNode!==h){if(pin)pin.remove();pin=document.createElement("div");pin.className="gfth-pin";pin.innerHTML=ICON;h.appendChild(pin)}return panel}
+  ["pointerdown","mousedown","wheel","click","dblclick"].forEach(t=>panel.addEventListener(t,e=>e.stopPropagation()));drag(panel)}return panel}
 function drag(p){p.addEventListener("pointerdown",e=>{if(e.button||e.target.closest("button,a,input,select,textarea,summary"))return;
  const r=p.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top,x0=e.clientX,y0=e.clientY;let moved=false;
  const mv=ev=>{if(!moved){if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4)return;moved=true;
@@ -73,29 +75,48 @@ function drag(p){p.addEventListener("pointerdown",e=>{if(e.button||e.target.clos
   ev.preventDefault();const w=p.offsetWidth,h=p.offsetHeight;
   p.style.left=Math.max(0,Math.min(innerWidth-Math.min(w,60),ev.clientX-dx))+"px";p.style.top=Math.max(0,Math.min(innerHeight-30,ev.clientY-dy))+"px";p.style.bottom="auto";p.style.right="auto"};
  const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up)})}
+const fmtT=t=>(t<0&&Math.round(t)!==0?"−":"")+Math.abs(Math.round(t))+" °C";
+/* the gauge: tube from y=3 to y=30, zero mark at y=19; +40 °C fills to the top, −40 °C to the bulb */
+function gauge(t){const Z=19;let bar="",bulb="#b9c3cd";
+ if(t!=null){if(t>=0){const top=Z-Math.min(1,t/40)*15;bar='<rect x="10.4" y="'+top.toFixed(1)+'" width="3.2" height="'+(Z-top+.6).toFixed(1)+'" rx="1.6" fill="#e0402f"/>';bulb="#e0402f"}
+  else{const bot=Z+Math.min(1,-t/40)*10;bar='<rect x="10.4" y="'+(Z-.6)+'" width="3.2" height="'+(bot-Z+.6).toFixed(1)+'" rx="1.6" fill="#2b7bd5"/>';bulb="#2b7bd5"}}
+ return'<svg viewBox="0 0 24 40" aria-hidden="true"><path d="M8.6 5a3.4 3.4 0 0 1 6.8 0v24.2a6.2 6.2 0 1 1-6.8 0z" fill="#fff" stroke="#4a5568" stroke-width="1.4"/>'+bar+
+  '<line x1="15.4" x2="18.4" y1="'+Z+'" y2="'+Z+'" stroke="#4a5568" stroke-width="1.3"/><text x="19.2" y="'+(Z+1.6)+'" font-size="4.6" font-weight="800" fill="#4a5568" font-family="system-ui">0</text>'+
+  '<circle cx="12" cy="33.6" r="4.1" fill="'+bulb+'"/></svg>'}
+const tNow=it=>it&&it.c?todayT(it.c.T):null;
+function tabs(){if(items.length<2)return"";return'<div class="gfth-tabs" role="tablist">'+items.map((it,i)=>{const t=tNow(it);return'<button type="button" role="tab" data-ti="'+i+'" class="'+(it===last?"on":"")+'" aria-selected="'+(it===last)+'"><span class="gfth-tn">'+(i+1)+'</span>'+esc(it.name||fmtLL(it.ll))+(t!=null?' <i class="'+(t<0?"cold":"")+'">'+fmtT(t)+'</i>':'')+'<span class="gfth-tx" data-tx="'+i+'" title="Remove this thermometer">×</span></button>'}).join("")+'</div>'}
 function render(){const p=mount();if(!p)return;let body;
- if(!last)body='<p class="gfth-help">Click anywhere on land to see its climate: temperature and rainfall, month by month.</p>';
+ if(!last)body='<p class="gfth-help">Click anywhere on land to place a thermometer and see its climate: temperature and rainfall, month by month. You can place up to '+MAXT+'.</p>';
  else if(!D)body='<p class="gfth-help">Loading the climate data…</p>';
  else if(!last.c)body='<p class="gfth-help"><b>'+fmtLL(last.ll)+'</b>: open sea. Climate graphs are for places on land; click on land.</p>';
  else{const{T,P}=last.c,k=koppen(T,P,last.ll[1]),MAT=T.reduce((a,b)=>a+b)/12,MAP=P.reduce((a,b)=>a+b);
   body='<div class="gfth-where"><b>'+esc(last.name||fmtLL(last.ll))+'</b>'+(last.name?'<small>'+fmtLL(last.ll)+'</small>':'')+'</div>'+
    '<div class="gfth-now">Today ('+new Date().toLocaleDateString(undefined,{day:"numeric",month:"long"})+'): usually about <b>'+todayT(T).toFixed(1).replace("-","−")+' °C</b></div><div class="gfth-k"><span class="kc">'+k+'</span>'+esc(KN[k]||"")+'</div>'+graph(T,P)+
    '<div class="gfth-sum"><span><i class="tc"></i>Average '+MAT.toFixed(1)+' °C · warmest '+Math.max(...T).toFixed(1)+' °C · coldest '+Math.min(...T).toFixed(1)+' °C</span><span><i class="pc"></i>Rain and snow '+Math.round(MAP).toLocaleString()+' mm a year</span></div>'}
- p.innerHTML='<div class="gfth-h" title="Drag to move"><span class="gfth-ic">'+ICON+'</span><b>Thermometer</b><button type="button" class="gfth-x" aria-label="Close">×</button></div>'+body+
+ p.innerHTML='<div class="gfth-h" title="Drag to move"><span class="gfth-ic">'+ICON+'</span><b>Thermometer'+(items.length?' <small>'+items.length+' of '+MAXT+'</small>':'')+'</b><button type="button" class="gfth-x" aria-label="Close">×</button></div>'+tabs()+body+
+  (items.length>=MAXT?'<p class="gfth-help gfth-full">That is the most thermometers: the next one replaces the oldest.</p>':'')+
   '<p class="gfth-src">WorldClim 2.1 monthly averages, 1970–2000 (CC BY 4.0), at about 55 km; the Köppen type is worked out from the same numbers.</p>';
- p.querySelector(".gfth-x").onclick=()=>stop();place()}
-function place(){const g=G();if(!pin||!g)return;if(!last||!on){pin.style.display="none";return}
- const pr=g.projection(),q=pr(last.ll);let vis=!!q&&isFinite(q[0]);if(vis&&!g._flat){try{const ro=pr.rotate();vis=d3.geoDistance(last.ll,[-ro[0],-ro[1]])<Math.PI/2}catch(e){}}
- const c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();if(!tag||tag.parentNode!==g.host){if(tag)tag.remove();tag=document.createElement("div");tag.className="gfth-tag";g.host.appendChild(tag)}
- if(!vis){pin.style.display="none";tag.style.display="none";return}
- if(last.c){const t=todayT(last.c.T);tag.textContent=(t<0&&Math.round(t)!==0?"−":"")+Math.abs(Math.round(t))+" °C";tag.title="Usual temperature for today's date";tag.style.display="";tag.style.left=(c.left-h.left+q[0]+14)+"px";tag.style.top=(c.top-h.top+q[1]-22)+"px"}else tag.style.display="none";
- pin.style.display="";pin.style.left=(c.left-h.left+q[0])+"px";pin.style.top=(c.top-h.top+q[1])+"px"}
+ p.querySelector(".gfth-x").onclick=()=>stop();
+ p.querySelectorAll("[data-ti]").forEach(b=>b.onclick=e=>{const x=e.target.closest("[data-tx]");if(x){remove(+x.dataset.tx);return}show(+b.dataset.ti)});place()}
+function show(i){if(!items[i])return;last=items[i];render()}
+function remove(i){const it=items[i];if(!it)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();items.splice(i,1);if(last===it)last=items[items.length-1]||null;render()}
+function mkPin(it,g){const h=g.host;if(it.pin&&it.pin.parentNode===h)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();
+ const p=document.createElement("div");p.className="gfth-pin";p.title="Show this thermometer";h.appendChild(p);it.pin=p;it.pk="";
+ p.addEventListener("pointerdown",e=>{e.stopPropagation();e.preventDefault()});p.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();const i=items.indexOf(it);if(i>=0)show(i)});
+ const t=document.createElement("div");t.className="gfth-tag";h.appendChild(t);it.tag=t}
+function place(){const g=G();if(!g)return;const pr=g.projection(),ro=pr.rotate?pr.rotate():[0,0],c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();
+ items.forEach(it=>{mkPin(it,g);if(!on){it.pin.style.display=it.tag.style.display="none";return}
+  const q=pr(it.ll);let vis=!!q&&isFinite(q[0]);if(vis&&!g._flat){try{vis=d3.geoDistance(it.ll,[-ro[0],-ro[1]])<Math.PI/2&&(!window.gfGlobeShows||gfGlobeShows(g,q))}catch(e){}}
+  if(!vis){it.pin.style.display=it.tag.style.display="none";return}
+  const t=tNow(it),k=(t==null?"n":Math.round(t*2))+(it===last?"s":"");if(it.pk!==k){it.pk=k;it.pin.innerHTML=gauge(t);it.pin.classList.toggle("sel",it===last)}
+  const x=c.left-h.left+q[0],y=c.top-h.top+q[1];it.pin.style.display="";it.pin.style.left=x+"px";it.pin.style.top=y+"px";
+  if(t!=null){it.tag.textContent=fmtT(t);it.tag.title="Usual temperature for today's date";it.tag.classList.toggle("cold",t<0);it.tag.style.display="";it.tag.style.left=(x+12)+"px";it.tag.style.top=(y-30)+"px"}else it.tag.style.display="none"})}
 function todayT(T,d){d=d||new Date();const y=d.getFullYear(),doy=(d-new Date(y,0,1))/864e5,L=(y%4?365:366),m=doy/L*12-.5,i=Math.floor(m),f=m-i,a=(i+12)%12,b=(i+13)%12;return T[a]*(1-f)+T[b]*f}
-let tag=null;
-function pick(ll){last={ll,c:null,name:null};render();load().then(()=>{if(!last||last.ll!==ll)return;last.c=at(ll);const cc=countryAt(ll);last.name=cname(cc);render()})}
+function pick(ll){if(items.length>=MAXT)remove(0);const it={ll,c:null,name:null,pin:null,tag:null};items.push(it);last=it;render();
+ load().then(()=>{it.c=at(ll);const cc=countryAt(ll);it.name=cname(cc);it.pk="";if(on)render()})}
 let down=null;
 function onDown(e){if(!on)return;const g=G();if(!g||e.button)return;const c=g.canvas.getBoundingClientRect();if(e.clientX<c.left||e.clientX>c.right||e.clientY<c.top||e.clientY>c.bottom)return;
- if(e.target.closest&&e.target.closest(".gfth,.globe-btns,.gf-xs,.gfk-tray,.gfk-panel,.ps-card,.flk,.ps-launcher,.globe-subs,button,input,select"))return;
+ if(e.target.closest&&e.target.closest(".gfth,.gfth-pin,.globe-btns,.gf-xs,.gfk-tray,.gfk-panel,.ps-card,.flk,.ps-launcher,.globe-subs,button,input,select"))return;
  /* the place is worked out now, before the map can react to the press */
  /* the place: from the last pointer position before the press (other handlers can shift the map's frame on the press itself) */
  let ll=hov&&Math.hypot(hov.x-e.clientX,hov.y-e.clientY)<3?hov.ll:llAt(g,e.clientX,e.clientY);
@@ -113,7 +134,7 @@ addEventListener("pointerdown",onDown,true);addEventListener("pointerup",onUp,tr
 /* the click that placed the pin does not also open a country card */
 addEventListener("click",e=>{if(performance.now()-swallow<400){e.stopImmediatePropagation();e.preventDefault()}},true);
 function start(){on=true;load();mount();render();sync()}
-function stop(){on=false;if(panel){panel.remove();panel=null}if(tag){tag.remove();tag=null}if(pin){pin.remove();pin=null}sync()}
+function stop(){on=false;if(panel){panel.remove();panel=null}items.forEach(it=>{if(it.pin)it.pin.style.display="none";if(it.tag)it.tag.style.display="none"});sync()}
 (function loop(){try{if(on){if(appMode!=="allmaps")stop();else if(G()){if(!panel||!panel.isConnected||(panel.parentNode!==G().host&&!panel._float))render();place()}}}catch(e){}requestAnimationFrame(loop)})();
 function sync(){try{const g=G();if(g)g.host.classList.toggle("gfth-on",on)}catch(e){}document.querySelectorAll(".gfk-thermo").forEach(b=>b.classList.toggle("on",on))}
 
@@ -152,11 +173,20 @@ const css=document.createElement("style");css.textContent=`
 .gfth-sum{ display:flex; flex-direction:column; gap:2px; font-size:11.5px; } .gfth-sum i{ display:inline-block; width:10px; height:3px; border-radius:2px; margin-right:5px; vertical-align:middle; } .gfth-sum i.tc{ background:#d6402f; } .gfth-sum i.pc{ background:#4b97d8; height:8px; }
 .gfth-src{ margin:5px 0 0; font-size:10px; opacity:.55; }
 .gfth.gfth-float{ position:fixed; z-index:9000; }
+.gfth:not(.gfth-float){ z-index:20; max-height:calc(100% - 20px); overflow:auto; }
 .gfth{ cursor:grab; } .gfth button{ cursor:pointer; }
 .gfth-now{ margin:2px 0 6px; font-size:12.5px; } .gfth-now b{ color:#d2452c; font-size:14px; }
 .gfth-tag{ position:absolute; z-index:8; pointer-events:none; background:#d2452c; color:#fff; font:700 12px/1 system-ui,sans-serif; padding:4px 7px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.35); white-space:nowrap; }
-.gfth-pin{ position:absolute; z-index:8; transform:translate(-50%,-100%); pointer-events:none; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
-.gfth-pin svg{ width:26px; height:26px; }
+.gfth-pin{ position:absolute; z-index:8; transform:translate(-50%,-92%); pointer-events:auto; cursor:pointer; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)); border-radius:10px; }
+.gfth-pin svg{ width:22px; height:37px; display:block; } .gfth-pin.sel{ filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 3px #ffd34d) drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.gfth-tag.cold{ background:#2b7bd5; }
+.gfth-tabs{ display:flex; flex-wrap:nowrap; overflow-x:auto; gap:4px; margin:0 0 6px; padding-bottom:2px; scrollbar-width:thin; } .gfth-tabs button{ flex:none; }
+.gfth-tabs button{ border:1.5px solid rgba(20,40,70,.14); background:transparent; color:inherit; border-radius:999px; padding:2px 4px 2px 3px; font:600 11.5px system-ui; display:inline-flex; align-items:center; gap:4px; max-width:170px; white-space:nowrap; overflow:hidden; }
+.gfth-tabs button.on{ border-color:#d2452c; background:rgba(210,69,44,.1); } .gfth-tabs i{ font-style:normal; font-weight:800; color:#d2452c; } .gfth-tabs i.cold{ color:#2b7bd5; }
+.gfth-tn{ background:#4a5568; color:#fff; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; flex:none; }
+.gfth-tx{ opacity:.5; padding:0 4px; font-size:14px; } .gfth-tx:hover{ opacity:1; }
+.gfth-h small{ font-weight:600; opacity:.55; font-size:11px; margin-left:4px; } .gfth-full{ font-size:11px; }
+body.sky-night .gfth-tabs button{ border-color:rgba(255,255,255,.18); }
 .globe-host.gfth-on canvas{ cursor:crosshair; }
 .gfk-thermo.on{ outline:2px solid #e0402f; outline-offset:2px; border-radius:12px; }
 body.sky-night .gfth{ background:#1c2333; color:#e8ecf3; } body.sky-night .gfth-g .mo{ fill:#aab4c6; } body.sky-night .gfth-g .gl{ stroke:#fff; } body.sky-night .gfth-x{ background:rgba(255,255,255,.1); }`;
