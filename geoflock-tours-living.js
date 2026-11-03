@@ -594,7 +594,7 @@ const CARD={
  "forests|Mangroves":"Sunrise reflections over the mangroves, Makasutu, The Gambia - 2012.jpg","forests|Cloud forests":"Monteverde Cloud Forest 01.jpg",
  "forests|Where forests are lost":"Slash and burn in the rainforest.jpg","forests|Forests come back":"Saihanba National Forest Park(Autumn 2011) - panoramio.jpg",
  "ocean|Ocean life":"Whale Shark AdF.jpg","ocean|Coral reefs and the Coral Triangle":"Reefscape in the Bird's Head Seascape.jpg","ocean|Upwelling: where the fish are":"Atlantic Ocean in Western Sahara.jpg",
- "ocean|The great whales":"Grytviken Harbour, Island of South Georgia, United Kingdom.jpg","ocean|Krill and the polar seas":"Antarctic krill (Euphausia superba).jpg",
+ "ocean|The great whales":"Anim1754 - Flickr - NOAA Photo Library.jpg","ocean|Krill and the polar seas":"Antarctic krill (Euphausia superba).jpg",
  "ocean|Too many boats":"Reine Lofoten 2009.JPG","ocean|Ocean parks":"Hawaiian monk seal - Neomonachus schauinslandi - Poipu beach, Kauai.jpg","ocean|Plastic seas":"004 Beach pollution in Tenerife - Atlantic Ocean beach plastic garbage debris.jpg",
  "amigration|Animals on the move":"Serengeti wildebeest migration JF.jpg","amigration|Wildebeest follow the rain":"Western white-bearded wildebeest (Connochaetes taurinus mearnsi) Mara River crossing 2c.jpg",
  "amigration|The Arctic tern":"Arctic tern (Sterna paradisaea) juvenile in flight Blonduos.jpg","amigration|Monarch butterflies":"Monarc Butterfly Reserve4, Michoacan, Mexico.JPG",
