@@ -1,13 +1,10 @@
 /* GeoFlock: globe pictures without freezing the page. The globe's big pictures (relief, satellite, city lights and
    elevation, up to 8192x4096) used to be copied, edge-blended and uploaded in the frame they arrived, which stopped the
    spinning globe for seconds on a first visit. The edge blend is now baked into the files (the *_LK / *_B pictures), and
-   here each picture is decoded (and shrunk to what the graphics card takes) off the main thread with createImageBitmap
+   here each picture is decoded off the main thread (img.decode) and, if needed, shrunk to what the graphics card takes
    before the globe sees it; the globe keeps spinning with what it has meanwhile. */
 (function(){
-if(typeof globeImages!=="function"||typeof _globeImgs==="undefined"||typeof createImageBitmap!=="function")return;
-/* Safari (and every browser on iPhone and iPad, all WebKit) draws these pre-decoded pictures on the globe as black: there the
-   globe keeps the plain pictures */
-try{if(/Apple/.test(navigator.vendor||"")||/iP(hone|ad|od)/.test(navigator.userAgent)&&!window.chrome)return}catch(e){}
+if(typeof globeImages!=="function"||typeof _globeImgs==="undefined")return;
 const KEYS={relief:1,satellite:1,night:1,elevation:1};
 let MX=0;
 function maxTex(){if(MX)return MX;try{const c=document.createElement("canvas"),g=c.getContext("webgl")||c.getContext("experimental-webgl");MX=g&&g.getParameter(g.MAX_TEXTURE_SIZE)||4096;
@@ -16,12 +13,13 @@ const P={};/* key -> {state:"load"|"wait"|"prep"|"done"|"skip", cbs:[]} */
 const _gi=globeImages;
 function fire(p){const cbs=p.cbs.splice(0);cbs.forEach(f=>{try{f&&f()}catch(e){console.error(e)}})}
 function prep(key,p){const rec=_globeImgs[key];if(!rec||!rec.ready){p.state="skip";fire(p);return}p.state="prep";const mx=maxTex();
- Promise.all(rec.imgs.map(im=>{const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;if(!w||!h)return Promise.resolve(im);
-   const o=w>mx||h>mx?{resizeWidth:Math.round(w*Math.min(1,mx/w,mx/h)),resizeHeight:Math.round(h*Math.min(1,mx/w,mx/h)),resizeQuality:"high"}:undefined;
-   const mk=src=>o?createImageBitmap(src,o):createImageBitmap(src);
-   /* from the file's bytes (decoded off the main thread; the download is already in the browser's cache) */
-   const url=im.currentSrc||im.src;
-   return (url&&!/^data:/.test(url)&&window.fetch?fetch(url).then(r=>{if(!r.ok)throw 0;return r.blob()}).then(mk):Promise.reject()).catch(()=>mk(im)).catch(()=>im)}))
+ /* the pictures stay ordinary images (pre-decoded ImageBitmaps drew black on some computers): they are decoded off the main
+    thread with img.decode() before the globe gets them; one bigger than the graphics card takes is shrunk on a canvas */
+ Promise.all(rec.imgs.map(im=>{const w=im.naturalWidth||im.width,h=im.naturalHeight||im.height;
+   const dec=im.decode?im.decode().catch(()=>{}):Promise.resolve();
+   if(!w||!h||(w<=mx&&h<=mx))return dec.then(()=>im);
+   return dec.then(()=>{const k=Math.min(mx/w,mx/h),c=document.createElement("canvas");c.width=Math.round(w*k);c.height=Math.round(h*k);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);return c}).catch(()=>im)}))
   .then(list=>{const r=_globeImgs[key];if(r!==rec){p.state="skip";fire(p);return}
    list.forEach((b,i)=>{rec.imgs[i]=b});rec.imgs._seam=true;rec._gfClean=true;p.state="done";fire(p)})
   .catch(()=>{p.state="skip";fire(p)})}
