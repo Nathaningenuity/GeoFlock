@@ -1,8 +1,8 @@
 /* GeoFlock: sign in (a simulator: names and passwords stay in this browser, nothing is sent anywhere) and what needs it.
    - The account button (top right) opens Sign in / Sign up: a username and a password. Signed in, it shows your initial
      and a menu (your progress profiles, sign out).
-   - Without signing in: the Relief map (flat and globe) and the Guided tour on geography are open; every other map,
-     Projections, Deep Time and Printable maps, the other guided tours and Human Geo ask you to sign up first, with a
+   - Without signing in: the Relief map (flat and globe), the Guided tour on geography and Unit 1 of Human Geo are open; every other map,
+     Projections, Deep Time and Printable maps, the other guided tours and Human Geo Units 2-7 ask you to sign up first, with a
      picture of what you would get. Study & Quiz and Trivia allow 10 questions, and each game one round or 5 questions.
      While the sign-up card is open, the map you asked for starts loading, so it is ready when you are in.
    - The Trace the River game is hidden for now.
@@ -71,10 +71,10 @@ body.sky-night .gf-si button.b:not(.pri),body.dark .gf-si button.b:not(.pri){bac
 body.sky-night .gf-si-menu,body.dark .gf-si-menu{background:#1d2638;color:#e6edf7}body.sky-night .gf-si-menu button:hover,body.dark .gf-si-menu button:hover{background:#2c3750}
 .gf-lockchip{position:relative}
 body:not(.gf-in) #allMapsToggleRow [data-allmaps-mode]:not([data-allmaps-mode="relief"])::before,
-body:not(.gf-in) #projTabChip::before,body:not(.gf-in) #gfDeepChip::before,body:not(.gf-in) #gfPrintChip::before,body:not(.gf-in) #appModeApBtn::before{
- content:"";position:absolute;left:-4px;top:-4px;width:15px;height:15px;border-radius:50%;opacity:1;background:#f0b429 center/9px 9px no-repeat;box-shadow:0 1px 3px rgba(0,0,0,.3);
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2322324a' d='M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z'/%3E%3C/svg%3E");z-index:2}
-body:not(.gf-in) #allMapsToggleRow [data-allmaps-mode]:not([data-allmaps-mode="relief"]),body:not(.gf-in) #projTabChip,body:not(.gf-in) #gfDeepChip,body:not(.gf-in) #gfPrintChip,body:not(.gf-in) #appModeApBtn{position:relative;overflow:visible}
+body:not(.gf-in) #projTabChip::before,body:not(.gf-in) #gfDeepChip::before,body:not(.gf-in) #gfPrintChip::before{
+ content:"";position:absolute;left:3px;top:3px;width:10px;height:10px;opacity:.6;background:currentColor;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V7a3 3 0 0 0-6 0z'/%3E%3C/svg%3E") center/contain no-repeat;z-index:2}
+body:not(.gf-in) #allMapsToggleRow [data-allmaps-mode]:not([data-allmaps-mode="relief"]),body:not(.gf-in) #projTabChip,body:not(.gf-in) #gfDeepChip,body:not(.gf-in) #gfPrintChip{position:relative;overflow:visible}
 #regionRow [data-g="river"]{display:none!important}
 .acct-btn .gf-si-ico{width:18px;height:18px;display:block}`;
 document.head.appendChild(css);
@@ -156,14 +156,14 @@ setInterval(()=>{if(signed())return;try{
 let e_skip=false;
 
 /* ---------- tours and Human Geo ---------- */
+const freeTour=id=>id==="geo"||/^hg1/.test(String(id||""));
 function tourGate(id,then){let nm="";try{nm=PS_TOURS[id]&&PS_TOURS[id].name||""}catch(e){}
  open({img:null,head:"Sign up for this guided tour",text:(nm?nm+": ":"")+"guided tours other than the Guided tour on geography need a free account.",then})}
 function W(name,mk){const f=window[name];if(typeof f!=="function"||f._gfSi)return;const w=mk(f);w._gfSi=1;try{window[name]=w}catch(e){}}
 function wrapAll(){
- W("psLaunchTour",o=>function(id){if(!signed()&&id&&id!=="geo"){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}return o.apply(this,arguments)});
+ W("psLaunchTour",o=>function(id){if(!signed()&&id&&!freeTour(id)){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}return o.apply(this,arguments)});
  W("psStart",o=>function(want){if(!signed()){let id=want;if(!id)try{id=psCtx().tour}catch(e){}
-   if(id!=="geo"){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}}return o.apply(this,arguments)});
- W("goToursPane",o=>function(p){if(!signed()&&p==="aphg"){apGate(()=>o.call(this,p));return}return o.apply(this,arguments)});
+   if(!freeTour(id)){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}}return o.apply(this,arguments)});
  /* Study & Quiz: 10 questions */
  W("finalizeAnswer",o=>function(){if(!signed()){FREE.study++;saveFree()}return o.apply(this,arguments)});
  W("spAnswer",o=>function(){if(!signed()){if(FREE.study>=10){studyGate();return}FREE.study++;saveFree()}return o.apply(this,arguments)});
@@ -201,14 +201,15 @@ function wrapAll(){
  /* Trace the River is hidden for now */
  try{const N=G("NEW_GAMES");if(N){const i=N.findIndex(g=>g[0]==="river");if(i>=0)N.splice(i,1)}}catch(e){}}
 wrapAll();[500,1500,4000,9000].forEach(t=>setTimeout(wrapAll,t));
-function apGate(then){open({img:null,head:"Sign up for Human Geo",text:"The full AP Human Geography course (units, lessons, practice and review) needs a free account.",then})}
+function apGate(u,then){open({img:null,head:"Sign up for Unit "+u+" of Human Geo",text:"Unit 1 of the AP Human Geography course is free. Units 2 to 7 (tours, labs, practice and unit tests) need a free account.",then})}
 function studyGate(){open({head:"You've answered your 10 free questions",text:"Sign up for free to keep practising in Study & Quiz, with every subject and mode.",then:()=>{try{renderQuizCard()}catch(e){}}})}
 function triviaGate(){open({head:"You've answered your 10 free trivia questions",text:"Sign up for free for unlimited trivia, topic quizzes, speed rounds and Jeopardy.",then:()=>{try{triviaNext()}catch(e){}}})}
 const GNAME={globle:"Globle",chain:"Border Chain",memory:"Memory Match",silrush:"Silhouette Rush",hilo:"Higher or Lower",flagpie:"Flagpie",reveal:"Flag Reveal",whereis:"Where is this?",scramble:"Scramble",mystery:"Mystery Country",neighbours:"Neighbours",popguess:"Close Enough",langid:"Which Language?",climguess:"Guess the Climate"};
 function gameGate(id){const one=["globle","chain","memory","silrush"].includes(id);
  open({head:"That was your free "+(one?"round":"5 questions")+" of "+(GNAME[id]||"this game"),text:"Sign up for free to keep playing "+(GNAME[id]||"this game")+" and every other game as much as you like."})}
 document.addEventListener("click",e=>{if(signed()||!e.target.closest||e_skip)return;
- if(e.target.closest("#appModeApBtn")){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();apGate(()=>{try{goToursPane("aphg")}catch(x){}});return}
+ {const h=e.target.closest("[data-hggo]");if(h){const v=h.dataset.hggo,m=/(?:t:hg|u)(\d+)/.exec(v),u=m?+m[1]:1;
+  if(u>1){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();apGate(u,()=>{if(h.isConnected)h.click()});return}}}
  if(G("appMode")!=="games")return;const g=G("activeGame");
  /* closure games: Which Language? and Guess the Climate, 5 answers each */
  const lang=g==="langid"&&e.target.closest("#gamesView .li-o"),clim=g==="climguess"&&e.target.closest("#gamesView .cg-go, #gamesView .cg-sug li, #gamesView .cg-skip");
