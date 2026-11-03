@@ -114,7 +114,7 @@ const onGlobe=()=>{try{return amGlobeOn()&&amGlobe&&amGlobe.host&&amGlobe.host.o
 const host=()=>onGlobe()?amGlobe.host:document.getElementById("allMapsWrap");
 const svgEl=()=>amtSvg();
 function toLL(cx,cy){if(onGlobe()){const r=amGlobe.canvas.getBoundingClientRect(),p=amGlobe.projection(),ll=p.invert([cx-r.left,cy-r.top]);if(!ll||!isFinite(ll[0]))return null;const r0=p.rotate();if(!amGlobe._flat&&d3.geoDistance(ll,[-r0[0],-r0[1]])>Math.PI/2-.01)return null;return ll}return amtToLL(cx,cy)}
-function toScreen(ll){if(onGlobe()){const p=amGlobe.projection(),r0=p.rotate();if(!amGlobe._flat&&d3.geoDistance(ll,[-r0[0],-r0[1]])>Math.PI/2-.02)return null;const q=p(ll),r=amGlobe.canvas.getBoundingClientRect();return q?[r.left+q[0],r.top+q[1]]:null}
+function toScreen(ll){if(onGlobe()){const p=amGlobe.projection(),r0=p.rotate();if(!amGlobe._flat&&d3.geoDistance(ll,[-r0[0],-r0[1]])>Math.PI/2-.02)return null;const q=p(ll),r=amGlobe.canvas.getBoundingClientRect();return q&&(!window.gfGlobeShows||gfGlobeShows(amGlobe,q))?[r.left+q[0],r.top+q[1]]:null}
  const svg=svgEl(),q=svg&&amtFromLL(ll);if(!q)return null;const m=svg.getScreenCTM();if(!m)return null;const P=new DOMPoint(q[0],q[1]).matrixTransform(m);return[P.x,P.y]}
 /* the flat map's projection as a d3 stream: Robinson turned by the map's east–west spin, then the spin's scale and shift */
 function flatPath(){try{const S=SPIN.A,r0=GLOBE_ROBINSON0.rotate(),P=d3.geoRobinson().scale(GLOBE_ROBINSON0.scale()).translate(GLOBE_ROBINSON0.translate()).rotate([r0[0]+S.dl,r0[1],r0[2]]).precision(.2);

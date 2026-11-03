@@ -4,6 +4,10 @@
       edge colour is carried a few pixels out past the rim, so the edge is solid wherever it is sampled.
    2. Zoomed-in outlines: Åland's detailed outline has every skerry (about 6,000 points, more than all of Sweden), so next to the
       Swedish and Finnish coasts it looked far sharper than its neighbours. It is thinned to the same level of detail. */
+/* is a point (in the globe canvas's own pixels) inside the part of the globe on show? When zoomed in, the globe is a
+   magnified view inside a circle of its normal size, so a point on the front of the ball can still be off the globe. */
+window.gfGlobeShows=function(g,q){try{if(!g||g._flat||!q)return!!q;const pr=g.projection(),t=pr.translate();let R=pr.scale();const z=g.size();if(z&&z.r<R)R=z.r;return Math.hypot(q[0]-t[0],q[1]-t[1])<=R+1}catch(e){return true}};
+
 (function(){
 if(typeof spinImg==="function"){const _si=spinImg,done=new Map();
  spinImg=function(href){if(done.has(href))return done.get(href);const p=_si.apply(this,arguments).then(im=>{try{return padEdges(im)}catch(e){console.error(e);return im}});done.set(href,p);return p}}

@@ -176,7 +176,9 @@ function local(e){const g=G();const r=g.canvas.getBoundingClientRect();return[e.
 /* what is drawn is kept as places (longitude, latitude), so it stays on the map when you zoom or pan while drawing;
    a finished line keeps its control points (the two ends of a straight line, the points of a freehand path) to edit */
 const inv=p=>{try{const q=G().projection().invert(p);return q&&isFinite(q[0])&&isFinite(q[1])?q:null}catch(e){return null}};
-function scr(ll){const g=G();if(!g)return null;const pr0=g.projection(),ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]];if(!g._flat&&d3.geoDistance(ll,[-ro[0],-ro[1]])>=Math.PI/2-1e-3)return null;const q=pr0(ll);return q&&isFinite(q[0])?q:null}
+/* the part of the globe on show: when zoomed in, the globe is a magnified view inside a circle of its normal size */
+function vis(g,pr0){if(!g||g._flat||!pr0||!pr0.translate)return null;const t=pr0.translate();let R=pr0.scale();try{const z=g.size();if(z&&z.r<R)R=z.r}catch(e){}return[t[0],t[1],R]}
+function scr(ll){const g=G();if(!g)return null;const pr0=g.projection(),ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]];if(!g._flat&&d3.geoDistance(ll,[-ro[0],-ro[1]])>=Math.PI/2-1e-3)return null;const q=pr0(ll);if(!q||!isFinite(q[0]))return null;const d=vis(g,pr0);return d&&Math.hypot(q[0]-d[0],q[1]-d[1])>d[2]?null:q}
 let editing=null;
 function handleAt(e){const L=lines.length===1&&lines[0].edit;if(!L)return-1;const p=local(e);let best=-1,bd=13;L.pts.forEach((ll,i)=>{const q=scr(ll);if(!q)return;const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;best=i}});return best}
 function down(e){if(!on||inPanel(e))return;const g=G();if(!g)return;
@@ -207,9 +209,13 @@ function up(e){
 function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov){return}
  const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
  if(ov.width!==Math.round(r.width*dpr)||ov.height!==Math.round(r.height*dpr)){ov.width=Math.round(r.width*dpr);ov.height=Math.round(r.height*dpr);ov.style.width=r.width+"px";ov.style.height=r.height+"px"}
- ov.style.left=(r.left-hr.left)+"px";ov.style.top=(r.top-hr.top)+"px";const x=ov.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);const pr0=g.projection();
+ /* lined up with the globe by where it really lands (its offset parent can differ, e.g. in full screen) */
+ {const L0=parseFloat(ov.style.left)||0,T0=parseFloat(ov.style.top)||0,o=ov.getBoundingClientRect();if(Math.abs(o.left-r.left)>.5||Math.abs(o.top-r.top)>.5){ov.style.left=(L0+r.left-o.left)+"px";ov.style.top=(T0+r.top-o.top)+"px"}}
+ const x=ov.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);const pr0=g.projection();
+ /* on the globe nothing is drawn outside the ball */
+ x.save();const disc=vis(g,pr0);if(disc){x.beginPath();x.arc(disc[0],disc[1],disc[2]+.5,0,7);x.clip()}
  /* on the globe, points on the far side are not drawn (the projection would mirror them onto the near side) */
- const ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]],ctr=[-ro[0],-ro[1]],pr=ll=>g._flat||d3.geoDistance(ll,ctr)<Math.PI/2-1e-3?pr0(ll):null;
+ const ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]],ctr=[-ro[0],-ro[1]],pr=ll=>{if(!(g._flat||d3.geoDistance(ll,ctr)<Math.PI/2-1e-3))return null;const q=pr0(ll);return q&&(!disc||Math.hypot(q[0]-disc[0],q[1]-disc[1])<=disc[2])?q:null};
  const stroke=(pts,col)=>{x.lineJoin=x.lineCap="round";x.beginPath();let pen=false,last=null;pts.forEach(p=>{if(!p){pen=false;return}if(pen&&last&&Math.abs(p[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);pen=true;last=p});
   x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=4;x.stroke();x.strokeStyle=col;x.lineWidth=2;x.stroke()};
  lines.forEach(L=>{const pts=L.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null});stroke(pts,L.c);
@@ -218,7 +224,7 @@ function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFram
   if(lines.length===1&&L.edit&&!armed){const E=L.edit.pts;E.forEach((ll,i)=>{if(L.edit.kind==="line"||i===0||i===E.length-1)return;const q=pr(ll);if(!q)return;x.fillStyle="#fff";x.strokeStyle=L.c;x.lineWidth=1.6;x.beginPath();x.arc(q[0],q[1],4.2,0,7);x.fill();x.stroke()})}
   if(lines.length===1){lab(pts[0],"A");lab(pts[pts.length-1],"B")}});
  if(drawing){stroke(drawing.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null}),"#c0392b")}
- if(hover){const q=pr(hover.ll);if(q){x.fillStyle=hover.c||"#c0392b";x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],6,0,7);x.fill();x.stroke()}}}
+ if(hover){const q=pr(hover.ll);if(q){x.fillStyle=hover.c||"#c0392b";x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],6,0,7);x.fill();x.stroke()}}x.restore()}
 /* ---------- named landforms along a line ----------
    mountain ranges, plateaus, plains, basins and deserts (the outlines the map search uses), the map's own seas and lakes,
    and the deep-sea trenches (rough centre lines) */
