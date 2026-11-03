@@ -606,7 +606,7 @@ setInterval(()=>{try{
  if(ms&&appMode!=="allmaps")ms.remove();
  /* the map key (bottom right) */
  const k=document.getElementById("flKey");if(k){freeDrag(k,".flk-h,.flk-pill","keyBR");if(FPOS.keyBR&&!k.style.right)restore(k,"keyBR")}}catch(e){}},300);
-window.gfToolkit={cursorFor,S,K,render,toLL,toScreen,putAway,dropTool,openPalette,seaPanel,penPicker,pinMenu,lift};
+window.gfToolkit={cursorFor,S,K,render,toLL,toScreen,putAway,dropTool,openPalette,seaPanel,penPicker,pinMenu,lift,select:(i,add)=>geoSelect(i,add)};
 
 /* ================= look ================= */
 const css=document.createElement("style");css.textContent=`
@@ -669,6 +669,7 @@ body.dark-theme .gfk-px, body.sky-night .gfk-px{ background:rgba(255,255,255,.12
 .gfk-pinlist li{ display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid rgba(0,0,0,.06); }
 .gfk-pinlist i{ width:12px; height:12px; border-radius:50%; flex:none; box-shadow:inset -2px -2px 3px rgba(0,0,0,.25); }
 .gfk-pinlist [data-go]{ flex:1; text-align:left; border:0; background:none; font:700 13px system-ui; color:#22324a; cursor:pointer; padding:0; } .gfk-pinlist small{ display:block; font-weight:500; font-size:11px; opacity:.65; }
+.gfk-xacts{ flex-basis:100%; display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; } .gfk-xacts button.pri{ background:#2a9d8f; color:#fff; border-color:#2a9d8f; }
 .gfk-del{ border:0; background:none; font-size:18px; color:rgba(22,50,79,.4); cursor:pointer; }
 .gfk-f{ display:block; font-size:11.5px; font-weight:700; color:#56677a; margin:6px 0; } .gfk-f input, .gfk-f textarea{ display:block; width:100%; box-sizing:border-box; margin-top:3px; border:1px solid rgba(22,50,79,.2); border-radius:8px; padding:6px 8px; font:500 13px system-ui; color:#22324a; resize:vertical; }
 .gfk-ll{ font:700 12.5px "JetBrains Mono",ui-monospace,monospace; color:#3a5068; margin:-2px 0 8px; display:flex; gap:8px; align-items:baseline; } .gfk-ll small{ font-weight:500; opacity:.6; font-size:11px; }
@@ -956,6 +957,21 @@ function geoList(){const box=document.querySelector("#gfkGeoMore .gfk-shapes");i
  box.innerHTML='<p class="gfk-hint">Your shapes ('+ink.length+'), top of the list is drawn on top. Click to pick, Shift-click to pick several, × removes one.</p><ul>'+ink.map((s,i)=>'<li data-si="'+i+'" class="'+(L.includes(i)?"on":"")+'"><i style="background:'+esc(s.c||"#888")+'"></i><span>'+kindOf(s)+(s.tx?' “'+esc(s.tx.slice(0,18))+'”':'')+(s.lab?' <small>'+esc(s.lab)+'</small>':'')+'</span><button type="button" data-sx="'+i+'" aria-label="Remove this shape" title="Remove">×</button></li>').reverse().join("")+'</ul>';
  box.querySelectorAll("[data-si]").forEach(li=>li.onclick=e=>{if(e.target.closest("[data-sx]"))return;const i=+li.dataset.si;if(e.shiftKey)geoSelect(i,true);else geoSelect(GEO.sel===i&&L.length===1?-1:i)});
  box.querySelectorAll("[data-sx]").forEach(b=>b.onclick=()=>geoDelete(+b.dataset.sx));const on=box.querySelector("li.on");if(on)on.scrollIntoView({block:"nearest"});geoInfo()}
+/* what you can find out about the chosen drawing, said out loud: a line gets its cross-section, a point its climate, a
+   shape the people living in it, and each one "More details" (the full details card) */
+function xKind(s){const g=s&&s.g;if(!g)return s&&s.t!=="geoText"&&s.p&&s.p.length>1?"line":null;if(g.m==="point")return"point";if(g.m==="text")return null;
+ if(g.m==="poly"?g.cl:["compass","rect","oval","ring"].includes(g.m))return"shape";return"line"}
+function xActs(s,many){if(many||!s)return"";const k=xKind(s);if(!k)return"";const A=[];
+ if(k==="line"&&window.gfCrossSection)A.push('<button type="button" data-x="xs" title="The ups and downs of the land along this line">✂ Cross-section</button>');
+ if(k==="point"&&window.gfThermo)A.push('<button type="button" data-x="cl" title="Climate graph for this place: temperature and rainfall month by month">🌡 Climate</button>');
+ if(k==="shape"&&window.gfShapeInfo)A.push('<button type="button" data-x="pp" title="How many people live inside this shape">👥 Population</button>');
+ if(window.gfShapeInfo)A.push('<button type="button" data-x="info" class="pri" title="'+(k==="line"?"Height profile, countries crossed, flight and shortest route, climate along the way":k==="point"?"The place, its climate, sun and daylight, people nearby, the place through time":"People, countries inside, height, what the land is made of")+'">ⓘ More details</button>');
+ return A.length?'<div class="gfk-xacts">'+A.join("")+'</div>':""}
+function xWire(box,s){box.querySelectorAll("[data-x]").forEach(b=>b.onclick=e=>{e.stopPropagation();const x=b.dataset.x,i=K().ink.indexOf(s);try{
+  if(x==="xs"){if(!document.querySelector(".gf-xs"))gfCrossSection.start();setTimeout(()=>gfCrossSection.pick("d"+i),60)}
+  else if(x==="cl"){gfThermo.start();gfThermo.pick(s.g.A.slice())}
+  else if(x==="pp"){gfShapeInfo.open(s)}
+  else if(x==="info"){gfShapeInfo.open(s)}}catch(err){console.error(err)}})}
 /* the chosen shapes. The geometry panel keeps a short bar (size, Duplicate, Remove); outline, fill, arrows, text and order
    are in the separate "More settings" window, so the panel stays small */
 function morePanel(id,title,html,anchor){let m=document.getElementById(id);if(!m){m=document.createElement("div");m.className="gfk-panel gfk-more";m.id=id;document.body.appendChild(m);
@@ -971,7 +987,8 @@ function geoBar(){const box=document.querySelector("#gfkGeo .gfk-selbar");if(!bo
  const r=!many&&g&&(g.m==="ring"?g.km:g.m==="compass"&&g.tru?Math.round(hav(g.A,g.B)*KM):null);
  box.innerHTML='<b>'+(many?L.length+" shapes":kindOf(s))+'</b>'+(r!=null&&r!==false?'<label><input data-r type="number" min="1" max="20000" step="10" value="'+r+'"> km</label>':(!many&&s.lab?' <small>'+esc(s.lab)+'</small>':''))+
   (!many&&s.t==="geoText"?'<input data-tx type="text" maxlength="60" placeholder="Type here" value="'+esc(s.tx||"")+'">':'')+'<span class="gfk-sp"></span>'+
-  (!many&&g&&g.m==="ring"?'<button type="button" data-a="ring" title="Add a ring around the same centre">+ ring</button>':'')+'<button type="button" data-a="dup" title="Duplicate (Ctrl+D)">Duplicate</button><button type="button" data-a="del" class="gfk-del" title="Delete key">Remove</button>';
+  (!many&&g&&g.m==="ring"?'<button type="button" data-a="ring" title="Add a ring around the same centre">+ ring</button>':'')+'<button type="button" data-a="dup" title="Duplicate (Ctrl+D)">Duplicate</button><button type="button" data-a="del" class="gfk-del" title="Delete key">Remove</button>'+xActs(s,many);
+ xWire(box,s);
  const ri=box.querySelector("[data-r]");if(ri){let first=true;ri.oninput=()=>{const v=Math.max(1,Math.min(20000,+ri.value||0));if(!v)return;if(first){hist();first=false}if(g.m==="ring")g.km=v;else g.B=dest(g.A,bearing(g.A,g.B),v/KM);rebuild(s);save();render()};ri.onchange=()=>geoList()}
  const ti=box.querySelector("[data-tx]");if(ti){let first=true;ti.oninput=()=>{if(first){hist();first=false}s.tx=ti.value;document.querySelectorAll("#gfkGeo [data-tx],#gfkGeoMore [data-tx]").forEach(x=>{if(x!==ti)x.value=s.tx||""});save();render()};ti.onchange=()=>geoList();if(GEO._focusText){GEO._focusText=false;setTimeout(()=>{ti.focus();ti.select()},30)}}
  box.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==="del")geoDeleteMany(selList());else if(a==="dup"){copySel();pasteShapes(CLIP,24)}else if(a==="ring")addConcentric(s)})}
