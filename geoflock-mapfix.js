@@ -661,7 +661,7 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
        if(!up||!sb.offsetParent||!sb.children.length){if(mt)sb.style.removeProperty("margin-top")}
        else{const goal=(L&&L.offsetParent?L.getBoundingClientRect().bottom:std+12)+10,dd=Math.round(goal-sb.getBoundingClientRect().top);if(Math.abs(dd)>1)sb.style.setProperty("margin-top",(mt+dd)+"px","important")}}}}
    if(h.style.getPropertyValue("margin-top")!==MT+"px"||h.style.getPropertyPriority("margin-top")!=="important")h.style.setProperty("margin-top",MT+"px","important")});
-  const h=document.getElementById("amGlobeHost");if(h&&h!==cur){cur=h;if(obs)obs.disconnect();obs=new MutationObserver(()=>{/* at most every 120 ms: the globe touches its style while it draws, and each run reads the layout */if(fixT)return;fixT=setTimeout(()=>{fixT=0;fix()},120)});obs.observe(h,{attributes:true,attributeFilter:["style"]})}}catch(e){}}
+  const h=document.getElementById("amGlobeHost");if(h&&h!==cur){cur=h;if(obs)obs.disconnect();obs=new MutationObserver(()=>fix());obs.observe(h,{attributes:true,attributeFilter:["style"]})}}catch(e){}}
  setInterval(fix,300);document.addEventListener("click",()=>setTimeout(fix,0),true)})();
 /* the flat map's round buttons sit inside the map's empty corners (the map is an oval): zoom in, zoom out and reset in
    the top right; full screen, lock, relief underneath and clouds in the bottom right. Spin is for the globe only. */

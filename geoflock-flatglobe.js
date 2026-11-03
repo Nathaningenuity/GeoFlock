@@ -118,7 +118,8 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
 {const _r=P._render;P._render=function(){const D=defOf(this);if(!D){this._flat=false;return _r.apply(this,arguments)}
  window._gfFlatNow=this;const want=D.wanted();if(want!==!!this._flat){this._flat=want;if(want){this.zoom=Math.max(1,this.zoom);if(this._flatHome!==false){this.zoom=1;this.rot=[0,0]}}else{this.zoom=1;this.rot=this.cfg.rot?this.cfg.rot.slice():[-15,-20]}
   this.host.classList.toggle("gf-flat",want);const v=document.getElementById(D.view);if(v)v.classList.toggle("gf-flatc",want);if(want)setTimeout(()=>{try{wire(this);this.request()}catch(e){}},0)}
- this.host.style.removeProperty("margin-top");
+ /* the globe's offset is the layout fix's (geoflock-mapfix.js): reset only when switching between flat and globe, never on every frame (that made the globe and its buttons jump) */
+ if(this._gfMtFlat!==!!this._flat){this._gfMtFlat=!!this._flat;this.host.style.removeProperty("margin-top")}
  if(!this._flat)return _r.apply(this,arguments);
  this.host.style.setProperty("margin-top","10px","important");
  flatCtx(this);const{w,h,r}=this.size();this._flatR={w,h,r,s:r*this.zoom,p:this.projection(),skip:false};
