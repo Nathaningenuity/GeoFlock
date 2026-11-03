@@ -450,5 +450,24 @@ body.sky-night .hist-dock{background:rgba(29,37,70,.92);color:#e6ebfa}body.sky-n
 .hist-story .hs-grip{position:absolute;left:50%;top:-4px;width:40px;height:10px;margin-left:-20px;cursor:grab;background:radial-gradient(circle,#b9c3cd 1.6px,transparent 2px) 0 0/8px 5px;opacity:.9}
 .hist-story .hs-head::before{display:none}
 .hist-story .hs-head,.hist-story .hs-year{cursor:grab}`;document.head.appendChild(st);
+/* until the detailed borders for the year on show are in, the History map is covered by a "Loading" card (the older,
+   coarser map underneath is never shown on the Maps page); tour stops that use the older maps on purpose are left alone */
+{const ov=document.createElement("div");ov.className="gf-hload";ov.hidden=true;ov.setAttribute("role","status");
+ ov.innerHTML='<div><i aria-hidden="true"></i><b>Loading the History map…</b><span>5,000 years of borders, year by year</span><em><s></s></em></div>';
+ const css=document.createElement("style");css.textContent=`.gf-hload{position:absolute;z-index:58;display:flex;align-items:center;justify-content:center;border-radius:18px;background:rgba(236,242,248,.97);color:#22324a;font:500 14px system-ui,sans-serif;pointer-events:auto}
+.gf-hload>div{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.gf-hload i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(34,50,74,.15);border-top-color:#2a9d8f;animation:gfHl 0.9s linear infinite}
+.gf-hload b{font-size:17px}.gf-hload span{opacity:.7}
+.gf-hload em{display:block;width:180px;height:6px;border-radius:3px;background:rgba(34,50,74,.12);overflow:hidden}.gf-hload s{display:block;height:100%;width:0;background:#2a9d8f;transition:width .3s}
+.gf-hload[hidden]{display:none}
+@keyframes gfHl{to{transform:rotate(360deg)}}
+body.sky-night .gf-hload,body.dark .gf-hload{background:rgba(22,29,52,.97);color:#e6ebfa}`;document.head.appendChild(css);
+ const host=()=>{try{const g=document.getElementById("amGlobeHost");if(g&&g.offsetParent&&g.getBoundingClientRect().height>50)return g}catch(e){}const w=document.getElementById("allMapsWrap");return w&&w.offsetParent?w:null};
+ const ready=()=>{if(!IDX)return false;const k=chunkOf(curY);return k<0||!!CH[k]};
+ setInterval(()=>{let show=false;try{show=appMode==="allmaps"&&histOn()&&!(tourOn()&&tourOld)&&!ready()}catch(e){}
+  if(show){ensureIdx();if(IDX)need(curY);const h=host();if(!h){ov.hidden=true;return}if(!ov.isConnected)document.body.appendChild(ov);
+   const r=h.getBoundingClientRect();Object.assign(ov.style,{left:r.left+scrollX+"px",top:r.top+scrollY+"px",width:r.width+"px",height:r.height+"px"});
+   const tot=IDX?3:1,got=IDX?1+[chunkOf(curY)].filter(k=>CH[k]).length:0;ov.querySelector("s").style.width=Math.round(20+70*got/tot)+"%";ov.hidden=false}
+  else if(!ov.hidden){ov.hidden=true;try{amGlobe&&amGlobe.request&&amGlobe.request()}catch(e){}}},200)}
 window.GF_HIST2={usesNew:()=>useNew(),loading:()=>Object.keys(LOADING).length>0,years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?N-1:i)},year:()=>curY,setYear:y=>setYear(y),frame:()=>frame(),labels:()=>{const o=LBL.get(frame()._id+"#"+labMode()+"#"+fxKey());return o&&o.set},tr:()=>TR,imp:p=>impOf(p),focusInfo:()=>{const fr=frame();return{focus:histFocus,old:tourOld,y:curY,any:!!histFocus&&focusAny(fr),names:histFocus?[...new Set(fr.filter(f=>inFocus(f.properties)).map(f=>f.properties.n))].slice(0,6):[]}},featsAt:async y=>{for(let i=0;i<200&&!CH[chunkOf(y)];i++){need(y);await new Promise(r=>setTimeout(r,100))}return frameAt(y)||[]}};
 })();
