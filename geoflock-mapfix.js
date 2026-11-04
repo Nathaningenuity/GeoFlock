@@ -648,17 +648,20 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
      /* the globe sits higher: the top of the ball just above the second row of switches (its tour button, sub-map chips
         and round buttons are moved back down by the same amount, so they stay where they were) */
      const g=typeof amGlobe!=="undefined"&&amGlobe;let up=0;
-     if(g&&g.host===h&&!g._flat&&typeof amGlobeOn==="function"&&amGlobeOn()){const r2=secondRowTop();if(r2!=null){const pr=g.projection(),c=g.canvas.getBoundingClientRect(),sz=g.size(),sTop=c.top+sz.h/2-sz.r/* the ball at its normal size and place: zooming in must not move the map */,off=sTop-h.getBoundingClientRect().top;
+     /* decided by "is this the globe", not by how far it is raised: when that is 0–2 px it flipped every check, and the
+        tour button and sub-map chips jumped up and down by a couple of pixels non-stop */
+     const gOn=!!(g&&g.host===h&&!g._flat&&typeof amGlobeOn==="function"&&amGlobeOn());
+     if(gOn){const r2=secondRowTop();if(r2!=null){const pr=g.projection(),c=g.canvas.getBoundingClientRect(),sz=g.size(),sTop=c.top+sz.h/2-sz.r/* the ball at its normal size and place: zooming in must not move the map */,off=sTop-h.getBoundingClientRect().top;
        up=Math.max(0,Math.round(want-(r2-12-off)));want-=up}}
      const d=Math.round(want-h.getBoundingClientRect().top);MT=Math.abs(d)<=1?now:Math.max(-160,Math.min(60,now+d));
      /* the tour button and the round buttons sit where they do on the flat map (12 and 60 px below the map's usual top) */
      const std=row.getBoundingClientRect().bottom+GAP;[h.querySelector(":scope > .ps-launcher, :scope > .ps-launch"),h.querySelector(".globe-btns")].forEach(el=>{if(!el||!el.offsetParent)return;
       const mt=parseFloat(el.style.getPropertyValue("margin-top"))||0,base=el.classList.contains("globe-btns")?60:12;
-      /* the tour button: just under the last row of switches (no empty band); the round buttons stay put */const sw=[...document.querySelectorAll("#allMapsView .all-maps-controls")].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect().bottom),top0=sw.length?Math.max(...sw):row.getBoundingClientRect().bottom,gx=document.getElementById("gfsX"),gxb=gx&&gx.offsetParent?gx.getBoundingClientRect().bottom:0,goal=up?(base===12?Math.min(std+base,top0+10):Math.max(Math.min(std+base,top0+8),gxb+10)):null;/* the round buttons: right under the switches, or under the list of places found *//* the round buttons too: right under the switches */if(goal==null){if(mt)el.style.removeProperty("margin-top");return}
+      /* the tour button: just under the last row of switches (no empty band); the round buttons stay put */const sw=[...document.querySelectorAll("#allMapsView .all-maps-controls")].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect().bottom),top0=sw.length?Math.max(...sw):row.getBoundingClientRect().bottom,gx=document.getElementById("gfsX"),gxb=gx&&gx.offsetParent?gx.getBoundingClientRect().bottom:0,goal=gOn?(base===12?Math.min(std+base,top0+10):Math.max(Math.min(std+base,top0+8),gxb+10)):null;/* the round buttons: right under the switches, or under the list of places found *//* the round buttons too: right under the switches */if(goal==null){if(mt)el.style.removeProperty("margin-top");return}
       const dd=Math.round(goal-el.getBoundingClientRect().top);if(Math.abs(dd)>1)el.style.setProperty("margin-top",(mt+dd)+"px","important")});
      /* the globe's sub-map chips: just under the tour button, as before */
      {const sb=document.getElementById("amGlobeSubs"),L=h.querySelector(":scope > .ps-launcher, :scope > .ps-launch");if(sb){const mt=parseFloat(sb.style.getPropertyValue("margin-top"))||0;
-       if(!up||!sb.offsetParent||!sb.children.length){if(mt)sb.style.removeProperty("margin-top")}
+       if(!gOn||!sb.offsetParent||!sb.children.length){if(mt)sb.style.removeProperty("margin-top")}
        else{const goal=(L&&L.offsetParent?L.getBoundingClientRect().bottom:std+12)+10,dd=Math.round(goal-sb.getBoundingClientRect().top);if(Math.abs(dd)>1)sb.style.setProperty("margin-top",(mt+dd)+"px","important")}}}}
    if(h.style.getPropertyValue("margin-top")!==MT+"px"||h.style.getPropertyPriority("margin-top")!=="important")h.style.setProperty("margin-top",MT+"px","important")});
   const h=document.getElementById("amGlobeHost");if(h&&h!==cur){cur=h;if(obs)obs.disconnect();obs=new MutationObserver(()=>fix());obs.observe(h,{attributes:true,attributeFilter:["style"]})}}catch(e){}}
