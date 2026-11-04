@@ -689,3 +689,13 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 /* the map key on the right opens with every map (folding it away lasts until the next map) */
 (function(){let last=null;setInterval(()=>{try{if(appMode!=="allmaps")return;const m=allMapsColorMode+"|"+(typeof allMapsSubMode!=="undefined"?JSON.stringify(allMapsSubMode[allMapsColorMode]||""):"");
  if(last!==null&&m!==last&&stats.prefs&&stats.prefs.flkFold){stats.prefs.flkFold=false;try{saveStats()}catch(e){}try{flkSync(true)}catch(e){}}last=m}catch(e){}},400)})();
+/* a lighter copy of each country's shape for while the globe moves (a point every ~0.12°, under a pixel at normal zoom):
+   drawing the full shapes was most of the time of each frame of a drag. At rest the full shapes are drawn again. */
+(function(){const M=new WeakMap();
+ const ring=r=>{if(r.length<12)return r;const o=[r[0]];let q=r[0];for(let i=1;i<r.length-1;i++){const p=r[i];if(Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])>.12){o.push(p);q=p}}o.push(r[r.length-1]);return o.length>=4?o:r};
+ window.gfLoF=function(f){let v=M.get(f);if(v)return v;const g=f.geometry;if(!g){M.set(f,f);return f}
+  let ng=g;if(g.type==="Polygon")ng={type:"Polygon",coordinates:g.coordinates.map(ring)};else if(g.type==="MultiPolygon")ng={type:"MultiPolygon",coordinates:g.coordinates.map(P=>P.map(ring))};
+  v={type:"Feature",properties:f.properties,geometry:ng};M.set(f,v);return v};
+ /* after the globe stops moving, one more frame at full detail */
+ let t=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g)return;if(g._moving){t=1}else if(t){t=0;g.request?g.request():g.render()}}catch(e){}},200)})();
+
