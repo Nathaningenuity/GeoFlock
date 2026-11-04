@@ -668,4 +668,6 @@ if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(mine())prep(p
 /* covers for the Guided tours page cards */
 try{if(typeof TOUR_THUMBS!=="undefined"){const C={biomes:"Acacia tree on a sunrise safari at the Serengeti National Park, Tanzania.jpg",forests:"Valdivian rainforest.jpg",ocean:"Reefscape in the Bird's Head Seascape.jpg",amigration:"Western white-bearded wildebeest (Connochaetes taurinus mearnsi) Mara River crossing 2c.jpg",crops:"Corncobs.jpg"};
  const set=()=>{for(const id in C){if(TOUR_THUMBS[id])continue;const p=findP(C[id]);if(p&&p.d&&/^photos\//.test(p.d))TOUR_THUMBS[id]=p.d}};set();addEventListener("load",()=>setTimeout(set,1500))}}catch(e){}
+/* Too many boats: the fishery model (set the catch, watch the stock) */
+try{if(typeof PS_DIAG!=="undefined"&&typeof DG!=="undefined"&&DG.fishery)PS_DIAG["ocean|Too many boats"]="fishery"}catch(e){}
 })();
