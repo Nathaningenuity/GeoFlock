@@ -511,7 +511,7 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
 function line(a,b,t,pts){if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify(pts&&pts.length>1?pts:[a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
 /* Esc: out of drawing at once (a stroke in progress is dropped), the pen goes; a second Esc closes the panel */
 addEventListener("keydown",e=>{if(e.key!=="Escape"||!on)return;if(armed||drawing){armed=false;drawing=null;try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(er){}renderPanel();e.preventDefault();e.stopImmediatePropagation()}},true);
-window.gfCrossSection={start,stop,pick,line,clear:()=>clearLine(),editPoints:()=>{const L=lines.length===1&&lines[0].edit;if(!L)return null;const r=G().canvas.getBoundingClientRect();return L.pts.map(ll=>{const q=scr(ll);return q?[q[0]+r.left,q[1]+r.top]:null})},get lineCount(){return lines.length},elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
+window.gfCrossSection={start,stop,pick,line,loadLakes,lakeAt:ll=>lakeAt(ll),clear:()=>clearLine(),editPoints:()=>{const L=lines.length===1&&lines[0].edit;if(!L)return null;const r=G().canvas.getBoundingClientRect();return L.pts.map(ll=>{const q=scr(ll);return q?[q[0]+r.left,q[1]+r.top]:null})},get lineCount(){return lines.length},elevAt,loadDEM,stem,lfAt,loadLF,get presets(){return PRESETS},get armed(){return on&&armed},get drawing(){return!!drawing}};
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
 /* the cross-section panel stays a compact size: on a full-screen map it no longer stretches across the whole screen */
