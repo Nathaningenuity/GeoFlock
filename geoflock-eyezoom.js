@@ -9,26 +9,40 @@
    26 April 2023), https://images.nasa.gov/details/iss069e005471 . NASA, public domain.
    Patch pattern as in geoflock-niagara.js: runs after window load + 1.5 s, re-runs at +5 and +12 s, guarded. */
 (function(){
-const TOUR="space",TITLE="The colours of the Sahara";
-const EYE=[-11.40,21.12],RING_KM=24;/* the outer ring is about 40–50 km across */
-const IMG="photos/richat-iss069e005471.webp";
+/* every magnified place: the stop, the spot, the ring's radius in km, the close-up and its caption.
+   Island close-ups: Sentinel-2 cloudless 2016 by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2016),
+   CC BY 4.0, https://s2maps.eu . */
+const S2="Sentinel-2 cloudless 2016 by EOX · CC BY 4.0";
+const ZOOMS=[
+ {tour:"space",title:"The colours of the Sahara",at:[-11.40,21.12],ringKm:24,img:"photos/richat-iss069e005471.webp",name:"The Eye of the Sahara",sub:"about 40 km across · seen from the ISS",credit:"Photo: NASA"},
+ {tour:"islandlife",title:"Christmas Island’s red crabs",at:[105.63,-10.49],ringKm:12,img:"photos/s2-christmas.webp",name:"Christmas Island",sub:"about 19 km across · from space",credit:S2},
+ {tour:"amigration",title:"Red crabs march to the sea",at:[105.63,-10.49],ringKm:12,img:"photos/s2-christmas.webp",name:"Christmas Island",sub:"about 19 km across · from space",credit:S2},
+ {tour:"islands",title:"Tiny island, two nations",at:[-63.06,18.06],ringKm:11,img:"photos/s2-stmartin.webp",name:"Saint Martin",sub:"French north, Dutch south · about 15 km across",credit:S2,
+  /* the stop's two flag tags sit on the close-up (French north, Dutch south) instead of covering the island on the map */
+  tags:[["fr","France",28],["nl","Netherlands",74]]},
+ {tour:"oceania",title:"The smallest island country",at:[166.93,-0.525],ringKm:4,img:"photos/s2-nauru.webp",name:"Nauru",sub:"21 km² · about 6 km across",credit:S2},
+ {tour:"hoceania",title:"Easter Island’s giants",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
+ {tour:"bcollapse",title:"Easter Island",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
+ {tour:"islandlife",title:"Krakatoa starts again",at:[105.42,-6.11],ringKm:7,img:"photos/s2-krakatau.webp",name:"Krakatoa",sub:"what is left of the 1883 volcano, Anak Krakatau in the middle",credit:S2}];
+let C=ZOOMS[0];
 const clean=s=>String(s==null?"":s).replace(/​/g,"").trim();
 const tourOn=()=>typeof ps!=="undefined"&&!!ps;
-const active=()=>{try{return tourOn()&&ps.tour===TOUR&&clean((psSteps()[ps.i]||{}).title)===TITLE}catch(e){return false}};
+const active=()=>{try{if(!tourOn())return false;const t=clean((psSteps()[ps.i]||{}).title),z=ZOOMS.find(z=>z.tour===ps.tour&&z.title===t);if(z)C=z;return!!z}catch(e){return false}};
 /* where the reader dragged the close-up, as an offset from the eye on screen (so it follows the map); reset per visit */
 let OFF=null,KEY=null,drag=null;
 
 function layer(box){let L=box.querySelector(".gf-eyez");
+ if(L&&L._z!==C){L.remove();L=null}
  if(!L){L=document.createElement("div");L.className="gf-eyez";L.setAttribute("aria-hidden","true");
-  L.innerHTML='<svg class="gf-eyez-svg"><path class="gf-eyez-cone"/><path class="gf-eyez-tan"/><circle class="gf-eyez-ring0"/><circle class="gf-eyez-ring"/></svg>'+
-   '<div class="gf-eyez-lens"><div class="gf-eyez-img" style="background-image:url('+IMG+')"></div>'+
-   '<div class="gf-eyez-cap"><b>The Eye of the Sahara</b><span>about 40 km across · seen from the ISS</span><small>Photo: NASA</small></div></div>';
+  L._z=C;L.innerHTML='<svg class="gf-eyez-svg"><path class="gf-eyez-cone"/><path class="gf-eyez-tan"/><circle class="gf-eyez-ring0"/><circle class="gf-eyez-ring"/></svg>'+
+   '<div class="gf-eyez-lens"><div class="gf-eyez-img" style="background-image:url('+C.img+')">'+(C.tags||[]).map(t=>'<span class="gf-eyez-tag" style="top:'+t[2]+'%"><img src="'+(typeof flagUrl==="function"?flagUrl(t[0],"w40"):"")+'" alt="">'+t[1]+'</span>').join("")+'</div>'+
+   '<div class="gf-eyez-cap"><b>'+C.name+'</b><span>'+C.sub+'</span><small>'+C.credit+'</small></div></div>';
   box.appendChild(L);
   const lens=L.querySelector(".gf-eyez-lens");
   /* keep the map's own pan and zoom off the close-up */
   ["pointerdown","mousedown","touchstart","wheel","click","dblclick"].forEach(ev=>lens.addEventListener(ev,e=>e.stopPropagation(),{passive:ev!=="click"&&ev!=="dblclick"}));
   lens.addEventListener("pointerdown",e=>{if(e.button!==undefined&&e.button!==0)return;
-   const c=psScreen(EYE),x=parseFloat(lens.style.left),y=parseFloat(lens.style.top);if(!c||!isFinite(x))return;
+   const c=psScreen(C.at),x=parseFloat(lens.style.left),y=parseFloat(lens.style.top);if(!c||!isFinite(x))return;
    drag={id:e.pointerId,x0:e.clientX,y0:e.clientY,ox:x-c[0],oy:y-c[1]};lens.classList.add("gf-eyez-drag");
    try{lens.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()});
   lens.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;e.stopPropagation();
@@ -37,7 +51,7 @@ function layer(box){let L=box.querySelector(".gf-eyez");
   lens.addEventListener("pointerup",end);lens.addEventListener("pointercancel",end);
   lens.addEventListener("dblclick",()=>{OFF=null;place()})}
  return L}
-function remove(){document.querySelectorAll(".gf-eyez").forEach(x=>x.remove())}
+function remove(){document.querySelectorAll(".gf-eyez").forEach(x=>x.remove());document.querySelectorAll(".gf-ftags").forEach(x=>x.style.visibility="")}
 
 /* screen rectangle of the card, in the box's coordinates (null if it is not over the map) */
 function cardRect(br){try{const c=ps.card;if(!c||c.offsetParent===null)return null;const r=c.getBoundingClientRect();
@@ -49,9 +63,10 @@ function place(){
  {const k=ps.tour+"|"+ps.i;if(k!==KEY){KEY=k;OFF=null}}
  const box=psContainer&&psContainer();if(!box)return;
  document.querySelectorAll(".gf-eyez").forEach(x=>{if(x.parentElement!==box)x.remove()});
- const L=layer(box),c=psScreen(EYE);
+ const L=layer(box),c=psScreen(C.at);
+ {const ft=box.querySelector(".gf-ftags");if(ft)ft.style.visibility=C.tags?"hidden":""}
  if(!c){L.style.display="none";return}
- const n=psScreen([EYE[0],EYE[1]+RING_KM/111.2]);
+ const n=psScreen([C.at[0],C.at[1]+C.ringKm/111.2]);
  const r=Math.max(9,Math.min(80,n?Math.hypot(n[0]-c[0],n[1]-c[1]):9));
  const W=box.clientWidth,H=box.clientHeight,br=box.getBoundingClientRect();
  /* keep inside the visible window, too (the globe's stage can be larger than the screen) */
@@ -59,7 +74,7 @@ function place(){
  const R=Math.round(Math.max(56,Math.min(118,Math.min(vx1-vx0,vy1-vy0)*.15)));
  const small=innerWidth<=600,CAP=small?22:46,M=small?6:12,HW=Math.max(R,small?60:92),card=cardRect(br);
  /* other things on the map to keep clear of: the photo squares and the stop's own pins */
- const avoid=[];try{box.querySelectorAll(".ps-sq,.ps-pin,.ps-legend,.ps-tourlegend,.globe-btns button").forEach(el=>{if(el.closest(".gf-eyez"))return;const q=el.getBoundingClientRect();if(q.width&&q.height)avoid.push({l:q.left-br.left,r:q.right-br.left,t:q.top-br.top,b:q.bottom-br.top})})}catch(e){}
+ const avoid=[];try{box.querySelectorAll(".ps-sq,.ps-pin,.ps-legend,.ps-tourlegend,.ps-mapkey,.ps-lbl,.globe-btns button").forEach(el=>{if(el.closest(".gf-eyez"))return;const q=el.getBoundingClientRect();if(q.width&&q.height)avoid.push({l:q.left-br.left,r:q.right-br.left,t:q.top-br.top,b:q.bottom-br.top})})}catch(e){}
  const ok=(x,y)=>{const rc={l:x-HW,r:x+HW,t:y-R,b:y+R+CAP};
   if(rc.l<vx0+M||rc.r>vx1-M||rc.t<vy0+M||rc.b>vy1-M)return-1;
   if(card&&hits(rc,card))return-1;
@@ -102,6 +117,10 @@ function hook(){if(hooked||typeof psPhPinsSync!=="function"||typeof psScreen!=="
 .gf-eyez-lens{ position:absolute; pointer-events:auto; cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none; width:calc(var(--R) * 2); transform:translate(-50%,calc(var(--R) * -1)); }
 .gf-eyez-img{ width:calc(var(--R) * 2); height:calc(var(--R) * 2); border-radius:50%; background-size:cover; background-position:center;
   border:3px solid #ffb347; box-shadow:0 0 0 2px rgba(255,255,255,.9), 0 8px 24px rgba(0,0,0,.45); box-sizing:border-box; }
+.gf-eyez-img{ position:relative; }
+.gf-eyez-tag{ position:absolute; left:50%; transform:translate(-50%,-50%); display:flex; align-items:center; gap:4px; padding:2px 7px 2px 3px; border-radius:999px;
+  background:rgba(255,255,255,.92); color:#1d2a3a; font:800 10.5px system-ui,sans-serif; white-space:nowrap; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+.gf-eyez-tag img{ width:16px; height:11px; border-radius:2px; object-fit:cover; }
 .gf-eyez-lens.gf-eyez-drag{ cursor:grabbing; }
 .gf-eyez-lens.gf-eyez-drag .gf-eyez-img{ box-shadow:0 0 0 2px #fff, 0 14px 34px rgba(0,0,0,.55); }
 .gf-eyez-cap{ margin-top:6px; text-align:center; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.85), 0 0 8px rgba(0,0,0,.6); line-height:1.2; white-space:nowrap; }
