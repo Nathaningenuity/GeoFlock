@@ -220,12 +220,19 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    card.addEventListener("pointermove",mv);card.addEventListener("pointerup",up);card.addEventListener("pointercancel",up)});
   ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el);e._els.push(el);labOf(e);
   const sp=spotFor(e);if(sp){const s2=e._spot=document.createElement("div");s2.className="gfs-spotpin";s2.innerHTML=sp;document.body.appendChild(s2);e._els.push(s2);e._base=[0,-34]}else e._base=[0,0]}
- if(!el&&mode!=="icon"&&mode!=="city"){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-name";el.innerHTML='<span class="gfs-lab">'+esc(e.n)+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
+ if(!el&&mode!=="icon"&&mode!=="city"){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-name";el.innerHTML='<span class="gfs-lab">'+esc(e.n)+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e);
+  /* a name can be dragged off its place too (a line keeps it tied); an island's name starts a little above the island */
+  e._base=e.cat==="islands"||e.cat==="groups"?[0,-16]:[0,0];const lab=el.querySelector(".gfs-lab");
+  lab.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._off||e._base||[0,0],x0=ev.clientX,y0=ev.clientY;try{lab.setPointerCapture(ev.pointerId)}catch(err){}
+   const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(Math.hypot(dx,dy)<3)return;e._off=[o[0]+dx,o[1]+dy];pin(e)};
+   const up=()=>{lab.removeEventListener("pointermove",mv);lab.removeEventListener("pointerup",up);lab.removeEventListener("pointercancel",up)};
+   lab.addEventListener("pointermove",mv);lab.addEventListener("pointerup",up);lab.addEventListener("pointercancel",up)});
+  ["click","mousedown","wheel"].forEach(t=>lab.addEventListener(t,ev=>ev.stopPropagation()))}
  if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
   el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
  const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
  const s0=screenOf(e.ll);if(!s0){hide();return}const wr=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();
- if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
+ if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo")||el.classList.contains("gfs-name"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
  if(isPh){let ln=e._leash;let far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;
@@ -326,7 +333,8 @@ const css=document.createElement("style");css.textContent=`
 #gfsX .gfs-row b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.18); align-items:center; justify-content:center; font-size:15px; }
 #gfsX .gfs-row b:hover{ background:#e8701a; }
 #gfsX .gfs-row b.gfs-tagb.off{ background:rgba(232,112,26,.85); }
-.gfs-nolab .gfs-lab{ display:none !important; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
+.gfs-nolab .gfs-lab{ display:none !important; }
+.gfs-pin.gfs-name .gfs-lab{ pointer-events:auto; cursor:grab; touch-action:none; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
 #gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
 #gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
