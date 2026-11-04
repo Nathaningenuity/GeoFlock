@@ -100,7 +100,7 @@ function render(){const p=mount();if(!p)return;p.style.display=quiet?"none":"";l
   '<p class="gfth-src">WorldClim 2.1 monthly averages, 1970–2000 (CC BY 4.0), at about 55 km; the Köppen type is worked out from the same numbers.</p>';
  p.querySelector(".gfth-x").onclick=()=>stop();
  p.querySelectorAll("[data-ti]").forEach(b=>b.onclick=e=>{const x=e.target.closest("[data-tx]");if(x){remove(+x.dataset.tx);return}show(+b.dataset.ti)});place()}
-function show(i){if(!items[i])return;quiet=false;last=items[i];render()}
+function show(i){if(!items[i])return;quiet=false;last=items[i];if(!on){on=true;sync()}render()}
 function remove(i){const it=items[i];if(!it)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();items.splice(i,1);if(last===it)last=items[items.length-1]||null;render()}
 function mkPin(it,g){const h=g.host;if(it.pin&&it.pin.parentNode===h)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();
  const p=document.createElement("div");p.className="gfth-pin";p.title="Click to show this thermometer · drag to move it";h.appendChild(p);it.pin=p;it.pk="";
@@ -115,7 +115,7 @@ function mkPin(it,g){const h=g.host;if(it.pin&&it.pin.parentNode===h)return;if(i
  p.addEventListener("click",e=>{e.stopPropagation();e.preventDefault()});
  const t=document.createElement("div");t.className="gfth-tag";h.appendChild(t);it.tag=t}
 function place(){const g=G();if(!g)return;const pr=g.projection(),ro=pr.rotate?pr.rotate():[0,0],c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();
- items.forEach(it=>{mkPin(it,g);if(!on){it.pin.style.display=it.tag.style.display="none";return}
+ items.forEach(it=>{mkPin(it,g);
   const q=pr(it.ll);let vis=!!q&&isFinite(q[0]);if(vis&&!g._flat){try{vis=d3.geoDistance(it.ll,[-ro[0],-ro[1]])<Math.PI/2&&(!window.gfGlobeShows||gfGlobeShows(g,q))}catch(e){}}
   if(!vis){it.pin.style.display=it.tag.style.display="none";return}
   const t=tNow(it),k=(t==null?"n":Math.round(t*2))+(it===last?"s":"");if(it.pk!==k){it.pk=k;it.pin.innerHTML=gauge(t);it.pin.classList.toggle("sel",it===last)}
@@ -150,9 +150,14 @@ let swallow=0;
 addEventListener("pointerdown",onDown,true);addEventListener("pointerup",onUp,true);
 /* the click that placed the pin does not also open a country card */
 addEventListener("click",e=>{if(performance.now()-swallow<400){e.stopImmediatePropagation();e.preventDefault()}},true);
+/* the map now sees the press too (so it can pan), so its own tap would open the country card: not right after a thermometer tap */
+(function hookFZ(){if(typeof openFlagZoom!=="function"){setTimeout(hookFZ,800);return}if(openFlagZoom._th)return;const _f=openFlagZoom;
+ openFlagZoom=function(){if(performance.now()-swallow<700)return;return _f.apply(this,arguments)};openFlagZoom._th=1})();
 function start(){on=true;load();mount();render();sync()}
-function stop(){on=false;if(panel){panel.remove();panel=null}items.forEach(it=>{if(it.pin)it.pin.style.display="none";if(it.tag)it.tag.style.display="none"});sync()}
-(function loop(){try{if(on){if(appMode!=="allmaps")stop();else if(G()){if(!panel||!panel.isConnected||(panel.parentNode!==G().host&&!panel._float))render();place()}}}catch(e){}requestAnimationFrame(loop)})();
+/* closing the tool keeps the thermometers on the map (a click on one opens it again); only new ones cannot be placed */
+function stop(){on=false;if(panel){panel.remove();panel=null}sync()}
+(function loop(){try{if(on){if(appMode!=="allmaps")stop();else if(G()){if(!panel||!panel.isConnected||(panel.parentNode!==G().host&&!panel._float))render();place()}}
+ else if(items.length&&appMode==="allmaps"&&G())place()}catch(e){}requestAnimationFrame(loop)})();
 function sync(){try{const g=G();if(g)g.host.classList.toggle("gfth-on",on)}catch(e){}document.querySelectorAll(".gfk-thermo").forEach(b=>b.classList.toggle("on",on))}
 
 /* ---------- the Toolkit slot ---------- */
