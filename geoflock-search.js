@@ -116,6 +116,7 @@ function inRings(x,y,R){let c=false;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.l
 /* how far along (ux,uy) from (x,y) the ray leaves the area */
 function exitPx(x,y,u,R){let far=0;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[j],b=r[i],ex=b[0]-a[0],ey=b[1]-a[1],den=u[0]*ey-u[1]*ex;if(Math.abs(den)<1e-9)continue;
   const wx=a[0]-x,wy=a[1]-y,t=(wx*ey-wy*ex)/den,v=(wx*u[1]-wy*u[0])/den;if(t>0&&v>=0&&v<=1&&t>far)far=t}});return far}
+function labOf(e){(e._els||[]).forEach(x=>{if(x&&x.classList)x.classList.toggle("gfs-nolab",!!e.nolab)})}
 function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
 function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
 function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.splice(i,1);try{if(onGlobe())amGlobe.request()}catch(er){}xBtn()}
@@ -180,11 +181,11 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;e._off=[o[0]+dx,o[1]+dy];pin(e)};
    const up=()=>{card.removeEventListener("pointermove",mv);card.removeEventListener("pointerup",up);card.removeEventListener("pointercancel",up);if(!moved){const Q=picsFor(e)[e._pi||0];try{psPhotoOpen(Q?Q.P:P,Q?Q.cap:e.n)}catch(err){}}};
    card.addEventListener("pointermove",mv);card.addEventListener("pointerup",up);card.addEventListener("pointercancel",up)});
-  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el);e._els.push(el);
+  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el);e._els.push(el);labOf(e);
   const sp=spotFor(e);if(sp){const s2=e._spot=document.createElement("div");s2.className="gfs-spotpin";s2.innerHTML=sp;document.body.appendChild(s2);e._els.push(s2);e._base=[0,-34]}else e._base=[0,0]}
- if(!el&&mode!=="icon"&&mode!=="city"){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-name";el.innerHTML='<span class="gfs-lab">'+esc(e.n)+'</span>';document.body.appendChild(el);e._els.push(el)}
+ if(!el&&mode!=="icon"&&mode!=="city"){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-name";el.innerHTML='<span class="gfs-lab">'+esc(e.n)+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
  if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
-  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el)}
+  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
  const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
  const s0=screenOf(e.ll);if(!s0){hide();return}const wr=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();
  if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
@@ -226,8 +227,10 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
   ["pointerdown","mousedown","click"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation()));
   b.addEventListener("click",ev=>{const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
    if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
-   if(x){const e=LIST[+x.dataset.gx];if(e)removeOne(e);draw();return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
- b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+EMO[e.cat]+' '+esc(e.n)+'</span><b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+   if(x){const e=LIST[+x.dataset.gx];if(e)removeOne(e);draw();return}
+   /* the tag button: hide or show this result's name on the map */
+   const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+EMO[e.cat]+' '+esc(e.n)+'</span><b data-gl="'+i+'" class="gfs-tagb'+(e.nolab?' off':'')+'" title="'+(e.nolab?'Show its label':'Hide its label')+'" aria-label="'+(e.nolab?'Show':'Hide')+' the label of '+esc(e.n)+'"><svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M2 3h6.5l5 5-5 5H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="5.2" cy="8" r="1.2" fill="currentColor"/>'+(e.nolab?'<path d="M1.5 14.5 14.5 1.5" stroke="currentColor" stroke-width="1.6"/>':'')+'</svg></b><b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
 function wire(){loadProv();loadRegs();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
@@ -282,7 +285,9 @@ const css=document.createElement("style");css.textContent=`
 #gfsX{ position:absolute; right:0; left:auto; top:calc(100% + 6px); display:flex; flex-direction:column; align-items:flex-end; gap:4px; z-index:45; }
 #gfsX .gfs-row{ display:flex; gap:8px; align-items:center; border-radius:999px; padding:5px 6px 5px 12px; background:rgba(16,28,48,.88); color:#fff; font:600 12.5px/1 system-ui,sans-serif; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.25); }
 #gfsX .gfs-row b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.18); align-items:center; justify-content:center; font-size:15px; }
-#gfsX .gfs-row b:hover{ background:#e8701a; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
+#gfsX .gfs-row b:hover{ background:#e8701a; }
+#gfsX .gfs-row b.gfs-tagb.off{ background:rgba(232,112,26,.85); }
+.gfs-nolab .gfs-lab{ display:none !important; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
 #gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
 #gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
