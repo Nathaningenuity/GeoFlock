@@ -83,7 +83,9 @@ let FN=null;function phFor(e){if(e.phf!==undefined)return e.phf;e.phf=null;if(e.
  if(!FN)FN=PS_PHOTO_DATA.filter(x=>x&&x.d&&x.f).map(x=>[norm(x.f.replace(/\.[a-z]+$/i,"")),x.f]);const n=norm(e.n);
  const tries={rivers:[n+" river","river "+n,"rio "+n,n],lakes:[n,"lake "+n],islands:[n+" island",n],groups:[n+" islands",n],peaks:[n,"mount "+n],volcanoes:[n,"mount "+n],deserts:[n+" desert",n],ranges:[n+" mountains",n],forests:[n],waterfalls:[n],seas:[n],peninsulas:[n+" peninsula",n],cities:[]}[e.cat]||[];
  for(const t of tries){if(t.length<4)continue;const hit=FN.find(([k])=>k===t||k.startsWith(t+" ")||k.startsWith(t+",")||k.startsWith(t+"-"));if(hit){e.phf=hit[1];return e.phf}}
- const NP=window.GF_NAMEPH||{};for(const k of e.keys){if(NP[k]){e.phf=NP[k];return e.phf}}}catch(err){}return e.phf}
+ const NP=Object.assign({},window.GF_NAMEPH||{},XPH);for(const k of e.keys){if(NP[k]){e.phf=NP[k];return e.phf}}}catch(err){}return e.phf}
+/* a few more pictures by name */
+const XPH={"christmas island":"Christmas island red crabs - female with eggs chris bray-2.jpg","christmas island (australia)":"Christmas island red crabs - female with eggs chris bray-2.jpg"};
 /* every picture for a place, the most iconic first: a country's own photos (its best-known sight leads), or the
    place's photo and any other library photos named after it. Swapped with the ⇄ button on the card */
 function picsFor(e){if(e._pics)return e._pics;const L=[],seen=new Set(),add=(P,cap)=>{if(P&&P.d&&!seen.has(P.d)){seen.add(P.d);L.push({P,cap:cap||e.n})}};
@@ -202,7 +204,9 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
     if(x2>R.left+2&&x2<R.right-2&&y2>R.top+2&&y2<R.bottom-2){x2=R.left+R.width/2;y2=R.bottom-2}}}catch(er){}
    let len=Math.hypot(x2-x1,y2-y1);const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
    /* the Richat Structure: the line points at it from outside its rings (about 20 km out), with no dot covering it */
-   const nod=/richat/i.test(e.n||"")||!!AR;ln.classList.toggle("gfs-nodot",nod);
+   /* tiny islands too: the line points at them, no dot on them */
+   const isl=e.cat==="islands"&&!AR;const nod=/richat/i.test(e.n||"")||!!AR||isl;
+   if(isl&&len>14){const g=9;x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}ln.classList.toggle("gfs-nodot",nod);
    if(AR&&len>12){const u=[Math.cos(ang*Math.PI/180),Math.sin(ang*Math.PI/180)],g=Math.min(len-8,exitPx(x1,y1,u,AR)+3);if(g>0){x1+=u[0]*g;y1+=u[1]*g;len-=g}}
    if(nod){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
    ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
