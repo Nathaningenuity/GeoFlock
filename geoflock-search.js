@@ -244,8 +244,10 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
   let x1=s0[0],y1=s0[1];
    /* the line reaches the card itself: the point of the card (photo and name) nearest the place, so it never stops short,
       and a card dragged below its place is joined at its top edge */
-   let x2=x1+off[0],y2=y1+off[1]-4;try{const R=el.getBoundingClientRect();if(R.width){x2=Math.max(R.left+2,Math.min(R.right-2,x1));y2=Math.max(R.top+2,Math.min(R.bottom-2,y1));
-    if(x2>R.left+2&&x2<R.right-2&&y2>R.top+2&&y2<R.bottom-2){x2=R.left+R.width/2;y2=R.bottom-2}}}catch(er){}
+   let x2=x1+off[0],y2=y1+off[1]-4;/* the nearest point on what you can see (the photo or the name label), not the pin's whole box: its hidden pointer
+      tip below the label would leave a gap */
+   try{let bd=1e9;el.querySelectorAll(".gfs-card,.gfs-lab").forEach(c=>{const R=c.getBoundingClientRect();if(!R.width||getComputedStyle(c).display==="none")return;
+     const px=Math.max(R.left+1,Math.min(R.right-1,x1)),py=Math.max(R.top+1,Math.min(R.bottom-1,y1)),d=Math.hypot(px-x1,py-y1);if(d<bd){bd=d;x2=px;y2=py}})}catch(er){}
    let len=Math.hypot(x2-x1,y2-y1);const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
    /* the Richat Structure: the line points at it from outside its rings (about 20 km out), with no dot covering it */
    /* tiny islands too: the line points at them, no dot on them */
