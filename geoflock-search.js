@@ -153,6 +153,13 @@ function inRings(x,y,R){let c=false;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.l
 /* how far along (ux,uy) from (x,y) the ray leaves the area */
 function exitPx(x,y,u,R){let far=0;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[j],b=r[i],ex=b[0]-a[0],ey=b[1]-a[1],den=u[0]*ey-u[1]*ex;if(Math.abs(den)<1e-9)continue;
   const wx=a[0]-x,wy=a[1]-y,t=(wx*ey-wy*ex)/den,v=(wx*u[1]-wy*u[0])/den;if(t>0&&v>=0&&v<=1&&t>far)far=t}});return far}
+/* a pin's size and where its photo and name sit inside it (offsets from its top-left), cached until its label is
+   shown or hidden or its picture changes */
+/* the map's rectangle, measured once per frame for all the pins */
+let MR=null,MRt=-1;function mapRect(){const t=Math.round(performance.now()/8);if(MR&&MRt===t)return MR;MRt=t;MR=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();return MR}
+function partsOf(el){const k=(el.classList.contains("gfs-nolab")?1:0)+"|"+(el.querySelector(".gfs-card img")||{}).src;if(el._parts&&el._parts.k===k&&el._parts.w)return el._parts;
+ const R=el.getBoundingClientRect(),P=[];el.querySelectorAll(".gfs-card,.gfs-lab").forEach(c=>{if(getComputedStyle(c).display==="none")return;const r=c.getBoundingClientRect();if(r.width)P.push({x:r.left-R.left,y:r.top-R.top,w:r.width,h:r.height})});
+ el._parts={k,w:R.width,h:R.height,parts:P};return el._parts}
 function labOf(e){(e._els||[]).forEach(x=>{if(x&&x.classList)x.classList.toggle("gfs-nolab",!!e.nolab)})}
 function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
 function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
@@ -233,7 +240,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
  if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
   el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
  const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
- const s0=screenOf(e.ll);if(!s0){hide();return}const wr=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();
+ const s0=screenOf(e.ll);if(!s0){hide();return}const wr=mapRect();
  if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo")||el.classList.contains("gfs-name"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
@@ -246,8 +253,10 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
       and a card dragged below its place is joined at its top edge */
    let x2=x1+off[0],y2=y1+off[1]-4;/* the nearest point on what you can see (the photo or the name label), not the pin's whole box: its hidden pointer
       tip below the label would leave a gap */
-   try{let bd=1e9;el.querySelectorAll(".gfs-card,.gfs-lab").forEach(c=>{const R=c.getBoundingClientRect();if(!R.width||getComputedStyle(c).display==="none")return;
-     const px=Math.max(R.left+1,Math.min(R.right-1,x1)),py=Math.max(R.top+1,Math.min(R.bottom-1,y1)),d=Math.hypot(px-x1,py-y1);if(d<bd){bd=d;x2=px;y2=py}})}catch(er){}
+   /* measured once per card (not every frame: reading the layout right after moving the card made the browser lay the
+      page out again on every frame of a globe drag) */
+   try{const G=partsOf(el),L0=x1+off[0]-G.w/2,T0=y1+off[1]-G.h;let bd=1e9;G.parts.forEach(q=>{const l=L0+q.x,t=T0+q.y,r=l+q.w,bt=t+q.h;
+     const px=Math.max(l+1,Math.min(r-1,x1)),py=Math.max(t+1,Math.min(bt-1,y1)),d=Math.hypot(px-x1,py-y1);if(d<bd){bd=d;x2=px;y2=py}})}catch(er){}
    let len=Math.hypot(x2-x1,y2-y1);const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
    /* the Richat Structure: the line points at it from outside its rings (about 20 km out), with no dot covering it */
    /* tiny islands too: the line points at them, no dot on them */
