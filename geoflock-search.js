@@ -108,6 +108,14 @@ const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof
 /* up to five things found stay on the map together (search one, then another, without clearing); the oldest goes when a
    sixth is added. Each keeps its own highlight, pin and photo card; a list under the search box names them */
 let LIST=[],raf=0;const MAXN=5;const same=(a,b)=>a.n===b.n&&a.cat===b.cat;
+/* a result's area on screen: its outline rings (thinned to a few hundred points), or null for a point or a line */
+function areaRings(e){const g=e&&e.g;if(!g||!/Polygon/.test(g.type))return null;const rs=g.type==="Polygon"?g.coordinates:[].concat(...g.coordinates);
+ const tot=rs.reduce((n,r)=>n+r.length,0),st=Math.max(1,Math.ceil(tot/500)),out=[];
+ rs.forEach(r=>{const q=[];for(let i=0;i<r.length;i+=st){const v=screenOf(r[i]);if(v)q.push(v)}if(q.length>2)out.push(q)});return out.length?out:null}
+function inRings(x,y,R){let c=false;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1]+1e-9)+a[0])c=!c}});return c}
+/* how far along (ux,uy) from (x,y) the ray leaves the area */
+function exitPx(x,y,u,R){let far=0;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[j],b=r[i],ex=b[0]-a[0],ey=b[1]-a[1],den=u[0]*ey-u[1]*ex;if(Math.abs(den)<1e-9)continue;
+  const wx=a[0]-x,wy=a[1]-y,t=(wx*ey-wy*ex)/den,v=(wx*u[1]-wy*u[0])/den;if(t>0&&v>=0&&v<=1&&t>far)far=t}});return far}
 function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
 function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
 function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.splice(i,1);try{if(onGlobe())amGlobe.request()}catch(er){}xBtn()}
@@ -182,10 +190,19 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
  if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
- if(isPh){let ln=e._leash;const far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;if(!far){if(ln){ln.style.display="none"}el.classList.remove("gfs-moved")}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
-  let x1=s0[0],y1=s0[1];const x2=x1+off[0],y2=y1+off[1]-4;let len=Math.hypot(x2-x1,y2-y1);const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
+ if(isPh){let ln=e._leash;let far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;
+  /* an area (a forest, a country, a lake...): no line while the card is still over it; once dragged off, the line starts
+     at the area's edge (no dot on the area) */
+  const AR=far?areaRings(e):null;if(AR&&inRings(s0[0]+off[0],s0[1]+off[1],AR))far=false;if(!far){if(ln){ln.style.display="none"}el.classList.remove("gfs-moved")}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
+  let x1=s0[0],y1=s0[1];
+   /* the line reaches the card itself: the point of the card (photo and name) nearest the place, so it never stops short,
+      and a card dragged below its place is joined at its top edge */
+   let x2=x1+off[0],y2=y1+off[1]-4;try{const R=el.getBoundingClientRect();if(R.width){x2=Math.max(R.left+2,Math.min(R.right-2,x1));y2=Math.max(R.top+2,Math.min(R.bottom-2,y1));
+    if(x2>R.left+2&&x2<R.right-2&&y2>R.top+2&&y2<R.bottom-2){x2=R.left+R.width/2;y2=R.bottom-2}}}catch(er){}
+   let len=Math.hypot(x2-x1,y2-y1);const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
    /* the Richat Structure: the line points at it from outside its rings (about 20 km out), with no dot covering it */
-   const nod=/richat/i.test(e.n||"");ln.classList.toggle("gfs-nodot",nod);
+   const nod=/richat/i.test(e.n||"")||!!AR;ln.classList.toggle("gfs-nodot",nod);
+   if(AR&&len>12){const u=[Math.cos(ang*Math.PI/180),Math.sin(ang*Math.PI/180)],g=Math.min(len-8,exitPx(x1,y1,u,AR)+3);if(g>0){x1+=u[0]*g;y1+=u[1]*g;len-=g}}
    if(nod){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
    ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
 /* the map adds its own layers after a search is drawn; keep the search highlight on top of them */
@@ -258,7 +275,7 @@ const css=document.createElement("style");css.textContent=`
 .gfs-pin.gfs-icon .gfs-spot{ width:38px; height:38px; } .gfs-card:active{ cursor:grabbing; }
 .gfs-leash{ position:fixed; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
 .gfs-leash.gfs-nodot::before{ display:none; }
-.gfs-leash::before{ content:""; position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:#c0392b; border:2px solid #fff; }
+.gfs-leash::before{ content:""; position:absolute; left:-3.5px; top:-2.5px; width:7px; height:7px; border-radius:50%; background:#c0392b; border:1.5px solid #fff; }
 .gfs-photo.gfs-moved .gfs-tip{ visibility:hidden; }
 .gfs-tip{ width:0; height:0; border:7px solid transparent; border-top-color:rgba(16,28,48,.9); margin-top:-1px; }
 @media (max-width:600px){ .gfs-card{ width:72px; height:72px; } }
