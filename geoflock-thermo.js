@@ -101,8 +101,16 @@ function render(){const p=mount();if(!p)return;let body;
 function show(i){if(!items[i])return;last=items[i];render()}
 function remove(i){const it=items[i];if(!it)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();items.splice(i,1);if(last===it)last=items[items.length-1]||null;render()}
 function mkPin(it,g){const h=g.host;if(it.pin&&it.pin.parentNode===h)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();
- const p=document.createElement("div");p.className="gfth-pin";p.title="Show this thermometer";h.appendChild(p);it.pin=p;it.pk="";
- p.addEventListener("pointerdown",e=>{e.stopPropagation();e.preventDefault()});p.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();const i=items.indexOf(it);if(i>=0)show(i)});
+ const p=document.createElement("div");p.className="gfth-pin";p.title="Click to show this thermometer · drag to move it";h.appendChild(p);it.pin=p;it.pk="";
+ /* a click shows this thermometer; a drag moves it, and it reads the new place when let go */
+ p.addEventListener("pointerdown",e=>{if(e.button)return;e.stopPropagation();e.preventDefault();const x0=e.clientX,y0=e.clientY;let moved=false;
+  try{p.setPointerCapture(e.pointerId)}catch(x){}
+  const mv=ev=>{if(!moved&&Math.hypot(ev.clientX-x0,ev.clientY-y0)<4)return;moved=true;p.classList.add("drag");const g2=G();const ll=g2&&llAt(g2,ev.clientX,ev.clientY);if(ll){it.ll=[((ll[0]+540)%360)-180,ll[1]];place()}};
+  const up=ev=>{p.removeEventListener("pointermove",mv);p.removeEventListener("pointerup",up);p.removeEventListener("pointercancel",up);p.classList.remove("drag");swallow=performance.now();
+   const i=items.indexOf(it);if(i<0)return;if(!moved){show(i);return}
+   it.c=null;it.name=null;it.pk="";last=it;render();load().then(()=>{it.c=at(it.ll);it.name=cname(countryAt(it.ll));it.pk="";if(on)render()})};
+  p.addEventListener("pointermove",mv);p.addEventListener("pointerup",up);p.addEventListener("pointercancel",up)});
+ p.addEventListener("click",e=>{e.stopPropagation();e.preventDefault()});
  const t=document.createElement("div");t.className="gfth-tag";h.appendChild(t);it.tag=t}
 function place(){const g=G();if(!g)return;const pr=g.projection(),ro=pr.rotate?pr.rotate():[0,0],c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();
  items.forEach(it=>{mkPin(it,g);if(!on){it.pin.style.display=it.tag.style.display="none";return}
@@ -120,12 +128,15 @@ function onDown(e){if(!on)return;const g=G();if(!g||e.button)return;const c=g.ca
  /* the place is worked out now, before the map can react to the press */
  /* the place: from the last pointer position before the press (other handlers can shift the map's frame on the press itself) */
  let ll=hov&&Math.hypot(hov.x-e.clientX,hov.y-e.clientY)<3?hov.ll:llAt(g,e.clientX,e.clientY);
- down={x:e.clientX,y:e.clientY,t:performance.now(),ll};e.stopPropagation()}
-/* like the pins: while the thermometer is on, a press on the map picks a place and never spins or drags the map */
-["mousedown","touchstart"].forEach(t=>addEventListener(t,e=>{if(down)e.stopPropagation()},true));
-function onUp(e){if(!on||!down)return;const d=down;down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5||performance.now()-d.t>700)return;
+ /* the map still pans and spins as usual: only a quick click that does not move puts a thermometer down */
+ if(pend&&performance.now()-pend.t<320){clearTimeout(pend.tm);pend=null;down=null;return}
+ down={x:e.clientX,y:e.clientY,t:performance.now(),ll}}
+let pend=null;
+function onUp(e){if(!on||!down)return;const d=down;down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>4||performance.now()-d.t>500)return;
  const ll=d.ll;if(!ll||!isFinite(ll[0])||!isFinite(ll[1]))return;
- e.stopImmediatePropagation();e.preventDefault();pick([((ll[0]+540)%360)-180,ll[1]]);swallow=performance.now()}
+ swallow=performance.now();
+ /* wait a moment: a second click (a double-click zooms the map) cancels it */
+ const at0=[((ll[0]+540)%360)-180,ll[1]];pend={t:performance.now(),tm:setTimeout(()=>{pend=null;if(on)pick(at0)},300)}}
 function llAt(g,x,y){try{const c=g.canvas.getBoundingClientRect();const ll=g.projection().invert([x-c.left,y-c.top]);if(!ll||!isFinite(ll[0]))return null;
  if(!g._flat){const ro=g.projection().rotate();if(d3.geoDistance(ll,[-ro[0],-ro[1]])>Math.PI/2)return null}return ll}catch(e){return null}}
 let hov=null;addEventListener("pointermove",e=>{if(!on||e.buttons)return;const g=G();if(!g)return;hov={x:e.clientX,y:e.clientY,ll:llAt(g,e.clientX,e.clientY)}},true);
@@ -177,7 +188,7 @@ const css=document.createElement("style");css.textContent=`
 .gfth{ cursor:grab; } .gfth button{ cursor:pointer; }
 .gfth-now{ margin:2px 0 6px; font-size:12.5px; } .gfth-now b{ color:#d2452c; font-size:14px; }
 .gfth-tag{ position:absolute; z-index:8; pointer-events:none; background:#d2452c; color:#fff; font:700 12px/1 system-ui,sans-serif; padding:4px 7px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.35); white-space:nowrap; }
-.gfth-pin{ position:absolute; z-index:8; transform:translate(-50%,-92%); pointer-events:auto; cursor:pointer; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)); border-radius:10px; }
+.gfth-pin{ position:absolute; z-index:8; transform:translate(-50%,-92%); pointer-events:auto; cursor:grab; touch-action:none; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45)); border-radius:10px; }
 .gfth-pin svg{ width:22px; height:37px; display:block; } .gfth-pin.sel{ filter:drop-shadow(0 0 0 #fff) drop-shadow(0 0 3px #ffd34d) drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
 .gfth-tag.cold{ background:#2b7bd5; }
 .gfth-tabs{ display:flex; flex-wrap:nowrap; overflow-x:auto; gap:4px; margin:0 0 6px; padding-bottom:2px; scrollbar-width:thin; } .gfth-tabs button{ flex:none; }
