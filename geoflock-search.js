@@ -183,7 +183,11 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
  if(isPh){let ln=e._leash;const far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;if(!far){if(ln){ln.style.display="none"}el.classList.remove("gfs-moved")}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
-  const x1=s0[0],y1=s0[1],x2=x1+off[0],y2=y1+off[1]-4,len=Math.hypot(x2-x1,y2-y1),ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
+  let x1=s0[0],y1=s0[1];const x2=x1+off[0],y2=y1+off[1]-4;let len=Math.hypot(x2-x1,y2-y1);const ang=Math.atan2(y2-y1,x2-x1)*180/Math.PI;
+   /* the Richat Structure: the line points at it from outside its rings (about 20 km out), with no dot covering it */
+   const nod=/richat/i.test(e.n||"");ln.classList.toggle("gfs-nodot",nod);
+   if(nod){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
+   ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
 /* the map adds its own layers after a search is drawn; keep the search highlight on top of them */
 setInterval(()=>{if(!LIST.length)return;const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;LIST.forEach(e=>{const g=e._g;if(g&&g.ownerSVGElement===svg&&g!==svg.lastElementChild)svg.appendChild(g)})},400);
 /* keep things in place as the map moves */
@@ -253,6 +257,7 @@ const css=document.createElement("style");css.textContent=`
 .gfs-spot svg{ width:100%; height:100%; display:block; } .gfs-spot.gfs-flip svg{ transform:scaleX(-1); }
 .gfs-pin.gfs-icon .gfs-spot{ width:38px; height:38px; } .gfs-card:active{ cursor:grabbing; }
 .gfs-leash{ position:fixed; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
+.gfs-leash.gfs-nodot::before{ display:none; }
 .gfs-leash::before{ content:""; position:absolute; left:-5px; top:-4px; width:10px; height:10px; border-radius:50%; background:#c0392b; border:2px solid #fff; }
 .gfs-photo.gfs-moved .gfs-tip{ visibility:hidden; }
 .gfs-tip{ width:0; height:0; border:7px solid transparent; border-top-color:rgba(16,28,48,.9); margin-top:-1px; }
