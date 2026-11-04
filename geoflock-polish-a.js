@@ -95,8 +95,8 @@ if(T("lakes")&&!T("lakes")._polA){T("lakes")._polA=1;
  set("lakes","The highest lake you can sail",s=>{s.xsec={title:"From the Pacific up to Lake Titicaca",pts:[[-71.34,-17.64,"Ilo"],[-70.6,-16.9],[-70.02,-15.84,"Puno"],[-69.4,-15.9,"Titicaca"],[-68.6,-16.2],[-68.15,-16.5,"La Paz"]],mark:3812,
   note:"The dashed line is the lake’s surface, 3,812 m up. Heights are smoothed."};
   s.body="Move along the chart: from the Pacific coast the land climbs almost 4 km to the Altiplano, a high plain between two ranges of the Andes, where the lake lies. Peru and Bolivia share it."});
- set("lakes","Lakes in a crack",s=>{s.xsec={title:"Down the Western Rift, lake after lake",pts:[[30.9,1.7,"Albert"],[29.6,-0.35,"Edward"],[29.2,-2.0,"Kivu"],[29.3,-3.8],[29.6,-6.0,"Tanganyika"],[30.6,-8.0],[32.2,-8.0,"Rukwa"],[34.3,-10.5],[34.6,-11.5,"Malawi"],[34.8,-13.5]],
-  note:"The line runs down the rift's floor from Lake Albert to Lake Malawi. Each lake sits at its own level (blue); between them the rift's floor climbs over volcanoes and ridges. Lake beds are approximate."};
+ set("lakes","Lakes in a crack",s=>{s.xsec={title:"Down the Rift Valley, lake after lake",pts:[[37.85,6.4,"Abaya"],[37.6,6.0],[36.0,3.9],[36.1,3.3,"Turkana"],[33.0,1.5,"Kyoga"],[32.6,1.55],[30.9,1.7,"Albert"],[29.6,-0.35,"Edward"],[29.2,-2.0,"Kivu"],[29.3,-3.8],[29.6,-6.0,"Tanganyika"],[30.6,-8.0],[34.3,-10.5],[34.6,-11.5,"Malawi"],[34.8,-13.5],[35.25,-14.65,"Malombe"]],
+  note:"The line runs down the rift from Ethiopia's Lake Abaya to Lake Malombe. Each lake sits at its own level (blue); between them the rift's floor climbs over volcanoes and ridges. Lake beds are approximate."};
   s.body="They fill a crack in Africa’s crust, the Great Rift Valley, where the continent is slowly pulling apart. Move along the chart to follow the rift south: lake after lake, each at its own height, from Albert and Kivu down to Tanganyika and Malawi."});
  set("lakes","Deadly lakes",s=>{s.view=[1,-1,19,13];s.globe=[10.3,6.44,4];s.lk=[];s.pins=[[[10.3,6.44],"Lake Nyos","point"]];s.hi=["cm"];dropPh(s,["Lake Nyos, 1986"]);});
 }

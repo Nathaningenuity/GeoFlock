@@ -11,7 +11,11 @@ function sample(P,n){const L=[0];for(let i=1;i<P.length;i++)L.push(L[i-1]+km(P[i
  for(let k=0;k<=n;k++){const d=tot*k/n;let i=1;while(i<P.length-1&&L[i]<d)i++;const t=(d-L[i-1])/Math.max(1e-9,L[i]-L[i-1]);out.push({d,ll:[P[i-1][0]+(P[i][0]-P[i-1][0])*t,P[i-1][1]+(P[i][1]-P[i-1][1])*t]})}
  return{out,tot,at:L}}
 function cardHTML(S){const X=S.xsec;return'<div class="psx" data-psx><div class="psx-h"><b>'+esc(X.title||"Cross-section")+'</b><span class="psx-v">Move along the chart</span></div>'+
- '<div class="psx-c"><svg class="psx-svg" viewBox="0 0 320 132" aria-label="Height along the line"></svg></div>'+(X.note?'<small class="psx-n">'+esc(X.note)+'</small>':'')+'</div>'}
+ '<div class="psx-c"><svg class="psx-svg" viewBox="0 0 320 132" aria-label="Height along the line"></svg></div>'+(X.note?'<small class="psx-n">'+esc(X.note)+'</small>':'')+'<button type="button" class="psx-open" data-psx-open>✂ Open the full cross-section</button></div>'}
+/* the button opens the Elevation tools' full cross-section panel along the same line (bigger, with depths and names) */
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-psx-open]");if(!b)return;e.preventDefault();e.stopPropagation();
+ try{const S=stop(),X=S&&S.xsec;if(!X||!XS())return;XS().line(null,null,X.title||"Cross-section",X.pts.map(p=>[p[0],p[1]]))}catch(err){console.error(err)}},true);
+{const st=document.createElement("style");st.textContent=".psx-open{display:block;margin:8px 0 2px;padding:6px 12px;border-radius:999px;border:1.5px solid #c0392b;background:#fff;color:#c0392b;font:800 12.5px inherit;cursor:pointer}.psx-open:hover{background:#c0392b;color:#fff}";document.head.appendChild(st)}
 {const hook=()=>{if(typeof psCardHTML!=="function"||psCardHTML._xs)return false;const _c=psCardHTML;psCardHTML=function(){let h=_c.apply(this,arguments);try{const S=stop();if(S&&S.xsec){const ui=cardHTML(S),i=h.indexOf('class="ps-stat"'),at=i>0?h.indexOf("</div>",i):-1;h=at>0?h.slice(0,at+6)+ui+h.slice(at+6):h+ui}}catch(e){console.error(e)}return h};psCardHTML._xs=1;return true};
  if(!hook()){const t=setInterval(()=>{if(hook())clearInterval(t)},400)}}
 /* the dot on the map */
@@ -22,9 +26,11 @@ function mapDot(ll){try{const host=ps&&ps.g&&ps.g.host;if(!host)return;if(!ll){i
 function draw(box,S){const X=S.xsec,svg=box.querySelector("svg");if(!svg||!XS())return;box._done=1;
  /* the height grid is a large file: say so while it loads, instead of an empty chart */
  if(!svg.innerHTML.trim())svg.innerHTML='<text x="160" y="70" text-anchor="middle" class="psx-yl psx-wait">Loading heights…</text>';
- Promise.all([XS().loadDEM(),XS().loadLakes?XS().loadLakes().catch(()=>null):null]).then(()=>{const{out,tot,at}=sample(X.pts,180);out.forEach(p=>{p.raw=XS().elevAt(p.ll[0],p.ll[1]);
-   /* a lake (HydroLAKES, as in the full cross-section): its water stands at the lake's level, never below the ground */
-   const o=XS().lakeAt?XS().lakeAt(p.ll):null;if(o&&o.lv!=null){p.lake=o;p.raw=Math.min(p.raw,o.lv)}});
+ Promise.all([XS().loadDEM(),XS().loadLakes?XS().loadLakes().catch(()=>null):null]).then(()=>{const{out,tot,at}=sample(X.pts,180);out.forEach(p=>{p.raw=XS().elevAt(p.ll[0],p.ll[1])});
+   /* lakes (HydroLAKES), as in the full cross-section: water at each lake's level over its bed (approximate where the
+      height data has none) */
+   try{if(XS().lakeify){const P=out.map(p=>({ll:p.ll,km:p.d,e:p.raw})),lk=XS().lakeify(P);P.forEach((q,i)=>{out[i].raw=q.e});
+     lk.forEach(k=>{const o={n:k.n,lv:k.lv};for(let i=k.i;i<=k.j;i++)out[i].lake=o})}}catch(e){console.error(e)}
   /* a line that runs over deep water shows the sea floor too (the water drawn above it), unless the stop says otherwise */
   const below=X.below!=null?X.below:Math.min(...out.map(p=>p.raw))<-150;const fl=below?-1e5:0;out.forEach(p=>p.h=Math.max(fl,p.raw));
   const W=320,H=132,l=34,r=8,t=14,b=22,mx=Math.max(...out.map(p=>p.h)),top=below&&mx<150?(mx>0?200:100):Math.max(500,Math.ceil(mx/500)*500),bot=(m=>m>=0?0:below?(m<-1000?Math.floor(m/500)*500:Math.floor(m/100)*100):m>-300?0:Math.floor(m/500)*500)(Math.min(...out.map(p=>p.h)));
