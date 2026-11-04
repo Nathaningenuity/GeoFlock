@@ -95,6 +95,11 @@
   ["migration","China moves to the cities","🚆","A train to the cities",{per:1}],
   ["hrevolutions","The great migrations",STEAM,"Emigrant ships",{per:1,float:1}]
  ].forEach(([t,title,e,name,o])=>{W[t+"|"+title]=Object.assign({emoji:e,name,size:26,per:2},o)});
+ /* an eel (there is no eel emoji): a long olive body that ripples as it swims, head to the right */
+ const EEL='<svg viewBox="0 0 84 26" width="100%" height="100%" overflow="visible"><defs><linearGradient id="hwEel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d6b2e"/><stop offset=".6" stop-color="#8a8a3c"/><stop offset="1" stop-color="#d9c98a"/></linearGradient></defs>'+
+  '<path fill="none" stroke="url(#hwEel)" stroke-width="7" stroke-linecap="round" d="M4,13 C14,5 22,21 34,13 S54,5 64,13 L74,13"><animate attributeName="d" dur="0.9s" repeatCount="indefinite" values="M4,13 C14,5 22,21 34,13 S54,5 64,13 L74,13;M4,13 C14,21 22,5 34,13 S54,21 64,13 L74,13;M4,13 C14,5 22,21 34,13 S54,5 64,13 L74,13"/></path>'+
+  '<path d="M66,9.5 Q80,9 81,13 Q80,17 66,16.5 Z" fill="#6d7a34"/><circle cx="76" cy="12" r="1.2" fill="#14160a"/><path d="M70,15.2 L77,14.6" stroke="#3b3f1c" stroke-width=".8"/></svg>';
+ W["amigration|Eels to the Sargasso Sea"]={svg:EEL,face:"right",name:"European eels heading for the Sargasso Sea",size:30,wide:3.2,per:2,float:1};
  window.gfWalkers=W;window.gfWalkerFig=fig;
  let lay=null,raf=0,cur=null;const st=document.createElement("style");st.textContent=".hw-lay{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}.hw-w{position:absolute;left:0;top:0;will-change:transform,opacity;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}.hw-w img{width:100%;height:100%;object-fit:contain;display:block}.hw-w>svg,.hw-w>.hw-in{display:block;width:100%;height:100%}.hw-emo{line-height:1;text-align:center;display:flex!important;align-items:flex-end;justify-content:center}.hw-m{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}";document.head.appendChild(st);
  const stop=()=>{cancelAnimationFrame(raf);raf=0;if(lay)lay.remove();lay=null;cur=null};
@@ -108,7 +113,7 @@
    const walkers=[];lines.forEach((c,i)=>{const P=path(c),dur=w.dur||Math.max(5000,Math.min(14000,P.L*90));for(let k=0;k<per;k++){const el=document.createElement("div");el.className="hw-w";el.style.width=zw+"px";el.style.height=z+"px";el.style.margin=(-z)+"px 0 0 "+(-zw/2)+"px";el.title=w.name;
      const fg=Array.isArray(w.fig)?w.fig[i%w.fig.length]:w.fig,em=Array.isArray(w.emoji)?w.emoji[i%w.emoji.length]:w.emoji;
      el.innerHTML=fg?'<div class="hw-in">'+fig(fg)+'</div>':em?'<div class="hw-in hw-emo" style="font-size:'+Math.round(z*.92)+'px">'+em+'</div>':w.svg?'<div class="hw-in">'+w.svg+'</div>':'<img src="'+w.img+'" alt="">';lay.appendChild(el);
-     const q=s=>el.querySelector(s);walkers.push({el,P,dur,off:(k/per+i*.17)%1,in:el.firstChild,flip:fg?"right":em&&!NOFLIP.has(em)?"left":null,lg1:q(".lg1"),lg2:q(".lg2"),ar1:q(".ar1"),ar2:q(".ar2"),ar1t:q(".ar1t"),dir:1,px:null})}});
+     const q=s=>el.querySelector(s);walkers.push({el,P,dur,off:(k/per+i*.17)%1,in:el.firstChild,flip:fg?"right":em&&!NOFLIP.has(em)?"left":w.face||null,lg1:q(".lg1"),lg2:q(".lg2"),ar1:q(".ar1"),ar2:q(".ar2"),ar1t:q(".ar1t"),dir:1,px:null})}});
    /* pictures that stay put on the map: {ll, html, w, h} anchored at their bottom centre */
    const marks=(w.marks||[]).map(m=>{const el=document.createElement("div");el.className="hw-m";el.style.width=m.w+"px";el.style.height=m.h+"px";el.style.margin=(-m.h)+"px 0 0 "+(-m.w/2)+"px";el.innerHTML=m.html;if(m.title)el.title=m.title;lay.appendChild(el);return{el,m}});
    const t0=performance.now();const tick=n=>{if(!lay||!lay.isConnected||cur!==S){stop();return}const calm=still();

@@ -372,7 +372,9 @@ S({title:"Red crabs march to the sea",view:[101.5,-12.6,110.5,-6.4],globe:[105.6
  body:"The crabs live in the rainforest and walk to the coast to breed. Roads close, and bridges and tunnels help them across. Females release their eggs into the sea at dawn at the turn of the high tide, around the last quarter of the Moon.",
  more:"A month later, tiny baby crabs swarm out of the sea and march back into the forest. Christmas Island belongs to Australia but lies about 350 km south of Java."}),
 S({title:"Eels to the Sargasso Sea",view:[-85,10,20,62],globe:[-30,38,1.5],card:"left",gfCur:{ocean:1},
- lines:[{coords:[[5,52],[-5,48],[-20,40],[-35,34],[-50,29],[-60,27]],kind:"flow"},{coords:[[-9,53],[-20,46]],kind:"flow"},{coords:[[-60,27],[-75,32],[-65,40],[-45,46],[-25,50],[-10,51]],kind:"dash"}],
+ lines:[{coords:[[5,52],[-5,48],[-20,40],[-35,34],[-50,29],[-60,27]],kind:"flow"},{coords:[[-9,53],[-20,46]],kind:"flow"},{coords:[[-60,27],[-75,32],[-65,40],[-45,46],[-25,50],[-10,51]],kind:"dash"},
+  /* the Sargasso Sea: the calm sea inside the North Atlantic gyre, roughly 20–35°N and 70–40°W */
+  {poly:[[-38.0,28.0],[-38.6,29.9],[-40.3,31.8],[-43.0,33.3],[-46.5,34.5],[-50.6,35.2],[-55.0,35.5],[-59.4,35.2],[-63.5,34.5],[-67.0,33.3],[-69.7,31.8],[-71.4,29.9],[-72.0,28.0],[-71.4,26.1],[-69.7,24.3],[-67.0,22.7],[-63.5,21.5],[-59.4,20.8],[-55.0,20.5],[-50.6,20.8],[-46.5,21.5],[-43.0,22.7],[-40.3,24.2],[-38.6,26.1],[-38.0,28.0]],kind:"outline"}],
  pins:[[[-60,27],"Spawning: Sargasso Sea","point"],[[-28,38.5],"Azores","point"]],
  stat:"Every European eel was born in the Sargasso Sea, up to 6,000 km away",
  body:"Adult eels leave the rivers of Europe and swim across the Atlantic to spawn and die. Their leaf-shaped larvae drift back on the Gulf Stream (dashed; the arrows show the currents), turn into see-through glass eels at the coast and swim up the rivers, where they may live for decades.",

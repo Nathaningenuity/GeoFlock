@@ -23,6 +23,7 @@ function sameThing(a,b){const A=words(a);for(const w of words(b))if(A.has(w))ret
 function prep(S){try{
  if(!S||typeof ps==="undefined"||!ps||SKIP.has(ps.tour))return;
  const P=Array.isArray(S.phPins)?S.phPins:[],T=Array.isArray(S.pins)?S.pins:[];
+ try{if(!S._gfPins0)Object.defineProperty(S,"_gfPins0",{configurable:true,writable:true,enumerable:false,value:T})}catch(e){}
  if(S._gfSm&&S._gfSm.P===P&&S._gfSm.T===T)return;
  const vk=viewKm(S),rk=Math.max(15,Math.min(260,vk*.07)),near=Math.max(80,vk*.15);
  /* 3: duplicates */
@@ -61,15 +62,27 @@ function shortCap(t){t=strip(t).replace(/\u2026|\.\.\.$/g,"").trim();let seg=t.s
  if(seg.length<=20)return seg.charAt(0).toUpperCase()+seg.slice(1);const w=seg.split(/\s+/),out=[];
  for(const x of w){if((out.join(" ")+" "+x).trim().length>20)break;out.push(x)}
  while(out.length>1&&STOPW.has(out[out.length-1].toLowerCase()))out.pop();const r=out.join(" ")||w[0];return r.charAt(0).toUpperCase()+r.slice(1)}
-/* a tiny island (a land piece under TINY_KM2), or no land outline at all there: a line points at it, not into it, with no
-   dot on it. Returns the place's radius in km (6 when the map has no outline for it), or null for a bigger place. */
-const TINY_KM2=5000,tinyMemo=new Map();
-function tinyKm(ll){if(!isPt(ll))return null;const key=ll[0].toFixed(3)+","+ll[1].toFixed(3);if(tinyMemo.has(key))return tinyMemo.get(key);
+/* a small unit (a tiny island, a small lake such as the Salton Sea, or a spot the map has no outline for): a line points
+   at it and stops at its edge, with no dot on it and nothing drawn over it. unitOf(ll) gives the unit's outline (rings of
+   [lon,lat]), [] when there is no outline there, or null for a place too big to count (a large island or lake, a country). */
+const TINY_KM2=5000,LAKE_KM=120,unitMemo=new Map();
+function unitOf(ll){if(!isPt(ll))return null;const key=ll[0].toFixed(3)+","+ll[1].toFixed(3);if(unitMemo.has(key))return unitMemo.get(key);
+ let out=[];
+ try{const O=typeof globeOverlays==="function"?globeOverlays():null;
+  if(O&&O.lakes)for(const L of O.lakes){if(L.c&&L.r!=null&&d3.geoDistance(L.c,ll)>L.r*1.05)continue;let hit=false;try{hit=d3.geoContains(L,ll)}catch(e){}
+   if(!hit)continue;const r=(L.r||0)*6371;out=r&&r>LAKE_KM?null:ringsOf(L.geometry||L);unitMemo.set(key,out);return out}}catch(e){}
  let F=null;try{F=typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.features}catch(e){}if(!F||!F.length)return null;
- let out=6;try{outer:for(const f of F){const g=f.geometry;if(!g)continue;const polys=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
-  for(const c of polys){const piece={type:"Polygon",coordinates:c};if(d3.geoContains(piece,ll)){const A=d3.geoArea(piece)*6371*6371;out=A<TINY_KM2?Math.max(1.5,Math.sqrt(A/Math.PI)):null;break outer}}}}catch(e){out=null}
- tinyMemo.set(key,out);return out}
-function tinyPx(ll){const k=tinyKm(ll);return k==null?null:Math.max(3,ringPx(ll,k))+6}
+ try{outer:for(const f of F){const g=f.geometry;if(!g)continue;const polys=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
+  for(const c of polys){const piece={type:"Polygon",coordinates:c};if(d3.geoContains(piece,ll)){out=d3.geoArea(piece)*6371*6371<TINY_KM2?c:null;break outer}}}}catch(e){out=null}
+ unitMemo.set(key,out);return out}
+function ringsOf(g){if(!g)return[];if(g.type==="Feature")g=g.geometry;if(!g)return[];if(g.type==="Polygon")return g.coordinates;if(g.type==="MultiPolygon")return[].concat(...g.coordinates);if(Array.isArray(g.coordinates))return g.coordinates;return[]}
+/* how far (px) from the spot a line heading (ux,uy) must start to be outside the unit; null if the spot is no small unit */
+function unitGap(ll,a,ux,uy){const U=unitOf(ll);if(U==null)return null;let far=0;
+ for(const ring of U){let prev=null;for(const q of ring){const s=psScreen(q);if(s&&prev){
+   /* where the ray a + t·u crosses this edge */
+   const ex=s[0]-prev[0],ey=s[1]-prev[1],den=ux*ey-uy*ex;if(Math.abs(den)>1e-9){const wx=prev[0]-a[0],wy=prev[1]-a[1],t=(wx*ey-wy*ex)/den,v=(wx*uy-wy*ux)/den;if(t>0&&v>=0&&v<=1&&t>far&&t<4000)far=t}}
+  prev=s}}
+ return Math.max(7,far+5)}
 function ringPx(a,k){try{const p=psScreen(a),q=psScreen([a[0]+k/(111.32*Math.cos(a[1]*Math.PI/180)),a[1]]);return p&&q?Math.hypot(q[0]-p[0],q[1]-p[1]):0}catch(e){return 0}}
 
 function install(){
@@ -97,7 +110,7 @@ function install(){
     placed.push([x,y]);
     const ux=(x-a[0]),uy=(y-a[1]),ud=Math.hypot(ux,uy)||1;
     if(R){lines+=`<line x1="${(a[0]+ux/ud*(R+1)).toFixed(1)}" y1="${(a[1]+uy/ud*(R+1)).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}
-    else if(tinyPx(q.at)!=null){const g=Math.min(ud-4,tinyPx(q.at));if(g<ud-6)lines+=`<line x1="${(a[0]+ux/ud*g).toFixed(1)}" y1="${(a[1]+uy/ud*g).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}
+    else if(unitGap(q.at,a,ux/ud,uy/ud)!=null){const g=unitGap(q.at,a,ux/ud,uy/ud);if(g<ud-6)lines+=`<line x1="${(a[0]+ux/ud*g).toFixed(1)}" y1="${(a[1]+uy/ud*g).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}
     else{lines+=`<line x1="${(a[0]+ux/ud*6).toFixed(1)}" y1="${(a[1]+uy/ud*6).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="ps-dot2" cx="${a[0].toFixed(1)}" cy="${a[1].toFixed(1)}" r="3.4"/>`}});
    const svg=L.querySelector("svg.ps-sq-lead");if(svg)svg.innerHTML=lines;
    /* captions short enough to read in full on the map; the whole name stays in the tooltip and the opened photo */
@@ -122,7 +135,11 @@ function install(){
   try{const S=cur();if(!S||SKIP.has(ps.tour))return r;const svg=pinsEl.querySelector(".ps-leaders");if(!svg)return r;
    const rk=(S.pins||[]).filter(p=>p&&p._gfRk).map(p=>{const a=psScreen(at(p));return a?[a[0],a[1],ringPx(at(p),p._gfRk)]:null}).filter(Boolean);
    /* text pins on a tiny island: the same, with the island's own size as the circle */
-   (S.pins||[]).forEach(p=>{if(!p||p._gfRk||!Array.isArray(p)||(p[2]&&p[2]!=="point"))return;const ll=at(p),t=tinyPx(ll);if(t==null)return;const a=psScreen(ll);if(a)rk.push([a[0],a[1],t-1])});
+   const un=(S.pins||[]).concat(S._gfPins0||[]).filter(p=>p&&!p._gfRk&&Array.isArray(p)&&(!p[2]||p[2]==="point")&&unitOf(at(p))!=null).map(p=>{const a=psScreen(at(p));return a?[a[0],a[1],at(p)]:null}).filter(Boolean);
+   if(un.length){svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy");if(un.some(k=>Math.hypot(k[0]-x,k[1]-y)<2))c.style.display="none"});
+    svg.querySelectorAll("line").forEach(l=>{const x=+l.getAttribute("x1"),y=+l.getAttribute("y1"),k=un.find(k=>Math.hypot(k[0]-x,k[1]-y)<2);if(!k)return;
+     const x2=+l.getAttribute("x2"),y2=+l.getAttribute("y2"),d=Math.hypot(x2-x,y2-y);if(d<1)return;const g=unitGap(k[2],[x,y],(x2-x)/d,(y2-y)/d);
+     if(g!=null&&d>g+2){l.setAttribute("x1",(x+(x2-x)/d*g).toFixed(1));l.setAttribute("y1",(y+(y2-y)/d*g).toFixed(1))}else if(g!=null)l.style.display="none"})}
    if(!rk.length)return r;
    svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy"),k=rk.find(k=>Math.hypot(k[0]-x,k[1]-y)<2);if(k)c.style.display="none"});
    svg.querySelectorAll("line").forEach(l=>{const x=+l.getAttribute("x1"),y=+l.getAttribute("y1"),k=rk.find(k=>Math.hypot(k[0]-x,k[1]-y)<2);if(!k)return;
