@@ -374,6 +374,13 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
   if(e0<0){let w="M"+X(0)+","+yz;P.forEach((p,i)=>{w+="L"+X(p.km).toFixed(1)+","+Y(inLake.has(i)||p.c?0:Math.min(0,p.e)).toFixed(1)});w+="L"+X(P[P.length-1].km)+","+yz+"Z";s+='<path d="'+w+'" fill="url(#gfxsSea)" clip-path="url(#gfxsClip)"/>'}
   let top="";P.forEach((p,i)=>{top+=(i?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1)});
   s+='<g clip-path="url(#gfxsClip)"><path d="'+top+"L"+X(P[P.length-1].km)+","+(H-mb)+"L"+X(0)+","+(H-mb)+'Z" fill="url(#gfxsRock)"/>';
+  /* the sea always shows: a thin water layer just under sea level along every stretch of sea, even where it is only a
+     few metres deep (the rock would otherwise hide it); land above sea level still rises above it */
+  if(e0<0){let sw="",prev=null;const sea=i=>P[i].e<0&&!P[i].c&&!inLake.has(i);
+   for(let i=0;i<P.length;i++){if(!sea(i))continue;let a=i;while(i+1<P.length&&sea(i+1))i++;
+    const xa=a>0?(X(P[a-1].km)+X(P[a].km))/2:X(P[a].km),xb=i<P.length-1?(X(P[i].km)+X(P[i+1].km))/2:X(P[i].km);
+    sw+='<rect x="'+xa.toFixed(1)+'" y="'+yz.toFixed(1)+'" width="'+Math.max(1.5,xb-xa).toFixed(1)+'" height="3.2" fill="#3f9fe0"/>'}
+   s+=sw}
   /* the coloured land edge only where the ground is above the sea: no green on a sea floor at -2 m */
   {let land="",run=false,dep="",dr=false;P.forEach((p,i)=>{if(p.e>=0&&!inLake.has(i)){land+=(run?"L":"M")+X(p.km).toFixed(1)+","+Y(p.e).toFixed(1);run=true}else run=false;
     /* land below sea level (a depression): a plain land-green edge, not the colour scale's below-sea blue */
