@@ -120,6 +120,9 @@ set("lakes","The deepest and oldest lake",s=>{
  s.stat="Lake Baikal holds more fresh water than all five Great Lakes put together";
  s.body="It is over 1,600 m deep and about 25 million years old, the deepest and oldest lake on Earth. It covers less area than Lake Superior, but its depth lets it hold about 23,600 km³ of water."});
 rename("lakes","Land of a thousand lakes","Lakes scraped by ice");
+/* the Canadian Shield: a line threading its great lakes, west to east */
+ set("lakes","Lakes scraped by ice",s=>{s.xsec={title:"Across Canada, lake after lake",pts:[[-121.3,65.9,"Great Bear"],[-120,65.3],[-114.5,61.6,"Great Slave"],[-113,61.8],[-109.5,59.2,"Athabasca"],[-108,59.3],[-103.3,58.3,"Wollaston"],[-102.3,57.3,"Reindeer"],[-97.8,52.6,"Winnipeg"],[-96.8,51.3],[-94.8,49.3,"Woods"],[-87.5,47.7,"Superior"],[-85,47.2]],
+  note:"From Great Bear Lake to Lake Superior the line crosses one ice-scraped lake after another; each is drawn at its own level."}});
 set("lakes","Lakes scraped by ice",s=>{
  s.stat="Canada has more lakes than the rest of the world combined, and Finland has about 188,000";
  s.body="Ice-age glaciers scraped hollows into hard, old rock, the Canadian and Baltic shields, and the hollows filled with water. That is why lakes crowd the north and are rare further south.";
