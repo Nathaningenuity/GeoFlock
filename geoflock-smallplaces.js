@@ -61,6 +61,15 @@ function shortCap(t){t=strip(t).replace(/\u2026|\.\.\.$/g,"").trim();let seg=t.s
  if(seg.length<=20)return seg.charAt(0).toUpperCase()+seg.slice(1);const w=seg.split(/\s+/),out=[];
  for(const x of w){if((out.join(" ")+" "+x).trim().length>20)break;out.push(x)}
  while(out.length>1&&STOPW.has(out[out.length-1].toLowerCase()))out.pop();const r=out.join(" ")||w[0];return r.charAt(0).toUpperCase()+r.slice(1)}
+/* a tiny island (a land piece under TINY_KM2), or no land outline at all there: a line points at it, not into it, with no
+   dot on it. Returns the place's radius in km (6 when the map has no outline for it), or null for a bigger place. */
+const TINY_KM2=5000,tinyMemo=new Map();
+function tinyKm(ll){if(!isPt(ll))return null;const key=ll[0].toFixed(3)+","+ll[1].toFixed(3);if(tinyMemo.has(key))return tinyMemo.get(key);
+ let F=null;try{F=typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.features}catch(e){}if(!F||!F.length)return null;
+ let out=6;try{outer:for(const f of F){const g=f.geometry;if(!g)continue;const polys=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
+  for(const c of polys){const piece={type:"Polygon",coordinates:c};if(d3.geoContains(piece,ll)){const A=d3.geoArea(piece)*6371*6371;out=A<TINY_KM2?Math.max(1.5,Math.sqrt(A/Math.PI)):null;break outer}}}}catch(e){out=null}
+ tinyMemo.set(key,out);return out}
+function tinyPx(ll){const k=tinyKm(ll);return k==null?null:Math.max(3,ringPx(ll,k))+6}
 function ringPx(a,k){try{const p=psScreen(a),q=psScreen([a[0]+k/(111.32*Math.cos(a[1]*Math.PI/180)),a[1]]);return p&&q?Math.hypot(q[0]-p[0],q[1]-p[1]):0}catch(e){return 0}}
 
 function install(){
@@ -88,6 +97,7 @@ function install(){
     placed.push([x,y]);
     const ux=(x-a[0]),uy=(y-a[1]),ud=Math.hypot(ux,uy)||1;
     if(R){lines+=`<line x1="${(a[0]+ux/ud*(R+1)).toFixed(1)}" y1="${(a[1]+uy/ud*(R+1)).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}
+    else if(tinyPx(q.at)!=null){const g=Math.min(ud-4,tinyPx(q.at));if(g<ud-6)lines+=`<line x1="${(a[0]+ux/ud*g).toFixed(1)}" y1="${(a[1]+uy/ud*g).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`}
     else{lines+=`<line x1="${(a[0]+ux/ud*6).toFixed(1)}" y1="${(a[1]+uy/ud*6).toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="ps-dot2" cx="${a[0].toFixed(1)}" cy="${a[1].toFixed(1)}" r="3.4"/>`}});
    const svg=L.querySelector("svg.ps-sq-lead");if(svg)svg.innerHTML=lines;
    /* captions short enough to read in full on the map; the whole name stays in the tooltip and the opened photo */
@@ -111,6 +121,8 @@ function install(){
  const _ld=psLeaders;psLeaders=function(pinsEl,rects){const r=_ld.apply(this,arguments);
   try{const S=cur();if(!S||SKIP.has(ps.tour))return r;const svg=pinsEl.querySelector(".ps-leaders");if(!svg)return r;
    const rk=(S.pins||[]).filter(p=>p&&p._gfRk).map(p=>{const a=psScreen(at(p));return a?[a[0],a[1],ringPx(at(p),p._gfRk)]:null}).filter(Boolean);
+   /* text pins on a tiny island: the same, with the island's own size as the circle */
+   (S.pins||[]).forEach(p=>{if(!p||p._gfRk||!Array.isArray(p)||(p[2]&&p[2]!=="point"))return;const ll=at(p),t=tinyPx(ll);if(t==null)return;const a=psScreen(ll);if(a)rk.push([a[0],a[1],t-1])});
    if(!rk.length)return r;
    svg.querySelectorAll("circle").forEach(c=>{const x=+c.getAttribute("cx"),y=+c.getAttribute("cy"),k=rk.find(k=>Math.hypot(k[0]-x,k[1]-y)<2);if(k)c.style.display="none"});
    svg.querySelectorAll("line").forEach(l=>{const x=+l.getAttribute("x1"),y=+l.getAttribute("y1"),k=rk.find(k=>Math.hypot(k[0]-x,k[1]-y)<2);if(!k)return;
