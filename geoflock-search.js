@@ -15,11 +15,11 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const FOLD={"ø":"o","æ":"ae","œ":"oe","ß":"ss","ł":"l","đ":"d","ð":"d","þ":"th","ı":"i","ħ":"h","ŧ":"t","ŀ":"l","ĳ":"ij","ŉ":"n","ʻ":"","ʼ":"","‘":"","-":" ","–":" ","—":" "};
 const norm=s=>String(s||"").toLowerCase().replace(/[øæœßłđðþıħŧŀĳŉʻʼ‘\-–—]/g,c=>FOLD[c]).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
 const STRIP=/^(the |mount |mt |lake |loch |river |isla |isle of |gulf of |bay of |sea of |strait of |cape )/;
-const COL={countries:"#2f6f9e",regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8"};
+const COL={continents:"#0f8a6a",orgs:"#5b3cc4",countries:"#2f6f9e",regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8"};
 const TYPE={countries:"country",regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall"};
-const EMO={countries:"🏳️",regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦"};
+const EMO={continents:"🌍",orgs:"🤝",countries:"🏳️",regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦"};
 /* how each type is shown: zoom = fly to a point; flash = flash then soft highlight; icon = map icon; layer = flash then keep it drawn */
-const SHOW={countries:"label",regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer"};
+const SHOW={continents:"flash",orgs:"flash",countries:"label",regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer"};
 let IDX=null;
 /* which seas belong to which (roughly following the International Hydrographic Organization's limits). Only used by search:
    searching a sea also lights up its bays, gulfs and smaller seas. Everywhere else they stay separate. */
@@ -56,7 +56,17 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  {const base=n=>norm(n).replace(/\b(mountains|mts|range|ranges|desert|peninsula|pen|islands|island|is|plateau|the)\b/g,"").replace(/\s+/g," ").trim(),have=new Set(IDX.map(e=>base(e.n)));
   (REGS||[]).forEach(o=>{if(have.has(base(o.n))||(o.alt||[]).some(a=>have.has(base(a))))return;have.add(base(o.n));let g=o.g;try{IDX.push({n:o.n,alt:o.alt||[],cat:"regions",typ:o.t,g,ll:d3.geoCentroid(g),fame:2})}catch(e){}});
   UNIONS.forEach(([n,cc,alt])=>{if(have.has(base(n)))return;const g=unionOf(cc);if(!g)return;IDX.push({n,alt,cat:"regions",typ:"group of countries",g,ll:d3.geoCentroid(g),fame:2})});
-  IDX.push({n:"Silk Road",alt:["Silk Roads","Silk Route"],cat:"routes",g:SILK,ll:[75,40],fame:1})}
+  IDX.push({n:"Silk Road",alt:["Silk Roads","Silk Route"],cat:"routes",g:SILK,ll:[75,40],fame:1});
+  /* continents and the map's own sub-regions (North Africa, the Caribbean...): their countries flash */
+  try{const C=typeof COUNTRIES!=="undefined"?COUNTRIES:[],by=(f)=>C.filter(f).map(c=>c.c);
+   const AM_N=new Set(["North America","Central America","Caribbean","Northern America"]);
+   const CONT=[["Africa",by(c=>c.r==="Africa").concat(["eh"]),["African continent"]],["Asia",by(c=>c.r==="Asia"),["Asian continent"]],["Europe",by(c=>c.r==="Europe"),["European continent"]],
+    ["North America",by(c=>c.r==="Americas"&&AM_N.has(c.s)),["North and Central America"]],["South America",by(c=>c.r==="Americas"&&!AM_N.has(c.s)),["Latin America (south)"]],["Oceania",by(c=>c.r==="Oceania"),["Australasia and the Pacific"]],
+    ["The Americas",by(c=>c.r==="Americas"),["Americas"]]];
+   CONT.forEach(([n,cc,alt])=>{const g=unionOf(cc);if(g)IDX.push({n,alt,cat:"continents",typ:"continent",g,ll:d3.geoCentroid(g),fame:1,cc})});
+   [...new Set(C.map(c=>c.s).filter(Boolean))].forEach(sr=>{if(have.has(base(sr))||CONT.some(x=>x[0]===sr))return;have.add(base(sr));const cc=by(c=>c.s===sr),g=unionOf(cc);if(g)IDX.push({n:sr,alt:[],cat:"regions",typ:"region",g,ll:d3.geoCentroid(g),fame:2,cc})});
+   /* organisations: every member country, each with its own border; one organisation on the map at a time */
+   ORGS.forEach(([n,cc,alt])=>{if(n==="African Union")cc=by(c=>c.r==="Africa").concat(["eh"]);const g=membersOf(cc);if(g)IDX.push({n,alt,cat:"orgs",typ:"organisation, "+cc.length+" members",g,ll:d3.geoCentroid(unionOf(cc)||g),fame:1,cc})})}catch(err){console.error(err)}}
  {const isl=new Set(IDX.filter(e=>e.cat==="islands").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="groups"&&isl.has(norm(e.n))))}
  /* a name that is both a lake and a sea (the Caspian, Aral and Dead Seas) is kept once, as a lake */
  {const lk=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="seas"&&lk.has(norm(e.n))))}
@@ -74,6 +84,29 @@ const UNIONS=[["Maghreb",["ma","dz","tn","ly","mr","eh"],["Maghrib","Northwest A
 /* the Silk Road's main routes, through the cities it is named by */
 const SILK={type:"MultiLineString",coordinates:[[[108.94,34.34],[103.83,36.06],[102.64,37.93],[100.45,38.93],[98.49,39.73],[94.66,40.14],[93.51,42.83],[89.19,42.95],[82.96,41.72],[80.26,41.17],[75.99,39.47],[72.8,40.53],[69.62,40.28],[66.96,39.65],[64.42,39.77],[61.84,37.66],[58.8,36.21],[51.43,35.59],[48.51,34.8],[44.58,33.09],[38.27,34.55],[36.16,36.2]],
  [[94.66,40.14],[88.97,39.22],[79.93,37.11],[77.24,38.41],[75.99,39.47]],[[36.16,36.2],[32.85,39.93],[28.98,41.01]]]};
+/* the members as one shape that keeps each country's own border (not merged) */
+function membersOf(codes){try{const S=new Set(codes),T=PROJ_WORLD,G=T.objects.countries.geometries.filter(g=>S.has(String((g.properties||{}).c||g.id||"").toLowerCase()));if(!G.length)return null;
+ const co=[];G.forEach(g=>{const f=topojson.feature(T,g).geometry;if(!f)return;if(f.type==="Polygon")co.push(f.coordinates);else if(f.type==="MultiPolygon")co.push(...f.coordinates)});return{type:"MultiPolygon",coordinates:co}}catch(e){return null}}
+const ORGS=[
+ ["European Union",["at","be","bg","hr","cy","cz","dk","ee","fi","fr","de","gr","hu","ie","it","lv","lt","lu","mt","nl","pl","pt","ro","sk","si","es","se"],["EU"]],
+ ["NATO",["al","be","bg","ca","hr","cz","dk","ee","fi","fr","de","gr","hu","is","it","lv","lt","lu","me","nl","mk","no","pl","pt","ro","sk","si","es","se","tr","gb","us"],["North Atlantic Treaty Organization","OTAN"]],
+ ["ASEAN",["bn","kh","id","la","my","mm","ph","sg","th","vn","tl"],["Association of Southeast Asian Nations"]],
+ ["African Union",[],["AU"]],
+ ["OPEC",["dz","cg","gq","ga","ir","iq","kw","ly","ng","sa","ae","ve"],["Organization of the Petroleum Exporting Countries"]],
+ ["G7",["ca","fr","de","it","jp","gb","us"],["Group of Seven"]],
+ ["G20",["ar","au","br","ca","cn","fr","de","in","id","it","jp","kr","mx","ru","sa","za","tr","gb","us"],["Group of Twenty"]],
+ ["BRICS",["br","ru","in","cn","za","eg","et","ir","ae","id"],[]],
+ ["Mercosur",["ar","br","py","uy","bo"],["Mercosul","Southern Common Market"]],
+ ["Commonwealth of Nations",["ag","au","bs","bd","bb","bz","bw","bn","cm","ca","cy","dm","sz","fj","ga","gm","gh","gd","gy","in","jm","ke","ki","ls","mw","my","mv","mt","mu","mz","na","nr","nz","ng","pk","pg","rw","kn","lc","vc","ws","sc","sl","sg","sb","za","lk","tg","to","tt","tv","ug","gb","tz","vu","zm"],["Commonwealth"]],
+ ["Arab League",["dz","bh","km","dj","eg","iq","jo","kw","lb","ly","mr","ma","om","ps","qa","sa","so","sd","sy","tn","ae","ye"],["League of Arab States"]],
+ ["USMCA",["us","ca","mx"],["NAFTA","CUSMA","T-MEC"]],
+ ["Schengen Area",["at","be","bg","hr","cz","dk","ee","fi","fr","de","gr","hu","is","it","lv","li","lt","lu","mt","nl","no","pl","pt","ro","sk","si","es","se","ch"],["Schengen"]],
+ ["Eurozone",["at","be","bg","hr","cy","ee","fi","fr","de","gr","ie","it","lv","lt","lu","mt","nl","pt","sk","si","es"],["Euro area","Euro zone"]],
+ ["Gulf Cooperation Council",["bh","kw","om","qa","sa","ae"],["GCC"]],
+ ["ECOWAS",["bj","cv","ci","gm","gh","gn","gw","lr","ng","sn","sl","tg"],["Economic Community of West African States"]],
+ ["SADC",["ao","bw","km","cd","sz","ls","mg","mw","mu","mz","na","sc","za","tz","zm","zw"],["Southern African Development Community"]],
+ ["OECD",["au","at","be","ca","cl","co","cr","cz","dk","ee","fi","fr","de","gr","hu","is","ie","il","it","jp","kr","lv","lt","lu","mx","nl","nz","no","pl","pt","sk","si","es","se","ch","tr","gb","us"],["Organisation for Economic Co-operation and Development"]],
+ ["UN Security Council (permanent members)",["cn","fr","ru","gb","us"],["P5","UN Security Council","Security Council"]]];
 function unionOf(codes){try{const S=new Set(codes),T=PROJ_WORLD,G=T.objects.countries.geometries.filter(g=>S.has(String((g.properties||{}).c||g.id||"").toLowerCase()));if(!G.length)return null;return topojson.merge(T,G)}catch(e){return null}}
 let PROV=null;function loadProv(){if(PROV)return;PROV=[];fetch("provinces/names.json").then(r=>r.ok?r.json():[]).then(d=>{PROV=d;if(IDX){IDX=null}}).catch(()=>{})}
 function provKind(cc){try{const L=(window.gfProvinces&&gfProvinces.LIST||[]).find(x=>x[0]===cc);const k=L?L[2]:"province";return(k.includes(" or ")?k.split(" or ")[0]:k)+" of "+((COUNTRY_BY_CODE||{})[cc]||{n:cc.toUpperCase()}).n}catch(e){return"province"}}
@@ -125,6 +158,8 @@ function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.spli
 function show(e){if(!active())return;
  if(e.cat==="provinces"&&!e.shape){const c=e;if(window.gfProvinces)gfProvinces.load(c.cc).then(d=>{const it=d.items.find(x=>x.n===c.n);if(it){c.g=it.g;c.ll=it.c||c.ll;c.shape=1}show(c)}).catch(()=>{c.shape=1;show(c)});return}
  e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];
+ /* one organisation at a time: a new one replaces the last */
+ if(e.cat==="orgs")LIST.filter(x=>x.cat==="orgs"&&!same(x,e)).forEach(removeOne);
  const old=LIST.find(x=>same(x,e));if(old)e=old;else{LIST.push(e);while(LIST.length>MAXN)removeOne(LIST[0])}
  e._t0=performance.now();fly(e);draw();xBtn();cancelAnimationFrame(raf);
  const tick=()=>{if(!LIST.length)return;draw();if(LIST.some(x=>performance.now()-x._t0<2600))raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)}
