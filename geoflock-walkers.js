@@ -50,9 +50,9 @@
   "islandlife|Christmas Island’s red crabs":{img:CRAB,name:"Red crabs on their way to the sea",size:18,per:2,dur:6500,lines:coast.map(c=>[CI,c])}};
  /* travellers on other tours: [tour, stop, emoji (or one per route), what it is, options] */
  const NOFLIP=new Set(["⛵","🦋","🚀","🛶","🛷","🚆"]),SHIP="⛵",STEAM="🚢",CANOE="🛶",CAMEL="🐪";
- [["amigration","Animals on the move",["🦬","🐦","🦋","🐋","🐟"],"Animals on their yearly journeys",{per:1}],
+ [["amigration","Animals on the move",["🕊️","🕊️","🐦","🦋","🐋"],"Animals on their yearly journeys",{per:1}],
   ["amigration","Wildebeest follow the rain","🦬","Wildebeest following the rain",{}],
-  ["amigration","The Arctic tern","🐦","An Arctic tern",{per:1}],
+  ["amigration","The Arctic tern","🕊️","An Arctic tern",{per:1}],
   ["amigration","The godwit’s non-stop flight","🐦","A bar-tailed godwit",{}],
   ["amigration","The East Asian–Australasian Flyway","🐦","Shorebirds on the flyway",{per:1}],
   ["amigration","The falcons of Nagaland","🦅","Amur falcons",{}],
@@ -98,8 +98,10 @@
  window.gfWalkers=W;window.gfWalkerFig=fig;
  let lay=null,raf=0,cur=null;const st=document.createElement("style");st.textContent=".hw-lay{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}.hw-w{position:absolute;left:0;top:0;will-change:transform,opacity;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45))}.hw-w img{width:100%;height:100%;object-fit:contain;display:block}.hw-w>svg,.hw-w>.hw-in{display:block;width:100%;height:100%}.hw-emo{line-height:1;text-align:center;display:flex!important;align-items:flex-end;justify-content:center}.hw-m{position:absolute;left:0;top:0;will-change:transform;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}";document.head.appendChild(st);
  const stop=()=>{cancelAnimationFrame(raf);raf=0;if(lay)lay.remove();lay=null;cur=null};
- function path(c){const seg=[];let L=0;for(let i=1;i<c.length;i++){const d=Math.hypot(c[i][0]-c[i-1][0],c[i][1]-c[i-1][1]);seg.push(d);L+=d}return{c,seg,L}}
- function at(P,t){let d=t*P.L;for(let i=0;i<P.seg.length;i++){if(d<=P.seg[i]){const f=P.seg[i]?d/P.seg[i]:0,a=P.c[i],b=P.c[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]}d-=P.seg[i]}return P.c[P.c.length-1]}
+ /* routes are drawn as great circles (d3 LineString), so travellers follow great circles too: the same curve, and the short way across 180° */
+ const RAD=180/Math.PI;
+ function path(c){const seg=[],ip=[];let L=0;for(let i=1;i<c.length;i++){const d=d3.geoDistance(c[i-1],c[i])*RAD;seg.push(d);ip.push(d3.geoInterpolate(c[i-1],c[i]));L+=d}return{c,seg,ip,L}}
+ function at(P,t){let d=t*P.L;for(let i=0;i<P.seg.length;i++){if(d<=P.seg[i])return P.ip[i](P.seg[i]?d/P.seg[i]:0);d-=P.seg[i]}return P.c[P.c.length-1]}
  const still=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
  function start(key,S){const w=W[key];if(!w)return;const box=psContainer&&psContainer();if(!box)return;const lines=w.lines||(S.lines||[]).filter(l=>l.kind==="flow"&&l.coords).map(l=>l.coords);if(!lines.length&&!(w.marks||[]).length)return;
   const go=()=>{if(cur!==S)return;lay=document.createElement("div");lay.className="hw-lay";box.appendChild(lay);const z=w.size||46,per=w.per||2,zw=w.fig?z*.5:z*(w.wide||1);
