@@ -72,7 +72,8 @@ function profile(ll,opt){const P=[];let km=0;for(let i=0;i<ll.length;i++){if(i)k
 /* ---------- countries along the line ---------- */
 let FB=null;function feats(){if(FB)return FB;try{FB=projFeatures().filter(f=>f.geometry&&f.properties&&f.properties.c).map(f=>({f,b:d3.geoBounds(f),c:String(f.properties.c).toLowerCase()}))}catch(e){FB=[]}return FB}
 function countryAt(ll){for(const o of feats()){const b=o.b;if(b[0][0]<=b[1][0]?(ll[0]<b[0][0]||ll[0]>b[1][0]):(ll[0]<b[0][0]&&ll[0]>b[1][0]))continue;if(ll[1]<b[0][1]||ll[1]>b[1][1])continue;if(d3.geoContains(o.f,ll))return o.c}return null}
-const cname=c=>c&&typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[c]?COUNTRY_BY_CODE[c].n:null;
+/* the name the map itself uses: territories as "Guadeloupe (France)", countries by their own name */
+const cname=c=>{if(!c)return null;try{if(typeof allMapsCountryName==="function"){const n=allMapsCountryName(c);if(n)return n}}catch(e){}return typeof COUNTRY_BY_CODE!=="undefined"&&COUNTRY_BY_CODE[c]?COUNTRY_BY_CODE[c].n:null};
 /* ---------- state ---------- */
 let head=null,on=false,armed=false,shape="line",lines=[],hover=null,panel=null,ov=null,raf=0,drawing=null,title="",note="";
 /* the lines you draw stay on the map (up to MAXL, the oldest goes first); the card shows one, and you switch between them */
