@@ -261,6 +261,11 @@ function lfAt(ll,e,minA){if(e<-4000){for(const T of TRENCH)if(T.pts.some(q=>d3.g
  for(const o of LFD){if(o.lake&&LAKES)continue;if(o.sea||o.lake){if(e>5&&!o.lake)continue}else if(e<-20)continue;if(!inB(o.b,ll))continue;try{if(!d3.geoContains(o.g,ll))continue}catch(er){continue}hit.push(o)}
  if(!hit.length)return null;const pr=o=>o.sea||o.lake?5:o.p,p0=Math.min(...hit.map(pr)),C=hit.filter(o=>pr(o)===p0);
  const big=C.filter(o=>o.a>=(minA||0)).sort((x,y)=>x.a-y.a)[0]||C.sort((x,y)=>y.a-x.a)[0];return{n:big.n,k:big.sea?"sea":big.lake?"lake":"land"}}
+/* the water a point is in, for the readout when it is in no country: a lake, else the smallest named sea, else the ocean */
+function waterName(ll){try{const k=LAKES&&lakeAt(ll);if(k&&k.n)return/lake|sea|reservoir/i.test(k.n)?k.n:"Lake "+k.n}catch(e){}
+ let best=null;try{(LFD||[]).forEach(o=>{if(!o.sea||!inB(o.b,ll))return;try{if(d3.geoContains(o.g,ll)&&(!best||o.a<best.a))best=o}catch(e){}})}catch(e){}if(best)return best.n;
+ const lon=ll[0],lat=ll[1];if(lat<-60)return"Southern Ocean";if(lat>66)return"Arctic Ocean";
+ if(lon>-100&&lon<20&&!(lon<-70&&lat<8&&lon<-80))return"Atlantic Ocean";if(lon>=20&&lon<=147&&lat<=30)return"Indian Ocean";return"Pacific Ocean"}
 function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cur=null;
  const Lk=(P[P.length-1].km||0)-(P[0].km||0),minA=Math.pow(Lk/7/R_KM,2);
  for(let i=0;i<P.length;i+=step){const p=P[i],h=lfAt(p.ll,p.e,minA),n=h&&h.n;if(cur&&cur.n===n){cur.b=p.km;cur.hi=Math.max(cur.hi,p.e);cur.lo=Math.min(cur.lo,p.e)}else{cur={n,k:h&&h.k,a:p.km,b:p.km,hi:p.e,lo:p.e};out.push(cur)}}
@@ -304,7 +309,8 @@ function innerMax(o){if(o._in!=null)return o._in;let m=0;const[[w,sth],[e,n]]=o.
  o._in=m||1;return o._in}
 function compute(){yl={lo:null,hi:null};lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
  /* every sample, so small islands (Guadeloupe, Dominica...) on a long line are not skipped */
- for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);L.P[i].c=c||null;if(!cur||cur.c!==c){cur={c,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
+ /* stretches in no country are split by the water they cross (a lake, a sea, an ocean), named in blue */
+ for(let i=0;i<L.P.length;i++){const c=countryAt(L.P[i].ll);L.P[i].c=c||null;const w=c?null:waterName(L.P[i].ll),k=c||("~"+w);if(!cur||cur.k!==k){cur={k,c,w,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
 /* detailed heights for a drawn line (not the rivers): AWS Terrain Tiles (Terrarium; SRTM, GMTED2010, ETOPO1 and other
    open sources), fetched only for the tiles the line crosses, at a zoom that matches the line's length */
 const TILES=new Map();let refineId=0;
@@ -424,10 +430,12 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
    if(g.k==="sea"||g.k==="trench"||g.k==="lake"){const yy=g.k==="trench"?Y(g.lo)-8:Math.min(Y(g.lo)-6,Math.max(yz+13,(yz+Y(g.lo))/2));if(!inWin(g.lo)&&g.k==="trench")return;s+='<text x="'+xm.toFixed(1)+'" y="'+yy.toFixed(1)+'" text-anchor="middle" font-size="10.5" font-style="italic" font-weight="700" fill="'+(g.k==="trench"?"#fff":"#1f4f7a")+'">'+esc(nm)+'</text>'}
    else{const yy=Math.max(mt+24,Y(Math.min(g.hi,e1))-10);s+='<path d="M'+(a+2).toFixed(1)+','+(yy+4).toFixed(1)+'v-3H'+(b-2).toFixed(1)+'v3" fill="none" stroke="#6b4a2a" stroke-opacity=".55"/><text x="'+xm.toFixed(1)+'" y="'+(yy-1).toFixed(1)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b3a17">'+esc(nm)+'</text>'}})}
   /* every country or territory the line crosses is named, however short the stretch: names that would collide drop to a second row */
-  {const rowEnd=[-1e9,-1e9];(L.segs||[]).forEach(g=>{if(!g.c)return;const a=X(g.a),b=Math.max(X(g.b),a+2),nm=cname(g.c);if(!nm)return;
-   s+='<rect x="'+a.toFixed(1)+'" y="'+(H-mb+15)+'" width="'+(b-a).toFixed(1)+'" height="3" fill="#8a5a2b" fill-opacity=".45"/>';
+  {const rowEnd=[-1e9,-1e9];(L.segs||[]).forEach(g=>{if(!g.c&&!g.w)return;const a=X(g.a),b=Math.max(X(g.b),a+2),nm=g.c?cname(g.c):g.w;if(!nm)return;
+   /* a stretch of water too short to see is not named (a bay between two headlands) */
+   if(!g.c&&b-a<10)return;
+   s+='<rect x="'+a.toFixed(1)+'" y="'+(H-mb+15)+'" width="'+(b-a).toFixed(1)+'" height="3" fill="'+(g.c?"#8a5a2b":"#2f7fd0")+'" fill-opacity=".45"/>';
    const w=nm.length*5.6+6,xm=Math.max(w/2,(a+b)/2);let r=rowEnd.findIndex(e=>xm-w/2>e+4);if(r<0)return;rowEnd[r]=xm+w/2;
-   s+='<text class="gf-xs-cty" x="'+xm.toFixed(1)+'" y="'+(H-mb+28+r*12)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="#5b3a17">'+esc(nm)+'</text>'})}}
+   s+='<text class="gf-xs-cty" x="'+xm.toFixed(1)+'" y="'+(H-mb+28+r*12)+'" text-anchor="middle" font-size="10.5" font-weight="700"'+(g.c?' fill="#5b3a17"':' fill="#1f5f9e" font-style="italic"')+'>'+esc(nm)+'</text>'})}}
  else{s+='<g clip-path="url(#gfxsClip)">';Ps.forEach(L=>{let d="";L.P.forEach((p,i)=>{d+=(i?"L":"M")+X(xKey(p)).toFixed(1)+","+Y(p.e).toFixed(1)});s+='<path d="'+d+'" fill="none" stroke="'+L.c+'" stroke-width="2.6"/>'});s+='</g>';
   /* each river's name where its line enters the window, and its biggest drop */
   Ps.forEach(L=>{const i=Math.max(0,L.P.findIndex(p=>p.e<=e1)),p=L.P[i];s+=lbl(X(xKey(p))+4,Math.max(mt+22,Y(p.e)-4),L.name,{c:L.c,fs:11,fw:800});s+=overTop(L,L.c);
@@ -477,7 +485,7 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
   /* a playhead, like a video's: it stays put, jumps to wherever you click, drags left and right, and its point shows on the map */
   const X0=chartSVG.X(0),put=vx=>{let best=null,bd=1e9;
    lines.forEach(L=>(L.P||[]).forEach(p=>{const d=Math.abs(chartSVG.X(chartSVG.comp?p.fromSea:p.km)-vx);if(d<bd){bd=d;best={p,L}}}));if(!best)return;
-   const p=best.p,xx=chartSVG.X(chartSVG.comp?p.fromSea:p.km),yy=chartSVG.Y(p.e);head=xx;hover={ll:p.ll,c:best.L.c};const nm=lines.length===1?cname(countryAt(p.ll)):best.L.name;
+   const p=best.p,xx=chartSVG.X(chartSVG.comp?p.fromSea:p.km),yy=chartSVG.Y(p.e);head=xx;hover={ll:p.ll,c:best.L.c};const nm=lines.length===1?(cname(countryAt(p.ll))||waterName(p.ll)):best.L.name;
    const T=(best.L.P[best.L.P.length-1]||{}).km||1,ft=best.L.P.find(q=>q.n&&Math.abs(q.km-p.km)<T*.012);
    const txt=Math.round(chartSVG.comp?p.fromSea:p.km).toLocaleString()+" km · "+fmtE(p.e)+(ft?" · "+ft.n:nm?" · "+nm:"");
    const yyc=Math.max(14,Math.min(chartSVG.H-24,yy));cur.innerHTML='<line x1="'+xx+'" x2="'+xx+'" y1="12" y2="'+(chartSVG.H-24)+'" stroke="#1d2433" stroke-opacity=".7" stroke-width="1.6"/><path d="M'+(xx-6)+',6 h12 v5 l-6,6 l-6,-6z" fill="#1d2433"/><circle cx="'+xx+'" cy="'+yyc+'" r="5" fill="'+best.L.c+'" stroke="#fff" stroke-width="2"/><text x="'+Math.min(chartSVG.W-150,Math.max(60,xx+8))+'" y="26" font-size="12" font-weight="800" fill="#1d2433" stroke="#fff" stroke-width="3" paint-order="stroke">'+esc(txt)+'</text>';
