@@ -56,15 +56,19 @@ function tourView(){window._gfFlagTour=true;try{renderMapAtlasStudy()}catch(e){c
 function leaveTour(){if(!window._gfFlagTour)return;window._gfFlagTour=false;try{if(typeof ps!=="undefined"&&ps&&ps.tour==="flags")psEnd(true)}catch(e){}}
 function show(){const v=document.getElementById("studyView");if(!v)return;if(view==="tour"){v.style.display="";tourView();return}leaveTour();v.style.display="";v.innerHTML=view==="stories"?storiesHTML():historyHTML();
  v.querySelectorAll(".fx-map").forEach(b=>b.onclick=()=>{const i=+b.dataset.step;try{switchAppMode("allmaps")}catch(e){}setTimeout(()=>{try{psLaunchTour("flags");setTimeout(()=>{try{psGo(i)}catch(e){}},400)}catch(e){console.error(e)}},350)})}
-{const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{const row=document.getElementById("regionRow");if(appMode!=="flag"||activeTab!=="study"){view=null;leaveTour();return r}
- if(row){[["__tour__","Flags tour","tour"],["__stories__","Flag stories","stories"],["__history__","Flag history","history"]].forEach(([k,lab,id])=>{let b=row.querySelector('[data-r="'+k+'"]');if(!b){b=document.createElement("button");b.className="chip";b.dataset.r=k;b.textContent=lab;b.onclick=()=>{view=id;try{ffInStudy=false}catch(e){}renderChrome();renderActiveView()};row.appendChild(b)}b.classList.toggle("active",view===id)});
+{const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{const row=document.getElementById("regionRow");if(appMode!=="flag"||activeTab!=="study"){if(row)row.classList.remove("fx-tight");view=null;leaveTour();return r}
+ if(row){[["__tour__","Flags tour","tour"],["__history__","Flag history","history"]].forEach(([k,lab,id])=>{let b=row.querySelector('[data-r="'+k+'"]');if(!b){b=document.createElement("button");b.className="chip";b.dataset.r=k;b.textContent=lab;b.onclick=()=>{view=id;try{ffInStudy=false}catch(e){}renderChrome();renderActiveView()};row.appendChild(b)}b.classList.toggle("active",view===id)});
   /* the three Flags extras sit on their own row below the regions */
-  const fam=row.querySelector('[data-r="__families__"]')||row.querySelector('[data-r="__tour__"]');if(fam&&!row.querySelector(".fx-break")){const br=document.createElement("span");br.className="fx-break";br.style.cssText="flex-basis:100%;width:100%;height:0";row.insertBefore(br,fam)}
-  ["__families__","__tour__","__stories__","__history__"].forEach(k=>{const b=row.querySelector('[data-r="'+k+'"]');if(b)row.appendChild(b)});
+  /* same row as the regions, after a thin divider (it wraps on narrow screens) */
+  const fam=row.querySelector('[data-r="__families__"]')||row.querySelector('[data-r="__tour__"]');row.querySelectorAll(".fx-break").forEach(x=>x.remove());if(fam&&!row.querySelector(".fx-sep")){const br=document.createElement("span");br.className="fx-sep";row.insertBefore(br,fam)}row.classList.add("fx-tight");
+  [".fx-sep","__families__","__tour__","__history__"].forEach(k=>{const b=row.querySelector(k[0]==="."?k:'[data-r="'+k+'"]');if(b)row.appendChild(b)});
   if(view)row.querySelectorAll('.chip.active:not([data-r="__stories__"]):not([data-r="__history__"]):not([data-r="__tour__"])').forEach(x=>x.classList.remove("active"));
   row.querySelectorAll('.chip:not([data-r="__stories__"]):not([data-r="__history__"]):not([data-r="__tour__"])').forEach(x=>{if(!x._fx){x._fx=1;x.addEventListener("click",()=>{view=null},true)}})}}catch(e){console.error(e)}return r}}
 {const _rav=renderActiveView;renderActiveView=function(){const r=_rav.apply(this,arguments);try{if(view&&appMode==="flag"&&activeTab==="study")show();else leaveTour()}catch(e){console.error(e)}return r}}
 const css=document.createElement("style");css.textContent=`
+#regionRow.fx-tight{ gap:6px; } #regionRow.fx-tight .chip{ padding-left:11px; padding-right:11px; }
+#regionRow .fx-sep{ align-self:center; width:1px; height:24px; margin:0 4px; background:currentColor; opacity:.3; }
+.ff-panel .game-head{ margin-top:0 !important; margin-bottom:8px !important; } .ff-panel .game-head h2{ margin:0 0 2px !important; } .ff-panel .game-head p{ margin:0 !important; }
 .fx-wrap{ max-width:900px; margin:6px auto 30px; padding:0 12px; } .fx-head{ text-align:center; margin-bottom:14px; } .fx-head h2{ margin:0 0 4px; } .fx-head p{ margin:0; opacity:.75; }
 .fx-card{ background:rgba(255,255,255,.88); border-radius:20px; box-shadow:0 4px 16px rgba(20,40,70,.08); padding:16px 18px; margin:0 0 14px; }
 .fx-card h3{ margin:10px 0 4px; } .fx-stat{ font-weight:700; color:#b4406b; margin:0 0 6px; } .fx-card p{ margin:0 0 6px; line-height:1.5; } .fx-card details{ margin:4px 0 8px; } .fx-card summary{ cursor:pointer; font-weight:700; opacity:.8; }
