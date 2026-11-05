@@ -22,6 +22,8 @@ const ZOOMS=[
   tags:[["fr","France",28],["nl","Netherlands",74]]},
  {tour:"oceania",title:"The smallest island country",at:[166.93,-0.525],ringKm:4,img:"photos/s2-nauru.webp",name:"Nauru",sub:"21 km² · about 6 km across",credit:S2},
  {tour:"hoceania",title:"Easter Island’s giants",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
+ {tour:"bremote",title:"Christmas Island",at:[105.63,-10.49],ringKm:12,img:"photos/s2-christmas.webp",name:"Christmas Island",sub:"about 19 km across · from space",credit:S2},
+ {tour:"bremote",title:"Rapa Nui",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
  {tour:"bcollapse",title:"Easter Island",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
  {tour:"islandlife",title:"Krakatoa starts again",at:[105.42,-6.11],ringKm:7,img:"photos/s2-krakatau.webp",name:"Krakatoa",sub:"what is left of the 1883 volcano, Anak Krakatau in the middle",credit:S2}];
 let C=ZOOMS[0];
