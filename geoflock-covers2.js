@@ -1,5 +1,6 @@
 /* GeoFlock: new tour covers that say the subject at a glance — Maths gets Oliver Byrne's coloured proof of Pythagoras'
-   theorem (Euclid's Elements, 1847; the diagram and the theorem, cropped from the page) and Psychology gets the first card of Hermann Rorschach's inkblot test (1921).
+   theorem (Euclid's Elements, 1847; the diagram and the theorem, cropped from the page) and Psychology gets the first card of Hermann Rorschach's inkblot test (1921), and Explorers keeps its cover (the five voyages,
+   the photo labels and the tall ship) on the app's own Pirate chart map instead of the Relief map.
    Loaded after geoflock-tourcovers.js, so it has the last word on TOUR_THUMBS for these tours (tourcovers.js skips its
    Maths swap for any tour set here). The photos are freely licensed files from Wikimedia Commons (GF_COVERS2_PHOTOS, with
    author, licence and page), joined to the shared photo library the way geoflock-polish-k.js does it. */
@@ -8,7 +9,7 @@ window.GF_COVERS2_PHOTOS=[
  {f:"Rorschach blot 01.jpg",d:"photos/x859e1bbbb29babb8.webp",by:"Hermann Rorschach (1921)",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Rorschach_blot_01.jpg"}
 ];
 (function(){
-const COVER={maths:"photos/x5dff1f65126282b6.webp",psychology:"photos/x859e1bbbb29babb8.webp"};
+const COVER={maths:"photos/x5dff1f65126282b6.webp",psychology:"photos/x859e1bbbb29babb8.webp",explorers:"photos/cover-explorers-pirate.webp"};
 /* crop: keep the top of Byrne's red square in the card */
 const POS={maths:"50% 30%"};
 window.gfCovers2=COVER;
