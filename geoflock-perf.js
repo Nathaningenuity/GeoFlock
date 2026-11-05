@@ -97,7 +97,15 @@ function notice(){if(S.shut||shutNow||document.getElementById("gfPerfNote"))retu
  n.querySelector(".gpn-x").onclick=()=>{shutNow=true;n.remove()};
  n.querySelector(".gpn-never").onclick=()=>{S.shut=1;save();n.remove()};
  n.querySelector(".gpn-sharp input").onchange=e=>{S.ov=e.target.checked?"sharp":null;save();apply()}}
+/* ---------- decoration that never stops costs every frame on every device ----------
+   Measured: the six blurred background clouds drifting forever (a 34 px blur moved and turned every frame) took the
+   page from 25 to 8 frames a second at rest; the star twinkle and the twinkle on a map button cost a little more.
+   The clouds now stand still everywhere (they only ever moved 18 px in 26 s); on the Maps page the stars and the
+   button stop twinkling too. */
+{const syncMap=()=>{try{document.body.classList.toggle("gf-onmap",typeof appMode!=="undefined"&&appMode==="allmaps")}catch(e){}};setInterval(syncMap,600);addEventListener("click",()=>setTimeout(syncMap,50),true)}
 const st=document.createElement("style");st.textContent=`
+.sky-field span{ animation:none !important; }
+body.gf-onmap .sky-field::before, body.gf-onmap .sky-field::after, body.gf-onmap .chip::after{ animation:none !important; }
 #gfPerfNote{ position:fixed; left:50%; bottom:var(--gpn-b,14px); transform:translateX(-50%); z-index:9000; max-width:min(560px,calc(100vw - 24px)); background:rgba(16,28,48,.94); color:#eef3fa;
   border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.35); font:500 13px/1.4 system-ui,sans-serif; padding:8px 10px; }
 #gfPerfNote .gpn-row{ display:flex; align-items:center; gap:8px; }
