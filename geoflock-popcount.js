@@ -30,6 +30,7 @@ const css=document.createElement("style");css.textContent=`
 .gf-pc-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#b3401f; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); }
 .gf-pc-ico.on{ background:#c2491f; color:#fff; }
 .gf-pc-ov{ position:absolute; left:0; top:0; pointer-events:none; z-index:30; }
+.gf-pc.gf-pc-float{ position:fixed; z-index:1200; }
 .gf-pc{ position:absolute; left:12px; top:60px; width:300px; z-index:41; background:rgba(255,255,255,.97); border-radius:14px; box-shadow:0 6px 24px rgba(0,0,0,.25); padding:10px 12px; font:13px/1.4 system-ui,sans-serif; color:#1d2433; }
 body.dark .gf-pc{ background:rgba(28,35,51,.97); color:#e8ecf3; }
 .gf-pc-h{ display:flex; align-items:center; gap:6px; cursor:move; margin-bottom:6px; } .gf-pc-h b{ font-size:14px; } .gf-pc-h button{ margin-left:auto; border:0; background:none; font-size:18px; cursor:pointer; color:inherit; opacity:.7; }
@@ -45,9 +46,11 @@ function start(){const g=G();if(!g)return;on=true;mount();render();load().then(r
 function stop(){on=false;shape=split=res=null;drawing=null;if(panel){panel.remove();panel=null}if(ov){ov.remove();ov=null}cancelAnimationFrame(raf)}
 function mount(){const g=G();if(!g)return;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
  if(!ov||ov.parentNode!==h){ov=document.createElement("canvas");ov.className="gf-pc-ov";h.appendChild(ov)}
- if(!panel||panel.parentNode!==h){panel=document.createElement("div");panel.className="gf-pc";h.appendChild(panel);
-  panel.addEventListener("pointerdown",e=>{if(!e.target.closest(".gf-pc-h")||e.target.closest("button"))return;e.preventDefault();e.stopPropagation();const hr=h.getBoundingClientRect(),r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;
-   const mv=ev=>{panel.style.left=Math.max(-200,Math.min(hr.width-80,ev.clientX-hr.left-dx))+"px";panel.style.top=Math.max(0,Math.min(hr.height-40,ev.clientY-hr.top-dy))+"px"};const up=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true)},true);
+ if(!panel||(panel.parentNode!==h&&!panel._float)){if(panel)panel.remove();panel=document.createElement("div");panel.className="gf-pc";h.appendChild(panel);
+  panel.addEventListener("pointerdown",e=>{if(!e.target.closest(".gf-pc-h")||e.target.closest("button"))return;e.preventDefault();e.stopPropagation();const r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;
+   /* dragging lifts the card off the map onto the page, so it can go anywhere in the window (and stays there) */
+   if(!panel._float){panel._float=1;document.body.appendChild(panel);panel.classList.add("gf-pc-float");panel.style.left=r.left+"px";panel.style.top=r.top+"px"}
+   const mv=ev=>{const w=panel.offsetWidth;panel.style.left=Math.max(60-w,Math.min(innerWidth-60,ev.clientX-dx))+"px";panel.style.top=Math.max(0,Math.min(innerHeight-40,ev.clientY-dy))+"px"};const up=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",up,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",up,true)},true);
   ["pointerdown","click","wheel","dblclick"].forEach(t=>panel.addEventListener(t,e=>e.stopPropagation()))}}
 function render(){if(!panel)return;const T=[["country","Click a country"],["draw","Draw a shape"],["split","Split it"]];
  let body="";if(!POP)body='<p class="gf-pc-hint">Loading the people grid…</p>';
