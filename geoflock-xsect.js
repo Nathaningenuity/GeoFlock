@@ -429,7 +429,7 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
    const deep={};runs.forEach(r=>{const n=nmOf2(P[r.lo]);if(n&&(!deep[n]||P[r.lo].e<P[deep[n].lo].e))deep[n]=r});
    const lakeNear=r=>(L.lk||[]).some(k=>k.i<=r.j+3&&k.j>=r.i-3);
    runs.forEach(r=>{const q=P[r.lo];if(q.e>-5||X(P[r.j].km)-X(P[r.i].km)<6||!inWin(q.e))return;const nm=nmOf2(q);if(nm&&deep[nm]!==r)return;if(lakeNear(r))return;
-    const t=(nm||"Land below sea level")+" · "+fmtE(q.e),xm=X(q.km),yy=Y(q.e)+14;
+    const t=nm||"Land below sea level",/* the name only: the depth is on the scale and in the readout */xm=X(q.km),yy=Y(q.e)+14;
     s+='<circle cx="'+xm.toFixed(1)+'" cy="'+Y(q.e).toFixed(1)+'" r="2.6" fill="#5b3a17"/>'+lbl(xm,Math.min(H-mb-4,yy),t,{c:"#5b3a17",fs:10.5,fw:800})})}
   /* lakes: the water up to the lake's level, its surface, and its name and height */
   if(L.lk&&L.lk.length){s+='<g clip-path="url(#gfxsClip)">';const LX=[];
