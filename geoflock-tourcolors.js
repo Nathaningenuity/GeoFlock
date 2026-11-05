@@ -30,6 +30,7 @@ const C={
  regions:"#6a4fb0",capitals:"#b8862a",energy:"#e0a21a",currencies:"#3a8a4a",conflicts:"#a83a3a",
  /* books */
  bprisoners:"#7a6048",bggs:"#a5683f",bnations:"#9a5a48",bcollapse:"#6a7a50",
+ bcandide:"#b0485a",bjourneywest:"#c8642a",bsilkroads:"#b08a2a",bflat:"#3a7ab0",bspiky:"#d0563a",bbeagle:"#2e7d8a",brihla:"#9a6a2a",bremote:"#2a6a9a",b80days:"#7a4a2a",bplagues:"#5a6a3a",b12maps:"#8a6a4a",b1001:"#7a3a8a",bextinction:"#4a7a4a",
  /* AP Human Geography units */
  hg1:"#3b6fb6",hg1b:"#4a7ac0",hg2a:"#d0603a",hg2b:"#bc5e3e",hg2d:"#b06a5a",hg2c:"#2a86a8",
  hg3a:"#8a5ad0",hg3b:"#6a8a4a",hg3c:"#7052c8",hg4a:"#2e8b84",hg4b:"#3a6a9a",hg4c:"#7a3f6a",hg4d:"#a8483a",
