@@ -53,6 +53,10 @@ body.sky-night.gf-fs #allMapsView{ background:radial-gradient(ellipse at 30% 20%
 /* with a sky theme, full screen keeps the page's own artistic background (the sky scene) instead of a plain fill */
 body.sky-theme.gf-fs #allMapsView:not(.gf-fs-sky){ background:transparent !important; }
 body.sky-theme.gf-fs #skyField{ position:fixed !important; inset:0 !important; height:auto !important; }
+/* behind a full-screen map the sky scene is muted: a soft veil (cheaper than blurring it, and it never repaints) */
+body.sky-theme.gf-fs #skyField::after{ content:"" !important; display:block !important; position:absolute !important; inset:0 !important; width:auto !important; height:auto !important; z-index:50 !important; pointer-events:none; opacity:1 !important; transform:none !important; animation:none !important; filter:none !important;
+  background:linear-gradient(180deg,rgba(232,240,248,.72),rgba(226,234,244,.8)) !important; }
+body.sky-theme.sky-night.gf-fs #skyField::after{ background:linear-gradient(180deg,rgba(14,20,44,.68),rgba(10,14,32,.78)) !important; }
 body.gf-fs #allMapsToggleRow{ flex-wrap:nowrap !important; overflow-x:auto; justify-content:flex-start !important; gap:5px !important; margin:0 0 4px !important; padding:2px 52px 4px 2px !important; scrollbar-width:none; }
 body.gf-fs #allMapsToggleRow::-webkit-scrollbar{ display:none; }
 body.gf-fs #allMapsToggleRow > *{ flex:none !important; }
