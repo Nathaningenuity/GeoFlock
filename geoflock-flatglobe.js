@@ -9,7 +9,7 @@
 if(typeof GlobeView==="undefined"||typeof amGlobeOn!=="function"||typeof d3==="undefined"||!d3.geoRobinson)return;
 const RX=.8487,RY=1.3523;/* Robinson's width and height factors */
 const tour=()=>typeof ps!=="undefined"&&!!ps||!!window._gfPsStarting;
-function flatWanted(){try{return typeof appMode!=="undefined"&&appMode==="allmaps"&&FEATURES.globe&&!globePrefs().allmaps&&ALLMAPS_GLOBE_MODES.has(allMapsColorMode)&&!(typeof proj!=="undefined"&&proj.on)&&!(window.gfCartoOn&&gfCartoOn())/* tours run on the flat map too */}catch(e){return false}}
+function flatWanted(){try{return typeof appMode!=="undefined"&&appMode==="allmaps"&&FEATURES.globe&&!(typeof gfWantGlobe==="function"?gfWantGlobe():globePrefs().allmaps)&&ALLMAPS_GLOBE_MODES.has(allMapsColorMode)&&!(typeof proj!=="undefined"&&proj.on)&&!(window.gfCartoOn&&gfCartoOn())/* tours run on the flat map too */}catch(e){return false}}
 /* which globes can turn flat: the Maps page's, and the Places and Capitals study map's */
 const stWanted=()=>{try{return typeof stGlobe!=="undefined"&&FEATURES.globe&&!globePrefs().study&&typeof activeTab!=="undefined"&&activeTab==="study"&&(appMode==="map"||appMode==="capital"&&window._gfCapMap||appMode==="flag"&&window._gfFlagTour)/* tours run on the flat map too */}catch(e){return false}};
 function defOf(g){try{if(typeof amGlobe!=="undefined"&&g===amGlobe)return{wanted:flatWanted,svg:"#allMapsWrap > svg",view:"allMapsView",f:()=>SPIN.A.f,key:"am"};if(typeof stGlobe!=="undefined"&&g===stGlobe)return{wanted:stWanted,view:"studyView",f:()=>({s:1,bx:0,by:0}),key:"st",fixed:()=>stats.mapColorMode?[]:[{h:"textures/reliefAllMaps.webp",x:0,y:-6.688,w:2000,hh:1014.376,op:1,blend:"normal",tf:null,pr:"none"}]}}catch(e){}return null}
