@@ -7,9 +7,23 @@ const V=()=>document.getElementById("allMapsView");let on=false;
 const ICO=f=>f?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>'
  :'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
 function redraw(){setTimeout(()=>{dispatchEvent(new Event("resize"));try{amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}},80)}
-function enter(){if(on)return;on=true;document.body.classList.add("gf-fs","gf-fs-layers");try{const r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen({navigationUI:"hide"});if(r&&r.catch)r.catch(()=>{})}catch(e){}scrollTo(0,0);sync();redraw()}
+function enter(){if(on)return;on=true;document.body.classList.add("gf-fs","gf-fs-layers");try{const r=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen({navigationUI:"hide"});if(r&&r.then)r.then(lockEsc,()=>{})}catch(e){}scrollTo(0,0);sync();redraw()}
 function exit(){if(!on)return;on=false;document.body.classList.remove("gf-fs","gf-fs-layers");try{if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch(e){}sync();redraw()}
 window.gfFullscreen={enter,exit,on:()=>on};
+/* Esc first closes what is open (a drawing, a line being drawn, a country card, a panel), and only an Esc with nothing to
+   close leaves full screen. Browsers leave full screen on Esc themselves; Chrome and Edge let a page take Esc instead
+   (keyboard lock, full screen only; holding Esc still leaves). Other browsers leave on the first Esc, as before. */
+function lockEsc(){try{if(navigator.keyboard&&navigator.keyboard.lock)navigator.keyboard.lock(["Escape"]).catch(()=>{})}catch(e){}}
+function sig(){let t="";try{document.querySelectorAll(".gfk-panel,.gf-xs,.gfth,.flag-zoom-overlay,.game-modal-backdrop,.game-modal,.ps-lightbox,.gfs-pin,.tour-pop,[role=dialog],#gfsX .gfs-row,.gf-sd,.gfk-xacts").forEach(e=>{if(e.offsetParent!==null||getComputedStyle(e).position==="fixed")t+=e.className+"|"})}catch(e){}
+ try{const T=window.gfToolkit&&gfToolkit.S;if(T)t+="T"+(T.tool||"")+(T.mode||"")+(T.pen||"")+(T.stroke?1:0)+(T.sel!=null?T.sel:"")}catch(e){}
+ try{const X=window.gfCrossSection;if(X)t+="X"+X.armed+X.drawing+X.lineCount}catch(e){}
+ try{t+="K"+(window.gfToolkit&&gfToolkit.K?JSON.stringify((gfToolkit.K().ink||[]).length):"")}catch(e){}return t+document.body.className}
+/* the state just before the key: kept fresh, since other Esc handlers may run before this file's */
+let before=null,snap=null;const take=()=>{if(on&&document.fullscreenElement)snap=sig()};setInterval(take,200);
+["pointerup","keyup","click"].forEach(t=>addEventListener(t,()=>setTimeout(take,0),true));
+addEventListener("keydown",e=>{if(e.key==="Escape"&&on&&document.fullscreenElement)before=snap!=null?snap:sig()},true);
+addEventListener("keydown",e=>{if(e.key!=="Escape"||!on||!document.fullscreenElement||before==null)return;const b=before;before=null;
+ const consumed=e.defaultPrevented;setTimeout(()=>{if(!on)return;if(consumed||sig()!==b)return;exit()},60)});
 document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&on)exit()});
 /* without the browser's full screen (an iPhone, say), Esc still leaves */
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&on&&!document.fullscreenElement&&!document.querySelector(".gfk-panel,.game-modal:not([hidden]),.flag-zoom-overlay.show")){exit()}});
