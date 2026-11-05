@@ -176,7 +176,7 @@ function arrows(){const row=document.getElementById("allMapsToggleRow");
 document.addEventListener("scroll",e=>{if(e.target&&e.target.id==="allMapsToggleRow")try{arrows()}catch(x){}},true);
 
 function skySync(){const v=document.getElementById("allMapsView");document.body.classList.toggle("gfx-sky",!!(v&&v.classList.contains("gf-fs-sky")&&fs()))}
-function tick(){try{skySync()}catch(e){}[btnsSync,keySync,bottomSync,dngSync,arrows].forEach(f=>{try{f()}catch(e){}})}
+function tick(){/* not while the globe is being dragged or spun: it measures the page, which costs a layout */try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._moving)return}catch(e){}try{skySync()}catch(e){}[btnsSync,keySync,bottomSync,dngSync,arrows].forEach(f=>{try{f()}catch(e){}})}
 setInterval(tick,350);addEventListener("resize",()=>setTimeout(tick,150));addEventListener("scroll",()=>{try{bottomSync();keySync()}catch(e){}},{passive:true});
 window.gfFsFix={tick};
 })();

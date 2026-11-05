@@ -18,7 +18,7 @@ const P=GlobeView.prototype,_dm=P._drawMeasure;P._drawMeasure=function(ctx,p){co
  const t=p.translate(),R=p.scale(),sat=document.getElementById("allMapsView")?.classList.contains("sat-on");if(sat||!isFinite(R))return r;
  const g=ctx.createRadialGradient(t[0],t[1],R*.985,t[0],t[1],R*1.07),c=dark()?"120,170,255":"110,170,240";
  g.addColorStop(0,"rgba("+c+",0.55)");g.addColorStop(.35,"rgba("+c+",0.22)");g.addColorStop(1,"rgba("+c+",0)");
- ctx.save();ctx.beginPath();ctx.arc(t[0],t[1],R*1.08,0,7);ctx.arc(t[0],t[1],R*.985,0,7,true);ctx.fillStyle=g;ctx.fill("evenodd");ctx.restore()}}catch(e){}return r};
+ ctx.save();/* exactly one turn each, the inner circle started on its own (an overshooting arc joined the two with a wedge at the bottom right) */ctx.beginPath();ctx.arc(t[0],t[1],R*1.08,0,2*Math.PI);ctx.moveTo(t[0]+R*.985,t[1]);ctx.arc(t[0],t[1],R*.985,2*Math.PI,0,true);ctx.fillStyle=g;ctx.fill("evenodd");ctx.restore()}}catch(e){}return r};
 function sync(){let g;try{g=amGlobe}catch(e){return}if(!g||!g.host)return;const st=g.host.querySelector(".globe-stage");if(!st)return;
  const v=document.getElementById("allMapsView"),sat=v&&v.classList.contains("sat-on"),full=!!document.fullscreenElement||document.body.classList.contains("gf-fs"),globe=!g._flat&&appMode==="allmaps";
  /* where the globe is, for the fade and the shadow */
