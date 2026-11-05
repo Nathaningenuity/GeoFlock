@@ -11,6 +11,12 @@
    - Country dragger: pick up a country and move it anywhere; its true size shows as it moves away from the equator
    - Sea level changer: from the last Ice Age to all ice melted
    Drawings and pins are stored by latitude and longitude, so they line up on both the flat map and the globe. */
+/* one drawing tool at a time (the toolkit's pens, geometry set and pins, the cross-section's drawing, dropping
+   thermometers): the tool that switches on claims the map, and every other one lets go (the geometry set falls back to
+   Select). gfOneTool.claim(name) / gfOneTool.on(name, release) */
+window.gfOneTool=window.gfOneTool||(()=>{const R={};let cur=null,busy=false;return{
+ claim(n){if(busy)return;cur=n;busy=true;try{for(const k in R)if(k!==n)try{R[k]()}catch(e){console.error(e)}}finally{busy=false}},
+ on(n,f){R[n]=f},get current(){return cur},get releasing(){return busy}}})();
 (function(){
 "use strict";
 if(typeof d3==="undefined"||typeof amtToLL!=="function")return;
@@ -318,7 +324,7 @@ function penMore(){const m=morePanel("gfkPensMore","Pen settings",
  m.querySelectorAll('[data-sg="pw"] button').forEach(b=>b.onclick=()=>{S.penW=+b.dataset.v;try{K().penW=S.penW;save()}catch(e){}penMore()});
  m.querySelector('[data-m="clear"]').onclick=()=>{if(!K().ink.length)return;if(confirm("Clear all your drawings?")){K().ink=[];save();render()}}}
 let cap=null;
-function capture(on,cursor,handlers){S.snap=null;if(cap){cap.remove();cap=null}if(!on)return;const h=host();if(!h)return;cap=document.createElement("div");cap.className="gfk-cap";cap.style.cursor=cursor||"crosshair";h.appendChild(cap);
+function capture(on,cursor,handlers){S.snap=null;if(cap){cap.remove();cap=null}if(!on)return;try{gfOneTool.claim("toolkit")}catch(e){}const h=host();if(!h)return;cap=document.createElement("div");cap.className="gfk-cap";cap.style.cursor=cursor||"crosshair";h.appendChild(cap);
  cap.addEventListener("pointerdown",e=>{if(e.button)return;e.preventDefault();e.stopPropagation();cap.setPointerCapture(e.pointerId);handlers.down&&handlers.down(e)});
  cap.addEventListener("pointermove",e=>{handlers.move&&handlers.move(e)});cap.addEventListener("pointerup",e=>{handlers.up&&handlers.up(e)});
  cap.addEventListener("wheel",e=>{/* let the map still zoom underneath */if(e.ctrlKey)e.preventDefault();cap.style.pointerEvents="none";setTimeout(()=>{if(cap)cap.style.pointerEvents=""},350)},{passive:false})}
@@ -796,6 +802,11 @@ function flyTo(ll){try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host.is
    exactly as drawn on the screen. Shapes are kept with the drawings (Pens' Undo and Clear work on them too). --- */
 try{S.penW=K().penW||1;S.eraseW=K().eraseW||1}catch(e){}
 const GEO={mode:"compass",tru:true,km:1000,col:"#c8281c",sel:-1};
+/* another drawing tool switched on: the toolkit lets go (pens, pins, shovel, dragger off; the geometry set to Select) */
+gfOneTool.on("toolkit",()=>{const was=!!cap||!!S.pen||!!S.pinArm||!!S.shovelArm||(GEO.mode&&GEO.mode!=="select");if(!was)return;
+ S.shovelArm=false;if(S.pen)penStop();if(S.pinArm)pinArm(false);if(S.dragging)dragOn(false);capture(false);
+ if(GEO.mode&&GEO.mode!=="select"){GEO.mode="select";try{geoSave()}catch(e){}if(document.getElementById("gfkGeo"))try{geoPanel()}catch(e){}}
+ try{render();sync()}catch(e){}});
 try{Object.assign(GEO,K().geo||{})}catch(e){}
 const geoSave=()=>{try{K().geo={mode:GEO.mode,tru:GEO.tru,km:GEO.km,col:GEO.col,w:GEO.w||1};save()}catch(e){}};
 const RAD=Math.PI/180,KM=6371;

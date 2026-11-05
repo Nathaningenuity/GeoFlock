@@ -86,19 +86,20 @@ function gauge(t){const Z=19;let bar="",bulb="#b9c3cd";
 const tNow=it=>it&&it.c?todayT(it.c.T):null;
 function tabs(){if(items.length<2)return"";return'<div class="gfth-tabs" role="tablist">'+items.map((it,i)=>{const t=tNow(it);return'<button type="button" role="tab" data-ti="'+i+'" class="'+(it===last?"on":"")+'" aria-selected="'+(it===last)+'"><span class="gfth-tn">'+(i+1)+'</span>'+esc(it.name||fmtLL(it.ll))+(t!=null?' <i class="'+(t<0?"cold":"")+'">'+fmtT(t)+'</i>':'')+'<span class="gfth-tx" data-tx="'+i+'" title="Remove this thermometer">×</span></button>'}).join("")+'</div>'}
 /* quiet: a tour stop put thermometers down; only their pins show (no panel, map clicks place nothing) until one is clicked */
-let quiet=false,auto=[],autoStarted=false;
+let quiet=false,auto=[],autoStarted=false,drop=false;
 function render(){const p=mount();if(!p)return;p.style.display=quiet?"none":"";let body;
- if(!last)body='<p class="gfth-help">Click anywhere on land to place a thermometer and see its climate: temperature and rainfall, month by month. You can place up to '+MAXT+'.</p>';
+ if(!last)body='<p class="gfth-help">'+(drop?'Click anywhere on land to place a thermometer and see its climate: temperature and rainfall, month by month. You can place up to '+MAXT+'.':'Turn on <b>Drop thermometers</b>, then click anywhere on land to see its climate: temperature and rainfall, month by month.')+'</p>';
  else if(!D)body='<p class="gfth-help">Loading the climate data…</p>';
  else if(!last.c)body='<p class="gfth-help"><b>'+fmtLL(last.ll)+'</b>: open sea. Climate graphs are for places on land; click on land.</p>';
  else{const{T,P}=last.c,k=koppen(T,P,last.ll[1]),MAT=T.reduce((a,b)=>a+b)/12,MAP=P.reduce((a,b)=>a+b);
   body='<div class="gfth-where"><b>'+esc(last.name||fmtLL(last.ll))+'</b>'+(last.name?'<small>'+fmtLL(last.ll)+'</small>':'')+'</div>'+
    '<div class="gfth-now">Today ('+new Date().toLocaleDateString(undefined,{day:"numeric",month:"long"})+'): usually about <b>'+todayT(T).toFixed(1).replace("-","−")+' °C</b></div><div class="gfth-k"><span class="kc">'+k+'</span>'+esc(KN[k]||"")+'</div>'+graph(T,P)+
    '<div class="gfth-sum"><span><i class="tc"></i>Average '+MAT.toFixed(1)+' °C · warmest '+Math.max(...T).toFixed(1)+' °C · coldest '+Math.min(...T).toFixed(1)+' °C</span><span><i class="pc"></i>Rain and snow '+Math.round(MAP).toLocaleString()+' mm a year</span></div>'}
- p.innerHTML='<div class="gfth-h" title="Drag to move"><span class="gfth-ic">'+ICON+'</span><b>Thermometer'+(items.length?' <small>'+items.length+' of '+MAXT+'</small>':'')+'</b><button type="button" class="gfth-x" aria-label="Close">×</button></div>'+tabs()+body+
+ p.innerHTML='<div class="gfth-h" title="Drag to move"><span class="gfth-ic">'+ICON+'</span><b>Thermometer'+(items.length?' <small>'+items.length+' of '+MAXT+'</small>':'')+'</b><button type="button" class="gfth-x" aria-label="Close">×</button></div>'+
+  '<div class="gfth-dropr"><button type="button" class="gfth-drop'+(drop?' on':'')+'" aria-pressed="'+drop+'" title="'+(drop?'Clicks on the map place thermometers (Esc stops)':'Turn on to place thermometers with a click')+'"><i></i>Drop thermometers</button><small>'+(drop?'Click on land · Esc to stop':'Off: the map pans as usual')+'</small></div>'+tabs()+body+
   (items.length>=MAXT?'<p class="gfth-help gfth-full">That is the most thermometers: the next one replaces the oldest.</p>':'')+
   '<p class="gfth-src">WorldClim 2.1 monthly averages, 1970–2000 (CC BY 4.0), at about 55 km; the Köppen type is worked out from the same numbers.</p>';
- p.querySelector(".gfth-x").onclick=()=>stop();
+ p.querySelector(".gfth-x").onclick=()=>stop();p.querySelector(".gfth-drop").onclick=()=>setDrop(!drop);
  p.querySelectorAll("[data-ti]").forEach(b=>b.onclick=e=>{const x=e.target.closest("[data-tx]");if(x){remove(+x.dataset.tx);return}show(+b.dataset.ti)});place()}
 function show(i){if(!items[i])return;quiet=false;last=items[i];if(!on){on=true;sync()}render()}
 function remove(i){const it=items[i];if(!it)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();items.splice(i,1);if(last===it)last=items[items.length-1]||null;render()}
@@ -114,22 +115,33 @@ function mkPin(it,g){const h=g.host;if(it.pin&&it.pin.parentNode===h)return;if(i
   p.addEventListener("pointermove",mv);p.addEventListener("pointerup",up);p.addEventListener("pointercancel",up)});
  p.addEventListener("click",e=>{e.stopPropagation();e.preventDefault()});
  const t=document.createElement("div");t.className="gfth-tag";h.appendChild(t);it.tag=t}
+/* the picked thermometer gets a small bar under it: Duplicate, Delete */
+let bar=null;
+function dup(it){const g=G();if(!g)return;let ll=null;try{const q=g.projection()(it.ll);if(q)ll=g.projection().invert([q[0]+34,q[1]+6])}catch(e){}
+ if(!ll||!isFinite(ll[0]))ll=[it.ll[0]+1.5,it.ll[1]];pick([((ll[0]+540)%360)-180,ll[1]])}
+function placeBar(g,h){const it=last,show=on&&!quiet&&it&&it.pin&&it.pin.style.display!=="none"&&items.includes(it);
+ if(!show){if(bar)bar.hidden=true;return}
+ if(!bar||bar.parentNode!==h){if(bar)bar.remove();bar=document.createElement("div");bar.className="gfth-bar";
+  bar.innerHTML='<button type="button" data-a="dup" title="Another thermometer next to this one">⧉ Duplicate</button><button type="button" data-a="del" class="del" title="Remove this thermometer">🗑 Delete</button>';
+  ["pointerdown","mousedown","click","dblclick","wheel"].forEach(t=>bar.addEventListener(t,e=>e.stopPropagation()));
+  bar.querySelector('[data-a="dup"]').onclick=()=>{if(last)dup(last)};bar.querySelector('[data-a="del"]').onclick=()=>{const i=items.indexOf(last);if(i>=0)remove(i)};h.appendChild(bar)}
+ bar.hidden=false;bar.style.left=it.pin.style.left;bar.style.top=(parseFloat(it.pin.style.top)+14)+"px"}
 function place(){const g=G();if(!g)return;const pr=g.projection(),ro=pr.rotate?pr.rotate():[0,0],c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();
  items.forEach(it=>{mkPin(it,g);
   const q=pr(it.ll);let vis=!!q&&isFinite(q[0]);if(vis&&!g._flat){try{vis=d3.geoDistance(it.ll,[-ro[0],-ro[1]])<Math.PI/2&&(!window.gfGlobeShows||gfGlobeShows(g,q))}catch(e){}}
   if(!vis){it.pin.style.display=it.tag.style.display="none";return}
   const t=tNow(it),k=(t==null?"n":Math.round(t*2))+(it===last?"s":"");if(it.pk!==k){it.pk=k;it.pin.innerHTML=gauge(t);it.pin.classList.toggle("sel",it===last)}
   const x=c.left-h.left+q[0],y=c.top-h.top+q[1];it.pin.style.display="";it.pin.style.left=x+"px";it.pin.style.top=y+"px";
-  if(t!=null){it.tag.textContent=fmtT(t);it.tag.title="Usual temperature for today's date";it.tag.classList.toggle("cold",t<0);it.tag.style.display="";it.tag.style.left=(x+12)+"px";it.tag.style.top=(y-30)+"px"}else it.tag.style.display="none"})}
+  if(t!=null){it.tag.textContent=fmtT(t);it.tag.title="Usual temperature for today's date";it.tag.classList.toggle("cold",t<0);it.tag.style.display="";it.tag.style.left=(x+12)+"px";it.tag.style.top=(y-30)+"px"}else it.tag.style.display="none"});placeBar(g,g.host)}
 function todayT(T,d){d=d||new Date();const y=d.getFullYear(),doy=(d-new Date(y,0,1))/864e5,L=(y%4?365:366),m=doy/L*12-.5,i=Math.floor(m),f=m-i,a=(i+12)%12,b=(i+13)%12;return T[a]*(1-f)+T[b]*f}
 function pick(ll,nm){if(items.length>=MAXT)remove(0);const it={ll,c:null,name:null,pin:null,tag:null};items.push(it);last=it;render();
  load().then(()=>{it.c=at(ll);const cc=countryAt(ll);it.name=nm||cname(cc);it.pk="";if(on)render()});return it}
 /* a tour stop's thermometers: [[lon,lat,"Name"],…]; clearAuto takes them away again (and the tool, if the stop turned it on) */
-function setAuto(list){clearAuto();if(!list||!list.length)return;quiet=true;if(!on){autoStarted=true;start()}
+function setAuto(list){clearAuto();if(!list||!list.length)return;quiet=true;if(!on){autoStarted=true;start({drop:false})}
  auto=list.map(q=>pick([q[0],q[1]],q[2]||null));if(quiet)last=auto[0];render()}
 function clearAuto(){const A=auto;auto=[];A.forEach(it=>{const i=items.indexOf(it);if(i>=0)remove(i)});const was=quiet;quiet=false;if(autoStarted){autoStarted=false;if(!items.length)stop();else render()}else if(was&&on)render()}
 let down=null;
-function onDown(e){if(!on||quiet)return;const g=G();if(!g||e.button)return;const c=g.canvas.getBoundingClientRect();if(e.clientX<c.left||e.clientX>c.right||e.clientY<c.top||e.clientY>c.bottom)return;
+function onDown(e){if(!on||quiet||!drop)return;const g=G();if(!g||e.button)return;const c=g.canvas.getBoundingClientRect();if(e.clientX<c.left||e.clientX>c.right||e.clientY<c.top||e.clientY>c.bottom)return;
  if(e.target.closest&&e.target.closest(".gfth,.gfth-pin,.globe-btns,.gf-xs,.gfk-tray,.gfk-panel,.ps-card,.flk,.ps-launcher,.globe-subs,button,input,select"))return;
  /* the place is worked out now, before the map can react to the press */
  /* the place: from the last pointer position before the press (other handlers can shift the map's frame on the press itself) */
@@ -138,11 +150,11 @@ function onDown(e){if(!on||quiet)return;const g=G();if(!g||e.button)return;const
  if(pend&&performance.now()-pend.t<320){clearTimeout(pend.tm);pend=null;down=null;return}
  down={x:e.clientX,y:e.clientY,t:performance.now(),ll}}
 let pend=null;
-function onUp(e){if(!on||!down)return;const d=down;down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>4||performance.now()-d.t>500)return;
+function onUp(e){if(!on||!drop||!down)return;const d=down;down=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>4||performance.now()-d.t>500)return;
  const ll=d.ll;if(!ll||!isFinite(ll[0])||!isFinite(ll[1]))return;
  swallow=performance.now();
  /* wait a moment: a second click (a double-click zooms the map) cancels it */
- const at0=[((ll[0]+540)%360)-180,ll[1]];pend={t:performance.now(),tm:setTimeout(()=>{pend=null;if(on)pick(at0)},300)}}
+ const at0=[((ll[0]+540)%360)-180,ll[1]];pend={t:performance.now(),tm:setTimeout(()=>{pend=null;if(on&&drop)pick(at0)},300)}}
 function llAt(g,x,y){try{const c=g.canvas.getBoundingClientRect();const ll=g.projection().invert([x-c.left,y-c.top]);if(!ll||!isFinite(ll[0]))return null;
  if(!g._flat){const ro=g.projection().rotate();if(d3.geoDistance(ll,[-ro[0],-ro[1]])>Math.PI/2)return null}return ll}catch(e){return null}}
 let hov=null;addEventListener("pointermove",e=>{if(!on||e.buttons)return;const g=G();if(!g)return;hov={x:e.clientX,y:e.clientY,ll:llAt(g,e.clientX,e.clientY)}},true);
@@ -153,12 +165,17 @@ addEventListener("click",e=>{if(performance.now()-swallow<400){e.stopImmediatePr
 /* the map now sees the press too (so it can pan), so its own tap would open the country card: not right after a thermometer tap */
 (function hookFZ(){if(typeof openFlagZoom!=="function"){setTimeout(hookFZ,800);return}if(openFlagZoom._th)return;const _f=openFlagZoom;
  openFlagZoom=function(){if(performance.now()-swallow<700)return;return _f.apply(this,arguments)};openFlagZoom._th=1})();
-function start(){on=true;load();mount();render();sync()}
+function setDrop(v){drop=!!v;if(drop)try{gfOneTool.claim("thermo")}catch(e){}render();sync()}
+/* start({drop}): dropping is on unless asked otherwise (the Climate map opens the tool with it off) */
+function start(o){on=true;drop=!(o&&o.drop===false);if(drop)try{gfOneTool.claim("thermo")}catch(e){}load();mount();render();sync()}
+try{gfOneTool.on("thermo",()=>{if(!drop)return;drop=false;if(on)render();sync()})}catch(e){}
+/* Esc stops dropping (the thermometers stay) */
+addEventListener("keydown",e=>{if(e.key==="Escape"&&on&&drop&&!e.target.closest?.("input,textarea,select")){drop=false;render();sync()}});
 /* closing the tool keeps the thermometers on the map (a click on one opens it again); only new ones cannot be placed */
-function stop(){on=false;if(panel){panel.remove();panel=null}sync()}
+function stop(){on=false;drop=false;if(panel){panel.remove();panel=null}if(bar)bar.hidden=true;sync()}
 (function loop(){try{if(on){if(appMode!=="allmaps")stop();else if(G()){if(!panel||!panel.isConnected||(panel.parentNode!==G().host&&!panel._float))render();place()}}
  else if(items.length&&appMode==="allmaps"&&G())place()}catch(e){}requestAnimationFrame(loop)})();
-function sync(){try{const g=G();if(g)g.host.classList.toggle("gfth-on",on)}catch(e){}document.querySelectorAll(".gfk-thermo").forEach(b=>b.classList.toggle("on",on))}
+function sync(){try{const g=G();if(g)g.host.classList.toggle("gfth-on",on&&drop&&!quiet)}catch(e){}document.querySelectorAll(".gfk-thermo").forEach(b=>b.classList.toggle("on",on))}
 
 /* ---------- the Toolkit slot ---------- */
 const ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a2 2 0 0 1 4 0v9.3a4 4 0 1 1-4 0z" fill="#fff" stroke="#b3261e" stroke-width="1.6"/><circle cx="12" cy="16.6" r="2.3" fill="#e0402f"/><rect x="11.2" y="8" width="1.6" height="8" rx=".8" fill="#e0402f"/></svg>';
@@ -168,18 +185,27 @@ function art(){return'<svg viewBox="0 0 100 100" class="gfk-art"><defs><linearGr
  '<circle cx="45" cy="71" r="4" fill="#fff" opacity=".55"/></svg>'}
 function addSlot(){const felt=document.querySelector("#gfKit .gfk-felt");if(!felt||felt.querySelector(".gfk-thermo"))return;
  const b=document.createElement("button");b.type="button";b.className="gfk-slot gfk-thermo";b.title="Thermometer: click a place to see its climate graph";b.setAttribute("aria-label","Thermometer");
- b.innerHTML=art()+"<span>Thermometer</span>";b.onclick=e=>{e.stopPropagation();if(on&&quiet){quiet=false;autoStarted=false;render();return}on?stop():start()};
+ b.innerHTML=art()+"<span>Thermometer</span>";b.onclick=e=>{e.stopPropagation();if(on&&quiet){quiet=false;autoStarted=false;render();return}on?stop():start({drop:true})};
  const after=felt.querySelector('[data-tool="shovel"]');if(after&&after.nextSibling)felt.insertBefore(b,after.nextSibling);else felt.appendChild(b);sync()}
 setInterval(addSlot,700);addSlot();
 
 /* ---------- the Climate map opens with the Thermometer on; the Elevation map with the cross-section ---------- */
 (function(){let lastMode=null;setInterval(()=>{try{const m=appMode==="allmaps"?allMapsColorMode:null;if(m===lastMode)return;const prev=lastMode;lastMode=m;
  if(typeof ps!=="undefined"&&ps)return;
- if(m==="climate"&&!on)setTimeout(()=>{if(allMapsColorMode==="climate"&&!on)start()},300);else if(prev==="climate"&&on)stop();
+ if(m==="climate"&&!on)setTimeout(()=>{if(allMapsColorMode==="climate"&&!on)start({drop:false})},300);else if(prev==="climate"&&on)stop();
  if(m==="elevation"&&window.gfCrossSection&&!document.querySelector(".gf-xs"))setTimeout(()=>{try{if(allMapsColorMode==="elevation"&&!document.querySelector(".gf-xs"))gfCrossSection.start()}catch(e){}},300);
  else if(prev==="elevation"&&m!=="elevation"&&window.gfCrossSection&&document.querySelector(".gf-xs"))try{gfCrossSection.stop()}catch(e){}}catch(e){}},400)})();
 
 const css=document.createElement("style");css.textContent=`
+.gfth-dropr{ display:flex; align-items:center; gap:8px; margin:2px 0 8px; } .gfth-dropr small{ opacity:.7; font-size:11.5px; }
+.gfth-drop{ display:inline-flex; align-items:center; gap:7px; border:1.5px solid rgba(179,38,30,.45); background:transparent; color:inherit; border-radius:999px; padding:5px 11px; font:700 12.5px system-ui,sans-serif; cursor:pointer; }
+.gfth-drop i{ width:26px; height:14px; border-radius:999px; background:rgba(120,130,150,.45); position:relative; flex:none; transition:background .15s; }
+.gfth-drop i::after{ content:""; position:absolute; top:2px; left:2px; width:10px; height:10px; border-radius:50%; background:#fff; transition:left .15s; }
+.gfth-drop.on{ background:#c0392b; border-color:#c0392b; color:#fff; } .gfth-drop.on i{ background:rgba(255,255,255,.45); } .gfth-drop.on i::after{ left:14px; }
+.gfth-bar{ position:absolute; z-index:26; transform:translateX(-50%); display:flex; gap:4px; padding:3px; border-radius:10px; background:rgba(20,28,48,.92); box-shadow:0 3px 10px rgba(0,0,0,.3); }
+.gfth-bar[hidden]{ display:none; }
+.gfth-bar button{ border:0; border-radius:7px; padding:4px 9px; background:rgba(255,255,255,.1); color:#fff; font:700 11.5px system-ui,sans-serif; cursor:pointer; white-space:nowrap; }
+.gfth-bar button:hover{ background:rgba(255,255,255,.22); } .gfth-bar button.del:hover{ background:#c0392b; }
 .gfth{ position:absolute; left:10px; bottom:10px; z-index:9; width:min(370px,calc(100% - 20px)); background:#fff; color:#1d2433; border-radius:14px; box-shadow:0 8px 26px rgba(0,0,0,.25); padding:0 10px 8px; font-size:12.5px; }
 .gfth-h{ display:flex; align-items:center; gap:6px; padding:7px 0 5px; cursor:move; user-select:none; }
 .gfth-h b{ flex:1; font-size:13.5px; } .gfth-ic svg,.gfth-pin svg{ width:18px; height:18px; display:block; }
