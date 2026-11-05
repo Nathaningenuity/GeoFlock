@@ -72,18 +72,24 @@ function steps(){
  if(BR==="firefox")return'<li><b>Turn on graphics acceleration.</b> Open '+link("about:preferences#general")+', scroll to <i>Performance</i>, tick <i>Use recommended performance settings</i> (or untick it and tick <i>Use hardware acceleration when available</i>), then restart Firefox.</li>'+
   '<li><b>Check it worked:</b> open '+link("about:support")+' and look under <i>Graphics</i> for <i>Compositing: WebRender</i> (not <i>WebRender (Software)</i>).</li>';
  return'<li><b>Turn on graphics acceleration</b> in your browser’s settings (usually under System or Performance), then restart the browser. Safari has it on already.</li>'}
+/* giving the browser the best graphics chip: Windows' own settings page opens from a link (Windows asks first) */
+const WIN=/Windows/.test(UA),MAC=/Macintosh/.test(UA);
+function chip(){
+ if(WIN)return'<li><b>Give the browser the best graphics chip.</b> Press <kbd>Win</kbd> + <kbd>R</kbd>, paste '+link("ms-settings:display-advancedgraphics")+' and press <kbd>Enter</kbd> (or click the link). Under <i>Custom options for apps</i>, find your browser (or <i>Add desktop app</i> → Browse to it), choose <i>Options</i> → <i>High performance</i> → <i>Save</i>, then restart the browser. This only helps if the computer has a second, stronger graphics card.</li>';
+ if(MAC)return'<li><b>Give the browser the best graphics chip</b> (MacBook Pros with two chips): System Settings → Battery → Options → turn off <i>Automatic graphics switching</i>. Macs with Apple chips have one graphics chip, so there is nothing to change.</li>';
+ return'<li><b>Give the browser the best graphics chip</b> in your system’s display or graphics settings, if the computer has two.</li>'}
 function notice(){if(S.shut||shutNow||document.getElementById("gfPerfNote"))return;const n=document.createElement("div");n.id="gfPerfNote";n.setAttribute("role","status");
  const msg=softGL||(why||S.why)==="soft"?"Graphics acceleration seems to be off in this browser, so the map is drawn the slow way.":"The map is running slowly on this device. Better graphics settings can help.";
  n.innerHTML='<div class="gpn-row"><span class="gpn-ic">⚙️</span><span class="gpn-t">'+msg+'</span>'+
   '<button type="button" class="gpn-how">How?</button><button type="button" class="gpn-never" title="Do not show this again on this device">Never remind me</button><button type="button" class="gpn-x" aria-label="Close for now" title="Close for now">×</button></div>'+
   '<div class="gpn-body" hidden><ol>'+steps()+
-  '<li><b>Give the browser the best graphics chip.</b> Windows: Settings → System → Display → Graphics → pick your browser → <i>High performance</i>. This only helps if the computer has a second, stronger graphics card.</li>'+
+  chip()+
   '<li><b>Plug the laptop in and leave battery saver off.</b> Windows: battery icon → <i>Best performance</i>. Mac: System Settings → Battery → Low Power Mode off.</li>'+
   '<li><b>Close other heavy tabs</b> (video calls, games, other maps).</li></ol>'+
-  (PRE||BR==="firefox"?'<p class="gpn-tip">Browsers don’t let a web page open their settings pages, so clicking a link copies it: paste it into the address bar.</p>':'')+
+  (PRE||BR==="firefox"?'<p class="gpn-tip">Browsers don’t let a web page open their own settings pages, so clicking a browser link copies it: paste it into the address bar. The Windows link opens Settings (Windows asks first) and is copied too.</p>':'')+
   '<label class="gpn-sharp"><input type="checkbox"'+(S.ov==="sharp"?" checked":"")+'> Keep full sharpness on this device (it may stay a little slower)</label></div>';
  document.body.appendChild(n);
- n.querySelectorAll(".gpn-link").forEach(a=>a.onclick=e=>{e.preventDefault();const u=a.dataset.u;const done=()=>{a.classList.add("copied");a.setAttribute("data-c","Copied, paste it into the address bar");setTimeout(()=>a.classList.remove("copied"),2600)};
+ n.querySelectorAll(".gpn-link").forEach(a=>a.onclick=e=>{const u=a.dataset.u;if(!/^ms-settings:/.test(u))e.preventDefault();const done=()=>{a.classList.add("copied");a.setAttribute("data-c",/^ms-settings:/.test(u)?"Copied, paste it into Win + R":"Copied, paste it into the address bar");setTimeout(()=>a.classList.remove("copied"),2600)};
   try{navigator.clipboard.writeText(u).then(done,()=>{prompt("Copy this, then paste it into the address bar:",u)})}catch(x){prompt("Copy this, then paste it into the address bar:",u)}});
  /* sit just above the toolkit tray when it is open */
  const lift=()=>{if(!n.isConnected)return;let b=14;try{const t=[...document.querySelectorAll("#gfKit, .gfk-tray")].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.height&&r.top<innerHeight);if(t.length)b=Math.max(14,innerHeight-Math.min(...t.map(r=>r.top))+10)}catch(e){}n.style.setProperty("--gpn-b",b+"px");setTimeout(lift,700)};lift();
@@ -103,6 +109,7 @@ const st=document.createElement("style");st.textContent=`
 #gfPerfNote .gpn-body{ margin-top:6px; } #gfPerfNote ol{ margin:4px 0 6px 18px; padding:0; } #gfPerfNote li{ margin:3px 0; }
 #gfPerfNote .gpn-link{ color:#ffc27a; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; text-decoration:underline; position:relative; }
 #gfPerfNote .gpn-link.copied::after{ content:attr(data-c); position:absolute; left:0; top:-22px; white-space:nowrap; background:#2e9d5b; color:#fff; font:700 11px system-ui,sans-serif; padding:2px 7px; border-radius:6px; }
+#gfPerfNote kbd{ font:700 11px ui-monospace,Menlo,Consolas,monospace; color:#fff; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.16); border-radius:4px; padding:0 4px; }
 #gfPerfNote .gpn-tip{ margin:0 0 6px; font-size:11.5px; opacity:.8; }
 #gfPerfNote .gpn-sharp{ display:flex; gap:6px; align-items:center; font-size:12px; opacity:.9; }`;
 document.head.appendChild(st);
