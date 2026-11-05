@@ -41,8 +41,8 @@ shovel(u){/* a garden spade: steel blade, wooden shaft, D-handle */
  <path d="M30 56 h20 l-1 24 c0 8 -6 13 -9 15 c-3 -2 -9 -7 -9 -15z" fill="url(#${u}s)" stroke="#5e666d" stroke-width="1"/><path d="M36 58 h8 v6 h-8z" fill="#6c757c"/><path d="M33 84 c2 4 4 6 7 8" stroke="#fff" stroke-opacity=".6" stroke-width="1.2" fill="none"/></g></svg>`},
 compass(u,deg){deg=deg||0;let t="";for(let i=0;i<32;i++){const a=i*Math.PI/16,r1=i%8===0?33:i%2?37:35;t+=`<line x1="${50+Math.sin(a)*r1}" y1="${50-Math.cos(a)*r1}" x2="${50+Math.sin(a)*39}" y2="${50-Math.cos(a)*39}" stroke="#4a3a24" stroke-width="${i%8===0?1.6:.7}"/>`}
  return`<svg viewBox="0 0 100 100" class="gfk-art"><defs><radialGradient id="${u}b" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fff2b8"/><stop offset=".35" stop-color="#e2b55a"/><stop offset=".75" stop-color="#a87526"/><stop offset="1" stop-color="#6b4512"/></radialGradient><radialGradient id="${u}f" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#e9dcc0"/></radialGradient><linearGradient id="${u}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
- <circle cx="51" cy="53" r="47" fill="#000" opacity=".18"/><circle cx="50" cy="50" r="47" fill="url(#${u}b)"/><circle cx="50" cy="50" r="41" fill="#5a3c12" opacity=".5"/><circle cx="50" cy="50" r="40" fill="url(#${u}f)"/>${t}
- <g font-family="Georgia,serif" font-weight="700" font-size="9" fill="#3a2a16" text-anchor="middle"><text x="50" y="24" fill="#b0261c">N</text><text x="50" y="83">S</text><text x="79" y="53.5">E</text><text x="21" y="53.5">W</text></g>
+ <circle cx="51" cy="53" r="47" fill="#000" opacity=".18"/><circle cx="50" cy="50" r="47" fill="url(#${u}b)"/><circle cx="50" cy="50" r="41" fill="#5a3c12" opacity=".5"/><circle cx="50" cy="50" r="40" fill="url(#${u}f)"/><g class="gfk-dial">${t}
+ <g font-family="Georgia,serif" font-weight="700" font-size="9" fill="#3a2a16" text-anchor="middle"><text x="50" y="24" fill="#b0261c">N</text><text x="50" y="83">S</text><text x="79" y="53.5">E</text><text x="21" y="53.5">W</text></g></g>
  <g class="gfk-needle" transform="rotate(${deg} 50 50)"><path d="M50 18 L56 50 L44 50Z" fill="#c8281c"/><path d="M50 82 L56 50 L44 50Z" fill="#f4efe4" stroke="#8a7a62" stroke-width=".6"/><path d="M50 18 L56 50 L50 50Z" fill="#8e1a12" opacity=".5"/></g>
  <circle cx="50" cy="50" r="4" fill="url(#${u}b)" stroke="#5a3c12" stroke-width=".8"/><ellipse cx="38" cy="32" rx="22" ry="12" fill="url(#${u}g)" transform="rotate(-30 38 32)"/></svg>`},
 ruler(u){let t="";for(let i=0;i<=36;i++){const x=12+i*4.9,h=i%6===0?11:i%3===0?8:5;t+=`<line x1="${x}" y1="6" x2="${x}" y2="${6+h}" stroke="#4a3216" stroke-width="${i%6===0?1.1:.7}"/>`;if(i%6===0&&i)t+=`<text x="${x}" y="27" font-size="7" font-family="Georgia,serif" fill="#4a3216" text-anchor="middle">${i/6}</text>`}
@@ -208,8 +208,9 @@ function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forE
  if(!all){all=document.createElement("button");all.type="button";all.className="gfk-gall";all.textContent="Put all countries back";all.addEventListener("pointerdown",e=>e.stopPropagation(),true);all.onclick=e=>{e.stopPropagation();S.ghosts.length=0;render()};h.appendChild(all)}}
 
 /* ================= the tray ================= */
-const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there"],["geometry","Geometry set","Ruler, drawing compass, range rings, straight lines, shapes, and a place's latitude and longitude around the world"],
- ["pens","Pens","Pick a pen and colour, then draw on the map"],["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Roll for somewhere random"],
+/* the pens are put away for now (the Geometry set has its own pen); the ruler has its own slot again */
+const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there, and turns as the map turns"],["ruler","Ruler","Lay it on the map, then click two places: the distance between them"],["geometry","Geometry set","Ruler, drawing compass, range rings, straight lines, shapes, and a place's latitude and longitude around the world"],
+ ["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Roll for somewhere random"],
  ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"],["shovel","Shovel","Cut a cross-section of the land and sea floor"]];
 function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):t==="shovel"?ART.shovel(u):t==="geometry"?ART.geometry(u):ART.sea(u)}
 function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.className="gfk-tray";
@@ -240,7 +241,7 @@ function placeObjects(){const h=host();Object.entries(S.place).forEach(([t,o])=>
  if(t==="compass")updCompass(o)})}
 function placeAt(tool,cx,cy){const h=host();if(!h)return;let o=S.place[tool];if(!o){const el=document.createElement("div");el.className="gfk-obj gfk-o-"+tool;el.innerHTML=artFor(tool);el.title=tool==="compass"?"Compass: drag it around; drag it back to the toolkit to put it away":"Ruler: click two places on the map to measure. Drag it back to the toolkit to put it away";
   ["pointerdown","mousedown","click","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation()));
-  o=S.place[tool]={el};wireObj(o,tool);if(tool==="compass"){const r=document.createElement("div");r.className="gfk-cpos";el.appendChild(r)}}
+  o=S.place[tool]={el};wireObj(o,tool);if(tool==="compass"){const r=document.createElement("div");r.className="gfk-cpos";el.appendChild(r);const d=document.createElement("div");d.className="gfk-cdec";el.appendChild(d)}}
  const hr=h.getBoundingClientRect();o.x=cx-hr.left;o.y=cy-hr.top;o.el.style.left=o.x+"px";o.el.style.top=o.y+"px";if(o.el.parentNode!==h)h.appendChild(o.el);sync();placeObjects()}
 function wireObj(o,tool){o.el.addEventListener("pointerdown",e=>{if(e.button)return;e.preventDefault();e.stopPropagation();const h=host(),hr=h.getBoundingClientRect(),dx=e.clientX-hr.left-o.x,dy=e.clientY-hr.top-o.y;o.el.classList.add("gfk-held");
  const mv=ev=>{o.x=ev.clientX-hr.left-dx;o.y=ev.clientY-hr.top-dy;o.el.style.left=o.x+"px";o.el.style.top=o.y+"px";o.el.classList.toggle("gfk-home",overTray(ev.clientX,ev.clientY));if(tool==="compass")updCompass(o)};
@@ -254,7 +255,18 @@ function updCompass(o){const h=host();if(!h)return;const hr=h.getBoundingClientR
   const M=[[[139.3,85.8],700,"spin","You’re on the magnetic north pole! Magnetic north is straight below, so the needle has no direction to point and swings around"],[[135.9,-63.9],700,"spin","You’re on the magnetic south pole! The needle has no direction to point here, so it swings around"],[[36.5,51.5],250,"pull","Kursk Magnetic Anomaly: huge iron ore beds underground pull the needle away from north"]];
   for(const [at,r,k,t] of M)if(km(ll,at)<r){odd=[k,t];break}}
  o.el.classList.toggle("gfk-odd",!!odd);if(odd){pos.textContent=odd[1];if(odd[0]==="spin")deg=(o.deg||0)+47+Math.random()*30;else deg+=55+Math.sin(performance.now()/300)*25}
- const n=o.el.querySelector(".gfk-needle");if(n){o.deg=o.deg==null?deg:o.deg+((((deg-o.deg)%360)+540)%360-180)*.35;n.setAttribute("transform","rotate("+o.deg.toFixed(1)+" 50 50)")}}
+ /* the dial (N, E, S, W) turns with the map so N faces true north at this spot; the needle points to magnetic north,
+    which is off true north by the magnetic declination: here worked out as the direction from this spot to the north
+    magnetic pole along the globe (a simple one-pole model; the real field is lumpier, so it is approximate) */
+ const dial=o.el.querySelector(".gfk-dial");let dec=0;
+ if(ll&&!odd){dec=bearing(ll,MAGN);if(dec>180)dec-=360;
+  const pl=o.el.querySelector(".gfk-cdec");const txt=Math.abs(dec)<.5?"Magnetic and true north line up here":"Needle: "+Math.abs(dec).toFixed(0)+"° "+(dec>0?"east":"west")+" of true north";if(pl&&pl.textContent!==txt)pl.textContent=txt}
+ if(dial){o.dd=o.dd==null?deg:o.dd+((((deg-o.dd)%360)+540)%360-180)*.35;dial.setAttribute("transform","rotate("+o.dd.toFixed(1)+" 50 50)")}
+ const nd=deg+(odd?0:dec);
+ const n=o.el.querySelector(".gfk-needle");if(n){o.deg=o.deg==null?nd:o.deg+((((nd-o.deg)%360)+540)%360-180)*.35;n.setAttribute("transform","rotate("+o.deg.toFixed(1)+" 50 50)")}}
+/* the north magnetic pole (2025) and the starting direction of the shortest path from a to b, degrees clockwise from north */
+const MAGN=[139.3,85.8];
+function bearing(a,b){const r=Math.PI/180,f1=a[1]*r,f2=b[1]*r,dl=(b[0]-a[0])*r;const y=Math.sin(dl)*Math.cos(f2),x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl);return(Math.atan2(y,x)/r+360)%360}
 setInterval(()=>{const o=S.place.compass;if(o&&o.el.isConnected)updCompass(o)},60);
 
 /* ================= what each tool does ================= */
@@ -637,6 +649,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-slot{ flex:none; position:relative; width:58px; height:64px; padding:2px 2px 14px; border:0; background:none; cursor:grab; border-radius:10px; display:flex; align-items:center; justify-content:center; transition:transform .15s, background .15s; touch-action:none; }
 .gfk-slot:hover{ transform:translateY(-3px) rotate(-2deg); background:rgba(255,255,255,.06); }
 .gfk-slot .gfk-art{ width:100%; height:100%; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); pointer-events:none; }
+.gfk-box{ position:absolute; z-index:40; border:1.5px dashed #2a6fdb; background:rgba(42,111,219,.12); pointer-events:none; border-radius:3px; }
 .gfk-slot.gfk-ruler{ width:96px; } .gfk-slot.gfk-ruler .gfk-art{ height:auto; }
 .gfk-slot span{ position:absolute; left:0; right:0; bottom:0; font:700 9.5px/1.1 system-ui,sans-serif; color:#d7e8dc; text-align:center; white-space:nowrap; pointer-events:none; }
 .gfk-slot.gfk-out .gfk-art, .gfk-slot.gfk-lifted .gfk-art{ opacity:.18; filter:grayscale(1); }
@@ -712,6 +725,8 @@ body.dark-theme .gfk-px, body.sky-night .gfk-px{ background:rgba(255,255,255,.12
 .gfk-mine label{ display:flex; align-items:center; gap:7px; font:600 12px system-ui; cursor:pointer; min-width:0; } .gfk-mine span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .gfk-mine input{ width:30px; height:24px; padding:0; border:1px solid rgba(0,0,0,.15); border-radius:6px; background:none; cursor:pointer; flex:none; }
 .gfk-gx{ position:absolute; z-index:7; width:22px; height:22px; margin-left:-11px; border-radius:50%; border:2px solid; background:#fff; font:800 15px/1 system-ui; padding:0; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.25); transform:translateX(38px); }
+.gfk-cdec{ position:absolute; left:50%; top:100%; transform:translate(-50%,22px); white-space:nowrap; font:700 10px/1 system-ui,sans-serif; color:#3a2a16; background:rgba(250,240,215,.85); padding:2px 6px; border-radius:6px; }
+.gfk-cdec:empty,.gfk-o-compass.gfk-odd .gfk-cdec{ display:none; }
 .gfk-o-compass.gfk-odd .gfk-cpos{ white-space:normal; width:170px; line-height:1.3; text-align:center; background:#7a2a1a; color:#fff; }
 .gfk-gall{ position:absolute; z-index:7; left:50%; top:14px; transform:translateX(-50%); border:0; border-radius:999px; padding:7px 14px; background:rgba(255,255,255,.95); color:#22324a; font:700 12.5px system-ui; cursor:pointer; box-shadow:0 2px 10px rgba(20,40,70,.18); }
 .gfk-toast{ position:absolute; left:50%; top:52px; transform:translate(-50%,-8px); z-index:9; background:rgba(20,30,46,.88); color:#fff; padding:7px 14px; border-radius:999px; font:600 13px system-ui; opacity:0; transition:.2s; pointer-events:none; white-space:nowrap; }
@@ -1054,8 +1069,23 @@ function lineUp(ll,name){const C=cities();if(!name){let best=null,bd=60/KM;C.for
  const li=(c,k)=>'<li><b>'+esc(c.n)+'</b>'+(ctyOf(c.ll)?', '+esc(ctyOf(c.ll)):'')+' <small>'+(k==="lat"?fmtLat(c.ll[1]):fmtLon(c.ll[0]))+'</small></li>';
  const box=document.querySelector("#gfkGeo .gfk-lu");if(box)box.innerHTML='<p><b>'+esc(name||"This place")+'</b> is at '+fmtLat(lat)+', '+fmtLon(lon)+'.</p>'+
   (lv.length?'<p class="gfk-hint">Level with it (the same latitude):</p><ul class="gfk-lul">'+lv.map(c=>li(c,"lat")).join("")+'</ul>':'')+(ln.length?'<p class="gfk-hint">Due north and south (the same longitude):</p><ul class="gfk-lul">'+ln.map(c=>li(c,"lon")).join("")+'</ul>':'')}
-const MODES=[["select",'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 3.5v15.2l4.1-3.9 2.7 6 2.6-1.2-2.7-5.9 5.6-.3z"/></svg>',"Select","Click a shape to pick it (Shift-click to pick several), drag it to move it, drag its white dots to resize it. The map still pans"],["line","📏","Ruler","Drag from one place to another: a straight line with its length"],["compass",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.2" r="1.9"/><path d="M11 6 6.2 21M13 6l4.8 15M7.8 15.6c2.6 1.3 5.8 1.3 8.4 0"/></svg>',"Compass","Drag from the centre outwards to draw a circle (hold Shift for a square). Or click a place for a ring of the distance below: click the same centre again to add rings around it"],["point",'<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="5" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".45"/></svg>',"Point","Click to mark a place with a dot"],["mpen",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.2-4.4L16.5 4.3a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.4 18.8z"/><path d="M14.5 6.3l3.2 3.2"/><path d="M3 22h7" stroke-dasharray="1.5 2"/></svg>',"Pen","Draw freely. A line shows its length; close the shape (end where you started) to see its area"],["rect","▭","Rectangle","Drag a box. Hold Shift for a square"],["oval","⬭","Oval","Drag a box. Hold Shift for a circle"],["text","<b style=\"font:800 16px Georgia,serif\">T</b>","Text","Click the map to put a text box there, then type"],["lineup","✛","Line up","Click a place (or type a city) to draw its latitude and longitude around the world"]];
+const MODES=[["box",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2.4"><rect x="3.5" y="4.5" width="17" height="14" rx="1.5"/></svg>',"Box select","Drag a box over the map: every shape whose middle is inside it is picked (Shift adds to the pick). Then drag any picked shape to move them all"],["select",'<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 3.5v15.2l4.1-3.9 2.7 6 2.6-1.2-2.7-5.9 5.6-.3z"/></svg>',"Select","Click a shape to pick it (Shift-click to pick several), drag it to move it, drag its white dots to resize it. The map still pans"],["line","📏","Ruler","Drag from one place to another: a straight line with its length"],["compass",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.2" r="1.9"/><path d="M11 6 6.2 21M13 6l4.8 15M7.8 15.6c2.6 1.3 5.8 1.3 8.4 0"/></svg>',"Compass","Drag from the centre outwards to draw a circle (hold Shift for a square). Or click a place for a ring of the distance below: click the same centre again to add rings around it"],["point",'<svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="5" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".45"/></svg>',"Point","Click to mark a place with a dot"],["mpen",'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.2-4.4L16.5 4.3a2 2 0 0 1 2.8 0l.4.4a2 2 0 0 1 0 2.8L8.4 18.8z"/><path d="M14.5 6.3l3.2 3.2"/><path d="M3 22h7" stroke-dasharray="1.5 2"/></svg>',"Pen","Draw freely. A line shows its length; close the shape (end where you started) to see its area"],["rect","▭","Rectangle","Drag a box. Hold Shift for a square"],["oval","⬭","Oval","Drag a box. Hold Shift for a circle"],["text","<b style=\"font:800 16px Georgia,serif\">T</b>","Text","Click the map to put a text box there, then type"],["lineup","✛","Line up","Click a place (or type a city) to draw its latitude and longitude around the world"]];
 const GCOLS=["#c8281c","#2a3f8f","#1e8c8a","#2f8f3e","#e8762a","#7a3fb0","#1d1b18"];
+/* box select: drag a rectangle; the shapes whose screen middle is inside it are picked, then the set goes to Select */
+function boxSelect(){let a=null,bx=null,add=false;const h=host();
+ const end=()=>{if(bx){bx.remove();bx=null}a=null};
+ capture(true,"crosshair",{
+  down:e=>{a=[e.clientX,e.clientY];add=e.shiftKey;if(!h)return;bx=document.createElement("div");bx.className="gfk-box";h.appendChild(bx);mv(e)},
+  move:e=>{if(a)mv(e)},
+  up:e=>{if(!a)return;const x0=Math.min(a[0],e.clientX),x1=Math.max(a[0],e.clientX),y0=Math.min(a[1],e.clientY),y1=Math.max(a[1],e.clientY);end();
+   if(x1-x0<4&&y1-y0<4){if(!add){GEO.sel=-1;GEO.sels=[];render();geoList()}return}
+   const ink=K().ink,got=[];ink.forEach((it,i)=>{const P=(it.p||[]).map(toScreen).filter(Boolean);if(!P.length)return;let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;P.forEach(q=>{a0=Math.min(a0,q[0]);a1=Math.max(a1,q[0]);b0=Math.min(b0,q[1]);b1=Math.max(b1,q[1])});
+    const cx=(a0+a1)/2,cy=(b0+b1)/2;if(cx>=x0&&cx<=x1&&cy>=y0&&cy<=y1)got.push(i)});
+   const L=add?[...new Set([...selList(),...got])]:got;GEO.sels=L;GEO.sel=L.length?L[L.length-1]:-1;
+   if(L.length){GEO.mode="select";geoSave();capture(false);geoPanel()}render();geoList();toast(got.length?(got.length===1?"1 shape picked":got.length+" shapes picked"):"Nothing inside the box")}});
+ function mv(e){if(!bx||!h||!a)return;const r=h.getBoundingClientRect(),x0=Math.min(a[0],e.clientX)-r.left,y0=Math.min(a[1],e.clientY)-r.top;bx.style.left=x0+"px";bx.style.top=y0+"px";bx.style.width=Math.abs(e.clientX-a[0])+"px";bx.style.height=Math.abs(e.clientY-a[1])+"px"}
+ /* Esc while dragging drops the box */
+ const esc=ev=>{if(ev.key==="Escape"&&a){end();ev.stopPropagation()}};addEventListener("keydown",esc,true);setTimeout(()=>{},0);boxSelect._esc&&removeEventListener("keydown",boxSelect._esc,true);boxSelect._esc=esc}
 function geoPanel(){if(GEO.mode==="ring")GEO.mode="compass";if(GEO.mode==="ruler")GEO.mode="line";const M=MODES.find(m=>m[0]===GEO.mode);
  const p=panel("gfkGeo",'<b class="gfk-ph">Geometry set</b><div class="gfk-geom">'+MODES.map(m=>'<button type="button" data-gm="'+m[0]+'" class="'+(m[0]===GEO.mode?"on":"")+'" title="'+esc(m[3])+'"><i>'+m[1]+'</i>'+m[2]+'</button>').join("")+'</div>'+
   '<p class="gfk-hint">'+(M&&GEO.mode!=="select"?esc(M[3])+'.':'Click a shape to pick it, drag to move it. The map still pans.')+'</p>'+
@@ -1074,6 +1104,7 @@ function geoPanel(){if(GEO.mode==="ring")GEO.mode="compass";if(GEO.mode==="ruler
  {let first=true;thkWire(p,v=>{GEO.w=v;geoSave();const L=selList();if(L.length){if(first){hist();first=false}L.forEach(i=>{const x=K().ink[i];if(x&&x.t!=="geoText")x.w=v});save();render()}})}
  p.querySelector('[data-act="undo"]').onclick=undoGeo;p.querySelector('[data-act="redo"]').onclick=redoGeo;p.querySelector('[data-act="more"]').onclick=()=>{const m=document.getElementById("gfkGeoMore");if(m)m.remove();else geoMore()};
  
+ if(GEO.mode==="box"){boxSelect();return}
  if(!M||GEO.mode==="select"){capture(false);return}
  if(GEO.mode==="ruler"){capture(false);if(!S.place.ruler){const h=host();if(h){const r=h.getBoundingClientRect();dropTool("ruler",r.left+r.width*.5,r.top+r.height*.8)}}else measure(true);return}
  if(S.pen){S.pen=null;sync()}pinArm(false);
