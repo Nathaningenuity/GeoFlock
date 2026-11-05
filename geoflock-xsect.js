@@ -161,7 +161,7 @@ function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".g
    if(cl.includes("col"))el.appendChild(b);else el.parentNode.insertBefore(b,el)}b.classList.toggle("on",on)})}
 /* the way in: a round button in the map's right-hand column (and the Shovel gadget in the toolkit) */
 function chip(){icons(mode()==="elevation")}
-function start(){const g=G();if(!g)return;on=true;loadDEM().then(()=>{if(!lines.length&&hist.length)showHist(hist.length-1);else renderPanel()}).catch(()=>{});mount();if(!lines.length&&hist.length){lines=[hist[hist.length-1]];title=lines[0].title}renderPanel();if(!lines.length)armed=true;renderPanel();loop()}
+function start(o){const g=G();if(!g)return;on=true;loadDEM().then(()=>{if(!lines.length&&hist.length)showHist(hist.length-1);else renderPanel()}).catch(()=>{});mount();if(!lines.length&&hist.length){lines=[hist[hist.length-1]];title=lines[0].title}renderPanel();/* opening the Elevation map: ready to draw straight away (your earlier lines stay listed) */if(!lines.length||(o&&o.draw))armed=true;renderPanel();loop()}
 function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(e.target.closest(".gf-xs-rz")){e.preventDefault();e.stopPropagation();
   const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),sv=panel.querySelector("svg"),sh=sv?sv.getBoundingClientRect().height:190,x0=e.clientX,y0=e.clientY;
   panel.style.left=(r.left-h.left)+"px";panel.style.top=(r.top-h.top)+"px";panel.style.right="auto";panel.style.bottom="auto";
