@@ -695,7 +695,11 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
  const ring=r=>{if(r.length<12)return r;const o=[r[0]];let q=r[0];for(let i=1;i<r.length-1;i++){const p=r[i];if(Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])>TOL){o.push(p);q=p}}o.push(r[r.length-1]);return o.length>=4?o:r};
  let TOL=.12,M2=M;window.gfLoF=function(f){const tl=window.gfLoTol||.12;if(tl!==TOL){TOL=tl;M2=new WeakMap()}let v=M2.get(f);if(v)return v;const g=f.geometry;if(!g){M2.set(f,f);return f}
   let ng=g;if(g.type==="Polygon")ng={type:"Polygon",coordinates:g.coordinates.map(ring)};else if(g.type==="MultiPolygon")ng={type:"MultiPolygon",coordinates:g.coordinates.map(P=>P.map(ring))};
-  v={type:"Feature",properties:f.properties,geometry:ng};M2.set(f,v);return v};
+  v={type:"Feature",properties:f.properties,geometry:ng};
+  /* thinning a ring round a pole (Antarctica) or across 180° can turn it inside out, and then that one country covers the
+     whole globe: keep the full shape whenever the light one's area differs */
+  try{const a0=d3.geoArea(f),a1=d3.geoArea(v);if(!(Math.abs(a1-a0)<=Math.max(1e-6,a0*.15)))v=f}catch(e){v=f}
+  M2.set(f,v);return v};
  /* after the globe stops moving, one more frame at full detail */
  let t=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g)return;if(g._moving){t=1}else if(t){t=0;g.request?g.request():g.render()}}catch(e){}},200)})();
 
