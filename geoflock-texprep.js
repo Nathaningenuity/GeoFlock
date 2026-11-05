@@ -7,7 +7,7 @@
 if(typeof globeImages!=="function"||typeof _globeImgs==="undefined")return;
 const KEYS={relief:1,satellite:1,night:1,elevation:1};
 let MX=0;
-function maxTex(){if(MX)return MX;try{const c=document.createElement("canvas"),g=c.getContext("webgl")||c.getContext("experimental-webgl");MX=g&&g.getParameter(g.MAX_TEXTURE_SIZE)||4096;
+function maxTex(){if(MX)return MX;try{const c=document.createElement("canvas"),g=c.getContext("webgl")||c.getContext("experimental-webgl");MX=g&&g.getParameter(g.MAX_TEXTURE_SIZE)||4096;if(window.gfTexCap)MX=Math.min(MX,window.gfTexCap);
  try{const l=g&&g.getExtension("WEBGL_lose_context");if(l)l.loseContext()}catch(e){}}catch(e){MX=4096}MX=Math.min(MX,8192);return MX}
 const P={};/* key -> {state:"load"|"wait"|"prep"|"done"|"skip", cbs:[]} */
 const _gi=globeImages;

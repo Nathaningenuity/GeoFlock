@@ -41,7 +41,7 @@ function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let
  const mx=Math.max(.5,(E-W)*.08),my=Math.max(.5,(N-Sx)*.08);N=Math.min(85,N+my);Sx=Math.max(-85,Sx-my);W-=mx;E+=mx;
  if(W<-180||E>180){/* across the date line: keep the larger side */if(W<-180){if(-180-W>E+180)return null;W=-180}if(E>180){if(E-180>180-W)return null;E=180}}return[W,N,E,Sx]}catch(e){return null}}
 function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){PDBG="not globe";return null}
- const dpr=Math.min(2,devicePixelRatio||1),ppdNeed=g.projection().scale()*Math.PI/180*dpr,z=gfGibs.level(ppdNeed);
+ const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),ppdNeed=g.projection().scale()*Math.PI/180*dpr,z=gfGibs.level(ppdNeed);
  if(z==null){if(st.P){try{G.gl.deleteTexture(st.P.t)}catch(e){}st.P=null}return null}
  /* the gentle auto-spin alone does not count as moving: the patch is made wider instead, to cover ~30 s of it */
  let spin=false;try{spin=typeof gfSpinWanted==="function"&&gfSpinWanted(g)&&!g._gfDown&&!g._flying}catch(e){}
@@ -246,7 +246,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
   /* City Lights without the sun (a tour, or "Night only"), zoomed in far enough for the sharp tiles: drawn here as night
      everywhere, so the tiles can be used */
   if(!S.on&&o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.night&&o.tex===this.tex.night&&window.gfGibs&&GLOBE_TEX.satellite){
-   const dpr=Math.min(2,devicePixelRatio||1);if(gfGibs.level(amGlobe.projection().scale()*Math.PI/180*dpr)!=null){const im=globeImages("satellite",req);if(im)o=Object.assign({},o,{tex:this.texture("satellite",im),_nightOnly:1})}}
+   const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1));if(gfGibs.level(amGlobe.projection().scale()*Math.PI/180*dpr)!=null){const im=globeImages("satellite",req);if(im)o=Object.assign({},o,{tex:this.texture("satellite",im),_nightOnly:1})}}
   if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
   /* the Satellite globe is always drawn here: in Day & Night with the sun, in Day evenly lit (night picture unused) */
   const day=!S.on&&!o._nightOnly,imgs=day?null:nightReady(),P=(day||imgs)&&prog(this);

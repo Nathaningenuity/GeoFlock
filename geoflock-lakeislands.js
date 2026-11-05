@@ -110,7 +110,7 @@ const sat=()=>{try{return allMapsColorMode==="satellite"}catch(e){return false}}
 function dots(g){prep();if(!READY||sat())return;const ov=g.cfg.overlays?g.cfg.overlays():{};if(!ov.lakes)return;
  const p=g.projection(),ctr=[-g.rot[0],-g.rot[1]],list=[];
  for(const I of ISLES){if(!I.dot||!lakeShown(ov,I))continue;if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.02)continue;const k=pxDeg(p,I.ll);if(k<PT_MIN_PXDEG)continue;const c=p(I.ll);if(c)list.push([c,k])}
- if(!list.length)return;const ctx=g.ctx,dpr=Math.min(2,window.devicePixelRatio||1),dk=dark();
+ if(!list.length)return;const ctx=g.ctx,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),dk=dark();
  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dk?"#8f8a6c":"#d2c79f";ctx.strokeStyle=dk?"rgba(255,255,255,.55)":"rgba(70,58,30,.6)";ctx.lineWidth=.8;
  /* a little bigger as the map zooms in, but always small: these islands are only a few km across */
  list.forEach(([c,k])=>{const rr=Math.max(1.8,Math.min(3.4,k/40));ctx.beginPath();ctx.arc(c[0],c[1],rr,0,2*Math.PI);ctx.fill();ctx.stroke()});ctx.restore()}
@@ -124,7 +124,7 @@ function install(){const P=GlobeView.prototype;
  const _ren=P._render;P._render=function(){const r=_ren.apply(this,arguments);if(!onMaps(this))return r;
   try{dots(this)}catch(err){console.error(err)}
   const I=this._gfIsle;if(!I||this.tip.hidden)return r;
-  try{const ctx=this.ctx,dpr=Math.min(2,window.devicePixelRatio||1),{w,h,r:R}=this.size(),p=this.projection(),dk=dark();
+  try{const ctx=this.ctx,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),{w,h,r:R}=this.size(),p=this.projection(),dk=dark();
    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,R,0,2*Math.PI);ctx.clip()}
    ctx.lineJoin="round";ctx.lineCap="round";const fill=dk?"rgba(255,226,120,0.62)":"rgba(255,206,64,0.58)",edge=dk?"#fff3c4":"#7a4a00";
    if(I.kind==="s"){const path=d3.geoPath(p,ctx);ctx.beginPath();path(I.g);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke()}

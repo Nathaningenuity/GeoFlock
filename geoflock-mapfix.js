@@ -464,7 +464,7 @@ setInterval(()=>{const bar=document.getElementById("ptBar"),p=bar&&bar.parentEle
  function fresh(svg){const c=svg._gfWorld;return c&&c.mut===(svg._gfMut2||0)&&cache(svg)}
  window.gfSnapDraw=function(svg,b,rect){try{const s=cache(svg);if(!s||!rect||!rect.width)return false;const wrap=svg.parentNode;let cv=ov.get(svg);
    if(!cv){cv=document.createElement("canvas");cv.className="gf-world-pic";cv.style.cssText="position:absolute;pointer-events:none;z-index:1";wrap.appendChild(cv);ov.set(svg,cv)}
-   const dpr=Math.min(2,devicePixelRatio||1),W=rect.width,H=rect.height;if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+   const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),W=rect.width,H=rect.height;if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
    cv.style.left=(rect.left-rect._pl-rect._bl)+"px";cv.style.top=(rect.top-rect._pt-rect._bt)+"px";cv.style.width=W+"px";cv.style.height=H+"px";cv.style.display="";
    const ctx=cv.getContext("2d"),k=W/b[2];ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);ctx.imageSmoothingQuality="high";
    ctx.setTransform(dpr*k/s.sc,0,0,dpr*k/s.sc,dpr*(s.vb0.x-b[0])*k,dpr*(s.vb0.y-b[1])*k);ctx.drawImage(s.cv,0,0);
@@ -692,10 +692,10 @@ function gfIsVolcano(name){const n=String(name||"").toLowerCase().replace(/^(mou
 /* a lighter copy of each country's shape for while the globe moves (a point every ~0.12°, under a pixel at normal zoom):
    drawing the full shapes was most of the time of each frame of a drag. At rest the full shapes are drawn again. */
 (function(){const M=new WeakMap();
- const ring=r=>{if(r.length<12)return r;const o=[r[0]];let q=r[0];for(let i=1;i<r.length-1;i++){const p=r[i];if(Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])>.12){o.push(p);q=p}}o.push(r[r.length-1]);return o.length>=4?o:r};
- window.gfLoF=function(f){let v=M.get(f);if(v)return v;const g=f.geometry;if(!g){M.set(f,f);return f}
+ const ring=r=>{if(r.length<12)return r;const o=[r[0]];let q=r[0];for(let i=1;i<r.length-1;i++){const p=r[i];if(Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])>TOL){o.push(p);q=p}}o.push(r[r.length-1]);return o.length>=4?o:r};
+ let TOL=.12,M2=M;window.gfLoF=function(f){const tl=window.gfLoTol||.12;if(tl!==TOL){TOL=tl;M2=new WeakMap()}let v=M2.get(f);if(v)return v;const g=f.geometry;if(!g){M2.set(f,f);return f}
   let ng=g;if(g.type==="Polygon")ng={type:"Polygon",coordinates:g.coordinates.map(ring)};else if(g.type==="MultiPolygon")ng={type:"MultiPolygon",coordinates:g.coordinates.map(P=>P.map(ring))};
-  v={type:"Feature",properties:f.properties,geometry:ng};M.set(f,v);return v};
+  v={type:"Feature",properties:f.properties,geometry:ng};M2.set(f,v);return v};
  /* after the globe stops moving, one more frame at full detail */
  let t=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g)return;if(g._moving){t=1}else if(t){t=0;g.request?g.request():g.render()}}catch(e){}},200)})();
 

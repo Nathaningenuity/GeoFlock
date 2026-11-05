@@ -160,7 +160,7 @@ function fillsOf(){const S=cur;if(!S||!S.gfSym||!S.gfSym.fills)return null;const
 let fillCv=null,fillSig="";
 function paintFill(){try{const box=lay&&lay.parentNode;if(!box||ps.mode!=="globe"||!ps.g||typeof ps.g.projection!=="function")return;const F=fillsOf();if(!F||!F.length)return;
  if(!fillCv||fillCv.parentNode!==box){fillCv=document.createElement("canvas");fillCv.className="gfs-fill";box.insertBefore(fillCv,box.querySelector(".ps-pins")||lay)}
- const w=box.clientWidth,h=box.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1),pr=ps.g.projection(),a=psScreen(anchor(cur));
+ const w=box.clientWidth,h=box.clientHeight,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),pr=ps.g.projection(),a=psScreen(anchor(cur));
  const sg=w+"x"+h+"|"+(a?a[0].toFixed(1)+","+a[1].toFixed(1):"x")+"|"+pr.scale().toFixed(2)+"|"+pr.rotate().map(v=>v.toFixed(2)).join(",")+"|"+pr.translate().map(v=>v.toFixed(1)).join(",");
  if(sg===fillSig)return;fillSig=sg;
  if(fillCv.width!==Math.round(w*dpr)||fillCv.height!==Math.round(h*dpr)){fillCv.width=Math.round(w*dpr);fillCv.height=Math.round(h*dpr)}

@@ -83,7 +83,7 @@ let eatUntil=0;function suppress(){eatUntil=Date.now()+500}
 if(!window._gfPcL){window._gfPcL=1;addEventListener("pointerdown",down,true);addEventListener("pointermove",move,true);addEventListener("pointerup",up,true);
  addEventListener("click",e=>{if(on&&Date.now()<eatUntil){e.stopImmediatePropagation();e.preventDefault()}},true)}
 /* ---------- drawing the shape, the split and the labels over the map ---------- */
-function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov)return;const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
+function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov)return;const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1));
  if(ov.width!==Math.round(r.width*dpr)||ov.height!==Math.round(r.height*dpr)){ov.width=Math.round(r.width*dpr);ov.height=Math.round(r.height*dpr);ov.style.width=r.width+"px";ov.style.height=r.height+"px"}
  ov.style.left=(r.left-hr.left)+"px";ov.style.top=(r.top-hr.top)+"px";const x=ov.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,r.width,r.height);const pr=g.projection(),path=d3.geoPath(pr,x);
  if(shape){x.beginPath();shape.rings.forEach(R=>{let pen=false,last=null;R.forEach(ll=>{const q=pr(ll);if(!q||!isFinite(q[0])){pen=false;return}if(pen&&last&&Math.abs(q[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]);pen=true;last=q})});

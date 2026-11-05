@@ -125,14 +125,14 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
  flatCtx(this);const{w,h,r}=this.size();this._flatR={w,h,r,s:r*this.zoom,p:this.projection(),skip:false};
  /* the GL ball is not used: the flat pictures go on the 2-D canvas first */
  const gl=this.gl;if(gl&&!gl._gfFlat){gl._gfFlat=1;const D=gl.draw.bind(gl),T=gl.texture.bind(gl),self=this;gl.texture=function(){return self._flat?null:T.apply(gl,arguments)};
-  gl.draw=function(o){if(!self._flat)return D(o);D(null);if(!self._inFlat||self._picDone)return;self._picDone=true;const dpr=Math.min(2,window.devicePixelRatio||1);const n=self._flatPictures(self.ctx,dpr);self._flatR.skip=n>0}}
+  gl.draw=function(o){if(!self._flat)return D(o);D(null);if(!self._inFlat||self._picDone)return;self._picDone=true;const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1));const n=self._flatPictures(self.ctx,dpr);self._flatR.skip=n>0}}
  if(!gl){/* no GL: draw the pictures right after the canvas is cleared */}
  this._inFlat=true;this._picDone=false;let r0;try{r0=_r.apply(this,arguments)}finally{this._inFlat=false}
 
  if(!gl){}
  return r0}}
 /* without GL the ball would be drawn by the processor; on the flat map the pictures are drawn instead */
-{const _c=P._cpuRaster;if(_c)P._cpuRaster=function(){if(!this._flat)return _c.apply(this,arguments);const dpr=Math.min(2,window.devicePixelRatio||1);this._flatR.skip=this._flatPictures(this.ctx,dpr)>0}}
+{const _c=P._cpuRaster;if(_c)P._cpuRaster=function(){if(!this._flat)return _c.apply(this,arguments);const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1));this._flatR.skip=this._flatPictures(this.ctx,dpr)>0}}
 /* the sea under the pictures when the map has no pictures of its own (colour maps): drawn by the ball code, as the outline */
 
 /* ---------- moving the flat map: drag slides, wheel and pinch zoom around the pointer, smoothly ---------- */
@@ -337,7 +337,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
 (function(){const P=GlobeView.prototype,_r=P._render;P._render=function(){const r=_r.apply(this,arguments);try{const code=this.hot,ctx=this.ctx;if(!code||!ctx)return r;
   const fs=(this._base||[]).filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return r;
   /* only small countries (Monaco, San Marino): bigger ones keep their normal outline under the labels */let pa=0;try{const gp=d3.geoPath(this.projection());fs.forEach(f=>{pa+=gp.area(f)})}catch(e){return r}if(!(pa<900))return r;
-  const dpr=Math.min(2,window.devicePixelRatio||1),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
+  const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
   if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
   const path=d3.geoPath(this.projection(),ctx);ctx.lineJoin="round";
   fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="#ffffff";ctx.lineWidth=2*Math.max(.35,Math.min(1.2,.42*Math.pow(this.zoom,.6)));ctx.stroke()});/* as thin as the normal highlight *//* the same white line as the normal highlight */ctx.restore()}catch(e){}return r}})();

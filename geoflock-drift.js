@@ -194,7 +194,7 @@ function turnPt(q,lo,la){const v=[Math.cos(la*DEG)*Math.cos(lo*DEG),Math.cos(la*
  const t=[2*(y*v[2]-z*v[1]),2*(z*v[0]-x*v[2]),2*(x*v[1]-y*v[0])];const r=[v[0]+w*t[0]+(y*t[2]-z*t[1]),v[1]+w*t[1]+(z*t[0]-x*t[2]),v[2]+w*t[2]+(x*t[1]-y*t[0])];
  return[Math.atan2(r[1],r[0])/DEG,Math.asin(Math.max(-1,Math.min(1,r[2])))/DEG]}
 /* draw the world at t (million years ago) into a 2D canvas; lon0 turns the map */
-function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=Math.min(2,window.devicePixelRatio||1),W=Math.max(1,Math.round(target.clientWidth*dpr)),H=Math.max(1,Math.round(target.clientHeight*dpr));
+function draw(target,t,lon0,o){if(!G)return false;o=o||{};const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),W=Math.max(1,Math.round(target.clientWidth*dpr)),H=Math.max(1,Math.round(target.clientHeight*dpr));
  if(target.width!==W)target.width=W;if(target.height!==H)target.height=H;
  const m=(o.margin||8)*dpr,lf=(o.left||0)*dpr,globe=!!o.globe,lat0=globe?(o.lat0||0):0,p=(globe?d3.geoOrthographic().clipAngle(90).rotate([lon0,-lat0]):d3.geoEqualEarth().rotate([lon0,0])).fitExtent([[m+lf,m],[W-m,H-m]],{type:"Sphere"}),k=p.scale(),tr=p.translate();
  /* a point on the screen, or null if it is on the far side of the globe */

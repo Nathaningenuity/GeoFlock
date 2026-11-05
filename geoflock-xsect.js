@@ -216,7 +216,7 @@ function up(e){
  armed=false;title=shape==="line"?"Your line":"Your path";note="";head=null;const used=new Set(hist.map(h=>h.c)),col=HCOL.find(c=>!used.has(c))||HCOL[0];if(hist.length>=MAXL)hist.shift();const nL={ll,c:col,P:null,edit:{kind:shape,pts:ed},title,n:0};hist.push(nL);renum();title=nL.title;lines=[nL];compute();renderPanel()}
 /* ---------- the map overlay ---------- */
 function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFrame(loop);const g=G();if(!g||!ov){return}
- const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
+ const c=g.canvas,r=c.getBoundingClientRect(),hr=g.host.getBoundingClientRect(),dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1));
  if(ov.width!==Math.round(r.width*dpr)||ov.height!==Math.round(r.height*dpr)){ov.width=Math.round(r.width*dpr);ov.height=Math.round(r.height*dpr);ov.style.width=r.width+"px";ov.style.height=r.height+"px"}
  /* lined up with the globe by where it really lands (its offset parent can differ, e.g. in full screen) */
  {const L0=parseFloat(ov.style.left)||0,T0=parseFloat(ov.style.top)||0,o=ov.getBoundingClientRect();if(Math.abs(o.left-r.left)>.5||Math.abs(o.top-r.top)>.5){ov.style.left=(L0+r.left-o.left)+"px";ov.style.top=(T0+r.top-o.top)+"px"}}

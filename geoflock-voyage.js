@@ -298,7 +298,7 @@ function draw(cv,opt){
 }
 function projFor(W,H,tr){const pad=Math.max(14,W*.02);const p=d3.geoNaturalEarth1().rotate([-12,0]).precision(.3).fitExtent([[pad,pad+H*.01],[W-pad,H-pad]],{type:"Sphere"});
  if(tr){const s=p.scale(),t=p.translate();p.scale(s*tr.k).translate([t[0]*tr.k+tr.x,t[1]*tr.k+tr.y])}return p}
-function sizeCanvas(cv,W,H){const dpr=Math.min(2,window.devicePixelRatio||1);cv._w=W;cv._h=H;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+"px";cv.style.height=H+"px"}
+function sizeCanvas(cv,W,H){const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1));cv._w=W;cv._h=H;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+"px";cv.style.height=H+"px"}
 
 /* ---------- fonts ---------- */
 if(!document.getElementById("gfVoyFont")){const l=document.createElement("link");l.id="gfVoyFont";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap";document.head.appendChild(l)}

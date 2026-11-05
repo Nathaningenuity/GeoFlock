@@ -32,7 +32,7 @@ function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=x
 function fbm(x,y,o){let s=0,a=.5,f=1;for(let i=0;i<o;i++){s+=a*vnoise(x*f,y*f);f*=2.03;a*=.5}return s}
 let rnd=1;const rand=()=>(rnd=Math.imul(rnd^(rnd>>>15),2246822507)+0x9e3779b9>>>0,rnd/4294967296);
 function drawGalaxy(cv){
-  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;
+  const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),W=innerWidth,H=innerHeight;
   cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);
   /* the band: an arch from lower left to upper right */
   const ax=-0.12*W,ay=1.08*H,bx=1.12*W,by=-0.18*H,dx=bx-ax,dy=by-ay,L=Math.hypot(dx,dy),nx=-dy/L,ny=dx/L,wid=0.11*Math.hypot(W,H);
@@ -99,7 +99,7 @@ function roundTree(ctx,x,y,h){ctx.beginPath();ctx.rect(x-h*0.04,y-h*0.4,h*0.08,h
   for(const[dx,dy,r] of [[0,-0.62,0.30],[-0.18,-0.5,0.22],[0.19,-0.52,0.23],[0,-0.82,0.2]]){ctx.beginPath();ctx.arc(x+dx*h,y+dy*h,r*h,0,7);ctx.fill()}}
 function drawLand(host,P){
   let cv=host.querySelector("canvas");if(!cv){cv=document.createElement("canvas");host.appendChild(cv)}
-  const dpr=Math.min(2,devicePixelRatio||1),W=host.clientWidth||innerWidth,H=host.clientHeight||220;
+  const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),W=host.clientWidth||innerWidth,H=host.clientHeight||220;
   cv.width=W*dpr;cv.height=H*dpr;cv.style.width=W+"px";cv.style.height=H+"px";
   const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);rnd=777;
   const S=1/Math.max(W,900),G=(c,w)=>x=>Math.exp(-Math.pow((x-c*W)/(w*W),2)),sm=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
@@ -142,7 +142,7 @@ function drawDayLand(host){
      down a cliff, forested hills around a valley with a winding stream,
      and a meadow foreground with groves */
   let cv=host.querySelector("canvas");if(!cv){cv=document.createElement("canvas");host.appendChild(cv)}
-  const dpr=Math.min(2,devicePixelRatio||1),Wc=host.clientWidth||innerWidth,H=host.clientHeight||220;
+  const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),Wc=host.clientWidth||innerWidth,H=host.clientHeight||220;
   cv.width=Wc*dpr;cv.height=H*dpr;cv.style.width=Wc+"px";cv.style.height=H+"px";
   const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,Wc,H);rnd=2024;
   const W=Math.max(Wc,760);ctx.translate(-(W-Wc)*0.45,0);
@@ -226,7 +226,7 @@ function drawDayLand(host){
 }
 /* ---------- day sky: only a thin layer of haze lying low over the ranges; the clouds themselves are drawn in drawDayClouds ---------- */
 function drawDaySky(cv){
-  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
+  const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;
   const ctx=cv.getContext("2d");ctx.clearRect(0,0,cv.width,cv.height);
   const landTop=H-Math.min(H*0.28,250);
 
@@ -346,7 +346,7 @@ function cumulus(w,o){
   const cv=document.createElement("canvas");cv.width=cw;cv.height=ch;cv.getContext("2d").putImageData(img,0,0);
   return{cv,w:cw/s,h:ch/s,ax:CX/s,ay:YB/s}}
 function drawDayClouds(cv){
-  const dpr=Math.min(2,window.devicePixelRatio||1),W=innerWidth,H=innerHeight,Wd=cv.clientWidth||Math.round(W*1.06),OX=(Wd-W)/2;
+  const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),W=innerWidth,H=innerHeight,Wd=cv.clientWidth||Math.round(W*1.06),OX=(Wd-W)/2;
   cv.width=Math.round(Wd*dpr);cv.height=Math.round(H*dpr);
   const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,Wd,H);
   const narrow=W<700,landH=Math.min(H*0.28,250),horizon=H-landH*0.68,res=Math.min(2,dpr);   /* horizon: about where the far range rises */
