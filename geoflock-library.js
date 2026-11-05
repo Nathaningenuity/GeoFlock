@@ -13,8 +13,12 @@ const MAPN={relief:"Relief",satellite:"Satellite",elevation:"Elevation",populati
 let box=null,tab="dict",q="",cat="all",shelf="all",mapF="all",openT=null;
 
 /* ---------- map helpers ---------- */
-function goMap(mode,cb){const run=()=>{try{const chip=document.querySelector('[data-allmaps-mode="'+mode+'"]');if(chip&&!(typeof allMapsColorMode!=="undefined"&&allMapsColorMode===mode))chip.click()}catch(e){}if(cb)setTimeout(cb,700)};
- if(typeof appMode!=="undefined"&&appMode!=="allmaps"){try{switchAppMode("allmaps")}catch(e){}setTimeout(run,700)}else run()}
+/* open the Maps page and the wanted map, waiting until each is really there */
+function whenReady(test,cb,max){let n=0;const t=setInterval(()=>{n++;let ok=false;try{ok=test()}catch(e){}if(ok||n>(max||200)){clearInterval(t);if(ok)cb()}},150)}
+const mapReady=()=>typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host&&amGlobe.host.isConnected&&amGlobe.host.offsetParent&&!!document.querySelector("[data-allmaps-mode]");
+function goMap(mode,cb){try{if(appMode!=="allmaps")switchAppMode("allmaps")}catch(e){}
+ whenReady(mapReady,()=>{try{const chip=document.querySelector('[data-allmaps-mode="'+mode+'"]');if(chip&&allMapsColorMode!==mode)chip.click()}catch(e){}
+  whenReady(()=>allMapsColorMode===mode,()=>{if(cb)setTimeout(cb,500)},200)})}
 function flyLL(ll,z){try{const G=amGlobe;if(!G)return;z=z||4;
  if(!G._flat){const from=[-G.rot[0],-G.rot[1]],z0=G.zoom,st=performance.now(),D=900,ip=d3.geoInterpolate(from,ll),zTo=Math.max(1,Math.min(9,z));
   const step=n=>{const k=Math.min(1,(n-st)/D),s=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,c=ip(s);G.rot=[-c[0],-c[1]];G.zoom=Math.exp(Math.log(z0)+(Math.log(zTo)-Math.log(z0))*s);G.render();if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step);return}
@@ -41,7 +45,7 @@ function dictHTML(){const C=CATS(),L=dictList(),n=D().length;
  let letters="";if(!q&&cat==="all"){const S=new Set(L.map(e=>e.t[0].toUpperCase()));letters='<div class="gflib-az">'+[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(l=>'<button type="button" data-az="'+l+'"'+(S.has(l)?"":" disabled")+'>'+l+'</button>').join("")+'</div>'}
  return'<div class="gflib-chips"><button type="button" data-cat="all" class="'+(cat==="all"?"on":"")+'">All <i>'+n+'</i></button>'+Object.keys(C).map(k=>'<button type="button" data-cat="'+k+'" class="c-'+k+(cat===k?" on":"")+'">'+esc(C[k])+' <i>'+D().filter(e=>e.c===k).length+'</i></button>').join("")+'</div>'+letters+
   '<div class="gflib-list">'+(L.length?L.slice(0,lim).map(e=>entry(e,openT===e.t||L.length===1)).join(""):'<p class="gflib-empty">No term matches “'+esc(q)+'”.</p>')+(L.length>lim?'<p class="gflib-more">'+(L.length-lim)+' more: type to narrow, or pick a letter or a category.</p>':'')+'</div>'}
-function showTerm(t){const e=D().find(x=>x.t===t);if(!e)return;tab="dict";q="";cat="all";openT=t;render();setTimeout(()=>{const a=box&&box.querySelector('.gflib-e[data-t="'+CSS.escape(t)+'"]');if(a)a.scrollIntoView({block:"center"})},30)}
+function showTerm(t){const e=D().find(x=>x.t===t);if(!e)return;open("dict");tab="dict";q=t;cat="all";openT=t;render();setTimeout(()=>{const a=box&&box.querySelector('.gflib-e[data-t="'+CSS.escape(t)+'"]');if(a)a.scrollIntoView({block:"center"})},30)}
 function termOnMap(t){const e=D().find(x=>x.t===t);if(!e||!e.m)return;close();goMap(e.m.map||"relief",()=>{flyLL(e.m.at,e.m.z||4);setTimeout(()=>ping(e.m.at,e.t),950)})}
 
 /* ---------- stops ---------- */
@@ -62,7 +66,7 @@ function stopsHTML(){const A=buildStops(),L=stopList(),groups=[...new Set(A.map(
   '<div class="gflib-stops">'+L.slice(0,lim).map(s=>'<button type="button" class="gflib-s" data-sid="'+s.id+'|'+s.i+'" style="--c:'+esc(s.col)+'"><span class="gflib-play">▶</span><span class="gflib-st"><b>'+esc(s.title)+'</b><small>'+esc(s.stat)+'</small><em>'+esc(s.tour)+' · stop '+(s.i+1)+' · '+esc(MAPN[s.map]||s.map)+' map</em></span></button>').join("")+'</div>'}
 function playStop(id,i){const T=PS_TOURS[id];if(!T)return;const S=T.steps[i];const need=S.mode||(T.map&&T.map.mode)||"relief";
  const here=typeof appMode!=="undefined"&&appMode==="allmaps"&&typeof allMapsColorMode!=="undefined"?allMapsColorMode:null;
- const go=()=>{close();try{if(appMode!=="allmaps")switchAppMode("allmaps")}catch(e){}setTimeout(()=>{try{psLaunchTour(id)}catch(e){console.error(e);return}let n=0;const w=setInterval(()=>{n++;try{if(typeof ps!=="undefined"&&ps&&ps.tour===id){clearInterval(w);/* let the tour finish opening, then jump (again if it reset itself) */if(i>0){setTimeout(()=>{try{psGo(i)}catch(e){}},900);setTimeout(()=>{try{if(ps&&ps.tour===id&&ps.i!==i)psGo(i)}catch(e){}},2200)}}}catch(e){}if(n>40)clearInterval(w)},150)},here?50:600)};
+ const go=()=>{close();try{if(appMode!=="allmaps")switchAppMode("allmaps")}catch(e){}whenReady(mapReady,()=>{try{psLaunchTour(id)}catch(e){console.error(e);return}let n=0;const w=setInterval(()=>{n++;try{if(typeof ps!=="undefined"&&ps&&ps.tour===id){clearInterval(w);/* let the tour finish opening, then jump (again if it reset itself) */if(i>0){setTimeout(()=>{try{psGo(i)}catch(e){}},900);setTimeout(()=>{try{if(ps&&ps.tour===id&&ps.i!==i)psGo(i)}catch(e){}},2200)}}}catch(e){}if(n>200)clearInterval(w)},150)})};
  if(here===need||(T.alsoOn||[]).includes(here)||!S.mode&&here&&(T.alsoOn||[]).includes(here)){go();return}
  confirmBox('This stop is on the <b>'+esc(MAPN[need]||need)+' map</b>'+(here?' (you are on the '+esc(MAPN[here]||here)+' map)':'')+'. Go there and play it?',"Go to the "+(MAPN[need]||need)+" map",go)}
 function confirmBox(html,yes,cb){const m=document.createElement("div");m.className="gflib-ask";m.innerHTML='<div class="gflib-askc"><p>'+html+'</p><div><button type="button" class="y">'+esc(yes)+'</button><button type="button" class="n">Not now</button></div></div>';document.body.appendChild(m);
