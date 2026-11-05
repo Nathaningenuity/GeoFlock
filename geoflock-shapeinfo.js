@@ -96,13 +96,21 @@ function dayLenSVG(ll){const W=300,H=90,pad=22,yr=new Date().getUTCFullYear();le
 
 /* ---------- the card ---------- */
 let card=null,job=0;
-function shell(title,sub){if(!card){card=document.createElement("div");card.className="gfsi";["pointerdown","mousedown","wheel","click","dblclick"].forEach(ev=>card.addEventListener(ev,e=>e.stopPropagation()));document.body.appendChild(card)}
- card.innerHTML='<div class="gfsi-h"><div><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div><button type="button" class="gfsi-x" aria-label="Close">×</button></div><div class="gfsi-b"></div>';
+/* the card's place and height are remembered: it opens where you left it */
+let POS={};try{POS=JSON.parse(localStorage.getItem("gfsiPos")||"{}")}catch(e){}
+const savePos=()=>{try{const r=card.getBoundingClientRect();POS={top:Math.round(r.top),left:card.style.left?Math.round(r.left):null,h:card.style.height?Math.round(r.height):POS.h||null};localStorage.setItem("gfsiPos",JSON.stringify(POS))}catch(e){}};
+function shell(title,sub){if(!card){card=document.createElement("div");card.className="gfsi";["pointerdown","mousedown","wheel","click","dblclick"].forEach(ev=>card.addEventListener(ev,e=>e.stopPropagation()));document.body.appendChild(card);
+  if(POS.top!=null)card.style.top=Math.max(4,Math.min(innerHeight-80,POS.top))+"px";if(POS.left!=null){card.style.left=Math.max(4,Math.min(innerWidth-80,POS.left))+"px";card.style.right="auto"}if(POS.h)card.style.height=Math.max(140,Math.min(innerHeight-20,POS.h))+"px"}
+ card.innerHTML='<div class="gfsi-h"><div><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</div><button type="button" class="gfsi-x" aria-label="Close">×</button></div><div class="gfsi-b"></div><div class="gfsi-grip" title="Drag to make it taller or shorter"></div>';
  card.querySelector(".gfsi-x").onclick=close;
  /* drag by its title */
  const h=card.querySelector(".gfsi-h");h.onpointerdown=e=>{if(e.target.closest("button"))return;const r=card.getBoundingClientRect(),ox=e.clientX-r.left,oy=e.clientY-r.top;
   const mv=ev=>{card.style.left=Math.max(4,Math.min(innerWidth-80,ev.clientX-ox))+"px";card.style.top=Math.max(4,Math.min(innerHeight-40,ev.clientY-oy))+"px";card.style.right="auto"};
-  const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up)};
+  const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);savePos()};addEventListener("pointermove",mv);addEventListener("pointerup",up)};
+ /* drag the bottom edge: taller or shorter */
+ card.querySelector(".gfsi-grip").onpointerdown=e=>{e.preventDefault();const r=card.getBoundingClientRect(),y0=e.clientY,h0=r.height;
+  const mv=ev=>{card.style.height=Math.max(140,Math.min(innerHeight-r.top-6,h0+ev.clientY-y0))+"px";card.style.maxHeight="none"};
+  const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up);savePos()};addEventListener("pointermove",mv);addEventListener("pointerup",up)};
  return card.querySelector(".gfsi-b")}
 function sec(body,ic,title,open){const s=document.createElement("details");s.className="gfsi-s";if(open!==false)s.open=true;s.innerHTML='<summary><i>'+ic+'</i>'+esc(title)+'</summary><div class="gfsi-c"><p class="gfsi-wait">Working it out…</p></div>';body.appendChild(s);return s.querySelector(".gfsi-c")}
 function close(){job++;if(card){card.remove();card=null}}
@@ -240,9 +248,10 @@ function point(ll,name,j){const b=shell(name||"This spot",llTxt(ll));
 
 window.gfShapeInfo={open,close,plateAt:ll=>plates().at(ll)};
 addEventListener("keydown",e=>{if(e.key==="Escape"&&card&&!(e.target.closest&&e.target.closest("input,textarea")))close()});
-{const st=document.createElement("style");st.textContent=`.gfsi{position:fixed;right:18px;top:96px;z-index:9000;width:min(360px,calc(100vw - 24px));max-height:calc(100vh - 120px);display:flex;flex-direction:column;background:rgba(255,251,243,.98);color:#2b2118;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);font:13px system-ui;overflow:hidden}
+{const st=document.createElement("style");st.textContent=`.gfsi{position:fixed;right:18px;top:96px;z-index:9000;width:min(360px,calc(100vw - 24px));height:min(380px,calc(100vh - 120px));max-height:calc(100vh - 20px);display:flex;flex-direction:column;background:rgba(255,251,243,.98);color:#2b2118;border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.35);font:13px system-ui;overflow:hidden}
+.gfsi-grip{flex:0 0 12px;cursor:ns-resize;position:relative}.gfsi-grip::after{content:"";position:absolute;left:50%;top:4px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:currentColor;opacity:.25}.gfsi-grip:hover::after{opacity:.5}
 .gfsi-h{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:12px 14px 8px;cursor:move;border-bottom:1px solid rgba(0,0,0,.08)}.gfsi-h b{display:block;font-size:15px}.gfsi-h small{opacity:.7;font-weight:600}.gfsi-x{border:0;background:rgba(0,0,0,.07);width:28px;height:28px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;color:inherit;padding:0;margin:0;min-height:0;box-shadow:none}
-.gfsi-b{overflow:auto;padding:4px 12px 12px}.gfsi-s{border-bottom:1px solid rgba(0,0,0,.07);padding:4px 0}.gfsi-s summary{cursor:pointer;font-weight:800;padding:6px 0;list-style:none;display:flex;align-items:center;gap:7px}.gfsi-s summary::-webkit-details-marker{display:none}.gfsi-s summary::after{content:"▾";margin-left:auto;opacity:.5}.gfsi-s:not([open]) summary::after{content:"▸"}.gfsi-s summary i{font-style:normal}
+.gfsi-b{flex:1 1 auto;min-height:0;overflow:auto;padding:4px 12px 12px}.gfsi-s{border-bottom:1px solid rgba(0,0,0,.07);padding:4px 0}.gfsi-s summary{cursor:pointer;font-weight:800;padding:6px 0;list-style:none;display:flex;align-items:center;gap:7px}.gfsi-s summary::-webkit-details-marker{display:none}.gfsi-s summary::after{content:"▾";margin-left:auto;opacity:.5}.gfsi-s:not([open]) summary::after{content:"▸"}.gfsi-s summary i{font-style:normal}
 .gfsi-c{padding:0 0 6px}.gfsi-r{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(0,0,0,.06)}.gfsi-r span{opacity:.75}.gfsi-r b{text-align:right;font-weight:700}.gfsi-r small{font-weight:500;opacity:.7}
 .gfsi-note{font-size:11px;opacity:.65;margin:5px 0 0}.gfsi-wait{opacity:.6;font-style:italic;margin:2px 0}.gfsi-sum{margin:4px 0 6px}.gfsi-cap{margin:8px 0 2px;font-weight:700;font-size:12px}.gfsi-cap small{font-weight:500;opacity:.7}
 .gfsi-bars{display:flex;flex-direction:column;gap:3px}.gfsi-bar{display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 38px;align-items:center;gap:6px}.gfsi-bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gfsi-bar i{height:8px;border-radius:4px;background:rgba(0,0,0,.08);overflow:hidden}.gfsi-bar em{display:block;height:100%;border-radius:4px}.gfsi-bar b{text-align:right;font-size:12px}
