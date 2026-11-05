@@ -156,6 +156,11 @@ const mix=(a,b,t)=>"#"+a.map((v,i)=>Math.round(v+(b[i]-v)*t).toString(16).padSta
  const v=Object.values(vals).sort((a,b)=>a-b);if(v.length<50)return;const lo=Math.min(v[Math.floor(v.length*.02)],ed[0]),hi=Math.max(v[Math.floor(v.length*.98)-1],ed[ed.length-1]);
  const unit=/%/.test(T.cats[0][1])?"%":"";const f=x=>(Math.abs(x)<10?+x.toFixed(1):Math.round(x))+unit;
  T.grad={vals,edges:[Math.max(0,lo)].concat(ed,[hi]),labels:[Math.max(0,lo)].concat(ed,[hi]).map(f)}}catch(e){}});
+/* the Human Development Index: the UN's bands (0.550, 0.700, 0.800) become points along one smooth scale */
+{const T=TH_THEMES.hdi;if(T&&!T.grad&&T.info){try{const vals={};Object.entries(T.info).forEach(([c,s])=>{const m=String(s).match(/\d?\.\d+/);if(m)vals[c]=parseFloat(m[0])});
+ const v=Object.values(vals).sort((a,b)=>a-b);if(v.length>50){const lo=Math.min(v[Math.floor(v.length*.02)],.45),hi=Math.max(v[Math.floor(v.length*.98)-1],.93);
+  /* the bands run low to high in this order */const order=["h4","h3","h2","h1"];if(order.every(k=>T.cats.some(c=>c[0]===k)))T.cats=order.map(k=>T.cats.find(c=>c[0]===k));
+  const E=[lo,.55,.7,.8,hi];T.grad={vals,edges:E,labels:E.map(x=>x.toFixed(2))};T.note=String(T.note).replace(/The bands are the UN’s own\.?/,"0.55, 0.70 and 0.80 mark the UN’s low, medium, high and very high levels.")}}catch(e){}}}
 function gradT(){try{const T=thTheme();return T&&T.grad?T:null}catch(e){return null}}
 function gradColor(T,v){const E=T.grad.edges,P=T.cats.map(c=>hex(c[2])),n=E.length-1;let i=0;while(i<n-1&&v>=E[i+1])i++;
  let f=(v-E[i])/((E[i+1]-E[i])||1);f=Math.max(0,Math.min(1,f));const t=Math.max(0,Math.min(1,(i+f)/n))*(P.length-1),j=Math.min(P.length-2,Math.floor(t));return mix(P[j],P[j+1],t-j)}
