@@ -1,16 +1,17 @@
 /* GeoFlock: new tour covers that say the subject at a glance — Maths gets Oliver Byrne's coloured proof of Pythagoras'
-   theorem (Euclid's Elements, 1847; the diagram and the theorem, cropped from the page) and Psychology gets the first card of Hermann Rorschach's inkblot test (1921).
+   theorem (Euclid's Elements, 1847; the diagram and the theorem, cropped from the page) and Psychology gets the first card of Hermann Rorschach's inkblot test (1921), and Explorers gets the pirate treasure map from Treasure Island (1883).
    Loaded after geoflock-tourcovers.js, so it has the last word on TOUR_THUMBS for these tours (tourcovers.js skips its
    Maths swap for any tour set here). The photos are freely licensed files from Wikimedia Commons (GF_COVERS2_PHOTOS, with
    author, licence and page), joined to the shared photo library the way geoflock-polish-k.js does it. */
 window.GF_COVERS2_PHOTOS=[
  {f:"Byrne 1847 Pythagoras Querformat.jpg",d:"photos/x5dff1f65126282b6.webp",by:"Oliver Byrne (The First Six Books of the Elements of Euclid, 1847); scan by Dr Mirko Junge",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Byrne_1847_Pythagoras_Querformat.jpg"},
+ {f:"Treasure Island map (1883)",d:"photos/cover-explorers-map.webp",by:"Robert Louis Stevenson, Treasure Island (1883), map as printed in the Project Gutenberg edition; cropped and tinted",lic:"Public domain",page:"https://www.gutenberg.org/ebooks/120"},
  {f:"Rorschach blot 01.jpg",d:"photos/x859e1bbbb29babb8.webp",by:"Hermann Rorschach (1921)",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Rorschach_blot_01.jpg"}
 ];
 (function(){
-const COVER={maths:"photos/x5dff1f65126282b6.webp",psychology:"photos/x859e1bbbb29babb8.webp"};
+const COVER={maths:"photos/x5dff1f65126282b6.webp",psychology:"photos/x859e1bbbb29babb8.webp",explorers:"photos/cover-explorers-map.webp"};
 /* crop: keep the top of Byrne's red square in the card */
-const POS={maths:"50% 30%"};
+const POS={maths:"50% 30%",explorers:"50% 45%"};
 window.gfCovers2=COVER;
 function merge(){try{if(typeof gfMergeExtra==="function")gfMergeExtra();if(typeof PS_PHOTO_DATA==="undefined")return;
  const have=new Set(PS_PHOTO_DATA.map(p=>p&&p.f));GF_COVERS2_PHOTOS.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}catch(e){}}
