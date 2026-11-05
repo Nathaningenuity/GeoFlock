@@ -165,7 +165,7 @@ function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".g
    if(cl.includes("col"))el.appendChild(b);else el.parentNode.insertBefore(b,el)}b.classList.toggle("on",on)})}
 /* the way in: a round button in the map's right-hand column (and the Shovel gadget in the toolkit) */
 function chip(){icons(mode()==="elevation")}
-function start(o){const g=G();if(!g)return;on=true;loadDEM().then(()=>{if(!lines.length&&hist.length)showHist(hist.length-1);else renderPanel()}).catch(()=>{});mount();if(!lines.length&&hist.length){lines=[hist[hist.length-1]];title=lines[0].title}renderPanel();/* opening the Elevation map: ready to draw straight away (your earlier lines stay listed) */if(!lines.length||(o&&o.draw))armed=true;renderPanel();loop()}
+function start(o){const g=G();if(!g)return;on=true;loadDEM().then(()=>{if(!lines.length&&hist.length)showHist(hist.length-1);else renderPanel()}).catch(()=>{});mount();if(!lines.length&&hist.length){lines=[hist[hist.length-1]];title=lines[0].title}renderPanel();/* never drawing on opening: drawing starts only from its button (or when a caller asks for it outright) */if(o&&o.draw)armed=true;renderPanel();loop()}
 function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(e.target.closest(".gf-xs-rz")){e.preventDefault();e.stopPropagation();
   const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),sv=panel.querySelector("svg"),sh=sv?sv.getBoundingClientRect().height:190,x0=e.clientX,y0=e.clientY;
   panel.style.left=(r.left-h.left)+"px";panel.style.top=(r.top-h.top)+"px";panel.style.right="auto";panel.style.bottom="auto";
@@ -555,7 +555,7 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
  const st=document.createElement("style");st.textContent=".gf-xs-pen,.gf-xs-pen *{cursor:"+PEN+" !important} .gf-xs-pen .gf-xs, .gf-xs-pen .gf-xs *{cursor:auto !important} .gf-xs-pen .gf-xs :is(button,select,a,label,.gf-xs-hit){cursor:pointer !important} .gf-xs-pen .gf-xs .gf-xs-top{cursor:move !important}";document.head.appendChild(st);
  let last=null;setInterval(()=>{try{const g=G(),h=g&&g.host,w=!!(on&&armed&&h);if(last&&last!==h)last.classList.remove("gf-xs-pen");if(h)h.classList.toggle("gf-xs-pen",w);last=h}catch(e){}},150)}
 /* a straight line between two places (for tours and checks): gfCrossSection.line([lon,lat],[lon,lat],"title") */
-function line(a,b,t,pts){if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify(pts&&pts.length>1?pts:[a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
+function line(a,b,t,pts){const okLL=q=>Array.isArray(q)&&isFinite(q[0])&&isFinite(q[1]);pts=Array.isArray(pts)?pts.filter(okLL):null;if(pts&&pts.length>1){a=pts[0];b=pts[pts.length-1]}if(!okLL(a)||!okLL(b))return;if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify(pts&&pts.length>1?pts:[a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
 /* Esc: out of drawing at once (a stroke in progress is dropped), the pen goes; a second Esc closes the panel */
 addEventListener("keydown",e=>{if(e.key!=="Escape"||!on)return;if(armed||drawing){armed=false;drawing=null;try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(er){}renderPanel();e.preventDefault();e.stopImmediatePropagation()}},true);
 window.gfCrossSection={start,stop,pick,line,loadLakes,lakeAt:ll=>lakeAt(ll),

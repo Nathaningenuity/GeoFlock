@@ -253,7 +253,11 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
      everywhere, so the tiles can be used */
   if(!S.on&&o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.night&&o.tex===this.tex.night&&window.gfGibs&&GLOBE_TEX.satellite){
    const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1));if(gfGibs.level(amGlobe.projection().scale()*Math.PI/180*dpr)!=null){const im=globeImages("satellite",req);if(im)o=Object.assign({},o,{tex:this.texture("satellite",im),_nightOnly:1})}}
-  if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&this.tex.satellite&&o.tex===this.tex.satellite){
+  /* the Satellite map with the sea level changed shows a rebuilt picture (flooded or drained coasts): it is still the
+     satellite picture, so it is drawn here too (Light ocean, Day & Night); only the sharp NASA tiles stay off, as they
+     show today's coasts */
+  const seaSat=!!(o&&!o._nightOnly&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite"&&o.tex&&o.tex!==this.tex.satellite&&o.tex!==this.tex.night&&typeof gfSeaLevel==="function"&&gfSeaLevel());
+  if(o&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.gl===this&&!amGlobe._flat&&(seaSat||this.tex.satellite&&o.tex===this.tex.satellite)){
   /* the Satellite globe is always drawn here: in Day & Night with the sun, in Day evenly lit (night picture unused) */
   const day=!S.on&&!o._nightOnly,imgs=day?null:nightReady(),P=(day||imgs)&&prog(this);
   if(P){const gl=this.gl,u=P.u,N=day?null:this.texture("night",imgs);
@@ -265,7 +269,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    gl.uniform1f(u.uClA,ct?(day||o._nightOnly?o.clouds:1):0);gl.uniform1f(u.uClSt,window.gfCloudStyle&&gfCloudStyle()==="real"?1:0);gl.uniform1f(u.uClNoNight,window.gfCloudNight&&!gfCloudNight()?1:0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
-   /* the Day & Night globe (lit by the Sun) keeps the built-in pictures: no sharp tiles there (the owner's call) */{const dp=o._nightOnly||S.on?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
+   /* the Day & Night globe (lit by the Sun) keeps the built-in pictures: no sharp tiles there (the owner's call) */{const dp=o._nightOnly||S.on||seaSat?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
    {const pt=day||S.on?null:patchFor(this,"night");gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,pt?pt.t:null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,pt?1:0);if(pt)gl.uniform4f(u.uPB,pt.b[0],pt.b[1],pt.b[2],pt.b[3])}
    {const it=iceTex(this);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0)}
    {const bt=bathyTex(this);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}

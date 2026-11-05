@@ -124,6 +124,8 @@ window.gfNightSharp.covers=function(g,dpr,list,C){try{const kind=list&&list.leng
  if(!(O&&typeof amGlobe!=="undefined"&&g===amGlobe&&g._flat&&!g._gfOx&&kind&&(list.length===1||kind==="sat")&&list[0].blend==="normal"&&!list[0].tf&&list[0].op>.99&&C))return false;
  const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<MINMAG||O.dl!==V.dl||O.dpr!==V.dpr||O.kind!==V.kind)return false;return O.key===V.key||V.S/O.S<=mag}catch(e){return false}};
 
+/* for checks: whether a sharp picture is on the map, being made, or missing tiles */
+window.gfNightSharp.state=()=>({on:!!O,kind:O&&O.kind,busy:!!job,miss:!!(O&&O.miss)});
 /* while the flat map moves: fetch the NASA tiles of the view meanwhile (at most every 300 ms) */
 let pfAt=0;function prefetchView(g,V){try{const now=Date.now();if(now-pfAt<300||!gfGibs.prefetch)return;pfAt=now;const pr=g.projection(),{w,h}=g.size(),q=[];
  for(let i=0;i<=4;i++)for(let j=0;j<=4;j++){const ll=pr.invert([w*i/4,h*j/4]);if(ll&&isFinite(ll[0])&&isFinite(ll[1]))q.push(ll)}if(q.length<4)return;

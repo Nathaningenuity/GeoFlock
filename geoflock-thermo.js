@@ -176,7 +176,7 @@ setInterval(addSlot,700);addSlot();
 (function(){let lastMode=null;setInterval(()=>{try{const m=appMode==="allmaps"?allMapsColorMode:null;if(m===lastMode)return;const prev=lastMode;lastMode=m;
  if(typeof ps!=="undefined"&&ps)return;
  if(m==="climate"&&!on)setTimeout(()=>{if(allMapsColorMode==="climate"&&!on)start()},300);else if(prev==="climate"&&on)stop();
- if(m==="elevation"&&window.gfCrossSection&&!document.querySelector(".gf-xs"))setTimeout(()=>{try{if(allMapsColorMode==="elevation"&&!document.querySelector(".gf-xs"))gfCrossSection.start({draw:true})}catch(e){}},300);
+ if(m==="elevation"&&window.gfCrossSection&&!document.querySelector(".gf-xs"))setTimeout(()=>{try{if(allMapsColorMode==="elevation"&&!document.querySelector(".gf-xs"))gfCrossSection.start()}catch(e){}},300);
  else if(prev==="elevation"&&m!=="elevation"&&window.gfCrossSection&&document.querySelector(".gf-xs"))try{gfCrossSection.stop()}catch(e){}}catch(e){}},400)})();
 
 const css=document.createElement("style");css.textContent=`
