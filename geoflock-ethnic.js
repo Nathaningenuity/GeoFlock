@@ -95,7 +95,7 @@ function place(e){tip.hidden=false;tip.style.left=Math.max(6,Math.min(innerWidth
 const tourOn=()=>{try{if(typeof ps==="undefined"||!ps||!ps.g)return false;const S=(psSteps()||[])[ps.i];return!!(S&&S.gfMurdock)}catch(e){return false}};
 let tHov=null,rq=0,touchT=0;
 function track(e){const tour=tourOn(),g=tour?ps.g:on()?amGlobe:null,D=tour?M:G;
- if(!g||!D||!g.host||!g.host.contains(e.target)||(e.target.closest&&e.target.closest("button,a,input,.gfk-tray,.gfk-panel,.gf-xs,.gf-pc,.ps-card"))){if(!tip.hidden&&e.type==="pointermove"&&e.pointerType==="mouse")tip.hidden=true;if(hov||tHov){hov=tHov=null;try{g&&g.request()}catch(_){}}return}
+ if(!g||!D||!g.host||!g.host.contains(e.target)||(e.target.closest&&e.target.closest("button,a,input,.gfk-tray,.gfk-panel,.gf-xs,.gf-pc,.gfpp,.ps-card"))){if(!tip.hidden&&e.type==="pointermove"&&e.pointerType==="mouse")tip.hidden=true;if(hov||tHov){hov=tHov=null;try{g&&g.request()}catch(_){}}return}
  if(rq)return;rq=requestAnimationFrame(()=>{rq=0;const r=g.canvas.getBoundingClientRect();let ll=null;try{ll=g.projection().invert([e.clientX-r.left,e.clientY-r.top])}catch(_){}const f=at(D,ll);
   if(tour){if(f!==tHov){tHov=f;reqTour()}}else if(f!==hov){hov=f;try{g.request?g.request():g.render()}catch(_){}}
   if(!f){tip.hidden=true;return}tip.innerHTML=tipHTML(f,tour?"Murdock, 1959":"Atlas Narodov Mira, 1964");place(e);
