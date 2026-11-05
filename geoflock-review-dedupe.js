@@ -232,7 +232,27 @@ const FIX=[
  /* the refugee figure fell after 2024 (UNHCR: about 117 million by mid-2025); match the Conflicts tour's end-2025 figure */
  ["hg2c","Forced to move",S=>{if(/^Over 120 million/.test(S.stat||""))set(S,"stat","About 118 million people had been forced from their homes by the end of 2025")}],
  /* the "Vietnam" label sat at 106°E 16°N, which is in Laos */
- ["hg4c","Shatterbelts",S=>{(S.pins||[]).forEach(p=>{if(Array.isArray(p)&&p[1]==="Vietnam"&&Array.isArray(p[0])&&p[0][0]===106&&p[0][1]===16)p[0]=[108.3,14.6]})}]
+ ["hg4c","Shatterbelts",S=>{(S.pins||[]).forEach(p=>{if(Array.isArray(p)&&p[1]==="Vietnam"&&Array.isArray(p[0])&&p[0][0]===106&&p[0][1]===16)p[0]=[108.3,14.6]})}],
+ /* the text says "drag the US over it to compare", but there was nothing to drag */
+ ["africa","The Sahara is mostly rock",S=>{if(!(S.ghosts||[]).length)set(S,"ghosts",[{code:"us",at:[12,23],col:"#e0592a",label:"United States, true size"}])}],
+ /* the text says "about 1,800 km in a straight line (ruler)" but the stop had no ruler */
+ ["hasia","The emperor’s clay army",S=>{if(!S.gfRuler)set(S,"gfRuler",{a:[119.75,40.0],b:[98.22,39.8]})}],
+ /* five stops say "move along the chart" but had no chart: give them the card cross-section (geoflock-tourxs.js) */
+ ["elev","The lowest land on Earth",S=>{if(!S.xsec)set(S,"xsec",{title:"From the Mediterranean down to the Dead Sea",below:true,
+  pts:[[34.65,31.8,"Coast"],[35.0,31.78],[35.21,31.78,"Jerusalem"],[35.4,31.72],[35.5,31.7,"Dead Sea"],[35.75,31.72,"Jordan’s highlands"]],
+  note:"Heights are averaged over about 10 km, so the narrow trough reads a little shallower than its real 430 m below sea level."})}],
+ ["samerica","Living high in the Andes",S=>{if(!S.xsec)set(S,"xsec",{title:"From the Pacific over Aconcagua to the pampas",
+  pts:[[-71.62,-32.75,"Pacific"],[-70.7,-32.7],[-70.01,-32.65,"Aconcagua"],[-69.3,-32.8],[-68.84,-32.89,"Mendoza"],[-66.5,-33.3,"Pampas"]],
+  note:"Heights are averaged over about 10 km, so the summit reads lower than its 6,961 m."})}],
+ ["samerica","The Amazon basin",S=>{if(!S.xsec)set(S,"xsec",{title:"Up the Amazon to the foot of the Andes",
+  pts:[[-49.5,-0.6,"River mouth"],[-54.7,-2.4,"Santarém"],[-60.0,-3.1,"Manaus"],[-65.8,-3.4],[-73.25,-3.75,"Iquitos"],[-75.8,-5.5],[-77.2,-6.3,"Andes foothills"],[-78.0,-7.2,"Andes"]],
+  note:"Iquitos, about 3,000 km from the sea, is only about 100 m up; then the Andes rise in a few hundred kilometres."})}],
+ ["hantarctica","Reading the ice",S=>{if(!S.xsec)set(S,"xsec",{title:"From the coast up the ice sheet to Vostok",
+  pts:[[140.0,-66.66,"Coast"],[133.5,-70.5],[123.35,-75.1,"Dome C"],[115,-77],[106.84,-78.46,"Vostok"]],
+  note:"The heights are the top of the ice; the rock underneath lies much lower."})}],
+ ["hazards","Tornado Alley",S=>{if(!S.xsec)set(S,"xsec",{title:"From the Gulf of Mexico across the Great Plains",
+  pts:[[-97.4,27.8,"Gulf coast"],[-97.3,32.75,"Dallas"],[-97.5,35.45,"Oklahoma City"],[-97.3,37.7,"Wichita"],[-96.7,40.8,"Lincoln"],[-98.5,45.5],[-101.3,50.5,"Canadian prairies"]],
+  note:"No mountain range lies across the path, so warm Gulf air and cold northern air meet head on."})}]
 ];
 /* the GDP tour's "Count the lights" stop asks for the Earth at night (mode:"night", and its text says the map has
    switched), but the tour never had per-stop maps switched on, so it stayed on the Economy map */
