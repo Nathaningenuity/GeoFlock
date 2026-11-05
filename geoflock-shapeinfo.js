@@ -107,7 +107,17 @@ function shell(title,sub){if(!card){card=document.createElement("div");card.clas
 function sec(body,ic,title,open){const s=document.createElement("details");s.className="gfsi-s";if(open!==false)s.open=true;s.innerHTML='<summary><i>'+ic+'</i>'+esc(title)+'</summary><div class="gfsi-c"><p class="gfsi-wait">Working it out…</p></div>';body.appendChild(s);return s.querySelector(".gfsi-c")}
 function close(){job++;if(card){card.remove();card=null}}
 const row=(k,v)=>'<div class="gfsi-r"><span>'+k+'</span><b>'+v+'</b></div>';
-const bars=list=>'<div class="gfsi-bars">'+list.map(x=>'<div class="gfsi-bar"><span>'+esc(x.n)+'</span><i><em style="width:'+Math.max(1.5,x.f*100).toFixed(1)+'%;background:'+(x.col||"#2f6fb0")+'"></em></i><b>'+pct(x.f)+'</b></div>').join("")+'</div>';
+const bars=list=>'<div class="gfsi-bars">'+list.map(x=>'<div class="gfsi-bar"><span>'+esc(x.n)+'</span><i><em style="width:'+Math.max(1.5,(x.w!=null?x.w:x.f)*100).toFixed(1)+'%;background:'+(x.col||"#2f6fb0")+'"></em></i><b>'+(x.lab!=null?x.lab:pct(x.f))+'</b></div>').join("")+'</div>';
+/* sea hidden by default (a switch shows it); land shares then add up to 100% */
+let SEA=false;const seaSw=on=>'<label class="gfsi-sea"><input type="checkbox" data-sea'+(on?" checked":"")+'> Show sea</label>';
+const noSea=(list,isSea)=>{if(SEA)return list;const L=list.filter(x=>!isSea(x)),t=L.reduce((a,x)=>a+x.f,0)||1;return L.map(x=>Object.assign({},x,{f:x.f/t}))};
+const big=v=>v>=1e12?(v/1e12).toFixed(1)+" trillion":v>=1e9?(v/1e9).toFixed(1)+" billion":v>=1e6?(v/1e6).toFixed(1)+" million":Math.round(v).toLocaleString();
+/* ways to rank the countries inside a shape */
+const RANKS=[["share","Share of the shape"],["pop","Population"]];
+function rankVal(k,c){try{const P=typeof COUNTRY_POPULATION!=="undefined"?COUNTRY_POPULATION[c]:null,Gd=typeof COUNTRY_GDP!=="undefined"?COUNTRY_GDP[c]:null;
+ if(k==="pop")return P;if(k==="gdp")return Gd!=null?Gd*1e6:null;if(k==="gdppc")return P&&Gd?Gd*1e6/P:null;
+ if(k==="area"){const f=countries().F.find(x=>ctyCode(x)===c);return f?d3.geoArea(f)*KM*KM:null}}catch(e){}return null}
+function rankLab(k,v){if(v==null)return"–";if(k==="pop")return big(v)+" people";if(k==="gdp")return"$"+big(v);if(k==="gdppc")return"$"+Math.round(v).toLocaleString();if(k==="area")return big(v)+" km²";return pct(v)}
 const live=j=>j===job&&card;
 
 function open(s){if(!s)return;close();const j=++job;
@@ -125,9 +135,13 @@ function shape(s,j){const tk=T();let ring=tk.fillRing?tk.fillRing(s):s.p;if(ring
  setTimeout(()=>{if(!live(j))return;const S=samples(ring,40),C=countries();
   const sh=shares(S,ll=>{const f=C.at(ll);return f?ctyCode(f):"~sea"});const land=sh.filter(x=>x.k!=="~sea"),sea=sh.find(x=>x.k==="~sea");
   if(!land.length)cC.innerHTML="<p>No country: it is all sea"+(sea?"":"")+".</p>";
-  else{const L=land.slice(0,12).map(x=>({n:projName(x.k,x.k),f:x.f,k:x.k}));cC.innerHTML=bars(L.concat(sea?[{n:"Sea",f:sea.f,col:"#5b8fc7"}]:[]))+(land.length>12?'<p class="gfsi-note">and '+(land.length-12)+' more</p>':'')+
-   '<button type="button" class="gfsi-btn" data-sel>Turn these countries into shapes on the map</button><p class="gfsi-note">Share of the shape’s area.</p>';
-   cC.querySelector("[data-sel]").onclick=()=>selectCountries(L.map(x=>x.k))}
+  else{let rk="share";const draw=()=>{const L=land.map(x=>({n:projName(x.k,x.k),f:x.f,k:x.k}));let shown;
+    if(rk==="share")shown=noSea(L.concat(sea?[{n:"Sea",f:sea.f,col:"#5b8fc7",k:"~sea"}]:[]),x=>x.k==="~sea").sort((a,b)=>(a.k==="~sea")-(b.k==="~sea")||b.f-a.f).slice(0,13);
+    else{const V=L.map(x=>Object.assign(x,{v:rankVal(rk,x.k)})).filter(x=>x.v!=null).sort((a,b)=>b.v-a.v).slice(0,12),mx=V.length?V[0].v:1;shown=V.map(x=>Object.assign(x,{w:x.v/mx,lab:rankLab(rk,x.v)}))}
+    cC.innerHTML='<div class="gfsi-ctl"><label>Rank by <select data-rk>'+RANKS.map(([k,t])=>'<option value="'+k+'"'+(k===rk?" selected":"")+'>'+t+'</option>').join("")+'</select></label>'+(rk==="share"&&sea?seaSw(SEA):"")+'</div>'+bars(shown)+(land.length>12?'<p class="gfsi-note">'+land.length+' countries in all</p>':'')+
+     '<button type="button" class="gfsi-btn" data-sel>Turn these countries into shapes on the map</button><p class="gfsi-note">'+(rk==="share"?"Share of the shape’s "+(SEA?"area.":"land."):"Ranked by the whole country’s "+RANKS.find(r=>r[0]===rk)[1].toLowerCase()+".")+'</p>';
+    cC.querySelector("[data-sel]").onclick=()=>selectCountries(land.slice(0,12).map(x=>x.k));
+    cC.querySelector("[data-rk]").onchange=e=>{rk=e.target.value;draw()};const sw=cC.querySelector("[data-sea]");if(sw)sw.onchange=()=>{SEA=sw.checked;draw();try{drawM&&drawM()}catch(e){}}};draw()}
   dem().then(()=>{if(!live(j))return;const st=tk.elevStats?tk.elevStats(ring):null;if(!st){cE.innerHTML="<p>No height data.</p>";return}
    const nm=ll=>{try{const f=gfCrossSection.lfAt(ll,elev(ll));return f&&f.n?" · "+esc(f.n):""}catch(e){return""}};
    cE.innerHTML=row("Highest",mTxt(st.hi)+'<small>'+nm(st.hiAt)+'</small>')+row("Lowest",(st.lo<0?mTxt(-st.lo)+(C.at(st.loAt)?" below sea level":" deep (sea floor)"):mTxt(st.lo))+'<small>'+nm(st.loAt)+'</small>')+row("Average",mTxt(st.avg))+'<p class="gfsi-note">ETOPO 2022, 0.1° grid: single peaks read a little low.</p>'});
@@ -139,10 +153,12 @@ function shape(s,j){const tk=T();let ring=tk.fillRing?tk.fillRing(s):s.p;if(ring
     fp=shares(S.filter((_,i)=>i%3===0),ll=>{for(const f of FF){if(f._bb&&!inBB(f._bb,ll))continue;try{if(d3.geoContains(f,ll)){const k=f.properties.k,c=fc.find(x=>x[0]===k);return c?c[1]:k}}catch(e){}}return null}).filter(x=>x.k)}
    const card0=(N.cards||[]);const bcol=n=>{const c=card0.find(x=>x.n===n);return c&&c.col};
    const sum=bio.filter(x=>x.k!=="Sea").slice(0,3).map(x=>pct(x.f)+" "+x.k.toLowerCase()).join(", ");
-   const tabs=[["Biome",bars(bio.slice(0,8).map(x=>({n:x.k,f:x.f,col:x.k==="Sea"?"#5b8fc7":bcol(x.k)})))],["Climate",kp.length?bars(kp.slice(0,8).map(x=>({n:x.k,f:x.f,col:"#c0802f"}))):"<p>No climate data (sea).</p>"]];
-   if(fp.length)tabs.push(["Human footprint",bars(fp.map(x=>({n:x.k,f:x.f,col:"#8a6b4a"})))]);
-   cM.innerHTML=(sum?'<p class="gfsi-sum">'+esc(sum)+'</p>':'')+'<div class="gfsi-tabs">'+tabs.map((t,i)=>'<button type="button" data-t="'+i+'" class="'+(i?"":"on")+'">'+t[0]+'</button>').join("")+'</div><div class="gfsi-tab">'+tabs[0][1]+'</div>';
-   cM.querySelectorAll("[data-t]").forEach(bt=>bt.onclick=()=>{cM.querySelectorAll("[data-t]").forEach(x=>x.classList.toggle("on",x===bt));cM.querySelector(".gfsi-tab").innerHTML=tabs[+bt.dataset.t][1]})})},30)}
+   let cur=0;const hasSea=bio.some(x=>x.k==="Sea");
+   drawM=()=>{if(!cM.isConnected)return;const tabs=[["Biome",bars(noSea(bio.map(x=>({n:x.k,f:x.f,col:x.k==="Sea"?"#5b8fc7":bcol(x.k)})),x=>x.n==="Sea").slice(0,8))],["Climate",kp.length?bars(kp.slice(0,8).map(x=>({n:x.k,f:x.f,col:"#c0802f"}))):"<p>No climate data (sea).</p>"]];
+    if(fp.length)tabs.push(["Human footprint",bars(fp.map(x=>({n:x.k,f:x.f,col:"#8a6b4a"})))]);
+    cM.innerHTML=(sum?'<p class="gfsi-sum">'+esc(sum)+'</p>':'')+'<div class="gfsi-tabs">'+tabs.map((t,i)=>'<button type="button" data-t="'+i+'" class="'+(i===cur?"on":"")+'">'+t[0]+'</button>').join("")+(hasSea?seaSw(SEA):"")+'</div><div class="gfsi-tab">'+tabs[cur][1]+'</div>';
+    cM.querySelectorAll("[data-t]").forEach(bt=>bt.onclick=()=>{cur=+bt.dataset.t;drawM()});const sw=cM.querySelector("[data-sea]");if(sw)sw.onchange=()=>{SEA=sw.checked;drawM()}};drawM()})},30)}
+let drawM=null;
 /* the countries of a shape become shapes of their own (picked together in the Geometry set) */
 function selectCountries(codes){const tk=T(),C=countries();if(!tk.keep)return;const k=tk.K(),n0=k.ink.length,cols=["#2a3f8f","#1e8c8a","#2f8f3e","#e8762a","#7a3fb0","#c8281c"];
  codes.forEach((c,i)=>{const f=C.F.find(x=>ctyCode(x)===c);if(!f)return;const g=f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;let best=null,ba=0;
@@ -231,7 +247,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&card&&!(e.target.closest&&e.
 .gfsi-note{font-size:11px;opacity:.65;margin:5px 0 0}.gfsi-wait{opacity:.6;font-style:italic;margin:2px 0}.gfsi-sum{margin:4px 0 6px}.gfsi-cap{margin:8px 0 2px;font-weight:700;font-size:12px}.gfsi-cap small{font-weight:500;opacity:.7}
 .gfsi-bars{display:flex;flex-direction:column;gap:3px}.gfsi-bar{display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 38px;align-items:center;gap:6px}.gfsi-bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gfsi-bar i{height:8px;border-radius:4px;background:rgba(0,0,0,.08);overflow:hidden}.gfsi-bar em{display:block;height:100%;border-radius:4px}.gfsi-bar b{text-align:right;font-size:12px}
 .gfsi-btn{margin:8px 0 0;border:1px solid #2f6fb0;background:#2f6fb0;color:#fff;border-radius:999px;padding:5px 12px;font:700 12px system-ui;cursor:pointer;min-height:0;box-shadow:none}
-.gfsi-tabs{display:flex;gap:4px;margin:2px 0 6px}.gfsi-tabs button{border:1px solid rgba(0,0,0,.15);background:none;color:inherit;border-radius:999px;padding:3px 10px;font:700 11.5px system-ui;cursor:pointer;margin:0;min-height:0;box-shadow:none}.gfsi-tabs button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}
+.gfsi-tabs{display:flex;gap:4px;margin:2px 0 6px;align-items:center;flex-wrap:wrap}.gfsi-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0 6px;font-size:12px}.gfsi-ctl select{font:inherit;border-radius:8px;padding:2px 6px}.gfsi-sea{display:inline-flex;gap:4px;align-items:center;font-size:12px;margin-left:auto;cursor:pointer}.gfsi-tabs button{border:1px solid rgba(0,0,0,.15);background:none;color:inherit;border-radius:999px;padding:3px 10px;font:700 11.5px system-ui;cursor:pointer;margin:0;min-height:0;box-shadow:none}.gfsi-tabs button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}
 .gfsi-ol{margin:0;padding-left:20px}.gfsi-ol li{padding:2px 0}.gfsi-ol li span{display:inline-block;min-width:60%}.gfsi-ol li b{float:right}.gfsi-ol li.sea{opacity:.6}.gfsi-ul{margin:2px 0;padding-left:16px}.gfsi-ul li{padding:2px 0}
 .gfsi-k{display:inline-block;background:#2f6fb0;color:#fff;border-radius:6px;padding:1px 6px;margin-right:4px}.gfsi-graph svg{width:100%;height:auto}.gfsi-svg{display:block;margin:2px 0}
 .gfsi-chips{display:flex;flex-wrap:wrap;align-items:center;gap:3px;margin:4px 0}.gfsi-chips span{background:rgba(0,0,0,.07);border-radius:5px;padding:1px 5px;font-weight:700;font-size:11px}.gfsi-chips i{font-style:normal;opacity:.5;font-size:10px}
