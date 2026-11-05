@@ -192,16 +192,37 @@ function line(s,j){const tk=T(),p=s.p,L=along(p,400),len=L[L.length-1].d,a=p[0],
    (gc>1?row("Shortest route (great circle)",kmTxt(gc))+row("Your line",kmTxt(len)+(extra>.003?' <small>('+(extra*100).toFixed(extra<.1?1:0)+'% longer)</small>':' <small>(already the shortest)</small>')):"")+
    '<p class="gfsi-note">On a flat map the shortest route looks curved, bending towards the pole: that is why flights to Asia from America cross the Arctic.</p><button type="button" class="gfsi-btn">Show the shortest route on the map</button>';
   cT.querySelector("button").onclick=()=>{const n=96,pts=[];for(let i=0;i<=n;i++)pts.push(d3.geoInterpolate(a,z)(i/n));try{tk.keep({t:"geoDash",c:"#1d6fb8",p:pts,lab:"shortest · "+kmTxt(gc),at:d3.geoInterpolate(a,z)(.5)})}catch(e){}}}
- clim().then(()=>{if(!live(j))return;const n=10,P=along(p,n).map(q=>Object.assign(q,{c:climAt(q.ll)}));const ok=P.filter(q=>q.c);if(!ok.length){cK.innerHTML="<p>The line is over the sea: no climate data.</p>";return}
-  const W=300,H=130,l=30,r=30,t=10,bt=20,X=d=>l+(W-l-r)*d/len,Tm=q=>q.c.T.reduce((x,y)=>x+y)/12,Pm=q=>q.c.P.reduce((x,y)=>x+y);
-  const tmin=Math.min(...ok.map(Tm),0),tmax=Math.max(...ok.map(Tm),25),pmax=Math.max(...ok.map(Pm),500);const YT=v=>t+(H-t-bt)*(1-(v-tmin)/(tmax-tmin)),bw=(W-l-r)/(n+1)*.7;
-  let s2='<svg viewBox="0 0 '+W+' '+H+'" width="100%" class="gfsi-svg">';ok.forEach(q=>{const h=(H-t-bt)*Pm(q)/pmax;s2+='<rect x="'+(X(q.d)-bw/2)+'" y="'+(H-bt-h)+'" width="'+bw+'" height="'+h+'" fill="#4a86c8" opacity=".75"/>'});
-  s2+='<path d="'+ok.map((q,i)=>(i?"L":"M")+X(q.d).toFixed(1)+","+YT(Tm(q)).toFixed(1)).join("")+'" fill="none" stroke="#d8452b" stroke-width="2.2"/>';ok.forEach(q=>s2+='<circle cx="'+X(q.d)+'" cy="'+YT(Tm(q))+'" r="2.6" fill="#d8452b"/>');
-  s2+='<text x="'+(l-4)+'" y="'+(YT(tmax)+4)+'" font-size="9" text-anchor="end" fill="#d8452b">'+Math.round(tmax)+'°</text><text x="'+(l-4)+'" y="'+(YT(tmin)+3)+'" font-size="9" text-anchor="end" fill="#d8452b">'+Math.round(tmin)+'°</text><text x="'+(W-r+4)+'" y="'+(t+8)+'" font-size="9" fill="#4a86c8">'+Math.round(pmax)+'</text><text x="'+(W-r+4)+'" y="'+(t+18)+'" font-size="8" fill="#4a86c8">mm</text>';
-  s2+='<text x="'+l+'" y="'+(H-5)+'" font-size="9" fill="currentColor" opacity=".7">start</text><text x="'+(W-r)+'" y="'+(H-5)+'" font-size="9" text-anchor="end" fill="currentColor" opacity=".7">end</text></svg>';
+ clim().then(()=>{if(!live(j))return;const n=160,P=along(p,n).map(q=>Object.assign(q,{c:climAt(q.ll)}));const ok=P.filter(q=>q.c);if(!ok.length){cK.innerHTML="<p>The line is over the sea: no climate data.</p>";return}
+  /* like the cross-section: temperature as a line (the coldest to the warmest month as a band), rain as many thin columns
+     that change gradually, and a playhead to move along the line that also shows the spot on the map */
+  const W=320,H=150,l=30,r=34,t=12,bt=18,X=d=>l+(W-l-r)*d/len,Tm=q=>q.c.T.reduce((x,y)=>x+y)/12,Tlo=q=>Math.min(...q.c.T),Thi=q=>Math.max(...q.c.T),Pm=q=>q.c.P.reduce((x,y)=>x+y);
+  const tmin=Math.min(...ok.map(Tlo),0),tmax=Math.max(...ok.map(Thi),25),pmax=Math.max(...ok.map(Pm),500);const YT=v=>t+(H-t-bt)*(1-(v-tmin)/(tmax-tmin)),cw=(W-l-r)/n+.6;
+  const C=countries();
+  let s2='<svg viewBox="0 0 '+W+' '+H+'" width="100%" class="gfsi-svg gfsi-clim"><rect x="'+l+'" y="'+t+'" width="'+(W-l-r)+'" height="'+(H-t-bt)+'" fill="currentColor" opacity=".04"/>';
+  P.forEach(q=>{if(!q.c)return;const h=(H-t-bt)*Pm(q)/pmax;s2+='<rect x="'+(X(q.d)-cw/2).toFixed(1)+'" y="'+(H-bt-h).toFixed(1)+'" width="'+cw.toFixed(2)+'" height="'+h.toFixed(1)+'" fill="#4a86c8" opacity=".55"/>'});
+  /* the band and the line, broken over the sea */
+  const runs=[];let cur=null;P.forEach(q=>{if(q.c){if(!cur){cur=[];runs.push(cur)}cur.push(q)}else cur=null});
+  runs.forEach(R=>{s2+='<path d="'+R.map((q,i)=>(i?"L":"M")+X(q.d).toFixed(1)+","+YT(Thi(q)).toFixed(1)).join("")+R.slice().reverse().map(q=>"L"+X(q.d).toFixed(1)+","+YT(Tlo(q)).toFixed(1)).join("")+'Z" fill="#d8452b" opacity=".14"/>';
+   s2+='<path d="'+R.map((q,i)=>(i?"L":"M")+X(q.d).toFixed(1)+","+YT(Tm(q)).toFixed(1)).join("")+'" fill="none" stroke="#d8452b" stroke-width="2"/>'});
+  if(tmin<0&&tmax>0)s2+='<line x1="'+l+'" x2="'+(W-r)+'" y1="'+YT(0)+'" y2="'+YT(0)+'" stroke="#d8452b" stroke-dasharray="3 3" opacity=".4"/>';
+  s2+='<text x="'+(l-4)+'" y="'+(YT(tmax)+4)+'" font-size="9" text-anchor="end" fill="#d8452b">'+Math.round(tmax)+'°</text><text x="'+(l-4)+'" y="'+(YT(tmin)+3)+'" font-size="9" text-anchor="end" fill="#d8452b">'+Math.round(tmin)+'°</text><text x="'+(W-r+4)+'" y="'+(t+8)+'" font-size="9" fill="#4a86c8">'+Math.round(pmax).toLocaleString()+'</text><text x="'+(W-r+4)+'" y="'+(t+18)+'" font-size="8" fill="#4a86c8">mm/yr</text>';
+  s2+='<text x="'+l+'" y="'+(H-5)+'" font-size="9" fill="currentColor" opacity=".7">0 km</text><text x="'+(W-r)+'" y="'+(H-5)+'" font-size="9" text-anchor="end" fill="currentColor" opacity=".7">'+kmTxt(len)+'</text>';
+  s2+='<g class="gfsi-cur"></g><rect class="gfsi-hit" x="'+l+'" y="0" width="'+(W-l-r)+'" height="'+H+'" fill="transparent" style="cursor:ew-resize"/></svg><div class="gfsi-read"></div>';
   const f=ok[0],e=ok[ok.length-1];
   cK.innerHTML=s2+'<p class="gfsi-sum">From <b>'+esc(f.c.kn.toLowerCase())+'</b> ('+Tm(f).toFixed(0)+'°C, '+Math.round(Pm(f)).toLocaleString()+' mm a year) to <b>'+esc(e.c.kn.toLowerCase())+'</b> ('+Tm(e).toFixed(0)+'°C, '+Math.round(Pm(e)).toLocaleString()+' mm).</p>'+
-   '<div class="gfsi-chips">'+ok.filter((q,i)=>!i||q.c.k!==ok[i-1].c.k).map(q=>'<span title="'+esc(q.c.kn)+'">'+q.c.k+'</span>').join("<i>→</i>")+'</div><p class="gfsi-note">Red: average temperature. Blue bars: rain in a year. WorldClim 2.1, 1970–2000.</p>'})}
+   '<div class="gfsi-chips">'+ok.filter((q,i)=>!i||q.c.k!==ok[i-1].c.k).map(q=>'<span title="'+esc(q.c.kn)+'">'+q.c.k+'</span>').join("<i>→</i>")+'</div><p class="gfsi-note">Red line: average temperature; pale red: coldest to warmest month. Blue: rain and snow in a year. Drag along the chart to follow the line. WorldClim 2.1, 1970–2000.</p>';
+  /* the playhead */
+  const svg=cK.querySelector("svg"),g=cK.querySelector(".gfsi-cur"),rd=cK.querySelector(".gfsi-read");let dot=null,at=null;
+  const mapDot=ll=>{try{const tk2=T();const q=ll&&tk2.toScreen?tk2.toScreen(ll):null;if(!q){if(dot)dot.style.display="none";return}if(!dot){dot=document.createElement("div");dot.className="gfsi-mdot";document.body.appendChild(dot)}dot.style.display="";dot.style.left=q[0]+"px";dot.style.top=q[1]+"px"}catch(er){}};
+  const put=vx=>{const d=Math.max(0,Math.min(len,(vx-l)/(W-l-r)*len));let q=P[0];P.forEach(x=>{if(Math.abs(x.d-d)<Math.abs(q.d-d))q=x});at=q;const x=X(q.d);
+   g.innerHTML='<line x1="'+x+'" x2="'+x+'" y1="'+t+'" y2="'+(H-bt)+'" stroke="currentColor" stroke-width="1.2" opacity=".7"/>'+(q.c?'<circle cx="'+x+'" cy="'+YT(Tm(q))+'" r="3.6" fill="#d8452b" stroke="#fff" stroke-width="1.4"/>':'');
+   const fc=C.at(q.ll),nm=fc?projName(ctyCode(fc),ctyCode(fc)):"Sea";
+   rd.innerHTML='<b>'+kmTxt(q.d)+'</b> · '+esc(nm)+(q.c?' · <span style="color:#d8452b">'+Tm(q).toFixed(1)+'°C</span> <small>('+Tlo(q).toFixed(0)+' to '+Thi(q).toFixed(0)+'°C)</small> · <span style="color:#4a86c8">'+Math.round(Pm(q)).toLocaleString()+' mm</span> · '+esc(q.c.kn):' · no climate data (sea)');mapDot(q.ll)};
+  const vx=ev=>{const R=svg.getBoundingClientRect();return(ev.clientX-R.left)/R.width*W};
+  const hit=cK.querySelector(".gfsi-hit");hit.addEventListener("pointerdown",ev=>{ev.preventDefault();put(vx(ev));const mv=m=>put(vx(m)),up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up)});
+  hit.addEventListener("pointermove",ev=>{if(!ev.buttons)put(vx(ev))});put(l);
+  /* the dot follows the map as it moves; it goes when the card closes */
+  (function follow(){if(!cK.isConnected||!live(j)){if(dot)dot.remove();return}if(at)mapDot(at.ll);requestAnimationFrame(follow)})()})}
 
 /* ----- a point or a pin ----- */
 function point(ll,name,j){const b=shell(name||"This spot",llTxt(ll));
@@ -256,6 +277,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&card&&!(e.target.closest&&e.
 .gfsi-note{font-size:11px;opacity:.65;margin:5px 0 0}.gfsi-wait{opacity:.6;font-style:italic;margin:2px 0}.gfsi-sum{margin:4px 0 6px}.gfsi-cap{margin:8px 0 2px;font-weight:700;font-size:12px}.gfsi-cap small{font-weight:500;opacity:.7}
 .gfsi-bars{display:flex;flex-direction:column;gap:3px}.gfsi-bar{display:grid;grid-template-columns:minmax(0,1.3fr) 1fr 38px;align-items:center;gap:6px}.gfsi-bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gfsi-bar i{height:8px;border-radius:4px;background:rgba(0,0,0,.08);overflow:hidden}.gfsi-bar em{display:block;height:100%;border-radius:4px}.gfsi-bar b{text-align:right;font-size:12px}
 .gfsi-btn{margin:8px 0 0;border:1px solid #2f6fb0;background:#2f6fb0;color:#fff;border-radius:999px;padding:5px 12px;font:700 12px system-ui;cursor:pointer;min-height:0;box-shadow:none}
+.gfsi-read{font-size:12px;margin:2px 0 4px;min-height:16px}.gfsi-mdot{position:fixed;z-index:9001;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#d8452b;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5);pointer-events:none}
 .gfsi-tabs{display:flex;gap:4px;margin:2px 0 6px;align-items:center;flex-wrap:wrap}.gfsi-ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:2px 0 6px;font-size:12px}.gfsi-ctl select{font:inherit;border-radius:8px;padding:2px 6px}.gfsi-sea{display:inline-flex;gap:4px;align-items:center;font-size:12px;margin-left:auto;cursor:pointer}.gfsi-tabs button{border:1px solid rgba(0,0,0,.15);background:none;color:inherit;border-radius:999px;padding:3px 10px;font:700 11.5px system-ui;cursor:pointer;margin:0;min-height:0;box-shadow:none}.gfsi-tabs button.on{background:#2f6fb0;border-color:#2f6fb0;color:#fff}
 .gfsi-ol{margin:0;padding-left:20px}.gfsi-ol li{padding:2px 0}.gfsi-ol li span{display:inline-block;min-width:60%}.gfsi-ol li b{float:right}.gfsi-ol li.sea{opacity:.6}.gfsi-ul{margin:2px 0;padding-left:16px}.gfsi-ul li{padding:2px 0}
 .gfsi-k{display:inline-block;background:#2f6fb0;color:#fff;border-radius:6px;padding:1px 6px;margin-right:4px}.gfsi-graph svg{width:100%;height:auto}.gfsi-svg{display:block;margin:2px 0}
