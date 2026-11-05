@@ -55,12 +55,14 @@ function notice(){if(S.shut||shutNow||document.getElementById("gfPerfNote"))retu
   '<li><b>Close other heavy tabs</b> (video calls, games, other maps).</li></ol>'+
   '<label class="gpn-sharp"><input type="checkbox"'+(S.ov==="sharp"?" checked":"")+'> Keep full sharpness on this device (it may stay a little slower)</label></div>';
  document.body.appendChild(n);
+ /* sit just above the toolkit tray when it is open */
+ const lift=()=>{if(!n.isConnected)return;let b=14;try{const t=[...document.querySelectorAll("#gfKit, .gfk-tray")].filter(e=>e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.height&&r.top<innerHeight);if(t.length)b=Math.max(14,innerHeight-Math.min(...t.map(r=>r.top))+10)}catch(e){}n.style.setProperty("--gpn-b",b+"px");setTimeout(lift,700)};lift();
  n.querySelector(".gpn-how").onclick=()=>{const b=n.querySelector(".gpn-body");b.hidden=!b.hidden};
  n.querySelector(".gpn-x").onclick=()=>{shutNow=true;n.remove()};
  n.querySelector(".gpn-never").onclick=()=>{S.shut=1;save();n.remove()};
  n.querySelector(".gpn-sharp input").onchange=e=>{S.ov=e.target.checked?"sharp":null;save();apply()}}
 const st=document.createElement("style");st.textContent=`
-#gfPerfNote{ position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:9000; max-width:min(560px,calc(100vw - 24px)); background:rgba(16,28,48,.94); color:#eef3fa;
+#gfPerfNote{ position:fixed; left:50%; bottom:var(--gpn-b,14px); transform:translateX(-50%); z-index:9000; max-width:min(560px,calc(100vw - 24px)); background:rgba(16,28,48,.94); color:#eef3fa;
   border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.35); font:500 13px/1.4 system-ui,sans-serif; padding:8px 10px; }
 #gfPerfNote .gpn-row{ display:flex; align-items:center; gap:8px; }
 #gfPerfNote .gpn-t{ flex:1; }

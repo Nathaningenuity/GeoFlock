@@ -497,7 +497,8 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
    const mv=ev=>{if(!held)return;ev.stopPropagation();ev.preventDefault();put(vxOf(ev))},rel=ev=>{held=false;ev.stopPropagation();removeEventListener("pointermove",mv,true);removeEventListener("pointerup",rel,true);removeEventListener("pointercancel",rel,true)};
    addEventListener("pointermove",mv,true);addEventListener("pointerup",rel,true);addEventListener("pointercancel",rel,true)});
   svg.setAttribute("tabindex","0");svg.addEventListener("keydown",e=>{if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();put((head==null?X0:head)+(e.key==="ArrowRight"?1:-1)*(e.shiftKey?40:8))});
-  if(head!=null)put(head)}}
+  /* the playhead shows from the start, at 0 km, so it is plain it can be dragged or clicked along */
+  put(head!=null?head:X0)}}
 /* fly so the whole line sits in the top half of the map, above the chart */
 function frameTo(llAll){const g=G();if(!g||!llAll.length)return;if(!g._flat){try{const c=d3.geoCentroid({type:"MultiPoint",coordinates:llAll});if(c&&isFinite(c[0])){g.rot=[-c[0],-c[1]];g.request()}}catch(e){}return}try{const b=g._flatBase(),{w,h}=g.size(),z0=g.zoom,q=llAll.map(ll=>b(ll)).filter(p=>p&&isFinite(p[0]));if(!q.length)return;
  const xs=q.map(p=>p[0]/z0),ys=q.map(p=>p[1]/z0),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
