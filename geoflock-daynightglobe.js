@@ -75,7 +75,9 @@ window.gfNightPatch=()=>PS.night.P&&{b:PS.night.P.b,z:PS.night.P.z};window.gfDay
 const FS=`#version 300 es
 precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
-uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uPatch; uniform vec4 uPB; uniform float uPatchOn; uniform float uNightOnly; uniform sampler2D uDPatch; uniform vec4 uDPB; uniform float uDPatchOn; uniform sampler2D uCl; uniform float uClA; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
+uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uPatch; uniform vec4 uPB; uniform float uPatchOn; uniform float uNightOnly; uniform sampler2D uDPatch; uniform vec4 uDPB; uniform float uDPatchOn; uniform sampler2D uCl; uniform float uClA;
+uniform float uClSt;
+uniform float uClNoNight; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
 out vec4 o;
 /* sea ice (textures/SEAICE_POLAR.png): two squares centred on the poles (left Arctic, right Antarctic), azimuthal
    equidistant out to 50°, so nothing pinches at the pole. R = sea-ice concentration from the NSIDC Sea Ice Index (one month:
@@ -189,12 +191,16 @@ void main(){
   /* Night only (City Lights zoomed in): the night picture as the ordinary globe draws it, so zooming in changes nothing */
   if(uNightOnly < 0.5) ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
-  if(uClA > 0.0){ cl = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc, v), gx, gy).r) * uClA;
-    float cs = smoothstep(0.1, 0.86, textureGrad(uCl, vec2(uc + 0.0018, v - 0.0014), gx, gy).r) * uClA;
+  if(uClA > 0.0){ float r0 = textureGrad(uCl, vec2(uc, v), gx, gy).r, r1 = textureGrad(uCl, vec2(uc + 0.0018 * (1.0 + uClSt), v - 0.0014 * (1.0 + uClSt)), gx, gy).r;
+    /* "real from space": more cover and the thin swirls (a gentler curve), a deeper shadow, grey-blue where the cloud is thin */
+    cl = (uClSt > 0.5 ? pow(smoothstep(0.03, 0.62, r0), 0.8) : smoothstep(0.1, 0.86, r0)) * uClA;
+    float cs = (uClSt > 0.5 ? pow(smoothstep(0.03, 0.62, r1), 0.8) : smoothstep(0.1, 0.86, r1)) * uClA;
+    vec3 cc = uClSt > 0.5 ? mix(vec3(0.80, 0.85, 0.92), vec3(0.99, 0.995, 1.0), cl) : vec3(0.97, 0.98, 1.0);
     if(uNightOnly > 0.5){ /* as the ordinary globe draws clouds over the night picture */
-      ngt *= 1.0 - 0.3 * cs * uClA; ngt = mix(ngt, vec3(0.97, 0.98, 1.0), cl * 0.95 * uClA); }
-    else { day *= 1.0 - 0.3 * cs; day = mix(day, vec3(0.97, 0.98, 1.0), cl * 0.95);
-    ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; } }
+      if(uClNoNight < 0.5){ ngt *= 1.0 - 0.3 * cs * uClA; ngt = mix(ngt, cc, cl * 0.95 * uClA); } }
+    else { day *= 1.0 - (0.3 + 0.12 * uClSt) * cs; day = mix(day, cc, cl * 0.95);
+    /* clouds over the night side dim the city lights, unless that is switched off */
+    if(uClNoNight < 0.5) ngt = ngt * (1.0 - cl * 0.7) + cl * 0.02; } }
   vec3 col = day * light + ngt * lights;
   /* warm light near the terminator (sun 0–8° up) */
   if(uDayOnly < 0.5){ float edge = smoothstep(0.18, 0.0, s) * smoothstep(-0.12, 0.02, s); col *= mix(vec3(1.0), vec3(1.0, 0.82, 0.65), edge * 0.5); }
@@ -210,7 +216,7 @@ function prog(G){if(G._dng!==undefined)return G._dng;G._dng=null;const gl=G.gl;
  try{const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
   const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
-  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uPatch","uPB","uPatchOn","uNightOnly","uDPatch","uDPB","uDPatchOn","uCl","uClA","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
+  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uPatch","uPB","uPatchOn","uNightOnly","uDPatch","uDPB","uDPatchOn","uCl","uClA","uClSt","uClNoNight","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
  catch(e){console.error("Day & Night globe:",e)}return G._dng}
 /* the coastal glow picture: loaded once, one small GPU texture per globe */
 let GLOW_IMG=null;
@@ -256,7 +262,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    {const g=(o.roll||0)*D2R;gl.uniform2f(u.uRoll,Math.cos(g),Math.sin(g))}gl.uniform1f(u.uSp,Math.sin(o.phi0));gl.uniform1f(u.uCp,Math.cos(o.phi0));gl.uniform1f(u.uSpace,o.space?1:0);
    const la=S.lat*D2R,lo=S.lon*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
    let ct=null;try{if(day){ct=o.clouds&&this.cloudTex?this.cloudTex():null}else if(cloudsOn()){cloudsLoad();ct=this.cloudTex()}}catch(e){}
-   gl.uniform1f(u.uClA,ct?(day||o._nightOnly?o.clouds:1):0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
+   gl.uniform1f(u.uClA,ct?(day||o._nightOnly?o.clouds:1):0);gl.uniform1f(u.uClSt,window.gfCloudStyle&&gfCloudStyle()==="real"?1:0);gl.uniform1f(u.uClNoNight,window.gfCloudNight&&!gfCloudNight()?1:0);gl.uniform1f(u.uDayOnly,day?1:0);gl.uniform1f(u.uNightOnly,o._nightOnly?1:0);gl.uniform1f(u.uSea,seaMode());gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct||null);gl.uniform1i(u.uCl,3);
    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,o.tex.list[0]);gl.uniform1i(u.uSat,0);
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
    /* the Day & Night globe (lit by the Sun) keeps the built-in pictures: no sharp tiles there (the owner's call) */{const dp=o._nightOnly||S.on?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
@@ -509,7 +515,7 @@ function drawOn(G,o,sun){try{
  const la=sun[1]*D2R,lo=sun[0]*D2R;gl.uniform3f(u.uSun,Math.cos(la)*Math.cos(lo),Math.cos(la)*Math.sin(lo),Math.sin(la));
  /* clouds (o.clouds): white by day, dark and faint by night, as on the Maps globe */
  let ct=null;if(o.clouds){try{cloudsLoad();ct=G.cloudTex()}catch(e){ct=null}}
- gl.uniform1f(u.uClA,ct?1:0);gl.uniform1f(u.uDayOnly,0);gl.uniform1f(u.uNightOnly,0);gl.uniform1f(u.uSea,1);
+ gl.uniform1f(u.uClA,ct?1:0);gl.uniform1f(u.uClSt,window.gfCloudStyle&&gfCloudStyle()==="real"?1:0);gl.uniform1f(u.uClNoNight,window.gfCloudNight&&!gfCloudNight()?1:0);gl.uniform1f(u.uDayOnly,0);gl.uniform1f(u.uNightOnly,0);gl.uniform1f(u.uSea,1);
  gl.activeTexture(gl.TEXTURE3);gl.bindTexture(gl.TEXTURE_2D,ct);gl.uniform1i(u.uCl,3);
  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,T.list[0]);gl.uniform1i(u.uSat,0);
  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
@@ -559,3 +565,21 @@ GlobeView.prototype._rimLit=function(ctx,cx,cy,r,outline){
 (function(){if(typeof GlobeGL==="undefined")return;const _d=GlobeGL.prototype.draw;GlobeGL.prototype.draw=function(o){try{const gl=this.gl,c=gl&&gl.canvas;
  if(o&&c&&gl.drawingBufferWidth&&(gl.drawingBufferWidth<c.width||gl.drawingBufferHeight<c.height)){const kx=gl.drawingBufferWidth/c.width,ky=gl.drawingBufferHeight/c.height,k=Math.min(kx,ky);
   o=Object.assign({},o,{cx:o.cx*kx,cy:o.cy*ky,s:o.s*k,frame:(o.frame||1e9)*k})}}catch(e){}return _d.call(this,o)}})();
+/* cloud settings (the Satellite palette): style "soft" (default) or "real" (from space), and whether clouds cover the
+   city lights on the night side; remembered in this browser */
+(function(){let C={style:"soft",night:true};try{Object.assign(C,JSON.parse(localStorage.getItem("gfClouds")||"{}"))}catch(e){}
+ window.gfCloudStyle=()=>C.style==="real"?"real":"soft";window.gfCloudNight=()=>C.night!==false;
+ window.gfCloudSet=o=>{Object.assign(C,o||{});try{localStorage.setItem("gfClouds",JSON.stringify(C))}catch(e){}
+  try{if(o&&o.style&&typeof globePrefs==="function"&&globePrefs().clouds===false){globePrefs().clouds=true;if(typeof saveStats==="function")saveStats();document.querySelectorAll(".globe-btns .gfx-cloud, [data-clouds]").forEach(b=>b.classList.add("on"))}}catch(e){}
+  try{if(typeof cloudsLoad==="function")cloudsLoad()}catch(e){}
+  try{if(typeof amGlobe!=="undefined"&&amGlobe)(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}}})();
+/* space around the globe on Satellite (the stars, and the globe's lighting as seen from space): on by default, switched
+   in the Satellite palette, remembered in this browser */
+(function(){let on=true;try{on=localStorage.getItem("gfSpace")!=="off"}catch(e){}
+ const st=document.createElement("style");st.textContent=`
+body.gf-nospace .sat-on .globe-stage, body.gf-nospace #allMapsView .globe-stage{ background:none !important; }
+body.gf-nospace .globe-stage.gf-sky::before{ display:none !important; }`;document.head.appendChild(st);
+ const apply=()=>{document.body&&document.body.classList.toggle("gf-nospace",!on);try{if(typeof amGlobe!=="undefined"&&amGlobe)(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}};
+ window.gfSpaceOn=()=>on;window.gfSpaceSet=v=>{on=!!v;try{localStorage.setItem("gfSpace",on?"on":"off")}catch(e){}apply()};
+ if(document.body)apply();else addEventListener("DOMContentLoaded",apply)})();
+
