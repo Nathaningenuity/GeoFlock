@@ -30,7 +30,11 @@ body.sky-night .gf-dkfix:hover{ background-color:rgba(40,50,84,.92) !important; 
 /* the map switches' names: crisp, not glowing */
 body.sky-night #allMapsView .switch-label{ text-shadow:none !important; color:#d9e1ef !important; filter:none !important; }`;document.head.appendChild(st);
 /* re-check when the theme changes or the page changes */
-new MutationObserver(()=>{if(!q)q=setTimeout(scan,600)}).observe(document.body,{childList:true,subtree:true});
-let wasDark=dark();new MutationObserver(()=>{const d=dark();if(d===wasDark)return;wasDark=d;document.querySelectorAll(".gf-dkfix").forEach(x=>x.classList.remove("gf-dkfix"));lit.forEach(x=>x.style.removeProperty("color"));lit.clear();seen=new WeakSet();seenT=new WeakSet();if(!q)q=setTimeout(scan,300)}).observe(document.body,{attributes:true,attributeFilter:["class"]});
+/* a scan forces a layout of the whole page, so none runs while the map is being moved (its labels and pins change the
+   page all the time then); it waits until the map is still */
+const moving=()=>{try{return typeof amGlobe!=="undefined"&&amGlobe&&(amGlobe._moving||amGlobe._flying)}catch(e){return false}};
+function later(ms){if(!q)q=setTimeout(()=>{q=0;if(moving()){later(500);return}scan()},ms)}
+new MutationObserver(()=>later(600)).observe(document.body,{childList:true,subtree:true});
+let wasDark=dark();new MutationObserver(()=>{const d=dark();if(d===wasDark)return;wasDark=d;document.querySelectorAll(".gf-dkfix").forEach(x=>x.classList.remove("gf-dkfix"));lit.forEach(x=>x.style.removeProperty("color"));lit.clear();seen=new WeakSet();seenT=new WeakSet();later(300)}).observe(document.body,{attributes:true,attributeFilter:["class"]});
 setTimeout(scan,1500);
 })();
