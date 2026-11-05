@@ -18,7 +18,9 @@ window.GF_REVIEW_PHOTOS2=[/*PHOTOS*/
 {"f":"Aldbrough (Mount Pleasant) No Parking! - geograph.org.uk - 239850.jpg","d":"photos/xc47916d824ce2bd5.webp","by":"Paul Anderson","lic":"CC BY-SA 2.0","page":"https://commons.wikimedia.org/wiki/File:Aldbrough_(Mount_Pleasant)_No_Parking!_-_geograph.org.uk_-_239850.jpg"},
 {"f":"Ice road saimaa.JPG","d":"photos/x12955219e75125ad.webp","by":"Becca8383","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Ice_road_saimaa.JPG"},
 {"f":"Denmark-Strait-pack-ice.jpg","d":"photos/x806152cef19477e0.webp","by":"Algkalv","lic":"CC BY-SA 3.0","page":"https://commons.wikimedia.org/wiki/File:Denmark-Strait-pack-ice.jpg"},
-{"f":"Desierto florido.jpg","d":"photos/x0962d81c9dfadbc6.webp","by":"Javier Rubilar","lic":"CC BY-SA 2.0","page":"https://commons.wikimedia.org/wiki/File:Desierto_florido.jpg"}
+{"f":"Desierto florido.jpg","d":"photos/x0962d81c9dfadbc6.webp","by":"Javier Rubilar","lic":"CC BY-SA 2.0","page":"https://commons.wikimedia.org/wiki/File:Desierto_florido.jpg"},
+{"f":"Mercator 1569.png","d":"photos/xa33c90dd32d5000a.webp","by":"Gerardus Mercator","lic":"Public domain","page":"https://commons.wikimedia.org/wiki/File:Mercator_1569.png"},
+{"f":"Ganado, Imehejek, Sudán del Sur, 2024-01-21, DD 10.jpg","d":"photos/x94ea17a89d2153bc.webp","by":"Diego Delso","lic":"CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Ganado,_Imehejek,_Sudán_del_Sur,_2024-01-21,_DD_10.jpg"}
 ];
 /* card photos: "tour|title" → library file name (f) */
 const CARD={/*CARD*/
@@ -48,7 +50,8 @@ const SQ={/*SQ*/
 "India: about 200 million, more than Egypt":"A large queue of Muslim voters at a polling station near Jama Masjid, Delhi on 14 January 1952.jpg",
 "Duisburg: Mercator’s map, 1569":"Mercator 1569.png",
 "Duisburg: Mercator's map, 1569":"Mercator 1569.png",
-"Mouth, over 4,000 km later":"The Niger delta.jpg"
+"Mouth, over 4,000 km later":"The Niger delta.jpg",
+"South Sudan: Cattle at a camp near Imehejek":"Ganado, Imehejek, Sudán del Sur, 2024-01-21, DD 10.jpg"
 };
 /* captions */
 const CAP={/*CAP*/

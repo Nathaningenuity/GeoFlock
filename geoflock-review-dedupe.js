@@ -218,3 +218,28 @@ const hook=()=>{try{if(typeof psGo==="function"&&!psGo._rvDedupe){const _g=psGo;
 const ready=()=>setTimeout(()=>{run();hook();[1500,5000,12000].forEach(ms=>setTimeout(()=>{run();hook()},ms))},1500);
 if(document.readyState==="complete")ready();else addEventListener("load",ready);
 })();
+
+/* GeoFlock: overnight tour review of 2026-11-05: small fixes and additions (see TOUR-REVIEW.md).
+   Same rules as above: stops are found by tour id and title, every change is idempotent, and it is re-applied after
+   load (+1.5, +3, +6.5 and +13.5 s) and whenever a stop is opened, because other files rebuild some steps late. */
+(function(){
+"use strict";
+const strip=s=>String(s==null?"":s).replace(/​/g,"").trim();
+const T=id=>{try{const t=PS_TOURS[id];return t&&Array.isArray(t.steps)?t:null}catch(e){return null}};
+const step=(id,title)=>{const t=T(id);return t?t.steps.find(s=>s&&strip(s.title)===title):null};
+const set=(o,k,v)=>{try{Object.defineProperty(o,k,{configurable:true,enumerable:true,writable:true,value:v})}catch(e){try{o[k]=v}catch(_){}}};
+const FIX=[
+ /* the refugee figure fell after 2024 (UNHCR: about 117 million by mid-2025); match the Conflicts tour's end-2025 figure */
+ ["hg2c","Forced to move",S=>{if(/^Over 120 million/.test(S.stat||""))set(S,"stat","About 118 million people had been forced from their homes by the end of 2025")}],
+ /* the "Vietnam" label sat at 106°E 16°N, which is in Laos */
+ ["hg4c","Shatterbelts",S=>{(S.pins||[]).forEach(p=>{if(Array.isArray(p)&&p[1]==="Vietnam"&&Array.isArray(p[0])&&p[0][0]===106&&p[0][1]===16)p[0]=[108.3,14.6]})}]
+];
+/* the GDP tour's "Count the lights" stop asks for the Earth at night (mode:"night", and its text says the map has
+   switched), but the tour never had per-stop maps switched on, so it stayed on the Economy map */
+function tours(){try{const t=T("gdp");if(t&&t.steps.some(s=>s&&s.mode==="night")&&!t.stopModes){set(t,"stopModes",true);if(!(t.alsoOn||[]).includes("night"))set(t,"alsoOn",(t.alsoOn||[]).concat(["night"]))}}catch(e){console.error("review 2026-11-05",e)}}
+function run(){tours();FIX.forEach(([id,title,fn])=>{try{const S=step(id,title);if(S)fn(S)}catch(e){console.error("review 2026-11-05",e)}})}
+window.gfReview1105={FIX,run};
+const hook=()=>{try{if(typeof psGo==="function"&&!psGo._rv1105){const _g=psGo;psGo=function(){try{run()}catch(e){}return _g.apply(this,arguments)};psGo._rv1105=1}}catch(e){}};
+const ready=()=>setTimeout(()=>{run();hook();[1500,5000,12000].forEach(ms=>setTimeout(()=>{run();hook()},ms))},1500);
+if(document.readyState==="complete")ready();else addEventListener("load",ready);
+})();

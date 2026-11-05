@@ -25,7 +25,13 @@ const T={
  "weather|The snowiest city on Earth":[[140.74,40.82,"Aomori"]],
  "antarctica|Coldest, driest, windiest, highest":[[106.84,-78.46,"Vostok Station"],[-56.99,-63.4,"Antarctic Peninsula"]],
  "houses|Yurts and gers":[[106.92,47.92,"Ulaanbaatar"]],
- "sports|Ice hockey and the cold north":[[-73.57,45.5,"Montréal"],[-79.38,43.65,"Toronto"]]};
+ "sports|Ice hockey and the cold north":[[-73.57,45.5,"Montréal"],[-79.38,43.65,"Toronto"]],
+ /* added by the tour review of 2026-11-05 */
+ "climate|Same line, different worlds":[[31.24,30.04,"Cairo"],[-90.07,29.95,"New Orleans"],[121.47,31.23,"Shanghai"]],
+ "houses|Snow houses":[[-81.8,69.38,"Igloolik"]],
+ "houses|Towers that catch the wind":[[54.37,31.9,"Yazd"]],
+ "deserts|Hotter than an oven floor":[[59.1,30.4,"Lut Desert"],[57.08,30.28,"Kerman"]],
+ "weather|Warm winds off the mountains":[[-110.5,47.93,"Loma, Montana"],[-111.3,47.5,"Great Falls"]]};
 window.gfTourThermo=T;
 const clean=s=>String(s==null?"":s).replace(/​/g,"").trim();
 let cur=null;
