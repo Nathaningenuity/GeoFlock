@@ -109,7 +109,7 @@
  function at(P,t){let d=t*P.L;for(let i=0;i<P.seg.length;i++){if(d<=P.seg[i])return P.ip[i](P.seg[i]?d/P.seg[i]:0);d-=P.seg[i]}return P.c[P.c.length-1]}
  const still=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
  function start(key,S){const w=W[key];if(!w)return;const box=psContainer&&psContainer();if(!box)return;const lines=w.lines||(S.lines||[]).filter(l=>l.kind==="flow"&&l.coords).map(l=>l.coords);if(!lines.length&&!(w.marks||[]).length)return;
-  const go=()=>{if(cur!==S)return;lay=document.createElement("div");lay.className="hw-lay";box.appendChild(lay);const z=w.size||46,per=w.per||2,zw=w.fig?z*.5:z*(w.wide||1);
+  const go=()=>{if(cur!==S)return;if(lay){cancelAnimationFrame(raf);raf=0;lay.remove()}lay=document.createElement("div");lay.className="hw-lay";box.appendChild(lay);const z=w.size||46,per=w.per||2,zw=w.fig?z*.5:z*(w.wide||1);
    const walkers=[];lines.forEach((c,i)=>{const P=path(c),dur=w.dur||Math.max(5000,Math.min(14000,P.L*90));for(let k=0;k<per;k++){const el=document.createElement("div");el.className="hw-w";el.style.width=zw+"px";el.style.height=z+"px";el.style.margin=(-z)+"px 0 0 "+(-zw/2)+"px";el.title=w.name;
      const fg=Array.isArray(w.fig)?w.fig[i%w.fig.length]:w.fig,em=Array.isArray(w.emoji)?w.emoji[i%w.emoji.length]:w.emoji;
      el.innerHTML=fg?'<div class="hw-in">'+fig(fg)+'</div>':em?'<div class="hw-in hw-emo" style="font-size:'+Math.round(z*.92)+'px">'+em+'</div>':w.svg?'<div class="hw-in">'+w.svg+'</div>':'<img src="'+w.img+'" alt="">';lay.appendChild(el);
@@ -126,6 +126,6 @@
     marks.forEach(({el,m})=>{const s=psScreen(m.ll);if(!s){el.style.opacity=0;return}el.style.opacity=1;el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px)"});
     raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)};
   if(w.img){const ok=new Image();ok.onload=go;ok.onerror=()=>{};ok.src=w.img}else go()}
- const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{stop();if(ps){const S=psSteps()[ps.i],key=ps.tour+"|"+(S&&S.title);if(W[key]){cur=S;setTimeout(()=>{if(cur===S&&psSteps()[ps.i]===S)start(key,S)},900)}}}catch(e){console.error(e)}return r};
+ const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{stop();if(ps){const S=psSteps()[ps.i],key=ps.tour+"|"+(S&&S.title);if(W[key]){cur=S;/* opening the same stop twice quickly must not start two sets of travellers */clearTimeout(psGo._hwT);psGo._hwT=setTimeout(()=>{if(cur===S&&psSteps()[ps.i]===S)start(key,S)},900)}}}catch(e){console.error(e)}return r};
  if(typeof psClose==="function"){const _c=psClose;window.psClose=psClose=function(){stop();return _c.apply(this,arguments)}}
  setInterval(()=>{if(lay&&(typeof ps==="undefined"||!ps))stop()},1000)})();
