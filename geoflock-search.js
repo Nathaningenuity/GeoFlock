@@ -157,10 +157,12 @@ function exitPx(x,y,u,R){let far=0;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.le
    shown or hidden or its picture changes */
 /* the map's rectangle, measured once per frame for all the pins */
 let MR=null,MRt=-1;function mapRect(){const t=Math.round(performance.now()/8);if(MR&&MRt===t)return MR;MRt=t;MR=(onGlobe()?amGlobe.canvas:document.querySelector("#allMapsWrap")).getBoundingClientRect();return MR}
-function partsOf(el){const k=(el.classList.contains("gfs-nolab")?1:0)+"|"+(el.querySelector(".gfs-card img")||{}).src;if(el._parts&&el._parts.k===k&&el._parts.w)return el._parts;
+function partsOf(el){const k=(el.classList.contains("gfs-nolab")?1:0)+(el.classList.contains("gfs-noimg")?"i":"")+"|"+(el.querySelector(".gfs-card img")||{}).src;if(el._parts&&el._parts.k===k&&el._parts.w)return el._parts;
  const R=el.getBoundingClientRect(),P=[];el.querySelectorAll(".gfs-card,.gfs-lab").forEach(c=>{if(getComputedStyle(c).display==="none")return;const r=c.getBoundingClientRect();if(r.width)P.push({x:r.left-R.left,y:r.top-R.top,w:r.width,h:r.height})});
  el._parts={k,w:R.width,h:R.height,parts:P};return el._parts}
-function labOf(e){(e._els||[]).forEach(x=>{if(x&&x.classList)x.classList.toggle("gfs-nolab",!!e.nolab)})}
+function labOf(e){(e._els||[]).forEach(x=>{if(x&&x.classList){x.classList.toggle("gfs-nolab",!!e.nolab);x.classList.toggle("gfs-noimg",!!e.noimg)}})}
+/* does this result show a picture on the map? */
+const hasImg=e=>(e._els||[]).some(x=>x&&x.querySelector&&x.querySelector(".gfs-card img"));
 function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
 function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
 function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.splice(i,1);try{if(onGlobe())amGlobe.request()}catch(er){}xBtn()}
@@ -288,8 +290,10 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
    if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
    if(x){const e=LIST[+x.dataset.gx];if(e)removeOne(e);draw();return}
    /* the tag button: hide or show this result's name on the map */
-   const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
- b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+EMO[e.cat]+' '+esc(e.n)+'</span><b data-gl="'+i+'" class="gfs-tagb'+(e.nolab?' off':'')+'" title="'+(e.nolab?'Show its label':'Hide its label')+'" aria-label="'+(e.nolab?'Show':'Hide')+' the label of '+esc(e.n)+'"><svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M2 3h6.5l5 5-5 5H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="5.2" cy="8" r="1.2" fill="currentColor"/>'+(e.nolab?'<path d="M1.5 14.5 14.5 1.5" stroke="currentColor" stroke-width="1.6"/>':'')+'</svg></b><b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+   const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}
+   /* the image button: hide or show this result's picture (its name stays) */
+   const ib=ev.target.closest("[data-gim]");if(ib){const e=LIST[+ib.dataset.gim];if(e){e.noimg=!e.noimg;labOf(e);xBtn();try{draw()}catch(_){}}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+EMO[e.cat]+' '+esc(e.n)+'</span><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+(hasImg(e)?'<b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
 function wire(){loadProv();loadRegs();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
@@ -347,6 +351,9 @@ const css=document.createElement("style");css.textContent=`
 #gfsX .gfs-row b:hover{ background:#e8701a; }
 #gfsX .gfs-row b.gfs-tagb.off{ background:rgba(232,112,26,.85); }
 .gfs-nolab .gfs-lab{ display:none !important; }
+.gfs-noimg .gfs-card{ display:none !important; }
+.gfs-tog{ flex:none; margin-left:4px; padding:1px 7px; border-radius:999px; border:1px solid currentColor; font:700 10.5px/1.5 system-ui,sans-serif; opacity:.8; cursor:pointer; }
+.gfs-tog:hover{ opacity:1; } .gfs-tog.off{ opacity:.45; text-decoration:line-through; }
 .gfs-pin.gfs-name .gfs-lab{ pointer-events:auto; cursor:grab; touch-action:none; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
 #gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
 #gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
