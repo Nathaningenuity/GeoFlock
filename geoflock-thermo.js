@@ -190,10 +190,10 @@ function addSlot(){const felt=document.querySelector("#gfKit .gfk-felt");if(!fel
 setInterval(addSlot,700);addSlot();
 
 /* ---------- the Climate map opens with the Thermometer on; the Elevation map with the cross-section ---------- */
-(function(){let lastMode=null;setInterval(()=>{try{const m=appMode==="allmaps"?allMapsColorMode:null;if(m===lastMode)return;const prev=lastMode;lastMode=m;
- if(typeof ps!=="undefined"&&ps)return;
- if(m==="climate"&&!on)setTimeout(()=>{if(allMapsColorMode==="climate"&&!on)start({drop:false})},300);else if(prev==="climate"&&on)stop();
- if(m==="elevation"&&window.gfCrossSection&&!document.querySelector(".gf-xs"))setTimeout(()=>{try{if(allMapsColorMode==="elevation"&&!document.querySelector(".gf-xs"))gfCrossSection.start()}catch(e){}},300);
+(function(){const inTour=()=>{try{if(typeof ps!=="undefined"&&ps){window._gfTourSeen=Date.now();return true}return!!(typeof psSwitching!=="undefined"&&psSwitching)||Date.now()-(window._gfTourSeen||0)<4000}catch(e){return false}};/* a tour (also while it switches maps, when it briefly ends and restarts) */let lastMode=null;setInterval(()=>{try{inTour();const m=appMode==="allmaps"?allMapsColorMode:null;if(m===lastMode)return;const prev=lastMode;lastMode=m;
+ if(inTour())return;
+ if(m==="climate"&&!on)setTimeout(()=>{if(allMapsColorMode==="climate"&&!on&&!inTour())start({drop:false})},300);else if(prev==="climate"&&on)stop();
+ if(m==="elevation"&&window.gfCrossSection&&!document.querySelector(".gf-xs"))setTimeout(()=>{try{if(allMapsColorMode==="elevation"&&!document.querySelector(".gf-xs")&&!inTour())gfCrossSection.start()}catch(e){}},300);
  else if(prev==="elevation"&&m!=="elevation"&&window.gfCrossSection&&document.querySelector(".gf-xs"))try{gfCrossSection.stop()}catch(e){}}catch(e){}},400)})();
 
 const css=document.createElement("style");css.textContent=`

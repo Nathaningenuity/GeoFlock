@@ -203,8 +203,8 @@ setInterval(()=>{document.querySelectorAll(".gfk-people,.gfpp-ico").forEach(b=>b
 const ICO='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/></svg>';
 setInterval(()=>{try{const g=G(),btns=g&&g.host.querySelector(".globe-btns");if(!btns)return;let b=btns.querySelector(".gfpp-ico");if(mapMode()!=="population"){if(b)b.remove();return}
  if(!b){b=document.createElement("button");b.type="button";b.className="gfpp-ico";b.title="People counter";b.innerHTML=ICO;b.onclick=e=>{e.stopPropagation();autoOn=false;isOpen()?close():open({mode:"select"})};btns.appendChild(b)}}catch(e){}},600);
-let autoOn=false,lastM=null;setInterval(()=>{try{const m=mapMode();if(m===lastM)return;const prev=lastM;lastM=m;if(typeof ps!=="undefined"&&ps)return;
- if(m==="population"&&!isOpen()&&!document.getElementById("gfkGeo")){setTimeout(()=>{if(mapMode()==="population"&&!document.getElementById("gfkGeo")){autoOn=true;open({mode:"select"})}},400)}
+const inTour=()=>{try{if(typeof ps!=="undefined"&&ps){window._gfTourSeen=Date.now();return true}return!!(typeof psSwitching!=="undefined"&&psSwitching)||Date.now()-(window._gfTourSeen||0)<4000}catch(e){return false}};/* a tour (also while it switches maps, when it briefly ends and restarts) */let autoOn=false,lastM=null;setInterval(()=>{try{inTour();const m=mapMode();if(m===lastM)return;const prev=lastM;lastM=m;if(inTour())return;
+ if(m==="population"&&!isOpen()&&!document.getElementById("gfkGeo")){setTimeout(()=>{if(mapMode()==="population"&&!document.getElementById("gfkGeo")&&!inTour()){autoOn=true;open({mode:"select"})}},400)}
  else if(prev==="population"&&autoOn&&isOpen()){autoOn=false;close()}}catch(e){}},400);
 
 const css=document.createElement("style");css.textContent=`
