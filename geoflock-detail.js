@@ -195,7 +195,7 @@ function waterHit(g,ll,cx,cy,ov){const s=on(g);if(!s)return null;const out={};
    const n=hit.name;out.water=hit.name&&hit.cls==="river"&&!/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr/i.test(n)?n+" River":n;out.river={type:"MultiLineString",coordinates:co,n:out.water};return out}}
  return null}
 const _wa=GlobeView.prototype.waterAt;GlobeView.prototype.waterAt=function(ll,cx,cy){const out=_wa.apply(this,arguments)||{};try{let ov=this.cfg.overlays?this.cfg.overlays():{};/* Satellite: lakes are in the photo; hovering one names it even with Lakes off */if(allMapsColorMode==="satellite"&&!ov.lakes)ov=Object.assign({},ov,{lakes:true});if(view(this)&&(ov.lakes||ov.rivers)){const h=waterHit(this,ll,cx,cy,ov);
-  if(h){delete out.lake;delete out.river;Object.assign(out,h);if(out.lake&&!h.lake)delete out.lake}else if(on(this)){/* the built-in shapes are not drawn now: keep only a name from them */if(out.lake){const n=out.water;delete out.lake;out.water=n}if(out.river){delete out.river;delete out.water}}}}catch(e){console.error(e)}return out};
+  if(h){delete out.lake;delete out.river;Object.assign(out,h);if(out.lake&&!h.lake)delete out.lake}else if(on(this)){/* the built-in shapes are not drawn now: keep only a name from them */if(out.lake){const n=out.water;delete out.lake;out.water=n}/* rivers: the big ones are still drawn from the built-in lines at this zoom (a tile with no named line for them), so a hit on one stands */}}}catch(e){console.error(e)}return out};
 
 /* sharp outlines for a searched island or lake (geoflock-search.js): from the tiles on show, the coast rings (islands are holes in
    the sea) or lake shapes that lie within the place's box. null when the tiles are not on show or nothing fits */
