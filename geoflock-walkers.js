@@ -126,6 +126,6 @@
     marks.forEach(({el,m})=>{const s=psScreen(m.ll);if(!s){el.style.opacity=0;return}el.style.opacity=1;el.style.transform="translate("+s[0].toFixed(1)+"px,"+s[1].toFixed(1)+"px)"});
     raf=requestAnimationFrame(tick)};raf=requestAnimationFrame(tick)};
   if(w.img){const ok=new Image();ok.onload=go;ok.onerror=()=>{};ok.src=w.img}else go()}
- let hwT=0;const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{stop();if(ps){const S=psSteps()[ps.i],key=ps.tour+"|"+(S&&S.title);if(W[key]){cur=S;/* opening the same stop twice quickly must not start two sets of travellers */clearTimeout(hwT);hwT=setTimeout(()=>{if(cur===S&&psSteps()[ps.i]===S)start(key,S)},900)}}}catch(e){console.error(e)}return r};
+ let hwT=0;const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{stop();if(ps){const S=psSteps()[ps.i],key=ps.tour+"|"+(S&&S.title);if(W[key]){cur=S;/* opening the same stop twice quickly must not start two sets of travellers */clearTimeout(hwT);hwT=setTimeout(()=>{if(typeof ps!=="undefined"&&ps&&cur===S&&psSteps()[ps.i]===S)start(key,S)},900)}}}catch(e){console.error(e)}return r};
  if(typeof psClose==="function"){const _c=psClose;window.psClose=psClose=function(){stop();return _c.apply(this,arguments)}}
  setInterval(()=>{if(lay&&(typeof ps==="undefined"||!ps))stop()},1000)})();

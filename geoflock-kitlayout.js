@@ -16,6 +16,12 @@ const keyOf=b=>b.dataset.tool||[...b.classList].find(c=>/^gfk-(?!slot)/.test(c))
 function apply(){const t=tray();if(!t)return;const f=t.querySelector(".gfk-felt");if(!f)return;
  t.classList.toggle("gfkl-col",L.dock!=="bottom");t.classList.toggle("gfkl-left",L.dock==="left");t.classList.toggle("gfkl-right",L.dock==="right");
  const h=host(),hw=h?h.clientWidth:1000,hh=h?h.clientHeight:600;
+ if(L.dock==="free"){t.classList.toggle("gfkl-col",!!L.col);t.classList.remove("gfkl-left","gfkl-right");t.classList.toggle("gfkl-free",true);
+  f.style.maxWidth=!L.col&&L.lenRow?Math.max(130,L.lenRow)+"px":"";f.style.maxHeight=L.col?(L.lenCol?Math.max(130,Math.min(L.lenCol,innerHeight-90)):Math.max(160,Math.min(innerHeight-90,520)))+"px":"";
+  t.style.right="auto";t.style.bottom="auto";const hr=h?h.getBoundingClientRect():{left:0,top:0},w=t.offsetWidth||300,th=t.offsetHeight||120;
+  const x=Math.max(-hr.left+4,Math.min(innerWidth-hr.left-w-4,L.fx||0)),y=Math.max(-hr.top+4,Math.min(innerHeight-hr.top-th-4,L.fy||0));
+  t.style.left=x+"px";t.style.top=y+"px";f.querySelectorAll(".gfk-slot").forEach(b=>{b.classList.toggle("gfkl-hide",L.hidden.includes(keyOf(b)))});return}
+ t.classList.remove("gfkl-free");
  if(L.dock==="bottom"){t.style.left=Math.max(0,Math.min(hw-140,L.x||12))+"px";t.style.right="auto";t.style.top="auto";t.style.bottom="0";
   f.style.maxHeight="";f.style.maxWidth=L.lenRow?Math.max(130,L.lenRow)+"px":"";}
  else{t.style.bottom="auto";t.style.top="58px";if(L.dock==="left"){t.style.left="6px";t.style.right="auto"}else{t.style.left="auto";t.style.right="54px"}
@@ -31,11 +37,12 @@ function wire(){const t=tray();if(!t||t._gfkl)return;t._gfkl=1;const tab=t.query
  gear.addEventListener("click",e=>{e.stopPropagation();e.preventDefault();toggleMenu()});
  gear.addEventListener("pointerdown",e=>e.stopPropagation());
  let drag=null,swallow=false;
- tab.addEventListener("pointerdown",e=>{if(e.button)return;const h=host();if(!h)return;const tr=t.getBoundingClientRect();drag={x0:e.clientX,y0:e.clientY,dx:e.clientX-tr.left,moved:false,id:e.pointerId};try{tab.setPointerCapture(e.pointerId)}catch(x){}});
- tab.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;if(!drag.moved&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<6)return;drag.moved=true;t.classList.add("gfkl-moving");
-  const h=host(),hr=h.getBoundingClientRect(),near=64;let dock="bottom";if(e.clientX<hr.left+near)dock="left";else if(e.clientX>hr.right-near)dock="right";
-  L.dock=dock;if(dock==="bottom")L.x=Math.round(e.clientX-hr.left-drag.dx);apply();showHint(dock)});
- const end=e=>{if(!drag||e.pointerId!==drag.id)return;const m=drag.moved;drag=null;t.classList.remove("gfkl-moving");hideHint();if(m){swallow=true;setTimeout(()=>swallow=false,50);saveL()}};
+ tab.addEventListener("pointerdown",e=>{if(e.button)return;const h=host();if(!h)return;const tr=t.getBoundingClientRect();drag={x0:e.clientX,y0:e.clientY,dx:e.clientX-tr.left,dy:e.clientY-tr.top,moved:false,id:e.pointerId};try{tab.setPointerCapture(e.pointerId)}catch(x){}});
+ /* the tray goes exactly where it is dropped, anywhere on the screen (row or column is chosen under ⚙) */
+ tab.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;if(!drag.moved&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<6)return;
+  if(!drag.moved){if(L.dock!=="free"){L.col=L.dock!=="bottom"}L.dock="free"}drag.moved=true;t.classList.add("gfkl-moving");
+  const hr=host().getBoundingClientRect();L.fx=Math.round(e.clientX-hr.left-drag.dx);L.fy=Math.round(e.clientY-hr.top-drag.dy);apply()});
+ const end=e=>{if(!drag||e.pointerId!==drag.id)return;const m=drag.moved;drag=null;t.classList.remove("gfkl-moving");if(m){swallow=true;setTimeout(()=>swallow=false,50);saveL()}};
  tab.addEventListener("pointerup",end);tab.addEventListener("pointercancel",end);
  /* a drag is not a click: it must not also open or close the tray */
  tab.addEventListener("click",e=>{if(swallow){e.stopImmediatePropagation();e.preventDefault()}},true);
@@ -53,11 +60,12 @@ function hideHint(){if(hint){hint.remove();hint=null}}
 let menu=null;
 function toggleMenu(){if(menu){menu.remove();menu=null;return}const t=tray();if(!t)return;const slots=[...t.querySelectorAll(".gfk-felt .gfk-slot")];
  menu=document.createElement("div");menu.className="gfkl-menu";menu.innerHTML='<b>Gadgets in the toolkit</b><p>Untick to hide one from the tray.</p>'+slots.map(b=>{const k=keyOf(b);return'<label><input type="checkbox" data-k="'+k.replace(/"/g,"")+'"'+(L.hidden.includes(k)?"":" checked")+'> '+nameOf(b)+'</label>'}).join("")+
-  '<div class="gfkl-acts"><button type="button" data-all>Show all</button><button type="button" data-reset>Reset position and size</button></div>';
+  '<div class="gfkl-acts"><button type="button" data-col>'+((L.dock==="free"?L.col:L.dock!=="bottom")?"Show as a row":"Show as a column")+'</button><button type="button" data-all>Show all</button><button type="button" data-reset>Reset position and size</button></div>';
  ["pointerdown","mousedown","click","wheel","keydown"].forEach(ev=>menu.addEventListener(ev,e=>e.stopPropagation()));
  menu.querySelectorAll("input").forEach(i=>i.onchange=()=>{const k=i.dataset.k;L.hidden=L.hidden.filter(x=>x!==k);if(!i.checked)L.hidden.push(k);saveL();apply()});
  menu.querySelector("[data-all]").onclick=()=>{L.hidden=[];saveL();apply();menu.querySelectorAll("input").forEach(i=>i.checked=true)};
- menu.querySelector("[data-reset]").onclick=()=>{L.dock="bottom";L.x=12;L.lenRow=null;L.lenCol=null;saveL();apply();toggleMenu()};
+ menu.querySelector("[data-col]").onclick=()=>{const t2=tray(),r=t2&&t2.getBoundingClientRect(),hr=host()&&host().getBoundingClientRect();const wasCol=L.dock==="free"?!!L.col:L.dock!=="bottom";if(L.dock!=="free"&&r&&hr){L.fx=Math.round(r.left-hr.left);L.fy=Math.round(r.top-hr.top)}L.dock="free";L.col=!wasCol;saveL();apply();toggleMenu()};
+ menu.querySelector("[data-reset]").onclick=()=>{L.dock="bottom";L.col=false;L.x=12;L.lenRow=null;L.lenCol=null;saveL();apply();toggleMenu()};
  document.body.appendChild(menu);const r=t.querySelector(".gfk-tab").getBoundingClientRect();
  menu.style.left=Math.max(8,Math.min(innerWidth-260,r.left))+"px";const below=r.top<260;menu.style.top=(below?r.bottom+6:Math.max(8,r.top-6-menu.offsetHeight))+"px"}
 document.addEventListener("pointerdown",e=>{if(menu&&!menu.contains(e.target)&&!(e.target.closest&&e.target.closest(".gfkl-gear"))){menu.remove();menu=null}},true);
