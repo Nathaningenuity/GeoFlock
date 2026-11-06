@@ -346,6 +346,7 @@ const css=document.createElement("style");css.textContent=`
 .gfs-tip{ width:0; height:0; border:7px solid transparent; border-top-color:rgba(16,28,48,.9); margin-top:-1px; }
 @media (max-width:600px){ .gfs-card{ width:72px; height:72px; } }
 #gfsX{ position:absolute; right:0; left:auto; top:calc(100% + 6px); display:flex; flex-direction:column; align-items:flex-end; gap:4px; z-index:45; }
+#globalSearchWrap .suggestions, #globalSearchSuggestions{ z-index:60 !important; }
 #gfsX .gfs-row{ display:flex; gap:8px; align-items:center; border-radius:999px; padding:5px 6px 5px 12px; background:rgba(16,28,48,.88); color:#fff; font:600 12.5px/1 system-ui,sans-serif; cursor:pointer; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.25); }
 #gfsX .gfs-row b{ display:inline-flex; width:20px; height:20px; border-radius:50%; background:rgba(255,255,255,.18); align-items:center; justify-content:center; font-size:15px; }
 #gfsX .gfs-row b:hover{ background:#e8701a; }
