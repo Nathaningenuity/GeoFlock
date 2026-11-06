@@ -1,5 +1,5 @@
 /* GeoFlock: the base map of the guided tours.
-   1. Many tours start on the Satellite map (plain Day: the real Earth, far more convincing for nature, oceans, islands,
+   1. Every Relief or Satellite tour starts on the Satellite map (plain Day: the real Earth, far more convincing for nature, oceans, islands,
       ice, hazards and the continents); the rest of the Relief tours stay on Relief.
    2. Any tour that runs on Relief or Satellite can be switched between the two at any stop: the choice is kept for the
       rest of the tour (no stop switches it back) and remembered for that tour next time (localStorage gfTourBase). */
@@ -8,16 +8,18 @@ if(typeof PS_TOURS==="undefined"||typeof psGo!=="function")return;
 const PAIR={relief:1,satellite:1};
 const SAT=["rivers","lakes","seas","islands","europe","asia","africa","namerica","samerica","oceania","antarctica","hantarctica","hazards",
  "humans","islandlife","volcanoes","caves","coasts","ice","ocean","amigration","animals","explorers","environment","landmarks","regions"];
+const KEEP_RELIEF=[];
 let PICK={};try{PICK=JSON.parse(localStorage.getItem("gfTourBase")||"{}")||{}}catch(e){}
 const savePick=()=>{try{localStorage.setItem("gfTourBase",JSON.stringify(PICK))}catch(e){}};
 function apply(){Object.keys(PS_TOURS).forEach(id=>{const T=PS_TOURS[id];if(!T||!T.map||!PAIR[T.map.mode])return;
- if(T._gfOrig==null)T._gfOrig=T.map.mode;if(T._gfBase==null)T._gfBase=SAT.includes(id)?"satellite":T.map.mode;T.map.mode=PICK[id]&&PAIR[PICK[id]]?PICK[id]:T._gfBase})}
+ if(T._gfOrig==null)T._gfOrig=T.map.mode;/* every Relief or Satellite tour now starts on Satellite (the real Earth, more convincing); Relief stays one click away
+    and is remembered per tour. KEEP_RELIEF lists any tour that reads better on Relief */if(T._gfBase==null)T._gfBase=KEEP_RELIEF.includes(id)?T.map.mode:"satellite";T.map.mode=PICK[id]&&PAIR[PICK[id]]?PICK[id]:T._gfBase})}
 apply();setTimeout(apply,1500);setTimeout(apply,5000);
 const inPair=id=>{const T=PS_TOURS[id];return!!(T&&T.map&&PAIR[T.map.mode])};
 /* a stop that asks for Relief or Satellite gets whichever of the two is on show */
 {const _g=psGo;psGo=function(i){let S=null,orig;try{if(typeof ps!=="undefined"&&ps&&inPair(ps.tour)){S=psSteps()[i];const cur=allMapsColorModeOn?allMapsColorMode:null;
    /* on show now if it is one of the two, else the tour's own choice (after a stop on another map, e.g. Elevation) */
-   if(S&&(S.mode?PAIR[S.mode]:true)){orig=S.mode;S.mode=PAIR[cur]?cur:PS_TOURS[ps.tour].map.mode}else S=null}}catch(e){S=null}
+   if(S&&!S.modeFixed&&(S.mode?PAIR[S.mode]:true)){orig=S.mode;S.mode=PAIR[cur]?cur:PS_TOURS[ps.tour].map.mode}else S=null}}catch(e){S=null}
  try{return _g.apply(this,arguments)}finally{if(S){if(orig===undefined)delete S.mode;else S.mode=orig}}}}
 /* switching between Relief and Satellite during a tour: kept for the rest of it, and remembered */
 let guard=0;
