@@ -133,6 +133,8 @@ function isLakeSea(o){if(o._lk!==undefined)return o._lk;o._lk=false;try{const L=
   if(!pts.length)return false;let hit=0;pts.forEach(p=>{if(L.some(K=>d3.geoDistance(K.c,p)<=K.r+.01&&d3.geoContains(K,p)))hit++});
   o._lk=hit>=Math.max(1,pts.length*.4)}catch(e){}return o._lk}
 function bigLakes(d){return d.ocean.filter(isLakeSea).map(o=>{if(!o._K){o._K={cls:"lake",rings:o.rings,bb:bboxOf(o.rings),int:0};o._K._casp=undefined}return o._K})}
+let SEAL=null;function seaLakes(){if(SEAL)return SEAL;try{SEAL=globeOverlays().lakes.filter(L=>window.gfSeaLake&&gfSeaLake(L.n))}catch(e){SEAL=[]}return SEAL}
+function isSeaLake(K){if(K._sl!==undefined)return K._sl;const c=[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2];K._sl=seaLakes().some(L=>{try{return d3.geoContains(L,c)}catch(e){return false}});return K._sl}
 let CASP=null;function caspian(){if(CASP!==null)return CASP;try{CASP=globeOverlays().lakes.find(L=>/^Caspian/.test(L.n||""))||false}catch(e){CASP=false}return CASP}
 function isCaspian(K){if(K._casp!==undefined)return K._casp;const C=caspian();K._casp=!!(C&&K.bb[2]-K.bb[0]>.5&&d3.geoContains(C,[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2]));return K._casp}
 function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
@@ -148,7 +150,9 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
   const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?(rel?(window._gfLakesClean?"#a8cbe5":"rgba(166,201,228,0.78)"):"#b9d8ea"):(I.ocean||"#5797cf");
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
-  each(d=>{const L=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster?bigLakes(d).filter(K=>!isCaspian(K)):[]);
+  each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster?bigLakes(d).filter(K=>!isCaspian(K)):[]);
+   /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
+   const SL=rel?L0.filter(isSeaLake):[],L=rel?L0.filter(K=>!isSeaLake(K)):L0;if(SL.length&&!ne){ctx.fillStyle="#6fa3cd";ctx.beginPath();SL.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")}
    /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
    [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
     const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];

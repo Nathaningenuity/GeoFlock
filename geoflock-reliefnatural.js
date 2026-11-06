@@ -6,7 +6,7 @@
 "use strict";
 const ID="natural",NAME="Natural Earth",V="?v=1";
 const IMG={all:"textures/reliefAllMaps_NE.webp"+V,atlas:"textures/reliefAtlas_NE.webp"+V,w:"textures/GLOBE_RELIEF_W_LK_NE.webp"+V,e:"textures/GLOBE_RELIEF_E_LK_NE.webp"+V};
-const PAL={sea:["#3a95e0","#1f6fc4","#1257ab","#0b4594"],land:["#5fb04f","#e2d64a","#e9a866","#f2f4f8"],lake:"#2f86d6"};
+const PAL={sea:["#3a95e0","#1f6fc4","#1257ab","#0b4594"],land:["#5fb04f","#e2d64a","#e9a866","#f2f4f8"],lake:"#a8cbe5"};
 const on=()=>{try{return gfMS().style===ID}catch(e){return false}};
 function install(){
  if(typeof GF_STYLE_ORDER==="undefined"||typeof gfReliefApply!=="function"||typeof gfSetStyle!=="function"||typeof GLOBE_TEX==="undefined")return false;
@@ -33,6 +33,9 @@ function install(){
 let n=0;const t=setInterval(()=>{if(install()||++n>80)clearInterval(t)},400);
 {const st=document.createElement("style");st.textContent=`.gf-ms-swatch.s-natural i{background:linear-gradient(135deg,#1257ab 0 30%,#5fb04f 30% 55%,#e2d64a 55% 75%,#e9a866 75%)!important}`;document.head.appendChild(st)}
 })();
+/* lakes open to the sea are drawn as sea, not as lakes */
+window.gfSeaLake=function(n){return /^(Caspian|Lake Maracaibo|Lagoa dos Patos|Lagoa Mirim|Lake Molochnyi Liman|Lake Kiziltashskiy liman)/.test(n||"")};
+gfSeaLake.ne=function(){try{return gfMS().style==="natural"}catch(e){return false}};
 /* the Caspian is a special exception: never painted as a lake (the base pictures already show it as water); hovering it
    still names it */
 {const st=document.createElement("style");st.textContent=`svg .map-lake[data-name="Caspian Sea"]{fill:none!important;stroke:none!important}`;document.head.appendChild(st)}
