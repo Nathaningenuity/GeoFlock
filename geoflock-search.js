@@ -168,7 +168,7 @@ const hasImg=e=>(e._els||[]).some(x=>x&&x.querySelector&&x.querySelector(".gfs-c
 function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
 function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
 function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.splice(i,1);try{if(onGlobe())amGlobe.request()}catch(er){}xBtn()}
-function show(e){/* a dictionary word opens the dictionary, not the map */if(e&&e.cat==="terms"){try{window.gfLibrary&&gfLibrary.showTerm(e.n)}catch(err){console.error(err)}return}if(!active())return;
+function show(e){fixWind(e);/* a dictionary word opens the dictionary, not the map */if(e&&e.cat==="terms"){try{window.gfLibrary&&gfLibrary.showTerm(e.n)}catch(err){console.error(err)}return}if(!active())return;
  if(e.cat==="provinces"&&!e.shape){const c=e;if(window.gfProvinces)gfProvinces.load(c.cc).then(d=>{const it=d.items.find(x=>x.n===c.n);if(it){c.g=it.g;c.ll=it.c||c.ll;c.shape=1}show(c)}).catch(()=>{c.shape=1;show(c)});return}
  e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];
  /* one organisation at a time: a new one replaces the last */
@@ -196,7 +196,12 @@ function fly(e){const pt=e.g.type==="Point";
  const box={x:x0,y:y0,w:x1-x0,h:y1-y0};try{typeof pzFly==="function"?pzFly(w,box):w._panZoom.setBox(box)}catch(err){w._panZoom.setBox(box)}}
 /* ---------- drawing ---------- */
 function draw(){LIST.forEach(drawOne);if(onGlobe()){try{amGlobe.request()}catch(err){}}}
-function drawOne(e){const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha(e);
+/* a shape wound the wrong way round covers the whole Earth instead of the place (Tahiti filled the globe): each part
+   bigger than a hemisphere is turned round, once */
+function fixWind(e){if(e._fw||!e.g)return;e._fw=1;try{const g=e.g,turn=P=>{try{return d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI?P.map(r=>r.slice().reverse()):P}catch(x){return P}};
+ const before=JSON.stringify(g.coordinates).length&&d3.geoArea(g);if(g.type==="Polygon")e.g=Object.assign({},g,{coordinates:turn(g.coordinates)});else if(g.type==="MultiPolygon")e.g=Object.assign({},g,{coordinates:g.coordinates.map(turn)});
+ /* the place's centre was worked out from the wrong shape: work it out again */if(e.g!==g&&d3.geoArea(e.g)<before)e.ll=d3.geoCentroid(e.g)}catch(x){}}
+function drawOne(e){fixWind(e);const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha(e);
  pin(e);if(mode==="label")return;
  if(onGlobe()){if(e._g){e._g.remove();e._g=null}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
@@ -206,7 +211,7 @@ function drawOne(e){const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha(e);
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
-function globeDrawOne(ctx,p,e){const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
+function globeDrawOne(ctx,p,e){fixWind(e);const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(e.g);if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
  else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
