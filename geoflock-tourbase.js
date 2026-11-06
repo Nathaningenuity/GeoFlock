@@ -1,20 +1,32 @@
 /* GeoFlock: the base map of the guided tours.
-   1. Every Relief or Satellite tour starts on the Satellite map (plain Day: the real Earth, far more convincing for nature, oceans, islands,
+   1. (2026-11) Most tours start on Relief; SAT below start on Satellite. (Before: every Relief or Satellite tour started on the Satellite map (plain Day: the real Earth, far more convincing for nature, oceans, islands,
       ice, hazards and the continents); the rest of the Relief tours stay on Relief.
    2. Any tour that runs on Relief or Satellite can be switched between the two at any stop: the choice is kept for the
       rest of the tour (no stop switches it back) and remembered for that tour next time (localStorage gfTourBase). */
 (function(){
 if(typeof PS_TOURS==="undefined"||typeof psGo!=="function")return;
 const PAIR={relief:1,satellite:1};
-const SAT=["rivers","lakes","seas","islands","europe","asia","africa","namerica","samerica","oceania","antarctica","hantarctica","hazards",
- "humans","islandlife","volcanoes","caves","coasts","ice","ocean","amigration","animals","explorers","environment","landmarks","regions"];
+/* 2026-11: most tours run on Relief (the Natural Earth colours); Satellite leads only where the real photo persuades:
+   what you see from space, day and night, and the authority it lends to geopolitics */
+const SAT=["space","time","geopol","politics","conflicts","bprisoners","environment","hg3b","hg5d"];
+/* single stops that need the photo whatever the tour's map (what is seen from orbit) */
+const FIX_SAT=["rivers|Rivers that never reach the sea","resources|Phosphate","resources|Water from the sea","hg1b|Mapping a disaster from home",
+ "caves|Caves made by lava","coasts|A delta named after a letter","coasts|A coast built by animals","festivals|The biggest crowd on Earth",
+ "bcollapse|Hispaniola: one island, two paths","ocean|Blooms seen from space","science|Mapping the ocean floor","b12maps|Google Earth"];
 const KEEP_RELIEF=[];
 let PICK={};try{PICK=JSON.parse(localStorage.getItem("gfTourBase")||"{}")||{}}catch(e){}
 const savePick=()=>{try{localStorage.setItem("gfTourBase",JSON.stringify(PICK))}catch(e){}};
 function apply(){Object.keys(PS_TOURS).forEach(id=>{const T=PS_TOURS[id];if(!T||!T.map||!PAIR[T.map.mode])return;
  if(T._gfOrig==null)T._gfOrig=T.map.mode;/* every Relief or Satellite tour now starts on Satellite (the real Earth, more convincing); Relief stays one click away
-    and is remembered per tour. KEEP_RELIEF lists any tour that reads better on Relief */if(T._gfBase==null)T._gfBase=KEEP_RELIEF.includes(id)?T.map.mode:"satellite";T.map.mode=PICK[id]&&PAIR[PICK[id]]?PICK[id]:T._gfBase})}
-apply();setTimeout(apply,1500);setTimeout(apply,5000);
+    and is remembered per tour. KEEP_RELIEF lists any tour that reads better on Relief */if(T._gfBase==null)T._gfBase=SAT.includes(id)?"satellite":"relief";T.map.mode=PICK[id]&&PAIR[PICK[id]]?PICK[id]:T._gfBase})}
+function fix(id,S){if(S&&FIX_SAT.includes(id+"|"+S.title)){S.mode="satellite";S.modeFixed=1;S.gfMode="satellite";const T=PS_TOURS[id];if(T)T.stopModes=true}}
+function applyFix(){FIX_SAT.forEach(k=>{const[id,t]=k.split("|"),T=PS_TOURS[id];if(!T)return;(T.steps||[]).forEach(S=>{if(S&&S.title===t)fix(id,S)})})}
+apply();applyFix();setTimeout(()=>{apply();applyFix()},1500);setTimeout(()=>{apply();applyFix()},5000);
+{const _s=psSteps;psSteps=function(){const L=_s.apply(this,arguments);try{if(ps&&L)L.forEach(S=>fix(ps.tour,S))}catch(e){}return L}}
+/* the geography tour switches map stop by stop: a stop that just asks for Relief or Satellite gets the one you are using */
+if(typeof geoMapFor==="function"){const _gm=geoMapFor;geoMapFor=function(S){let o;try{if(S&&!S.modeFixed&&PAIR[S.gfMode||"relief"]){const T=PS_TOURS.geo,cur=allMapsColorModeOn&&PAIR[allMapsColorMode]?allMapsColorMode:null;
+   o=S.gfMode;S.gfMode=PICK.geo&&PAIR[PICK.geo]?PICK.geo:cur||(T&&T._gfBase)||"relief"}}catch(e){}
+  try{return _gm.apply(this,arguments)}finally{if(o!==undefined)S.gfMode=o;else if(S&&!S.modeFixed&&S.gfMode&&o===undefined){}}}}
 const inPair=id=>{const T=PS_TOURS[id];return!!(T&&T.map&&PAIR[T.map.mode])};
 /* a stop that asks for Relief or Satellite gets whichever of the two is on show */
 {const _g=psGo;psGo=function(i){let S=null,orig;try{if(typeof ps!=="undefined"&&ps&&inPair(ps.tour)){S=psSteps()[i];const cur=allMapsColorModeOn?allMapsColorMode:null;
