@@ -69,7 +69,11 @@ const MED=new Set(),EXT=new Map();let MAJ=null;
 function reach(R){const b=(R.keys[0]&&EXT.get(R.keys[0]))||R.bb;return Math.max(.05,Math.hypot(b[2]-b[0],b[3]-b[1]))}
 function major(){if(MAJ)return MAJ;MAJ=new Set();try{(ALLMAPS_RIVERS||[]).forEach(([n])=>{if(!/^[A-Z]{2}[-\\/]/.test(n))MAJ.add(rkey(n))})}catch(e){}
  [["amazonas","amazon"],["yellow","huang"],["ayeyarwady","irrawaddy"],["yenisey","yenisei"],["selenge","selenga"],["severnaya dvina","northern dvina"],["xi","xi"],["st lawrence","saint lawrence"],["parana","parana"]].forEach(([a,b])=>{if(MAJ.has(a))MAJ.add(b)});MAJ.delete("");return MAJ}
-function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();if(R.keys.some(k=>M.has(k)))return"major";if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
+/* a river with no name (or a local one) that runs along one of the map's own big rivers is that river */
+let CO=null;function coarse(){if(CO)return CO;CO=[];try{globeOverlays().rivers.forEach(Rv=>Rv.coordinates.forEach(l=>{for(let i=1;i<l.length;i++)CO.push([l[i-1][0],l[i-1][1],l[i][0],l[i][1]])}))}catch(e){}return CO}
+function nearCoarse(R){let best=null;R.ls.forEach(l=>{if(!best||l.length>best.length)best=l});if(!best||best.length<9)return false;const n=best.length/3;let hits=0;
+ [.25,.5,.75].forEach(f=>{const i=Math.floor(n*f)*3,x=best[i],y=best[i+1],c=Math.cos(y*Math.PI/180);let d=1e9;for(const q of coarse()){if(Math.abs(q[1]-y)>1||Math.abs(q[0]-x)>2)continue;const vx=(q[2]-q[0])*c,vy=q[3]-q[1],px=(x-q[0])*c,py=y-q[1],L2=vx*vx+vy*vy||1e-9;let u=(px*vx+py*vy)/L2;u=Math.max(0,Math.min(1,u));d=Math.min(d,Math.hypot(px-u*vx,py-u*vy))}if(d<.2)hits++});return hits>=2}
+function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();if(R.keys.some(k=>M.has(k)))return"major";if(nearCoarse(R)){R.keys.forEach(k=>M.add(k));return"major"}if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
 function inRings(rs,p){let c=false;for(const r of rs){for(let i=0,j=r.length-3;i<r.length;j=i,i+=3){const xi=r[i],yi=r[i+1],xj=r[j],yj=r[j+1];if((yi>p[1])!==(yj>p[1])&&p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi)c=!c}}return c}
 
 /* ---------- tiles: which are wanted, loading, cache ---------- */
