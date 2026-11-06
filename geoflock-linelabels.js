@@ -12,6 +12,7 @@ const LINES={
  "heurope|The Vikings":[[2,"To Iceland"],[3,"To Greenland"],[4,"To Vinland, about 1000"],[5,"Down Russia’s rivers"]],
  "bspiky|Who’s your city?":[[0,"Moving to the peaks"]],
  "bflat|UPS: the parcel company that fixes laptops":[[0,"Broken laptops in","#7a5230"],[1,null,"#7a5230"],[2,null,"#7a5230"],[3,null,"#7a5230"],[4,"Repaired, flown back","#2e8b57"],[5,null,"#2e8b57"]],
+ "climate|Five Mediterraneans":[[0,"30°N"],[1,"40°N"],[2,"30°S"],[3,"40°S"]],
  "explorers|Sailing by the stars":[[5,"Hōkūleʻa, 1976"]]
 };
 const strip=s=>String(s==null?"":s).replace(/​/g,"").trim();
