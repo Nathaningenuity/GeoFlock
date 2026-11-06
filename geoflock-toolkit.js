@@ -303,6 +303,8 @@ const TOOLPANEL={pens:"gfkPens",pins:"gfkPins",palette:"gfkPal",sea:"gfkSea",sho
 /* closing a tool's window (its ×, Esc, or its icon again) also puts down whatever it was doing */
 function allOff(){try{if(HOLES&&HOLES.length)holes([])}catch(e){}S.shovelArm=false;if(S.pen)penStop();if(S.pinArm)pinArm(false);if(S.dragging)dragOn(false);capture(false);try{GEO.sel=-1}catch(e){}render();sync()}
 function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClientRect();
+ if(t==="geometry"&&GEO.people&&document.getElementById("gfkGeo")){GEO.people=false;geoPanel();return}
+ if(t==="geometry")GEO.people=false;
  if(TOOLPANEL[t]&&document.getElementById(TOOLPANEL[t])){closePanels();allOff();return}
  /* the shovel is the cross-section now: a second press puts it away */
  if(t==="shovel"&&document.querySelector(".gf-xs-top")){try{gfCrossSection.stop()}catch(e){}return}
@@ -902,7 +904,8 @@ function elevStats(r){const X=window.gfCrossSection;if(!X)return null;let x0=1e9
  for(let j=0;j<=n;j++){const la=y0+j*dy,w=Math.cos(la*RAD);for(let i=0;i<=n;i++){const ll=[x0+i*dx,la];if(!d3.geoContains(poly,ll))continue;const e=X.elevAt(ll[0],ll[1]);sw+=w;sum+=e*w;if(e>hi){hi=e;hiAt=ll}if(e<lo){lo=e;loAt=ll}}}
  if(!sw)return null;return{avg:sum/sw,hi,lo,hiAt,loAt}}
 const fmtM=m=>Math.round(m).toLocaleString()+" m";
-const popMode=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="population"}catch(e){return false}};
+/* shapes show the people inside them on the Population map, and whenever the People counter (this set in people mode) is open */
+const popMode=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="population"||!!(GEO.people&&document.getElementById("gfkGeo"))}catch(e){return false}};
 function labelShape(s){if(!s||!s.p||s.p.length<2)return;if(s.cty){if(s.lab){delete s.lab;delete s.at}return}
  if(closedOf(s)){const pm=popMode(),em=elevMode(),key=s.p.length+"|"+s.p[0]+"|"+s.p[s.p.length>>1]+"|"+(pm?"P":"")+(em?"E":"");if(s._lk===key&&s.lab===s._lv)return;const o=ringOf(s.p);if(!o)return;
   let lab=fmtKm2(o.A*KM*KM);
@@ -1129,16 +1132,21 @@ function boxSelect(){let a=null,bx=null,add=false;const h=host();
  function mv(e){if(!bx||!h||!a)return;const r=h.getBoundingClientRect(),x0=Math.min(a[0],e.clientX)-r.left,y0=Math.min(a[1],e.clientY)-r.top;bx.style.left=x0+"px";bx.style.top=y0+"px";bx.style.width=Math.abs(e.clientX-a[0])+"px";bx.style.height=Math.abs(e.clientY-a[1])+"px"}
  /* Esc while dragging drops the box */
  const esc=ev=>{if(ev.key==="Escape"&&a){end();ev.stopPropagation()}};addEventListener("keydown",esc,true);setTimeout(()=>{},0);boxSelect._esc&&removeEventListener("keydown",boxSelect._esc,true);boxSelect._esc=esc}
-function geoPanel(){if(GEO.mode==="ring")GEO.mode="compass";if(GEO.mode==="ruler")GEO.mode="line";const M=MODES.find(m=>m[0]===GEO.mode);
- const p=panel("gfkGeo",'<b class="gfk-ph">Geometry set</b><div class="gfk-geom">'+MODES.map(m=>'<button type="button" data-gm="'+m[0]+'" class="'+(m[0]===GEO.mode?"on":"")+'" title="'+esc(m[3])+'"><i>'+m[1]+'</i>'+m[2]+'</button>').join("")+'</div>'+
+/* the People counter is this same set in people mode: the shape tools only, every shape labelled with the people inside,
+   and a People section (geoflock-people.js) for countries, places, growing circles, splits and comparisons */
+const PEOPLE_MODES=["box","select","compass","mpen","rect","oval"];
+function openPeople(o){GEO.people=true;if(o&&o.mode)GEO.mode=o.mode;else if(!PEOPLE_MODES.includes(GEO.mode))GEO.mode="select";geoPanel()}
+function geoPanel(){if(GEO.mode==="ring")GEO.mode="compass";if(GEO.mode==="ruler")GEO.mode="line";if(GEO.people&&GEO.mode&&!PEOPLE_MODES.includes(GEO.mode))GEO.mode="select";const M=MODES.find(m=>m[0]===GEO.mode),MM=GEO.people?MODES.filter(m=>PEOPLE_MODES.includes(m[0])).map(m=>m[0]==="compass"?[m[0],m[1],"Circle","Drag out from a centre: a circle (resize it from its edge afterwards)"]:m[0]==="mpen"?[m[0],m[1],"Freehand","Drag round an area; end where you started to close it"]:m):MODES;
+ const p=panel("gfkGeo",'<b class="gfk-ph">'+(GEO.people?"👥 People counter":"Geometry set")+'</b><div class="gfk-geom">'+MM.map(m=>'<button type="button" data-gm="'+m[0]+'" class="'+(m[0]===GEO.mode?"on":"")+'" title="'+esc(m[3])+'"><i>'+m[1]+'</i>'+m[2]+'</button>').join("")+'</div>'+
   '<p class="gfk-hint">'+(M&&GEO.mode!=="select"?esc(M[3])+'.':'Click a shape to pick it, drag to move it. The map still pans.')+'</p>'+
   (GEO.mode==="compass"?'<div class="gfk-km"><button type="button" class="gfk-addring" title="Add a ring of this distance round the picked circle or ring (or click a place on the map)">+ ring</button><input type="number" min="1" max="20000" step="50" value="'+GEO.km+'" aria-label="Distance in km"> km '+[100,500,1000,2000,5000].map(k=>'<button type="button" data-km="'+k+'">'+k.toLocaleString()+'</button>').join("")+'</div>':'')+
   (GEO.mode==="lineup"?'<input type="search" class="gfk-lus" placeholder="Type a city, e.g. Rome" list="gfkLuList"><datalist id="gfkLuList">'+cities().slice(0,1200).map(c=>'<option value="'+esc(c.n)+'">').join("")+'</datalist><div class="gfk-lu"></div>':'')+
   '<div class="gfk-cols">'+GCOLS.map(c=>'<button type="button" data-gc="'+c+'" style="background:'+c+'" class="'+(c===GEO.col?"on":"")+'" aria-label="Colour"></button>').join("")+'</div>'+
   thkRow("Thickness",(()=>{const s0=K().ink[GEO.sel];return s0&&s0.w?s0.w:GEO.w||1})(),GEO.col)+
-  '<div class="gfk-selbar" hidden></div>'+
+  (GEO.people?'<div class="gfk-pplx"></div>':'')+'<div class="gfk-selbar" hidden></div>'+
   '<div class="gfk-acts"><button type="button" data-act="undo" title="Ctrl+Z">Undo</button><button type="button" data-act="redo" title="Ctrl+Y">Redo</button><button type="button" data-act="more" title="Outline, fill, arrows, text, your shapes and more">More settings…</button></div>',true);if(!p)return;
- p.querySelectorAll("[data-gm]").forEach(b=>b.onclick=()=>{const m=b.dataset.gm;if(m===GEO.mode){GEO.mode=null;capture(false);if(m==="ruler"&&S.place.ruler)putAway("ruler")}else GEO.mode=m;geoSave();geoPanel()});
+ {const x=p.querySelector(".gfk-pplx");if(x&&window.gfPeopleExt)try{gfPeopleExt(x)}catch(e){console.error(e)}}
+ p.querySelectorAll("[data-gm]").forEach(b=>b.onclick=()=>{const m=b.dataset.gm;try{window.gfPeopleExt&&gfPeopleExt.pick&&gfPeopleExt.pick(null)}catch(e){}if(m===GEO.mode){GEO.mode=null;capture(false);if(m==="ruler"&&S.place.ruler)putAway("ruler")}else GEO.mode=m;geoSave();geoPanel()});
  geoList();
  p.querySelectorAll("[data-gc]").forEach(b=>b.onclick=()=>{GEO.col=b.dataset.gc;geoSave();p.querySelectorAll("[data-gc]").forEach(x=>x.classList.toggle("on",x===b));const s=K().ink[GEO.sel];if(s){s.c=GEO.col;save();render();geoList()}});
  const ki=p.querySelector(".gfk-km input");if(ki){ki.onchange=()=>{GEO.km=Math.max(1,Math.min(20000,+ki.value||1000));geoSave()};p.querySelectorAll("[data-km]").forEach(b=>b.onclick=()=>{GEO.km=+b.dataset.km;ki.value=GEO.km;geoSave()})}
@@ -1239,5 +1247,5 @@ setInterval(()=>{try{const t=S.tray;if(!t||!t.isConnected)return;let b=t.querySe
   b.onclick=()=>{if(!K().ink.length)return;if(!confirm("Clear all your drawings and shapes from the map?"))return;hist();K().ink=[];GEO.sel=-1;GEO.sels=[];save();render();geoList();toast("Drawings cleared. Undo in the Geometry set brings them back")};t.appendChild(b)}}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=`.gfk-clearall{position:absolute;left:148px;top:2px;z-index:2;border:1px solid rgba(0,0,0,.12);background:rgba(255,250,240,.95);color:#8a2a1a;border-radius:999px;padding:3px 10px;font:700 11.5px system-ui;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18);white-space:nowrap}.gfk-clearall:hover{background:#fff}.gfk-tray.closed .gfk-clearall{left:132px}body.dark-theme .gfk-clearall,body.sky-night .gfk-clearall{background:#1d2638;color:#ff9a8f;border-color:#3a4a66}`;document.head.appendChild(st)}
 /* for the details card (geoflock-shapeinfo.js) */
-Object.assign(window.gfToolkit,{GEO,keep,ringAt,polyFrom,ringOf,elevStats,fmtKm2,fmtPpl,fmtM,kmTxt,closedOf,fillRing,hav,KM,cities,geoSelect,selList});
+Object.assign(window.gfToolkit,{openPeople,geoPanel,rebuild,dest,geoList,geoBar,save,hist,capture,PEOPLE_MODES,GEO,keep,ringAt,polyFrom,ringOf,elevStats,fmtKm2,fmtPpl,fmtM,kmTxt,closedOf,fillRing,hav,KM,cities,geoSelect,selList});
 })();
