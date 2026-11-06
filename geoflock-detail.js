@@ -54,7 +54,7 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
  if(L.water){const E=L.water.ext;T.feats(L.water).forEach(f=>{if(f.type!==3||!f.geom)return;const cls=f.tags.class;const rings=parts(f.geom);
    /* group: an outer ring (positive area) followed by its holes */const polys=[];rings.forEach(r=>{if(r.length<4)return;const c=clipRing(r.slice(0,-1),E);if(!c)return;const ll=toLL(c,z,tx,ty,E,true);if(area(r)>0||!polys.length)polys.push([ll]);else polys[polys.length-1].push(ll)});
    if(!polys.length)return;const all=polys.flat();if(cls==="ocean")D.ocean.push({rings:all});else D.lakes.push({id:f.tags.id,cls,int:f.tags.intermittent,polys,rings:all,bb:bboxOf(all)})})}
- if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nm(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));D.rivers.push(R)}})}
+ if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nm(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));const ek=R.keys[0];if(ek){const e=EXT.get(ek),b=R.bb;EXT.set(ek,e?[Math.min(e[0],b[0]),Math.min(e[1],b[1]),Math.max(e[2],b[2]),Math.max(e[3],b[3])]:b.slice())}D.rivers.push(R)}})}
  if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||t.admin_level!==2||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,ls})})}
  if(L.water_name){const E=L.water_name.ext;T.feats(L.water_name).forEach(f=>{if(f.type!==1||!f.geom)return;const p=parts(f.geom)[0];if(!p||!p[0])return;const ll=toLL([p[0]],z,tx,ty,E,false);D.names.push({n:nm(f.tags),cls:f.tags.class,ll:[ll[0],ll[1]]})})}
  /* lake names: a name point inside a lake names that lake (and its pieces in other tiles, by the lake's id) */
@@ -64,7 +64,9 @@ const NAMES=new Map();
 /* river importance: the map's own named rivers (the Amazon, the Congo…) are major; rivers already in the small-scale tiles
    (tile zoom 8 or less) are medium; the rest (and streams) are minor and come in later and thinner */
 const rkey=n=>String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\(.*?\)/g,"").replace(/\b(river|rio|riviere|fleuve|he|jiang|nehri|nahr|the)\b/g,"").replace(/[^a-z]+/g," ").trim();
-const MED=new Set();let MAJ=null;
+const MED=new Set(),EXT=new Map();let MAJ=null;
+/* how far a river reaches (degrees across, over every tile seen): long rivers come in first, short ones later */
+function reach(R){const b=(R.keys[0]&&EXT.get(R.keys[0]))||R.bb;return Math.max(.05,Math.hypot(b[2]-b[0],b[3]-b[1]))}
 function major(){if(MAJ)return MAJ;MAJ=new Set();try{(ALLMAPS_RIVERS||[]).forEach(([n])=>{if(!/^[A-Z]{2}[-\\/]/.test(n))MAJ.add(rkey(n))})}catch(e){}
  [["amazonas","amazon"],["yellow","huang"],["ayeyarwady","irrawaddy"],["yenisey","yenisei"],["selenge","selenga"],["severnaya dvina","northern dvina"],["xi","xi"],["st lawrence","saint lawrence"],["parana","parana"]].forEach(([a,b])=>{if(MAJ.has(a))MAJ.add(b)});MAJ.delete("");return MAJ}
 function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();if(R.keys.some(k=>M.has(k)))return"major";if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
@@ -128,9 +130,17 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;const pj=projector(g),ov=I.ov|
  if(ov.rivers){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
   ctx.fillStyle=rivCol;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});
-  /* major rivers bold from the start; medium ones fade in thin once the detail starts; minor ones and streams later, thinner */
-  const TW={major:[Math.min(1.8,.55+.07*z),rivA],medium:[Math.min(1.1,.35+.03*z),Math.min(.85,Math.max(0,(z-6)/14))],minor:[Math.min(.8,.25+.004*z),Math.min(.75,Math.max(0,(z-50)/110))],stream:[.45,Math.min(.6,Math.max(0,(z-100)/150))]};ctx.strokeStyle=rivCol;
-  ["stream","minor","medium","major"].forEach(tr=>{const[w,a]=TW[tr];if(a<.02)return;ctx.lineWidth=w;ctx.globalAlpha=a;each(d=>{ctx.beginPath();d.rivers.forEach(R=>{if((R._t||(R._t=tier(R)))!==tr)return;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke()})});ctx.globalAlpha=1}
+  /* major rivers bold from the start; every other river fades in at its own zoom, by how far it reaches (long ones first,
+     short ones later), so they do not all appear at once; small rivers and streams later still and thinner */
+  ctx.strokeStyle=rivCol;const B=new Map();
+  each(d=>d.rivers.forEach(R=>{const t=R._t||(R._t=tier(R));let w,a;
+   if(t==="major"){w=Math.min(1.8,.55+.07*z);a=rivA}
+   else{let za=18*Math.pow(4/reach(R),.7);if(t==="minor")za=Math.max(za,55);if(t==="stream")za=Math.max(za,110);
+    a=Math.min(t==="medium"?.85:.7,Math.max(0,(z-za)/za));if(a<.04)return;w=Math.min(t==="medium"?1.1:.8,.3+.25*Math.log2(1+z/za))}
+   const k=(Math.round(a*20)/20)+"|"+(Math.round(w*10)/10);let L=B.get(k);if(!L)B.set(k,L=[]);L.push([R,d])}));
+  /* one stroke per look; a tile drawn from its parent keeps its clip, so those are drawn tile by tile */
+  [...B.entries()].sort((x,y)=>parseFloat(x[0])-parseFloat(y[0])).forEach(([k,L])=>{const[a,w]=k.split("|").map(Number);ctx.globalAlpha=a;ctx.lineWidth=w;
+   each(d=>{ctx.beginPath();let any=false;L.forEach(([R,dd])=>{if(dd!==d)return;any=true;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});if(any)ctx.stroke()})});ctx.globalAlpha=1}
  if(coast&&borders){ctx.lineWidth=.55;ctx.strokeStyle=I.drewRaster?"rgba(25,25,25,0.55)":"rgba(20,30,20,0.5)";
   each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>edgePath(ctx,pj,r,true)));d.borders.forEach(B=>{if(!B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();
    ctx.setLineDash([3,2]);ctx.beginPath();d.borders.forEach(B=>{if(B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();ctx.setLineDash([])})}}
@@ -144,7 +154,7 @@ function waterHit(g,ll,cx,cy,ov){const s=on(g);if(!s)return null;const out={};
  if(ov.lakes){const K=lakeAt(s,ll);const name0=K&&(K.n||(K.id!=null&&NAMES.get(K.id)));if(K&&name0){const name=name0;const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(Q===K||(K.id!=null&&Q.id===K.id))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))})});
    out.water=name;out.lake={type:"MultiPolygon",coordinates:co,n:out.water};return out}}
  if(ov.rivers){const pj=projector(g),rc=g.canvas.getBoundingClientRect(),mx=cx-rc.left,my=cy-rc.top;let best=6,hit=null;const pad=.5;
-  s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best&&R.name&&(t=>t==="major"||t==="medium"&&g.zoom>8||t==="minor"&&g.zoom>60)(R._t||(R._t=tier(R)))){best=d;hit=R}}a=b}})})});
+  s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best&&R.name&&(t=>t==="major"||t!=="stream"&&g.zoom>18*Math.pow(4/reach(R),.7)*1.25&&(t==="medium"||g.zoom>60))(R._t||(R._t=tier(R)))){best=d;hit=R}}a=b}})})});
   if(hit){const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(R===hit||(hit.name&&R.name===hit.name))R.ls.forEach(l=>{const c=[];for(let i=0;i<l.length;i+=3)c.push([l[i],l[i+1]]);co.push(c)})})});
    const n=hit.name;out.water=hit.name&&hit.cls==="river"&&!/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr/i.test(n)?n+" River":n;out.river={type:"MultiLineString",coordinates:co,n:out.water};return out}}
  return null}
