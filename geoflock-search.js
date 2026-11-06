@@ -211,8 +211,12 @@ function drawOne(e){fixWind(e);const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
+/* zoomed in, an island or lake is drawn from the map's detailed coast (geoflock-detail.js) instead of its rough outline */
+function sharp(e){try{const kind=e.cat==="lakes"?"lake":e.cat==="islands"||e.cat==="groups"?"coast":null;if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return e.g;
+ const k=amGlobe._dstk||"";if(e._shK===k)return e._sh||e.g;e._shK=k;if(!e._bb){const b=d3.geoBounds(e.g);e._bb=[b[0][0],b[0][1],b[1][0],b[1][1]]}
+ e._sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;return e._sh||e.g}catch(x){return e.g}}
 function globeDrawOne(ctx,p,e){fixWind(e);const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
- ctx.save();ctx.beginPath();path(e.g);if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
+ ctx.save();ctx.beginPath();path(sharp(e));if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
  else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(!G._flat&&d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p||(window.gfGlobeShows&&!gfGlobeShows(G,p)))return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
@@ -362,6 +366,8 @@ const css=document.createElement("style");css.textContent=`
 .gfs-noimg .gfs-card{ display:none !important; }
 .gfs-tog{ flex:none; margin-left:4px; padding:1px 7px; border-radius:999px; border:1px solid currentColor; font:700 10.5px/1.5 system-ui,sans-serif; opacity:.8; cursor:pointer; }
 .gfs-tog:hover{ opacity:1; } .gfs-tog.off{ opacity:.45; text-decoration:line-through; }
+#gfsX .gfs-row .gfs-tog{ display:inline-flex; width:auto; height:auto; border-radius:999px; padding:2px 8px; font:700 10.5px/1.3 system-ui,sans-serif; background:none; border:1px solid rgba(255,255,255,.6); }
+#gfsX .gfs-row .gfs-tog:hover{ background:rgba(255,255,255,.15); }
 .gfs-pin.gfs-name .gfs-lab{ pointer-events:auto; cursor:grab; touch-action:none; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
 #gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
 #gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
