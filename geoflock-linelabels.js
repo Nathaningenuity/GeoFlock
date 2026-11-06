@@ -8,6 +8,10 @@ const LINES={
  "explorers|The great journeys":[[1,"Columbus, 1492"],[3,"Da Gama, 1498"],[4,"Magellan’s crew, 1519–22"],[6,"Zheng He, 1405–33"],[8,"Cook, 1768–71"]],
  "food|Three grains, three cradles":[[0,"Wheat","#c99a1a"],[1,"Wheat","#c99a1a"],[2,"Rice","#3c9a4a"],[3,"Rice","#3c9a4a"],[4,"Rice","#3c9a4a"],[5,"Maize","#d9622b"],[6,"Maize","#d9622b"]],
  "b12maps|Al-Idrisi’s map for a Norman king":[0,1,2,3,4,5,6].map(i=>[i,"Climate "+(i+1)+" ↑",null,.04]),
+ "conflicts|Refugees: where people go":[[0,"Venezuelans → Colombia"],[1,"Syrians → Türkiye"],[2,"Afghans → Iran"],[3,"Afghans → Pakistan"],[4,"Sudanese → Chad"],[5,"Sudanese → Egypt"],[6,"South Sudanese → Uganda"],[7,"Ukrainians → Poland"]],
+ "heurope|The Vikings":[[2,"To Iceland"],[3,"To Greenland"],[4,"To Vinland, about 1000"],[5,"Down Russia’s rivers"]],
+ "bspiky|Who’s your city?":[[0,"Moving to the peaks"]],
+ "bflat|UPS: the parcel company that fixes laptops":[[0,"Broken laptops in","#7a5230"],[1,null,"#7a5230"],[2,null,"#7a5230"],[3,null,"#7a5230"],[4,"Repaired, flown back","#2e8b57"],[5,null,"#2e8b57"]],
  "explorers|Sailing by the stars":[[5,"Hōkūleʻa, 1976"]]
 };
 const strip=s=>String(s==null?"":s).replace(/​/g,"").trim();
@@ -24,7 +28,11 @@ function draw(){try{const box=typeof psContainer==="function"&&psContainer();if(
   const c=l.coords,t0=l.labelAt!=null?l.labelAt:.5,w=Math.min(190,key.length*6.4+16),h=20;
   const at=t=>{const f=(c.length-1)*t,k=Math.min(c.length-2,Math.floor(f)),u=f-k;return[c[k][0]+(c[k+1][0]-c[k][0])*u,c[k][1]+(c[k+1][1]-c[k][1])*u]};
   const ok=b=>!(b.l<4||b.t<4||b.l+b.w>W-4||b.t+b.h>H-64)&&!(card&&!(b.l+b.w<card.l||card.r<b.l||b.t+b.h<card.t||card.b<b.t))&&!avoid.concat(placed).some(q=>!(b.l+b.w<q.l||q.l+q.w<b.l||b.t+b.h<q.t||q.t+q.h<b.t));
-  let b=null,p=null;for(let d=0;d<=1&&!b;d+=.03){for(const t of d?[t0+d,t0-d]:[t0]){if(t<0||t>1)continue;const q=psScreen(at(t));if(!q)continue;const bb={l:q[0]-w/2,t:q[1]-h/2,w,h};if(ok(bb)){b=bb;p=q;break}}}
+  let b=null,p=null;for(let d=0;d<=1&&!b;d+=.03){for(const t of d?[t0+d,t0-d]:[t0]){if(t<0||t>1)continue;const q=psScreen(at(t));if(!q)continue;
+   /* beside the line, not on it (the arrowheads sit on the line) */
+   const q2=psScreen(at(Math.min(1,t+.02)))||psScreen(at(Math.max(0,t-.02)));let nx=0,ny=-1;if(q2){const dx=q2[0]-q[0],dy=q2[1]-q[1],dl=Math.hypot(dx,dy);if(dl>.5){nx=-dy/dl;ny=dx/dl}}
+   const off=Math.abs(nx)*(w/2)+Math.abs(ny)*(h/2)+6;
+   for(const sg of [1,-1]){const cx=q[0]+nx*off*sg,cy=q[1]+ny*off*sg,bb={l:cx-w/2,t:cy-h/2,w,h};if(ok(bb)){b=bb;p=[cx,cy];break}}if(b)break}}
   if(!b)return;
   placed.push(b);seen.add(key);html+=`<span style="left:${p[0].toFixed(0)}px;top:${p[1].toFixed(0)}px;--lc:${lineCol(l)}">${key.replace(/[<>&]/g,"")}</span>`});
  if(lay._h!==html){lay.innerHTML=html;lay._h=html}}catch(e){}}
