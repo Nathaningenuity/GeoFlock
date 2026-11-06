@@ -5,15 +5,17 @@
 (function(){
 "use strict";
 const T=window.gfToolkit,X=()=>window.gfCrossSection,TH=()=>window.gfThermo;
-let OPEN=null;
+let OPEN=null,ADDED=[];
 const shovel=(v)=>()=>{OPEN="shovel";try{const x=X();x.start();setTimeout(()=>{try{x.pick(v)}catch(e){}},400)}catch(e){console.error(e)}};
 const thermo=(list)=>()=>{OPEN="thermo";try{TH().setAuto(list)}catch(e){console.error(e)}};
 const sea=()=>()=>{OPEN="sea";try{gfToolkit.seaPanel();clear()}catch(e){}};
 /* a panel opened from the card should not sit on top of the card */
-function clear(){setTimeout(()=>{try{const p=document.getElementById("gfkSea"),c=ps&&ps.card;if(!p||!c)return;const a=p.getBoundingClientRect(),b=c.getBoundingClientRect();if(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom)return;
- const x=b.right+14<innerWidth-a.width?b.right+14:Math.max(8,b.left-a.width-14);p.style.position="fixed";p.style.left=x+"px";p.style.right="auto";p.style.top=Math.max(70,Math.min(innerHeight-a.height-12,b.top))+"px";p.style.bottom="auto"}catch(e){}},60)}
+function clear(id){setTimeout(()=>{try{const p=document.getElementById(id||"gfkSea"),c=ps&&ps.card;if(!p||!c)return;const a=p.getBoundingClientRect(),b=c.getBoundingClientRect();if(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom)return;
+ const far=id==="gfkGeo"&&innerWidth-a.width-12>b.right+14,x=far?innerWidth-a.width-12:b.right+14<innerWidth-a.width?b.right+14:Math.max(8,b.left-a.width-14);p.style.position="fixed";p.style.left=x+"px";p.style.right="auto";p.style.top=Math.max(70,Math.min(innerHeight-a.height-12,b.top))+"px";p.style.bottom="auto"}catch(e){}},60)}
 const ruler=()=>()=>{OPEN="ruler";try{const h=document.getElementById("allMapsWrap"),g=window.amGlobe;const r=(g&&g.host&&g.host.offsetParent?g.host:h).getBoundingClientRect();gfToolkit.dropTool("ruler",r.left+r.width*.5,r.top+r.height*.78)}catch(e){}};
 const lift=(ll)=>()=>{OPEN="dragger";try{const s=gfToolkit.toScreen(ll);if(s)gfToolkit.dropTool("dragger",s[0],s[1])}catch(e){console.error(e)}};
+/* the people counter, opened with a shape already drawn: a circle, or whole countries side by side */
+const people=(fn)=>()=>{OPEN="people";try{gfPeople.open({mode:"select"});setTimeout(()=>{try{const K=gfToolkit.K(),n0=K.ink.length;fn(gfPeople);ADDED=K.ink.slice(n0)}catch(e){console.error(e)}clear("gfkGeo")},500)}catch(e){console.error(e)}};
 const TRY={
  "geo|Deeper than Everest is tall":["Slice down into the Mariana Trench",shovel("p5")],
  "geo|Africa is splitting":["Slice across the East African Rift",shovel("p3")],
@@ -50,6 +52,10 @@ const TRY={
  "deserts|Not heat, but rain":["Compare a hot and a cold desert",thermo([[32.9,24.1,"Aswan"],[106.9,43.6,"Gobi"]])],
  "deserts|Death Valley’s heat trap":["Drop a thermometer in Death Valley",thermo([[-116.87,36.46,"Death Valley"]])],
  "weather|The wettest place":["Drop a thermometer in Mawsynram",thermo([[91.58,25.3,"Mawsynram"]])],
+ "pop|Half of humanity in one circle":["Count the people in the circle yourself",people(P=>P.addCircle([100.25,21],3442,"Half of humanity")),"Drag the circle or change its size and watch the count"],
+ "pop|Mongolia: the emptiest country":["Count Mongolia’s people against Bangladesh’s",people(P=>{P.addCountry("mn");P.addCountry("bd")})],
+ "pop|Egypt is the Nile":["Count Egypt’s people, then draw round the Nile",people(P=>P.addCountry("eg")),"Draw a thin shape along the river to see how many live there"],
+ "pop|Australia keeps to the coast":["Count Australia’s people",people(P=>P.addCountry("au")),"Then draw round the coast from Brisbane to Adelaide"],
  "pop|China’s Hu line":["Lay the ruler along the Hu line",ruler(),"Click Heihe in the far north-east, then Tengchong near Myanmar"],
  "africa|Room for three giants":["Lift the United States and drop it on Africa",lift([-98,39]),"Then lift China and India too"],
  "samerica|Brazil is half the continent":["Lift Brazil and drag it over Europe",lift([-52,-10])],
@@ -93,7 +99,7 @@ function add(){try{if(typeof ps==="undefined"||!ps||!ps.card)return;const S=psSt
 function hint(t){let m=document.querySelector(".gftry-hint");if(!m){m=document.createElement("div");m.className="gftry-hint";document.body.appendChild(m)}m.textContent=t;m.classList.add("on");clearTimeout(m._t);m._t=setTimeout(()=>m.classList.remove("on"),5000)}
 setInterval(add,600);
 /* what a "Try it" opened is put away when the stop changes or the tour ends */
-function tidy(){const o=OPEN;OPEN=null;if(!o)return;try{if(o==="shovel")gfCrossSection.stop();else if(o==="thermo")gfThermo.clearAuto();else if(o==="dragger"||o==="ruler")gfToolkit.putAway(o);else if(o==="sea"){const p=document.getElementById("gfkSea");if(p)p.remove()}}catch(e){}}
+function tidy(){const o=OPEN;OPEN=null;if(!o)return;try{if(o==="shovel")gfCrossSection.stop();else if(o==="thermo")gfThermo.clearAuto();else if(o==="dragger"||o==="ruler")gfToolkit.putAway(o);else if(o==="people"){try{gfPeople.close()}catch(e){}try{const K=gfToolkit.K();ADDED.forEach(x=>{const i=K.ink.indexOf(x);if(i>=0)K.ink.splice(i,1)});ADDED=[];gfToolkit.render()}catch(e){}}else if(o==="sea"){const p=document.getElementById("gfkSea");if(p)p.remove()}}catch(e){}}
 let wrapped=0;const w=setInterval(()=>{if(wrapped||typeof psGo!=="function")return;wrapped=1;clearInterval(w);const _g=psGo;psGo=function(i){if(OPEN&&typeof ps!=="undefined"&&ps&&i!==ps.i)tidy();return _g.apply(this,arguments)};const _e=psEnd;psEnd=function(){tidy();return _e.apply(this,arguments)}},500);
 window.gfTourTry={TRY};
 {const s=document.createElement("style");s.textContent=`
