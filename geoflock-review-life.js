@@ -164,7 +164,7 @@ function animals(){if(!once("animals"))return;
   body:"The Galápagos are young volcanoes that never touched a continent, so every animal here came by air or sea and changed to fit its new home. With no big predators, many never learned fear: you can walk right up to a nesting booby. Marine iguanas dive for seaweed, and cold currents let penguins live on the equator.",
   more:"When Charles Darwin visited in 1835, the islanders told him they could tell which island a tortoise came from by its shell, and he found that the mockingbirds differed from island to island. Those clues helped lead him to the idea of evolution by natural selection. Giant tortoises can weigh over 250 kg and live more than 100 years."});
  CARD["animals|Galápagos: animals with no fear"]="Blue footed booby courtship display.jpg";
- ins("animals","Galápagos: animals with no fear",{title:"The Coral Triangle and the Great Barrier Reef",view:[95,-26,165,21],globe:[132,-6,1.9],card:"left",hi:["id","ph","my","pg","tl","sb"],
+ ins("animals","Galápagos: animals with no fear",{title:"The Coral Triangle and the Great Barrier Reef",view:[95,-30,170,21],globe:[139,-11,1.7],card:"left",hi:["id","ph","my","pg","tl","sb"],
   lines:[{coords:[[117,7],[121,13.5],[127,10],[135,1],[156,-5],[162,-11],[150,-11.5],[141,-9.5],[127,-9.5],[118,-9],[115,-5],[117,7]],kind:"dash"}],
   pins:[P([128.5,-4.5],"The Coral Triangle"),P([150.5,-19.5],"Great Barrier Reef: 2,300 km")],
   phPins:[ph([123.8,9.6],"Clownfish in an anemone","Clownfish in an anemone.jpg"),
