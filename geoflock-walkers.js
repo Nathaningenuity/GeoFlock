@@ -117,7 +117,7 @@
    /* pictures that stay put on the map: {ll, html, w, h} anchored at their bottom centre */
    const marks=(w.marks||[]).map(m=>{const el=document.createElement("div");el.className="hw-m";el.style.width=m.w+"px";el.style.height=m.h+"px";el.style.margin=(-m.h)+"px 0 0 "+(-m.w/2)+"px";el.innerHTML=m.html;if(m.title)el.title=m.title;lay.appendChild(el);return{el,m}});
    const t0=performance.now();const tick=n=>{if(!lay||!lay.isConnected||cur!==S){stop();return}const calm=still();
-    walkers.forEach(v=>{const t=calm?.5:((n-t0)/v.dur+v.off)%1,ll=at(v.P,t),s=psScreen(ll);if(!s){v.el.style.opacity=0;return}
+    if(typeof ps==="undefined"||!ps)return;walkers.forEach(v=>{const t=calm?.5:((n-t0)/v.dur+v.off)%1,ll=at(v.P,t),s=psScreen(ll);if(!s){v.el.style.opacity=0;return}
      if(v.px&&Math.abs(s[0]-v.px)>.05)v.dir=s[0]<v.px?-1:1;v.px=s[0];
      const ph=calm?0:(n-t0)/(w.float?520:170)+v.off*9,fade=calm?1:Math.min(1,t*8,(1-t)*8),bob=w.float?Math.sin(ph)*z/14:Math.abs(Math.sin(ph))*-z/(w.fig?16:9),tilt=w.fig?0:Math.sin(ph)*(w.float?4:5);
      if(v.lg1){const a=Math.sin(ph)*24;v.lg1.setAttribute("transform","rotate("+a.toFixed(1)+" 20 45)");v.lg2.setAttribute("transform","rotate("+(-a).toFixed(1)+" 20 45)");v.ar1.setAttribute("transform","rotate("+(-a*.8).toFixed(1)+" 20 24)");v.ar2.setAttribute("transform","rotate("+(a*.8).toFixed(1)+" 20 24)");if(v.ar1t)v.ar1t.setAttribute("transform","rotate("+(-a*.8).toFixed(1)+" 20 24)")}
