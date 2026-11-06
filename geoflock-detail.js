@@ -130,10 +130,17 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
   ctx.globalCompositeOperation="destination-over";ctx.fillStyle=I.ocean||"#5797cf";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});ctx.restore()}
- if(ov.lakes&&!sat){const lf=I.drewRaster?(rel?(window._gfLakesClean?"#a8cbe5":"rgba(166,201,228,0.78)"):"#b9d8ea"):(I.ocean||"#5797cf");
-  ctx.strokeStyle=rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
-  each(d=>{const L=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K)));ctx.fillStyle=lf;ctx.beginPath();L.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd");
-   if(I.drewRaster){ctx.beginPath();L.forEach(K=>K.rings.forEach(r=>edgePath(ctx,pj,r,true)));ctx.stroke()}})}
+ if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
+  const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?(rel?(window._gfLakesClean?"#a8cbe5":"rgba(166,201,228,0.78)"):"#b9d8ea"):(I.ocean||"#5797cf");
+  const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
+  const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
+  each(d=>{const L=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K)));
+   /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
+   [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
+    const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
+    groups.forEach(([lo,hi])=>{const G=M.filter(K=>{const v=vis(K);return v>lo&&v<=hi||(!sat&&true)});if(!G.length)return;const a=sat?(lo+hi)/2:1;
+     ctx.globalAlpha=Math.min(1,a)*fa;ctx.fillStyle=lf;ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd");
+     if(I.drewRaster||dry){ctx.globalAlpha=Math.min(1,a);ctx.strokeStyle=ls;if(dry)ctx.setLineDash([3,2]);ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>edgePath(ctx,pj,r,true)));ctx.stroke();ctx.setLineDash([])}})});ctx.globalAlpha=1})}
  if(ov.rivers){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
   ctx.fillStyle=rivCol;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});
