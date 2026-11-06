@@ -9,6 +9,22 @@
 const TERR=/\b(delta|sundarbans|mangroves?|reefs?|atolls?|patch|plastic|wetlands?|swamps?|marsh(es)?|pantanal|salar|caldera|crater|sinkhole|everglades|okavango|uyuni|salt lakes?|salt (flat|pan)s?|lake eyre|kati thanda)\b/i;
 /* where the circle goes for well-known small places (the place's middle, and a size that surrounds it) */
 const CENTRE=[[/okavango/i,[22.85,-19.25],150],[/sundarbans/i,[89.25,21.95],95],[/nile delta/i,[31.0,30.85],110],[/uyuni/i,[-67.55,-20.2],80],[/lake eyre|kati thanda/i,[137.3,-28.45],90]];
+/* rings are kept only where they were checked one by one and help: a tiny place that would be lost on the map at that
+   stop (an atoll, a crater, a sinkhole). Deltas, salt flats, reefs and wetlands that are plainly visible, cities named after
+   them (Salt Lake City, the Delta blues), and world overviews with many photos get no ring. Hand-set ringKm still counts. */
+const KEEP=new Set([
+ "rivers|Rivers that never reach the sea|Okavango ends in the Kalahari",
+ "rivers|Rivers that split|Danube Sinkhole: Danube water goes to the Rhine",
+ "islands|Three kinds of islands|Maldives: coral atolls","islands|Three kinds of islands|Tuvalu: coral atolls",
+ "hoceania|Tupaia and Captain Cook|Endeavour Reef","hoceania|Nuclear tests|Bikini Atoll",
+ "geopol|An island for a base|The Chagos Islands: Salomon Atoll",
+ "volcanoes|Pinatubo cools the planet|Pinatubo’s crater lake",
+ "ice|Ground that never thaws|Batagaika crater",
+ "ocean|Ocean parks|Midway Atoll",
+ "mythology|Pele’s islands|Kīlauea: Halemaʻumaʻu crater","mythology|A war that made a lake|Crater Lake and Wizard Island",
+ "bbeagle|Bahia: into the rainforest|The Abrolhos reefs","bbeagle|Coral atolls: Cocos (Keeling)|Bikini Atoll",
+ "brihla|Judge of the Maldives|A Maldives atoll"]);
+const kept=(S,l)=>{try{return KEEP.has(ps.tour+"|"+S.title+"|"+strip(l))||!!(S.gfFrom&&KEEP.has(S.gfFrom+"|"+strip(l)))}catch(e){return false}};
 const SKIP=new Set(["geo"]);
 const strip=s=>String(s==null?"":s).replace(/​/g,"");
 const lab=p=>Array.isArray(p)?p[1]:(p&&p.label);
@@ -37,13 +53,13 @@ function prep(S){try{
  /* 1: rings */
  const circles=[];const addC=(a,r)=>{if(!circles.some(c=>km(c[0],a)<r*.8))circles.push([a,r])};
  const share=a=>circles.find(c=>km(c[0],a)<c[1]*2);
- P2=P2.map(q=>{if(q.ringKm){addC(q.at,q.ringKm);return q}if(!TERR.test(strip(q.label)))return q;
+ P2=P2.map(q=>{if(q.ringKm){addC(q.at,q.ringKm);return q}if(!TERR.test(strip(q.label))||!kept(S,q.label))return q;
   const C=CENTRE.find(c=>c[0].test(strip(q.label)));if(C){const ex=share(C[1]);if(ex)return Object.assign({},q,{at:ex[0],ringKm:ex[1]});const r2=Math.max(rk,C[2]);addC(C[1],r2);return Object.assign({},q,{at:C[1],ringKm:r2})}
   const c=share(q.at);if(c)return Object.assign({},q,{at:c[0],ringKm:c[1]});const n=Object.assign({},q,{ringKm:rk});addC(q.at,rk);return n});
  /* a photo of something inside a ringed place (the tiger in the Sundarbans) shares that circle */
  P2=P2.map(q=>{if(q.ringKm)return q;const c=circles.find(c=>km(c[0],q.at)<c[1]*1.1);return c?Object.assign({},q,{at:c[0],ringKm:c[1]}):q});
  /* a text label on a small place (a salt lake, a delta...) gets the circle too; other labels keep plain lines */
- T2=T2.map(p=>{if(!Array.isArray(p)||!TERR.test(strip(p[1])))return p;let a=at(p);
+ T2=T2.map(p=>{if(!Array.isArray(p)||!TERR.test(strip(p[1]))||!kept(S,p[1]))return p;let a=at(p);
   /* an "area" label on a small place becomes a ringed point in its middle */
   if(p[2]==="area"&&Array.isArray(a)&&a.length===2&&isPt(a[0])&&isPt(a[1])){a=[(a[0][0]+a[1][0])/2,(a[0][1]+a[1][1])/2];p=[a,p[1],"point"]}
   if(!isPt(a)||(p[2]&&p[2]!=="point"))return p;
