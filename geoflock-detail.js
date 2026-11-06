@@ -13,7 +13,9 @@ window.gfMaxZoom=256;
 const MINZ=5,COASTZ=7,MAXZ=14,TILEPX=256,MAXTILES=36,PAR=6;
 let URL0="https://tiles.openfreemap.org/planet/20261101_080013_pt/{z}/{x}/{y}.pbf",urlP=null;
 function tileUrl(){if(!urlP)urlP=fetch("https://tiles.openfreemap.org/planet").then(r=>r.json()).then(j=>{if(j&&j.tiles&&j.tiles[0])URL0=j.tiles[0];return URL0}).catch(()=>URL0);return urlP}
-const view=g=>{try{return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==="allmaps"&&allMapsColorMode!=="history"}catch(e){return false}};
+const view=g=>{try{if(g&&g._gfProj)return!!(typeof proj!=="undefined"&&proj.on);return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==="allmaps"&&allMapsColorMode!=="history"}catch(e){return false}};
+/* other views (the Projections map) get a redraw when tiles arrive */
+const REDRAW=new Set();const redraw=()=>{try{amGlobe&&amGlobe.request()}catch(e){}REDRAW.forEach(f=>{try{f()}catch(e){}})};
 
 /* ---------- a small vector-tile reader (only the layers used here) ---------- */
 const TD=new TextDecoder(),WANT={water:1,waterway:1,water_name:1,boundary:1};
@@ -84,13 +86,13 @@ function pump(){while(inflight<PAR&&queue.length){const k=queue.shift();if(CACHE
   const[z,x,y]=k.split("/").map(Number);
   tileUrl().then(u=>fetch(u.replace("{z}",z).replace("{x}",x).replace("{y}",y))).then(r=>r.ok?r.arrayBuffer():null).then(b=>{
    let d=null;try{d=b&&b.byteLength?build(new Uint8Array(b),z,x,y):{lakes:[],ocean:[],rivers:[],borders:[],names:[]}}catch(e){console.error("tile",k,e);d={lakes:[],ocean:[],rivers:[],borders:[],names:[]}}
-   CACHE.set(k,{st:"ok",d,t:performance.now()})}).catch(()=>{CACHE.delete(k)}).finally(()=>{inflight--;loads++;trim();try{amGlobe&&amGlobe.request()}catch(e){}pump()})}}
+   CACHE.set(k,{st:"ok",d,t:performance.now()})}).catch(()=>{CACHE.delete(k)}).finally(()=>{inflight--;loads++;trim();redraw();pump()})}}
 function trim(){if(CACHE.size<500)return;const live=new Set((ST&&ST.tiles||[]).map(t=>t.k));[...CACHE.entries()].filter(([k,v])=>v.st==="ok"&&!live.has(k)).sort((a,b)=>a[1].t-b[1].t).slice(0,150).forEach(([k])=>CACHE.delete(k))}
 const got=k=>{const c=CACHE.get(k);return c&&c.st==="ok"?c.d:null};
 
 /* ---------- what the view needs ---------- */
 let ST=null,STK="",WT=0,WSIG="";
-function state(g){const sz=g.size(),k=g.rot[0].toFixed(3)+","+g.rot[1].toFixed(3)+","+g.zoom.toFixed(4)+","+sz.w+","+sz.h+","+loads+","+allMapsColorMode;if(k===STK&&ST)return ST;STK=k;ST=compute(g,sz);return ST}
+function state(g){const sz=g.size(),k=(g.key?g.key():g.rot[0].toFixed(3)+","+g.rot[1].toFixed(3)+","+g.zoom.toFixed(4))+","+sz.w+","+sz.h+","+loads+","+allMapsColorMode;if(k===g._dstk&&g._dst)return(ST=g._dst);g._dstk=k;ST=g._dst=compute(g,sz);return ST}
 function compute(g,sz){const P=g.projection(),inv=q=>{try{const ll=P.invert(q);if(!ll||!isFinite(ll[0])||!isFinite(ll[1])||Math.abs(ll[0])>180.001||Math.abs(ll[1])>90.001)return null;const b=P(ll);if(!b||Math.hypot(b[0]-q[0],b[1]-q[1])>2)return null;return ll}catch(e){return null}};
  const c=inv([sz.w/2,sz.h/2]),c2=inv([sz.w/2+10,sz.h/2]);if(!c||!c2)return{on:false};
  const dpp=d3.geoDistance(c,c2)*180/Math.PI/10;let z=Math.round(Math.log2(360*Math.cos(c[1]*Math.PI/180)/(TILEPX*dpp)));z=Math.min(MAXZ,z);if(z<MINZ)return{on:false,z};
@@ -104,21 +106,22 @@ function compute(g,sz){const P=g.projection(),inv=q=>{try{const ll=P.invert(q);i
  tiles.forEach(t=>{t.d=got(t.k);t.src=t;if(!t.d)for(let u=1;u<=3&&z-u>=MINZ-1;u++){const pk=key(z-u,t.x>>u,t.y>>u),pd=got(pk);if(pd){t.d=pd;t.src={z:z-u,x:t.x>>u,y:t.y>>u};break}}});
  /* nearest first */const cx=(c[0]+180)/360*Math.pow(2,z);tiles.sort((a,b)=>Math.abs(a.x+.5-cx)-Math.abs(b.x+.5-cx));
  /* fetch only once the view has settled (not on every frame of a drag, a fly or a spin) */
- const ks=tiles.map(t=>t.k),sig=z+":"+ks.slice().sort().join(",");clearTimeout(WT);if(sig===WSIG)want(ks);else{WSIG=sig;WT=setTimeout(()=>{if(WSIG===sig){want(ks);try{amGlobe.request()}catch(e){}}},260)}
+ const ks=tiles.map(t=>t.k),sig=z+":"+ks.slice().sort().join(",");clearTimeout(WT);if(sig===WSIG)want(ks);else{WSIG=sig;WT=setTimeout(()=>{if(WSIG===sig){want(ks);redraw()}},260)}
  return{on:true,z,tiles,all:tiles.every(t=>t.d)}}
 const on=g=>{if(!view(g))return null;const s=state(g);return s.on&&s.all?s:null};
 
 /* ---------- drawing ---------- */
 function projector(g){const P=g.projection();if(g._flat)return(lo,la)=>P([lo,la]);const c=[-g.rot[0]*Math.PI/180,-g.rot[1]*Math.PI/180],cx=Math.cos(c[1])*Math.cos(c[0]),cy=Math.cos(c[1])*Math.sin(c[0]),cz=Math.sin(c[1]);
  return(lo,la)=>{const a=lo*Math.PI/180,b=la*Math.PI/180,cb=Math.cos(b);if(cb*Math.cos(a)*cx+cb*Math.sin(a)*cy+Math.sin(b)*cz<.02)return null;return P([lo,la])}}
-function ringPath(ctx,pj,r,closeIt){let first=true;for(let i=0;i<r.length;i+=3){const q=pj(r[i],r[i+1]);if(!q)return false;if(first){ctx.moveTo(q[0],q[1]);first=false}else ctx.lineTo(q[0],q[1])}if(closeIt)ctx.closePath();return true}
+let JUMP=Infinity;/* interrupted projections: a jump across a gap is not drawn */
+function ringPath(ctx,pj,r,closeIt){let first=true,px=0,py=0;for(let i=0;i<r.length;i+=3){const q=pj(r[i],r[i+1]);if(!q)return false;if(first||Math.abs(q[0]-px)+Math.abs(q[1]-py)>JUMP){ctx.moveTo(q[0],q[1]);first=false}else ctx.lineTo(q[0],q[1]);px=q[0];py=q[1]}if(closeIt)ctx.closePath();return true}
 function edgePath(ctx,pj,r,closed){let pen=false;const n=r.length/3;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);if(!a||!b){pen=false;continue}if(!pen){ctx.moveTo(a[0],a[1]);pen=true}ctx.lineTo(b[0],b[1])}}
 function boxClip(ctx,pj,t){const n=Math.pow(2,t.z),L=[];const ll=(x,y)=>{const m=Math.PI*(1-2*y/n);return[x/n*360-180,Math.atan(Math.sinh(m))*180/Math.PI]};const S=8;
  for(let i=0;i<=S;i++)L.push(ll(t.x+i/S,t.y));for(let i=0;i<=S;i++)L.push(ll(t.x+1,t.y+i/S));for(let i=0;i<=S;i++)L.push(ll(t.x+1-i/S,t.y+1));for(let i=0;i<=S;i++)L.push(ll(t.x,t.y+1-i/S));
  ctx.beginPath();let ok=true;L.forEach((p,i)=>{const q=pj(p[0],p[1]);if(!q){ok=false;return}i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();if(ok)ctx.clip();return ok}
 let CASP=null;function caspian(){if(CASP!==null)return CASP;try{CASP=globeOverlays().lakes.find(L=>/^Caspian/.test(L.n||""))||false}catch(e){CASP=false}return CASP}
 function isCaspian(K){if(K._casp!==undefined)return K._casp;const C=caspian();K._casp=!!(C&&K.bb[2]-K.bb[0]>.5&&d3.geoContains(C,[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2]));return K._casp}
-function draw(g,ctx,I){const s=on(g);if(!s)return;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
+function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
  const borders=g.cfg.borders?g.cfg.borders():true,coast=s.z>=COASTZ,LT=window.gfRiverLate?gfRiverLate(g):1,z=g.zoom/LT;/* rivers: later on maps other than Relief and Elevation */
  /* each tile is drawn whole (begin, path, fill or stroke) so a tile drawn from its parent can be clipped to its own square */
  const each=fn=>s.tiles.forEach(t=>{if(!t.d)return;const sub=t.src!==t;if(sub){ctx.save();if(!boxClip(ctx,pj,t)){ctx.restore();return}}try{fn(t.d)}finally{if(sub)ctx.restore()}});
@@ -169,8 +172,32 @@ function waterHit(g,ll,cx,cy,ov){const s=on(g);if(!s)return null;const out={};
 const _wa=GlobeView.prototype.waterAt;GlobeView.prototype.waterAt=function(ll,cx,cy){const out=_wa.apply(this,arguments)||{};try{let ov=this.cfg.overlays?this.cfg.overlays():{};/* Satellite: lakes are in the photo; hovering one names it even with Lakes off */if(allMapsColorMode==="satellite"&&!ov.lakes)ov=Object.assign({},ov,{lakes:true});if(view(this)&&(ov.lakes||ov.rivers)){const h=waterHit(this,ll,cx,cy,ov);
   if(h){delete out.lake;delete out.river;Object.assign(out,h);if(out.lake&&!h.lake)delete out.lake}else if(on(this)){/* the built-in shapes are not drawn now: keep only a name from them */if(out.lake){const n=out.water;delete out.lake;out.water=n}if(out.river){delete out.river;delete out.water}}}}catch(e){console.error(e)}return out};
 
-window.gfDetail={dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),covers:g=>!!on(g),ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
+window.gfDetail={onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),covers:g=>!!on(g),ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
 setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.host;if(!h)return;let c=h.querySelector(".gf-dt-cred");const v=!!(g&&on(g));if(v&&!c){c=document.createElement("div");c.className="gf-dt-cred";c.innerHTML='Detail © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';h.appendChild(c)}if(c)c.hidden=!v}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=".gf-dt-cred{position:absolute;right:62px;bottom:4px;z-index:6;font:500 9.5px system-ui,sans-serif;color:#33475b;background:rgba(255,255,255,.62);padding:1px 6px;border-radius:6px;pointer-events:auto}.gf-dt-cred a{color:inherit}.gf-dt-cred[hidden]{display:none}";document.head.appendChild(st)}
+
+/* ---------- the Projections map: the same detail on a canvas over its picture ---------- */
+(function(){if(typeof projRender!=="function")return;
+ window.gfProjMaxZoom=64;
+ const V={_gfProj:1,_flat:true,rot:[0,0],get zoom(){return proj.zoom||1},projection:()=>proj._p,size:()=>{const m=document.getElementById("projSvg");return{w:+(m&&m.getAttribute("width"))||800,h:+(m&&m.getAttribute("height"))||400}},
+  key:()=>{const p=proj._p;return p?p.scale().toFixed(2)+","+p.translate().map(v=>v.toFixed(1))+","+p.rotate().map(v=>v.toFixed(2))+","+(projDef().id||""):"-"},cfg:{borders:()=>true},canvas:null};
+ function paint(){const host=document.getElementById("projMap"),svg=document.getElementById("projSvg");let c=document.getElementById("projDetail");
+  if(!host||!svg||!proj.on||!proj._p){if(c)c.hidden=true;return}
+  if(!c){c=document.createElement("canvas");c.id="projDetail";c.style.cssText="position:absolute;pointer-events:none;z-index:1";host.appendChild(c);if(getComputedStyle(host).position==="static")host.style.position="relative"}
+  const s=on(V);svg.classList.toggle("gf-pd-coast",!!(s&&s.z>=COASTZ));if(!s){c.hidden=true;return}c.hidden=false;
+  const sz=V.size(),hr=host.getBoundingClientRect(),sr=svg.getBoundingClientRect(),k=sr.width/sz.w||1,dpr=Math.min(2,devicePixelRatio||1);
+  c.style.left=(sr.left-hr.left+host.scrollLeft)+"px";c.style.top=(sr.top-hr.top+host.scrollTop)+"px";c.style.width=sr.width+"px";c.style.height=sr.height+"px";
+  /* the zoom preview has moved the picture: draw only once it settles */
+  if(proj._pv)return;c.style.transform="";
+  const W=Math.round(sr.width*dpr),H=Math.round(sr.height*dpr);if(c.width!==W||c.height!==H){c.width=W;c.height=H}
+  const ctx=c.getContext("2d");ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);ctx.setTransform(dpr*k,0,0,dpr*k,0,0);
+  const sea=svg.querySelector(".proj-sea"),od=sea&&sea.getAttribute("d");ctx.save();if(od)try{ctx.clip(new Path2D(od))}catch(e){}
+  const ocean=sea?getComputedStyle(sea).fill:"#5797cf";
+  draw(V,ctx,{texKey:null,drewRaster:false,ov:{lakes:true,rivers:true},ocean});ctx.restore()}
+ const _pr=projRender;projRender=function(){const r=_pr.apply(this,arguments);try{paint()}catch(e){console.error(e)}return r};
+ if(typeof pjEls==="function"){const _pe=pjEls;pjEls=function(){const a=_pe.apply(this,arguments);const c=document.getElementById("projDetail");if(c&&!c.hidden&&a.length)a.push(c);return a}}
+ REDRAW.add(()=>{if(typeof proj!=="undefined"&&proj.on)paint()});
+ const st=document.createElement("style");st.textContent="#projSvg.gf-pd-coast .proj-land,#projSvg.gf-pd-coast .proj-seamline{stroke:none !important}";document.head.appendChild(st);
+})();
 })();
