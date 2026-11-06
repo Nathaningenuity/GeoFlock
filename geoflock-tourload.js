@@ -21,9 +21,9 @@ if(!hook()){const t=setInterval(()=>{if(hook())clearInterval(t)},300)}
 let lastHash="";
 setInterval(()=>{try{
  document.body.classList.toggle("gf-touring",on());
- /* the toolkit sits right under the tour card (folded at first); in full screen it keeps its own spot */
+ /* the toolkit keeps its own spot during a tour (it no longer follows the tour card); a spot left over from before is cleared */
  try{const tr=document.querySelector("#allMapsView .gfk-tray"),card=on()&&ps.card;
-  if(tr&&card&&card.isConnected&&innerWidth>640&&!document.body.classList.contains("gf-fs")){const par=tr.offsetParent;if(par){const pr=par.getBoundingClientRect(),cr=card.getBoundingClientRect();
+  if(false&&tr&&card&&card.isConnected&&innerWidth>640&&!document.body.classList.contains("gf-fs")){const par=tr.offsetParent;if(par){const pr=par.getBoundingClientRect(),cr=card.getBoundingClientRect();
    tr.style.setProperty("top",Math.round(cr.bottom-pr.top+8)+"px","important");tr.style.setProperty("left",Math.round(cr.left-pr.left)+"px","important");tr.style.setProperty("bottom","auto","important");tr.style.setProperty("z-index","8","important");tr._gftl=1}}
   else if(tr&&tr._gftl){["top","left","bottom","z-index"].forEach(k=>tr.style.removeProperty(k));tr._gftl=0}}catch(e){}
  if(want){const age=Date.now()-wantAt;
