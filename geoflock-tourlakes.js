@@ -31,5 +31,7 @@ function apply(){try{if(typeof applyAllMapsLakesBorders==="function")applyAllMap
 /* a tour whose current stop has its own map belongs to that map too: otherwise the map's tour check ends it right after
    the switch (it worked only for tours listed under both maps, like Deserts) */
 if(typeof psCtx==="function"){const _c=psCtx;psCtx=function(){const c=_c.apply(this,arguments);try{if(c&&ps&&Array.isArray(c.tours)&&!c.tours.includes(ps.tour)){const T=PS_TOURS[ps.tour],S=psSteps()[ps.i];
-  if(T&&T.stopModes&&S&&S.mode&&typeof allMapsColorMode!=="undefined"&&S.mode===allMapsColorMode)c.tours=c.tours.concat([ps.tour])}}catch(e){}return c}}
+  const cur=typeof allMapsColorMode!=="undefined"?allMapsColorMode:null,pair=m=>m==="relief"||m==="satellite";
+  /* also a Relief/Satellite tour on either of the two (they now start on Satellite, and many were listed under Relief only) */
+  if(T&&(T.stopModes&&S&&S.mode&&S.mode===cur||(T._gfBase!=null||pair(T.map&&T.map.mode))&&pair(cur)))c.tours=c.tours.concat([ps.tour])}}catch(e){}return c}}
 })();
