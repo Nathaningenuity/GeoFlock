@@ -13,6 +13,12 @@ const LS=k=>{try{return JSON.parse(localStorage.getItem(k)||"null")}catch(e){ret
 const SV=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let SI=LS("gfSignIn");const USERS=LS("gfSimUsers")||{};const FREE=Object.assign({study:0,trivia:0,g:{}},LS("gfFreeUse")||{});
 const signed=()=>!!(SI&&SI.user);window.gfSignedIn=signed;
+/* the sign-up locks are switched off for now (LOCKS=false): everything is open without an account; the account button stays */
+const LOCKS=true;
+/* signing up is optional: every sign-up card can be skipped ("Continue without an account"), and once skipped the cards stay
+   away for the rest of the visit (sessionStorage gfSiSkip) */
+const skipped=()=>{try{return sessionStorage.getItem("gfSiSkip")==="1"}catch(e){return false}};
+const unlocked=()=>!LOCKS||signed()||skipped();
 const saveFree=()=>SV("gfFreeUse",FREE);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const G=n=>{try{return(0,eval)(n)}catch(e){return undefined}};/* top-level let/const by name */
@@ -78,7 +84,7 @@ body:not(.gf-in) #allMapsToggleRow [data-allmaps-mode]:not([data-allmaps-mode="r
 #regionRow [data-g="river"]{display:none!important}
 .acct-btn .gf-si-ico{width:18px;height:18px;display:block}`;
 document.head.appendChild(css);
-const syncBody=()=>document.body&&document.body.classList.toggle("gf-in",signed());syncBody();
+const syncBody=()=>document.body&&document.body.classList.toggle("gf-in",unlocked());syncBody();
 
 /* ---------- the account button ---------- */
 const ICO='<svg class="gf-si-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
@@ -103,20 +109,22 @@ let CUR=null;
 /* o: {mode:"in"|"up", key (a map), title, text, img, then: function to run once signed in} */
 function open(o){if(CUR)CUR.remove();o=o||{};let mode=o.mode||"up";
  const d=document.createElement("div");d.className="gf-si";d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");CUR=d;
- const shot=o.img?'<div class="shot" style="background-image:url(textures/lock/'+o.img+'.webp)"><i>🔒 Members</i><b>'+esc(o.title||"")+"</b></div>":"";
- const gate=o.text?'<h3>'+esc(o.head||"Sign up to open this")+'</h3><p>'+esc(o.text)+'</p>'+(o.loading?'<div class="ld">⏳ '+esc(o.loading)+'</div>':"")+'<p style="margin:0"><b>A free account unlocks:</b></p><ul>'+PERKS.map(p=>"<li>"+esc(p)+"</li>").join("")+"</ul>":"";
+ const shot=o.img?'<div class="shot" style="background-image:url(textures/lock/'+o.img+'.webp)"><i>✨ Free account</i><b>'+esc(o.title||"")+"</b></div>":"";
+ const gate=o.text?'<h3>'+esc(o.head||"Sign up to open this")+'</h3><p>'+esc(o.text)+'</p>'+(o.loading?'<div class="ld">⏳ '+esc(o.loading)+'</div>':"")+'<p style="margin:0"><b>Signing up is optional.</b> A free account keeps your progress and opens:</p><ul>'+PERKS.map(p=>"<li>"+esc(p)+"</li>").join("")+"</ul>":"";
  d.innerHTML='<div class="c">'+(shot?"":"")+shot+'<button type="button" class="x" aria-label="Close">✕</button><div class="bd">'+gate+(gate?"":'<h3>Welcome to GeoFlock</h3><p>Sign in to keep your progress and open every map, tour and game.</p>')+
   '<div class="tabs" role="tablist"><button type="button" data-m="up">Sign up</button><button type="button" data-m="in">Sign in</button></div>'+
   '<form novalidate><label>Username<input name="u" autocomplete="username" maxlength="24" required></label><label>Password<input name="p" type="password" autocomplete="current-password" maxlength="64" required></label>'+
-  '<div class="err" aria-live="polite"></div><div class="row"><button type="submit" class="b pri"></button>'+(o.text?'<button type="button" class="b" data-later>Not now</button>':"")+'</div></form>'+
+  '<div class="err" aria-live="polite"></div><div class="row"><button type="submit" class="b pri"></button>'+(o.text?'<button type="button" class="b" data-later>Continue without an account</button>':"")+'</div></form>'+
   '<div class="note">This is a practice sign-in: your name and password stay on this device and are not sent anywhere.</div></div></div>';
  document.body.appendChild(d);
  const f=d.querySelector("form"),err=d.querySelector(".err"),sub=f.querySelector('[type="submit"]'),pw=f.p;
  const setMode=m=>{mode=m;d.querySelectorAll("[data-m]").forEach(b=>{b.classList.toggle("on",b.dataset.m===m);b.setAttribute("aria-selected",String(b.dataset.m===m))});sub.textContent=m==="up"?"Create account":"Sign in";pw.autocomplete=m==="up"?"new-password":"current-password";err.textContent=""};
  setMode(mode);d.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
  const close=()=>{d.remove();if(CUR===d)CUR=null;document.removeEventListener("keydown",key,true)};
- const key=e=>{if(e.key==="Escape"){e.stopPropagation();close()}};document.addEventListener("keydown",key,true);
- d.querySelector(".x").onclick=close;const l=d.querySelector("[data-later]");if(l)l.onclick=close;d.addEventListener("click",e=>{if(e.target===d)close()});
+ const key=e=>{if(e.key==="Escape"){e.stopPropagation();skip()}};document.addEventListener("keydown",key,true);
+ /* a sign-up card is optional: closing it (or Continue without an account) carries on with what was asked */
+ const skip=()=>{close();if(o.text){try{sessionStorage.setItem("gfSiSkip","1")}catch(e){}try{document.body.classList.add("gf-in")}catch(e){}if(o.then)setTimeout(()=>{try{o.then()}catch(e){}},30)}};
+ d.querySelector(".x").onclick=skip;const l=d.querySelector("[data-later]");if(l)l.onclick=skip;d.addEventListener("click",e=>{if(e.target===d)skip()});
  f.onsubmit=async e=>{e.preventDefault();const u=f.u.value.trim(),p=pw.value;
   if(u.length<2){err.textContent="Choose a username of at least 2 characters.";f.u.focus();return}
   if(!/^[\w .\-]+$/.test(u)){err.textContent="Use letters, numbers, spaces, dots, dashes or underscores.";f.u.focus();return}
@@ -136,17 +144,19 @@ function preload(k){/* the sign-up card buys time: the map starts loading behind
  try{if(k==="history"&&window.GF_HIST2&&GF_HIST2.featsAt)GF_HIST2.featsAt(GF_HIST2.year())}catch(e){}
  try{const b=document.querySelector('[data-allmaps-mode="'+k+'"]');const src=b&&b.dataset.src;if(src)new Image().src=src}catch(e){}}
 function mapGate(k,el){preload(k);const name=MAPS[k]||"This map";
- open({img:IMG[k]||k,title:name,head:"Sign up to open the "+name.replace(/ Map$/,"")+(/map|lights|time|projections/i.test(name)?"":" map"),text:"Access to this map requires a free account. "+(BLURB[k]||""),loading:"The map is loading while you sign up.",
+ open({img:IMG[k]||k,title:name,head:"Sign up to open the "+name.replace(/ Map$/,"")+(/map|lights|time|projections/i.test(name)?"":" map"),text:(BLURB[k]||""),loading:"The map is loading while you sign up.",
   then:()=>{if(el&&el.isConnected)el.click()}})}
 const keyOf=el=>el.dataset&&el.dataset.allmapsMode||(el.id==="projTabChip"?"projections":el.id==="gfDeepChip"?"deeptime":el.id==="gfPrintChip"?"print":null);
-document.addEventListener("click",e=>{if(signed()||!e.target.closest)return;
+document.addEventListener("click",e=>{if(unlocked()||!e.target.closest)return;
  const el=e.target.closest('#allMapsToggleRow [data-allmaps-mode]:not([data-allmaps-mode="relief"]),#projTabChip,#gfDeepChip,#gfPrintChip');if(!el)return;
- if(tourOn("geo"))return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();mapGate(keyOf(el),el)},true);
+ if(freeOn())return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();mapGate(keyOf(el),el)},true);
 const tourOn=id=>{try{const p=G("ps");return!!p&&(!id||p.tour===id)}catch(e){return false}};
+let launching=null,launchAt=0;/* a free tour being launched (its map switches before the tour is on) */
+const freeOn=()=>{try{const p=G("ps"),w=G("psSwitching");if(p&&launching&&p.tour===launching)launching=null;return!!(p&&freeTour(p.tour))||!!(w&&freeTour(w.id))||!!(launching&&freeTour(launching)&&Date.now()-launchAt<20000)}catch(e){return false}};
 /* any other way onto a locked map (links, buttons elsewhere): back to Relief, and the card */
 let lastBlock=0;
-setInterval(()=>{if(signed())return;try{
- if(G("appMode")!=="allmaps")return;if(tourOn("geo"))return;
+setInterval(()=>{if(unlocked())return;try{
+ if(G("appMode")!=="allmaps")return;if(freeOn())return;
  const m=G("allMapsColorMode"),on=G("allMapsColorModeOn"),pr=G("proj");
  let k=null;if(on&&m&&m!=="relief")k=m;else if(pr&&pr.on)k="projections";else if(document.querySelector("#gfDeepChip.active,#gfDeepChip.on"))k="deeptime";
  if(!k)return;if(tourOn())return;/* a tour that was started some other way is stopped by the tour gate */
@@ -156,65 +166,69 @@ setInterval(()=>{if(signed())return;try{
 let e_skip=false;
 
 /* ---------- tours and Human Geo ---------- */
-const freeTour=id=>id==="geo"||/^hg1/.test(String(id||""));
+/* the six tours on the cover page are open to everyone, with their maps */
+const COVER6=["geo","pop","plates","climate","explorers","hempires"];
+const freeTour=id=>COVER6.includes(id)||/^hg1/.test(String(id||""));
 function tourGate(id,then){let nm="";try{nm=PS_TOURS[id]&&PS_TOURS[id].name||""}catch(e){}
- open({img:null,head:"Sign up for this guided tour",text:(nm?nm+": ":"")+"guided tours other than the Guided tour on geography need a free account.",then})}
+ open({img:null,head:"Sign up for this guided tour",text:(nm?nm+": ":"")+"guided tours beyond the six on the front page are best with a free account (optional): it keeps your progress.",then})}
 function W(name,mk){const f=window[name];if(typeof f!=="function"||f._gfSi)return;const w=mk(f);w._gfSi=1;try{window[name]=w}catch(e){}}
 function wrapAll(){
- W("psLaunchTour",o=>function(id){if(!signed()&&id&&!freeTour(id)){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}return o.apply(this,arguments)});
- W("psStart",o=>function(want){if(!signed()){let id=want;if(!id)try{id=psCtx().tour}catch(e){}
+ W("psLaunchTour",o=>function(id){launching=id;launchAt=Date.now();if(!unlocked()&&id&&!freeTour(id)){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}return o.apply(this,arguments)});
+ W("psStart",o=>function(want){if(!unlocked()){let id=want;if(!id)try{id=psCtx().tour}catch(e){}
    if(!freeTour(id)){const a=arguments,t=this;tourGate(id,()=>o.apply(t,a));return}}return o.apply(this,arguments)});
  /* Study & Quiz: 10 questions */
- W("finalizeAnswer",o=>function(){if(!signed()){FREE.study++;saveFree()}return o.apply(this,arguments)});
- W("spAnswer",o=>function(){if(!signed()){if(FREE.study>=10){studyGate();return}FREE.study++;saveFree()}return o.apply(this,arguments)});
- W("renderQuizCard",o=>function(){if(!signed()&&FREE.study>=10){let rd=G("round");if(rd&&rd.queue&&rd.idx<rd.queue.length&&rd.idx>0){studyGate();return}}return o.apply(this,arguments)});
+ W("finalizeAnswer",o=>function(){if(!unlocked()){FREE.study++;saveFree()}return o.apply(this,arguments)});
+ W("spAnswer",o=>function(){if(!unlocked()){if(FREE.study>=10){studyGate();return}FREE.study++;saveFree()}return o.apply(this,arguments)});
+ W("renderQuizCard",o=>function(){if(!unlocked()&&FREE.study>=10){let rd=G("round");if(rd&&rd.queue&&rd.idx<rd.queue.length&&rd.idx>0){studyGate();return}}return o.apply(this,arguments)});
  /* Trivia: 10 questions */
- W("triviaRecord",o=>function(){if(!signed()){FREE.trivia++;saveFree()}return o.apply(this,arguments)});
- W("triviaNext",o=>function(){if(!signed()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
- W("triviaStart",o=>function(){if(!signed()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
- W("tsPickAns",o=>function(){if(!signed()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
- W("jpCredit",o=>function(){if(!signed()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
+ W("triviaRecord",o=>function(){if(!unlocked()){FREE.trivia++;saveFree()}return o.apply(this,arguments)});
+ W("triviaNext",o=>function(){if(!unlocked()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
+ W("triviaStart",o=>function(){if(!unlocked()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
+ W("tsPickAns",o=>function(){if(!unlocked()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
+ W("jpCredit",o=>function(){if(!unlocked()&&FREE.trivia>=10){triviaGate();return}return o.apply(this,arguments)});
  /* games */
  const inGames=()=>G("appMode")==="games";
  const gc=id=>FREE.g[id]||0,gi=(id,n)=>{FREE.g[id]=gc(id)+(n||1);saveFree()};
- const block=(id,lim)=>!signed()&&inGames()&&gc(id)>=lim;
+ const block=(id,lim)=>!unlocked()&&inGames()&&gc(id)>=lim;
  const rnd=(fn,id)=>W(fn,o=>function(){if(block(id,1)){gameGate(id);return}return o.apply(this,arguments)});
- const end=(fn,id)=>W(fn,o=>function(){const r=o.apply(this,arguments);if(!signed()&&inGames())gi(id);return r});
+ const end=(fn,id)=>W(fn,o=>function(){const r=o.apply(this,arguments);if(!unlocked()&&inGames())gi(id);return r});
  /* one round: Globle, Border Chain, Memory Match, Silhouette Rush */
  rnd("submitGlobleGuess","globle");end("recordGlobleWin","globle");end("recordGlobleGiveUp","globle");
  rnd("submitChainStep","chain");end("recordChainSolve","chain");end("recordChainGiveUp","chain");
  W("memFlip",o=>function(){if(block("memory",1)){gameGate("memory");return}const r=o.apply(this,arguments);
-   try{const m=G("mem");if(!signed()&&inGames()&&m&&m.matched&&m.matched.size===memPairs()&&!m._gfSi){m._gfSi=1;gi("memory")}}catch(e){}return r});
+   try{const m=G("mem");if(!unlocked()&&inGames()&&m&&m.matched&&m.matched.size===memPairs()&&!m._gfSi){m._gfSi=1;gi("memory")}}catch(e){}return r});
  W("srHit",o=>function(){if(block("silrush",1)){gameGate("silrush");return}return o.apply(this,arguments)});end("srOver","silrush");
  /* 5 questions: Higher or Lower, Flagpie, Flag Reveal, Where is this?, Scramble, Mystery Country, Neighbours, Close Enough */
- W("hiloAnswer",o=>function(){if(block("hilo",5)){gameGate("hilo");return}const h=G("hilo"),was=h&&h.picked;const r=o.apply(this,arguments);if(!signed()&&inGames()&&h&&!was&&h.picked)gi("hilo");return r});
+ W("hiloAnswer",o=>function(){if(block("hilo",5)){gameGate("hilo");return}const h=G("hilo"),was=h&&h.picked;const r=o.apply(this,arguments);if(!unlocked()&&inGames()&&h&&!was&&h.picked)gi("hilo");return r});
  rnd5("submitFlagpieGuess","flagpie");end("fpFinish","flagpie");
  W("frNext",o=>function(){if(block("reveal",5)){gameGate("reveal");return}return o.apply(this,arguments)});end("frFinish","reveal");
  rnd5("wiGuess","whereis");end("wiFinish","whereis");
- W("scrSubmit",o=>function(){if(block("scramble",5)){gameGate("scramble");return}const r=o.apply(this,arguments);if(!signed()&&inGames())gi("scramble");return r});
- W("myGuess",o=>function(){if(block("mystery",5)){gameGate("mystery");return}const m=G("MY"),was=m&&m.done;const r=o.apply(this,arguments);if(!signed()&&inGames()&&m&&!was&&m.done)gi("mystery");return r});
- W("nbPick",o=>function(){if(!signed()&&inGames()){if(gc("neighbours")>=5){gameGate("neighbours");return}gi("neighbours")}return o.apply(this,arguments)});
- W("pqRender",o=>function(){const q=G("pq");if(!signed()&&inGames()&&q){const n=(q.log||[]).length;if(q._gfN==null||n<q._gfN)q._gfN=n;if(n>q._gfN){gi("popguess",n-q._gfN);q._gfN=n}
+ W("scrSubmit",o=>function(){if(block("scramble",5)){gameGate("scramble");return}const r=o.apply(this,arguments);if(!unlocked()&&inGames())gi("scramble");return r});
+ W("myGuess",o=>function(){if(block("mystery",5)){gameGate("mystery");return}const m=G("MY"),was=m&&m.done;const r=o.apply(this,arguments);if(!unlocked()&&inGames()&&m&&!was&&m.done)gi("mystery");return r});
+ W("nbPick",o=>function(){if(!unlocked()&&inGames()){if(gc("neighbours")>=5){gameGate("neighbours");return}gi("neighbours")}return o.apply(this,arguments)});
+ W("pqRender",o=>function(){const q=G("pq");if(!unlocked()&&inGames()&&q){const n=(q.log||[]).length;if(q._gfN==null||n<q._gfN)q._gfN=n;if(n>q._gfN){gi("popguess",n-q._gfN);q._gfN=n}
    else if(q.state!=="setup"&&q.state!=="end"&&gc("popguess")>=5&&q._gfR===n){gameGate("popguess");return}q._gfR=n}return o.apply(this,arguments)});
  W("pqStart",o=>function(){if(block("popguess",5)){gameGate("popguess");return}return o.apply(this,arguments)});
  function rnd5(fn,id){W(fn,o=>function(){if(block(id,5)){gameGate(id);return}return o.apply(this,arguments)})}
  /* Trace the River is hidden for now */
  try{const N=G("NEW_GAMES");if(N){const i=N.findIndex(g=>g[0]==="river");if(i>=0)N.splice(i,1)}}catch(e){}}
 wrapAll();[500,1500,4000,9000].forEach(t=>setTimeout(wrapAll,t));
-function apGate(u,then){open({img:null,head:"Sign up for Unit "+u+" of Human Geo",text:"Unit 1 of the AP Human Geography course is free. Units 2 to 7 (tours, labs, practice and unit tests) need a free account.",then})}
+function apGate(u,then){open({img:null,head:"Sign up for Unit "+u+" of Human Geo",text:"Unit 1 of the AP Human Geography course is free. Units 2 to 7 (tours, labs, practice and unit tests) are best with a free account (optional): it keeps your progress.",then})}
 function studyGate(){open({head:"You've answered your 10 free questions",text:"Sign up for free to keep practising in Study & Quiz, with every subject and mode.",then:()=>{try{renderQuizCard()}catch(e){}}})}
 function triviaGate(){open({head:"You've answered your 10 free trivia questions",text:"Sign up for free for unlimited trivia, topic quizzes, speed rounds and Jeopardy.",then:()=>{try{triviaNext()}catch(e){}}})}
 const GNAME={globle:"Globle",chain:"Border Chain",memory:"Memory Match",silrush:"Silhouette Rush",hilo:"Higher or Lower",flagpie:"Flagpie",reveal:"Flag Reveal",whereis:"Where is this?",scramble:"Scramble",mystery:"Mystery Country",neighbours:"Neighbours",popguess:"Close Enough",langid:"Which Language?",climguess:"Guess the Climate"};
 function gameGate(id){const one=["globle","chain","memory","silrush"].includes(id);
  open({head:"That was your free "+(one?"round":"5 questions")+" of "+(GNAME[id]||"this game"),text:"Sign up for free to keep playing "+(GNAME[id]||"this game")+" and every other game as much as you like."})}
-document.addEventListener("click",e=>{if(signed()||!e.target.closest||e_skip)return;
+document.addEventListener("click",e=>{if(unlocked()||!e.target.closest||e_skip)return;
  {const h=e.target.closest("[data-hggo]");if(h){const v=h.dataset.hggo,m=/(?:t:hg|u)(\d+)/.exec(v),u=m?+m[1]:1;
   if(u>1){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();apGate(u,()=>{if(h.isConnected)h.click()});return}}}
  if(G("appMode")!=="games")return;const g=G("activeGame");
  /* closure games: Which Language? and Guess the Climate, 5 answers each */
  const lang=g==="langid"&&e.target.closest("#gamesView .li-o"),clim=g==="climguess"&&e.target.closest("#gamesView .cg-go, #gamesView .cg-sug li, #gamesView .cg-skip");
  if(lang||clim){const id=lang?"langid":"climguess";if((FREE.g[id]||0)>=5){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();gameGate(id);return}FREE.g[id]=(FREE.g[id]||0)+1;saveFree()}},true);
-document.addEventListener("keydown",e=>{if(signed()||e.key!=="Enter")return;try{if(G("appMode")==="games"&&G("activeGame")==="climguess"&&e.target.closest&&e.target.closest("#gamesView")&&e.target.tagName==="INPUT"){
+document.addEventListener("keydown",e=>{if(unlocked()||e.key!=="Enter")return;try{if(G("appMode")==="games"&&G("activeGame")==="climguess"&&e.target.closest&&e.target.closest("#gamesView")&&e.target.tagName==="INPUT"){
  if((FREE.g.climguess||0)>=5){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();gameGate("climguess");return}FREE.g.climguess=(FREE.g.climguess||0)+1;saveFree()}}catch(x){}},true);
 window.gfFreeUse=()=>JSON.parse(JSON.stringify(FREE));
+/* signing up is optional now: no lock marks on the maps and tours */
+{const st=document.createElement("style");st.textContent='body:not(.gf-in) #allMapsToggleRow [data-allmaps-mode]::before,body:not(.gf-in) #allMapsToggleRow [data-allmaps-mode]::after,body:not(.gf-in) #projTabChip::before,body:not(.gf-in) #gfDeepChip::before,body:not(.gf-in) #gfPrintChip::before,body:not(.gf-in) .gf-lock,body:not(.gf-in) .ps-lock{display:none !important}';document.head.appendChild(st)}
 })();
