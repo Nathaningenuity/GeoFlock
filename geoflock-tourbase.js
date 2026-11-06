@@ -30,7 +30,7 @@ let busy=0;
 setInterval(()=>{try{if(typeof ps==="undefined"||!ps||(typeof psSwitching!=="undefined"&&psSwitching))return;const id=ps.tour,T=PS_TOURS[id];if(!T||!T.map||T._gfBase==null)return;
  const want=PICK[id]&&PAIR[PICK[id]]?PICK[id]:T._gfBase;if(T.map.mode!==want&&PAIR[T.map.mode])T.map.mode=want;
  const S=psSteps()[ps.i],cur=allMapsColorModeOn?allMapsColorMode:null;
- if(PAIR[cur]&&cur!==want&&(!S||!S.mode||PAIR[S.mode])&&performance.now()-busy>1500){busy=performance.now();const b=document.querySelector('#allMapsToggleRow [data-allmaps-mode="'+want+'"]');if(b){guard=1;b.click();guard=0}}
+ if(PAIR[cur]&&cur!==want&&(!S||!S.mode||PAIR[S.mode]&&!S.modeFixed)/* modeFixed: the stop needs that exact map (Samosir needs Relief) */&&performance.now()-busy>1500){busy=performance.now();const b=document.querySelector('#allMapsToggleRow [data-allmaps-mode="'+want+'"]');if(b){guard=1;b.click();guard=0}}
  if(window.gfDNG&&gfDNG.on()&&T._gfOrig==="relief"&&allMapsColorMode==="satellite"){try{gfDNG.state.wasFlat=false}catch(e){}gfDNG.set(false)}}catch(e){}},300);
 window.gfTourBase={apply,SAT,pick:PICK};
 })();

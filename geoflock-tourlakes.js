@@ -14,10 +14,8 @@ const ON=new Set([
  "animals|The axolotl’s last lake","islandlife|Lakes are islands too","islandlife|Now explore","caves|The longest cave: Mammoth Cave",
  "weather|The lightning capital","ice|Driving on lakes","amigration|The falcons of Nagaland"]);
 /* stops that need the Relief map for fine detail (an island inside a lake) */
-/* (Samosir in Lake Toba stays on Satellite with its lake painted blue, which shows the island clearly. Moving it to Relief
-   ends the islands tour when the next stop switches back: see the task list) */
-const RELIEF={};
-try{Object.keys(RELIEF).forEach(k=>{const[t,title]=k.split("|"),T=PS_TOURS[t];if(!T)return;const S=(T.steps||[]).find(s=>s.title===title);if(S){S.mode="relief";T.stopModes=true}})}catch(e){}
+const RELIEF={"islands|An island in a lake on an island":1};
+try{Object.keys(RELIEF).forEach(k=>{const[t,title]=k.split("|"),T=PS_TOURS[t];if(!T)return;const S=(T.steps||[]).find(s=>s.title===title);if(S){S.mode="relief";S.modeFixed=1;T.stopModes=true}})}catch(e){}
 /* satellite tours no longer switch Lakes on for the whole tour: each stop decides */
 try{Object.values(PS_TOURS).forEach(T=>{if(T&&T.map&&T.map.mode==="satellite"&&Array.isArray(T.map.on))T.map.on=T.map.on.filter(id=>id!=="allMapsLakesToggle")})}catch(e){}
 /* during a tour on Satellite the Lakes layer follows the stop (an older rule kept it off for whole tours); the viewer's own
@@ -29,5 +27,9 @@ function apply(){try{if(typeof applyAllMapsLakesBorders==="function")applyAllMap
 {const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);setTimeout(apply,0);setTimeout(apply,800);return r}}
 {const _e=psEnd;psEnd=function(){const r=_e.apply(this,arguments);setTimeout(apply,60);return r}}
 /* stops whose map is changed here: psSteps() hands out copies, so the change is made on those too */
-{const _s=psSteps;psSteps=function(){const L=_s.apply(this,arguments);try{if(ps&&L)L.forEach(S=>{if(S&&RELIEF[ps.tour+"|"+S.title]&&S.mode!=="relief")S.mode="relief"})}catch(e){}return L}}
+{const _s=psSteps;psSteps=function(){const L=_s.apply(this,arguments);try{if(ps&&L)L.forEach(S=>{if(S&&RELIEF[ps.tour+"|"+S.title]){S.mode="relief";S.modeFixed=1}})}catch(e){}return L}}
+/* a tour whose current stop has its own map belongs to that map too: otherwise the map's tour check ends it right after
+   the switch (it worked only for tours listed under both maps, like Deserts) */
+if(typeof psCtx==="function"){const _c=psCtx;psCtx=function(){const c=_c.apply(this,arguments);try{if(c&&ps&&Array.isArray(c.tours)&&!c.tours.includes(ps.tour)){const T=PS_TOURS[ps.tour],S=psSteps()[ps.i];
+  if(T&&T.stopModes&&S&&S.mode&&typeof allMapsColorMode!=="undefined"&&S.mode===allMapsColorMode)c.tours=c.tours.concat([ps.tour])}}catch(e){}return c}}
 })();
