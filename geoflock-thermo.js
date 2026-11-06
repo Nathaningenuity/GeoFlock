@@ -92,14 +92,14 @@ function render(){const p=mount();if(!p)return;p.style.display=quiet?"none":"";l
  else if(!D)body='<p class="gfth-help">Loading the climate data…</p>';
  else if(!last.c)body='<p class="gfth-help"><b>'+fmtLL(last.ll)+'</b>: open sea. Climate graphs are for places on land; click on land.</p>';
  else{const{T,P}=last.c,k=koppen(T,P,last.ll[1]),MAT=T.reduce((a,b)=>a+b)/12,MAP=P.reduce((a,b)=>a+b);
-  body='<div class="gfth-where"><b>'+esc(last.name||fmtLL(last.ll))+'</b>'+(last.name?'<small>'+fmtLL(last.ll)+'</small>':'')+'</div>'+
+  body='<div class="gfth-where"><b>'+esc(last.name||fmtLL(last.ll))+'</b>'+(last.name?'<small>'+fmtLL(last.ll)+'</small>':'')+'<button type="button" class="gfth-del" title="Remove this thermometer from the map">🗑 Delete</button></div>'+
    '<div class="gfth-now">Today ('+new Date().toLocaleDateString(undefined,{day:"numeric",month:"long"})+'): usually about <b>'+todayT(T).toFixed(1).replace("-","−")+' °C</b></div><div class="gfth-k"><span class="kc">'+k+'</span>'+esc(KN[k]||"")+'</div>'+graph(T,P)+
    '<div class="gfth-sum"><span><i class="tc"></i>Average '+MAT.toFixed(1)+' °C · warmest '+Math.max(...T).toFixed(1)+' °C · coldest '+Math.min(...T).toFixed(1)+' °C</span><span><i class="pc"></i>Rain and snow '+Math.round(MAP).toLocaleString()+' mm a year</span></div>'}
  p.innerHTML='<div class="gfth-h" title="Drag to move"><span class="gfth-ic">'+ICON+'</span><b>Thermometer'+(items.length?' <small>'+items.length+' of '+MAXT+'</small>':'')+'</b><button type="button" class="gfth-x" aria-label="Close">×</button></div>'+
   '<div class="gfth-dropr"><button type="button" class="gfth-drop'+(drop?' on':'')+'" aria-pressed="'+drop+'" title="'+(drop?'Clicks on the map place thermometers (Esc stops)':'Turn on to place thermometers with a click')+'"><i></i>Drop thermometers</button><small>'+(drop?'Click on land · Esc to stop':'Off: the map pans as usual')+'</small></div>'+tabs()+body+
   (items.length>=MAXT?'<p class="gfth-help gfth-full">That is the most thermometers: the next one replaces the oldest.</p>':'')+
   '<p class="gfth-src">WorldClim 2.1 monthly averages, 1970–2000 (CC BY 4.0), at about 55 km; the Köppen type is worked out from the same numbers.</p>';
- p.querySelector(".gfth-x").onclick=()=>stop();p.querySelector(".gfth-drop").onclick=()=>setDrop(!drop);
+ p.querySelector(".gfth-x").onclick=()=>stop();{const d=p.querySelector(".gfth-del");if(d)d.onclick=()=>{const i=items.indexOf(last);if(i>=0)remove(i)}}p.querySelector(".gfth-drop").onclick=()=>setDrop(!drop);
  p.querySelectorAll("[data-ti]").forEach(b=>b.onclick=e=>{const x=e.target.closest("[data-tx]");if(x){remove(+x.dataset.tx);return}show(+b.dataset.ti)});place()}
 function show(i){if(!items[i])return;quiet=false;last=items[i];if(!on){on=true;sync()}render()}
 function remove(i){const it=items[i];if(!it)return;if(it.pin)it.pin.remove();if(it.tag)it.tag.remove();items.splice(i,1);if(last===it)last=items[items.length-1]||null;render()}
@@ -115,11 +115,11 @@ function mkPin(it,g){const h=g.host;if(it.pin&&it.pin.parentNode===h)return;if(i
   p.addEventListener("pointermove",mv);p.addEventListener("pointerup",up);p.addEventListener("pointercancel",up)});
  p.addEventListener("click",e=>{e.stopPropagation();e.preventDefault()});
  const t=document.createElement("div");t.className="gfth-tag";h.appendChild(t);it.tag=t}
-/* the picked thermometer gets a small bar under it: Duplicate, Delete */
+/* (the picked thermometer used to get a bar under it; Delete is now in the panel) */
 let bar=null;
 function dup(it){const g=G();if(!g)return;let ll=null;try{const q=g.projection()(it.ll);if(q)ll=g.projection().invert([q[0]+34,q[1]+6])}catch(e){}
  if(!ll||!isFinite(ll[0]))ll=[it.ll[0]+1.5,it.ll[1]];pick([((ll[0]+540)%360)-180,ll[1]])}
-function placeBar(g,h){const it=last,show=on&&!quiet&&it&&it.pin&&it.pin.style.display!=="none"&&items.includes(it);
+function placeBar(g,h){if(bar){bar.remove();bar=null}return;/* the bar under the pin is gone: Delete is in the panel now, and Duplicate was dropped */const it=last,show=false;
  if(!show){if(bar)bar.hidden=true;return}
  if(!bar||bar.parentNode!==h){if(bar)bar.remove();bar=document.createElement("div");bar.className="gfth-bar";
   bar.innerHTML='<button type="button" data-a="dup" title="Another thermometer next to this one">⧉ Duplicate</button><button type="button" data-a="del" class="del" title="Remove this thermometer">🗑 Delete</button>';
@@ -204,6 +204,7 @@ const css=document.createElement("style");css.textContent=`
 .gfth-drop.on{ background:#c0392b; border-color:#c0392b; color:#fff; } .gfth-drop.on i{ background:rgba(255,255,255,.45); } .gfth-drop.on i::after{ left:14px; }
 .gfth-bar{ position:absolute; z-index:26; transform:translateX(-50%); display:flex; gap:4px; padding:3px; border-radius:10px; background:rgba(20,28,48,.92); box-shadow:0 3px 10px rgba(0,0,0,.3); }
 .gfth-bar[hidden]{ display:none; }
+.gfth-where{ position:relative; padding-right:74px; } .gfth-del{ position:absolute; right:0; top:0; border:1px solid rgba(192,57,43,.45); background:none; color:#c0392b; border-radius:999px; padding:2px 9px; font:700 11px system-ui,sans-serif; cursor:pointer; } .gfth-del:hover{ background:#c0392b; color:#fff; }
 .gfth-bar button{ border:0; border-radius:7px; padding:4px 9px; background:rgba(255,255,255,.1); color:#fff; font:700 11.5px system-ui,sans-serif; cursor:pointer; white-space:nowrap; }
 .gfth-bar button:hover{ background:rgba(255,255,255,.22); } .gfth-bar button.del:hover{ background:#c0392b; }
 .gfth{ position:absolute; left:10px; bottom:10px; z-index:9; width:min(370px,calc(100% - 20px)); background:#fff; color:#1d2433; border-radius:14px; box-shadow:0 8px 26px rgba(0,0,0,.25); padding:0 10px 8px; font-size:12.5px; }
