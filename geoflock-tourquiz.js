@@ -67,6 +67,11 @@ function start(id,opts){try{if(typeof ps!=="undefined"&&ps)psEnd()}catch(e){}if(
 function stop(silent){if(!Z)return;try{gfPickQ=null}catch(e){}unarmPlace();if(Z.p)Z.p.remove();clearMark();Z=null}
 function dots(){return'<div class="gftq-dots">'+Z.L.map((q,i)=>{const r=Z.res[i];return'<i class="'+(i===Z.k?"cur ":"")+(r==null?"":r>=1?"ok":r>0?"half":"no")+'"></i>'}).join("")+"</div>"}
 const TYPE={mem:"From the tour",why:"Why?",map:"On the map",beyond:"Beyond the tour",use:"Use the idea"};
+/* on a map question the panel must not sit on the answer: if the place is under it, move to the other side of the map */
+function dodge(q){if(!Z||!Z.p)return;Z.p.classList.toggle("gftq-mapq",!!(q.pick||q.ll));let ll=q.ll;try{if(!ll&&q.pick){const c=COUNTRY_CENTROIDS[q.pick[0]];if(c)ll=[c[1],c[0]]}}catch(e){}
+ const go=()=>{if(!Z||!Z.p)return;pos();if(!ll)return;try{const g=amGlobe,r=g.canvas.getBoundingClientRect(),xy=g.projection()(ll);if(!xy)return;const x=r.left+xy[0],y=r.top+xy[1],a=Z.p.getBoundingClientRect();
+  if(x>a.left-40&&x<a.right+40&&y>a.top-40&&y<a.bottom+40){const m=mapEl().getBoundingClientRect();Z.p.style.left=Math.max(8,Math.min(innerWidth-a.width-8,m.right-a.width-12))+"px"}}catch(e){}};
+ setTimeout(go,80);setTimeout(go,700)}
 function render(){const q=Z.L[Z.k],p=Z.p;const lvl=q.d||3;
  p.innerHTML='<div class="gftq-h"><span>'+esc(tourName(Z.id))+' · quiz</span><button type="button" class="gftq-x" aria-label="Close">×</button></div>'+dots()+
   '<div class="gftq-meta"><span>Question '+(Z.k+1)+' of '+Z.L.length+'</span><span class="gftq-lv">'+"●".repeat(Math.min(5,lvl))+"○".repeat(5-Math.min(5,lvl))+'</span><span class="gftq-t">'+esc(TYPE[q.t]||"")+'</span></div>'+
@@ -78,6 +83,7 @@ function render(){const q=Z.L[Z.k],p=Z.p;const lvl=q.d||3;
  try{gfPickQ=null}catch(e){}unarmPlace();clearMark();
  /* a map question starts with the whole world in view */
  if(q.pick||q.ll)try{const g=amGlobe;if(g._flat){g.zoom=1;g.request()}else g.lookAt(g.rot?-g.rot[0]:20,15,1)}catch(e){}
+ dodge(q);
  if(q.pick){try{gfPickQ=(code,name)=>{gfPickQ=null;const ok=q.pick.includes(String(code).toLowerCase());answer(ok?1:0,{code,name})}}catch(e){}}
  if(q.ll)armPlace(ll=>{const km=d3.geoDistance(ll,q.ll)*6371,R=q.km||300;answer(km<=R?1:km<=R*3?.5:0,{ll,km})})}
 function answer(v,how,skipped){if(!Z)return;const q=Z.L[Z.k],p=Z.p;try{gfPickQ=null}catch(e){}unarmPlace();Z.res[Z.k]=v;Z.score+=v;
