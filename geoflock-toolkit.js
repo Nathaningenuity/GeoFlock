@@ -215,7 +215,7 @@ function ghostButtons(){const h=host();document.querySelectorAll(".gfk-gx").forE
 /* ================= the tray ================= */
 /* the pens are put away for now (the Geometry set has its own pen); the ruler has its own slot again */
 const TOOLS=[["compass","Compass","Drop it on the map: the needle points to north there, and turns as the map turns"],["ruler","Ruler","Lay it on the map, then click two places: the distance between them"],["geometry","Geometry set","Ruler, drawing compass, range rings, straight lines, shapes, and a place's latitude and longitude around the world"],
- ["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Roll for somewhere random"],
+ ["pins","Pins","Drag a pin onto the map, or click the tin and then click the map"],["dice","Dice","Drag it onto the map (or press it): whatever it lands on, a fun fact"],
  ["palette","Palette","Map colours: styles, your own colours, recolour this map"],["dragger","Country dragger","Turn on, then press any country and drag it to see its true size elsewhere"],["sea","Sea level changer","Raise or lower the sea"],["shovel","Shovel","Cut a cross-section of the land and sea floor"]];
 function artFor(t){const u=uid();return t==="compass"?ART.compass(u,0):t==="ruler"?ART.ruler(u):t==="pens"?ART.pencase(u):t==="pins"?ART.pinbox(u):t==="dice"?ART.die(u,5):t==="palette"?ART.palette(u):t==="dragger"?ART.dragger(u):t==="shovel"?ART.shovel(u):t==="geometry"?ART.geometry(u):ART.sea(u)}
 function buildTray(){const tr=document.createElement("div");tr.id="gfKit";tr.className="gfk-tray";
@@ -312,13 +312,13 @@ function clickTool(t,el){const h=host();if(!h)return;const r=h.getBoundingClient
  if(t==="compass"||t==="ruler"){if(S.place[t])putAway(t);else dropTool(t,r.left+r.width*(t==="compass"?.18:.5),r.top+r.height*(t==="compass"?.55:.8))}
  else if(t==="pens")penPicker();else if(t==="pins")pinMenu();else if(t==="dice")roll(el);else if(t==="palette")openPalette();else if(t==="dragger")dragPick();else if(t==="sea")seaPanel();else if(t==="shovel")shovelOpen();else if(t==="geometry")geoPanel()}
 function dropTool(t,cx,cy){if(t==="compass")placeAt("compass",cx,cy);
- else if(t==="ruler"){placeAt("ruler",cx,cy);measure(true)}
+ else if(t==="ruler"){placeAt("ruler",cx,cy);measure(true);toast("Click one point, then another: a straight line between them, with the distance")}
  else if(t==="pins")newPin(toLL(cx,cy),cx,cy);
  else if(t==="dice")roll(null,cx,cy);
  else if(t==="dragger"){const f=countryAt(cx,cy);dragOn(true);if(f&&f.properties.c!=="aq")lift(f,toLL(cx,cy))}
  else if(t==="geometry"){geoPanel();const ll=toLL(cx,cy);if(ll&&GEO.mode==="lineup")lineUp(ll)}
  else if(t==="pens")penPicker();else if(t==="palette")openPalette();else if(t==="sea")seaPanel();else if(t==="shovel")shovelOpen()}
-function clickPlaced(t){if(t==="ruler")measure(true)}
+function clickPlaced(t){if(t==="ruler"){measure(true);toast("Click one point, then another: a straight line between them, with the distance")}}
 function putAway(t){const o=S.place[t];if(o){o.el.remove();delete S.place[t]}if(t==="ruler")measure(false);if(t==="pens")penStop();if(t==="pins")pinArm(false);if(t==="dragger")dragOn(false);sync()}
 function measure(on){try{if(onGlobe()){if(!!amGlobe._measure!==on)amGlobe.toggleMeasure()}else amtToggleMeasure(on)}catch(e){}}
 
@@ -498,6 +498,12 @@ document.addEventListener("pointerdown",e=>{if(e.button||!host()||S.pen||S.dragg
 /* --- dice --- */
 function roll(el,cx,cy){const tr=S.tray&&S.tray.querySelector(".gfk-dice");if(tr){tr.classList.remove("gfk-roll");void tr.offsetWidth;tr.classList.add("gfk-roll")}
  if(cx!=null){const h=host(),hr=h.getBoundingClientRect(),d=document.createElement("div");d.className="gfk-thrown";d.innerHTML=ART.die(uid(),1+Math.floor(Math.random()*6));d.style.left=cx-hr.left+"px";d.style.top=cy-hr.top+"px";h.appendChild(d);setTimeout(()=>d.remove(),1100)}
+ /* a die thrown onto the map lands there and tells you something about what it landed on (geoflock-dicefacts.js);
+    pressed in the tray, it is thrown at a random spot of the map in view */
+ if(window.gfDiceLand){if(cx==null){const h=host(),hr=h.getBoundingClientRect();let px=null;
+   for(let k=0;k<40&&!px;k++){const x=hr.left+hr.width*(.15+.7*Math.random()),y=hr.top+hr.height*(.15+.7*Math.random());if(countryAt(x,y))px=[x,y]}
+   if(px){cx=px[0];cy=px[1];const d=document.createElement("div");d.className="gfk-thrown";d.innerHTML=ART.die(uid(),1+Math.floor(Math.random()*6));d.style.left=cx-hr.left+"px";d.style.top=cy-hr.top+"px";h.appendChild(d);setTimeout(()=>d.remove(),1100)}}
+  if(cx!=null){setTimeout(()=>{try{gfDiceLand(cx,cy,toLL(cx,cy),countryAt(cx,cy))}catch(e){console.error(e)}},650);return}}
  setTimeout(()=>{try{if(onGlobe())amGlobe.surprise();else amtDice()}catch(e){console.error(e)}},cx!=null?650:450)}
 
 /* --- country dragger: works like "drag countries" on the Projections page. While it is on, press a country and a copy
@@ -681,7 +687,7 @@ const css=document.createElement("style");css.textContent=`
 .gfk-slot:hover{ transform:translateY(-3px) rotate(-2deg); background:rgba(255,255,255,.06); }
 .gfk-slot .gfk-art{ width:100%; height:100%; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); pointer-events:none; }
 .gfk-box{ position:absolute; z-index:40; border:1.5px dashed #2a6fdb; background:rgba(42,111,219,.12); pointer-events:none; border-radius:3px; }
-.gfk-slot.gfk-ruler{ width:96px; } .gfk-slot.gfk-ruler .gfk-art{ height:auto; }
+.gfk-slot.gfk-ruler{ width:88px; } .gfk-slot.gfk-ruler .gfk-art{ height:auto; }
 .gfk-slot span{ position:absolute; left:0; right:0; bottom:0; font:700 9.5px/1.1 system-ui,sans-serif; color:#d7e8dc; text-align:center; white-space:nowrap; pointer-events:none; }
 .gfk-slot.gfk-out .gfk-art, .gfk-slot.gfk-lifted .gfk-art{ opacity:.18; filter:grayscale(1); }
 .gfk-slot.gfk-out::after{ content:""; position:absolute; inset:4px 6px 16px; border:1.5px dashed rgba(215,232,220,.35); border-radius:10px; }
@@ -783,7 +789,7 @@ body.dark-theme .gfk-coord{ background:rgba(28,38,56,.92); color:#dbe6f2; }
 #allMapsWrap:has(> .gfk-tray) > .am-measure{ top:14px !important; bottom:auto !important; }
 body.dark-theme .gfk-panel, body.sky-night .gfk-panel{ background:#1d2638; color:#e6edf7; }
 body.dark-theme .gfk-pinlist [data-go], body.sky-night .gfk-pinlist [data-go]{ color:#e6edf7 !important; } body.dark-theme .gfk-pinlist small, body.sky-night .gfk-pinlist small{ color:#b4c3d6 !important; opacity:1; } body.dark-theme .gfk-pinlist li, body.sky-night .gfk-pinlist li{ border-bottom-color:rgba(255,255,255,.1); }
-@media (max-width:640px){ #allMapsWrap > .gfk-tray, .globe-host > .gfk-tray{ position:relative; left:auto; bottom:auto; margin:8px 0 4px; width:100%; } .gfk-felt{ max-width:100%; } .gfk-slot{ width:48px; height:56px; } .gfk-slot.gfk-ruler{ width:78px; } .gfk-panel, .gfk-panel.gfk-wide{ width:calc(100vw - 24px); } .gfk-obj{ width:84px; height:84px; } .gfk-obj.gfk-o-ruler{ width:190px; height:38px; } }
+@media (max-width:640px){ #allMapsWrap > .gfk-tray, .globe-host > .gfk-tray{ position:relative; left:auto; bottom:auto; margin:8px 0 4px; width:100%; } .gfk-felt{ max-width:100%; } .gfk-slot{ width:48px; height:56px; } .gfk-slot.gfk-ruler{ width:70px; } .gfk-panel, .gfk-panel.gfk-wide{ width:calc(100vw - 24px); } .gfk-obj{ width:84px; height:84px; } .gfk-obj.gfk-o-ruler{ width:190px; height:38px; } }
 `;document.head.appendChild(css);
 /* typing a new meaning under a pin colour */
 document.addEventListener("input",e=>{const t=e.target;if(!t.classList||!t.classList.contains("gfk-kname"))return;try{const kit=K(),k=t.dataset.kn,v=t.value.trim();kit.pinNames=kit.pinNames||{};if(v&&v!==PIN_DEF[k])kit.pinNames[k]=v;else delete kit.pinNames[k];PINKIND[k][0]=v||PIN_DEF[k];save();

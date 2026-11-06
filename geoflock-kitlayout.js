@@ -7,6 +7,8 @@
 (function(){
 const KEY="gfKitLayout";
 let L={dock:"bottom",x:12,lenRow:null,lenCol:null,hidden:[]};try{Object.assign(L,JSON.parse(localStorage.getItem(KEY)||"{}"));delete L.len}catch(e){}
+/* the People gadget starts hidden (tick it under ⚙ to show it) */
+if(!L.v2){L.v2=1;if(!L.hidden.includes("gfk-people"))L.hidden.push("gfk-people");try{localStorage.setItem(KEY,JSON.stringify(L))}catch(e){}}
 const saveL=()=>{try{localStorage.setItem(KEY,JSON.stringify(L))}catch(e){}};
 const tray=()=>document.getElementById("gfKit");
 const host=()=>{const t=tray();return t&&t.parentElement};
