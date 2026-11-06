@@ -15,11 +15,11 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const FOLD={"ø":"o","æ":"ae","œ":"oe","ß":"ss","ł":"l","đ":"d","ð":"d","þ":"th","ı":"i","ħ":"h","ŧ":"t","ŀ":"l","ĳ":"ij","ŉ":"n","ʻ":"","ʼ":"","‘":"","-":" ","–":" ","—":" "};
 const norm=s=>String(s||"").toLowerCase().replace(/[øæœßłđðþıħŧŀĳŉʻʼ‘\-–—]/g,c=>FOLD[c]).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
 const STRIP=/^(the |mount |mt |lake |loch |river |isla |isle of |gulf of |bay of |sea of |strait of |cape )/;
-const COL={continents:"#0f8a6a",orgs:"#5b3cc4",countries:"#2f6f9e",regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8"};
-const TYPE={countries:"country",regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall"};
-const EMO={continents:"🌍",orgs:"🤝",countries:"🏳️",regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦"};
+const COL={continents:"#0f8a6a",orgs:"#5b3cc4",countries:"#2f6f9e",regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8",seafloor:"#1b4f8a",spots:"#b03060",lines:"#d43d1a",currents:"#0b8f8f",tectonics:"#c0392b",terms:"#5b3cc4"};
+const TYPE={countries:"country",regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall",seafloor:"ocean floor",spots:"place",lines:"map line",currents:"ocean current",tectonics:"plate tectonics",terms:"word in the dictionary"};
+const EMO={continents:"🌍",orgs:"🤝",countries:"🏳️",regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦",seafloor:"🌊",spots:"📍",lines:"🧭",currents:"🌀",tectonics:"🌐",terms:"📖"};
 /* how each type is shown: zoom = fly to a point; flash = flash then soft highlight; icon = map icon; layer = flash then keep it drawn */
-const SHOW={continents:"flash",orgs:"flash",countries:"label",regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer"};
+const SHOW={continents:"flash",orgs:"flash",countries:"label",regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer",seafloor:"flash",spots:"city",lines:"flash",currents:"flash",tectonics:"flash",terms:"term"};
 let IDX=null;
 /* which seas belong to which (roughly following the International Hydrographic Organization's limits). Only used by search:
    searching a sea also lights up its bays, gulfs and smaller seas. Everywhere else they stay separate. */
@@ -62,7 +62,7 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
    const AM_N=new Set(["North America","Central America","Caribbean","Northern America"]);
    const CONT=[["Africa",by(c=>c.r==="Africa").concat(["eh"]),["African continent"]],["Asia",by(c=>c.r==="Asia"),["Asian continent"]],["Europe",by(c=>c.r==="Europe"),["European continent"]],
     ["North America",by(c=>c.r==="Americas"&&AM_N.has(c.s)),["North and Central America"]],["South America",by(c=>c.r==="Americas"&&!AM_N.has(c.s)),["Latin America (south)"]],["Oceania",by(c=>c.r==="Oceania"),["Australasia and the Pacific"]],
-    ["The Americas",by(c=>c.r==="Americas"),["Americas"]]];
+    ["The Americas",by(c=>c.r==="Americas"),["Americas"]],["Antarctica",["aq"],["Antarctic continent"]]];
    CONT.forEach(([n,cc,alt])=>{const g=unionOf(cc);if(g)IDX.push({n,alt,cat:"continents",typ:"continent",g,ll:d3.geoCentroid(g),fame:1,cc})});
    [...new Set(C.map(c=>c.s).filter(Boolean))].forEach(sr=>{if(have.has(base(sr))||CONT.some(x=>x[0]===sr))return;have.add(base(sr));const cc=by(c=>c.s===sr),g=unionOf(cc);if(g)IDX.push({n:sr,alt:[],cat:"regions",typ:"region",g,ll:d3.geoCentroid(g),fame:2,cc})});
    /* organisations: every member country, each with its own border; one organisation on the map at a time */
@@ -71,6 +71,8 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  /* a name that is both a lake and a sea (the Caspian, Aral and Dead Seas) is kept once, as a lake */
  {const lk=new Set(IDX.filter(e=>e.cat==="lakes").map(e=>norm(e.n)));IDX=IDX.filter(e=>!(e.cat==="seas"&&lk.has(norm(e.n))))}
  /* local words for lake, reservoir, river… also match the English way of searching: "Manicouagan", "Lake Manicouagan" */
+ /* more kinds of places (the ocean floor, map lines, currents, tectonics, straits, capes...) from geoflock-search-more.js; a name already found here is kept as it is */
+ try{const have=new Set();IDX.forEach(e=>[e.n].concat(e.alt||[]).forEach(k=>have.add(norm(k))));(window.gfSearchMore?gfSearchMore():[]).forEach(e=>{const ks=[e.n].concat(e.alt||[]).map(norm);if(ks.some(k=>have.has(k)))return;ks.forEach(k=>have.add(k));IDX.push(e)})}catch(e){console.error(e)}
  const GEN=/^(reservoir|lac|lago|laguna|lagoa|embalse|represa|ozero|vodokhranilishche|jezero|jezioro|see|meer|sjon|jarvi|tonle|danau|hu|ko|gol|nuur|buhayrat|bahr|rio|rivière|riviere|fleuve)\s+(de |du |des |la |le |d |del |di )?/;
  IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys.slice().forEach(k=>{const m=k.match(GEN);if(m){const rest=k.slice(m[0].length);if(rest){e.keys.push(rest);if(e.cat==="lakes")e.keys.push("lake "+rest);if(e.cat==="rivers")e.keys.push(rest+" river")}}});e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
 /* states and provinces: the name list is small and loaded once; each shape comes with its country's file */
@@ -166,7 +168,7 @@ const hasImg=e=>(e._els||[]).some(x=>x&&x.querySelector&&x.querySelector(".gfs-c
 function dropEls(e){(e._els||[]).forEach(x=>x.remove());e._els=[];e._pin=e._spot=e._leash=null;if(e._g){e._g.remove();e._g=null}}
 function clear(){LIST.forEach(dropEls);LIST=[];cancelAnimationFrame(raf);try{if(onGlobe())amGlobe.request()}catch(e){}xBtn()}
 function removeOne(e){const i=LIST.indexOf(e);if(i<0)return;dropEls(e);LIST.splice(i,1);try{if(onGlobe())amGlobe.request()}catch(er){}xBtn()}
-function show(e){if(!active())return;
+function show(e){/* a dictionary word opens the dictionary, not the map */if(e&&e.cat==="terms"){try{window.gfLibrary&&gfLibrary.showTerm(e.n)}catch(err){console.error(err)}return}if(!active())return;
  if(e.cat==="provinces"&&!e.shape){const c=e;if(window.gfProvinces)gfProvinces.load(c.cc).then(d=>{const it=d.items.find(x=>x.n===c.n);if(it){c.g=it.g;c.ll=it.c||c.ll;c.shape=1}show(c)}).catch(()=>{c.shape=1;show(c)});return}
  e=withParts(e);if(/^Pacific Ocean$/.test(e.n))e.ll=[-160,0];if(/^Atlantic Ocean$/.test(e.n))e.ll=[-30,0];
  /* one organisation at a time: a new one replaces the last */
