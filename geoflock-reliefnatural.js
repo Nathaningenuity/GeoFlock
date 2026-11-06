@@ -17,6 +17,8 @@ function install(){
  try{const M=gfMS();if(!M.neDefault){M.neDefault=1;M.style=ID;gfMSsave()}else if(M.style==="classic"){M.style=ID;gfMSsave()}gfP().reliefClassic=false}catch(e){}
  GLOBE_TEX.reliefNE={kind:"halves",src:[IMG.w,IMG.e]};
  /* the globe's painted relief asks for "relief": it gets the Natural Earth halves while the style is on */
+ /* WebGL keeps one texture per key: the Natural Earth pictures get their own */
+ if(typeof GlobeGL!=="undefined"&&GlobeGL.prototype.texture&&!GlobeGL.prototype.texture._gfNE){const _t=GlobeGL.prototype.texture;GlobeGL.prototype.texture=function(key,imgs){return _t.call(this,key==="relief"&&on()?"reliefNE":key,imgs)};GlobeGL.prototype.texture._gfNE=1}
  const _gi=globeImages;globeImages=function(key,cb){return _gi.call(this,key==="relief"&&on()?"reliefNE":key,cb)};
  /* the older code turns any style it does not know back into Bright: it runs as Bright, then the pictures are swapped */
  const _ra=gfReliefApply;gfReliefApply=function(){if(!on())return _ra.apply(this,arguments);const M=gfMS();M.style="bright";let r;try{gfP().reliefClassic=false;r=_ra.apply(this,arguments)}finally{M.style=ID}
@@ -28,9 +30,9 @@ function install(){
  if(typeof reliefLegendHTML==="function"){const _rl=reliefLegendHTML;reliefLegendHTML=function(){const h=_rl.apply(this,arguments);return on()?h.replace(/background:#a9d3ec/g,"background:"+PAL.lake):h}}
   setTimeout(()=>{try{gfReliefApply();GFG.sig=null;gfGlobeDirty();amGlobe&&amGlobe.request();const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief")lg.innerHTML=allMapsLegendHTML()}catch(e){}},50);
  return true}
-/* the globe on the Maps page takes the Natural Earth texture while the style is on */
-let hooked=null;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g.cfg||hooked===g)return;hooked=g;const r0=g.cfg.raster;
-  g.cfg.raster=function(){const r=r0?r0.apply(this,arguments):null;return r==="relief"&&on()?"reliefNE":r}}catch(e){}},500);
 let n=0;const t=setInterval(()=>{if(install()||++n>80)clearInterval(t)},400);
 {const st=document.createElement("style");st.textContent=`.gf-ms-swatch.s-natural i{background:linear-gradient(135deg,#1257ab 0 30%,#5fb04f 30% 55%,#e2d64a 55% 75%,#e9a866 75%)!important}`;document.head.appendChild(st)}
 })();
+/* the Caspian is a special exception: never painted as a lake (the base pictures already show it as water); hovering it
+   still names it */
+{const st=document.createElement("style");st.textContent=`svg .map-lake[data-name="Caspian Sea"]{fill:none!important;stroke:none!important}`;document.head.appendChild(st)}
