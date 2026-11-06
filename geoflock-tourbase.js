@@ -35,4 +35,9 @@ setInterval(()=>{try{if(typeof ps==="undefined"||!ps||(typeof psSwitching!=="und
  if(PAIR[cur]&&cur!==want&&(!S||!S.mode||PAIR[S.mode]&&!S.modeFixed)/* modeFixed: the stop needs that exact map (Samosir needs Relief) */&&performance.now()-busy>1500){busy=performance.now();const b=document.querySelector('#allMapsToggleRow [data-allmaps-mode="'+want+'"]');if(b){guard=1;b.click();guard=0}}
  if(window.gfDNG&&gfDNG.on()&&T._gfOrig==="relief"&&allMapsColorMode==="satellite"){try{gfDNG.state.wasFlat=false}catch(e){}gfDNG.set(false)}}catch(e){}},300);
 window.gfTourBase={apply,SAT,pick:PICK};
+/* Relief and Satellite show the same tours, led by the geography tour (all of them start on Satellite and run on either) */
+if(typeof psCtx==="function"){const _c=psCtx;psCtx=function(){const c=_c.apply(this,arguments);try{if(c&&appMode==="allmaps"&&allMapsColorModeOn&&PAIR[allMapsColorMode]&&!(typeof amDensityOn==="function"&&amDensityOn())){
+  const all=PS_TOUR_ORDER.filter(k=>{const T=PS_TOURS[k];return T&&T.map&&(T._gfBase!=null||PAIR[T.map.mode])});const L=["geo"].filter(k=>all.includes(k)).concat(all.filter(k=>k!=="geo"));
+  const extra=(c.tours||[]).filter(k=>!L.includes(k));c.tours=L.concat(extra);
+  if(!(typeof ps!=="undefined"&&ps&&c.tours.includes(ps.tour))&&!(typeof psWanted!=="undefined"&&psWanted&&c.tours.includes(psWanted)))c.tour=c.tours[0]}}catch(e){}return c}}
 })();
