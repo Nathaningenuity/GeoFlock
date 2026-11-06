@@ -79,7 +79,9 @@ let head=null,on=false,armed=false,shape="line",lines=[],hover=null,panel=null,o
 /* the lines you draw stay on the map (up to MAXL, the oldest goes first); the card shows one, and you switch between them */
 const MAXL=6,HCOL=["#c0392b","#2e6fd0","#8e44ad","#138a72","#d35400","#4a5568"];let hist=[],badges=[];
 function renum(){hist.forEach((h,i)=>{h.n=i+1;h.title=(h.edit.kind==="line"?"Your line ":"Your path ")+(i+1)})}
-function showHist(i){const L=hist[i];if(!L)return;armed=false;drawing=null;editing=null;head=null;note="";title=L.title;lines=[L];yl={lo:null,hi:null};if(!L.P)compute();renderPanel()}
+let STASH=null;function unstash(){if(STASH&&!lines.length){lines=STASH.lines;title=STASH.title;note=STASH.note}STASH=null}
+function redrawXs(){try{if(typeof amGlobe!=="undefined"&&amGlobe)amGlobe.request()}catch(e){}try{if(typeof drawMap==="function")drawMap()}catch(e){}}
+function showHist(i){STASH=null;const L=hist[i];if(!L)return;armed=false;drawing=null;editing=null;head=null;note="";title=L.title;lines=[L];yl={lo:null,hi:null};if(!L.P)compute();renderPanel()}
 const css=document.createElement("style");css.textContent=`
 .gf-xs-chip.active{ background:#7a4b1f !important; color:#fff !important; }
 .gf-xs-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#5b3a17; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); flex:none; }
@@ -504,8 +506,12 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  panel.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{const L=lines[0];if(!L||!L.edit)return;const E=L.edit,k=b.dataset.ed;
   if(k==="hide"){E.hide=!E.hide;if(E.hide&&E.tool!=="cut"&&E.tool!=="add")E.tool=null;renderPanel()}else if(k==="smooth"){E.smooth=!E.smooth;rebuild(L)}else{E.tool=E.tool===k?null:k;if(k==="del")E.hide=false;renderPanel()}
   try{G().host.style.cursor=E.tool?"crosshair":""}catch(e){}});
- panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;try{if(armed)gfOneTool.claim("xsect")}catch(e){}renderPanel()};
- {const ex=panel.querySelector(".gf-xs-exit");if(ex)ex.onclick=()=>{armed=false;drawing=null;renderPanel()};const cl=panel.querySelector(".gf-xs-clear");if(cl)cl.onclick=clearLine}
+ panel.querySelector(".gf-xs-go").onclick=()=>{armed=!armed;try{if(armed)gfOneTool.claim("xsect")}catch(e){}
+  /* drawing a new line: the one on show steps aside (it stays under Your lines) and the panel shrinks out of the way;
+     stopping without drawing brings it back */
+  if(armed&&lines.length){STASH={lines:lines.slice(),title,note};lines=[];title="";note="";head=null;hover=null}
+  else if(!armed)unstash();renderPanel();try{redrawXs()}catch(e){}};
+ {const ex=panel.querySelector(".gf-xs-exit");if(ex)ex.onclick=()=>{armed=false;drawing=null;unstash();renderPanel();try{redrawXs()}catch(e){}};const cl=panel.querySelector(".gf-xs-clear");if(cl)cl.onclick=clearLine}
  panel.querySelector(".gf-xs-x").onclick=stop;{const dg=panel.querySelector(".gf-xs-dig");if(dg)dg.onclick=()=>window.gfShovelDig()}panel.querySelector(".gf-xs-min").onclick=()=>panel.classList.toggle("mini");
  panel.querySelector(".gf-xs-pre").onchange=e=>{if(e.target.value)pick(e.target.value)};
  panel.querySelectorAll("[data-hi]").forEach(b=>b.onclick=()=>showHist(+b.dataset.hi));
@@ -557,7 +563,7 @@ if(!window._gfXsL){window._gfXsL=1;addEventListener("pointerdown",e=>{const g=G(
 /* a straight line between two places (for tours and checks): gfCrossSection.line([lon,lat],[lon,lat],"title") */
 function line(a,b,t,pts){const okLL=q=>Array.isArray(q)&&isFinite(q[0])&&isFinite(q[1]);pts=Array.isArray(pts)?pts.filter(okLL):null;if(pts&&pts.length>1){a=pts[0];b=pts[pts.length-1]}if(!okLL(a)||!okLL(b))return;if(!on)start();armed=false;head=null;title=t||"Your line";note="";loadDEM().then(()=>{lines=[{ll:densify(pts&&pts.length>1?pts:[a,b],500),c:"#c0392b",P:null}];compute();renderPanel()})}
 /* Esc: out of drawing at once (a stroke in progress is dropped), the pen goes; a second Esc closes the panel */
-addEventListener("keydown",e=>{if(e.key!=="Escape"||!on)return;if(armed||drawing){armed=false;drawing=null;try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(er){}renderPanel();e.preventDefault();e.stopImmediatePropagation()}},true);
+addEventListener("keydown",e=>{if(e.key!=="Escape"||!on)return;if(armed||drawing){armed=false;drawing=null;unstash();try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(er){}renderPanel();redrawXs();e.preventDefault();e.stopImmediatePropagation()}},true);
 /* another drawing tool switched on: stop drawing here */
 try{gfOneTool.on("xsect",()=>{if(!armed&&!drawing)return;armed=false;drawing=null;try{renderPanel()}catch(e){}})}catch(e){}
 window.gfCrossSection={start,stop,pick,line,loadLakes,lakeAt:ll=>lakeAt(ll),
