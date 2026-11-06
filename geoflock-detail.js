@@ -54,13 +54,20 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
  if(L.water){const E=L.water.ext;T.feats(L.water).forEach(f=>{if(f.type!==3||!f.geom)return;const cls=f.tags.class;const rings=parts(f.geom);
    /* group: an outer ring (positive area) followed by its holes */const polys=[];rings.forEach(r=>{if(r.length<4)return;const c=clipRing(r.slice(0,-1),E);if(!c)return;const ll=toLL(c,z,tx,ty,E,true);if(area(r)>0||!polys.length)polys.push([ll]);else polys[polys.length-1].push(ll)});
    if(!polys.length)return;const all=polys.flat();if(cls==="ocean")D.ocean.push({rings:all});else D.lakes.push({id:f.tags.id,cls,int:f.tags.intermittent,polys,rings:all,bb:bboxOf(all)})})}
- if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.rivers.push({name:nm(f.tags),cls:f.tags.class,ls,bb:bboxOf(ls)})})}
+ if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nm(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));D.rivers.push(R)}})}
  if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||t.admin_level!==2||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,ls})})}
  if(L.water_name){const E=L.water_name.ext;T.feats(L.water_name).forEach(f=>{if(f.type!==1||!f.geom)return;const p=parts(f.geom)[0];if(!p||!p[0])return;const ll=toLL([p[0]],z,tx,ty,E,false);D.names.push({n:nm(f.tags),cls:f.tags.class,ll:[ll[0],ll[1]]})})}
  /* lake names: a name point inside a lake names that lake (and its pieces in other tiles, by the lake's id) */
  D.names.forEach(N=>{if(!N.n)return;for(const K of D.lakes){if(N.ll[0]<K.bb[0]||N.ll[0]>K.bb[2]||N.ll[1]<K.bb[1]||N.ll[1]>K.bb[3])continue;if(inRings(K.rings,N.ll)){if(K.id!=null)NAMES.set(K.id,N.n);K.n=N.n;break}}});
  return D}
 const NAMES=new Map();
+/* river importance: the map's own named rivers (the Amazon, the Congo…) are major; rivers already in the small-scale tiles
+   (tile zoom 8 or less) are medium; the rest (and streams) are minor and come in later and thinner */
+const rkey=n=>String(n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\(.*?\)/g,"").replace(/\b(river|rio|riviere|fleuve|he|jiang|nehri|nahr|the)\b/g,"").replace(/[^a-z]+/g," ").trim();
+const MED=new Set();let MAJ=null;
+function major(){if(MAJ)return MAJ;MAJ=new Set();try{(ALLMAPS_RIVERS||[]).forEach(([n])=>{if(!/^[A-Z]{2}[-\\/]/.test(n))MAJ.add(rkey(n))})}catch(e){}
+ [["amazonas","amazon"],["yellow","huang"],["ayeyarwady","irrawaddy"],["yenisey","yenisei"],["selenge","selenga"],["severnaya dvina","northern dvina"],["xi","xi"],["st lawrence","saint lawrence"],["parana","parana"]].forEach(([a,b])=>{if(MAJ.has(a))MAJ.add(b)});MAJ.delete("");return MAJ}
+function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();if(R.keys.some(k=>M.has(k)))return"major";if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
 function inRings(rs,p){let c=false;for(const r of rs){for(let i=0,j=r.length-3;i<r.length;j=i,i+=3){const xi=r[i],yi=r[i+1],xj=r[j],yj=r[j+1];if((yi>p[1])!==(yj>p[1])&&p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi)c=!c}}return c}
 
 /* ---------- tiles: which are wanted, loading, cache ---------- */
@@ -109,7 +116,7 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;const pj=projector(g),ov=I.ov|
  const borders=g.cfg.borders?g.cfg.borders():true,coast=s.z>=COASTZ,z=g.zoom;
  /* each tile is drawn whole (begin, path, fill or stroke) so a tile drawn from its parent can be clipped to its own square */
  const each=fn=>s.tiles.forEach(t=>{if(!t.d)return;const sub=t.src!==t;if(sub){ctx.save();if(!boxClip(ctx,pj,t)){ctx.restore();return}}try{fn(t.d)}finally{if(sub)ctx.restore()}});
- const rivCol=sat?"rgb(26,66,120)":I.drewRaster?"#2f7ab8":"#14568c",rivA=Math.max(.12,Math.min(.9,.12+.16*(z-1)));
+ const rivCol=sat?"rgb(26,66,120)":I.drewRaster?"#2f7ab8":"#14568c",rivA=Math.max(.12,Math.min(.9,.12+.4*(z-1)));
  /* fill maps: the sea drawn again over the land colours along the sharp coast */
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
@@ -121,8 +128,9 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;const pj=projector(g),ov=I.ov|
  if(ov.rivers){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
   ctx.fillStyle=rivCol;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});
-  const W={river:Math.min(2.2,.45+.15*Math.min(z,12)),canal:1,stream:.6,drain:.5,ditch:.5};ctx.strokeStyle=rivCol;
-  each(d=>["stream","drain","ditch","canal","river"].forEach(cl=>{ctx.lineWidth=W[cl];ctx.beginPath();d.rivers.forEach(R=>{const c=W[R.cls]?R.cls:"river";if(c!==cl)return;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke()}));ctx.globalAlpha=1}
+  /* major rivers bold from the start; medium ones fade in thin once the detail starts; minor ones and streams later, thinner */
+  const TW={major:[Math.min(1.8,.55+.07*z),rivA],medium:[Math.min(1.1,.35+.03*z),Math.min(.85,Math.max(0,(z-6)/14))],minor:[Math.min(.8,.25+.004*z),Math.min(.75,Math.max(0,(z-50)/110))],stream:[.45,Math.min(.6,Math.max(0,(z-100)/150))]};ctx.strokeStyle=rivCol;
+  ["stream","minor","medium","major"].forEach(tr=>{const[w,a]=TW[tr];if(a<.02)return;ctx.lineWidth=w;ctx.globalAlpha=a;each(d=>{ctx.beginPath();d.rivers.forEach(R=>{if((R._t||(R._t=tier(R)))!==tr)return;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke()})});ctx.globalAlpha=1}
  if(coast&&borders){ctx.lineWidth=.55;ctx.strokeStyle=I.drewRaster?"rgba(25,25,25,0.55)":"rgba(20,30,20,0.5)";
   each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>edgePath(ctx,pj,r,true)));d.borders.forEach(B=>{if(!B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();
    ctx.setLineDash([3,2]);ctx.beginPath();d.borders.forEach(B=>{if(B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();ctx.setLineDash([])})}}
@@ -133,12 +141,12 @@ function d3poly(rings){/* d3 wants each piece wound the other way from the tile'
  let P={type:"Polygon",coordinates:pol};try{if(d3.geoArea(P)>2*Math.PI)P={type:"Polygon",coordinates:pol.map(r=>r.slice().reverse())}}catch(e){}return P}
 function lakeAt(s,ll){for(const t of s.tiles){if(!t.d)continue;for(const K of t.d.lakes){if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])continue;if(inRings(K.rings,ll))return K}}return null}
 function waterHit(g,ll,cx,cy,ov){const s=on(g);if(!s)return null;const out={};
- if(ov.lakes){const K=lakeAt(s,ll);if(K){const name=K.n||(K.id!=null&&NAMES.get(K.id))||"";const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(Q===K||(K.id!=null&&Q.id===K.id))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))})});
-   out.water=name||LAB[K.cls]||"Lake";out.lake={type:"MultiPolygon",coordinates:co,n:out.water};return out}}
+ if(ov.lakes){const K=lakeAt(s,ll);const name0=K&&(K.n||(K.id!=null&&NAMES.get(K.id)));if(K&&name0){const name=name0;const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(Q===K||(K.id!=null&&Q.id===K.id))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))})});
+   out.water=name;out.lake={type:"MultiPolygon",coordinates:co,n:out.water};return out}}
  if(ov.rivers){const pj=projector(g),rc=g.canvas.getBoundingClientRect(),mx=cx-rc.left,my=cy-rc.top;let best=6,hit=null;const pad=.5;
-  s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best){best=d;hit=R}}a=b}})})});
+  s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best&&R.name&&(t=>t==="major"||t==="medium"&&g.zoom>8||t==="minor"&&g.zoom>60)(R._t||(R._t=tier(R)))){best=d;hit=R}}a=b}})})});
   if(hit){const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(R===hit||(hit.name&&R.name===hit.name))R.ls.forEach(l=>{const c=[];for(let i=0;i<l.length;i+=3)c.push([l[i],l[i+1]]);co.push(c)})})});
-   const n=hit.name||LAB[hit.cls]||"River";out.water=hit.name&&hit.cls==="river"&&!/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr/i.test(n)?n+" River":n;out.river={type:"MultiLineString",coordinates:co,n:out.water};return out}}
+   const n=hit.name;out.water=hit.name&&hit.cls==="river"&&!/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr/i.test(n)?n+" River":n;out.river={type:"MultiLineString",coordinates:co,n:out.water};return out}}
  return null}
 const _wa=GlobeView.prototype.waterAt;GlobeView.prototype.waterAt=function(ll,cx,cy){const out=_wa.apply(this,arguments)||{};try{let ov=this.cfg.overlays?this.cfg.overlays():{};/* Satellite: lakes are in the photo; hovering one names it even with Lakes off */if(allMapsColorMode==="satellite"&&!ov.lakes)ov=Object.assign({},ov,{lakes:true});if(view(this)&&(ov.lakes||ov.rivers)){const h=waterHit(this,ll,cx,cy,ov);
   if(h){delete out.lake;delete out.river;Object.assign(out,h);if(out.lake&&!h.lake)delete out.lake}else if(on(this)){/* the built-in shapes are not drawn now: keep only a name from them */if(out.lake){const n=out.water;delete out.lake;out.water=n}if(out.river){delete out.river;delete out.water}}}}catch(e){console.error(e)}return out};
