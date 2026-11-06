@@ -14,8 +14,8 @@ const ON=new Set([
  "animals|The axolotl’s last lake","islandlife|Lakes are islands too","islandlife|Now explore","caves|The longest cave: Mammoth Cave",
  "weather|The lightning capital","ice|Driving on lakes","amigration|The falcons of Nagaland"]);
 /* stops that need the Relief map for fine detail (an island inside a lake) */
-/* (Samosir in Lake Toba: kept on Satellite with its lake painted, which shows the island clearly; moving a stop to another
-   map mid-tour currently ends the tour when the next stop switches back, see the task list) */
+/* (Samosir in Lake Toba stays on Satellite with its lake painted blue, which shows the island clearly. Moving it to Relief
+   ends the islands tour when the next stop switches back: see the task list) */
 const RELIEF={};
 try{Object.keys(RELIEF).forEach(k=>{const[t,title]=k.split("|"),T=PS_TOURS[t];if(!T)return;const S=(T.steps||[]).find(s=>s.title===title);if(S){S.mode="relief";T.stopModes=true}})}catch(e){}
 /* satellite tours no longer switch Lakes on for the whole tour: each stop decides */
