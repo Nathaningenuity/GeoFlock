@@ -22,9 +22,9 @@ function add(S,tour){try{if(!S)return;const A=BY.get(tour+"|"+strip(S.title));if
   if(S.phPins.length<next.length){try{const d=Object.getOwnPropertyDescriptor(S,"phPins");if(d&&d.get)Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,get(){return next},set(){}})}catch(e){}}
   S._sqPruned=-1}
  S._gfSpOk=S.phPins}catch(e){}}
-/* one photo once per stop: two labels that point at the same picture (Kilimanjaro, Kilimanjaro 5,895 m) keep the first */
+/* one photo once per stop: a pin showing the card's own photo, or a second label for the same picture, is dropped */
 function setPins(S,next){S.phPins=next;if(S.phPins.length!==next.length){try{const d=Object.getOwnPropertyDescriptor(S,"phPins");if(d&&d.get)Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,get(){return next},set(){}})}catch(e){}}S._sqPruned=-1}
-function dedupe(S){try{const P=S&&Array.isArray(S.phPins)?S.phPins:null;if(!P||P.length<2)return false;const seen=new Set;let drop=false;
+function dedupe(S){try{const P=S&&Array.isArray(S.phPins)?S.phPins:null;if(!P||!P.length)return false;const seen=new Set;let drop=false;try{const m=typeof psPhotoFor==="function"&&psPhotoFor(S);if(m&&m.f)seen.add(m.f)}catch(e){}
  const next=P.filter(q=>{if(!q||q.person)return true;let f=null;try{const x=psSqPhoto(q);f=x&&x.f}catch(e){}if(!f)return true;if(seen.has(f)){drop=true;return false}seen.add(f);return true});
  if(!drop)return false;setPins(S,next);S._gfSpOk=S.phPins;return true}catch(e){return false}}
 function all(){try{if(typeof PS_TOURS==="undefined")return;Object.keys(PS_TOURS).forEach(t=>{const T=PS_TOURS[t];(T&&T.steps||[]).forEach(S=>add(S,t))})}catch(e){}}
