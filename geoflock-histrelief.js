@@ -6,13 +6,13 @@
       strength, so where two shapes overlap the colour does not add up (geoflock-history2.js draws through gfHR.alpha()).
       "No state" land is left clear so the relief shows there. Borders are drawn darker so they stay readable through a
       weak layer; names stay fully opaque. The Politics and Culture maps use the same strength for their colours.
-   3. "Colour strength" slider (10–100 %, default 40 %) in the map key while Relief underneath is on; saved in
+   3. "Colour strength" slider (10–100 %, default 85 %) in the map key while Relief underneath is on; saved in
       localStorage (gfReliefAlpha) and applied live on the flat map and the globe.
    4. History names grow at half the zoom rate (screen size × √zoom, at most 2.5 times their whole-world size, like the layer icons), like the
       city, landform and layer icons — on the flat map, the globe and the old SVG map. */
 (function(){
 if(typeof histOn!=="function"||typeof histReliefOn!=="function")return;
-const KEY="gfReliefAlpha",DEF=.4;
+const KEY="gfReliefAlpha2",DEF=.85;/* a new key: the old default of 40 % was too faint, so everyone starts again at 85 % */
 let A=DEF;try{const v=parseFloat(localStorage.getItem(KEY));if(v>=.1&&v<=1)A=v}catch(e){}
 const hOn=()=>{try{return histOn()&&histReliefOn()}catch(e){return false}};
 const tOn=()=>{try{return typeof thOn==="function"&&typeof thReliefOn==="function"&&thOn()&&thReliefOn()}catch(e){return false}};
@@ -100,7 +100,7 @@ function applyA(final){document.documentElement.style.setProperty("--gf-hr-a",St
  if(rq)return;rq=requestAnimationFrame(()=>{rq=0;try{
   if(tOn()){const w=document.getElementById("allMapsWrap");if(w&&typeof applyAllMapsColorMode==="function")applyAllMapsColorMode(w);if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobeOn())amGlobeSync()}
   if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobeOn())amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){console.error(e)}})}
-document.addEventListener("input",e=>{const i=e.target.closest&&e.target.closest(".gf-hr-op input");if(!i)return;A=Math.max(.1,Math.min(1,(+i.value||40)/100));try{localStorage.setItem(KEY,String(A))}catch(err){}applyA()});
+document.addEventListener("input",e=>{const i=e.target.closest&&e.target.closest(".gf-hr-op input");if(!i)return;A=Math.max(.1,Math.min(1,(+i.value||85)/100));try{localStorage.setItem(KEY,String(A))}catch(err){}applyA()});
 document.addEventListener("change",e=>{const i=e.target.closest&&e.target.closest(".gf-hr-op input");if(i)applyA(true)});
 
 /* ---------- keeping it all in step ---------- */
@@ -112,7 +112,7 @@ setInterval(()=>{try{sync()}catch(e){}},500);
 
 const st=document.createElement("style");st.textContent=`
 /* the old SVG map: one see-through layer, no state = clear */
-#allMapsWrap.hist-mode.hist-relief #histLayer .hist-years{ opacity:var(--gf-hr-a,.4); }
+#allMapsWrap.hist-mode.hist-relief #histLayer .hist-years{ opacity:var(--gf-hr-a,.85); }
 #allMapsWrap.hist-mode.hist-relief #histLayer .hist-year path, #allMapsWrap.hist-mode.hist-relief #histLayer .hist-year path.hist-g{ fill-opacity:1 !important; }
 #allMapsWrap.hist-mode.hist-relief #histLayer .hist-year path.hist-k0{ fill-opacity:0 !important; }
 /* the slider */

@@ -17,7 +17,7 @@
                                                                  text, at:[lon,lat] moves it
       Stops that do not need a year are plain relief with their usual highlights, lines and pins.
    3. Strength. The overlay follows the History map's "Relief underneath" colour strength (geoflock-histrelief.js:
-      gfHR.alpha(), saved as gfReliefAlpha; 40 % when neither is there). The empire and climate overlays of these tours
+      gfHR.alpha(), saved as gfReliefAlpha2; 85 % when neither is there). The empire and climate overlays of these tours
       (gfEmpire, gfClimate, geoflock-tourover.js) follow it too.
    4. Where they are listed. All four are in the "more tours" list of both the Relief tab and the History tab
       (T.alsoOn includes "history"). Started from the History tab, a book tour switches to the Relief map and runs there;
@@ -56,7 +56,7 @@ const YEAR={
 
 /* ---------- the overlays' strength ---------- */
 function strength(){try{if(window.gfHR&&typeof gfHR.alpha==="function"){const a=+gfHR.alpha();if(a>=.05&&a<=1)return a}}catch(e){}
- try{const v=parseFloat(localStorage.getItem("gfReliefAlpha"));if(v>=.1&&v<=1)return v}catch(e){}return .4}
+ try{const v=parseFloat(localStorage.getItem("gfReliefAlpha2"));if(v>=.1&&v<=1)return v}catch(e){}return .85}
 window.gfHistOpacity=window.gfHistOpacity||strength;
 /* the empire and climate overlays read o.alpha when they draw: it follows the same strength */
 function follow(o){if(!o||typeof o!=="object"||o._gfBkA)return;try{Object.defineProperty(o,"alpha",{configurable:true,enumerable:true,get:strength,set(){}});Object.defineProperty(o,"_gfBkA",{value:1,configurable:true})}catch(e){}}
