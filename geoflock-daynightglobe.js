@@ -310,7 +310,7 @@ function panel(){let el=document.getElementById("gfDngPanel");const host=documen
    '<button type="button" class="gf-dng-spin" data-dng="spin" aria-pressed="false" title="Spin the globe"><span aria-hidden="true">⟳</span> Spin</button>'+
    
    '<em class="gf-dng-mode" aria-live="polite"></em></div>'+
-   '<button type="button" class="gf-dng-nudge" data-dng="nudge" hidden>⟳ Turn on <b>Spin</b> too, to watch Earth turn under a still Sun</button>'+
+   '<button type="button" class="gf-dnhint" data-dng="nudge" hidden>⟳ Turn on <b>Spin</b> too, to watch Earth turn under a still Sun</button>'+
    '<label class="gf-dng-row gf-dng-speedrow" hidden><span>Speed</span><input type="range" min="0" max="1000" step="1" data-dng="speed" aria-label="Speed: how fast time runs and the globe turns"><em class="gf-dng-speedtxt"></em></label>'+
    '<label class="gf-dng-row"><span>Time</span><input type="range" title="Time of day (UTC). The bar shows day and night at Greenwich, 0°" min="0" max="1439" step="1" data-dng="time" aria-label="Time of day, UTC: moves the line between day and night"></label>'+
    '<label class="gf-dng-row"><span>Date</span><input type="range" min="1" max="365" step="1" data-dng="doy" aria-label="Date: 1 January to 31 December"><em class="gf-dng-season"></em></label>';
@@ -412,9 +412,34 @@ function chip(){const gOn=typeof amGlobeOn==="function"&&amGlobeOn()&&!(typeof a
   host.querySelectorAll("[data-dng-sub]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.dngSub;
    if(k==="night"){toNight();return}if(k==="dn"&&typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat){toGlobe();return}S.userDay=k==="sat"||k==="nightonly";set(k==="dn")});c=document.getElementById("gfDngChip")}
  return c}
+/* the nudge: the Day & Night chip glows and a bubble points at it, on the Satellite globe in Day, until the viewer has
+   tried Day & Night once (or closes the bubble three times) */
+const tried=()=>{try{return localStorage.getItem("gfDngTried")==="1"||+(localStorage.getItem("gfDngNo")||0)>=3}catch(e){return false}};
+let nb=null,nbOff=false;
+function nudge(c){const show=!!c&&c.isConnected&&!S.on&&!tried()&&!nbOff&&allMapsColorMode==="satellite"&&!(typeof ps!=="undefined"&&ps)&&!!c.offsetParent;
+ document.querySelectorAll("#gfDngChip").forEach(x=>x.classList.toggle("gf-dng-pulse",show));
+ if(!show){if(nb){nb.remove();nb=null}return}
+ if(!nb){nb=document.createElement("div");nb.className="gf-dnhint";nb.setAttribute("role","note");
+  nb.innerHTML='<b>🌗 See day and night as it is right now</b><span>Press <em>Day &amp; Night</em>: the Sun lights half the Earth, and the cities glow on the night side.</span><div><button type="button" data-go>Show me</button><button type="button" data-x aria-label="Not now">Not now</button></div>';
+  document.body.appendChild(nb);["width:280px","max-width:calc(100vw - 16px)","right:auto","height:auto","display:block"].forEach(d=>{const[k,v]=d.split(":");nb.style.setProperty(k,v,"important")});
+  nb.querySelector("[data-go]").onclick=()=>{const k=document.getElementById("gfDngChip");if(k)k.click()};
+  nb.querySelector("[data-x]").onclick=()=>{nbOff=true;try{localStorage.setItem("gfDngNo",String(+(localStorage.getItem("gfDngNo")||0)+1))}catch(e){}nudge(null)}}
+ const r=c.getBoundingClientRect();nb.style.left=Math.max(8,Math.min(innerWidth-300,r.left))+"px";nb.style.top=(r.bottom+10+scrollY)+"px"}
+addEventListener("scroll",()=>{try{if(nb)nudge(document.getElementById("gfDngChip"))}catch(e){}},{passive:true});
+addEventListener("resize",()=>{try{if(nb)nudge(document.getElementById("gfDngChip"))}catch(e){}});
+setInterval(()=>{try{nudge(document.getElementById("gfDngChip"))}catch(e){}},700);
+{const st=document.createElement("style");st.textContent=`#gfDngChip.gf-dng-pulse{animation:gfDngPulse 1.6s ease-in-out infinite;box-shadow:0 0 0 0 rgba(255,190,70,.8);border-color:#ffbe46 !important}
+@keyframes gfDngPulse{0%{box-shadow:0 0 0 0 rgba(255,190,70,.85)}70%{box-shadow:0 0 0 12px rgba(255,190,70,0)}100%{box-shadow:0 0 0 0 rgba(255,190,70,0)}}
+.gf-dnhint{position:absolute;z-index:60;width:280px;padding:11px 13px;border-radius:14px;background:#fff8e6;color:#3b2a10;box-shadow:0 10px 28px rgba(20,30,50,.28);font:500 13px/1.35 system-ui,sans-serif}
+.gf-dnhint:before{content:"";position:absolute;top:-7px;left:22px;border:7px solid transparent;border-top:0;border-bottom-color:#fff8e6}
+.gf-dnhint b{display:block;margin-bottom:3px;font-size:14px}.gf-dnhint span{display:block;opacity:.85}.gf-dnhint em{font-style:normal;font-weight:700}
+.gf-dnhint div{display:flex;gap:8px;margin-top:9px}.gf-dnhint button{border:0;border-radius:999px;padding:6px 13px;font:700 12px system-ui;cursor:pointer;background:#e9dfc8;color:#3b2a10}
+.gf-dnhint button[data-go]{background:#e08a1e;color:#fff}
+body.sky-night .gf-dnhint{background:#2a2f44;color:#f3ead6}body.sky-night .gf-dnhint:before{border-bottom-color:#2a2f44}body.sky-night .gf-dnhint button{background:#3b4260;color:#f3ead6}
+@media (prefers-reduced-motion:reduce){#gfDngChip.gf-dng-pulse{animation:none;box-shadow:0 0 0 3px rgba(255,190,70,.8)}}`;document.head.appendChild(st)}
 const litMode=()=>{try{return allMapsColorModeOn&&(allMapsColorMode==="satellite"||allMapsColorMode==="night")}catch(e){return false}};
 function allowed(){try{return appMode==="allmaps"&&FEATURES.globe&&!!GLOBE_TEX.night&&!(typeof proj!=="undefined"&&proj.on)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}}
-function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
+function set(v){if(v&&!allowed())v=false;if(v){try{localStorage.setItem("gfDngTried","1")}catch(e){}}if(v===S.on){sync();return}
  if(v){const sat=document.querySelector('#allMapsToggleRow [data-allmaps-mode="satellite"]');if(!litMode()&&sat)sat.click();}
  S.on=v;
  if(v){toNow();
@@ -422,11 +447,13 @@ function set(v){if(v&&!allowed())v=false;if(v===S.on){sync();return}
  else{stop();freeNight();if(S.wasFlat){S.wasFlat=false;try{globePrefs().allmaps=false;saveStats();amGlobeSync()}catch(e){}}}
  sync();req();if(v&&!S.play&&!(typeof ps!=="undefined"&&ps))play()}
 function sync(){const c=chip(),view=document.getElementById("allMapsView");
- /* Day & Night is the default view of the Satellite globe: each time the Satellite map is opened on the globe */
+ /* the Satellite globe opens in Day (Day & Night is one press away, and nudged: see nudge()) */
  try{const satNow=litMode()&&amGlobeOn()&&!(amGlobe&&amGlobe._flat);
   const key=satNow?allMapsColorMode:null;if(key&&S.wasSat!==key){S.wasSat=key;S.userDay=false;
     /* City Lights opens on Night only (Day & Night is its second option) */
-    if(key==="night"){if(S.on){S.on=false;stop();freeNight();req()}}else if(!S.on&&allowed()){setTimeout(()=>set(true),0)}}else if(!key&&!S.on){S.wasSat=null;S.userDay=false}}catch(e){}
+    if(key==="night"){if(S.on){S.on=false;stop();freeNight();req()}}}else if(!key&&!S.on){S.wasSat=null;S.userDay=false}}catch(e){}
+ /* the Satellite globe now opens in plain Day; Day & Night is pressed on the viewer until they have tried it */
+ try{nudge(c)}catch(e){}
  if(S.on&&!(allowed()&&litMode()&&amGlobeOn()&&!(amGlobe&&amGlobe._flat))){S.on=false;stop();freeNight();req()}
  document.querySelectorAll("[data-dng-sub]").forEach(b=>{const k=b.dataset.dngSub;b.classList.toggle("active",k==="dn"?!!S.on:k==="sat"||k==="nightonly"?!S.on:false)});
  if(c)c.setAttribute("aria-pressed",String(S.on));
@@ -492,9 +519,9 @@ body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.2
 .gf-dng-speed{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; opacity:.85; }
 .gf-dng-speed select{ border:1px solid var(--line); background:var(--raised); color:inherit; border-radius:8px; padding:3px 4px; font:600 12px system-ui,sans-serif; }
 .gf-dng-mode{ font-style:normal; font-size:12px; font-weight:700; opacity:.8; margin-left:auto; }
-.gf-dng-nudge{ display:block; width:100%; text-align:left; margin:2px 0 4px; border:1px dashed rgba(47,143,107,.7); background:rgba(47,143,107,.12); color:inherit; border-radius:10px; padding:6px 10px; font:600 12px system-ui,sans-serif; cursor:pointer; animation:gfNudge 2.2s ease-in-out infinite; }
-.gf-dng-nudge:hover{ background:rgba(47,143,107,.24); }
-.gf-dng-nudge[hidden]{ display:none; }
+.gf-dnhint{ display:block; width:100%; text-align:left; margin:2px 0 4px; border:1px dashed rgba(47,143,107,.7); background:rgba(47,143,107,.12); color:inherit; border-radius:10px; padding:6px 10px; font:600 12px system-ui,sans-serif; cursor:pointer; animation:gfNudge 2.2s ease-in-out infinite; }
+.gf-dnhint:hover{ background:rgba(47,143,107,.24); }
+.gf-dnhint[hidden]{ display:none; }
 .gf-dng-speedrow[hidden]{ display:none; } .gf-dng-speedrow{ flex-wrap:wrap; row-gap:0; animation:gfPop .25s ease-out; }
 .gf-dng-speedrow .gf-dng-speedtxt{ flex-basis:100%; font-style:normal; font-size:11.5px; opacity:.75; text-align:right; margin:-2px 0 0; }
 .gf-dng-speedrow input{ accent-color:#ff8a2a; }
@@ -502,7 +529,7 @@ body.sky-night .gf-dng-btn{ background:#22304f; border-color:rgba(150,175,230,.2
 @keyframes gfNudge{ 0%,100%{ border-color:rgba(47,143,107,.5); } 50%{ border-color:rgba(47,200,140,1); } }
 .globe-btns [data-g="spin"].gf-spin-nudge{ animation:gfSpinNudge 1.8s ease-in-out infinite; }
 @keyframes gfSpinNudge{ 0%,100%{ box-shadow:0 0 0 0 rgba(47,200,140,.6); } 50%{ box-shadow:0 0 0 7px rgba(47,200,140,0); } }
-@media (prefers-reduced-motion: reduce){ .gf-dng-play,.gf-dng-nudge,.globe-btns [data-g="spin"].gf-spin-nudge{ animation:none !important; } }
+@media (prefers-reduced-motion: reduce){ .gf-dng-play,.gf-dnhint,.globe-btns [data-g="spin"].gf-spin-nudge{ animation:none !important; } }
 body.sky-night .gf-dng-spin, body.sky-night .gf-dng-speed select{ background:#22304f; border-color:rgba(150,175,230,.25); }
 .gf-dng.gf-dng-float .gf-dng-mode{ flex-basis:100%; margin-left:0; }`;
 document.head.appendChild(css);
