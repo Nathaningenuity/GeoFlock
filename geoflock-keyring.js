@@ -5,7 +5,10 @@
    The places are found from the map's own landform shapes (islands, island groups, lakes), only when a stop points at ONE
    such place and it is small on the map (under about 90 px); RINGS adds hand-set ones. */
 (function(){
+/* automatic rings are off: they turned up where they were not wanted (Wallace Line, Okavango). Only the hand-set ones below */
+const AUTO=false;
 const RINGS={
+ "islands|An island in a lake on an island":[{at:[98.83,2.61],km:54}],
  "bbeagle|Galápagos: islands of difference":[{at:[-90.55,-0.6],km:150}],
  "bbeagle|Coral atolls: Cocos (Keeling)":[{at:[96.85,-12.15],km:28}]};
 const SMALL=110;/* a ring this many pixels across or more is not a small place any more */
@@ -28,7 +31,7 @@ function rings(){try{if(typeof ps==="undefined"||!ps)return[];const S=psSteps()[
    const km=Math.max(6,d3.geoDistance(b[0],b[1])*6371/2*1.15);if(km>300)return;seen.set(it.e.n,{at:c,km,n:it.e.n})});
   /* only a stop about ONE small place gets an automatic ring (Samosir in Lake Toba); several small places pointed at
      (Bali, Lombok, Komodo at the Wallace Line) are a comparison, not a hidden spot: no rings there */
-  RS=seen.size===1?[...seen.values()].map(r=>Object.assign(r,{auto:1})):[];return RS}catch(e){return[]}}
+  RS=AUTO&&seen.size===1?[...seen.values()].map(r=>Object.assign(r,{auto:1})):[];return RS}catch(e){return[]}}
 function ringSvg(box,n){let s=box.querySelector("svg.gf-keyring");if(!s){s=document.createElementNS(NS,"svg");s.setAttribute("class","gf-keyring");s.setAttribute("aria-hidden","true");box.appendChild(s)}
  if(s.childElementCount!==2*n){s.innerHTML="";for(let i=0;i<n;i++)s.insertAdjacentHTML("beforeend",'<circle class="h"/><circle class="r"/>')}return s}
 function clear(){document.querySelectorAll("svg.gf-keyring").forEach(x=>x.remove())}
