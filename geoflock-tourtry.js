@@ -8,7 +8,10 @@ const T=window.gfToolkit,X=()=>window.gfCrossSection,TH=()=>window.gfThermo;
 let OPEN=null;
 const shovel=(v)=>()=>{OPEN="shovel";try{const x=X();x.start();setTimeout(()=>{try{x.pick(v)}catch(e){}},400)}catch(e){console.error(e)}};
 const thermo=(list)=>()=>{OPEN="thermo";try{TH().setAuto(list)}catch(e){console.error(e)}};
-const sea=()=>()=>{OPEN="sea";try{gfToolkit.seaPanel()}catch(e){}};
+const sea=()=>()=>{OPEN="sea";try{gfToolkit.seaPanel();clear()}catch(e){}};
+/* a panel opened from the card should not sit on top of the card */
+function clear(){setTimeout(()=>{try{const p=document.getElementById("gfkSea"),c=ps&&ps.card;if(!p||!c)return;const a=p.getBoundingClientRect(),b=c.getBoundingClientRect();if(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom)return;
+ const x=b.right+14<innerWidth-a.width?b.right+14:Math.max(8,b.left-a.width-14);p.style.position="fixed";p.style.left=x+"px";p.style.right="auto";p.style.top=Math.max(70,Math.min(innerHeight-a.height-12,b.top))+"px";p.style.bottom="auto"}catch(e){}},60)}
 const ruler=()=>()=>{OPEN="ruler";try{const h=document.getElementById("allMapsWrap"),g=window.amGlobe;const r=(g&&g.host&&g.host.offsetParent?g.host:h).getBoundingClientRect();gfToolkit.dropTool("ruler",r.left+r.width*.5,r.top+r.height*.78)}catch(e){}};
 const lift=(ll)=>()=>{OPEN="dragger";try{const s=gfToolkit.toScreen(ll);if(s)gfToolkit.dropTool("dragger",s[0],s[1])}catch(e){console.error(e)}};
 const TRY={
@@ -50,6 +53,38 @@ const TRY={
  "pop|China’s Hu line":["Lay the ruler along the Hu line",ruler(),"Click Heihe in the far north-east, then Tengchong near Myanmar"],
  "africa|Room for three giants":["Lift the United States and drop it on Africa",lift([-98,39]),"Then lift China and India too"],
  "samerica|Brazil is half the continent":["Lift Brazil and drag it over Europe",lift([-52,-10])],
+ "projections|Greenland vs Africa":["Lift Greenland and drop it on Africa",lift([-42,72]),"Watch it shrink as it moves south"],
+ "projections|Russia’s real size":["Lift Russia and drag it to the Equator",lift([100,62])],
+ "projections|Alaska vs Brazil":["Lift Alaska and drop it on Brazil",lift([-152,64])],
+ "projections|The shortest way is curved":["Lay the ruler from London to Tokyo",ruler(),"Click London, then Tokyo: the line bends over the Arctic"],
+ "volcanoes|Iceland: fire and ice":["Slice across Iceland on the ridge",shovel("p9")],
+ "volcanoes|Kilimanjaro and the Rift":["Slice across the East African Rift",shovel("p3")],
+ "plates|Hawaii on a conveyor belt":["Measure the island chain with the ruler",ruler(),"Click the Big Island, then Kauaʻi: about 500 km, made over 5 million years"],
+ "seas|14 km from Africa":["Measure the Strait of Gibraltar",ruler(),"Click Tarifa in Spain, then the Moroccan coast"],
+ "seas|The deep ocean":["Slice down into the Mariana Trench",shovel("p5")],
+ "islands|Penguins on the equator":["Drop a thermometer on the Galápagos",thermo([[-90.3,-0.74,"Puerto Ayora"]]),"Cool water from the south keeps it mild on the Equator"],
+ "ice|Ice on the equator":["Compare a peak town with the coast",thermo([[-78.5,-0.22,"Quito"],[-79.9,-2.19,"Guayaquil"]]),"Same latitude, 2,800 m apart: the higher you go, the colder"],
+ "elev|Living in thin air":["Compare La Paz with the Amazon lowland",thermo([[-68.15,-16.5,"La Paz"],[-63.18,-17.8,"Santa Cruz"]])],
+ "elev|Cities that climbed to keep cool":["Compare Bogotá with the Caribbean coast",thermo([[-74.07,4.71,"Bogotá"],[-74.8,10.96,"Barranquilla"]])],
+ "deserts|The Gobi":["Drop a thermometer in the Gobi",thermo([[106.9,43.6,"Dalanzadgad"]]),"A desert with winters far below freezing"],
+ "deserts|The Sahara":["Drop a thermometer in the middle of the Sahara",thermo([[5.5,22.8,"Tamanrasset"]])],
+ "deserts|Behind the mountains":["Compare both sides of the Andes",thermo([[-72.6,-41.5,"Puerto Montt"],[-69.2,-41.1,"Patagonian steppe"]])],
+ "weather|The snowiest city on Earth":["Drop a thermometer in Aomori",thermo([[140.74,40.82,"Aomori"]])],
+ "weather|The monsoon":["Compare Mumbai and Delhi",thermo([[72.88,19.08,"Mumbai"],[77.2,28.6,"Delhi"]])],
+ "biomes|Tundra":["Drop a thermometer on the tundra",thermo([[-156.8,71.3,"Utqiaġvik"]])],
+ "biomes|Taiga":["Drop a thermometer in the taiga",thermo([[129.73,62.03,"Yakutsk"]])],
+ "biomes|Savanna":["Drop a thermometer on the savanna",thermo([[36.8,-1.3,"Nairobi"],[34.8,-2.3,"Serengeti"]]),"A wet season and a long dry one"],
+ "biomes|Tropical rainforest":["Drop a thermometer in the rainforest",thermo([[-60.02,-3.12,"Manaus"]]),"Hot and wet all year: almost no seasons"],
+ "biomes|Mediterranean scrub":["Drop thermometers in all five",thermo([[-118.2,34.05,"Los Angeles"],[-70.65,-33.45,"Santiago"],[18.42,-33.92,"Cape Town"],[115.86,-31.95,"Perth"],[12.5,41.9,"Rome"]])],
+ "biomes|Why biomes follow latitude":["Drop thermometers from the Equator to the Arctic",thermo([[-60.02,-3.12,"Manaus"],[-99.1,19.4,"Mexico City"],[-90.07,29.95,"New Orleans"],[-87.6,41.9,"Chicago"],[-114.4,62.45,"Yellowknife"]])],
+ "environment|A treaty for a sinking nation":["Raise the sea over Tuvalu",sea(),"Tuvalu’s highest ground is about 4.5 m"],
+ "environment|Greenland is melting":["Raise the sea by 7 m",sea()],
+ "maths|Eratosthenes measures the Earth":["Measure Alexandria to Aswan",ruler(),"Click Alexandria, then Aswan: about 840 km, one fiftieth of the way round"],
+ "maths|Great circles":["Lay the ruler from New York to Tokyo",ruler(),"Click New York, then Tokyo"],
+ "maths|Mercator’s stretched map":["Lift Greenland and drag it south",lift([-42,72])],
+ "borders|The longest borders":["Measure Canada’s border with the ruler",ruler(),"Click Vancouver, then Montreal"],
+ "geopol|Chokepoints":["Measure the Strait of Hormuz",ruler(),"Click either shore: about 40 km at its narrowest"],
+ "climate|The hottest and coldest ever recorded":["Compare Death Valley and Yakutsk",thermo([[-116.87,36.46,"Death Valley"],[129.73,62.03,"Yakutsk"]])],
  "samerica|Further east than you think":["Lay the ruler from Miami to Lima",ruler(),"Click Miami, then Lima"]
 };
 function add(){try{if(typeof ps==="undefined"||!ps||!ps.card)return;const S=psSteps()[ps.i];if(!S)return;const k=ps.tour+"|"+S.title,v=TRY[k]||(S.gfFrom&&TRY[S.gfFrom]);if(!v)return;if(S.drag&&v[1]&&String(v[0]).startsWith("Lift"))return;
