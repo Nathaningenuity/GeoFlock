@@ -1,4 +1,4 @@
-/* GeoFlock: "Natural Earth" relief colours, an option in the Relief map's style row (Bright stays the default).
+/* GeoFlock: "Natural Earth" relief colours, the Relief map's default style (Bright is the other picture style; Classic is hidden).
    Natural Earth I (shaded relief, land cover and water; public domain) graded to a saturated look: green where the land
    is wet, yellow and orange where it is dry, deep blue sea. The globe uses its own texture key (reliefNE) and the flat
    maps their own pictures, so Bright and Classic are untouched. */
@@ -11,7 +11,10 @@ const on=()=>{try{return gfMS().style===ID}catch(e){return false}};
 function install(){
  if(typeof GF_STYLE_ORDER==="undefined"||typeof gfReliefApply!=="function"||typeof gfSetStyle!=="function"||typeof GLOBE_TEX==="undefined")return false;
  if(gfReliefApply._gfNE)return true;
- if(!GF_STYLE_ORDER.some(x=>x[0]===ID)){const i=GF_STYLE_ORDER.findIndex(x=>x[0]==="classic");GF_STYLE_ORDER.splice(i+1,0,[ID,NAME])}
+ /* Natural Earth first and the default; Bright next to it; Classic is hidden */
+ {const i=GF_STYLE_ORDER.findIndex(x=>x[0]==="classic");if(i>=0)GF_STYLE_ORDER.splice(i,1)}
+ if(!GF_STYLE_ORDER.some(x=>x[0]===ID))GF_STYLE_ORDER.unshift([ID,NAME]);
+ try{const M=gfMS();if(!M.neDefault){M.neDefault=1;M.style=ID;gfMSsave()}else if(M.style==="classic"){M.style=ID;gfMSsave()}gfP().reliefClassic=false}catch(e){}
  GLOBE_TEX.reliefNE={kind:"halves",src:[IMG.w,IMG.e]};
  /* the globe's painted relief asks for "relief": it gets the Natural Earth halves while the style is on */
  const _gi=globeImages;globeImages=function(key,cb){return _gi.call(this,key==="relief"&&on()?"reliefNE":key,cb)};
@@ -23,6 +26,7 @@ function install(){
    try{const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief")lg.innerHTML=allMapsLegendHTML()}catch(e){}}else{try{amGlobe&&amGlobe.request()}catch(e){}}return r};
  /* the lake colour in the key */
  if(typeof reliefLegendHTML==="function"){const _rl=reliefLegendHTML;reliefLegendHTML=function(){const h=_rl.apply(this,arguments);return on()?h.replace(/background:#a9d3ec/g,"background:"+PAL.lake):h}}
+  setTimeout(()=>{try{gfReliefApply();GFG.sig=null;gfGlobeDirty();amGlobe&&amGlobe.request();const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief")lg.innerHTML=allMapsLegendHTML()}catch(e){}},50);
  return true}
 /* the globe on the Maps page takes the Natural Earth texture while the style is on */
 let hooked=null;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g.cfg||hooked===g)return;hooked=g;const r0=g.cfg.raster;
