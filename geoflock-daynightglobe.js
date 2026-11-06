@@ -418,7 +418,7 @@ const tried=()=>{try{return localStorage.getItem("gfDngTried")==="1"||+(localSto
 let nb=null,nbOff=false;
 function nudge(c){const show=!!c&&c.isConnected&&!S.on&&!tried()&&!nbOff&&allMapsColorMode==="satellite"&&!(typeof ps!=="undefined"&&ps)&&!!c.offsetParent;
  document.querySelectorAll("#gfDngChip").forEach(x=>x.classList.toggle("gf-dng-pulse",show));
- if(!show){if(nb){nb.remove();nb=null}return}
+ if(nb){nb.remove();nb=null}return;/* only the glowing button now: no bubble (too much) */
  if(!nb){nb=document.createElement("div");nb.className="gf-dnhint";nb.setAttribute("role","note");
   nb.innerHTML='<b>🌗 See day and night as it is right now</b><span>Press <em>Day &amp; Night</em>: the Sun lights half the Earth, and the cities glow on the night side.</span><div><button type="button" data-go>Show me</button><button type="button" data-x aria-label="Not now">Not now</button></div>';
   document.body.appendChild(nb);["width:280px","max-width:calc(100vw - 16px)","right:auto","height:auto","display:block"].forEach(d=>{const[k,v]=d.split(":");nb.style.setProperty(k,v,"important")});
