@@ -15,13 +15,16 @@ let IDX=null;
 function index(){if(IDX)return IDX;IDX=[];try{(gfSearch.build()||[]).forEach(e=>{if(!KINDS[e.cat]||!e.g||!/Polygon/.test(e.g.type))return;try{const b=d3.geoBounds(e.g);if(b[1][0]<b[0][0])return;IDX.push({e,b})}catch(x){}})}catch(x){IDX=null}return IDX||[]}
 /* the smallest island, group or lake that holds (or nearly holds) a point */
 function placeAt(ll){let best=null,ba=1e9;for(const it of index()){const b=it.b,pad=.15;if(ll[0]<b[0][0]-pad||ll[0]>b[1][0]+pad||ll[1]<b[0][1]-pad||ll[1]>b[1][1]+pad)continue;
-  const a=(b[1][0]-b[0][0])*(b[1][1]-b[0][1]);if(a>=ba)continue;let inside=false;try{inside=d3.geoContains(it.e.g,ll)||Math.abs(ll[0]-(b[0][0]+b[1][0])/2)<(b[1][0]-b[0][0])/2+.05&&Math.abs(ll[1]-(b[0][1]+b[1][1])/2)<(b[1][1]-b[0][1])/2+.05}catch(x){}
+  const a=(b[1][0]-b[0][0])*(b[1][1]-b[0][1]);if(a>=ba)continue;let inside=false;try{/* inside, or within its box (an island in a lake sits in the lake's hole); the name check below keeps this honest */inside=d3.geoContains(it.e.g,ll)||Math.abs(ll[0]-(b[0][0]+b[1][0])/2)<(b[1][0]-b[0][0])/2+.05&&Math.abs(ll[1]-(b[0][1]+b[1][1])/2)<(b[1][1]-b[0][1])/2+.05}catch(x){}
   if(inside){best=it;ba=a}}return best}
 let KEY="",RS=[];
 function rings(){try{if(typeof ps==="undefined"||!ps)return[];const S=psSteps()[ps.i];if(!S)return[];const k=ps.tour+"|"+ps.i+"|"+S.title;if(k===KEY)return RS;KEY=k;
   const set=RINGS[ps.tour+"|"+S.title]||(S.gfFrom&&RINGS[S.gfFrom]);if(set){RS=set.map(r=>Object.assign({},r));return RS}
   const anchors=[];(S.pins||[]).forEach(p=>{if(Array.isArray(p)&&Array.isArray(p[0])&&typeof p[0][0]==="number"&&p[2]!=="area")anchors.push(p[0])});(S.phPins||[]).forEach(q=>{if(q&&q.at)anchors.push(q.at)});
-  const seen=new Map();anchors.forEach(a=>{const it=placeAt(a);if(!it)return;const b=it.b,c=[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2];
+  /* the stop's own words must name the place (Samosir, Lake Toba): a pin that merely lands on an island is not the point */
+  const words=((S.title||"")+" "+(S.stat||S.hl||"")+" "+(S.body||"")).toLowerCase();
+  const named=n=>{const k=String(n||"").toLowerCase().replace(/^(lake|lac|lago|isla|isle of|île)\s+/,"").replace(/\s+(island|islands|isla|lake)$/,"").replace(/\s*\(.*\)/,"").trim();return k.length>2&&words.includes(k)};
+  const seen=new Map();anchors.forEach(a=>{const it=placeAt(a);if(!it||!named(it.e.n))return;const b=it.b,c=[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2];
    const km=Math.max(6,d3.geoDistance(b[0],b[1])*6371/2*1.15);if(km>300)return;seen.set(it.e.n,{at:c,km,n:it.e.n})});
   /* only a stop about ONE small place gets an automatic ring (Samosir in Lake Toba); several small places pointed at
      (Bali, Lombok, Komodo at the Wallace Line) are a comparison, not a hidden spot: no rings there */
