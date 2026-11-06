@@ -140,7 +140,7 @@ function install(){
   try{if(!S||SKIP.has(ps.tour)||!Array.isArray(r))return r;
    const TS=(S.pins||[]).filter(p=>Array.isArray(p)&&isPt(p[0])&&(!p[2]||p[2]==="point"||p[2]==="ring")).map(p=>[p,psScreen(p[0])]).filter(x=>x[1]);
    r.forEach(q=>{if(!q||q.ax==null)return;const m=TS.find(x=>Math.hypot(x[1][0]-q.ax,x[1][1]-q.ay)<3);if(!m)return;const p=m[0];
-    const R=p&&p._gfRk?ringPx(p[0],p._gfRk):0,cx=q.x+q.w/2,cy=q.y+q.h/2,G=R+48;
+    const R=p&&p._gfRk?ringPx(p[0],p._gfRk):0,cx=q.x+q.w/2,cy=q.y+q.h/2,G=R?R+48:16;
     const edge=(X,Y)=>Math.hypot(Math.max(0,Math.abs(X-q.ax)-q.w/2),Math.max(0,Math.abs(Y-q.ay)-q.h/2));
     if(edge(cx,cy)>=G)return;let dx=cx-q.ax,dy=cy-q.ay,d=Math.hypot(dx,dy);if(d<1){dx=q.ax<W/2?1:-1;dy=-.5;d=Math.hypot(dx,dy)}
     let ux=dx/d,uy=dy/d,CX=cx,CY=cy;for(let n=0;n<40&&edge(CX,CY)<G;n++){CX+=ux*8;CY+=uy*8}

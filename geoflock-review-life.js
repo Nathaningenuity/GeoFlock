@@ -12,7 +12,7 @@
    (as in geoflock-polish-k.js). Card photos are keyed "tour|title" in PS_PHOTO, so renamed stops keep theirs.
    New photos: Wikimedia Commons, free licences only (listed in GF_RVLIFE_PHOTOS with author, licence and page); the rest
    come from the shared library. Load after the other tour files and polish patches. */
-window.GF_RVLIFE_PHOTOS=[{"f": "Bourbon vanilla beans - extra noire - +20cm.JPG", "d": "photos/x08bc14b76d26469d.webp", "by": "Alphaomega1010", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Bourbon_vanilla_beans_-_extra_noire_-_+20cm.JPG"},{"f": "Sambava - grading vanilla beans.jpg", "d": "photos/x5bbcc3ddbb4a032f.webp", "by": "WRI Staff", "lic": "CC BY 2.0", "page": "https://commons.wikimedia.org/wiki/File:Sambava_-_grading_vanilla_beans.jpg"},{"f": "Fécondation de la vanille à Madagascar - Emile Prudhomme - btv1b10103461d.jpg", "d": "photos/xf725824884162f29.webp", "by": "Émile Prudhomme", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Fécondation_de_la_vanille_à_Madagascar_-_Emile_Prudhomme_-_btv1b10103461d.jpg"},{"f": "Gousse de vanille verte.jpg", "d": "photos/x6a7c434b01406ba6.webp", "by": "RAJOELIMBOLOLONA Maryo Sébastieni", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Gousse_de_vanille_verte.jpg"},{"f": "Vaquita6 Olson NOAA.jpg", "d": "photos/x946d64dc4b6c4969.webp", "by": "Paula Olson, NOAA", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Vaquita6_Olson_NOAA.jpg"}, {"f": "Saiga antelope at the Stepnoi Sanctuary.jpg", "d": "photos/xa10a5245138fafea.webp", "by": "Andrey Giljov", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Saiga_antelope_at_the_Stepnoi_Sanctuary.jpg"}];
+window.GF_RVLIFE_PHOTOS=[{"f": "Sumatran Rhino 2.jpg", "d": "photos/b1ce9e11644039ca9.webp", "by": "Charles W. Hardin", "lic": "CC BY 2.0", "page": "https://commons.wikimedia.org/wiki/File%3ASumatran_Rhino_2.jpg"},{"f": "Bourbon vanilla beans - extra noire - +20cm.JPG", "d": "photos/x08bc14b76d26469d.webp", "by": "Alphaomega1010", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Bourbon_vanilla_beans_-_extra_noire_-_+20cm.JPG"},{"f": "Sambava - grading vanilla beans.jpg", "d": "photos/x5bbcc3ddbb4a032f.webp", "by": "WRI Staff", "lic": "CC BY 2.0", "page": "https://commons.wikimedia.org/wiki/File:Sambava_-_grading_vanilla_beans.jpg"},{"f": "Fécondation de la vanille à Madagascar - Emile Prudhomme - btv1b10103461d.jpg", "d": "photos/xf725824884162f29.webp", "by": "Émile Prudhomme", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Fécondation_de_la_vanille_à_Madagascar_-_Emile_Prudhomme_-_btv1b10103461d.jpg"},{"f": "Gousse de vanille verte.jpg", "d": "photos/x6a7c434b01406ba6.webp", "by": "RAJOELIMBOLOLONA Maryo Sébastieni", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Gousse_de_vanille_verte.jpg"},{"f": "Vaquita6 Olson NOAA.jpg", "d": "photos/x946d64dc4b6c4969.webp", "by": "Paula Olson, NOAA", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Vaquita6_Olson_NOAA.jpg"}, {"f": "Saiga antelope at the Stepnoi Sanctuary.jpg", "d": "photos/xa10a5245138fafea.webp", "by": "Andrey Giljov", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Saiga_antelope_at_the_Stepnoi_Sanctuary.jpg"}];
 (function(){
 if(typeof PS_TOURS==="undefined")return;
 const W=[-180,-58,180,80];
@@ -117,30 +117,73 @@ function animals(){if(!once("animals"))return;
  rm("animals","Monarch butterflies");rm("animals","Pole to pole");
  /* same figure and same bleaching point as the Ocean life tour's coral stop */
  rm("animals","The Coral Triangle");
- set("animals","Pandas",s=>{s.more="Pandas are bears built to eat meat, with a short carnivore’s gut that digests bamboo badly, which is why they must eat 12 to 38 kg of it a day and rest most of the time to save energy. They were moved off the endangered list in 2016 after their numbers grew; China lends pandas to zoos abroad, a custom called panda diplomacy."});
- ins("animals","Snow leopards",{title:"The saiga’s comeback",view:[40,38,90,56],globe:[65,48,2.6],card:"left",hi:["kz"],
-  pins:[P([68,47.3],"Betpak-Dala: the 2015 die-off"),P([51.5,49.4],"Ural herd"),P([56.5,44.2],"Ustyurt herd")],
-  phPins:[ph([66.5,48.6],"Saiga on the steppe","Saiga antelope at the Stepnoi Sanctuary.jpg")],
-  stat:"In 2015 about 200,000 saiga antelope, over half of all there were, died within a few weeks; by 2023 there were well over a million",
-  body:"Saiga, with odd drooping noses that filter out dust in summer and warm the air in winter, roam the dry steppes of Kazakhstan. In May 2015, during an unusually warm, humid spell, bacteria that normally live harmlessly in their noses turned deadly, and whole calving herds died where they stood.",
-  more:"Anti-poaching patrols and protected land let them breed back so fast that in 2023 the IUCN moved saiga from Critically Endangered to Near Threatened. Now some farmers complain that saiga eat their crops, and Kazakhstan has begun culling them."});
- CARD["animals|The saiga’s comeback"]="Saiga antelope at the Stepnoi Sanctuary.jpg";
- ins("animals","Polar bears never meet penguins",{title:"The last few vaquitas",view:[-124,22,-106,35],globe:[-114.6,31,4],card:"left",
-  pins:[P([-114.7,31.05],"The vaquita’s last refuge"),P([-112.8,26.6],"Gulf of California")],
-  phPins:[ph([-113.9,30.4],"A vaquita","Vaquita6 Olson NOAA.jpg")],
-  stat:"Fewer than ten vaquitas, the world’s smallest porpoise, are thought to be left, all in one corner of one sea",
-  body:"The vaquita lives only in the shallow, murky top of the Gulf of California. Fishermen there set gillnets for the totoaba, a big fish whose dried swim bladder can sell for thousands of dollars in China, and vaquitas get tangled in the nets and drown. Demand on the far side of the Pacific is emptying a sea in Mexico.",
-  more:"A 2024 survey saw only about six to eight. Mexico has banned gillnets in the vaquita’s last refuge, but enforcing the ban has been hard. The good news: the few survivors look healthy and still have calves, so the species could recover if the nets stop."});
- CARD["animals|The last few vaquitas"]="Vaquita6 Olson NOAA.jpg";
- ins("animals","The last few vaquitas",{title:"The axolotl’s last lake",view:[-104.5,15.5,-95.5,23],globe:[-99.1,19.4,5],card:"left",
-  lines:[{coords:[[-99.12,19.72],[-98.95,19.62],[-98.93,19.45],[-99.0,19.35],[-98.97,19.22],[-99.08,19.2],[-99.15,19.28],[-99.12,19.45],[-99.17,19.6],[-99.12,19.72]],kind:"dash"}],
-  pins:[P([-99.1,19.26],"Xochimilco’s canals"),P([-98.98,19.55],"The old lake, drained")],
-  phPins:[ph([-98.3,19.0],"An axolotl, gills and all","Mexican axolotl.jpg")],
-  stat:"Millions of axolotls live in labs and fish tanks, but in the wild they survive only in the canals of one city",
-  body:"Axolotls are salamanders that never grow up: they keep their feathery gills and live in water all their lives, and they can regrow lost legs and even parts of the heart and brain. Their home was the great lake (dashed) on which the Aztecs built Tenochtitlan. As Mexico City drained the lake and spread over it, only the canals of Xochimilco were left.",
-  more:"Surveys there found about 6,000 axolotls per km² in 1998 and only about 35 in 2014, because of dirty water and the carp and tilapia released into the canals, which eat their eggs. Farmers who keep their canals clean round the chinampas, the Aztec farm plots built up from the lake bed, now act as axolotl refuges."});
- CARD["animals|The axolotl’s last lake"]="Mexican axolotl.jpg";
- order("animals",["Animals of the world","Seventeen wild countries","The Amazon","The Wallace Line","The deadliest animal","Great journeys","Elephant country","Tigers","Lions outside Africa","Pandas","Snow leopards","The saiga’s comeback","Polar bears never meet penguins","The last few vaquitas","The axolotl’s last lake","Animals out of place","Now explore"]);
+ /* 2026-11: the single-species stops (tigers, Asiatic lions, pandas, snow leopards, saiga, vaquitas, axolotls) become
+    one stop on endangered animals, with the losers and the comebacks side by side; three new stops look at the places
+    with the most remarkable animals: Madagascar, the Galápagos, and the reefs of the Coral Triangle and Great Barrier Reef */
+ const red="#c0392b",grn="#2e8b57";
+ const pc=(at,label,f,col)=>Object.assign(ph(at,label,f),{col});
+ ["Tigers","Lions outside Africa","Pandas","Snow leopards"].forEach(t=>rm("animals",t));
+ ins("animals","Polar bears never meet penguins",{title:"On the edge",view:[-10,-20,150,62],globe:[78,20,1.05],card:"left",
+  pins:[],
+  phPins:[pc([101.5,-1.2],"Sumatran rhino","Sumatran Rhino 2.jpg",red),
+   pc([86,31.5],"Snow leopard","Panthera uncia - Zoo Karlsruhe.jpg",red),
+   pc([79.5,22.5],"Tiger","Bengal tiger (Panthera tigris tigris) female 3.jpg",grn),
+   pc([70.8,21.1],"Asiatic lion","Asiatic Lion Royal Walk at Gir National Park, Gujrat, India.jpg",grn),
+   pc([103.2,30.8],"Giant panda","Pandas eating Bamboo - panoramio.jpg",grn),
+   pc([66.5,48.6],"Saiga","Saiga antelope at the Stepnoi Sanctuary.jpg",grn),
+   pc([29.55,-1.45],"Mountain gorilla","Mountain gorilla (Gorilla beringei beringei) female with baby.jpg",grn)],
+  stat:"Some animals are down to a few dozen; others show that protection works, and have come back from the brink",
+  body:"Red photos are animals still sliding: fewer than 50 Sumatran rhinos are left, scattered in Sumatra’s forests, and snow leopards are hard to count in their high mountains. Green photos are comebacks: India’s tigers rose from 1,411 in 2006 to 3,682 in 2022, Asiatic lions now number 891 in and around Gir, and giant pandas left the endangered list in 2016.",
+  more:"What worked was nearly always the same: guarded reserves, an end to hunting, and local people who gain from the animals living. The saiga died in hundreds of thousands in 2015, yet they now number well over a million. Mountain gorillas, about 250 in the 1980s, passed 1,000 thanks to rangers and gorilla tourism. Far from this map, fewer than ten vaquitas survive in the Gulf of California, drowned in illegal fishing nets, and wild axolotls cling on in the canals of Mexico City."});
+ CARD["animals|On the edge"]="Bengal tiger (Panthera tigris tigris) female 3.jpg";
+ rm("animals","The saiga’s comeback");rm("animals","The last few vaquitas");rm("animals","The axolotl’s last lake");
+ ins("animals","The Wallace Line",{title:"Madagascar: animals found nowhere else",view:[38,-27,56,-11],globe:[46.8,-19,3.4],card:"left",hi:["mg"],
+  pins:[],
+  phPins:[ph([45.4,-22.6],"Ring-tailed lemur","Ring tailed lemur portrait.jpg"),
+   ph([48.42,-18.93],"Indri, the biggest lemur","Indri (Indri indri).jpg"),
+   ph([46.3,-25.0],"Verreaux’s sifaka","Verreaux's sifaka (Propithecus verreauxi) Peyrieras.jpg"),
+   ph([48.3,-13.35],"Mouse lemur, smaller than a hand","Nosy Be mouse lemur (Microcebus mamiratra).jpg"),
+   ph([49.9,-15.6],"Panther chameleon","§chameleon"),
+   ph([44.55,-20.05],"Fossa, the top hunter","§fossa"),
+   ph([44.42,-20.25],"Baobabs of Morondava","Allée des baobabs Morondava Madagascar.jpg")],
+  stat:"About 90% of Madagascar’s plants and animals live nowhere else on Earth, including every one of the world’s 100-plus kinds of lemur",
+  body:"Madagascar broke away from Africa about 160 million years ago and from India about 88 million years ago. Its animals arrived by chance, many probably floating across on rafts of plants, and then evolved alone. Lemurs filled the jobs monkeys do elsewhere, and the fossa, a cousin of the mongoose, became a cat-like hunter of lemurs.",
+  more:"Half of the world’s chameleons live here, from the panther chameleon to some no bigger than a fingernail. But most of the island’s forest has been cut, and about 95% of lemur species are threatened, which makes lemurs the most endangered group of mammals on Earth."});
+ CARD["animals|Madagascar: animals found nowhere else"]="Ring-tailed lemur.jpg";
+ ins("animals","Madagascar: animals found nowhere else",{title:"Galápagos: animals with no fear",view:[-92.3,-1.9,-88.9,0.9],globe:[-90.6,-0.55,6],card:"left",
+  pins:[],
+  phPins:[ph([-90.45,-0.68],"Giant tortoise","Galápagos giant tortoise (Chelonoidis niger hoodensis).jpg"),
+   ph([-91.55,-0.35],"Marine iguana","Marine iguana, Plaza island, July 13, 2025.jpg"),
+   ph([-90.29,-0.39],"Blue-footed booby","Blue footed booby courtship display.jpg"),
+   ph([-91.45,-0.95],"Galápagos penguin","Galápagos penguin (Spheniscus mendiculus) male.jpg"),
+   ph([-91.35,-0.25],"Flightless cormorant","Flightless cormorant (Phalacrocorax harrisi) drying wings.jpg"),
+   ph([-89.6,-0.9],"Sea lion pup","Galápagos sea lion pup (Zalophus wollebaeki).jpg"),
+   ph([-90.45,-1.28],"Darwin’s finch","Medium ground finch on Floreana Island in the Galápagos Islands.jpg"),
+   ph([-89.68,-1.37],"Galápagos mockingbird","Galapagos mockingbird.JPG")],
+  stat:"On islands 1,000 km off Ecuador live the only lizard that feeds in the sea, a cormorant that cannot fly, and penguins on the equator",
+  body:"The Galápagos are young volcanoes that never touched a continent, so every animal here came by air or sea and changed to fit its new home. With no big predators, many never learned fear: you can walk right up to a nesting booby. Marine iguanas dive for seaweed, and cold currents let penguins live on the equator.",
+  more:"When Charles Darwin visited in 1835, the islanders told him they could tell which island a tortoise came from by its shell, and he found that the mockingbirds differed from island to island. Those clues helped lead him to the idea of evolution by natural selection. Giant tortoises can weigh over 250 kg and live more than 100 years."});
+ CARD["animals|Galápagos: animals with no fear"]="Blue footed booby courtship display.jpg";
+ ins("animals","Galápagos: animals with no fear",{title:"The Coral Triangle and the Great Barrier Reef",view:[95,-26,165,21],globe:[132,-6,1.9],card:"left",hi:["id","ph","my","pg","tl","sb"],
+  lines:[{coords:[[117,7],[121,13.5],[127,10],[135,1],[156,-5],[162,-11],[150,-11.5],[141,-9.5],[127,-9.5],[118,-9],[115,-5],[117,7]],kind:"dash"}],
+  pins:[P([128.5,-4.5],"The Coral Triangle"),P([150.5,-19.5],"Great Barrier Reef: 2,300 km")],
+  phPins:[ph([123.8,9.6],"Clownfish in an anemone","Clownfish in an anemone.jpg"),
+   ph([130.6,-0.6],"Manta ray, Raja Ampat","Giant oceanic manta ray.jpg"),
+   ph([123.7,12.9],"Whale shark","Whale Shark AdF.jpg"),
+   ph([125.2,1.45],"Nudibranch","Anna's chromodoris nudibranch.jpg"),
+   ph([159.9,-8.6],"Blacktip reef sharks","Blacktip reef sharks (Carcharhinus melanopterus) Moorea.jpg"),
+   ph([119.5,-2.5],"Cuttlefish","§cuttlefish"),
+   ph([142.3,-10.2],"Dugong, the sea cow","§dugong"),
+   ph([145.9,-16.4],"Green turtle","Green turtle on a reef.jpg"),
+   ph([147.6,-18.6],"Giant clam","§clam"),
+   ph([152.2,-23.4],"Humphead wrasse","§wrasse"),
+   ph([149.2,-20.3],"Humpback whales come to calve","Humpback Whale-Megaptera novaeangliae (16793944076).jpg"),
+   ph([146.2,-16.7],"Coral at Flynn Reef","Coral Outcrop Flynn Reef.jpg")],
+  stat:"The Coral Triangle, an area of sea smaller than half of Australia, holds about three-quarters of all the world’s coral species",
+  body:"Between the Philippines, Indonesia, New Guinea and the Solomon Islands (dashed) the sea is warm, shallow and broken into thousands of islands, and it has been for millions of years, so reef life has had space and time to split into more kinds than anywhere else: about 600 corals and over 2,000 reef fish. To the south, the Great Barrier Reef runs 2,300 km along Australia, about 2,900 separate reefs.",
+  more:"Over 120 million people live along the Coral Triangle’s coasts, many of them by fishing its reefs. Whale sharks gather off the Philippines, humpback whales swim up from Antarctica to give birth in the Barrier Reef’s warm lagoon each winter, and dugongs graze seagrass in Torres Strait. Marine heatwaves have bleached the Great Barrier Reef five times since 2016."});
+ CARD["animals|The Coral Triangle and the Great Barrier Reef"]="Clownfish in an anemone.jpg";
+ order("animals",["Animals of the world","Seventeen wild countries","The Amazon","The Wallace Line","Madagascar: animals found nowhere else","Galápagos: animals with no fear","The Coral Triangle and the Great Barrier Reef","The deadliest animal","Great journeys","Elephant country","Polar bears never meet penguins","On the edge","Animals out of place","Now explore"]);
 }
 
 function humans(){if(!once("humans"))return;
@@ -545,7 +588,7 @@ function houses(){if(!once("houses"))return;
    ===================================================================================================== */
 const NEWQ={
  environment:[{st:"Bags that flooded a city",q:"Why did Bangladesh ban thin plastic bags in 2002?",o:["They blocked Dhaka’s drains in floods","They were killing river dolphins","Plastic was too expensive to import","To protect its jute farmers"],a:0,why:"Choked drains made the floods of 1988 and 1998 worse, so the ban was about flooding first.",kc:"bd"}],
- animals:[{st:"The last few vaquitas",q:"What is killing the last vaquitas?",o:["Gillnets set for the totoaba fish","Oil spills","Shark attacks","Cold water"],a:0,why:"Vaquitas drown in gillnets set for totoaba, whose swim bladders sell for thousands of dollars in China.",kc:"mx"}],
+ animals:[{st:"On the edge",q:"What is killing the last vaquitas?",o:["Gillnets set for the totoaba fish","Oil spills","Shark attacks","Cold water"],a:0,why:"Vaquitas drown in gillnets set for totoaba, whose swim bladders sell for thousands of dollars in China.",kc:"mx"}],
  landmarks:[{st:"The tower that leans to survive",q:"Why does the Leaning Tower of Pisa lean?",o:["Its soft clay ground sank on one side","It was built leaning on purpose","An earthquake in 1990 tipped it","Its top floors are made of heavier stone"],a:0,why:"The soft river clay under it sank on one side within five years of the start of building.",kc:"it"},
   {st:"Petra’s war on floods",q:"How did Petra’s builders protect the Siq from flash floods?",o:["With a dam and a tunnel through the mountain","By roofing over the gorge","By moving the city uphill","With walls of sandbags"],a:0,why:"The Nabataeans dammed the Siq’s entrance and cut an 88 m tunnel to send floodwater around it.",kc:"jo"}],
  cities:[{st:"Paris was built from its own underground",q:"What did Paris move into its old underground quarries from 1786?",o:["The bones from its overflowing cemeteries","The king’s wine cellars","Its first metro line","Gunpowder stores"],a:0,why:"The old limestone quarries became the Catacombs, which hold the bones of about 6 million Parisians.",kc:"fr"}],
