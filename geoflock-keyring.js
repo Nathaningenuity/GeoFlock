@@ -2,7 +2,8 @@
    (Samosir and Lake Toba, the Galápagos, Cocos (Keeling)…) and that place is small on the map, a ring is drawn round it,
    the labels and photo squares are kept outside the ring, and their leader lines start at the ring's edge: no dot and no
    line end on the place itself. Places that are big on the map (zoomed in) are left as they are.
-   The places are found from the map's own landform shapes (islands, island groups, lakes); RINGS adds hand-set ones. */
+   The places are found from the map's own landform shapes (islands, island groups, lakes), only when a stop points at ONE
+   such place and it is small on the map (under about 90 px); RINGS adds hand-set ones. */
 (function(){
 const RINGS={
  "bbeagle|Galápagos: islands of difference":[{at:[-90.55,-0.6],km:150}],
@@ -22,7 +23,9 @@ function rings(){try{if(typeof ps==="undefined"||!ps)return[];const S=psSteps()[
   const anchors=[];(S.pins||[]).forEach(p=>{if(Array.isArray(p)&&Array.isArray(p[0])&&typeof p[0][0]==="number"&&p[2]!=="area")anchors.push(p[0])});(S.phPins||[]).forEach(q=>{if(q&&q.at)anchors.push(q.at)});
   const seen=new Map();anchors.forEach(a=>{const it=placeAt(a);if(!it)return;const b=it.b,c=[(b[0][0]+b[1][0])/2,(b[0][1]+b[1][1])/2];
    const km=Math.max(6,d3.geoDistance(b[0],b[1])*6371/2*1.15);if(km>300)return;seen.set(it.e.n,{at:c,km,n:it.e.n})});
-  RS=[...seen.values()];return RS}catch(e){return[]}}
+  /* only a stop about ONE small place gets an automatic ring (Samosir in Lake Toba); several small places pointed at
+     (Bali, Lombok, Komodo at the Wallace Line) are a comparison, not a hidden spot: no rings there */
+  RS=seen.size===1?[...seen.values()].map(r=>Object.assign(r,{auto:1})):[];return RS}catch(e){return[]}}
 function ringSvg(box,n){let s=box.querySelector("svg.gf-keyring");if(!s){s=document.createElementNS(NS,"svg");s.setAttribute("class","gf-keyring");s.setAttribute("aria-hidden","true");box.appendChild(s)}
  if(s.childElementCount!==2*n){s.innerHTML="";for(let i=0;i<n;i++)s.insertAdjacentHTML("beforeend",'<circle class="h"/><circle class="r"/>')}return s}
 function clear(){document.querySelectorAll("svg.gf-keyring").forEach(x=>x.remove())}
@@ -30,7 +33,7 @@ function boxEdge(cx,cy,b){const bx=b.l+b.w/2,by=b.t+b.h/2,dx=cx-bx,dy=cy-by;if(!
 function hitsCircle(b,cx,cy,R){const x=Math.max(b.l,Math.min(cx,b.l+b.w)),y=Math.max(b.t,Math.min(cy,b.t+b.h));return Math.hypot(x-cx,y-cy)<R}
 function apply(){const RR=rings();const box=RR.length&&typeof psContainer==="function"&&psContainer();if(!box){clear();return}
  /* each ring on screen; only the small ones are kept */
- const C=[];RR.forEach(K=>{const c=psScreen(K.at),n=c&&psScreen([K.at[0],K.at[1]+K.km/111.2]);if(!c||!n)return;const R=Math.max(14,Math.hypot(n[0]-c[0],n[1]-c[1]));if(2*R<SMALL)C.push({c,R,K})});
+ const C=[];RR.forEach(K=>{const c=psScreen(K.at),n=c&&psScreen([K.at[0],K.at[1]+K.km/111.2]);if(!c||!n)return;const R=Math.max(14,Math.hypot(n[0]-c[0],n[1]-c[1]));if(2*R<(K.auto?90:SMALL))C.push({c,R,K})});
  if(!C.length){clear();return}
  const s=ringSvg(box,C.length);[...s.children].forEach((e,i)=>{const r=C[i>>1];e.setAttribute("cx",r.c[0].toFixed(1));e.setAttribute("cy",r.c[1].toFixed(1));e.setAttribute("r",r.R.toFixed(1))});
  const br=box.getBoundingClientRect(),W=box.clientWidth,H=box.clientHeight;const S=psSteps()[ps.i];
