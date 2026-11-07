@@ -58,7 +58,7 @@ let Z=null;
 /* the map on show (the globe or the flat map): the panel sits fixed over its top-left corner */
 function mapEl(){try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host&&amGlobe.host.offsetParent)return amGlobe.host}catch(e){}const w=document.getElementById("allMapsWrap");return w&&w.offsetParent?w:document.getElementById("allMapsView")||document.body}
 function host(){return document.body}
-function pos(){if(!Z||!Z.p)return;const r=mapEl().getBoundingClientRect(),w=Math.min(440,innerWidth-24);let L=Math.max(8,r.left+12),T=Math.max(8,r.top+12);if(L+w>innerWidth-8)L=innerWidth-8-w;Z.p.style.left=L+"px";Z.p.style.top=T+"px";Z.p.style.maxHeight=Math.max(260,Math.min(innerHeight-T-12,r.height>200?r.height-24:innerHeight-T-12))+"px"}
+function pos(){if(!Z||!Z.p||Z.p._gffMoved)return;/* moved by the reader (geoflock-floatfit.js): left there */const r=mapEl().getBoundingClientRect(),w=Math.min(440,innerWidth-24);let L=Math.max(8,r.left+12),T=Math.max(8,r.top+12);if(L+w>innerWidth-8)L=innerWidth-8-w;Z.p.style.left=L+"px";Z.p.style.top=T+"px";Z.p.style.maxHeight=Math.max(260,Math.min(innerHeight-T-12,r.height>200?r.height-24:innerHeight-T-12))+"px"}
 addEventListener("resize",pos);addEventListener("scroll",pos,true);setInterval(pos,800);
 function start(id,opts){try{if(typeof ps!=="undefined"&&ps)psEnd()}catch(e){}if(Z)stop(true);
  const L=draw(id).map(prep);if(!L.length)return;Z={id,L,k:0,score:0,res:[],stamps:[],t0:Date.now()};
