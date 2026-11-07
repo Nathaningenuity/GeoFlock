@@ -36,13 +36,20 @@ const DIAG={
 };
 /* ---------- the little map ---------- */
 function mini(e){if(!e.m||!e.m.at)return"";return'<div class="gfdv-mm"><canvas width="560" height="300" data-ll="'+e.m.at.join(",")+'" data-z="'+(e.m.z||4)+'"></canvas><small>'+esc(e.e?String(e.e).split(/[;:,(]/)[0]:"On the map")+'</small></div>'}
-function drawMini(cv){try{if(cv._done)return;const F=(window.amGlobe&&amGlobe.features)||(typeof projFeatures==="function"?projFeatures():null);if(!F||!F.length||typeof d3==="undefined")return;cv._done=1;
+/* the little map: a piece of the Relief map (Natural Earth picture: land cover, mountains and the sea floor), with the place marked */
+const RH={};const relief=h=>RH[h]||(RH[h]=new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src="textures/GLOBE_RELIEF_"+h+"_LK_NE.webp?v=1"}));
+function drawMini(cv){try{if(cv._done)return;cv._done=1;
  const ll=cv.dataset.ll.split(",").map(Number),z=+cv.dataset.z||4,W=cv.width,H=cv.height,x=cv.getContext("2d");
- const p=d3.geoOrthographic().rotate([-ll[0],-ll[1]]).translate([W/2,H/2]).scale(Math.min(4000,H*.45*Math.pow(1.55,z-1))).clipAngle(90),path=d3.geoPath(p,x);
- x.fillStyle="#a9cbe5";x.fillRect(0,0,W,H);let here=null;for(const f of F){try{if(d3.geoContains(f,ll)){here=f;break}}catch(er){}}
- x.beginPath();F.forEach(f=>path(f));x.fillStyle="#efe6d2";x.fill();x.strokeStyle="#b9ab90";x.lineWidth=.8;x.stroke();
- if(here){x.beginPath();path(here);x.fillStyle="#f2c879";x.fill();x.strokeStyle="#8a5a2b";x.lineWidth=1.4;x.stroke()}
- const s=p(ll);if(s){x.beginPath();x.arc(s[0],s[1],9,0,2*Math.PI);x.fillStyle="rgba(208,87,58,.25)";x.fill();x.beginPath();x.arc(s[0],s[1],5,0,2*Math.PI);x.fillStyle="#d0573a";x.fill();x.strokeStyle="#fff";x.lineWidth=2;x.stroke()}}catch(er){}}
+ /* the same area the old globe view showed: degrees across, widened by latitude so shapes keep their proportions */
+ const scale=Math.min(4000,H*.45*Math.pow(1.55,z-1)),wDeg=W/scale*180/Math.PI,k=Math.max(.2,Math.cos(ll[1]*Math.PI/180));
+ const lonSpan=wDeg/k,latSpan=wDeg*H/W,lon0=ll[0]-lonSpan/2,lat0=Math.min(90,ll[1]+latSpan/2);
+ x.fillStyle="#2a5d9a";x.fillRect(0,0,W,H);
+ Promise.all([relief("W"),relief("E")]).then(([iw,ie])=>{const pxd=iw.width/180;
+  /* each half covers 180° of longitude and the whole height; draw what falls in the window (also across the date line) */
+  [[iw,-180],[ie,0]].forEach(([im,base])=>[-360,0,360].forEach(off=>{const L=Math.max(lon0,base+off),R=Math.min(lon0+lonSpan,base+off+180);if(R<=L)return;
+   const sx=(L-base-off)*pxd,sw=(R-L)*pxd,sy=(90-lat0)*pxd,sh=latSpan*pxd;x.drawImage(im,sx,sy,sw,sh,(L-lon0)/lonSpan*W,0,sw/(lonSpan*pxd)*W,H)}));
+  const px=(ll[0]-lon0)/lonSpan*W,py=(lat0-ll[1])/latSpan*H;
+  x.beginPath();x.arc(px,py,11,0,2*Math.PI);x.fillStyle="rgba(255,255,255,.35)";x.fill();x.beginPath();x.arc(px,py,6,0,2*Math.PI);x.fillStyle="#d0573a";x.fill();x.strokeStyle="#fff";x.lineWidth=2.2;x.stroke()}).catch(()=>{cv._done=0})}catch(er){}}
 function visual(e){const P=IMG()[e.t];if(P&&P.d)return'<figure class="gfdv-fig"><img loading="lazy" alt="'+esc(e.t)+'" src="'+esc(P.d)+'"><figcaption>'+esc(P.caption||"")+credit(P)+'</figcaption></figure>';
  if(DIAG[e.t])return DIAG[e.t]();return mini(e)}
 /* ---------- the Pictures tab ---------- */
