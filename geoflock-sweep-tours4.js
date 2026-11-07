@@ -104,7 +104,7 @@ A("africa|The real southern tip",{view:[14.2,-36.5,22.2,-33],phDrop:/^South Afri
 /* North America: the whole-continent views reach west past the date line, so Alaska and the Pacific coast come out from
    under the card */
 ["North America","Three giants","Three languages","Now explore"].forEach(t=>A("namerica|"+t,{view:[-205,5,-45,80]}));
-A("namerica|Canada’s water",{view:[-175,41,-52,75],phDrop:/^Canada: Moraine Lake/});/* the card's own photo already */
+A("namerica|Canada’s water",{view:[-175,41,-52,75],pinsDrop:/^Canada$/,phDrop:/^Canada: Moraine Lake/});/* the card's own photo already */
 A("namerica|The longest border",{view:[-205,36,-55,72]});
 A("namerica|Greenland belongs to North America",{view:[-130,28,22,84]});
 A("namerica|Alaska breaks every record",{view:[-215,36,-83,72]});
