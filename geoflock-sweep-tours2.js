@@ -144,7 +144,7 @@ M({
  /* a photo of Big Ben on a Stonehenge stop: the stones themselves instead of the temple icon */
  "landmarks|Stonehenge":{phDrop:/^(United Kingdom: Big Ben|Stonehenge$)/,phAdd:[ph("stone1",[-1.826,51.179],"Stonehenge")]},
  /* the pyramid three times on one spot: icon pin, photo pin and icon */
- "landmarks|The pyramids of Giza":{phDrop:/^(Great Pyramid of Giza|Egypt: Pyramids of Giza)$/,iconDrop:true},
+ "landmarks|The pyramids of Giza":{phDrop:/^(Great Pyramid of Giza|Egypt: Pyramids of Giza)$/,iconDrop:true,view:[12,18,42,34],pinsAdd:[[[31.13,29.98],"Giza: the Great Pyramid","point"]]},
  "landmarks|Angkor Wat":{phDrop:/^Angkor Wat$/,iconDrop:true,phAdd:[ph("angkor1",[103.867,13.4125],"Angkor Wat")]},
  "landmarks|Machu Picchu":{phDrop:/^Machu Picchu$/,iconDrop:true},
  "landmarks|The Taj Mahal":{phDrop:/^Taj Mahal, Agra$/,iconDrop:true,phAdd:[ph("taj1",[78.042,27.175],"The Taj Mahal, Agra")]},
@@ -162,12 +162,8 @@ M({
  "flags|Pan-Slavic colours":{view:[-35,35,75,66]},
  /* Algeria, Tunisia and Turkey were under the card */
  "flags|The crescent and star":{view:[-90,-15,127,52]},
- /* Malaysia, one of the two flags the card is about, was off the map */
- "flags|Stars and stripes":{view:[-130,-15,125,60]},
  /* Nauru's flag sat on the island itself (a few pixels across): it now floats to the west, over open sea */
  "flags|Flags that are sea charts":{flagAt:{nr:[160.5,-3.2]}},
- /* Guatemala and Haiti were under the card */
- "flags|Weapons on flags":{view:[-150,-38,70,40],card:"left"},
  /* Switzerland and Vatican City, the square flags the card names, had no flag on the map */
  "flags|Not a rectangle":{view:[-75,10,110,60]},
  "flags|Pan-Arab colours":{stat:"Red, white, black and green, the colours of the 1916 Arab Revolt, live on in a dozen flags"},
