@@ -53,16 +53,26 @@ function drawMini(cv){try{if(cv._done)return;cv._done=1;
 function visual(e){const P=IMG()[e.t];if(P&&P.d)return'<figure class="gfdv-fig"><img loading="lazy" alt="'+esc(e.t)+'" src="'+esc(P.d)+'"><figcaption>'+esc(P.caption||"")+credit(P)+'</figcaption></figure>';
  if(DIAG[e.t])return DIAG[e.t]();return mini(e)}
 /* ---------- the Pictures tab ---------- */
-function allPics(){const L=[];const D=(window.GF_DICT||[]);Object.entries(IMG()).forEach(([t,P])=>{if(P&&P.d)L.push({kind:"term",t,P,cap:P.caption||t})});ICON().forEach(P=>{if(P&&P.d)L.push({kind:"place",t:P.name||P.caption,P,cap:P.caption||P.name})});return L}
-function picsHTML(q){const Q=String(q||"").toLowerCase().trim(),L=allPics().filter(x=>!Q||(x.t+" "+x.cap).toLowerCase().includes(Q));
+function allPics(){const L=[];const D=(window.GF_DICT||[]);Object.entries(IMG()).forEach(([t,P])=>{if(P&&P.d)L.push({kind:"term",t,P,cap:P.caption||t})});ICON().forEach(P=>{if(P&&P.d)L.push({kind:"place",t:P.name||P.caption,P,cap:P.caption||P.name})});
+ /* every other picture on the site: the tour and map photo library, found by its title, the stops and pins that show it */
+ const seen=new Set(L.map(x=>x.P.d));lib().forEach(x=>{if(!seen.has(x.P.d)){seen.add(x.P.d);L.push(x)}});return L}
+let LIB=null,LIBN=-1;
+function lib(){const D=window.PS_PHOTO_DATA||(typeof PS_PHOTO_DATA!=="undefined"?PS_PHOTO_DATA:null);if(!D)return[];if(LIB&&LIBN===D.length)return LIB;LIBN=D.length;
+ const ctx=new Map(),add=(i,t)=>{if(i==null||i<0||!t)return;t=String(t).replace(/\u200b/g,"").replace(/^[^|]*\|/,"");const a=ctx.get(i)||[];if(!a.includes(t))a.push(t);ctx.set(i,a)};
+ try{const PP=window.PS_PHOTO||(typeof PS_PHOTO!=="undefined"?PS_PHOTO:{});for(const k in PP)add(PP[k],k)}catch(e){}
+ try{const SQ=window.PS_SQ_IMG||{};for(const k in SQ)add(SQ[k],k)}catch(e){}
+ const nice=f=>String(f||"").replace(/\.(jpe?g|png|webp|gif|tiff?|svg)$/i,"").replace(/[_]+/g," ").replace(/\s*\((\d{6,}|cropped|\d+)\)\s*/gi," ").replace(/\s+-\s+\d{4}.*$/,"").replace(/\s{2,}/g," ").trim();
+ LIB=[];D.forEach((P,i)=>{if(!P||!P.d||!/^(photos\/|data:|https?:)/.test(P.d))return;const c=ctx.get(i)||[];const t=c.find(x=>x.length<48)||nice(P.f)||"Photo";
+  LIB.push({kind:"photo",t,P:Object.assign({name:t,caption:c.filter(x=>x!==t).slice(0,3).join(" · ")||nice(P.f)},P),cap:nice(P.f)+" "+c.join(" ")})});return LIB}
+function picsHTML(q){const Q=String(q||"").toLowerCase().trim(),W=Q.split(/\s+/).filter(Boolean),A=allPics().filter(x=>{const h=(x.t+" "+x.cap).toLowerCase();return W.every(w=>h.includes(w))}),L=A.slice(0,240);
  if(!allPics().length)return'<p class="gflib-empty">Pictures are on their way.</p>';
- return'<div class="gfdv-grid">'+(L.length?L.map((x,i)=>'<button type="button" class="gfdv-tile" data-pk="'+esc(x.kind)+'" data-pt="'+esc(x.t)+'"><img loading="lazy" alt="" src="'+esc(x.P.d)+'"><span>'+esc(x.t)+'</span></button>').join(""):'<p class="gflib-empty">No picture matches “'+esc(q)+'”.</p>')+'</div>'}
+ return'<div class="gfdv-grid">'+(L.length?L.map((x,i)=>'<button type="button" class="gfdv-tile" data-pk="'+esc(x.kind)+'" data-pt="'+esc(x.t)+'"><img loading="lazy" alt="" src="'+esc(x.P.d)+'"><span>'+esc(x.t)+'</span></button>').join(""):'<p class="gflib-empty">No picture matches “'+esc(q)+'”.</p>')+'</div>'+(A.length>L.length?'<p class="gflib-empty">'+A.length.toLocaleString()+' pictures: type to narrow them down.</p>':'')}
 function big(P,api){const el=document.createElement("div");el.className="gfdv-lb";el.innerHTML='<div class="gfdv-lbox"><button type="button" class="gfdv-lx" aria-label="Close">×</button><img alt="" src="'+esc(P.d)+'"><div><b>'+esc(P.name||"")+'</b><p>'+esc(P.caption||"")+'</p>'+credit(P)+(P.ll?'<button type="button" class="gfdv-go">🗺️ Fly there on the map</button>':'')+'</div></div>';
  document.body.appendChild(el);const x=()=>el.remove();el.onclick=ev=>{if(ev.target===el)x()};el.querySelector(".gfdv-lx").onclick=x;
  const g=el.querySelector(".gfdv-go");if(g)g.onclick=()=>{x();try{api.close();api.goMap("satellite",()=>{api.flyLL(P.ll,6);setTimeout(()=>api.ping(P.ll,P.name),950)})}catch(e){}}}
 function wire(c,api){c.querySelectorAll(".gfdv-mm canvas").forEach(drawMini);
  c.querySelectorAll(".gfdv-dtm").forEach(d=>{const sl=d.querySelector("input"),b=d.querySelector("b"),cap=d.querySelector(".gfdv-cap"),T=JSON.parse(cap.dataset.st);const up=()=>{const v=+sl.value;b.textContent=v;cap.textContent=T[v-1];d.querySelectorAll(".gfdv-st").forEach(r=>r.setAttribute("opacity",+r.dataset.s===v-1?.22:0))};sl.oninput=up;up()});
- c.querySelectorAll(".gfdv-tile").forEach(b=>b.onclick=()=>{const k=b.dataset.pk,t=b.dataset.pt;if(k==="term")api.showTerm(t);else{const P=ICON().find(x=>(x.name||x.caption)===t);if(P)big(P,api)}})}
+ c.querySelectorAll(".gfdv-tile").forEach(b=>b.onclick=()=>{const k=b.dataset.pk,t=b.dataset.pt;if(k==="term")api.showTerm(t);else if(k==="photo"){const x=lib().find(x=>x.t===t);if(x)big(x.P,api)}else{const P=ICON().find(x=>(x.name||x.caption)===t);if(P)big(P,api)}})}
 window.gfDictVis={visual,picsHTML,wire,DIAG};
 {const s=document.createElement("style");s.textContent=`
 .gfdv-fig{margin:4px 0 10px}.gfdv-fig img{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:10px}.gfdv-fig figcaption{font-size:12.5px;color:#6a5a44;margin-top:4px}
