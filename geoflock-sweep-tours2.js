@@ -341,7 +341,11 @@ M({
  "science|Ibn al-Haytham and light":{phDrop:/^Cairo$/,view:[0,20,52,40]},
  /* two photo pins and a label on one spot in Samarkand: the observatory model stays, the label goes */
  "science|Ulugh Beg’s observatory":{pinsDrop:/^Ulugh Beg’s observatory, Samarkand$/,view:[38,30,80,48]},
- "science|Galileo’s telescope":{pinsDrop:/^Florence$/,phLabel:{"Florence’s cathedral":"Florence: his last years"}},
+ /* the stop lost its Padua and Rome pictures to a later clean-up (they stand by the Galileo portrait); they come back
+    under their own names, so the card's three places, Padua, Rome and Florence, all show */
+ "science|Galileo’s telescope":{pinsDrop:/^Florence$/,phLabel:{"Florence’s cathedral":"Florence: his last years"},phAdd:[
+   {at:[11.88,45.41],label:"Padua: his telescopes, 1609",col:"#d9682b",f:"Galileo galilei, telescopi del 1609-10 ca..JPG",d:"photos/xa7cd3dae372cf933.webp",by:"Sailko",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:Galileo_galilei,_telescopi_del_1609-10_ca..JPG"},
+   {at:[12.48,41.9],label:"Rome: on trial, 1633",col:"#d9682b",f:"Galileo before the Holy Office - Joseph-Nicolas Robert-Fleury, 1847.png",d:"photos/xd48772b3f9e2ea6e.webp",by:"Joseph-Nicolas Robert-Fleury (1847)",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Galileo_before_the_Holy_Office_-_Joseph-Nicolas_Robert-Fleury,_1847.png"}]},
  "science|Greenwich and longitude":{phDup:true,phDrop:/^Greenwich’s prime meridian$/},
  /* the Galápagos, the subject, were under the card */
  "science|Darwin in the Galápagos":{view:[-112,-10,-76,6]},
@@ -371,14 +375,40 @@ M({
  "inventions|The first vaccine":{view:[-58,-5,73,58],phDrop:/^United Kingdom: Big Ben/},
  "inventions|The first computers":{view:[-147,30,18,60],pinsDrop:/^Berlin: Z3, 1941$/,iconDrop:/^statue$/},
  "inventions|Burrs, bricks and pens":{view:[-27,36,45,68],card:"left",pinsDrop:/^(Switzerland: Velcro|Billund: Lego, 1958|Moscow: Tetris, 1984)$/},
+ /* the dry Mediterranean, half the comparison, and western Britain were under the card */
+ "inventions|The heavy plough and the furlong":{view:[-40,33,40,64]},
+ "inventions|The steam engine":{view:[-16,48,8,59]},
  "inventions|The first bouncing balls":{stat:"About 3,600 years ago people in Mexico were making rubber balls that bounced, some 3,000 years before any European saw rubber"},
 });
 /* ---- Words ---- */
 M({
  "words|Papua New Guinea: 840 languages":{pinsDrop:/^(Goroka|Vanuatu: over 100 languages)$/,phLabel:{"An Asaro mud man":"Goroka: an Asaro mud man","Port Vila, Vanuatu":"Vanuatu: over 100 languages"}},
+ "words|England’s place-name layers":{view:[-14,49.8,4,56.2]},
+ /* Hawaii, one of the four revivals on the card, was off the map: a Pacific frame with Hawaii, New Zealand, Wales and Israel */
+ "words|Endangered and revived":{view:[-200,-50,50,65]},
  "words|Saints and rivers":{pinsDrop:/^Rio de Janeiro$/},
 });
 /* ---- Learning ---- */
+M({
+ /* Alexandria and its rival Pergamon both clear of the card */
+ "learning|The Library of Alexandria":{view:[-2,22,46,43]},
+ /* Xuanzang's route from Chang'an, the start of it, was under the card */
+ "learning|Nalanda":{view:[20,4,128,48]},
+ /* Hanoi's Temple of Literature and Seoul's Sungkyunkwan were at the edges */
+ "learning|Exams for an empire":{view:[64,6,134,46]},
+ /* the European end of the paper road (Xàtiva, Fabriano) and Fez were at the card's edge */
+ "learning|The road of paper":{view:[-90,-5,124,72]},
+ "learning|Al-Qarawiyyin":{view:[-40,24,14,44]},
+ "learning|Print, Protestants and reading":{view:[-40,34,32,64]},
+ /* Valentia, the cable's Irish end, was cut off at the right */
+ "learning|Cables under the sea":{view:[-150,25,25,72]},
+ /* Alice Springs was at the card's edge */
+ "learning|School by radio":{view:[100,-40,156,-10]},
+ /* a picture of the herding life the camel libraries serve: camels with a herder in the Somali lands next door */
+ "learning|Libraries on camels":{phAdd:[{at:[41.2,0.8],label:"Camel herders of the north-east",col:"#d9682b",f:"Somali veterinary technician carrying a camel calf in the rural of Xudun district, Sool, Somalia.jpg",d:"@e4f15d381bf9ac4d",by:"Cabdixamiid Xasan Cawad",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Somali_veterinary_technician_carrying_a_camel_calf_in_the_rural_of_Xudun_district,_Sool,_Somalia.jpg"}]},
+ /* six miles round Charing Cross was a dot on a map of south-east England: now London fills the map */
+ "learning|The Knowledge":{view:[-0.62,51.35,0.32,51.66],globe:[-0.13,51.5,40]},
+});
 M({
 });
 
@@ -410,8 +440,8 @@ M({
  "music|Down the Mississippi: blues and jazz":{view:[-112,24,-62,47],card:"left"},
  "literature|One Thousand and One Nights":{view:[-47,8,68,60]},
  "maths|Zero and algebra go west":{view:[-55,4,82,56]},
- "inventions|The wheel":{view:[-20,25,54,58]},
- "inventions|Who called first?":{view:[-142,33,0,62],card:"left"},
+ "inventions|The wheel":{view:[-25,20,62,60]},
+ "inventions|Who called first?":{view:[-140,28,15,64],card:"left"},
  "inventions|Taking to the air":{view:[-157,28,10,55]},
  "inventions|A lucky mould":{view:[-163,25,5,60]},
  "words|Words named after places":{view:[-48,26,46,58]},
