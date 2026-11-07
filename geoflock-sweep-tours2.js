@@ -36,15 +36,16 @@ function photos(S,X){
    if(X.phMove&&X.phMove[q.label]){q=Object.assign({},q,{at:X.phMove[q.label].slice()})}
    if(X.phLabel&&X.phLabel[q.label]){q=Object.assign({},q,{label:X.phLabel[q.label]})}return q})
   .filter((q,i,A)=>!X.phDup||!A.some((o,j)=>j!==i&&o.label===q.label&&(has(o)&&!has(q)||has(o)===has(q)&&j<i))).concat(mine);
- if(S._gfS2p){(X.phAdd||[]).forEach(libAdd);return}S._gfS2p=1;
+ /* already wrapped, and still ours: nothing to do (another script may have redefined the list since: then wrap again) */
+ const cur0=Object.getOwnPropertyDescriptor(S,"phPins");if(S._gfS2p&&cur0&&cur0.get&&cur0.get._s2){(X.phAdd||[]).forEach(libAdd);return false}S._gfS2p=1;
  /* a renamed pin keeps its picture: pictures are looked up by label (PS_SQ_IMG), so the new label gets the old one's */
  const relink=b=>{if(!X.phLabel)return;try{const M=window.PS_SQ_IMG=window.PS_SQ_IMG||{};(Array.isArray(b)?b:[]).forEach(q=>{const nl=q&&X.phLabel[q.label];if(!nl||M[nl]!=null)return;
   const v=M[q.label]!=null?M[q.label]:q.img!=null&&q.img>=0?q.img:q._gfImg;if(v!=null)M[nl]=v;try{if(typeof GF_SQ_FILE!=="undefined"&&GF_SQ_FILE[q.label]&&!GF_SQ_FILE[nl])GF_SQ_FILE[nl]=GF_SQ_FILE[q.label]}catch(e){}})}catch(e){}};
  const d=Object.getOwnPropertyDescriptor(S,"phPins");let base=d&&("value" in d)?d.value:S.phPins;let cache=null,ck=null;
  const get0=d&&d.get?d.get.bind(S):null,set0=d&&d.set?d.set.bind(S):null;
  try{Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,
-  get(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}relink(b);reg(cache);return cache},
-  set(v){if(set0)set0(v);else base=v;ck=null}})}catch(e){}
+  get:Object.assign(function(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}relink(b);reg(cache);return cache},{_s2:1}),
+  set(v){if(set0)set0(v);else base=v;ck=null}})}catch(e){}return true
  /* (no forced re-prune: the app's pruner drops any photo pin whose label has no picture registered; reg() registers them) */}
 /* every photo pin kept or added here has its picture registered under its label (PS_SQ_IMG), which is what the app's
    pin pruner (psSqPrune) and the pin drawing look up */
@@ -335,12 +336,7 @@ M({
  "science|Ibn al-Haytham and light":{phDrop:/^Cairo$/,view:[0,20,52,40]},
  /* two photo pins and a label on one spot in Samarkand: the observatory model stays, the label goes */
  "science|Ulugh Beg’s observatory":{pinsDrop:/^Ulugh Beg’s observatory, Samarkand$/,view:[38,30,80,48]},
- /* the stop lost its Padua and Rome pictures to a later clean-up (they stand by the Galileo portrait); they come back
-    under their own names, so the card's three places, Padua, Rome and Florence, all show */
- "science|Galileo’s telescope":{pinsDrop:/^Florence$/,phLabel:{"Florence’s cathedral":"Florence: his last years"},phAdd:[
-   {at:[11.88,45.41],label:"Padua: his telescopes, 1609",col:"#d9682b",f:"Galileo galilei, telescopi del 1609-10 ca..JPG",d:"photos/xa7cd3dae372cf933.webp",by:"Sailko",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:Galileo_galilei,_telescopi_del_1609-10_ca..JPG"},
-   {at:[12.48,41.9],label:"Rome: on trial, 1633",col:"#d9682b",f:"Galileo before the Holy Office - Joseph-Nicolas Robert-Fleury, 1847.png",d:"photos/xd48772b3f9e2ea6e.webp",by:"Joseph-Nicolas Robert-Fleury (1847)",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Galileo_before_the_Holy_Office_-_Joseph-Nicolas_Robert-Fleury,_1847.png"}]},
- "science|Greenwich and longitude":{phDup:true,phDrop:/^Greenwich’s prime meridian$/},
+ "science|Galileo’s telescope":{pinsDrop:/^Florence$/},
  /* the Galápagos, the subject, were under the card */
  "science|Darwin in the Galápagos":{view:[-112,-10,-76,6]},
  /* the Big Island was half under the card */
