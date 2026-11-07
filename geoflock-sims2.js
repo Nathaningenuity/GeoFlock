@@ -19,6 +19,7 @@
      citymodels  Three models of the city, drawn as textured city plans
      vonthunen   Von Thünen's rings on a textured landscape, with transport cost and a river
      tsunami     A tsunami crossing the Indian Ocean on the real depth profile from Sumatra to Sri Lanka
+     tallest     Which mountain is tallest: jagged mountains, Mauna Kea's drowned base, the Earth's bulge
      epicentre   Find the earthquake: the 2019 Ridgecrest quake timed by three real towns' seismographs
    Loaded after geoflock-climate-sims.js; the climate tour's own diagrams are left alone. */
 (function(){
@@ -782,6 +783,46 @@ make("epicentre",{title:"Find the earthquake: three seismographs",cat:"plates",h
   setPara(svg,"ep-tx",found?"Each circle shows every place that far from one seismograph; only one point lies on all three. Seismologists do the same with hundreds of stations.":"The fast P wave arrives first, the slower S wave later. The longer the gap, the further away the earthquake: about 8.4 km for each second.")},
  drag:(svg,s,n,x,y)=>{const ll=proj().invert([clamp(x,10,168),clamp(y,10,148)]);if(ll)s.g=ll},
  act:(svg,s,a)=>{const m=/^st:(\d)/.exec(a);if(m){s.on[+m[1]]=1;return true}}});
+})();
+
+/* ================================================================ 13. Which mountain is tallest? */
+(function(){
+/* name, latitude, height above sea (m), height from its own base (m), colour of its rock */
+const M=[["Everest",27.99,8849,4600,"#7d7368"],["K2",35.88,8611,3800,"#857a6c"],["Chimborazo",-1.47,6263,3700,"#6f6a66"],["Kilimanjaro",-3.07,5895,4900,"#6b5f55"],["Denali",63.07,6190,5500,"#8a8378"],["Mauna Kea",19.82,4207,10210,"#5b4a40"]];
+const A=6378.137,B=6356.752;/* WGS 84, km */
+const rC=(lat,h)=>{const f=lat*R,c=Math.cos(f),s=Math.sin(f);return Math.sqrt(((A*A*c)**2+(B*B*s)**2)/((A*c)**2+(B*s)**2))+h/1000};
+/* a jagged mountain outline from a seed */
+function peak(cx,base,top,hw,seed,snow){const n=26,pts=[],sn=[];for(let i=0;i<=n;i++){const u=i/n*2-1,env=Math.pow(1-Math.abs(u),1.25),j=(rnd(seed*13+i*3.7)-.5)*.16*(1-Math.abs(u)*.6);pts.push([cx+u*hw,base-(top-0)*Math.max(0,env+j*env)])}
+ return pts}
+const TABS=["Above sea level","From its base","From Earth’s centre"];
+make("tallest",{title:"Which mountain is tallest? It depends how you measure",cat:"plates",h:206,tabs:TABS,
+ src:"Everest 8,849 m (China–Nepal survey, 2020); K2 8,611 m; Chimborazo 6,263 m (IGM Ecuador); Kilimanjaro 5,895 m; Denali 6,190 m (USGS 2015); Mauna Kea 4,207 m, about 10,200 m from the sea floor (USGS). Bases rounded. Distances from the centre worked out on the WGS 84 ellipsoid.",
+ defs:()=>'<linearGradient id="dgTaSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fc3ec"/><stop offset="1" stop-color="#eaf4fb"/></linearGradient><linearGradient id="dgTaSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8fd1"/><stop offset="1" stop-color="#173f6e"/></linearGradient><linearGradient id="dgTaSnow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#dfe9f2"/></linearGradient>',
+ frame:()=>'<rect x="6" y="26" width="288" height="128" rx="8" fill="url(#dgTaSky)"/><clipPath id="dgTaClip"><rect x="6" y="26" width="288" height="128" rx="8"/></clipPath><g class="ta-g" clip-path="url(#dgTaClip)"></g><rect x="6" y="26" width="288" height="128" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/><g class="ta-l"></g>'+
+  '<text class="ta-big" x="8" y="166" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("ta-tx",8,169,286,22,6.3)+hint(8,202,"Switch the way of measuring, and drag the dashed line to compare heights"),
+ state:()=>({y:60}),
+ draw:(svg,s)=>{const t=s.tab;let h="",lab="";const X=[34,80,126,170,214,262],Y1=150,Y0=34;
+  if(t<2){const max=t===0?10200:11200,ys=v=>Y1-v/max*(Y1-Y0)*(t===1?.98:1),sea=t===0?Y1:Y1;
+   if(t===0)h+='<rect x="236" y="'+(Y1-3)+'" width="60" height="8" fill="url(#'+uid(svg,"dgTaSea")+')"/>';
+   M.forEach((m,i)=>{const v=t===0?m[2]:m[3],top=Y1-ys(v)+0,base=t===1?Y1:Y1,hw=t===1&&i===5?30:20+v/max*12,pts=peak(X[i],Y1,Y1-ys(v)===0?0:(Y1-ys(v)),hw,i+3);
+    if(t===1&&i===5){const sl=ys(6000);h+='<rect x="'+(X[i]-34)+'" y="'+f1(sl)+'" width="68" height="'+f1(Y1-sl)+'" fill="url(#'+uid(svg,"dgTaSea")+')" opacity=".9"/>';lab+=T(X[i]+33,f1(sl-2),"sea level",'text-anchor="end" font-size="5.2" font-weight="800" fill="#1d4f86"')}
+    h+='<path d="'+ln(pts)+'Z" fill="'+m[4]+'" stroke="#3a322c" stroke-width=".4"/>';
+    const snowLine=t===0?ys(5000):-1;const sp=pts.filter(p=>p[1]<snowLine);if(sp.length>2)h+='<path d="'+ln(sp)+'Z" fill="url(#'+uid(svg,"dgTaSnow")+')"/>';
+    if(t===1&&i===5)h+='<rect x="'+(X[i]-34)+'" y="'+f1(ys(6000))+'" width="68" height="'+f1(Y1-ys(6000))+'" fill="#3d8fd1" opacity=".35"/>';
+    lab+=T(X[i],f1(ys(v)-9),m[0],'text-anchor="middle" font-size="6" font-weight="900" fill="'+INK+'"')+T(X[i],f1(ys(v)-2),fmt(v)+" m",'text-anchor="middle" font-size="5.6" font-weight="700" fill="'+SUB+'"')});
+   const lv=Math.round((Y1-s.y)/(Y1-Y0)*max/50)*50;h+='<path d="M6,'+f1(s.y)+'H294" stroke="'+ACC+'" stroke-width="1" stroke-dasharray="4 2"/>';lab+='<g class="dg-handle" data-drag="y" transform="translate(284,'+f1(s.y)+')"><circle r="12" fill="transparent"/><circle r="5" fill="#fff" stroke="'+ACC+'" stroke-width="1.8"/></g>'+T(278,f1(s.y-3),fmt(lv)+" m",'text-anchor="end" font-size="6" font-weight="900" fill="'+ACC+'"');
+   txt(svg,".ta-big",t===0?"Above sea level, Everest wins: 8,849 m":"From its base on the sea floor, Mauna Kea wins: about 10,200 m");
+   setPara(svg,"ta-tx",t===0?"Heights on maps are measured from sea level. Everest’s summit is the highest point above it.":"Mauna Kea rises from the Pacific floor about 6,000 m down; Everest stands on the high Tibetan Plateau, so from foot to top it is only about 4,600 m.")}
+  else{/* the Earth bulges at the Equator: a quarter of it, flattening hugely exaggerated */const cx=26,cy=150,ex=8,base=6355,k=1.9;
+   const rp=lat=>(rC(lat,0)-base)*k*ex/ex+96;let arc=[];for(let l=0;l<=90;l+=3){const r=rp(l);arc.push([cx+Math.cos(l*R)*r*1.3,cy-Math.sin(l*R)*r*.95])}
+   h+='<path d="M'+cx+','+cy+' '+ln(arc).replace("M","L")+'Z" fill="#c9b48a" stroke="#8e7a52" stroke-width=".6"/>'+T(cx+4,cy-4,"Earth’s centre (far below)",'font-size="5.4" fill="#5a4a2a"');
+   M.forEach((m,i)=>{const l=Math.abs(m[1]),r0=rp(l),r1=r0+m[2]/1000*k*1.4,a=l*R,x0=cx+Math.cos(a)*r0*1.3,y0=cy-Math.sin(a)*r0*.95,x1=cx+Math.cos(a)*r1*1.3,y1=cy-Math.sin(a)*r1*.95;
+    h+='<path d="M'+f1(x0)+','+f1(y0)+'L'+f1(x1)+','+f1(y1)+'" stroke="'+m[4]+'" stroke-width="5" stroke-linecap="round"/>';const eq=l<5,ly=eq?(m[0]==="Chimborazo"?y1-22:y1-12):y1+2;lab+=(eq?'<path d="M'+f1(x1)+','+f1(y1-2)+'L'+f1(x1-2)+','+f1(ly+2)+'" stroke="#9fb2c4" stroke-width=".5"/>':"")+T(f1(eq?x1-3:x1+4),f1(ly),m[0]+" "+rC(m[1],m[2]).toFixed(1)+" km",'font-size="5.6" font-weight="800" fill="'+INK+'"'+(eq?' text-anchor="end"':""))});
+   lab+=T(150,40,"(the bulge is drawn many times bigger than it is)",'text-anchor="middle" font-size="5.4" fill="'+SUB+'"');
+   txt(svg,".ta-big","From the centre of the Earth, Chimborazo wins: 6,384.4 km");
+   setPara(svg,"ta-tx","The Earth bulges at the Equator: its radius there is 21 km longer than at the poles. Chimborazo sits almost on the Equator, so its top is the point furthest from the centre, about 2 km further out than Everest’s.")}
+  setHTML(svg,".ta-g",h);setHTML(svg,".ta-l",lab)},
+ drag:(svg,s,n,x,y)=>{s.y=clamp(y,36,150)}});
 })();
 
 /* rebuild a diagram's fixed parts for its current tab, keeping its state (for diagrams whose frame differs by tab) */
