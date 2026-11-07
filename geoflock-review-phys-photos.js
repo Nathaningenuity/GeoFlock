@@ -135,3 +135,13 @@ run();addEventListener("load",()=>setTimeout(run,1500));[0,1500,5000,12000].forE
 (function(){function go(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_TOURS==="undefined")return;const i=(window.PS_SQ_IMG||{})["The river runs dry about here"];if(i==null)return;
  for(const t in PS_TOURS){const T=PS_TOURS[t];(T.steps||[]).forEach(s=>{if(s&&String(s.title).replace(/​/g,"").trim()==="A river that stops short")PS_PHOTO[t+"|"+s.title]=i})}}catch(e){console.error(e)}}
  const run=()=>[1500,3000,6500,13500].forEach(ms=>setTimeout(go,ms));if(document.readyState==="complete")run();else addEventListener("load",run)})();
+/* "A river that stops short": nothing drawn over Lake Mead or Lake Powell. Both reservoirs are highlighted as lakes; the river is
+   drawn in three reaches along its real course that stop at each lake's shore; the dam marker that sat on Lake Mead and Las Vegas is gone. */
+(function(){const R=[[[-105.85,40.25],[-106.4,39.95],[-107.32,39.55],[-108.0,39.25],[-108.55,39.07],[-109.2,38.75],[-109.55,38.57],[-109.88,38.19],[-110.15,38.0],[-110.4,37.85]],
+  [[-111.49,36.94],[-111.6,36.87],[-111.83,36.5],[-111.79,36.19],[-112.1,36.1],[-112.7,36.2],[-113.1,36.02],[-113.6,35.95],[-113.97,36.11]],
+  [[-114.74,36.0],[-114.6,35.6],[-114.57,35.16],[-114.6,34.84],[-114.14,34.3],[-114.5,33.9],[-114.57,33.6],[-114.52,33.0],[-114.62,32.72],[-114.73,32.6],[-114.75,32.35]]];
+ function go(){try{if(typeof GF_ICONS!=="undefined")for(const k in GF_ICONS)if(/A river that stops short/.test(k))delete GF_ICONS[k]}catch(e){}
+  try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).forEach(s=>{if(!s||String(s.title).replace(/​/g,"").trim()!=="A river that stops short")return;s.iconPins=[];if(s._gfMead)return;s._gfMead=1;
+   s.lines=R.map(c=>({coords:c,kind:"river"}));s.lk=["Lake Mead","Lake Powell"];s.iconPins=[];s._gfIcons=1;
+   s.pins=(s.pins||[]).filter(p=>!/^(Lake Mead|Lake Powell)$/.test(p[1])).concat([[[-114.15,36.42],"Lake Mead","point"],[[-110.75,37.55],"Lake Powell","point"]])})}catch(e){console.error(e)}}
+ [0,1500,3000,6500,13500].forEach(ms=>setTimeout(go,ms))})();
