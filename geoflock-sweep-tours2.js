@@ -32,10 +32,13 @@ function photos(S,X){
    if(X.phLabel&&X.phLabel[q.label]){q=Object.assign({},q,{label:X.phLabel[q.label]})}return q})
   .filter((q,i,A)=>!X.phDup||!A.some((o,j)=>j!==i&&o.label===q.label&&(has(o)&&!has(q)||has(o)===has(q)&&j<i))).concat(mine);
  if(S._gfS2p){(X.phAdd||[]).forEach(libAdd);return}S._gfS2p=1;
+ /* a renamed pin keeps its picture: pictures are looked up by label (PS_SQ_IMG), so the new label gets the old one's */
+ const relink=b=>{if(!X.phLabel)return;try{const M=window.PS_SQ_IMG=window.PS_SQ_IMG||{};(Array.isArray(b)?b:[]).forEach(q=>{const nl=q&&X.phLabel[q.label];if(!nl||M[nl]!=null)return;
+  const v=M[q.label]!=null?M[q.label]:q.img!=null&&q.img>=0?q.img:q._gfImg;if(v!=null)M[nl]=v;try{if(typeof GF_SQ_FILE!=="undefined"&&GF_SQ_FILE[q.label]&&!GF_SQ_FILE[nl])GF_SQ_FILE[nl]=GF_SQ_FILE[q.label]}catch(e){}})}catch(e){}};
  const d=Object.getOwnPropertyDescriptor(S,"phPins");let base=d&&("value" in d)?d.value:S.phPins;let cache=null,ck=null;
  const get0=d&&d.get?d.get.bind(S):null,set0=d&&d.set?d.set.bind(S):null;
  try{Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,
-  get(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}return cache},
+  get(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}relink(b);return cache},
   set(v){if(set0)set0(v);else base=v;ck=null}})}catch(e){}
  S._sqPruned=-1}
 function apply(tour,S){const X=P[tour+"|"+S.title];if(!X)return;
@@ -78,6 +81,8 @@ Object.assign(P,{
  /* two Hong Kong photos on the same spot */
  "houses|Cities of towers":{phDrop:/^Hong Kong$/},
  "houses|Cities built by their people":{stat:"Over a billion people live in informal settlements: neighbourhoods built by the people who live there, without planning permission or deeds"},
+ /* the turf farm the card names, which had only a text label */
+ "houses|Houses made of grass":{pinsDrop:/^Glaumbær$/,phAdd:[{at:[-19.51,65.61],label:"Glaumbær: a turf farm, now a museum",col:"#d9682b",f:"Turf houses in Glaumbær open-air museum, Iceland, 20240715 1430 0924.jpg",d:"photos/s2glaumbaer.webp",by:"Jakub Hałun",lic:"CC BY 4.0",page:"https://commons.wikimedia.org/wiki/File:Turf_houses_in_Glaumb%C3%A6r_open-air_museum,_Iceland,_20240715_1430_0924.jpg"}]},
  "houses|Snow houses":{stat:"With a small lamp and body heat, the inside of an igloo can be over 30 °C warmer than the air outside"},
 });
 /* ---- Landmarks ---- */
@@ -96,7 +101,7 @@ Object.assign(P,{
  "landmarks|Angkor Wat":{phDrop:/^Angkor Wat$/,iconDrop:true,phAdd:[ph("angkor1",[103.867,13.4125],"Angkor Wat")]},
  "landmarks|Machu Picchu":{phDrop:/^Machu Picchu$/,iconDrop:true},
  "landmarks|The Taj Mahal":{phDrop:/^Taj Mahal, Agra$/,iconDrop:true,phAdd:[ph("taj1",[78.042,27.175],"The Taj Mahal, Agra")]},
- "landmarks|The Statue of Liberty":{phDrop:/^(Statue of Liberty|United States: Grand Canyon)$/,iconDrop:true,phAdd:[ph("liberty1",[-74.0445,40.6892],"The Statue of Liberty")],
+ "landmarks|The Statue of Liberty":{view:[-136,8,6,66],phDrop:/^(Statue of Liberty|United States: Grand Canyon)$/,iconDrop:true,phAdd:[ph("liberty1",[-74.0445,40.6892],"The Statue of Liberty")],
   more:"It travelled in about 350 pieces packed in over 200 crates, and was put back together on its island in New York harbour. The green coating, called a patina, formed as the copper weathered and now protects it, so when officials talked of painting it, people objected. Its full name is “Liberty Enlightening the World”."},
  "landmarks|The Eiffel Tower":{phDrop:/^Eiffel Tower$/,iconDrop:true},
  "landmarks|The tower that leans to survive":{stat:"Pisa’s tower began to lean in 1178, five years into building; the same soft ground has helped it ride out at least four strong earthquakes"},
@@ -120,16 +125,16 @@ function calYears(){const d=new Date(),y=d.getFullYear(),m=d.getMonth(),dd=d.get
  return{eth:(m>8||m===8&&dd>=11)?y-7:y-8,nep:(m>3||m===3&&dd>=14)?y+57:y+56,y}}
 Object.assign(P,{
  /* the key read "undefined" */
- "langrel|Hindu India, Hindu Bali":{keyLabel:"Where most people are Hindu"},
+ "langrel|Hindu India, Hindu Bali":{view:[-40,-35,185,40],keyLabel:"Where most people are Hindu"},
  "langrel|It isn’t 2026 everywhere":{fn:S=>{const c=calYears();SET(S,"stat","In Ethiopia’s calendar it is now "+c.eth+"; in Nepal’s it is already "+c.nep)}},
- "langrel|Holy cities":{more:"Millions of pilgrims visit every year: nearly 2 million make the Hajj to Mecca, where only Muslims may enter."},
+ "langrel|Holy cities":{view:[-48,8,89,52],more:"Millions of pilgrims visit every year: nearly 2 million make the Hajj to Mecca, where only Muslims may enter."},
 });
 /* ---- Food ---- */
 Object.assign(P,{
  /* the rice cradle was labelled twice, and wheat and maize had both a label and an icon at the same spot */
  "food|Three grains, three cradles":{pinsDrop:/^(Yangtze: rice|Wheat: the Fertile Crescent|Maize: southern Mexico)$/},
  "food|Maize without the recipe":{stat:"Maize left Mexico without its cooking method, and in the US South a disease spread that struck about 3 million people"},
- "food|The Spice Islands":{hi:["id"],
+ "food|The Spice Islands":{view:[-119,-40,135,50],hi:["id"],
   body:"The Maluku Islands, the “Spice Islands”, were the only source of cloves, and the tiny Banda Islands the only source of nutmeg. Drag the ruler: the Bandas are about 12,500 km from Venice.",
   more:"Spices passed through many traders’ hands on the way to Europe, growing dearer each time; by some accounts nutmeg was worth more than its weight in gold. The Dutch took the Bandas by force in 1621, killing, enslaving or driving out most of the islanders. In 1667 a peace treaty let the Dutch keep Run, a tiny nutmeg island, while the English kept Manhattan. Black pepper first came from India’s Malabar Coast, but today Vietnam exports the most, about 250,000 tonnes a year."},
 });
@@ -152,21 +157,27 @@ Object.assign(P,{
   body:"Shanghai is the busiest of all, handling over 50 million containers a year (counted in TEU: one TEU is one standard 20-foot box). Singapore is second, and Ningbo, Qingdao, Shenzhen, Guangzhou and Tianjin are all in the top ten. The blue shipping lanes on the map link them to the world."},
  /* Monaco and the Vatican were under the card */
  "cities|Countries that are a city":{view:[-62,-12,122,62],globe:[40,25,1]},
+ /* the map showed five photos and no numbers: the labels now carry the figures the card gives */
  "cities|Africa’s booming cities":{view:[-36,-36,60,38],globe:[15,5,1.35],
+  phLabel:{"Lagos":"Lagos: about 17 million","Kinshasa":"Kinshasa: about 17 million","Cairo":"Cairo: Africa’s biggest city","Dar es Salaam":"Dar es Salaam: 50 million by 2100?"},
   body:"Africa’s cities are growing faster than any others: their populations are young, and people keep moving in from the countryside to find work."},
  "cities|Cities at the extremes":{stat:"Yakutsk’s January averages below −35 °C; Kuwait City’s summer days often pass 45 °C"},
 });
 /* ---- Migration ---- */
 Object.assign(P,{
- "migration|America the magnet":{phDrop:/Grand Canyon/},
+ "migration|America the magnet":{view:[-156,20,-70,53],phDrop:/Grand Canyon/},
  "migration|Mexico to the US":{phDrop:/Grand Canyon/},
  /* Moraine Lake is a fine view, but says nothing about newcomers */
  "migration|Built by newcomers":{phDrop:/^Canada: Moraine Lake/},
- "migration|Nine in ten from abroad":{stat:"In the UAE and Qatar, nearly nine in ten people are foreigners",
+ "migration|Nine in ten from abroad":{view:[-13,0,124,42],stat:"In the UAE and Qatar, nearly nine in ten people are foreigners",
   more:"Because most of the workers are men who come alone, the UAE and Qatar have more than two men for every woman, the most lopsided ratios in the world. Indians are the largest group in the UAE, around 3.5 million, though estimates vary. Most foreign workers can never become citizens, however long they stay. Many work under kafala, a system that ties a worker to one employer, the ‘sponsor’; several Gulf states have loosened it in recent years."},
  "migration|India’s diaspora":{stat:"India has the biggest diaspora, about 18 million people, and receives more money from them than any country does",
   body:"In 2024 Indians abroad sent home about $130 billion, a world record. They work as engineers in California, doctors in Britain and builders in the Gulf. (A diaspora is a people scattered far from its homeland.)"},
- "migration|Fleeing Syria":{stat:"Syria’s war, from 2011, drove over 6 million people abroad: one of the largest refugee crises since World War II"},
+ /* Chengdu, where the ruler starts, sat under the card */
+ "migration|China moves to the cities":{view:[88,18,124,45],globe:[110,31,2.85]},
+ /* Warsaw and Berlin were under the card */
+ "migration|Ukraine, 2022":{view:[-3,42,35,57],card:"left"},
+ "migration|Fleeing Syria":{view:[-10,26,43,58],stat:"Syria’s war, from 2011, drove over 6 million people abroad: one of the largest refugee crises since World War II"},
  "migration|Crossing the Mediterranean":{stat:"From North Africa to Europe can be under 200 km by sea, yet it is one of the world’s deadliest migration routes"},
  "migration|The Philippines works abroad":{stat:"About one Filipino in ten lives or works abroad, as nurses, carers, builders and sailors"},
  "migration|Lebanon’s global family":{stat:"Far more people of Lebanese descent live abroad than in Lebanon itself, perhaps several times more"},
@@ -208,7 +219,7 @@ Object.assign(P,{
  /* Edo and Mount Fuji fell off the right-hand edge of the map; now Japan and Paris are both in view, clear of the card */
  "art|The Great Wave":{view:[-110,0,152,74],globe:[70,45,1]},
  "art|Pagodas that dance":{stat:"Japan’s wooden pagodas have stood through centuries of earthquakes; the one at Hōryū-ji is about 1,300 years old"},
- "art|The blue from one valley":{stat:"For centuries Europe’s finest blue paint came from one set of mines in north-east Afghanistan"},
+ "art|The blue from one valley":{view:[-37,18,74,58],stat:"For centuries Europe’s finest blue paint came from one set of mines in north-east Afghanistan"},
  "art|Dots in the desert":{stat:"One of the world’s best-known art movements began in 1971, with a mural on a school wall in a remote desert settlement"},
 });
 /* ---- Music ---- */
@@ -224,10 +235,13 @@ Object.assign(P,{
  "literature|The Tale of Genji":{phDrop:/^Kyoto$/},
  "literature|Dante’s journey":{phDrop:/^Florence$/},
  "literature|The great Russian novels":{pinsDrop:/^Moscow$/},
- "literature|Homer’s Troy and Ithaca":{stat:"Troy to Ithaca is about 500 km as the crow flies; Odysseus’s way home, as readers have mapped it, is over 5,000 km and takes him ten years"},
+ "literature|Weeping at the campsite":{body:"In the dry steppes and deserts of Arabia (rusty red and orange on the climate map), Bedouin herders moved with the rains and the grass, so tribes camped together for a season and then went their separate ways. That is why the classical ode, the qasida, opens with the poet at the traces of an old camp, hearth stones half buried in sand, weeping for a beloved whose tribe has moved on. Then he rides off across the desert on his camel."},
+ "literature|Homer’s Troy and Ithaca":{body:"The Iliad tells of the Trojan War; the Odyssey follows Odysseus on his ten-year voyage home. The Lotus-eaters, the Cyclops, the bag of winds, the giants who sink eleven of his ships, the witch Circe, the Underworld, the Sirens, Scylla and Charybdis: each danger waits on its own island or strait. He spends seven years on Calypso’s island before the Phaeacians carry him home. A sea full of islands suits such a story: an archipelago is a plot already cut into chapters.",
+  stat:"Troy to Ithaca is about 500 km as the crow flies; Odysseus’s way home, as readers have mapped it, is over 5,000 km and takes him ten years"},
 });
 /* ---- Philosophy ---- */
 Object.assign(P,{
+ "philosophy|Córdoba: reason and revelation":{body:"Ibn Rushd (Averroes, born 1126) and Moses Maimonides (born 1138) both grew up in Córdoba, in al-Andalus, where Muslims, Jews and Christians lived side by side. Both tried to square reason with revelation. Ibn Rushd argued that truth cannot contradict truth, so careful reasoning and the Qur’an must agree; Maimonides, that where the Bible seems to clash with reason, it should be read as a metaphor. The question can’t be avoided when rival scriptures share one city."},
  "philosophy|Fragmentation: Greece’s many constitutions":{stat:"Aristotle’s school collected 158 constitutions to compare: Greece’s mountains and islands supplied the sample"},
 });
 /* ---- Mythology ---- */
@@ -262,9 +276,9 @@ Object.assign(P,{
 Object.assign(P,{
  /* generic country photos (the Great Wall, a Seoul palace, Big Ben) that had nothing to do with the stops */
  "inventions|China’s Four Great Inventions":{phDrop:/^(China: Great Wall of China|South Korea: Gyeongbokgung Palace)$/},
- "inventions|The first vaccine":{phDrop:/^United Kingdom: Big Ben/},
- "inventions|The first computers":{pinsDrop:/^Berlin: Z3, 1941$/,iconDrop:/^statue$/},
- "inventions|Burrs, bricks and pens":{pinsDrop:/^(Switzerland: Velcro|Billund: Lego, 1958|Moscow: Tetris, 1984)$/},
+ "inventions|The first vaccine":{view:[-58,-5,73,58],phDrop:/^United Kingdom: Big Ben/},
+ "inventions|The first computers":{view:[-147,30,18,60],pinsDrop:/^Berlin: Z3, 1941$/,iconDrop:/^statue$/},
+ "inventions|Burrs, bricks and pens":{view:[-27,36,45,68],card:"left",pinsDrop:/^(Switzerland: Velcro|Billund: Lego, 1958|Moscow: Tetris, 1984)$/},
  "inventions|The first bouncing balls":{stat:"About 3,600 years ago people in Mexico were making rubber balls that bounced, some 3,000 years before any European saw rubber"},
 });
 /* ---- Words ---- */
@@ -274,6 +288,41 @@ Object.assign(P,{
 });
 /* ---- Learning ---- */
 Object.assign(P,{
+});
+
+/* ---- framing: views that keep each stop's places clear of the card (the card covers the left two-fifths of the map
+   on a laptop screen), centred on the subject ---- */
+Object.assign(P,{
+ "cities|The biggest cities":{view:[23,-12,144,46]},
+ "migration|Called in to rebuild":{view:[-162,8,34,62]},
+ "people|Russia’s missing men":{view:[-8,22,95,75]},
+ "culture|Europe’s odd ones out":{view:[-52,33,62,71]},
+ "culture|How the world writes":{view:[-22,16,58,52]},
+ "culture|Sign languages have borders too":{view:[-135,8,8,64]},
+ "langrel|Catholicism moved west":{view:[-168,-56,16,62]},
+ "langrel|The Reformation went south":{view:[-140,-36,20,72]},
+ "langrel|Two homes for most Jews":{view:[-161,15,40,62]},
+ "langrel|The most Muslim countries are not Arab":{view:[-24,-14,124,44],card:"left"},
+ "langrel|Buddhism left home":{view:[12,-12,140,50]},
+ "langrel|Sikhism’s Punjab":{view:[-210,-8,92,72]},
+ "langrel|Waiting for the vultures":{view:[35,12,80,32]},
+ "food|Chocolate moved to Africa":{view:[-168,-30,10,40]},
+ "food|The first noodles":{view:[-85,-5,141,58]},
+ "food|Dishes that travelled":{view:[-230,-10,19,65]},
+ "festivals|Carnival":{view:[-172,-38,16,62]},
+ "festivals|Holi and Diwali":{view:[64,19.9,92,33.1]},
+ "landmarks|The race for the sky":{view:[-29,-10,126,45]},
+ "flags|Maps on flags":{view:[2.5,30,41,48]},
+ "art|The first artists":{view:[-105,-35,128,65]},
+ "music|Vienna, city of music":{view:[-3,44,18.5,54.5]},
+ "music|Down the Mississippi: blues and jazz":{view:[-112,24,-62,47],card:"left"},
+ "literature|One Thousand and One Nights":{view:[-47,8,68,60]},
+ "maths|Zero and algebra go west":{view:[-55,4,82,56]},
+ "inventions|The wheel":{view:[-20,25,54,58]},
+ "inventions|Who called first?":{view:[-142,33,0,62],card:"left"},
+ "inventions|Taking to the air":{view:[-157,28,10,55]},
+ "inventions|A lucky mould":{view:[-163,25,5,60]},
+ "words|Words named after places":{view:[-48,26,46,58]},
 });
 
 })();
