@@ -281,7 +281,7 @@ M({
  "art|The Alhambra":{pinsDrop:/^Córdoba$/,phDrop:/^Granada from the Alhambra$/},
  "art|The Forbidden City":{pinsDrop:/^Terracotta Army/,phDrop:/^Forbidden City, Beijing$/},
  "art|Renaissance Florence":{pinsDrop:/^(Venice|Rome: St Peter’s and the Sistine Chapel)$/,phLabel:{"St Peter’s, Rome":"Rome: St Peter’s and the Sistine Chapel"}},
- "art|Mughal style: the Taj Mahal":{pinsDrop:/^Lahore$/,phDrop:/^Agra$/,phLabel:{"Badshahi Mosque, Lahore":"Lahore: the Badshahi Mosque"}},
+ "art|Mughal style: the Taj Mahal":{pinsDrop:/^Lahore$/,phLabel:{"Badshahi Mosque, Lahore":"Lahore: the Badshahi Mosque"}},
  "art|Gaudí’s Barcelona":{pinsDrop:/^Casa Batlló$/},
  "art|Skyscrapers":{pinsDrop:/^(New York|Kuala Lumpur|Shibam’s mud towers)$/,phLabel:{"Shibam, Yemen":"Shibam’s mud towers"}},
  /* Edo and Mount Fuji fell off the right-hand edge of the map; now Japan and Paris are both in view, clear of the card */
@@ -300,8 +300,6 @@ M({
 });
 /* ---- Literature ---- */
 M({
- "literature|The Tale of Genji":{phDrop:/^Kyoto$/},
- "literature|Dante’s journey":{phDrop:/^Florence$/},
  /* St Petersburg (Dostoevsky) was cut off at the top edge */
  "literature|The great Russian novels":{pinsDrop:/^Moscow$/,view:[12,47.5,46,63.5]},
  "literature|Weeping at the campsite":{body:"In the dry steppes and deserts of Arabia (rusty red and orange on the climate map), Bedouin herders moved with the rains and the grass, so tribes camped together for a season and then went their separate ways. That is why the classical ode, the qasida, opens with the poet at the traces of an old camp, hearth stones half buried in sand, weeping for a beloved whose tribe has moved on. Then he rides off across the desert on his camel."},
@@ -438,8 +436,6 @@ M({
  "landmarks|The race for the sky":{view:[-29,-10,126,45]},
  "flags|Maps on flags":{view:[2.5,30,41,48]},
  "art|The first artists":{view:[-105,-35,128,65]},
- "music|Vienna, city of music":{view:[0,43.5,25,54.5]},
- "music|Down the Mississippi: blues and jazz":{view:[-112,24,-62,47],card:"left"},
  "literature|One Thousand and One Nights":{view:[-47,8,68,60]},
  "maths|Zero and algebra go west":{view:[-55,4,82,56]},
  "inventions|The wheel":{view:[-25,20,62,60]},
