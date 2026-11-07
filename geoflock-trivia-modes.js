@@ -69,7 +69,8 @@ function pools(){if(P.ok)return P;P.ok=1;
 /* the climate game's places (cities of 300,000+, every capital): read from its file once */
 let CITIES=null,citiesP=null;
 function loadCities(){if(citiesP)return citiesP;citiesP=fetch("geoflock-climgame.js").then(r=>r.text()).then(t=>{const m=t.match(/"cities":(\[\[.*?\]\])/);CITIES=m?JSON.parse(m[1]).filter(c=>BY[c[1]]).map(c=>({n:c[0],cc:c[1],ll:[c[2],c[3]],cap:!!c[4]})):[];return CITIES}).catch(()=>{CITIES=[];return CITIES});return citiesP}
-let thermoOK=false;function loadThermo(){try{if(window.gfThermo&&gfThermo.load)gfThermo.load().then(()=>{thermoOK=true}).catch(()=>{})}catch(e){}}
+let thermoOK=false;function loadThermo(){try{if(window.gfThermo&&gfThermo.load&&!loadThermo.c){loadThermo.c=1;gfThermo.load().then(()=>{thermoReady()}).catch(()=>{})}}catch(e){}}
+function thermoReady(){if(thermoOK)return true;try{if(window.gfThermo&&gfThermo.at&&gfThermo.at([2.35,48.86]))thermoOK=true;else loadThermo()}catch(e){}return thermoOK}
 const centroid=c=>{const x=typeof COUNTRY_CENTROIDS!=="undefined"&&COUNTRY_CENTROIDS[c];return x?[x[1],x[0]]:null};
 
 /* ---------- a small world map of the app's own country shapes: pan, zoom, click ---------- */
@@ -253,8 +254,8 @@ TYPES.outline={name:"Outline",icon:"🗺️",
  label:q=>"Which country has this outline?"};
 /* climate graph: which place has this climate? */
 TYPES.clim={name:"Climate graph",icon:"🌦️",
- gen(o){if(!thermoOK||!CITIES||!CITIES.length||!window.gfThermo)return null;const L=CITIES.filter(c=>(c.cap||o.d==null||o.d>=4)&&(!o.reg||o.reg.t(c.cc)));for(let k=0;k<8;k++){const c=pick(L);if(!c)return null;const d=gfThermo.at(c.ll);if(!d||!d.T)continue;const K=gfThermo.koppen(d.T,d.P,c.ll[1]);
-   const others=[];let t=0;while(others.length<3&&t<120){t++;const x=pick(CITIES.filter(y=>y.cap));if(!x||x.n===c.n||others.some(y=>y.n===x.n))continue;const dx=gfThermo.at(x.ll);if(!dx||!dx.T)continue;const Kx=gfThermo.koppen(dx.T,dx.P,x.ll[1]);if(String(Kx).charAt(0)===String(K).charAt(0)&&String(Kx)===String(K))continue;others.push(x)}
+ gen(o){if(!thermoReady()||!CITIES||!CITIES.length||!window.gfThermo)return null;const L=CITIES.filter(c=>(c.cap||o.d==null||o.d>=4)&&(!o.reg||o.reg.t(c.cc)));for(let k=0;k<8;k++){const c=pick(L);if(!c)return null;const d=gfThermo.at(c.ll);if(!d||!d.T)continue;const K=gfThermo.koppen(d.T,d.P,c.ll[1]);
+   const others=[];let t=0;while(others.length<3&&t<120){t++;const x=pick(CITIES.filter(y=>y.cap));if(!x||x.n===c.n||others.some(y=>y.n===x.n))continue;const dx=gfThermo.at(x.ll);if(!dx||!dx.T)continue;const Kx=gfThermo.koppen(dx.T,dx.P,x.ll[1]);if(String(Kx)===String(K)||(o.d==null||o.d<=3)&&String(Kx).charAt(0)===String(K).charAt(0))continue;others.push(x)}
    if(others.length<3)continue;return{type:"clim",key:"cl:"+c.n,c:{n:c.n,cc:c.cc,ll:c.ll},o:others.map(x=>({n:x.n,cc:x.cc,ll:x.ll})),k:String(K),d:c.cap&&COMMON(c.cc)?3:4}}return null},
  render(q,box,done){const d=window.gfThermo&&gfThermo.at(q.c.ll);if(!d)return done({sc:0,yours:"",right:esc(q.c.n)});const opts=shuffle([q.c].concat(q.o)).map(x=>({h:flagImg(x.cc)+esc(x.n)+'<small>'+esc(cname(x.cc))+'</small>',ok:x.n===q.c.n,txt:esc(x.n)}));
   const kn=(gfThermo.KN||{})[q.k]||q.k;return mc(box,metaH("🌦️ Climate graph",q.d)+qH("Which of these places has this climate?")+'<div class="tm-clim">'+gfThermo.graph(d.T,d.P)+'</div>',opts,res=>{res.right=esc(q.c.n)+", "+cLink(q.c.cc);res.why=q.c.n+" has a "+String(kn).toLowerCase()+" climate.";res.codes=[q.c.cc];res.ll=q.c.ll;done(res)},esc(q.c.n)+": "+esc(kn))},
@@ -371,7 +372,7 @@ function textMatches(F){const{reg,terms}=parseQuery(F.q);const R2=F.reg?REG(F.re
  TRIVIA_Q.forEach(q=>{if(!usable(q))return;if(q.s==="identify"&&!terms.length)return;if(!inTopic(q,F.topic)||!dOK(q.d,F.diff))return;
   const cs=codesOf(q);if(reg&&!cs.some(reg.t))return;if(R2&&!cs.some(R2.t))return;if(terms.length){const H=hay(q);if(!terms.every(t=>termHit(t,H)))return}out.push(q)});return out}
 function genSpecs(F){if(F.type==="text")return[];const{terms}=parseQuery(F.q);const tags=Object.fromEntries(Object.entries(TYPE_TAGS).map(([k,v])=>[k,new Set(words(v))]));const out=[];
- (F.type?[F.type]:GEN_TYPES).forEach(t=>{if(t==="clim"&&!thermoOK)return;let subs=TYPE_SUBS[t]?TYPE_SUBS[t].slice():null;
+ (F.type?[F.type]:GEN_TYPES).forEach(t=>{if(t==="clim"&&!thermoReady())return;let subs=TYPE_SUBS[t]?TYPE_SUBS[t].slice():null;
   if(terms.length){if(!terms.every(w=>termHit(w,tags[t])))return;if(subs){const hit=subs.filter(s=>terms.some(w=>termHit(w,new Set(words(SUB_TAGS[s]||"")))));if(hit.length)subs=hit}}
   if(F.topic){const G=TOPIC_GEN[F.topic]||{};if(!(t in G))return;if(G[t]&&subs)subs=subs.filter(s=>G[t].includes(s));if(subs&&!subs.length)return}
   out.push({type:t,subs})});return out}
@@ -401,7 +402,7 @@ function hlStreak(){let prev=null;startRun({title:"Higher or Lower",n:Infinity,l
  scoreLabel:run=>'Streak <b>'+run.items.filter(it=>it.res.sc>=1).length+'</b>',total:run=>run.items.filter(it=>it.res.sc>=1).length,max:run=>run.items.length,noMistakes:1,
  onEnd:run=>{run.best=setBest("hl",run.items.filter(it=>it.res.sc>=1).length)},extra:run=>'<p class="tm-rextra">'+(run.best?"A new best streak!":"Best streak "+(MST().hl||0))+'</p>',again:hlStreak})}
 function survival(){startRun({title:"Survival",n:Infinity,lives:3,cls:"tm-mode",next:run=>{const d=Math.min(5,1+Math.floor(run.i/4));if(rnd()<.5){const L=TRIVIA_Q.filter(q=>usable(q)&&q.s!=="identify"&&Math.abs(q.d-d)<=(d>=5?1:0)&&!run.seen.has("t:"+q.id));if(L.length)return textQ(pick(L))}
-  return genOne({type:pick(GEN_TYPES.filter(t=>t!=="clim"||thermoOK))},{d:Math.min(4,d),avoid:run.seen})||textQ(pick(TRIVIA_Q.filter(usable)))},
+  return genOne({type:pick(GEN_TYPES.filter(t=>t!=="clim"||thermoReady()))},{d:Math.min(4,d),avoid:run.seen})||textQ(pick(TRIVIA_Q.filter(usable)))},
  scoreLabel:run=>'Score <b>'+fmtS(run.score)+'</b>',onEnd:run=>{run.best=setBest("surv",run.score)},extra:run=>'<p class="tm-rextra">You reached question '+run.items.length+' · level '+Math.min(5,1+Math.floor((run.items.length-1)/4))+' of 5 · '+(run.best?"a new best!":"best "+fmtS(MST().surv||0))+'</p>',again:survival})}
 /* Daily Challenge: the same ten for everyone today */
 const DPLAN=[["text",2],["pin",2],["photo",3],["hl",2],["text",3],["order",3],["match",3],["text",4],["num",3],["outline",3]];
@@ -446,7 +447,7 @@ function builderHTML(){const F=bState(),sv=LSget(SKEY,[]),M=mistakes();const nT=
    chipRow("Region","reg",[["","All"]].concat(REGIONS.filter(r=>!r.minor||r.id!=="Americas").map(r=>[r.id,r.id])),F.reg)+
    chipRow("Topic","topic",[["","All"]].concat(TOPICS.map(t=>[t.id,t.name])),F.topic)+
    chipRow("Difficulty","diff",[["","Any"],["easy","Easy"],["mid","Medium"],["hard","Hard"]],F.diff)+
-   chipRow("Kind","type",[["","Any"],["text","Trivia questions"]].concat(GEN_TYPES.filter(t=>t!=="clim"||thermoOK).map(t=>[t,TYPES[t].icon+" "+TYPES[t].name])),F.type)+
+   chipRow("Kind","type",[["","Any"],["text","Trivia questions"]].concat(GEN_TYPES.filter(t=>t!=="clim"||thermoReady()).map(t=>[t,TYPES[t].icon+" "+TYPES[t].name])),F.type)+
    '</div></details>'+chipRow("Length","len",LENS,F.len)+
   '<div class="tm-count">'+(nT||sp.length?'<b>'+nT.toLocaleString("en")+'</b> trivia question'+(nT===1?"":"s")+' match'+(nT===1?"es":"")+(sp.length?', plus <b>'+sp.length+'</b> kind'+(sp.length===1?"":"s")+' of question made fresh each time <span class="tm-ticons">'+sp.map(s=>TYPES[s.type].icon).join(" ")+'</span>':''):'Nothing matches yet — try fewer words or filters.')+
    ((F.q||F.reg||F.topic||F.diff||F.type)?' · <button type="button" class="tv-link" id="tmClear">Clear</button>':'')+' · <button type="button" class="tv-link" id="tmSave">Save this quiz</button></div>'+
@@ -491,7 +492,7 @@ function wireBuilder2(w,save){const b=w.querySelector("#tmBuild");if(!b)return;c
 
 /* ---------- mixed trivia: a new kind of question now and then ---------- */
 function genMixed(run){const reg=run.conts&&run.conts.length?{t:c=>tvInConts(c,run.conts)}:null;let lv=3;try{lv=Math.round(tvRunLevel(run))}catch(e){}
- const kinds=GEN_TYPES.filter(t=>t!=="clim"||thermoOK);for(let k=0;k<6;k++){const q=genOne({type:pick(kinds)},{reg,d:Math.max(1,Math.min(5,lv)),avoid:new Set((run._gq||[]).map(x=>x.q.key))});if(q)return q}return null}
+ const kinds=GEN_TYPES.filter(t=>t!=="clim"||thermoReady());for(let k=0;k<6;k++){const q=genOne({type:pick(kinds)},{reg,d:Math.max(1,Math.min(5,lv)),avoid:new Set((run._gq||[]).map(x=>x.q.key))});if(q)return q}return null}
 function showSpecial(q,run,cont){const v=view();if(!v)return cont();run._inBonus=true;
  v.innerHTML='<div class="tm-wrap tm-play tm-special"><div class="tm-bar"><button type="button" class="chip tm-back" id="tmSPause">← Trivia</button><b class="tm-title">✦ A new kind of question</b><span class="tm-score">Score <b>'+fmtS(run.score)+'</b>'+(run.bonus?' · bonus +'+fmtS(run.bonus):'')+'</span><button type="button" class="tv-link" id="tmSSkip">Skip</button></div><div class="tm-card" id="tmCard"></div><div id="tmFb"></div></div>';
  let done=false;const fin=()=>{if(done)return;done=true;run._inBonus=false;KEY=null;cont()};
@@ -526,7 +527,7 @@ document.addEventListener("keydown",e=>{const v=view();if(!v||!v.querySelector("
 /* load the slower data early, while the player reads the page */
 setTimeout(()=>{try{pools()}catch(e){}loadCities();loadThermo()},4000);
 window.gfTriviaModes={practise,stampsTotal,xpNow,centroid,TYPES,GEN_TYPES,makeMap,genOne,textQ,pools,loadCities,startRun,showResults,rowOf,REGIONS,mc,cLink,wireLinks,noteMistake,credit,flagImg,near,usable,TOPICS,inTopic,parseQuery,textMatches,
- get thermoOK(){return thermoOK},daily,pinDrop,photoHunt,hlStreak,survival,dailySet};
+ get thermoOK(){return thermoReady()},daily,pinDrop,photoHunt,hlStreak,survival,dailySet};
 
 const css=document.createElement("style");css.id="tmStyle";css.textContent=`
 .tm-build{ background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(232,244,255,.92)); border-radius:24px; padding:16px; margin:6px 0 14px; box-shadow:0 6px 22px rgba(20,40,70,.08); }
@@ -574,7 +575,7 @@ const css=document.createElement("style");css.id="tmStyle";css.textContent=`
 .tm-mflag{ width:84px; height:auto; border-radius:4px; box-shadow:0 1px 4px rgba(0,0,0,.25); }
 .tm-num{ max-width:520px; margin:6px auto; text-align:center; } .tm-num output{ display:block; font-weight:800;font-size:26px;font-family:inherit; margin-bottom:8px; } .tm-num input{ width:100%; accent-color:#e8701a; } .tm-numres{ text-align:center; margin-top:8px; font-size:15px; } .tm-numflag{ text-align:center; margin-bottom:6px; } .tm-numflag .tm-flag{ width:72px; margin:0; } .tm-numflag small{ display:block; opacity:.65; }
 .tm-outline{ display:flex; justify-content:center; margin:0 0 10px; } .tm-outline svg{ width:220px; height:220px; max-width:60vw; } .tm-outline svg path{ fill:#3a95d0; }
-.tm-clim{ display:flex; justify-content:center; margin:0 0 10px; overflow-x:auto; } .tm-clim svg{ max-width:100%; height:auto; }
+.tm-clim{ display:flex; justify-content:center; margin:0 0 10px; overflow-x:auto; } .tm-clim svg{ max-width:min(100%,520px); height:auto; }
 .tm-res .tm-rcard{ background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,244,230,.94)); border-radius:24px; padding:18px; box-shadow:0 6px 22px rgba(20,40,70,.09); }
 .tm-rtop{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px; } .tm-rscore b{ font-weight:900;font-size:54px;line-height:1;font-family:inherit; color:#e8701a; } .tm-rscore span{ font-size:18px; opacity:.6; margin-left:4px; }
 .tm-rwords{ display:flex; flex-direction:column; gap:2px; } .tm-rwords b{ font-size:20px; } .tm-rwords span{ opacity:.75; } .tm-rearn{ display:flex; gap:6px; margin-top:6px; } .tm-xp,.tm-stamp{ font-size:12.5px; font-weight:800; border-radius:999px; padding:3px 10px; background:#fff1d6; color:#9a5a10; } .tm-stamp{ background:#e6f0ff; color:#2d5fa8; }
