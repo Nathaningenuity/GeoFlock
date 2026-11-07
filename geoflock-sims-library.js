@@ -765,5 +765,5 @@ body.sky-night .gfsl-card{background:rgba(255,255,255,.05);border-color:rgba(255
 .gfsl-x{border:0;background:none;font-size:22px;line-height:1;cursor:pointer;color:inherit;opacity:.7}
 .gfsl-terms{max-width:640px;margin:4px auto 0;font-size:12.5px}
 .gflib-chips button.c-sim{border-color:#e8701a;color:#c0561d;font-weight:700}.gflib-chips button.c-sim.on{background:#e8701a;color:#fff;border-color:#e8701a}
-@media (max-width:640px){.gfsl-grid{grid-template-columns:1fr}}`;document.head.appendChild(css);
+@media (max-width:640px){.gfsl-grid{grid-template-columns:1fr}.gflib-tabs{max-width:100%;overflow-x:auto;scrollbar-width:none}.gflib-tabs::-webkit-scrollbar{display:none}.gflib-tabs button{white-space:nowrap;padding:6px 9px;font-size:12px}}`;document.head.appendChild(css);
 })();

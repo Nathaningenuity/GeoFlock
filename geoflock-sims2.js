@@ -19,6 +19,7 @@
      citymodels  Three models of the city, drawn as textured city plans
      vonthunen   Von Thünen's rings on a textured landscape, with transport cost and a river
      tsunami     A tsunami crossing the Indian Ocean on the real depth profile from Sumatra to Sri Lanka
+     epicentre   Find the earthquake: the 2019 Ridgecrest quake timed by three real towns' seismographs
    Loaded after geoflock-climate-sims.js; the climate tour's own diagrams are left alone. */
 (function(){
 "use strict";
@@ -752,6 +753,35 @@ make("tsunami",{title:"Why a tsunami slows down and rears up near land",cat:"wat
  tick:(svg,s,dt)=>{if(!s.play)return;s.t=Math.min(2.3,s.t+dt*.25);if(s.t>=2.3)s.play=0;DG.tsunami._d(svg,s)}});
 /* a point at a distance (km) and bearing (degrees) from a start point */
 function dest(p,brg,km){const d=km/6371,b=brg*R,la=p[1]*R,lo=p[0]*R,la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(b)),lo2=lo+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2));return[lo2/R,la2/R]}
+})();
+
+/* ================================================================ 12. Find the earthquake: three seismographs on a real map */
+(function(){
+/* the 2019 Ridgecrest earthquake, magnitude 7.1 (USGS), timed from three towns' seismographs */
+const EQ=[-117.6,35.77],ST=[["Pasadena",-118.17,34.15],["Barstow",-117.02,34.9],["Bakersfield",-119.02,35.37]];
+const KPS=8.4;/* km per second of S-minus-P delay: P waves about 6 km/s, S waves about 3.5 km/s */
+const SAF=[[-115.6,33.3],[-116.5,33.9],[-117.3,34.25],[-118,34.55],[-118.9,34.85],[-119.6,35.2],[-120.3,35.9],[-121,36.4]],GAR=[[-118.6,34.85],[-117.6,35.35],[-116.3,35.6]];
+const dist=(a,b)=>{const x=Math.sin((b[1]-a[1])*R/2),y=Math.sin((b[0]-a[0])*R/2);return 2*6371*Math.asin(Math.sqrt(x*x+Math.cos(a[1]*R)*Math.cos(b[1]*R)*y*y))};
+let PM=null;const proj=()=>PM||(PM=d3.geoMercator().fitExtent([[8,8],[170,150]],{type:"MultiPoint",coordinates:[[-120.6,33.6],[-115.8,36.6]]}));
+make("epicentre",{title:"Find the earthquake: three seismographs",cat:"plates",h:206,
+ src:"The 2019 Ridgecrest earthquake, magnitude 7.1, located by USGS. S−P method: P waves run about 6 km/s and S waves about 3.5 km/s, so each second between them means about 8.4 km of distance. Faults simplified from the USGS fault database.",
+ frame:()=>{const P=proj(),pa=d3.geoPath(P);return'<rect x="8" y="8" width="162" height="142" rx="8" fill="#cfe4f4"/><clipPath id="dgEpClip"><rect x="8" y="8" width="162" height="142" rx="8"/></clipPath><g clip-path="url(#dgEpClip)"><path d="'+landPath("epi",P,f=>["840","484"].includes(String(f.id)))+'" fill="#e6dcb8" stroke="#a89a6a" stroke-width=".5"/>'+
+  '<path d="'+ln(SAF.map(P))+'" fill="none" stroke="#b5401c" stroke-width="1.1" stroke-dasharray="4 1.5"/><path d="'+ln(GAR.map(P))+'" fill="none" stroke="#b5401c" stroke-width=".9" stroke-dasharray="4 1.5"/>'+T(f1(P([-119.3,34.7])[0]),f1(P([-119.3,34.7])[1]+9),"San Andreas Fault",'font-size="5.4" font-weight="800" fill="#b5401c"')+
+  '<g class="ep-c"></g><g class="ep-s"></g></g><rect x="8" y="8" width="162" height="142" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/><rect x="8" y="8" width="162" height="142" fill="transparent" data-drag="g"/><g class="ep-g"></g>'+
+  '<g transform="translate(176,8)"><rect width="118" height="142" rx="8" fill="#fff"/><g class="ep-w"></g></g><text class="ep-big" x="8" y="164" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("ep-tx",8,167,286,22,6.3)+hint(8,202,"Tap each seismograph to measure it, then drag the star to where the circles meet")},
+ state:()=>({on:[0,0,0],g:[-118.6,35.1]}),
+ draw:(svg,s)=>{const P=proj();let c="",st="",w=T(6,12,"Seismographs (tap)",'font-size="6.4" font-weight="800" fill="'+INK+'"');
+  ST.forEach(([n,lo,la],i)=>{const d=dist([lo,la],EQ),sp=d/KPS,p=P([lo,la]),on=s.on[i];
+   if(on){const pts=[];for(let a=0;a<=360;a+=6){const b=a*R,dd=d/6371,l1=la*R,l2=Math.asin(Math.sin(l1)*Math.cos(dd)+Math.cos(l1)*Math.sin(dd)*Math.cos(b)),o2=lo*R+Math.atan2(Math.sin(b)*Math.sin(dd)*Math.cos(l1),Math.cos(dd)-Math.sin(l1)*Math.sin(l2));pts.push(P([o2/R,l2/R]))}c+='<path d="'+ln(pts)+'Z" fill="'+["#2f78b8","#2e9b5f","#8a4ab5"][i]+'" fill-opacity=".08" stroke="'+["#2f78b8","#2e9b5f","#8a4ab5"][i]+'" stroke-width="1.1"/>'}
+   st+='<g data-act="st:'+i+'" style="cursor:pointer"><circle cx="'+f1(p[0])+'" cy="'+f1(p[1])+'" r="9" fill="transparent"/><path d="M'+f1(p[0])+','+f1(p[1]-4)+' l3.5,6 h-7Z" fill="'+INK+'"/>'+T(f1(p[0]+5),f1(p[1]+2),n,'font-size="5.8" font-weight="800" fill="'+INK+'" stroke="#fff" stroke-width="1.6" stroke-opacity=".8" paint-order="stroke"')+'</g>';
+   /* the trace: quiet, P arrives, then the bigger S */const y0=26+i*38,x0=6,x1=112;let tr=[];for(let k=0;k<=106;k++){const t=k/106*40,a=t<4?.4:t<4+sp?2.5*Math.exp(-(t-4)/9):9*Math.exp(-(t-4-sp)/7);tr.push([x0+k,y0+10+Math.sin(k*2.3+i)*a*(.5+rnd(k+i*99)*.5)])}
+   w+='<g data-act="st:'+i+'" style="cursor:pointer"><rect x="'+x0+'" y="'+(y0-6)+'" width="'+(x1-x0)+'" height="34" rx="5" fill="'+(on?"#f3f6fa":"#fbfcfe")+'" stroke="'+(on?["#2f78b8","#2e9b5f","#8a4ab5"][i]:"#e1e7ef")+'"/>'+T(x0+4,y0+2,n,'font-size="5.8" font-weight="800" fill="'+INK+'"')+T(x1-4,y0+2,on?"S−P "+sp.toFixed(1)+" s → "+fmt(d)+" km":"tap",'text-anchor="end" font-size="5.6" font-weight="800" fill="'+(on?ACC:SUB)+'"')+'<path d="'+ln(tr)+'" fill="none" stroke="#1d3047" stroke-width=".5"/>'+(on?'<path d="M'+f1(x0+4/40*106)+','+(y0+3)+'v22M'+f1(x0+(4+sp)/40*106)+','+(y0+3)+'v22" stroke="'+ACC+'" stroke-width=".7" stroke-dasharray="1.5 1"/>'+T(f1(x0+4/40*106+1.5),y0+26,"P",'font-size="5" font-weight="900" fill="'+ACC+'"')+T(f1(x0+(4+sp)/40*106+1.5),y0+26,"S",'font-size="5" font-weight="900" fill="'+ACC+'"'):"")+'</g>'});
+  setHTML(svg,".ep-c",c);setHTML(svg,".ep-s",st);setHTML(svg,".ep-w",w);
+  const gp=P(s.g),off=dist(s.g,EQ),n=s.on.filter(Boolean).length;setHTML(svg,".ep-g",'<g class="dg-handle" data-drag="g" transform="translate('+f1(gp[0])+','+f1(gp[1])+')"><circle r="12" fill="transparent"/><path d="M0,-6 l1.8,4 4.2,.4 -3.2,2.8 1,4.2 -3.8,-2.2 -3.8,2.2 1,-4.2 -3.2,-2.8 4.2,-.4Z" fill="#ffd24a" stroke="#c0561d" stroke-width=".8"/></g>');
+  const found=n===3&&off<15;txt(svg,".ep-big",found?"Found it: near Ridgecrest, 4 July 2019 (it was a magnitude 7.1)":n<3?n+" of 3 seismographs measured":"Your star is "+fmt(off)+" km from where the circles meet");
+  setPara(svg,"ep-tx",found?"Each circle shows every place that far from one seismograph; only one point lies on all three. Seismologists do the same with hundreds of stations.":"The fast P wave arrives first, the slower S wave later. The longer the gap, the further away the earthquake: about 8.4 km for each second.")},
+ drag:(svg,s,n,x,y)=>{const ll=proj().invert([clamp(x,10,168),clamp(y,10,148)]);if(ll)s.g=ll},
+ act:(svg,s,a)=>{const m=/^st:(\d)/.exec(a);if(m){s.on[+m[1]]=1;return true}}});
 })();
 
 /* rebuild a diagram's fixed parts for its current tab, keeping its state (for diagrams whose frame differs by tab) */
