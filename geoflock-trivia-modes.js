@@ -525,7 +525,7 @@ document.addEventListener("keydown",e=>{const v=view();if(!v||!v.querySelector("
  if(KEY&&KEY.key&&KEY.key(e.key)){e.preventDefault();e.stopPropagation()}},true);
 /* load the slower data early, while the player reads the page */
 setTimeout(()=>{try{pools()}catch(e){}loadCities();loadThermo()},4000);
-window.gfTriviaModes={TYPES,GEN_TYPES,makeMap,genOne,textQ,pools,loadCities,startRun,showResults,rowOf,REGIONS,mc,cLink,wireLinks,noteMistake,credit,flagImg,near,usable,TOPICS,inTopic,parseQuery,textMatches,
+window.gfTriviaModes={practise,stampsTotal,xpNow,centroid,TYPES,GEN_TYPES,makeMap,genOne,textQ,pools,loadCities,startRun,showResults,rowOf,REGIONS,mc,cLink,wireLinks,noteMistake,credit,flagImg,near,usable,TOPICS,inTopic,parseQuery,textMatches,
  get thermoOK(){return thermoOK},daily,pinDrop,photoHunt,hlStreak,survival,dailySet};
 
 const css=document.createElement("style");css.id="tmStyle";css.textContent=`
