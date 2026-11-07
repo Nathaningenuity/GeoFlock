@@ -73,12 +73,23 @@ function frame(s){try{const v=s.view;if(!v||v[2]-v[0]>=200||s.card==="right")ret
 function patch(){
 /* ───────── hg1 Thinking like a geographer ───────── */
 if(T("hg1")&&!T("hg1").steps._rvA){T("hg1").steps._rvA=1;
- ins("hg1","Geography’s tools",Object.assign(at(-87,32.4,16),{title:"A coastline in the votes",
-  lines:[{coords:[[-88.45,33.35],[-88.1,32.95],[-87.7,32.6],[-87.2,32.38],[-86.6,32.22],[-86.0,32.15],[-85.4,32.22],[-84.95,32.35]],kind:"dash"}],
-  pins:[[[[-87.3,32.6]],"The Black Belt","area"],[[-87.02,32.41],"Selma","point"],[[-86.3,32.38],"Montgomery","point"]],
-  stat:"Maps of Alabama’s elections still trace the shore of a sea from the age of the dinosaurs",
-  body:"About 80 million years ago a shallow sea covered southern Alabama, and chalk built up on its floor. The chalk weathered into a crescent of dark, fertile soil, the “Black Belt” (dashed). In the 1800s it became cotton country, worked by enslaved people. Their descendants are still most of the people in many of these counties, so the same curve shows on maps of soil, of population and of votes.",
-  more:"AP calls this spatial association: patterns on different maps that line up. Lining up is not proof by itself. Here a chain of causes links them: rock to soil, soil to cotton, cotton to slavery, slavery to where people live today."}));
+ ins("hg1","Geography’s tools",Object.assign({view:[-93.5,29.6,-82.5,35.9],globe:[-87.5,32.6,3.4],_ff:1,card:"left"},{title:"A coastline in the votes",
+  /* blue: roughly where the shallow sea lay about 80 million years ago (its shore near today’s Fall Line); green: the Black Belt,
+     the crescent of chalk that settled on its floor and weathered into dark soil (the Black Prairie of Mississippi and Alabama) */
+  lines:[{poly:[[-80.6,33.0],[-80.6,27.6],[-96.8,27.6],[-96.8,32.6],[-95.5,33.0],[-94.0,33.6],[-92.6,34.5],[-91.7,35.0],[-91.0,35.9],[-90.2,36.7],[-89.4,37.0],[-89.1,36.6],[-88.6,35.6],[-88.3,34.6],[-88.15,33.9],[-87.57,33.22],[-87.0,32.9],[-86.2,32.62],[-84.99,32.47],[-83.6,32.85],[-82.0,33.47],[-80.6,33.0]],kind:"shade"},
+   {poly:[[-88.85,34.35],[-88.45,34.35],[-88.3,33.6],[-87.95,33.05],[-87.5,32.72],[-86.95,32.55],[-86.3,32.48],[-85.6,32.42],[-85.05,32.3],[-85.05,32.05],[-85.6,32.0],[-86.3,32.0],[-87.0,32.05],[-87.65,32.12],[-88.25,32.45],[-88.6,33.0],[-88.8,33.6],[-88.85,34.35]],kind:"grass"}],
+  pins:[[[[-87.4,32.35]],"The Black Belt","area"],[[[-89.2,31.0]],"Sea, 80 million years ago","area"]],
+  stat:"Alabama’s election map still follows the shore of a sea from 80 million years ago: not because rock decides votes, but through a chain of causes",
+  body:"Follow it from the floor of an ancient sea to today’s ballot box:",
+  gfChain:[["🌊","Sea","A shallow sea (blue on the map) covered the coastal plain 80 million years ago."],
+   ["🪨","Chalk","Tiny shells piled up as chalk on its floor, in a band near the shore."],
+   ["🟫","Black soil","The chalk weathered into dark, fertile soil: the Black Belt (green)."],
+   ["🌱","Cotton","In the 1800s that soil was the best cotton land in the South."],
+   ["⛓️","Slavery","Plantations brought enslaved people here: the darkest counties on the 1861 map on this card."],
+   ["🏠","People today","Many of their descendants stayed. Most people in these counties are still Black."],
+   ["🗳️","Votes","Most Black voters vote Democratic, so the same arc shows up on election maps of a mostly Republican state."]],
+  gfChainEnd:"So maps of rock, soil, slavery, population and votes line up. Geographers call this spatial association, and the chain of causes, not the rock itself, is what explains it.",
+  more:"Lining up is not proof by itself: two maps can match by coincidence, and only a chain of causes like this one turns a match into an explanation. Booker T. Washington wrote in 1901 that the name “Black Belt” first meant the colour of the soil, and later came to mean the people."}));
  ins("hg1","Every flat map distorts",Object.assign({view:[62,-2,136,46],globe:[104,22,1.8],_ff:1,card:"left"},{title:"A map in your passport",
   pins:[[[[113,13]],"South China Sea","area"],[[[79.5,35.2]],"Aksai Chin","area"],[[[93.8,28]],"Arunachal Pradesh","area"]],
   stat:"In 2012 some of China’s neighbours refused to stamp its new passports, because of a map printed inside",
@@ -718,10 +729,23 @@ function questions(){try{if(typeof TOURQ==="undefined")return;for(const id in OP
 /* ───────── photos: library files → photo-pin indexes ───────── */
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function reg(s){try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};(s.phPins||[]).forEach(q=>{const f=q&&q._f;if(!f)return;const i=libIdx(f);if(i>=0){q.img=i;PS_SQ_IMG[q.label]=i}})}catch(e){}}
-function photos(){try{if(typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();
+const CARD_PH={"hg1|A coastline in the votes":{f:"Map showing the distribution of the slave population of the southern states (1861).jpg",d:"photos/locslave1860.webp",by:"Edwin Hergesheimer, US Coast Survey, 1861 (Library of Congress)",lic:"Public domain",page:"https://www.loc.gov/item/99447026/"}};
+function cards(){try{if(typeof PS_PHOTO==="undefined")return;for(const k in CARD_PH){const P=CARD_PH[k];let i=libIdx(P.f);if(i<0){PS_PHOTO_DATA.push(P);i=PS_PHOTO_DATA.length-1}PS_PHOTO[k]=i}}catch(e){console.error(e)}}
+function photos(){try{if(typeof PS_PHOTO_DATA==="undefined")return;if(typeof gfMergeExtra==="function")gfMergeExtra();cards();
  for(const id in OPEN){const t=T(id);if(t&&t.steps._rvA)t.steps.forEach(reg)}}catch(e){console.error(e)}}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(typeof ps!=="undefined"&&ps&&OPEN[ps.tour]){const S=psSteps()[i];if(S)reg(S)}}catch(e){}return _g.apply(this,arguments)}}
 
+/* a cause-and-effect chain on a card: each step leads to the next, then the conclusion */
+function chainHTML(S){const e=x=>String(x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+ return'<ol class="gf-chain">'+S.gfChain.map(c=>'<li><span class="gf-ci">'+c[0]+'</span><div><b>'+e(c[1])+'</b> '+e(c[2])+'</div></li>').join("")+'</ol>'+(S.gfChainEnd?'<p class="gf-chain-end">'+e(S.gfChainEnd)+'</p>':"")}
+if(typeof psCardHTML==="function"&&!psCardHTML._gfChain){const _c=psCardHTML;psCardHTML=function(){let h=_c.apply(this,arguments);try{const S=psSteps()[ps.i];
+ if(S&&S.gfChain&&h.indexOf("gf-chain")<0){const k=h.indexOf('<p class="ps-body">');const j=k>=0?h.indexOf("</p>",k)+4:-1;if(j>3)h=h.slice(0,j)+chainHTML(S)+h.slice(j)}}catch(e){console.error(e)}return h};psCardHTML._gfChain=1}
+{const st=document.createElement("style");st.textContent=`.gf-chain{list-style:none;margin:6px 0 4px;padding:0;position:relative}
+.gf-chain li{display:flex;gap:10px;align-items:flex-start;position:relative;padding:0 0 9px;font-size:.92em;line-height:1.35}
+.gf-chain li:not(:last-child)::after{content:"";position:absolute;left:14px;top:30px;bottom:1px;border-left:2px dashed rgba(217,104,43,.55)}
+.gf-chain .gf-ci{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(217,104,43,.14);font-size:15px}
+.gf-chain b{color:#d9682b}
+.gf-chain-end{margin:4px 0 6px;padding:8px 10px;border-radius:10px;background:rgba(46,155,95,.13);border-left:3px solid #2e9b5f;font-weight:600;font-size:.92em;line-height:1.4}`;document.head.appendChild(st)}
 function run(){try{patch()}catch(e){console.error(e)}questions();photos()}
 run();[1500,5000,12000].forEach(ms=>setTimeout(run,ms));addEventListener("load",()=>setTimeout(run,1500));
 })();

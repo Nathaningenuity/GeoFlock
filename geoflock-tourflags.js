@@ -25,7 +25,6 @@ window.GF_TOUR_FLAGS={
  "islandlife|Islands in the sky":"Stat repeats South America stop 12 (Angel Falls, 979 m); only the tepui-as-island idea is new",
  "hsince91|The Darién Gap":"Repeats AP tour 2c stop 3 (the Darién Gap, half a million in 2023)",
  "cities|The fall line":"Third fall-line stop (also North America 7 and AP tour 6a stop 1)",
- "hg1|A coastline in the votes":"Repeats Population stop 8 (Alabama’s chalk-belt vote)",
  "namerica|The longest border":"Repeats Borders stop 1 (Canada–US, the longest border)",
  "asia|The two giants’ neighbours":"Repeats Borders stop 2 (China and Russia, 14 neighbours each); little new on the map",
  "asia|Most people":"Generic ranking that repeats Population stop 1",
