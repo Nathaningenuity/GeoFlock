@@ -53,7 +53,9 @@ if(typeof psPlacePins==="function"){const _pp=psPlacePins;psPlacePins=function()
 function countUp(){const el=document.querySelector(".ps-card .ps-stat");if(!el||el._gfc===el.textContent)return;const txt=el.textContent,m=txt.match(/(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)/);el._gfc=txt;if(!m||matchMedia("(prefers-reduced-motion:reduce)").matches)return;
  const raw=m[1],val=parseFloat(raw.replace(/,/g,"")),dec=(raw.split(".")[1]||"").length,comma=raw.includes(",");if(!(val>=10)||/^(1[5-9]|20)\d\d$/.test(raw))return;/* years stay as they are */
  const pre=txt.slice(0,m.index),post=txt.slice(m.index+raw.length),t0=performance.now(),D=900,fmt=v=>{const s=v.toFixed(dec);return comma?Number(s).toLocaleString("en-US",{minimumFractionDigits:dec,maximumFractionDigits:dec}):s};
- const f=n=>{if(!el.isConnected)return;const k=Math.min(1,(n-t0)/D),e=1-Math.pow(1-k,3);el.textContent=pre+fmt(val*e)+post;if(k<1)requestAnimationFrame(f);else{el.textContent=txt;el._gfc=txt}};requestAnimationFrame(f)}
+ /* the card can be rebuilt while it counts (moved beside the map): whatever stat is showing then gets the true figure */
+ setTimeout(()=>{document.querySelectorAll(".ps-card .ps-stat").forEach(x=>{const c=x.textContent;if(c!==txt&&c.startsWith(pre)&&c.endsWith(post))x.textContent=txt})},D+250);
+ const f=n=>{if(!el.isConnected)return;const k=Math.max(0,Math.min(1,(n-t0)/D)),e=1-Math.pow(1-k,3);el.textContent=pre+fmt(val*e)+post;if(k<1)requestAnimationFrame(f);else{el.textContent=txt;el._gfc=txt}};requestAnimationFrame(f)}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);try{setTimeout(countUp,60)}catch(e){}return r}}
 const _d=psDrawFlat;psDrawFlat=function(){const r=_d.apply(this,arguments);try{enhance()}catch(e){console.error(e)}return r};
 const css=document.createElement("style");css.textContent=`
