@@ -122,7 +122,7 @@ function sameLat(){let n=0;try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).f
 /* 10. the Animals tour runs on the Nature map's Biomes view (animals live by biome); its cover is the map of its seventeen animal photos */
 function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode="nature";if(T.m)T.m.mode="nature";if(T.map)T.map.mode="nature";else T.map={mode:"nature"};
  (T.steps||[]).forEach(S=>{if(S&&(!S.mode||S.mode==="relief")&&!S.sub){S.mode="nature";if(!S.nsub)S.nsub="biomes"}});
- try{const C="photos/cover_animals.webp?v=3";if(typeof TOUR_THUMBS!=="undefined")TOUR_THUMBS.animals=C;
+ try{const C="photos/cover_animals.webp?v=4";if(typeof TOUR_THUMBS!=="undefined")TOUR_THUMBS.animals=C;
   /* pictures already drawn with the old dark cover (the home page tiles, the tour cards) */
   document.querySelectorAll('[data-tour="animals"] img, [data-gfm="animals"] img, [data-id="animals"] img').forEach(im=>{if(!im.src.includes("cover_animals"))im.src=C})}catch(e){}return true}catch(e){return false}}
 animalsNature();[0,1500,4000,9000].forEach(ms=>setTimeout(animalsNature,ms));setInterval(()=>{try{if(document.querySelector('[data-tour="animals"] img:not([src*="cover_animals"])'))animalsNature()}catch(e){}},1500);
