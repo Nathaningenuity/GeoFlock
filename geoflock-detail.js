@@ -235,7 +235,10 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  const seaC=I.drewRaster&&!sat?(seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s))))||window._gfSeaC||"rgb(38,116,185)"):null;/* no open sea in view (the Caspian): the last sea colour seen */if(seaC)window._gfSeaC=seaC;
  /* raster maps (Relief, Elevation...): the picture's own coast is coarse, and in places shows land where the sea is (the Gulf
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
- if(I.drewRaster&&!sat){try{const W=Math.max(5,Math.min(55,bandPx(pj,s)*1.3));if(seaC){const sig=colSig(I);let px=null;
+ /* only on the plain Relief and Elevation pictures: on City Lights (a dark picture) and on maps coloured over the relief
+    (Climate...) the sampled colour came out as a bright blue band along every coast */
+ const plain=/^(relief|elevation)/i.test(String(I.texKey||""))&&(typeof allMapsColorMode==="undefined"||/^(relief|elevation)$/.test(allMapsColorMode));
+ if(I.drewRaster&&!sat&&plain){try{const W=Math.max(5,Math.min(55,bandPx(pj,s)*1.3));if(seaC){const sig=colSig(I);let px=null;
    each(d=>{if(!d.ocean.length)return;/* each stretch of coast in the colour of the sea just off it (the picture's sea is lighter over
      shallows and darker over deeps: one colour for the whole view left pale bands round darker seas, as in the Gulf of Bothnia) */
     const G=new Map();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach((r,ri)=>{const n=r.length/3;for(let c0=0;c0<n;c0+=CH){const id=ri+":"+c0;
