@@ -229,9 +229,9 @@ M({
   body:"Shanghai is the busiest of all, handling over 50 million containers a year (counted in TEU: one TEU is one standard 20-foot box). Singapore is second, and Ningbo, Qingdao, Shenzhen, Guangzhou and Tianjin are all in the top ten. The blue shipping lanes on the map link them to the world."},
  /* Monaco and the Vatican were under the card */
  "cities|Countries that are a city":{view:[-62,-12,122,62],globe:[40,25,1]},
- /* the map showed five photos and no numbers: the labels now carry the figures the card gives */
+ /* the map showed five photos and no numbers: labels with the figures the card gives (photo captions show only a name) */
  "cities|Africa’s booming cities":{view:[-36,-36,60,38],globe:[15,5,1.35],
-  phLabel:{"Lagos":"Lagos: about 17 million","Kinshasa":"Kinshasa: about 17 million","Cairo":"Cairo: Africa’s biggest city","Dar es Salaam":"Dar es Salaam: 50 million by 2100?"},
+  pinsAdd:[[[3.38,6.52],"Lagos: 17 million+","point"],[[15.3,-4.3],"Kinshasa: 17 million+","point"],[[39.28,-6.8],"Dar es Salaam: 50 million by 2100?","point"],[[31.24,30.04],"Cairo: Africa’s biggest city","point"]],
   body:"Africa’s cities are growing faster than any others: their populations are young, and people keep moving in from the countryside to find work."},
  "cities|Cities at the extremes":{stat:"Yakutsk’s January averages below −35 °C; Kuwait City’s summer days often pass 45 °C"},
 });
@@ -241,7 +241,7 @@ M({
  "migration|Mexico to the US":{phDrop:/Grand Canyon/},
  /* Moraine Lake is a fine view, but says nothing about newcomers */
  "migration|Built by newcomers":{phDrop:/^Canada: Moraine Lake/},
- "migration|Nine in ten from abroad":{view:[-13,0,124,42],stat:"In the UAE and Qatar, nearly nine in ten people are foreigners",
+ "migration|Nine in ten from abroad":{view:[-45,0,124,44],stat:"In the UAE and Qatar, nearly nine in ten people are foreigners",
   more:"Because most of the workers are men who come alone, the UAE and Qatar have more than two men for every woman, the most lopsided ratios in the world. Indians are the largest group in the UAE, around 3.5 million, though estimates vary. Most foreign workers can never become citizens, however long they stay. Many work under kafala, a system that ties a worker to one employer, the ‘sponsor’; several Gulf states have loosened it in recent years."},
  "migration|India’s diaspora":{stat:"India has the biggest diaspora, about 18 million people, and receives more money from them than any country does",
   body:"In 2024 Indians abroad sent home about $130 billion, a world record. They work as engineers in California, doctors in Britain and builders in the Gulf. (A diaspora is a people scattered far from its homeland.)"},
@@ -382,7 +382,7 @@ M({
 });
 /* ---- Words ---- */
 M({
- "words|Papua New Guinea: 840 languages":{pinsDrop:/^(Goroka|Vanuatu: over 100 languages)$/,phLabel:{"An Asaro mud man":"Goroka: an Asaro mud man","Port Vila, Vanuatu":"Vanuatu: over 100 languages"}},
+ "words|Papua New Guinea: 840 languages":{pinsDrop:/^Goroka$/,phLabel:{"An Asaro mud man":"Goroka: an Asaro mud man"}},
  "words|England’s place-name layers":{view:[-14,49.8,4,56.2]},
  /* Hawaii, one of the four revivals on the card, was off the map: a Pacific frame with Hawaii, New Zealand, Wales and Israel */
  "words|Endangered and revived":{view:[-200,-50,50,65]},
@@ -426,7 +426,6 @@ M({
    on a laptop screen), centred on the subject ---- */
 M({
  "cities|The biggest cities":{view:[23,-12,144,46]},
- "migration|Called in to rebuild":{view:[-162,8,34,62]},
  "people|Russia’s missing men":{view:[-8,22,95,75]},
  "culture|Europe’s odd ones out":{view:[-52,33,62,71]},
  "culture|How the world writes":{view:[-22,16,58,52]},
