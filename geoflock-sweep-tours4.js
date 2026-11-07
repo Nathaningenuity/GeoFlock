@@ -168,7 +168,9 @@ A("bggs|Germs from the farmyard",{pinsDrop:/^(Mexico|Peru|Spain)$/});
 A("bggs|Africa’s great migration",{pinsDrop:/^(Cameroon|Nigeria)$/,view:[-55,-37,60,20]});
 
 /* Why Nations Fail */
-A("bnations|Nogales: one town, two countries",{view:[-114.5,29.6,-108.5,33],pinsDrop:/^(United States|Mexico)$/});
+/* the fence itself, through the middle of town */
+A("bnations|Nogales: one town, two countries",{view:[-114.5,29.6,-108.5,33],pinsDrop:/^(United States|Mexico|The two Nogales)$/,
+ ph:[{at:[-110.94,31.33],label:"The two Nogales: one fence between them",col:"#d9682b",f:"Mexican-American border at Nogales.jpg",d:"photos/x5f6c26be416216b1.webp",by:"Sgt. 1st Class Gordon Hyde",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Mexican-American_border_at_Nogales.jpg"}]});
 A("bnations|The convicts who sued",{pinsDrop:/^Australia$/});
 A("bnations|Printing held back",{view:[8,35,40,46]});
 A("bnations|Tearing up the railway",{pinsDrop:/^Sierra Leone$/});
@@ -182,7 +184,9 @@ A("bnations|Geography or institutions?",{mode:"gdp",sub:"percapita",phDrop:/^Sto
 /* Pitcairn's label sat behind the card; one of the two moai pictures (the card has its own) goes */
 A("bcollapse|Easter Island",{view:[-155,-40,-68,-15],phDrop:/^Rapa Nui \(Easter Island\)$/});
 A("bcollapse|Iceland’s blowing soil",{view:[-33,62.8,-12,67],pinsDrop:/^Iceland$/});
-A("bcollapse|The Norse in Greenland",{view:[-105,48,8,76]});
+/* the Norse in Greenland: the church of the last written record; country-name pins beside the map's own labels go */
+A("bcollapse|The Norse in Greenland",{view:[-105,48,8,76],pinsDrop:/^(Iceland|Norway|Greenland \(Denmark\))$/,
+ ph:[{at:[-45.78,60.82],label:"Hvalsey church: a wedding in 1408, the last record",col:"#d9682b",f:"Hvalsey Church.jpg",d:"photos/xad319d4040847c9b.webp",by:"Number 57 at English Wikipedia",lic:"CC0",page:"https://commons.wikimedia.org/wiki/File:Hvalsey_Church.jpg"}]});
 A("bcollapse|Too many people, too little land",{pinsDrop:/^Rwanda$/});
 /* the border between forest and bare hills only shows close up */
 A("bcollapse|Hispaniola: one island, two paths",{globe:[-71.7,18.9,9]});
@@ -352,12 +356,18 @@ A("asia|Deserts and steppe",{rep:[["one of only two double-landlocked countries,
 A("samerica|The far south",{rep:[["about 1,000 km from Antarctica across the Drake Passage","about 800 km from Antarctica across the Drake Passage"]]});
 
 /* New photo pins (Wikimedia Commons), where a picture explains the idea */
-A("europe|Changing wheels at the border",{view:[-34,33,48,66],ph:[{at:[22.22,48.43],label:"Chop, Ukraine: jacks that lift carriages for new wheels",col:"#d9682b",f:"Bogie change station at Chop station Ukraine.jpg",d:"photos/xc1d9e763dc601185.webp",by:"Maxim75",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Bogie_change_station_at_Chop_station_Ukraine.jpg"}]});
+A("europe|Changing wheels at the border",{view:[-52,33,48,70],phDrop:/^Brest Fortress/,ph:[{at:[22.22,48.43],label:"Chop, Ukraine: jacks that lift carriages for new wheels",col:"#d9682b",f:"Bogie change station at Chop station Ukraine.jpg",d:"photos/xc1d9e763dc601185.webp",by:"Maxim75",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Bogie_change_station_at_Chop_station_Ukraine.jpg"}]});
 A("asia|The Grand Canal",{pinsDrop:/^Yangzhou$/,ph:[{at:[119.43,32.39],label:"Yangzhou: barges still use the canal",col:"#d9682b",f:"Yangzhou-Modern-Grand-Canal-boats-3353.JPG",d:"photos/x69bd745ca76e7b74.webp",by:"Vmenkov",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:Yangzhou-Modern-Grand-Canal-boats-3353.JPG"}]});
 A("bcollapse|Montana: trouble in paradise",{pinsDrop:/^(United States|Butte|Missoula)$/,ph:[{at:[-112.5,46.02],label:"Butte: the Berkeley Pit from space",col:"#d9682b",f:"Berkeley Pit Butte, Montana.jpg",d:"photos/xdb67784f931d425c.webp",by:"NASA",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Berkeley_Pit_Butte%2C_Montana.jpg"}]});
 
 A("africa|The long shadow of the slave trade",{pinsDrop:/^(Benin|Ouidah)$/,ph:[{at:[2.09,6.33],label:"Ouidah: the Door of No Return",col:"#d9682b",f:"Door of no return.jpg",d:"photos/x252e5f06e3a68d5a.webp",by:"Francisco Anzola",lic:"CC BY 2.0",page:"https://commons.wikimedia.org/wiki/File:Door_of_no_return.jpg"}]});
 A("europe|Islands of the midnight sun",{pinsDrop:/^Global Seed Vault$/,ph:[{at:[15.49,78.24],label:"The Global Seed Vault",col:"#d9682b",f:"Svalbard Global Seed Vault February 2025.jpg",d:"photos/xde1ccd848b107e1c.webp",by:"Michael Major for Crop Trust",lic:"CC BY-SA 2.0",page:"https://commons.wikimedia.org/wiki/File:Svalbard_Global_Seed_Vault_February_2025.jpg"}]});
+
+/* the Fall Line: the falls themselves, from the photo library */
+A("namerica|Cities on the waterfall line",{pinsDrop:/^Great Falls of the Potomac$/,ph:[{at:[-77.25,38.998],label:"Great Falls of the Potomac",col:"#d9682b",f:"Great Falls Potomac River VA.JPG",d:"photos/da9c36107d174a3e3.webp",by:"NortyNort",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:Great_Falls_Potomac_River_VA.JPG"}]});
+
+/* the artesian basin: a newly drilled bore gushing by itself, around 1900 */
+A("oceania|Water from under the desert",{ph:[{at:[146.5,-28.5],label:"A new bore gushing, about 1900",col:"#d9682b",f:"Beels Bore (9014738440).jpg",d:"photos/xcc16946edd43d869.webp",by:"Powerhouse Museum from Sydney, Australia",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Beels_Bore_%289014738440%29.jpg"}]});
 
 /* ---------- patches go here ---------- */
 
