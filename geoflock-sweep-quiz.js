@@ -82,8 +82,11 @@ body.sky-night .sp-opt kbd{background:rgba(255,255,255,.1);color:rgba(255,255,25
    themes the revealed answer was pale pink on a pale sky */
 body.light-theme .map-feedback-text.bad{color:#b2453b!important}
 body.light-theme .map-feedback-text.ok,body.light-theme .type-feedback.ok{color:#23794f!important}
-/* Library on a phone: the filter chips scroll sideways in one line each, so the terms and stops start on the first screen */
+/* Library on a phone: the tabs and the filter chips scroll sideways in one line each (the close button stays on the
+   tabs row), so the terms and stops start on the first screen */
 .gflib-chips::-webkit-scrollbar{display:none}
+@media (max-width:560px){.gflib-c header .gflib-tabs{flex:1 1 0;min-width:0;overflow-x:auto;scrollbar-width:none}.gflib-c header .gflib-tabs button{flex:0 0 auto}
+ .gflib-c header .gflib-x{order:2}.gflib-c header>:not(.gflib-tabs):not(.gflib-x){order:3;flex-basis:100%}}
 @media (max-width:560px){.gflib-chips{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;mask-image:linear-gradient(90deg,#000 88%,transparent)}.gflib-chips>*{flex:0 0 auto}}
 `;
 function addCss(){if(document.getElementById("gfsqCss"))return;const s=document.createElement("style");s.id="gfsqCss";s.textContent=css;document.head.appendChild(s)}
