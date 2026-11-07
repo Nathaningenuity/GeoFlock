@@ -129,7 +129,7 @@ A("samerica|The Amazon basin",{view:[-100,-22,-44,8]});
 A("samerica|Turning bad soil into soybeans",{rep:[["The Cerrado, the tropical savanna (light blue on the map) south of the Amazon rainforest (dark blue), has","The Cerrado, the tropical savanna south of the Amazon rainforest, has"]]});
 A("samerica|The Inca Empire",{view:[-95,-36,-60,2]});
 /* Rio's pin showed the Maracanã stadium, built in 1950; the Paço Imperial was the royal palace from 1808 */
-A("samerica|Europe ruled from Rio",{view:[-80,-32,5,45],phDrop:/^(Rio de Janeiro: capital, 1808–1821|Brazil: Christ the Redeemer)/,
+A("samerica|Europe ruled from Rio",{view:[-80,-32,5,45],pinsDrop:/^Brazil$/,phDrop:/^(Rio de Janeiro: capital, 1808–1821|Brazil: Christ the Redeemer)/,
  ph:[{at:[-43.174,-22.903],label:"Paço Imperial: the king’s palace in Rio",f:"Paço Imperial ao entardecer.jpg",d:"@4505c64d931a9bfc",by:"Guilherme Soares",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Pa%C3%A7o_Imperial_ao_entardecer.jpg"}]});
 A("samerica|Rich from frozen beef",{view:[-80,-41,-50,-28]});
 A("samerica|Two great waterfalls",{view:[-110,-62,-25,21]});
@@ -337,7 +337,7 @@ A("bbeagle|Patagonia: a land that rose",{view:[-90,-56,-54,-38]});
 A("bbeagle|The earthquake at Concepción",{view:[-92,-44,-60,-30]});
 A("bbeagle|Seashells on the Andes",{view:[-82,-38,-64,-29],pinsDrop:/^Argentina$/});
 A("bbeagle|Galápagos: islands of difference",{view:[-108,-12,-72,6],pinsDrop:/^Ecuador$/});
-A("bbeagle|Tahiti and New Zealand",{view:[130,-48,215,-12],globe:[-170,-30,2]});
+A("bbeagle|Tahiti and New Zealand",{view:[130,-48,215,-12],globe:[-170,-30,2],pinsDrop:/^New Zealand$/});
 A("bbeagle|Australia: a strange continent",{view:[86,-46,158,-24]});
 A("bbeagle|Coral atolls: Cocos (Keeling)",{view:[40,-30,175,22]});
 A("bbeagle|Home by the Cape",{view:[-125,-42,62,56]});
@@ -381,6 +381,15 @@ function apply(S){try{if(!S||typeof ps==="undefined"||!ps)return;const X=P[ps.to
 function wrapGo(){if(typeof psGo!=="function")return false;if(psGo._gfT4)return true;const _g=psGo;
  psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];apply(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfT4=1;return true}
 /* wrapped after geoflock-polish-m.js has wrapped psGo, so these fixes run first and polish-m's per-stop fixes still apply */
+/* photo pins dropped here are also taken out just before the photo pins are drawn: other scripts (polish-m's own photo
+   pins, the stop-photos list) lay their own lists over a stop's photo pins after it opens */
+function phClean(){try{if(typeof ps==="undefined"||!ps)return;const S=psSteps()[ps.i],X=S&&P[ps.tour+"|"+S.title];if(!X||!X.phDrop)return;
+ const L=S.phPins;if(Array.isArray(L)&&L.some(q=>q&&X.phDrop.test(String(q.label||"")))){S.phPins=L.filter(q=>!(q&&X.phDrop.test(String(q.label||""))));
+  /* geoflock-stopphotos.js would add its pins back on the next draw: mark this list as already done */
+  try{S._gfSpOk=S.phPins}catch(e){}}}catch(e){}}
+function wrapSync(){if(typeof psPhPinsSync!=="function")return false;if(psPhPinsSync._gfT4)return true;const _s=psPhPinsSync;
+ psPhPinsSync=function(){phClean();return _s.apply(this,arguments)};psPhPinsSync._gfT4=1;return true}
+setInterval(wrapSync,2000);
 let n=0;const t=setInterval(()=>{if((typeof psGo==="function"&&psGo._gfM||n>30)&&wrapGo()||++n>80)clearInterval(t)},500);
 window.gfSweepT4=P;
 })();
