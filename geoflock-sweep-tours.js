@@ -8,6 +8,8 @@
 const SET=(S,k,v)=>{try{Object.defineProperty(S,k,{configurable:true,enumerable:true,writable:true,value:v})}catch(e){}};
 /* frame a stop: centre [lon,lat] and globe zoom, plus a matching view box for the flat map */
 const FRAME=(S,lon,lat,z,view)=>{SET(S,"globe",[lon,lat,z]);if(view){SET(S,"view",view);if(S.flatView)SET(S,"flatView",view)}};
+/* keep the card on the left at this stop (see "the tour card stands on the right" below: S.card is reset by other scripts) */
+const LEFT=S=>SET(S,"_gfSwLeft",1);
 const dropPins=(S,re)=>{if(Array.isArray(S.pins)){const L=S.pins.filter(q=>!(Array.isArray(q)&&re.test(String(q[1]))));if(L.length!==S.pins.length)SET(S,"pins",L)}};
 const FIX={
  /* Population: Java was framed on Borneo with Java itself cut off at the bottom edge */
@@ -36,8 +38,34 @@ const FIX={
  /* Crops: Madagascar was half under the card */
  "crops|Vanilla by hand":S=>FRAME(S,47,-18,4,[28,-27,60,-8]),
  /* stops where a right-hand card would sit on the subject: the card stays on the left */
- "pop|South America lives on its edges":S=>SET(S,"card","left"),
- "crops|The world’s breadbaskets":S=>SET(S,"card","left"),
+ "pop|South America lives on its edges":S=>LEFT(S),
+ "crops|The world’s breadbaskets":S=>LEFT(S),
+ /* Forests: the moisture's path starts over the Atlantic and ends at the Andes; a right-hand card covered both ends */
+ "forests|Forests make rain":S=>{LEFT(S);FRAME(S,-62,-14,2,[-124,-38,-28,12])},
+ /* Forests: Methuselah's White Mountains were at the card's edge */
+ "forests|The oldest trees":S=>{LEFT(S);FRAME(S,-116,38,3.5,[-136,30,-105,45])},
+ /* Island life: Socotra itself was under the right-hand card (only Yemen showed) */
+ "islandlife|Socotra":S=>{LEFT(S);FRAME(S,51,12.5,6,[42,8.5,57,16.5])},
+ /* Island life: Guam, where the snake struck, was under the card; Mauritius and Guam now both beside it */
+ "islandlife|Strangers from the ships":S=>{LEFT(S);FRAME(S,95,0,1.5,[-2,-26,150,24])},
+ /* Ice: the ice road runs north-east from Yellowknife, under the right-hand card; card on the left, road beside it */
+ "ice|Driving on lakes":S=>{LEFT(S);FRAME(S,-114,64,4,[-130,60.2,-103,67.6])},
+ /* Islands: the Galápagos themselves were under the card (only mainland Ecuador showed beside it) */
+ "islands|Penguins on the equator":S=>FRAME(S,-90.5,-1,5,[-103,-7,-84,4]),
+ /* Islands: Ireland and Tristan da Cunha sat at the card's edge */
+ "islands|No snakes in Ireland":S=>FRAME(S,-9,54.5,4,[-28,49,6,60]),
+ "islands|The loneliest island town":S=>FRAME(S,-8,-27,2.4,[-44,-45,22,-8]),
+ /* Islands: the Line Islands ring was under the right-hand card; all three island groups now beside a left-hand card */
+ "islands|Island countries":S=>{LEFT(S);FRAME(S,176,-2,2,[140,-16,-148,12])},
+ /* Lakes: the Caspian, the Great Lakes' Superior and Michigan, and the Missoula floods' path were half under the card */
+ "lakes|The biggest lake is called a sea":S=>FRAME(S,46,42,3,[28,34,64,50]),
+ "lakes|The Great Lakes":S=>FRAME(S,-88,45.5,4,[-104,40,-74,50]),
+ "lakes|Lakes in a crack":S=>FRAME(S,29,-6,2.6,[17,-17,42,6]),
+ "lakes|The lake that emptied in days":S=>FRAME(S,-120,47,4,[-131,44.3,-110,50.2]),
+ /* Lakes: Finland was under the right-hand card; card left, Canada's shield and Finland both beside it */
+ "lakes|Lakes scraped by ice":S=>{LEFT(S);FRAME(S,-60,58,1.1,[-205,38,42,74])},
+ /* Earth at night: Lagos and Nigeria's lights, which the text names, were under the card */
+ "night|The dim continent":S=>SET(S,"globe",[10,2,1.4]),
 /*@FIX*/
 };
 const TXT={
@@ -83,6 +111,7 @@ const TXT={
  "ranges|Old mountains: the Appalachians":{fix:[["body",/(perhaps higher, )+/g,"perhaps higher, "]]},
  /* the text repeated the stat line word for word */
  "hazards|Now explore":{re:[["body","Hover any country to see its name and neighbours. Try the","Try the"]]},
+ "environment|Now explore":{re:[["body","Hover any country to see its name and neighbours. Try the","Try the"]]},
 /*@TXT*/
 };
 function text(S,key){const X=TXT[key];if(!X)return;
@@ -105,10 +134,10 @@ window.gfSweepTours.kitGap=()=>{try{const c=typeof ps!=="undefined"&&ps&&ps.card
 /* the tour card stands on the right when the stop asks for it (S.card:"right") or when most of its pins are on the left
    (psCardSide), as the stops were written for; since tours moved into the flat-globe map (#amGlobeHost) it had stayed
    on the left, because the rule that moves it only named #allMapsWrap. Restored on the tours of these shelves; the few
-   stops where the right-hand card would cover the subject are kept on the left (card:"left" in FIX) */
+   stops where the right-hand card would cover the subject are kept on the left (LEFT in FIX) */
 const MINE=new Set(["geo","pop","projections","space","night","time","elev","plates","climate","weather","rivers","lakes","seas","coasts","islands","deserts","ice","ranges","volcanoes","hazards","caves","animals","biomes","forests","ocean","amigration","environment","islandlife","humans","crops"]);
-window.gfSweepTours.side=()=>{try{const c=typeof ps!=="undefined"&&ps&&ps.card;if(!c)return;const on=MINE.has(ps.tour)&&c.classList.contains("ps-right");if(c.classList.contains("gf-sw-right")!==on)c.classList.toggle("gf-sw-right",on)}catch(e){}};
-if(!document.getElementById("gfSwCss")){const st=document.createElement("style");st.id="gfSwCss";st.textContent="#amGlobeHost .ps-card.ps-over.ps-right.gf-sw-right:not(.ps-free):not([style*=\"left\"]){left:auto;right:58px}";document.head.appendChild(st)}
+window.gfSweepTours.side=()=>{try{const c=typeof ps!=="undefined"&&ps&&ps.card;if(!c)return;const S=psSteps()[ps.i],on=MINE.has(ps.tour)&&c.classList.contains("ps-right")&&!(S&&S._gfSwLeft);if(c.classList.contains("gf-sw-right")!==on)c.classList.toggle("gf-sw-right",on);const lf=MINE.has(ps.tour)&&!!(S&&S._gfSwLeft);if(c.classList.contains("gf-sw-left")!==lf)c.classList.toggle("gf-sw-left",lf)}catch(e){}};
+if(!document.getElementById("gfSwCss")){const st=document.createElement("style");st.id="gfSwCss";st.textContent="#amGlobeHost .ps-card.ps-over.ps-right.gf-sw-right:not(.ps-free):not([style*=\"left\"]){left:auto;right:58px}.ps-card.ps-over.ps-right.gf-sw-left:not(.ps-free):not([style*=\"left\"]){left:5px!important;right:auto!important}";document.head.appendChild(st)}
 if(window._gfSwInstalled){textAll();return}window._gfSwInstalled=1;
 function wrap(){if(typeof psGo!=="function")return false;if(psGo._gfSw)return true;const _g=psGo;
  psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];window.gfSweepTours.apply(S)}catch(e){}const r=_g.apply(this,arguments);try{window.gfSweepTours.side()}catch(e){}return r};psGo._gfSw=1;return true}
