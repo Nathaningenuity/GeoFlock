@@ -21,7 +21,6 @@ const FIX={
  /* Elevation: Beringia was half under the card (Chukotka side): the whole land bridge beside it */
  "elev|Land the sea swallowed":S=>FRAME(S,-178,63,3,[147,53,-150,73]),
  /* Animal migration: routes that ran along the left of the map, under the card */
- "amigration|Humpback whales":S=>FRAME(S,-80,-25,1.4,[-130,-72,-30,20]),
  "amigration|Eels to the Sargasso Sea":S=>FRAME(S,-60,36,1.5,[-138,10,20,62]),
  "amigration|Locust swarms":S=>FRAME(S,-60,17,1.3,[-161,-5,42,40]),
  /* Geography: the stop is about Antarctica, which the flat map cannot show (it ends near 60°S): this one stop opens on
@@ -32,6 +31,13 @@ const FIX={
  /* Climate: the Arctic cannot be seen on the flat map (only its southern edge, along the top): this stop opens on the
     globe, looking down on the Arctic Ocean */
  "climate|The fastest-warming place":S=>{SET(S,"autoGlobe",1);SET(S,"globe",[-30,78,1.3])},
+ /* Animals: the lions of Africa were under the card; Africa now sits beside it, with India and the tigers' Asia */
+ "animals|Tigers and lions":S=>FRAME(S,40,10,1.2,[-120,-38,145,58]),
+ /* Crops: Madagascar was half under the card */
+ "crops|Vanilla by hand":S=>FRAME(S,47,-18,4,[28,-27,60,-8]),
+ /* stops where a right-hand card would sit on the subject: the card stays on the left */
+ "pop|South America lives on its edges":S=>SET(S,"card","left"),
+ "crops|The world’s breadbaskets":S=>SET(S,"card","left"),
 /*@FIX*/
 };
 const TXT={
@@ -73,9 +79,16 @@ const TXT={
  "lakes|Lakes in a crack":{re:[["body","They fill a crack in Africa’s crust,","It and its neighbours fill a crack in Africa’s crust,"]]},
  /* "All four rivers" before the card had named them */
  "rivers|Cradles of civilisation":{re:[["body","All four rivers ran through dry land,","The Nile, the Tigris and Euphrates, the Indus and the Yellow River all ran through dry land,"]]},
+ /* "perhaps higher, perhaps higher, perhaps higher": another script adds the two words each time it runs */
+ "ranges|Old mountains: the Appalachians":{fix:[["body",/(perhaps higher, )+/g,"perhaps higher, "]]},
+ /* the text repeated the stat line word for word */
+ "hazards|Now explore":{re:[["body","Hover any country to see its name and neighbours. Try the","Try the"]]},
 /*@TXT*/
 };
-function text(S,key){const X=TXT[key];if(!X||S._gfSwT===X)return;S._gfSwT=X;
+function text(S,key){const X=TXT[key];if(!X)return;
+ /* pattern fixes run every time (another script may write the text again) */
+ (X.fix||[]).forEach(([k,re,b])=>{if(typeof S[k]==="string"){const v=S[k].replace(re,b);if(v!==S[k])SET(S,k,v)}});
+ if(S._gfSwT===X)return;S._gfSwT=X;
  ["title","stat","body","more"].forEach(k=>{const v=X[k];if(typeof v==="string")SET(S,k,v)});
  (X.re||[]).forEach(([k,a,b])=>{if(typeof S[k]==="string"&&S[k].includes(a))SET(S,k,S[k].split(a).join(b))})}
 function apply(S){try{if(!S||typeof ps==="undefined"||!ps)return;const key=ps.tour+"|"+S.title;text(S,key);const f=FIX[key];if(f&&S._gfSwF!==f){S._gfSwF=f;f(S)}}catch(e){console.error(e)}}
@@ -89,14 +102,21 @@ window.gfSweepTours.kitGap=()=>{try{const c=typeof ps!=="undefined"&&ps&&ps.card
   const natural=cr.top+Math.min(c.scrollHeight,480,host-24);
   if(kr.width&&kr.right>cr.left+8&&kr.left<cr.right-8&&kr.top<natural+4&&kr.top>cr.top+180)cap=Math.floor(kr.top-cr.top-8)}
  if((c._gfMh||0)!==cap){c._gfMh=cap;if(cap)c.style.setProperty("max-height",cap+"px","important");else c.style.removeProperty("max-height")}}catch(e){}};
+/* the tour card stands on the right when the stop asks for it (S.card:"right") or when most of its pins are on the left
+   (psCardSide), as the stops were written for; since tours moved into the flat-globe map (#amGlobeHost) it had stayed
+   on the left, because the rule that moves it only named #allMapsWrap. Restored on the tours of these shelves; the few
+   stops where the right-hand card would cover the subject are kept on the left (card:"left" in FIX) */
+const MINE=new Set(["geo","pop","projections","space","night","time","elev","plates","climate","weather","rivers","lakes","seas","coasts","islands","deserts","ice","ranges","volcanoes","hazards","caves","animals","biomes","forests","ocean","amigration","environment","islandlife","humans","crops"]);
+window.gfSweepTours.side=()=>{try{const c=typeof ps!=="undefined"&&ps&&ps.card;if(!c)return;const on=MINE.has(ps.tour)&&c.classList.contains("ps-right");if(c.classList.contains("gf-sw-right")!==on)c.classList.toggle("gf-sw-right",on)}catch(e){}};
+if(!document.getElementById("gfSwCss")){const st=document.createElement("style");st.id="gfSwCss";st.textContent="#amGlobeHost .ps-card.ps-over.ps-right.gf-sw-right:not(.ps-free):not([style*=\"left\"]){left:auto;right:58px}";document.head.appendChild(st)}
 if(window._gfSwInstalled){textAll();return}window._gfSwInstalled=1;
 function wrap(){if(typeof psGo!=="function")return false;if(psGo._gfSw)return true;const _g=psGo;
- psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];window.gfSweepTours.apply(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfSw=1;return true}
+ psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];window.gfSweepTours.apply(S)}catch(e){}const r=_g.apply(this,arguments);try{window.gfSweepTours.side()}catch(e){}return r};psGo._gfSw=1;return true}
 let n=0;const t=setInterval(()=>{if(wrap()||++n>80)clearInterval(t)},500);
-setInterval(()=>{try{window.gfSweepTours.kitGap()}catch(e){}},400);
+setInterval(()=>{try{window.gfSweepTours.side();window.gfSweepTours.kitGap()}catch(e){}},400);
 /* Biomes, Forests and Animals tours light one biome by pressing its swatch in the Nature key; since a swatch press also
    opens the biome's card (a full-screen panel over a blurred map), a press made by a tour, not a person, closes it again */
 document.addEventListener("click",e=>{try{if(!e.isTrusted&&e.target&&e.target.closest&&e.target.closest(".gf-nat-sw")&&typeof ps!=="undefined"&&ps)
  setTimeout(()=>document.querySelectorAll(".gf-nat-back").forEach(x=>x.remove()),0)}catch(err){}},true);
-[0,2000,6000,12000].forEach(ms=>setTimeout(()=>{try{window.gfSweepTours&&textAll()}catch(e){}},ms));
+[0,2000,6000,12000,20000,30000].forEach(ms=>setTimeout(()=>{try{window.gfSweepTours&&textAll()}catch(e){}},ms));
 })();
