@@ -118,12 +118,19 @@ function finish(){const sc=Math.round(Z.score*10)/10,S=st(),R=S[Z.id]=S[Z.id]||{
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){const r=document.querySelector(".gftq-res");if(r){r.remove();return}if(Z&&!e.defaultPrevented){stop()}}});
 /* ---------- clicking a place on the map ---------- */
 let placeCb=null,downAt=null;
-function armPlace(cb){placeCb=cb;document.body.classList.add("gftq-placing")}
+function armPlace(cb){placeCb=cb;pendLL=null;document.body.classList.add("gftq-placing")}
 function unarmPlace(){placeCb=null;document.body.classList.remove("gftq-placing")}
 function llAt(x,y){try{const g=amGlobe,r=g.canvas.getBoundingClientRect(),ll=g.projection().invert([x-r.left,y-r.top]);return ll&&isFinite(ll[0])?ll:null}catch(e){return null}}
 document.addEventListener("pointerdown",e=>{if(placeCb)downAt=[e.clientX,e.clientY]},true);
 document.addEventListener("click",e=>{if(!placeCb||!downAt)return;try{if(!amGlobe||Z&&Z.p&&Z.p.contains(e.target)||e.target.closest&&e.target.closest("button,.gfk-tray,.gfk-panel"))return;const r=amGlobe.canvas.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return}catch(er){return}
- if(Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;const ll=llAt(e.clientX,e.clientY);if(!ll)return;e.stopPropagation();e.preventDefault();const cb=placeCb;placeCb=null;markYou(ll);cb(ll)},true);
+ if(Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;const ll=llAt(e.clientX,e.clientY);if(!ll)return;e.stopPropagation();e.preventDefault();
+ /* drop (or move) your pin; nothing is marked until you confirm it */
+ pendLL=ll;let m=marks.find(x=>x.classList.contains("you"));if(m){m._ll=ll;place(m);m.classList.remove("drop");void m.offsetWidth;m.classList.add("drop")}else{markYou(ll);m=marks[marks.length-1];if(m){m.innerHTML=PIN;m.classList.add("drop")}}
+ confirmUI()},true);
+let pendLL=null;const PIN='<svg viewBox="0 0 24 34" width="26" height="36"><path d="M12 33C12 33 2 19 2 12a10 10 0 0 1 20 0c0 7-10 21-10 21z" fill="#e8601c" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg>';
+function confirmUI(){try{if(!Z||!Z.p)return;const a=Z.p.querySelector(".gftq-act");if(!a)return;let b=a.querySelector(".gftq-ok");
+ if(!b){a.innerHTML='📍 Your pin is down: click the map again to move it, then <button type="button" class="gftq-ok">Confirm my pin ✓</button>';b=a.querySelector(".gftq-ok");
+  b.onclick=e=>{e.stopPropagation();if(!pendLL||!placeCb)return;const cb=placeCb,ll=pendLL;placeCb=null;pendLL=null;a.textContent="📍 Pin confirmed";cb(ll)}}}catch(e){}}
 /* markers: where you clicked, and where it is */
 let marks=[];
 function clearMark(){marks.forEach(m=>m.remove());marks=[];try{amGlobe.cfg._gftqMarks=null;amGlobe.request()}catch(e){}}
@@ -173,7 +180,8 @@ window.gfTourQuiz={start,stop,pool,draw,available};
 .gftq-next{background:#e8601c;color:#fff}.gftq-back{background:#f0e6d2;color:#5a3a12}
 body.gftq-placing .globe-host canvas{cursor:crosshair!important}
 .gftq-mk{position:absolute;z-index:30;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none}
-.gftq-mk.you{background:#e8601c;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35)}.gftq-mk.it{background:#2e9b5f;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 0 10px rgba(46,155,95,.25)}
+.gftq-mk.you{width:26px;height:36px;margin:-36px 0 0 -13px;border-radius:0;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}.gftq-mk.you.drop{animation:gftqDrop .38s cubic-bezier(.3,1.6,.5,1)}@keyframes gftqDrop{0%{transform:translateY(-40px);opacity:0}60%{opacity:1}100%{transform:none}}
+.gftq-ok{margin-left:6px;border:0;border-radius:999px;padding:7px 14px;background:#e8601c;color:#fff;font:inherit;font-weight:800;cursor:pointer}.gftq-mk.it{background:#2e9b5f;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 0 10px rgba(46,155,95,.25)}
 .gftq-res{position:fixed;inset:0;z-index:3000;background:rgba(10,16,30,.45);display:flex;align-items:center;justify-content:center;padding:16px}
 .gftq-rbox{position:relative;width:520px;max-width:100%;max-height:90vh;overflow:auto;background:#fffaf0;color:#2a2014;border-radius:18px;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .gftq-rbox .gftq-x{position:absolute;top:10px;right:12px}
