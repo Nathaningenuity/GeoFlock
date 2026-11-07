@@ -171,6 +171,6 @@ function climCut(){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="climate")retur
 {let n=0;const t=setInterval(()=>{if(typeof psLaunchTour!=="function"){if(++n>40)clearInterval(t);return}clearInterval(t);if(psLaunchTour._gfCc)return;const _l=psLaunchTour;
  psLaunchTour=function(id){if(id==="climate"){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="climate"){}else climCut()}catch(e){}}return _l.apply(this,arguments)};psLaunchTour._gfCc=1},500)}
 /* every climate stop: on the Climate map, without the wind arrows and jet-stream lines of the Currents layer */
-function climStop(S){if(!S||S._gfCs)return;S._gfCs=1;if(S.mode==="satellite")SET(S,"mode",undefined);if(Array.isArray(S.on)&&S.on.includes("currents"))SET(S,"on",S.on.filter(x=>x!=="currents"))}
+function climStop(S){if(!S||S._gfCs)return;S._gfCs=1;if(S.mode==="satellite")SET(S,"mode",undefined);if(Array.isArray(S.on)&&S.on.includes("currents"))SET(S,"on",S.on.filter(x=>x!=="currents"));if(S.gfCur)SET(S,"gfCur",null)}
 window.gfPolishM={dedupe};
 })();
