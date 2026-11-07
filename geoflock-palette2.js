@@ -8,7 +8,7 @@ const style=()=>{try{return gfMS().style}catch(e){return null}};
 window.gfLakeColor=function(){const s=style();return(s&&LAKE[s])||null};
 const DEF_LAKE="#a8cbe5";
 function legendRefresh(){try{const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief"&&typeof allMapsLegendHTML==="function")lg.innerHTML=allMapsLegendHTML()}catch(e){}}
-function repaint(){try{GFG.sig=null;gfGlobeDirty()}catch(e){}try{amGlobe&&amGlobe.request()}catch(e){}try{typeof renderAllMaps==="function"&&renderAllMaps()}catch(e){}legendRefresh()}
+function repaint(){window._gfSeaSig=Date.now();try{GFG.sig=null;gfGlobeDirty()}catch(e){}try{amGlobe&&amGlobe.request()}catch(e){}try{typeof renderAllMaps==="function"&&renderAllMaps()}catch(e){}legendRefresh()}
 /* ---- the key ---- */
 function wrapLegend(){if(typeof reliefLegendHTML!=="function"||reliefLegendHTML._gfP2)return typeof reliefLegendHTML==="function";const _r=reliefLegendHTML;
  reliefLegendHTML=function(){let h=_r.apply(this,arguments);try{const st=style();
@@ -33,6 +33,7 @@ function addWell(){const p=document.getElementById("gfkPal");if(!p||typeof allMa
  l.querySelector("input").addEventListener("input",e=>{const st=style();if(!st)return;LAKE[st]=e.target.value;try{localStorage.setItem(KEY,JSON.stringify(LAKE))}catch(err){}repaint()})}
 new MutationObserver(addWell).observe(document.body,{childList:true,subtree:true});
 /* every colour change in the Palette: the key follows (the shades are painted a moment later) */
-document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#gfkPal")){legendRefresh();setTimeout(legendRefresh,1500);setTimeout(legendRefresh,4000)}},true);
+document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#gfkPal")){window._gfSeaSig=Date.now();legendRefresh();setTimeout(legendRefresh,1500);setTimeout(legendRefresh,4000)}},true);
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#gfkPal [data-st], #gfkPal [data-ra-reset]")){setTimeout(legendRefresh,300);setTimeout(legendRefresh,1500)}},true);
 })();
+document.addEventListener("input",e=>{if(e.target.closest&&e.target.closest("#gfkPal"))window._gfSeaSig=Date.now()},true);
