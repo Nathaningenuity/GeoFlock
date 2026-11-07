@@ -133,7 +133,7 @@ const PLAN={
   ["Scarlet macaw",[-68.6,-9.2],"Scarlet macaw.jpg"],
   ["Red-bellied piranha",[-55.0,-2.2],"Red-bellied piranha.jpg"]],
  s:[["monkey",[-53.6,-3.8],"Howler monkey"],["snake",[-63.4,-8.4],"Green anaconda"],["croc",[-62.6,-5.3],"Black caiman"],
-  ["eagle",[-56.4,-4.4],"Harpy eagle"],["frog",[-59.2,-0.9],"Poison dart frog"],["butterfly",[-52.6,-6.6],"Blue morpho"],
+  ["frog",[-59.2,-0.9],"Poison dart frog"],["butterfly",[-52.6,-6.6],"Blue morpho"],
   ["fish",[-63.2,-1.6],"Arapaima"],["parrot",[-61.6,-9.6],"Hyacinth macaw"]]},
 /* ---- Biomes ---- */
 "biomes|Tundra":{p:[
