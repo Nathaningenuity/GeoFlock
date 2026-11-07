@@ -104,7 +104,7 @@ A("africa|The real southern tip",{view:[14.2,-36.5,22.2,-33],phDrop:/^South Afri
    under the card */
 ["North America","Three giants","Three languages","Now explore"].forEach(t=>A("namerica|"+t,{view:[-205,5,-45,80]}));
 A("namerica|Canada’s water",{phDrop:/^Canada: Moraine Lake/});/* the card's own photo already */
-A("namerica|The longest border",{view:[-175,38,-60,72]});
+A("namerica|The longest border",{view:[-205,36,-55,72]});
 A("namerica|Greenland belongs to North America",{view:[-130,28,22,84]});
 A("namerica|Alaska breaks every record",{view:[-215,36,-83,72]});
 A("namerica|Mountains and rivers",{view:[-205,15,-55,72]});
@@ -127,13 +127,13 @@ A("samerica|The Amazon basin",{view:[-100,-22,-44,8]});
 A("samerica|Turning bad soil into soybeans",{rep:[["The Cerrado, the tropical savanna (light blue on the map) south of the Amazon rainforest (dark blue), has","The Cerrado, the tropical savanna south of the Amazon rainforest, has"]]});
 A("samerica|The Inca Empire",{view:[-95,-36,-60,2]});
 /* Rio's pin showed the Maracanã stadium, built in 1950; the Paço Imperial was the royal palace from 1808 */
-A("samerica|Europe ruled from Rio",{phDrop:/^(Rio de Janeiro: capital, 1808–1821|Brazil: Christ the Redeemer)/,
+A("samerica|Europe ruled from Rio",{view:[-80,-32,5,45],phDrop:/^(Rio de Janeiro: capital, 1808–1821|Brazil: Christ the Redeemer)/,
  ph:[{at:[-43.174,-22.903],label:"Paço Imperial: the king’s palace in Rio",f:"Paço Imperial ao entardecer.jpg",d:"@4505c64d931a9bfc",by:"Guilherme Soares",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Pa%C3%A7o_Imperial_ao_entardecer.jpg"}]});
 A("samerica|Rich from frozen beef",{view:[-80,-41,-50,-28]});
 A("samerica|Two great waterfalls",{view:[-110,-62,-25,21]});
 A("samerica|Two landlocked countries",{view:[-80,-28,-53,-9]});
 /* the islands were under the card; the tortoise pin repeated both the islands' pin spot and the card's own tortoise photo */
-A("samerica|Darwin’s islands",{view:[-105,-10,-75,5],phDrop:/^Ecuador: Galápagos tortoise/});
+A("samerica|Darwin’s islands",{view:[-105,-10,-75,5],pinsDrop:/^Ecuador$/,phDrop:/^Ecuador: Galápagos tortoise/});
 A("samerica|The far south",{view:[-100,-60,-50,-38]});
 A("samerica|Two-thirds of Guyana",{view:[-73,0,-53,10]});
 
@@ -150,6 +150,33 @@ A("oceania|Tuvalu’s lucky letters",{phDrop:/^Funafuti, Tuvalu’s capital$/});
 /* Antarctica: the penguin and whale pictures off the coast near 80°E were cut off at the bottom of the globe */
 A("antarctica|Life at the edge",{globe:[50,-76,1.1]});
 
+/* Prisoners of Geography: repeated pins go (country names beside the map's own labels; a second photo of the Congo at
+   Kinshasa, the card's own picture; two photo pins on Damascus) */
+A("bprisoners|America’s lucky geography",{pinsDrop:/^United States$/});
+A("bprisoners|Africa: bigger than it looks",{phDrop:/^The Congo at Kinshasa$/,globe:[8,2,1.4]});
+A("bprisoners|Lines in the sand",{phDrop:/^Damascus$/});
+A("bprisoners|Iran, a mountain fortress",{pinsDrop:/^Iran$/});
+A("bprisoners|Latin America’s walls",{pinsDrop:/^Peru$/});
+A("bprisoners|Brazil’s wall by the sea",{pinsDrop:/^Brazil$/});
+
+/* Guns, Germs, and Steel: name pins that repeated the map's own country labels go */
+A("bggs|Yali’s question",{pinsDrop:/^(Papua New Guinea|Indonesia)$/});
+A("bggs|The Chatham Islands, 1835",{pinsDrop:/^New Zealand$/});
+A("bggs|Germs from the farmyard",{pinsDrop:/^(Mexico|Peru|Spain)$/});
+/* the Bantu homeland had "Nigeria" and "Cameroon" pins on top of it; the Cape, where the farmers stopped, was cut off */
+A("bggs|Africa’s great migration",{pinsDrop:/^(Cameroon|Nigeria)$/,view:[-55,-37,60,20]});
+
+/* Why Nations Fail */
+A("bnations|Nogales: one town, two countries",{view:[-114.5,29.6,-108.5,33],pinsDrop:/^(United States|Mexico)$/});
+A("bnations|The convicts who sued",{pinsDrop:/^Australia$/});
+A("bnations|Printing held back",{view:[8,35,40,46]});
+A("bnations|Tearing up the railway",{pinsDrop:/^Sierra Leone$/});
+A("bnations|Growth that cannot last?",{pinsDrop:/^(Russia|China)$/});
+/* the tropics stop now shows the Economy map's money per person, so the reader can see where the poorest countries lie;
+   the Stockholm picture (for the Nobel) sat on the Sahara and goes */
+A("bnations|Geography or institutions?",{mode:"gdp",sub:"percapita",phDrop:/^Stockholm$/,
+ body:"The Economy map shows money per person: the poorest countries cluster between the tropics. Writers such as Jared Diamond and the economist Jeffrey Sachs stress geography: climate, disease and soils. Acemoglu and Robinson reply that the same places were often richer than Europe’s colonies in temperate lands before 1500, and that colonisers set up worse institutions where they could exploit large populations."});
+
 /* ---------- patches go here ---------- */
 
 function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f);
@@ -165,6 +192,8 @@ function photos(S,X){
   S._sqPruned=-1}else (X.ph||[]).forEach(libAdd)}
 const TXT=["body","stat","more"],RAW=["view","globe","hi","hiSoft","mode","sub","on","card","lines","iconPins","list","keyLabel","gfRuler","xsec","drag","ghosts","G"];
 function apply(S){try{if(!S||typeof ps==="undefined"||!ps)return;const X=P[ps.tour+"|"+S.title];if(!X)return;
+ /* a stop moved to another map: the tour must be allowed to run on it (alsoOn) */
+ if(typeof X.mode==="string"){try{const T=PS_TOURS[ps.tour];if(Array.isArray(T.alsoOn)&&!T.alsoOn.includes(X.mode))T.alsoOn.push(X.mode);if(!T.stopModes)T.stopModes=true}catch(e){}}
  TXT.forEach(k=>{if(typeof X[k]==="string"&&S[k]!==X[k])SET(S,k,X[k])});
  if(X.rep&&!S._gfT4r){S._gfT4r=1;TXT.forEach(k=>{let v=S[k];if(typeof v!=="string")return;X.rep.forEach(([a,b])=>{if(v.includes(a))v=v.split(a).join(b)});if(v!==S[k])SET(S,k,v)})}
  RAW.forEach(k=>{if(!(k in X))return;if(typeof X[k]==="function"){if(S["_gfT4_"+k]!==1){S["_gfT4_"+k]=1;SET(S,k,X[k](S[k],S))}}else if(S[k]!==X[k])SET(S,k,X[k])});
