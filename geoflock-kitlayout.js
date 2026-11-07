@@ -45,7 +45,11 @@ function wire(){const t=tray();if(!t||t._gfkl)return;t._gfkl=1;const tab=t.query
  /* the tray goes exactly where it is dropped, anywhere on the screen (row or column is chosen under ⚙) */
  tab.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;if(!drag.moved&&Math.hypot(e.clientX-drag.x0,e.clientY-drag.y0)<6)return;
   if(!drag.moved){if(L.dock!=="free"){L.col=L.dock!=="bottom"}L.dock="free"}drag.moved=true;t.classList.add("gfkl-moving");
-  const hr=host().getBoundingClientRect();L.fx=Math.round(e.clientX-hr.left-drag.dx);L.fy=Math.round(e.clientY-hr.top-drag.dy);apply()});
+  /* near the left or right edge of the window it stands up as a column; anywhere else it is a row */
+  const edge=e.clientX<110||e.clientX>innerWidth-110;if(edge!==!!L.col){L.col=edge;apply();const tr=t.getBoundingClientRect();drag.dx=Math.min(drag.dx,tr.width-20);drag.dy=Math.min(drag.dy,24)}
+  /* the tab stays under the pointer, folded or not (a folded tray is drawn lower by the height it will open to) */
+  const hr=host().getBoundingClientRect(),th=t.offsetHeight||120,fold=t.classList.contains("closed")&&L.fh?L.fh-th:0;
+  L.fx=Math.round(e.clientX-hr.left-drag.dx);L.fy=Math.round(e.clientY-hr.top-drag.dy-fold);apply()});
  const end=e=>{if(!drag||e.pointerId!==drag.id)return;const m=drag.moved;drag=null;t.classList.remove("gfkl-moving");if(m){swallow=true;setTimeout(()=>swallow=false,50);saveL()}};
  tab.addEventListener("pointerup",end);tab.addEventListener("pointercancel",end);
  /* a drag is not a click: it must not also open or close the tray */
