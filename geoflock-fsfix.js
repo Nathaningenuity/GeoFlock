@@ -127,14 +127,15 @@ function keySync(){const k=document.getElementById("flKey");if(!k)return;
  k.style.setProperty("--gfx-b",bot+"px");k.style.setProperty("--gfx-mh",mh+"px");if(width)k.style.setProperty("--gfx-w",width+"px");
  k.classList.add("gfx-fit");k.classList.toggle("gfx-w",!!width)}
 
-/* 6. bottom-of-map controls: into view when the map runs below the window; in full screen, above the History timeline */
+/* 6. bottom-of-map controls (the GPS box, the timeline): into view when the map runs below the window; in full screen, above the History timeline */
 function bottomSync(){const g=G();const host=g&&g.host&&vis(g.host)?g.host:document.getElementById("allMapsWrap");
- const els=[...document.querySelectorAll("#allMapsView .gfk-tray, #allMapsView .hist-dock, #allMapsView .gfk-coord")];
+ /* (not the toolkit: it floats where it was put, over everything, and never moves with the map or the timeline: geoflock-kitlayout.js) */
+ const els=[...document.querySelectorAll("#allMapsView .hist-dock, #allMapsView .gfk-coord")];
  const reset=()=>els.forEach(e=>{if(e._gfx){e.style.removeProperty("translate");e.style.removeProperty("bottom");e._gfx=0}});
  if(!onMaps()||!host||!vis(host)){reset();return}
  if(fs()){els.forEach(e=>{if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}});
   const dock=document.querySelector("#allMapsView .hist-dock");const d=dock&&vis(dock)?dock.getBoundingClientRect():null;
-  ["#allMapsView .gfk-tray","#allMapsView .gfk-coord"].forEach(sel=>{const e=document.querySelector(sel);if(!e)return;
+  ["#allMapsView .gfk-coord"].forEach(sel=>{const e=document.querySelector(sel);if(!e)return;
    /* straight from the timeline's top, without letting go first (measuring after a reset made it jump up and down) */
    if(d){const r=e.getBoundingClientRect();if(e._gfx===2||(r.left<d.right&&r.right>d.left)){const b=Math.round(innerHeight-d.top+6)+"px";if(e.style.getPropertyValue("bottom")!==b||e.style.getPropertyPriority("bottom")!=="important")e.style.setProperty("bottom",b,"important");e._gfx=2}}
    else if(e._gfx===2){e.style.removeProperty("bottom");e._gfx=0}});return}

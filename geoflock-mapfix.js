@@ -123,6 +123,33 @@ if(typeof flatLabelsLikeGlobe==="function"&&window.SVGGraphicsElement){const BB=
    wrapEl._gfLblW=w;wrapEl._gfLblT=now;clearTimeout(wrapEl._gfLblTo);wrapEl._gfLblTo=setTimeout(()=>{full(wrapEl)},320);return}
   wrapEl._gfLblW=w;wrapEl._gfLblT=now;return full.apply(this,arguments)}}
 if(typeof climComposite==="function"){const _cc=climComposite;climComposite=function(){try{if(typeof allMapsColorMode!=="undefined"&&allMapsColorMode!=="climate")return null}catch(e){}return _cc.apply(this,arguments)}}
+/* 5c. The Climate map in its softened colours (hot desert a rusty orange-red, cold desert pale salmon) from the very first
+      paint. The climate pictures are made in the old bright colours; they used to be recoloured afterwards, one by one
+      while the page was idle, so the bright red showed for a moment on the first switch to the Climate map. Now each
+      picture is recoloured as soon as the Climate map is chosen (a few small pictures: quick), and until its soft version
+      is ready it is not shown at all; the merged picture is only made from soft pictures. */
+(function(){if(typeof climComposite!=="function"||typeof gfClimSoft!=="function")return;
+ const BANDS="#allMapsWrap .climate-band";
+ const ready=b=>b.dataset.gfSoftOk==="1";
+ const allReady=()=>{const bs=document.querySelectorAll(BANDS);return bs.length>0&&[...bs].every(ready)};
+ /* not shown (on the old map, the flat map or the merged picture) until it has its soft colour */
+ {const st=document.createElement("style");st.textContent=`#allMapsWrap .climate-band:not([data-gf-soft-ok="1"]){visibility:hidden!important}`;document.head.appendChild(st)}
+ let busy=null;
+ function tint(b){return new Promise(done=>{const orig=String(b.dataset.clim||"").toLowerCase(),col=gfClimSoft(orig);try{if(typeof GF_SOFT_BACK!=="undefined")GF_SOFT_BACK[col]=orig}catch(e){}
+  const im=new Image;im.onload=()=>{try{const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext("2d");x.drawImage(im,0,0);x.globalCompositeOperation="source-in";x.fillStyle=col;x.fillRect(0,0,c.width,c.height);
+    c.toBlob(bl=>{if(bl)b.setAttribute("href",URL.createObjectURL(bl));b.dataset.soft="1";b.dataset.gfSoftOk="1";done()},"image/png")}catch(e){b.dataset.gfSoftOk="1";done()}};
+  im.onerror=()=>{b.dataset.gfSoftOk="1";done()};im.src=b.getAttribute("href")})}
+ function soften(){if(busy)return busy;const bs=[...document.querySelectorAll(BANDS)].filter(b=>!ready(b));if(!bs.length)return null;
+  /* (the page's own slower recolouring is told these are done, so it leaves them alone) */
+  bs.forEach(b=>b.dataset.soft="1");
+  busy=Promise.all(bs.map(tint)).then(()=>{busy=null;try{if(typeof gfClimRebuild==="function")gfClimRebuild()}catch(e){}
+   try{if(typeof amGlobe!=="undefined"&&amGlobe)(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}});return busy}
+ const on=()=>{try{return allMapsColorMode==="climate"}catch(e){return false}};
+ /* the merged picture waits for the soft pictures */
+ {const _c2=climComposite;climComposite=function(){if(!allReady()){if(on())soften();return null}return _c2.apply(this,arguments)}}
+ if(typeof applyAllMapsColorMode==="function"){const _a=applyAllMapsColorMode;applyAllMapsColorMode=function(){if(on())soften();const r=_a.apply(this,arguments);try{if(on()){soften();
+   document.querySelectorAll("#populationLegend .legend-swatch[data-clim] i").forEach(i=>{const w=gfClimSoft(i.parentNode.dataset.clim);if(i.dataset.soft!==w){i.style.background=w;i.dataset.soft=w}})}}catch(e){}return r}}
+ setInterval(()=>{if(on())soften()},300)})();
 /* 6b. Flat-map gestures move a finished picture instead of redrawing every shape each step: a zoom-in stretches what is drawn,
       and a pan or zoom-out draws the map once with half a screen of margin all round and slides it. The live map is redrawn
       when the button or finger is let go. */

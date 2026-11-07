@@ -6,7 +6,10 @@
      level -1  invisible: lighter shapes while moving (borders and rivers thinned to about 0.25°, still under a pixel or two)
      level -2  the big map pictures are capped at 4096 px on this device (from the next visit; close-up views use the sharp
                satellite tiles anyway)
-     level -3  a little less resolution (1.25x instead of 1.5x or 2x), steady, never switched on and off during a drag
+     level -3  a little less resolution (1.25x instead of 1.5x or 2x) while the map moves, steady through a whole drag
+               (never switched on and off during one); once the map has been still for a moment it is drawn again at
+               the screen's full sharpness, so a map at rest is never blurred (the History map's fine borders and names
+               looked soft at 1.25x on a 2x screen)
    The level is remembered in this browser (localStorage gfPerf) and steps back up if the device copes later.
    "Keep full sharpness" (in the notice) stops step -3 for good on this device.
    Also: a picture whose format the graphics chip cannot build mipmaps for (glGenerateMipmap errors on some Intel chips)
@@ -21,7 +24,10 @@ const KEY="gfPerf";let S={lvl:0,ov:null,seen:0,shut:0};try{Object.assign(S,JSON.
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const base=()=>window.devicePixelRatio||1;
 /* the resolution of the map canvases */
-window.gfDpr=function(){const b=base();let c=Math.min(2,b);if(S.lvl>=1)c=Math.min(3,b);if(S.lvl<=-3&&S.ov!=="sharp"&&c>1.25)c=1.25;return c};
+let lowNow=false;/* level -3: true from the first moving frame until the map has been still for a moment */
+window.gfDpr=function(){const b=base();let c=Math.min(2,b);if(S.lvl>=1)c=Math.min(3,b);if(S.lvl<=-3&&S.ov!=="sharp"&&c>1.25&&lowNow)c=1.25;return c};
+/* the screen's sharpness changed (the window moved to another screen, or the page was zoomed): the map is drawn again */
+{const watch=()=>{try{const q=matchMedia("(resolution: "+base()+"dppx)");const f=()=>{q.removeEventListener("change",f);watch();try{if(typeof amGlobe!=="undefined"&&amGlobe)(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}};q.addEventListener("change",f)}catch(e){}};watch()}
 window.gfLoTol=S.lvl<=-1?.25:.12;
 if(S.lvl<=-2)window.gfTexCap=4096;
 window.gfPerf={state:()=>Object.assign({},S),set:l=>{S.lvl=l;apply();save()},reset:()=>{S={lvl:0,ov:null,seen:0,shut:0};apply();save()}};
@@ -34,8 +40,12 @@ function apply(){window.gfLoTol=S.lvl<=-1?.25:.12;window.gfTexCap=S.lvl<=-2?4096
 
 /* ---------- measuring, only while the globe moves ---------- */
 let last=0,win=[],lastStep=0,okSince=0;
+let stillAt=0;
 function loop(t){requestAnimationFrame(loop);let g=null;try{g=typeof amGlobe!=="undefined"&&amGlobe}catch(e){}
  const moving=!!(g&&g._moving&&g.host&&g.host.offsetParent&&!document.hidden);
+ /* level -3 only while moving: sharp again 300 ms after the map comes to rest */
+ if(moving||(g&&g._fastMove)){stillAt=0;if(!lowNow&&S.lvl<=-3){lowNow=true}}
+ else if(lowNow){if(!stillAt)stillAt=t;else if(t-stillAt>300){lowNow=false;stillAt=0;try{g&&(g.request?g.request():g.render())}catch(e){}}}
  if(!moving){last=0;return}
  if(last){const d=t-last;if(d<200)win.push(d)}last=t;
  if(win.length<90)return;const a=win.slice().sort((x,y)=>x-y),med=a[a.length>>1],p80=a[Math.floor(a.length*.8)];win=[];const now=performance.now();

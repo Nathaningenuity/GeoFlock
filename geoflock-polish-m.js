@@ -26,6 +26,12 @@ function fixText(){try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).forEach(S
 /* 4. photo pins added to stops when they open (other scripts lock and reset a stop's photo pins after load, so these are
    added at the moment the stop is shown): each picture joins the photo library, the text pin or paw icon it replaces goes */
 const PH={
+ /* Climate tour: a photo for each stop that had none */
+ "climate|The rain belt":{add:[{at:[-60,-3.5],label:"Amazon: rain nearly every afternoon",col:"#2b7bb5",f:"Aerial view of the Amazon Rainforest.jpg",d:"@b2dcb9034ad8696e",by:"lubasi",lic:"CC BY-SA 2.0",page:""},
+  {at:[116.55,6.0],label:"Borneo: clouds rising off the forest",col:"#2b7bb5",f:"Rainforest cloud forming Kinabalu Sabah Borneo Kampong Kundasang 4.jpg",d:"@336e7edb653b5320",by:"kallerna",lic:"CC BY-SA 4.0",page:""}]},
+ "climate|The desert belts":{add:[{at:[8,30.5],label:"Sahara: dunes near 30°N",col:"#c0703a",f:"Two star dunes in the Grand Erg Oriental.png",d:"@f6acbf4d64b2f922",by:"Heribertus2",lic:"CC BY-SA 4.0",page:""},
+  {at:[15.3,-24.7],label:"Namib: dunes near 25°S",col:"#c0703a",f:"Sossusvlei Dune Rippled cropped.jpg",d:"@e2ba87703fcf4cf1",by:"Daniel Kraft",lic:"CC BY-SA 3.0",page:""}]},
+ "climate|Monsoon climates":{add:[{at:[80.27,13.08],label:"Chennai: monsoon rain",col:"#2b7bb5",f:"India - Chennai - Monsoon - 01 (3058208937).jpg",d:"@165f6fc8a776e7f3",by:"McKay Savage",lic:"CC BY 2.0",page:""}]},
  /* Island life: the Komodo dragon itself (the card shows the island-rule chart instead) and the Aldabra tortoise */
  "islandlife|Island giants":{add:[{at:[119.45,-8.55],label:"Komodo dragon, 3 m long",col:"#1f8a7a",f:"Komodo dragon (Varanus komodoensis) walking in Komodo National Park, Indonesia.png",d:"photos/xfc364f6e6f7eeaf0.webp",by:"Komodoinside",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Komodo_dragon_%28Varanus_komodoensis%29_walking_in_Komodo_National_Park%2C_Indonesia.png"},
   {at:[46.35,-9.42],label:"Aldabra giant tortoise",col:"#1f8a7a",f:"Aldabra giant tortoise (Aldabrachelys gigantea) in Curieuse Island - 02.jpg",d:"photos/x4cbc28ee4deef088.webp",by:"NorbertNagel",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Aldabra_giant_tortoise_%28Aldabrachelys_gigantea%29_in_Curieuse_Island_-_02.jpg"}]},
@@ -128,7 +134,7 @@ function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode=
 animalsNature();[0,1500,4000,9000].forEach(ms=>setTimeout(animalsNature,ms));setInterval(()=>{try{if(document.querySelector('[data-tour="animals"] img:not([src*="cover_animals"])'))animalsNature()}catch(e){}},1500);
 /* 11. tours on the Nature map: no fading veil, the biome colours and the relief under them show at full strength */
 (function(){let n=0;const t=setInterval(()=>{if(typeof psDimFill!=="function"){if(++n>40)clearInterval(t);return}if(psDimFill._gfNat){clearInterval(t);return}const _d=psDimFill;
- psDimFill=function(){try{const T=ps&&PS_TOURS[ps.tour],S=ps&&psSteps()[ps.i],m=(S&&S.mode)||(T&&T.map&&T.map.mode);if(m==="nature")return"rgba(0,0,0,0)"}catch(e){}return _d.apply(this,arguments)};psDimFill._gfNat=1;clearInterval(t)},500)})();
+ psDimFill=function(){try{const T=ps&&PS_TOURS[ps.tour],S=ps&&psSteps()[ps.i],m=(S&&S.mode)||(T&&T.map&&T.map.mode);if(m==="nature"||(ps&&ps.tour==="climate"))return"rgba(0,0,0,0)"}catch(e){}return _d.apply(this,arguments)};psDimFill._gfNat=1;clearInterval(t)},500)})();
 /* 12. per-stop framing fixes, applied each time the stop opens (other scripts re-fit some views after load) */
 const SET=(S,k,v)=>{try{Object.defineProperty(S,k,{configurable:true,enumerable:true,writable:true,value:v})}catch(e){}};
 const GAL=S=>{SET(S,"view",[-92.1,-1.6,-89,0.8]);SET(S,"globe",[-90.5,-0.5,9]);SET(S,"hi",[]);SET(S,"hiSoft",[]);
@@ -155,6 +161,16 @@ function remote(S){if(S._gfRem)return;S._gfRem=1;const R=(S.lines||[]).find(l=>l
   const r=Math.max(12,Math.round(2*hw*111.32*k*.025));R.km=r;km=r;(S.phPins||[]).forEach(q=>{if(q&&q.ringKm)q.ringKm=r})}
  if(Array.isArray(S.pins)){const L=S.pins.filter(q=>!(Array.isArray(q)&&Array.isArray(q[0])&&typeof q[0][0]==="number"&&near(q[0])));if(L.length!==S.pins.length)SET(S,"pins",L)}
  const ph=S.phPins;if(Array.isArray(ph))ph.forEach(q=>{if(q&&near(q.at)){q.at=c.slice();q.ringKm=km}})}
-function stopFix(S){try{if(!S||typeof ps==="undefined"||!ps)return;if(ps.tour==="bremote")remote(S);const f=FIX[ps.tour+"|"+S.title];if(f)f(S)}catch(e){console.error(e)}}
+function stopFix(S){try{if(!S||typeof ps==="undefined"||!ps)return;if(ps.tour==="bremote")remote(S);if(ps.tour==="climate")climStop(S);const f=FIX[ps.tour+"|"+S.title];if(f)f(S)}catch(e){console.error(e)}}
+/* 13. a shorter climate tour: 16 stops instead of 19. Stops that repeat an idea (another "same latitude, different
+   climate"), go too close in, or need a lot of reading are left out; what they showed lives on in the stops kept. */
+const CLIM_CUT=["Same line, different worlds","The coldest winter is a summer","Two islands, two currents"];
+function climCut(){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="climate")return;const L=PS_TOURS.climate&&PS_TOURS.climate.steps;if(!L)return;
+ for(let i=L.length-1;i>=0;i--)if(L[i]&&CLIM_CUT.includes(L[i].title))L.splice(i,1)}catch(e){}}
+[0,1500,4000,9000,13000,20000].forEach(ms=>setTimeout(climCut,ms));setInterval(climCut,5000);
+{let n=0;const t=setInterval(()=>{if(typeof psLaunchTour!=="function"){if(++n>40)clearInterval(t);return}clearInterval(t);if(psLaunchTour._gfCc)return;const _l=psLaunchTour;
+ psLaunchTour=function(id){if(id==="climate"){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="climate"){}else climCut()}catch(e){}}return _l.apply(this,arguments)};psLaunchTour._gfCc=1},500)}
+/* every climate stop: on the Climate map, without the wind arrows and jet-stream lines of the Currents layer */
+function climStop(S){if(!S||S._gfCs)return;S._gfCs=1;if(S.mode==="satellite")SET(S,"mode",undefined);if(Array.isArray(S.on)&&S.on.includes("currents"))SET(S,"on",S.on.filter(x=>x!=="currents"))}
 window.gfPolishM={dedupe};
 })();
