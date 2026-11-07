@@ -43,10 +43,17 @@ function comboMask(list,op){if(!list.length)return null;const box=R=>{let x0=1e9
  cv.width=0;const need=op==="inter"?list.length:1;return{c0,r0,w,h,at:(i,j)=>acc[j*w+i]>=need}}
 /* the area of the cells in a mask (km²), for combined shapes */
 function maskKm2(m){let a=0;const c=111.32*STEP;for(let j=0;j<m.h;j++){const la=90-(m.r0+j+.5)*STEP,ca=c*c*Math.cos(la*Math.PI/180);for(let i=0;i<m.w;i++)if(m.at(i,j))a+=ca}return a}
-function countRings(rings,cuts,mm){const m=mm||mask(rings);if(!m||!POP)return null;cuts=cuts||[];const CI=countryGrid();let tot=0,cx=0,cy=0;const parts={},cty={};
+/* a cut: the points it was drawn through (2 for an old straight cut). Its ends are carried on far beyond the shape, so it
+   cuts all the way across; a cell is on one side or the other of the nearest piece of the line (curves are followed) */
+function cutPrep(c){const P=c.map(q=>[q[0],q[1]]);if(P.length<2)return null;const k=Math.cos((P.reduce((a,q)=>a+q[1],0)/P.length)*Math.PI/180)||1;
+ const X=P.map(q=>[q[0]*k,q[1]]);const ext=(a,b)=>{const dx=a[0]-b[0],dy=a[1]-b[1],L=Math.hypot(dx,dy)||1;return[a[0]+dx/L*90,a[1]+dy/L*90]};
+ X.unshift(ext(X[0],X[1]));X.push(ext(X[X.length-1],X[X.length-2]));return{k,X}}
+function cutSide(C,lo,la){const x=lo*C.k,y=la,X=C.X;let bd=1e18,bs=0;for(let i=0;i<X.length-1;i++){const a=X[i],b=X[i+1],dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy||1e-12;let t=((x-a[0])*dx+(y-a[1])*dy)/L;t=t<0?0:t>1?1:t;
+  const ex=a[0]+t*dx-x,ey=a[1]+t*dy-y,d=ex*ex+ey*ey;if(d<bd-1e-12){bd=d;bs=dx*(y-a[1])-dy*(x-a[0])}else if(Math.abs(d-bd)<=1e-12&&t>0&&t<1){bs=dx*(y-a[1])-dy*(x-a[0])}}return bs>0}
+function countRings(rings,cuts,mm){const m=mm||mask(rings);if(!m||!POP)return null;cuts=cuts||[];const CP=cuts.map(cutPrep).filter(Boolean);const CI=countryGrid();let tot=0,cx=0,cy=0;const parts={},cty={};
  for(let j=0;j<m.h;j++)for(let i=0;i<m.w;i++){if(!m.at(i,j))continue;const gi=(m.r0+j)*W+(m.c0+i),v=POP[gi];if(!v)continue;const lo=(m.c0+i+.5)*STEP-180,la=90-(m.r0+j+.5)*STEP;tot+=v;cx+=lo*v;cy+=la*v;
   const ci=CI.length>1?CI[gi]:0;cty[ci]=(cty[ci]||0)+v;
-  if(cuts.length){let k="";for(const s of cuts)k+=((s[1][0]-s[0][0])*(la-s[0][1])-(s[1][1]-s[0][1])*(lo-s[0][0]))>0?"1":"0";const P=parts[k]||(parts[k]={v:0,x:0,y:0});P.v+=v;P.x+=lo*v;P.y+=la*v}}
+  if(CP.length){let k="";for(const C of CP)k+=cutSide(C,lo,la)?"1":"0";const P=parts[k]||(parts[k]={v:0,x:0,y:0});P.v+=v;P.x+=lo*v;P.y+=la*v}}
  return{tot,c:tot?[cx/tot,cy/tot]:null,m,parts:Object.keys(parts).map(k=>({v:parts[k].v,c:[parts[k].x/parts[k].v,parts[k].y/parts[k].v]})).filter(p=>p.v>0).sort((a,b)=>b.v-a.v),
   countries:Object.keys(cty).filter(k=>+k>0).map(k=>({c:CODES[+k],v:cty[k]})).filter(o=>o.c).sort((a,b)=>b.v-a.v)}}
 const fmt=n=>n>=1e9?(n/1e9).toFixed(2)+" billion":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+" million":n>=1e3?Math.round(n/1e3).toLocaleString()+" thousand":Math.round(n).toLocaleString();
@@ -76,7 +83,7 @@ function combine(op){const t=T(),L=t.selList().map(i=>t.K().ink[i]).filter(s=>s&
 function addCircle(c,km,nm){const t=T();const o={t:"geo",c:t.GEO.col,p:[c.slice(),c.slice()],f:1,fo:.14,g:{m:"compass",A:c.slice(),B:t.dest(c,90,km/t.KM),tru:true},nm};t.rebuild(o);if(!o.p||o.p.length<3)return;t.keep(o);t.geoSelect(t.K().ink.length-1);after()}
 function addCountry(code){const t=T();let rings=[];try{projFeatures().filter(f=>f.geometry&&String(f.properties.c).toLowerCase()===code).forEach(f=>{const g=f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];P.forEach(pl=>rings.push(pl[0]))})}catch(e){}
  if(!rings.length)return;let big=rings[0],ba=0;rings.forEach(r=>{let a=0;try{a=d3.geoArea({type:"Polygon",coordinates:[r]});if(a>2*Math.PI)a=4*Math.PI-a}catch(e){}if(a>ba){ba=a;big=r}});
- const p=big.map(q=>[+q[0].toFixed(3),+q[1].toFixed(3)]);const o={t:"geo",c:t.GEO.col,p,f:1,fo:.14,g:t.polyFrom(p,1),nm:cname(code),cc:code};t.keep(o);const s=t.K().ink[t.K().ink.length-1];
+ const p=big.map(q=>[+q[0].toFixed(3),+q[1].toFixed(3)]);const o={t:"geo",c:t.GEO.col,p,f:1,fo:.14,g:t.polyFrom(p,1),nm:cname(code),cc:code,lk:1};/* a country's outline stays where the country is (the Dragger is the tool for moving countries) */t.keep(o);const s=t.K().ink[t.K().ink.length-1];
  if(s){s.rings=rings;s._ccSig=sig(s)}
  /* in Country mode each new country joins the pick, so several can be combined in one go */
  const prev=pickMode==="country"?t.selList().filter(i=>{const x=t.K().ink[i];return x&&x.cc}):[];t.geoSelect(t.K().ink.length-1);prev.forEach(i=>t.geoSelect(i,true));selG=-1;after()}
@@ -102,37 +109,42 @@ function detail(o){const s=o.s,r=res(s);if(!r)return'<p class="gfpp-hint">Counti
   '<p class="gfpp-big">'+fmt(r.tot)+' people</p><p class="gfpp-sub">'+(km?Math.round(km).toLocaleString()+' km² · '+(dens>=10?Math.round(dens).toLocaleString():dens.toFixed(1))+' per km² · ':'')+(share>=.01?share.toFixed(share>=1?1:2):"<0.01")+'% of the world'+(share>=.5?' (1 in '+Math.round(100/share)+')':'')+'</p>';
  if(like&&like!==s.cc)h+='<p class="gfpp-like">About as many people as <b>'+esc(cname(like))+'</b></p>';
  if(r.parts&&r.parts.length>1)h+='<div class="gfpp-bar">'+r.parts.map((p,k)=>'<span style="width:'+(p.v/r.tot*100)+'%;background:'+COLS[k%COLS.length]+'">'+(p.v/r.tot>.14?Math.round(p.v/r.tot*100)+'%':'')+'</span>').join("")+'</div><ol class="gfpp-parts">'+r.parts.map((p,k)=>'<li style="--p:'+COLS[k%COLS.length]+'"><i></i>'+fmt(p.v)+' <small>'+(p.v/r.tot*100).toFixed(1)+'%</small></li>').join("")+'</ol>';
- const C=r.countries.filter(x=>x.v/r.tot>.002).slice(0,6);if(C.length>1||(C.length===1&&!s.cc))h+='<p class="gfpp-k">Countries</p><ul class="gfpp-cty">'+C.map(x=>'<li><span>'+esc(cname(x.c))+'</span><b>'+fmtS(x.v)+'</b></li>').join("")+(r.countries.length>C.length?'<li class="more">+ '+(r.countries.length-C.length)+' more</li>':'')+'</ul>';
- const ci=citiesIn(r.m,6);if(ci.length)h+='<p class="gfpp-k">Main cities inside</p><p class="gfpp-cities">'+ci.map(c=>(c.cap?'★ ':'')+esc(c.n)).join(" · ")+'</p>';
- h+='<div class="gfpp-acts"><button type="button" data-a="cut" class="'+(pickMode==="split"?"on":"")+'">✂️ Cut with a line</button><button type="button" data-a="half">Split in half</button>'+((s.cuts||[]).length?'<button type="button" data-a="uncut">Clear cuts</button>':'')+'</div></div>';return h}
+ /* the lists open in their own window (click to show), so the panel stays short */
+ const nC=r.countries.filter(x=>x.v/r.tot>.002).length;
+ h+='<div class="gfpp-acts gfpp-open">'+(nC>1||(nC===1&&!s.cc)?'<button type="button" data-m="cty">Countries <small>'+r.countries.length+'</small> ▸</button>':'')+'<button type="button" data-m="city">Cities ▸</button>'+
+  '<button type="button" data-a="cut" class="'+(pickMode==="split"?"on":"")+'" title="Draw lines across the shape to cut it into parts">✂️ Cut</button><button type="button" data-a="half" title="Split it in half">½</button>'+((s.cuts||[]).length?'<button type="button" data-a="uncut" title="Clear the cuts">✕ cuts</button>':'')+'</div></div>';return h}
 function gdetail(g){const r=gres(g);if(!r)return'<p class="gfpp-hint">Counting…</p>';const dens=r.km?r.tot/r.km:0,share=WORLD?r.tot/WORLD*100:0,like=likeCountry(r.tot);
  let h='<div class="gfpp-area" style="--c:'+g.col+'"><div class="gfpp-at"><i></i><b>'+(g.op==="inter"?"⊗ ":"⊕ ")+esc(g.nm)+'</b><button type="button" data-gdel title="Remove this combination">✕</button></div>'+
   '<p class="gfpp-sub">'+(g.op==="inter"?"Only where all "+g.members.length+" shapes overlap":"All "+g.members.length+" shapes together, overlaps counted once")+'</p>'+
   '<p class="gfpp-big">'+fmt(r.tot)+' people</p><p class="gfpp-sub">'+(r.km?Math.round(r.km).toLocaleString()+' km² · '+(dens>=10?Math.round(dens).toLocaleString():dens.toFixed(1))+' per km² · ':'')+(share>=.01?share.toFixed(share>=1?1:2):"<0.01")+'% of the world'+(share>=.5?' (1 in '+Math.round(100/share)+')':'')+'</p>';
  if(like)h+='<p class="gfpp-like">About as many people as <b>'+esc(cname(like))+'</b></p>';
- const C=r.countries.filter(x=>x.v/r.tot>.002).slice(0,8);if(C.length)h+='<p class="gfpp-k">Countries</p><ul class="gfpp-cty">'+C.map(x=>'<li><span>'+esc(cname(x.c))+'</span><b>'+fmtS(x.v)+'</b></li>').join("")+'</ul>';
- const ci=citiesIn(r.m,6);if(ci.length)h+='<p class="gfpp-k">Main cities inside</p><p class="gfpp-cities">'+ci.map(c=>(c.cap?'★ ':'')+esc(c.n)).join(" · ")+'</p>';
+ h+='<div class="gfpp-acts gfpp-open"><button type="button" data-m="cty">Countries <small>'+r.countries.length+'</small> ▸</button><button type="button" data-m="city">Cities ▸</button></div>';
  return h+'</div>'}
 function combineBox(){const t=T(),L=t.selList().map(i=>t.K().ink[i]).filter(s=>s&&t.closedOf(s));if(L.length<2)return"";
  let u="";if(POP){const m=comboMask(L.map(ringsOf),"union"),r=m&&countRings(null,[],m);if(r)u=' · together '+fmtS(r.tot)}
  return'<div class="gfpp-comb"><p class="gfpp-k">'+L.length+' shapes picked'+u+'</p><div class="gfpp-acts"><button type="button" data-c="union" title="One combined shape: every place in any of them, overlaps counted once">⊕ Together (union)</button><button type="button" data-c="inter" title="Only the places inside all of them">⊗ Overlap only (intersection)</button></div></div>'}
-function compare(L){const R=L.map(o=>({nm:nameOf(o.s,o.i),col:o.s.c,a:'data-i="'+o.i+'"',r:res(o.s)})).concat(GROUPS.map((g,j)=>({nm:(g.op==="inter"?"⊗ ":"⊕ ")+g.nm,col:g.col,a:'data-gi="'+j+'"',r:gres(g)}))).filter(x=>x.r);if(R.length<2)return"";R.sort((a,b)=>b.r.tot-a.r.tot);const mx=R[0].r.tot||1;
- return'<div class="gfpp-cmp"><p class="gfpp-k">All your shapes</p>'+R.map(x=>'<button type="button" class="gfpp-cr" '+x.a+'><span>'+esc(x.nm)+'</span><i style="width:'+Math.max(2,x.r.tot/mx*100)+'%;background:'+esc(x.col)+'"></i><b>'+fmtS(x.r.tot)+'</b></button>').join("")+'</div>'}
+function compare(L){const R=rank(L);if(R.length<2)return"";return'<div class="gfpp-acts gfpp-open"><button type="button" data-m="cmp">All your shapes, ranked <small>'+R.length+'</small> ▸</button></div>'}
+function rank(L){const R=L.map(o=>({nm:nameOf(o.s,o.i),col:o.s.c,a:'data-i="'+o.i+'"',r:res(o.s)})).concat(GROUPS.map((g,j)=>({nm:(g.op==="inter"?"⊗ ":"⊕ ")+g.nm,col:g.col,a:'data-gi="'+j+'"',r:gres(g)}))).filter(x=>x.r);R.sort((a,b)=>b.r.tot-a.r.tot);return R}
+function rankHTML(L){const R=rank(L);if(!R.length)return'<p class="gfpp-hint">No shapes yet.</p>';const mx=R[0].r.tot||1;
+ return'<div class="gfpp-cmp">'+R.map(x=>'<button type="button" class="gfpp-cr" '+x.a+'><span>'+esc(x.nm)+'</span><i style="width:'+Math.max(2,x.r.tot/mx*100)+'%;background:'+esc(x.col)+'"></i><b>'+fmtS(x.r.tot)+'</b></button>').join("")+'</div>'}
 function render(){if(!box||!box.isConnected||!isOpen()){box=null;return}const t=T(),L=shapes(),S=selShape();
  const tools=[["country","🗺️","Country","Click a country to make it a shape"],["place","📍","Around a place","A circle of a set size round a city or country"],["grow","🎯","Grow","Click a centre: a circle grows until it holds the target"]];
  let h='<p class="gfpp-k">Make a shape from</p><div class="gfpp-tools">'+tools.map(x=>'<button type="button" data-p="'+x[0]+'" class="'+(pickMode===x[0]?"on":"")+'" title="'+esc(x[3])+'"><i>'+x[1]+'</i>'+x[2]+'</button>').join("")+'</div>';
  if(pickMode==="place")h+='<form class="gfpp-place"><input type="search" placeholder="A city or country, e.g. Lagos" value="'+esc(placeQ)+'" list="gfppList"><input type="number" min="5" max="5000" step="5" value="'+placeKm+'" aria-label="Distance in km"> km<button type="submit">Add</button><datalist id="gfppList">'+cities().slice(0,900).map(c=>'<option value="'+esc(c.n)+'">').join("")+'</datalist></form>';
  if(pickMode==="grow")h+='<div class="gfpp-seg">'+[[1e8,"100 million"],[5e8,"500 million"],[1e9,"1 billion"],[1e12,"Half of humanity"]].map(([v,l])=>'<button type="button" data-g="'+v+'" class="'+(growT===v?"on":"")+'">'+l+'</button>').join("")+'</div>';
- const hint=pickMode==="country"?"Click a country on the map. Esc stops.":pickMode==="grow"?(busy?"Growing the circle…":"Click a centre on the map. Esc stops."):pickMode==="split"?"Drag a line across the picked shape. Each line cuts it again. Esc stops.":"";
+ const hint=pickMode==="country"?"Click a country on the map. Esc stops.":pickMode==="grow"?(busy?"Growing the circle…":"Click a centre on the map. Esc stops."):pickMode==="split"?(cutMode==="free"?"Draw any line across the picked shape, curving round what you like. Each line cuts it again. Esc stops.":"Drag a straight line across the picked shape. Each line cuts it again. Esc stops."):"";
+ if(pickMode==="split")h+='<div class="gfpp-seg"><button type="button" data-cm="line" class="'+(cutMode==="line"?"on":"")+'">╱ Straight line</button><button type="button" data-cm="free" class="'+(cutMode==="free"?"on":"")+'">〰 Freehand</button></div>';
  if(hint)h+='<p class="gfpp-hint act">'+hint+'</p>';
  if(!POP)h+='<p class="gfpp-hint">Loading the people grid…</p>';
  else if(selG>=0&&GROUPS[selG]&&alive(GROUPS[selG]))h+=gdetail(GROUPS[selG]);
  else if(S)h+=detail(S);else if(L.length)h+='<p class="gfpp-hint">Pick a shape (Select) to see who lives there.</p>';else h+='<p class="gfpp-hint">Draw a shape with the tools above, or make one from a country or a place.</p>';
  if(POP)h+=combineBox()+compare(L);
- h+='<p class="gfpp-src">People: GHS-POP 2025 (European Commission JRC, CC BY 4.0), counted in cells about 11 km across, so small shapes and coasts are approximate.</p>';
  box.innerHTML=h;
+ box.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>openWin(b.dataset.m));
+ if(win)fillWin();
  box.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(pickMode===b.dataset.p?null:b.dataset.p));
  box.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{growT=+b.dataset.g;render()});
+ box.querySelectorAll("[data-cm]").forEach(b=>b.onclick=()=>{cutMode=b.dataset.cm;render()});
  box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{selG=-1;t.geoSelect(+b.dataset.i);after()});
  box.querySelectorAll("[data-gi]").forEach(b=>b.onclick=()=>{selG=+b.dataset.gi;render()});
  box.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>combine(b.dataset.c));
@@ -141,6 +153,29 @@ function render(){if(!box||!box.isConnected||!isOpen()){box=null;return}const t=
  box.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(!S)return;if(a==="cut")pick(pickMode==="split"?null:"split");else if(a==="half")half(S.s);else if(a==="uncut"){t.hist();S.s.cuts=[];t.save();after()}});
  const f=box.querySelector(".gfpp-place");if(f){const [q,k]=f.querySelectorAll("input");f.addEventListener("keydown",e=>e.stopPropagation());f.onsubmit=e=>{e.preventDefault();placeQ=q.value;placeKm=Math.max(5,Math.min(5000,+k.value||200));if(!around(placeQ,placeKm)){const p=box.querySelector(".gfpp-hint");if(p)p.textContent="Couldn’t find “"+placeQ+"”. Try a city name from the list."}};setTimeout(()=>q.focus(),0)}
  syncCursor()}
+/* ---------- the details window: countries, cities, every shape ranked (opened from the panel's buttons) ---------- */
+let win=null,winTab="cty";
+function cur(){const S=selShape();if(selG>=0&&GROUPS[selG]&&alive(GROUPS[selG])){const g=GROUPS[selG];return{nm:(g.op==="inter"?"⊗ ":"⊕ ")+g.nm,col:g.col,r:gres(g),cc:null}}if(S)return{nm:nameOf(S.s,S.i),col:S.s.c,r:res(S.s),cc:S.s.cc};return null}
+function openWin(tab){winTab=tab;if(!win){win=document.createElement("div");win.className="gfpp-win";win.setAttribute("role","dialog");win.setAttribute("aria-label","People details");document.body.appendChild(win);
+  const pr=(box&&box.closest(".gfk-panel")||box).getBoundingClientRect();win.style.left=Math.min(innerWidth-330,pr.right+10)+"px";win.style.top=Math.max(70,pr.top)+"px"}
+ fillWin()}
+function closeWin(){if(win){win.remove();win=null}}
+function fillWin(){if(!win)return;if(!isOpen()){closeWin();return}const o=cur(),L=shapes();
+ const tabs=[["cty","Countries"],["city","Cities"],["cmp","All shapes"]];
+ let h='<div class="gfpp-wh"><b>'+(o?'<i style="background:'+esc(o.col)+'"></i>'+esc(o.nm):"People")+'</b><button type="button" class="gfpp-wx" aria-label="Close">×</button></div>'+
+  '<div class="gfpp-wt">'+tabs.map(([k,l])=>'<button type="button" data-t="'+k+'" class="'+(winTab===k?"on":"")+'">'+l+'</button>').join("")+'</div><div class="gfpp-wb">';
+ if(winTab==="cmp")h+=rankHTML(L);
+ else if(!o||!o.r)h+='<p class="gfpp-hint">Pick a shape to see who lives there.</p>';
+ else if(winTab==="cty"){const r=o.r,C=r.countries.filter(x=>x.v/r.tot>.0005).slice(0,40);h+='<ul class="gfpp-cty">'+C.map(x=>'<li><span>'+esc(cname(x.c))+'</span><b>'+fmtS(x.v)+'</b> <small>'+(x.v/r.tot*100).toFixed(x.v/r.tot>=.1?0:1)+'%</small></li>').join("")+(r.countries.length>C.length?'<li class="more">+ '+(r.countries.length-C.length)+' more, each a tiny share</li>':'')+'</ul>'}
+ else{const ci=citiesIn(o.r.m,24);h+=ci.length?'<ul class="gfpp-cty">'+ci.map(c=>'<li><span>'+(c.cap?'★ ':'')+esc(c.n)+'</span>'+(c.cap?'<small>capital</small>':'')+'</li>').join("")+'</ul>':'<p class="gfpp-hint">No big cities inside.</p>'}
+ h+='</div><p class="gfpp-src">People: GHS-POP 2025 (European Commission JRC, CC BY 4.0), counted in cells about 11 km across, so small shapes and coasts are approximate.</p>';
+ const st=win.querySelector(".gfpp-wb");const sc=st?st.scrollTop:0;win.innerHTML=h;const nb=win.querySelector(".gfpp-wb");if(nb)nb.scrollTop=sc;
+ win.querySelector(".gfpp-wx").onclick=closeWin;win.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{winTab=b.dataset.t;fillWin()});
+ win.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{selG=-1;T().geoSelect(+b.dataset.i);after()});win.querySelectorAll("[data-gi]").forEach(b=>b.onclick=()=>{selG=+b.dataset.gi;render()});
+ /* dragged by its title bar */
+ const hd=win.querySelector(".gfpp-wh");hd.onpointerdown=e=>{if(e.target.closest("button"))return;e.preventDefault();const r=win.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;
+  const mv=ev=>{win.style.left=Math.max(-r.width+80,Math.min(innerWidth-80,ev.clientX-dx))+"px";win.style.top=Math.max(0,Math.min(innerHeight-40,ev.clientY-dy))+"px"};const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up)}}
+setInterval(()=>{if(win&&!isOpen())closeWin()},700);
 function after(){try{T().render();T().geoList()}catch(e){}render()}
 /* the Geometry set calls this to fill its People section */
 window.gfPeopleExt=function(el){box=el;load().then(render).catch(()=>{});render();loop()};
@@ -153,14 +188,18 @@ setInterval(()=>{if(!isOpen()){if(pickMode){pickMode=null;syncCursor()}return}co
 const inUI=e=>e.target.closest&&e.target.closest(".gfk-panel,.globe-btns,.gfk-tray,.gf-xs,.gfth,.ps-card,button,a,input,select,textarea");
 function local(e){const g=G(),r=g.canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
 function inv(q){const g=G();if(!g)return null;try{const ll=g.projection().invert(q);if(!ll||!isFinite(ll[0])||!isFinite(ll[1]))return null;if(!g._flat){const ro=g.projection().rotate();if(d3.geoDistance(ll,[-ro[0],-ro[1]])>Math.PI/2)return null}return ll}catch(e){return null}}
-let press=null,cut=null,eatUntil=0;
-function down(e){if(!isOpen()||!pickMode||inUI(e)||e.button)return;const g=G();if(!g||!g.host.contains(e.target))return;
- if(pickMode==="split"){const S=selShape();if(!S)return;e.stopImmediatePropagation();e.preventDefault();cut={a:local(e),b:local(e),id:e.pointerId};return}
+let press=null,cut=null,eatUntil=0,cutMode="line";
+function down(e){if(!isOpen()||!pickMode||inUI(e)||e.button)return;const g=G();if(!g)return;/* anywhere over the map (place names float above it) */const cr=g.canvas.getBoundingClientRect();if(!g.host.contains(e.target)&&!(e.clientX>=cr.left&&e.clientX<=cr.right&&e.clientY>=cr.top&&e.clientY<=cr.bottom&&!(e.target.closest&&e.target.closest(".gfk-panel,.gfpp-win,.ps-card,.gftq,[role=dialog]"))))return;
+ if(pickMode==="split"){const S=selShape();if(!S)return;e.stopImmediatePropagation();e.preventDefault();const q=local(e);cut={a:q,b:q,pts:[q],id:e.pointerId};return}
  /* Country and Grow: the map keeps the press (it may be a drag); a click without moving is ours */
  press={x:e.clientX,y:e.clientY,t:performance.now()}}
-function move(e){if(cut&&e.pointerId===cut.id){e.stopImmediatePropagation();e.preventDefault();cut.b=local(e)}}
+function move(e){if(cut&&e.pointerId===cut.id){e.stopImmediatePropagation();e.preventDefault();const q=local(e);cut.b=q;const l=cut.pts[cut.pts.length-1];if(Math.hypot(q[0]-l[0],q[1]-l[1])>5)cut.pts.push(q)}}
+/* the cut as drawn on the screen, as points on the map: a straight one sampled along its length (so it follows what was drawn
+   on the globe too), a freehand one point by point */
+function cutLL(C){let Q=cutMode==="free"?C.pts.concat([C.b]):Array.from({length:25},(_,i)=>[C.a[0]+(C.b[0]-C.a[0])*i/24,C.a[1]+(C.b[1]-C.a[1])*i/24]);
+ const L=Q.map(inv).filter(Boolean).map(q=>[+q[0].toFixed(3),+q[1].toFixed(3)]);return L.length>=2?L:null}
 function up(e){if(cut&&e.pointerId===cut.id){e.stopImmediatePropagation();e.preventDefault();const C=cut;cut=null;eatUntil=Date.now()+400;
-  if(Math.hypot(C.b[0]-C.a[0],C.b[1]-C.a[1])<10)return;const a=inv(C.a),b=inv(C.b),S=selShape();if(!a||!b||!S)return;T().hist();S.s.cuts=(S.s.cuts||[]).concat([[a,b]]);T().save();after();return}
+  if(Math.hypot(C.b[0]-C.a[0],C.b[1]-C.a[1])<10&&C.pts.length<4)return;const L=cutLL(C),S=selShape();if(!L||!S)return;T().hist();S.s.cuts=(S.s.cuts||[]).concat([L]);T().save();after();return}
  if(!press)return;const P=press;press=null;if(Math.hypot(e.clientX-P.x,e.clientY-P.y)>5||performance.now()-P.t>600)return;
  const g=G();if(!g)return;eatUntil=Date.now()+500;
  if(pickMode==="grow"){const ll=inv(local(e));if(ll)grow(ll);return}
@@ -182,13 +221,13 @@ function loop(){cancelAnimationFrame(raf);if(!isOpen()){if(ov){ov.remove();ov=nu
  const vis=ll=>{if(g._flat)return true;const ro=pr.rotate();return d3.geoDistance(ll,[-ro[0],-ro[1]])<Math.PI/2};
  const seg=(q1,q2)=>{x.setLineDash([8,6]);x.strokeStyle="#fff";x.lineWidth=5;x.beginPath();x.moveTo(q1[0],q1[1]);x.lineTo(q2[0],q2[1]);x.stroke();x.strokeStyle="#1d2433";x.lineWidth=2.3;x.stroke();x.setLineDash([])};
  const lab=(ll,t,col)=>{if(!ll||!vis(ll))return;const q=pr(ll);if(!q)return;x.font="800 12.5px system-ui,sans-serif";const w=x.measureText(t).width+14;x.fillStyle=col;x.strokeStyle="#fff";x.lineWidth=2;x.beginPath();x.roundRect?x.roundRect(q[0]-w/2,q[1]-11,w,22,11):x.rect(q[0]-w/2,q[1]-11,w,22);x.fill();x.stroke();x.fillStyle="#fff";x.textAlign="center";x.textBaseline="middle";x.fillText(t,q[0],q[1]+.5)};
- shapes().forEach(o=>{const cuts=o.s.cuts||[];if(!cuts.length)return;cuts.forEach(s=>{const a=pr(s[0]),b=pr(s[1]);if(a&&b)seg(a,b)});const R=res(o.s);if(R&&R.parts.length>1)R.parts.forEach((p,k)=>lab(p.c,fmtS(p.v)+" · "+Math.round(p.v/R.tot*100)+"%",COLS[k%COLS.length]))});
+ shapes().forEach(o=>{const cuts=o.s.cuts||[];if(!cuts.length)return;cuts.forEach(c=>{for(let i=0;i<c.length-1;i++){if(!vis(c[i])||!vis(c[i+1]))continue;const a=pr(c[i]),b=pr(c[i+1]);if(a&&b)seg(a,b)}});const R=res(o.s);if(R&&R.parts.length>1)R.parts.forEach((p,k)=>lab(p.c,fmtS(p.v)+" · "+Math.round(p.v/R.tot*100)+"%",COLS[k%COLS.length]))});
  /* combinations: a union is outlined round every member; an overlap is shaded where all of them meet */
  GROUPS.forEach((g,j)=>{if(!alive(g))return;const path=s=>{x.beginPath();ringsOf(s).forEach(R=>{let pen=false,last=null;R.forEach(ll=>{const q=vis(ll)&&pr(ll);if(!q||!isFinite(q[0])){pen=false;return}if(pen&&last&&Math.abs(q[0]-last[0])>r.width/2)pen=false;pen?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]);pen=true;last=q})})};
   x.save();if(g.op==="inter"){g.members.forEach(s=>{path(s);x.clip("evenodd")});x.fillStyle=g.col;x.globalAlpha=j===selG?.42:.28;x.fillRect(0,0,r.width,r.height)}
   else{x.globalAlpha=j===selG?.95:.6;x.setLineDash([6,4]);x.lineWidth=j===selG?3:2;x.strokeStyle=g.col;g.members.forEach(s=>{path(s);x.stroke()})}
   x.restore();const R=gres(g);if(R&&R.c)lab(R.c,(g.op==="inter"?"⊗ ":"⊕ ")+fmtS(R.tot),g.col)});
- if(cut)seg(cut.a,cut.b)}
+ if(cut){if(cutMode==="free"){const P=cut.pts.concat([cut.b]);x.setLineDash([8,6]);x.lineJoin=x.lineCap="round";x.beginPath();P.forEach((q,i)=>i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]));x.strokeStyle="#fff";x.lineWidth=5;x.stroke();x.strokeStyle="#1d2433";x.lineWidth=2.3;x.stroke();x.setLineDash([])}else seg(cut.a,cut.b)}}
 
 /* ---------- ways in: the Toolkit slot, a button on the Population map; the Population map opens it (picking, not drawing) ---------- */
 function open(o){const t=T();if(!t||!t.openPeople)return;t.openPeople(o||{mode:"select"})}
@@ -213,7 +252,7 @@ const css=document.createElement("style");css.textContent=`
 .gfpp-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#b3401f; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); }
 .gfpp-ico.on{ background:#c2491f; color:#fff; }
 .gfk-pplx{ margin:6px 0 4px; padding-top:6px; border-top:1px solid rgba(0,0,0,.08); font:13px/1.4 system-ui,sans-serif; }
-.gfpp-tools{ display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin:2px 0 6px; }
+.gfpp-tools{ display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 6px; } .gfpp-tools button{ flex:1 1 auto; flex-direction:row !important; justify-content:center; gap:5px !important; padding:5px 8px !important; }
 .gfpp-tools button{ display:flex; flex-direction:column; align-items:center; gap:1px; border:1px solid rgba(194,73,31,.25); background:rgba(194,73,31,.05); border-radius:9px; padding:4px 2px; font:700 10.5px system-ui; color:inherit; cursor:pointer; }
 .gfpp-tools button i{ font-style:normal; font-size:15px; line-height:1.1; } .gfpp-tools button.on{ background:#c2491f; color:#fff; border-color:#c2491f; }
 .gfpp-hint{ font-size:12.3px; opacity:.85; margin:4px 0; } .gfpp-hint.act{ background:rgba(194,73,31,.1); border-radius:8px; padding:5px 8px; opacity:1; }
@@ -233,7 +272,15 @@ body.sky-night .gfpp-area{ background:rgba(255,255,255,.06); }
 .gfpp-comb{ margin:6px 0; padding:6px 8px; border-radius:8px; background:rgba(194,73,31,.08); }
 .gfpp-at button{ border:0; background:none; cursor:pointer; color:inherit; opacity:.55; } .gfpp-at button:hover{ opacity:1; }
 .gfpp-cmp{ margin-top:6px; } .gfpp-cr{ display:grid; grid-template-columns:96px 1fr 46px; align-items:center; gap:6px; font:11.5px system-ui; margin:2px 0; width:100%; border:0; background:none; color:inherit; padding:1px 0; cursor:pointer; text-align:left; } .gfpp-cr span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .gfpp-cr i{ height:10px; border-radius:5px; display:block; } .gfpp-cr b{ text-align:right; }
-.gfpp-src{ font-size:10.3px; opacity:.55; margin:6px 0 0; }`;document.head.appendChild(css);
+.gfpp-src{ font-size:10.3px; opacity:.55; margin:6px 0 0; }
+.gfpp-open{ display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; } .gfpp-open small{ opacity:.6; font-weight:700; }
+.gfpp-win{ position:fixed; z-index:9400; width:300px; max-height:min(70vh,520px); display:flex; flex-direction:column; background:#fffaf2; color:#2b2016; border-radius:14px; box-shadow:0 14px 40px rgba(0,0,0,.28); border:1px solid rgba(194,73,31,.2); font:13px system-ui,sans-serif; overflow:hidden; }
+.gfpp-wh{ display:flex; align-items:center; gap:8px; padding:10px 10px 6px 14px; cursor:grab; touch-action:none; } .gfpp-wh b{ flex:1; display:flex; align-items:center; gap:7px; font-size:14px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .gfpp-wh b i{ flex:0 0 auto; width:10px; height:10px; border-radius:50%; }
+.gfpp-wx{ border:0; background:rgba(0,0,0,.06); width:26px; height:26px; border-radius:50%; font-size:16px; cursor:pointer; color:inherit; }
+.gfpp-wt{ display:flex; gap:4px; padding:0 12px 6px; } .gfpp-wt button{ flex:1; border:1px solid rgba(194,73,31,.25); background:transparent; border-radius:999px; padding:4px 6px; font:600 12px system-ui; cursor:pointer; color:inherit; } .gfpp-wt button.on{ background:#c2491f; color:#fff; border-color:#c2491f; }
+.gfpp-wb{ overflow:auto; padding:0 14px 6px; flex:1 1 auto; } .gfpp-win .gfpp-cty li small{ opacity:.55; margin-left:6px; min-width:34px; text-align:right; } .gfpp-win .gfpp-cty li b{ margin-left:auto; }
+.gfpp-win .gfpp-src{ padding:4px 14px 10px; margin:0; }
+body.dark-theme .gfpp-win{ background:#1f2433; color:#e9edf5; border-color:rgba(255,255,255,.12); }`;document.head.appendChild(css);
 /* the old Count people tool's helpers, still used by the toolkit's shape labels */
 window.gfPopCount={load,count:rings=>countRings(rings,[])};
 window.gfPeople={open,close,shapes,res,addCountry,addCircle,load};

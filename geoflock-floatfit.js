@@ -28,7 +28,8 @@ function zone(p,x,y){const r=p.getBoundingClientRect();if(x<r.left-2||x>r.right+
 const CUR={n:"ns-resize",s:"ns-resize",e:"ew-resize",w:"ew-resize",ne:"nesw-resize",sw:"nesw-resize",nw:"nwse-resize",se:"nwse-resize"};
 
 function setSize(p,w,h){if(w!=null)p.style.setProperty("width",Math.round(w)+"px","important");
- if(h!=null){p.style.setProperty("height",Math.round(h)+"px","important");p.style.setProperty("max-height","none","important");p.style.setProperty("overflow","auto","important")}}
+ /* a height chosen by the reader is a ceiling, not a fixed size: a panel with less in it stays small */
+ if(h!=null){p.style.setProperty("height","auto","important");p.style.setProperty("max-height",Math.round(h)+"px","important");p.style.setProperty("overflow","auto","important")}}
 /* the panel's position in its own terms (left/top as CSS lengths), moved by dx, dy */
 function shift(p,dx,dy){const cs=getComputedStyle(p);
  if(dx){const l=parseFloat(cs.left);if(isFinite(l)){p.style.setProperty("left",(l+dx)+"px","important");p.style.setProperty("right","auto","important")}}
@@ -59,11 +60,11 @@ function wire(p){if(p._gff)return;p._gff=1;const R=regOf(p);
    if(z.includes("w")){w=Math.max(mn[0],Math.min(innerWidth-8,r0.width-dx));mx=r0.width-w}
    if(z.includes("s"))h=Math.max(mn[1],Math.min(innerHeight-8,r0.height+dy));
    if(z.includes("n")){h=Math.max(mn[1],Math.min(innerHeight-8,r0.height-dy));my=r0.height-h}
-   const cur=p.getBoundingClientRect();setSize(p,w,h);
+   const cur=p.getBoundingClientRect();setSize(p,w,h);if(h!=null)p.style.setProperty("height",Math.round(h)+"px","important");
    /* left and top edges: the far edge stays put */
    const ax=z.includes("w")?(r0.left+mx)-cur.left:0,ay=z.includes("n")?(r0.top+my)-cur.top:0;if(ax||ay)shift(p,ax,ay)};
   const up=()=>{p.removeEventListener("pointermove",mv);p.removeEventListener("pointerup",up);p.removeEventListener("pointercancel",up);document.body.classList.remove("gff-resizing");
-   const r=p.getBoundingClientRect();SIZE[k]={w:Math.round(r.width),h:z.match(/[ns]/)?Math.round(r.height):(SIZE[k]&&SIZE[k].h)||null};if(!z.match(/[ew]/))SIZE[k].w=(s&&s.w)||Math.round(r.width);save();setTimeout(()=>{p._gffRes=""},0);keepIn(p)};
+   const r=p.getBoundingClientRect();SIZE[k]={w:Math.round(r.width),h:z.match(/[ns]/)?Math.round(r.height):(SIZE[k]&&SIZE[k].h)||null};if(!z.match(/[ew]/))SIZE[k].w=(s&&s.w)||Math.round(r.width);save();if(SIZE[k].h)setSize(p,null,SIZE[k].h);setTimeout(()=>{p._gffRes=""},0);keepIn(p)};
   p.addEventListener("pointermove",mv);p.addEventListener("pointerup",up);p.addEventListener("pointercancel",up)},true)}
 
 /* 4. panels with no drag of their own (the tour quiz) are dragged by their title bar, anywhere on the page */
@@ -75,7 +76,7 @@ document.addEventListener("pointerdown",e=>{const R=REG.find(R=>R.drag&&e.target
 {const st=document.createElement("style");st.textContent=REG.filter(R=>R.drag).map(R=>R.sel+" "+R.drag+"{cursor:grab;touch-action:none}").join("");document.head.appendChild(st)}
 /* panels come and go (and some are rebuilt or resized by their own code): look every half second */
 function scan(){REG.forEach(R=>document.querySelectorAll(R.sel).forEach(p=>{if(!p.isConnected||!p.getClientRects().length)return;wire(p);
- const s=SIZE[R.key(p)];if(s&&!p._gffRes){const r=p.getBoundingClientRect();if(s.w&&Math.abs(r.width-s.w)>2||s.h&&Math.abs(r.height-s.h)>2)setSize(p,s.w,s.h)}
+ const s=SIZE[R.key(p)];if(s&&!p._gffRes){const r=p.getBoundingClientRect();if(s.w&&Math.abs(r.width-s.w)>2||s.h&&parseFloat(p.style.maxHeight)!==Math.round(s.h))setSize(p,s.w,s.h)}
  if(!p._gffRes&&!p.matches(".gfk-moving,.hs-dragging,.gff-moving"))keepIn(p)}))}
 setInterval(scan,500);addEventListener("resize",scan);
 {const st=document.createElement("style");st.textContent=`body.gff-resizing,body.gff-resizing *{user-select:none!important;-webkit-user-select:none!important}`;document.head.appendChild(st)}
