@@ -175,7 +175,7 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
   ctx.globalCompositeOperation="destination-over";ctx.fillStyle=I.ocean||"#5797cf";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});ctx.restore()}
- const seaC=(I.drewRaster&&!sat&&seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s)))))||null;
+ const seaC=(I.drewRaster&&!sat&&seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s)))))||null;if(seaC)window._gfSeaC=seaC;
  /* raster maps (Relief, Elevation...): the picture's own coast is coarse, and in places shows land where the sea is (the Gulf
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
  if(I.drewRaster&&!sat){try{const W=Math.max(6,Math.min(90,bandPx(pj,s)*2));const col=seaC;if(col){

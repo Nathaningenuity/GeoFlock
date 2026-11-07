@@ -30,6 +30,8 @@ const strip=s=>String(s==null?"":s).replace(/​/g,"").trim();
 function libIdx(f){try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}}
 function merge(){try{if(typeof gfMergeExtra==="function")gfMergeExtra();if(typeof PS_PHOTO_DATA==="undefined")return;
  const have=new Set(PS_PHOTO_DATA.map(p=>p&&p.f));GF_RVLIFE_PHOTOS.forEach(p=>{if(!have.has(p.f))PS_PHOTO_DATA.push(p)})}catch(e){}}
+/* a stop's photo pins are registered before the tour drops any it cannot find a picture for */
+if(typeof psSqPrune==="function"&&!psSqPrune._rl){const _p=psSqPrune;psSqPrune=function(S){try{if(typeof gfMergeExtra==="function")gfMergeExtra();reg(S)}catch(e){}return _p.apply(this,arguments)};psSqPrune._rl=1}
 function reg(s){try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};(s.phPins||[]).forEach(q=>{const f=q&&q._f;if(!f)return;const i=libIdx(f);if(i>=0){q.img=i;PS_SQ_IMG[strip(q.label)]=i;PS_SQ_IMG[q.label]=i}})}catch(e){}}
 /* photo pins whose file is not in the library are left out (never an empty frame) */
 const okPins=a=>(a||[]).filter(q=>!q._f||libIdx(q._f)>=0);
@@ -122,21 +124,44 @@ function animals(){if(!once("animals"))return;
     with the most remarkable animals: Madagascar, the Galápagos, and the reefs of the Coral Triangle and Great Barrier Reef */
  const red="#c0392b",grn="#2e8b57";
  const pc=(at,label,f,col)=>Object.assign(ph(at,label,f),{col});
- ["Tigers","Lions outside Africa","Pandas","Snow leopards"].forEach(t=>rm("animals",t));
+ /* 2026-11 (later): tigers and lions return as one stop, pandas as their own; snow leopards stay in On the edge */
+ ["Tigers","Lions outside Africa","Snow leopards"].forEach(t=>rm("animals",t));
+ ins("animals","Elephant country",{title:"Tigers and lions",view:[-20,-38,150,58],globe:[60,8,1.2],card:"left",hi:["in"],hiSoft:["np","bd","bt","th","my","id","ru","cn","tz","ke","za","bw","zm"],
+  pins:[P([134,46],"Siberian tigers: the snowy far east")],
+  phPins:[ph([79.5,22.5],"A Bengal tiger","Bengal tiger (Panthera tigris tigris) female 3.jpg"),
+   ph([70.8,21.1],"Gir: the last Asiatic lions","Asiatic Lion Royal Walk at Gir National Park, Gujrat, India.jpg"),
+   ph([34.8,-2.3],"Serengeti: most lions live in Africa","020 The lion king Snyggve in the Serengeti National Park Photo by Giles Laurent.jpg")],
+  stat:"India is the only country with both wild tigers and wild lions: about three in five of the world’s wild tigers, and every wild lion outside Africa",
+  body:"Tigers once lived from Turkey to Bali and lions from Greece to India. Today about 5,500 wild tigers are left, about 3,700 of them in India, where numbers have more than doubled since 2006. Lions live mostly in East and southern Africa, about 20,000 to 25,000 of them, and about 890 Asiatic lions live in and around the Gir forest in Gujarat.",
+  more:"The biggest tiger, the Siberian or Amur tiger, hunts in the snowy forests of Russia’s far east. In the early 1900s perhaps only a few dozen Asiatic lions were left; strict protection brought them back. Asiatic lions are a little smaller than African ones, and the males have shorter manes. Africa’s lions have halved in the last few decades as farms spread into their land."});
+ CARD["animals|Tigers and lions"]="Panthera tigris sumatran subspecies.jpg";
+ set("animals","Pandas",s=>{s.card="left";s.phPins=[ph([103.2,30.8],"Giant pandas at Wolong","Pandas!! (GIANT PANDA-WOLONG-SICHUAN-CHINA) (2150600169).jpg"),
+   ph([107.8,33.7],"Golden snub-nosed monkeys, Qinling","Golden Snub-nosed Monkeys, Qinling Mountains - China.jpg")];
+  s.stat="Wild giant pandas live only in a few mountain ranges in China, and they have come back from the endangered list";
+  s.body="About 1,900 giant pandas live in the bamboo forests of Sichuan, Shaanxi and Gansu, and almost all of their food is bamboo. In 2016 they moved from endangered to vulnerable, after China protected their forests and joined them up with green corridors.";
+  s.more="A panda eats 12 to 38 kg of bamboo a day and spends most of its waking hours eating. The same mountains shelter golden snub-nosed monkeys and takins. China lends pandas to zoos around the world, a custom called panda diplomacy."});
+ CARD["animals|Pandas"]="Pandas eating Bamboo - panoramio.jpg";
  ins("animals","Polar bears never meet penguins",{title:"On the edge",view:[-10,-20,150,62],globe:[78,20,1.05],card:"left",
   pins:[],
   phPins:[pc([101.5,-1.2],"Sumatran rhino","Sumatran Rhino 2.jpg",red),
    pc([86,31.5],"Snow leopard","Panthera uncia - Zoo Karlsruhe.jpg",red),
-   pc([79.5,22.5],"Tiger","Bengal tiger (Panthera tigris tigris) female 3.jpg",grn),
-   pc([70.8,21.1],"Asiatic lion","Asiatic Lion Royal Walk at Gir National Park, Gujrat, India.jpg",grn),
-   pc([103.2,30.8],"Giant panda","Pandas eating Bamboo - panoramio.jpg",grn),
    pc([66.5,48.6],"Saiga","Saiga antelope at the Stepnoi Sanctuary.jpg",grn),
    pc([29.55,-1.45],"Mountain gorilla","Mountain gorilla (Gorilla beringei beringei) female with baby.jpg",grn)],
   stat:"Some animals are down to a few dozen; others show that protection works, and have come back from the brink",
-  body:"Red photos are animals still sliding: fewer than 50 Sumatran rhinos are left, scattered in Sumatra’s forests, and snow leopards are hard to count in their high mountains. Green photos are comebacks: India’s tigers rose from 1,411 in 2006 to 3,682 in 2022, Asiatic lions now number 891 in and around Gir, and giant pandas left the endangered list in 2016.",
+  body:"Red photos are animals still sliding: fewer than 50 Sumatran rhinos are left, scattered in Sumatra’s forests, and snow leopards are hard to count in their high mountains. Green photos are comebacks: saiga antelope and mountain gorillas, like the tigers, lions and pandas of the last stops, show that protection works.",
   more:"What worked was nearly always the same: guarded reserves, an end to hunting, and local people who gain from the animals living. The saiga died in hundreds of thousands in 2015, yet they now number well over a million. Mountain gorillas, about 250 in the 1980s, passed 1,000 thanks to rangers and gorilla tourism. Far from this map, fewer than ten vaquitas survive in the Gulf of California, drowned in illegal fishing nets, and wild axolotls cling on in the canals of Mexico City."});
- CARD["animals|On the edge"]="Bengal tiger (Panthera tigris tigris) female 3.jpg";
- rm("animals","The saiga’s comeback");rm("animals","The last few vaquitas");rm("animals","The axolotl’s last lake");
+ CARD["animals|On the edge"]="Sumatran Rhino 2.jpg";
+ rm("animals","The saiga’s comeback");rm("animals","The last few vaquitas");
+ /* the axolotls keep their own stop, after On the edge (the vaquitas are in On the edge here, and have their own stop in Ocean life) */
+
+ ins("animals","On the edge",{title:"The axolotl’s last lake",view:[-104.5,15.5,-95.5,23],globe:[-99.1,19.4,5],card:"left",
+  lines:[{coords:[[-99.12,19.72],[-98.95,19.62],[-98.93,19.45],[-99.0,19.35],[-98.97,19.22],[-99.08,19.2],[-99.15,19.28],[-99.12,19.45],[-99.17,19.6],[-99.12,19.72]],kind:"dash"}],
+  pins:[P([-99.1,19.26],"Xochimilco’s canals"),P([-98.98,19.55],"The old lake, drained")],
+  phPins:[ph([-98.3,19.0],"An axolotl, gills and all","Mexican axolotl.jpg")],
+  stat:"Millions of axolotls live in labs and fish tanks, but in the wild they survive only in the canals of one city",
+  body:"Axolotls are salamanders that never grow up: they keep their feathery gills and live in water all their lives, and they can regrow lost legs and even parts of the heart and brain. Their home was the great lake (dashed) on which the Aztecs built Tenochtitlan. As Mexico City drained the lake and spread over it, only the canals of Xochimilco were left.",
+  more:"Surveys there found about 6,000 axolotls per km² in 1998 and only about 35 in 2014, because of dirty water and the carp and tilapia released into the canals, which eat their eggs. Farmers who keep their canals clean round the chinampas, the Aztec farm plots built up from the lake bed, now act as axolotl refuges."});
+ CARD["animals|The axolotl’s last lake"]="Mexican axolotl.jpg";
  ins("animals","The Wallace Line",{title:"Madagascar: animals found nowhere else",view:[38,-27,56,-11],globe:[46.8,-19,3.4],card:"left",hi:["mg"],
   pins:[],
   phPins:[ph([45.4,-22.6],"Ring-tailed lemur","Ring tailed lemur portrait.jpg"),
@@ -183,7 +208,7 @@ function animals(){if(!once("animals"))return;
   body:"Between the Philippines, Indonesia, New Guinea and the Solomon Islands (dashed) the sea is warm, shallow and broken into thousands of islands, and it has been for millions of years, so reef life has had space and time to split into more kinds than anywhere else: about 600 corals and over 2,000 reef fish. To the south, the Great Barrier Reef runs 2,300 km along Australia, about 2,900 separate reefs.",
   more:"Over 120 million people live along the Coral Triangle’s coasts, many of them by fishing its reefs. Whale sharks gather off the Philippines, humpback whales swim up from Antarctica to give birth in the Barrier Reef’s warm lagoon each winter, and dugongs graze seagrass in Torres Strait. Marine heatwaves have bleached the Great Barrier Reef five times since 2016."});
  CARD["animals|The Coral Triangle and the Great Barrier Reef"]="Clownfish in an anemone.jpg";
- order("animals",["Animals of the world","Seventeen wild countries","The Amazon","The Wallace Line","Madagascar: animals found nowhere else","Galápagos: animals with no fear","The Coral Triangle and the Great Barrier Reef","The deadliest animal","Great journeys","Elephant country","Polar bears never meet penguins","On the edge","Animals out of place","Now explore"]);
+ order("animals",["Animals of the world","Seventeen wild countries","The Amazon","The Wallace Line","Madagascar: animals found nowhere else","Galápagos: animals with no fear","The Coral Triangle and the Great Barrier Reef","The deadliest animal","Great journeys","Elephant country","Tigers and lions","Pandas","Polar bears never meet penguins","On the edge","The axolotl’s last lake","Animals out of place","Now explore"]);
 }
 
 function humans(){if(!once("humans"))return;
@@ -247,6 +272,14 @@ function forests(){if(!once("forests"))return;
 }
 
 function ocean(){if(!once("ocean"))return;
+ /* the vaquita: the world’s smallest porpoise, drowned in nets set for another fish */
+ ins("ocean","Too many boats",{title:"The last few vaquitas",view:[-124,22,-106,35],globe:[-114.6,31,4],card:"left",
+  pins:[P([-114.7,31.05],"The vaquita’s last refuge"),P([-112.8,26.6],"Gulf of California")],
+  phPins:[ph([-113.9,30.4],"A vaquita","Vaquita6 Olson NOAA.jpg")],
+  stat:"Fewer than ten vaquitas, the world’s smallest porpoise, are thought to be left, all in one corner of one sea",
+  body:"The vaquita lives only in the shallow, murky top of the Gulf of California. Fishermen there set gillnets for the totoaba, a big fish whose dried swim bladder can sell for thousands of dollars in China, and vaquitas get tangled in the nets and drown. Demand on the far side of the Pacific is emptying a sea in Mexico.",
+  more:"A 2024 survey saw only about six to eight. Mexico has banned gillnets in the vaquita’s last refuge, but enforcing the ban has been hard. The good news: the few survivors look healthy and still have calves, so the species could recover if the nets stop."});
+ CARD["ocean|The last few vaquitas"]="Vaquita6 Olson NOAA.jpg";
  set("ocean","Coral reefs and the Coral Triangle",s=>{const b=String(s.body||"");if(!/reef fish/.test(b))s.body=b+" The Coral Triangle alone shelters over a third of all reef fish species.";
   /* the 84% bleaching figure lives in the Environment tour's "Coral in hot water" */
   s.more="When the sea gets too hot, corals push out their algae and turn white, or ‘bleach’; if the heat lasts, they die. The Environment tour follows the worst bleaching on record, which began in 2023."});
