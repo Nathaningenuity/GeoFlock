@@ -32,7 +32,7 @@ function ping(ll,label){try{const G=amGlobe;if(!G)return;const h=G.host;let m=h.
 const D=()=>Array.isArray(window.GF_DICT)?GF_DICT:[];
 const CATS=()=>window.GF_DICT_CATS||{};
 const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-function dictList(){const Q=norm(q);let L=D().filter(e=>cat==="all"||e.c===cat);
+function dictList(){const Q=norm(q);let L=D().filter(e=>cat==="all"||e.c===cat||(cat==="sim"&&window.gfSimLib&&gfSimLib.has(e.t)));
  if(Q){const sc=e=>{const t=norm(e.t);if(t===Q||(e.a||[]).some(a=>norm(a)===Q))return 0;if(t.startsWith(Q))return 1;if(t.includes(Q)||(e.a||[]).some(a=>norm(a).includes(Q)))return 2;if(norm(e.d).includes(Q))return 3;return 9};L=L.map(e=>[sc(e),e]).filter(x=>x[0]<9).sort((a,b)=>a[0]-b[0]||a[1].t.localeCompare(b[1].t)).map(x=>x[1])}
  else L=L.slice().sort((a,b)=>a.t.localeCompare(b.t));return L}
 function entry(e,open){const C=CATS();return'<article class="gflib-e'+(open?" open":"")+'" data-t="'+esc(e.t)+'"><h3><button type="button" class="gflib-et">'+esc(e.t)+'</button><span class="gflib-cat c-'+esc(e.c)+'">'+esc(C[e.c]||e.c)+'</span></h3>'+
@@ -43,7 +43,7 @@ function dictHTML(){const C=CATS(),L=dictList(),n=D().length;
  if(!n)return'<p class="gflib-empty">The dictionary is loading…</p>';
  const lim=q?120:Math.min(L.length,cat==="all"?160:400);
  let letters="";if(!q&&cat==="all"){const S=new Set(L.map(e=>e.t[0].toUpperCase()));letters='<div class="gflib-az">'+[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].map(l=>'<button type="button" data-az="'+l+'"'+(S.has(l)?"":" disabled")+'>'+l+'</button>').join("")+'</div>'}
- return'<div class="gflib-chips"><button type="button" data-cat="all" class="'+(cat==="all"?"on":"")+'">All <i>'+n+'</i></button>'+Object.keys(C).map(k=>'<button type="button" data-cat="'+k+'" class="c-'+k+(cat===k?" on":"")+'">'+esc(C[k])+' <i>'+D().filter(e=>e.c===k).length+'</i></button>').join("")+'</div>'+letters+
+ return'<div class="gflib-chips"><button type="button" data-cat="all" class="'+(cat==="all"?"on":"")+'">All <i>'+n+'</i></button>'+Object.keys(C).map(k=>'<button type="button" data-cat="'+k+'" class="c-'+k+(cat===k?" on":"")+'">'+esc(C[k])+' <i>'+D().filter(e=>e.c===k).length+'</i></button>').join("")+(window.gfSimLib?'<button type="button" data-cat="sim" class="c-sim'+(cat==="sim"?" on":"")+'">▶ With simulation <i>'+gfSimLib.count()+'</i></button>':'')+'</div>'+letters+
   '<div class="gflib-list">'+(L.length?L.slice(0,lim).map(e=>entry(e,openT===e.t||L.length===1)).join(""):'<p class="gflib-empty">No term matches “'+esc(q)+'”.</p>')+(L.length>lim?'<p class="gflib-more">'+(L.length-lim)+' more: type to narrow, or pick a letter or a category.</p>':'')+'</div>'}
 function showTerm(t){const e=D().find(x=>x.t===t);if(!e)return;open("dict");tab="dict";q=t;cat="all";openT=t;render();setTimeout(()=>{const a=box&&box.querySelector('.gflib-e[data-t="'+CSS.escape(t)+'"]');if(a)a.scrollIntoView({block:"center"})},30)}
 function termOnMap(t){const e=D().find(x=>x.t===t);if(!e||!e.m)return;close();goMap(e.m.map||"relief",()=>{flyLL(e.m.at,e.m.z||4);setTimeout(()=>ping(e.m.at,e.t),950)})}
@@ -78,9 +78,9 @@ function open(t){tab=t||tab;if(!box){box=document.createElement("div");box.class
  box.hidden=false;document.body.classList.add("gflib-open");render();setTimeout(()=>{const i=box.querySelector(".gflib-q");if(i)i.focus()},30)}
 function close(){if(box){box.hidden=true;document.body.classList.remove("gflib-open")}}
 function render(){if(!box)return;const c=box.querySelector(".gflib-c");const focus=document.activeElement&&document.activeElement.classList.contains("gflib-q"),pos=focus?document.activeElement.selectionStart:null;
- c.innerHTML='<header><div class="gflib-tabs"><button type="button" data-tab="dict" class="'+(tab==="dict"?"on":"")+'">📖 Dictionary</button><button type="button" data-tab="stops" class="'+(tab==="stops"?"on":"")+'">🎧 Stops</button><button type="button" data-tab="pics" class="'+(tab==="pics"?"on":"")+'">🖼️ Pictures</button></div>'+
-  '<input class="gflib-q" type="search" placeholder="'+(tab==="dict"?"Search a term, e.g. gerrymandering, monsoon, isogloss…":tab==="pics"?"Search pictures, e.g. fjord, delta, Sahara…":"Search stops, e.g. Nile, monsoon, Silk Road…")+'" value="'+esc(q)+'"><button type="button" class="gflib-x" aria-label="Close">×</button></header>'+
-  '<div class="gflib-body">'+(tab==="dict"?dictHTML():tab==="pics"?(window.gfDictVis?gfDictVis.picsHTML(q):''):stopsHTML())+'</div>';
+ c.innerHTML='<header><div class="gflib-tabs"><button type="button" data-tab="dict" class="'+(tab==="dict"?"on":"")+'">📖 Dictionary</button><button type="button" data-tab="stops" class="'+(tab==="stops"?"on":"")+'">🎧 Stops</button><button type="button" data-tab="pics" class="'+(tab==="pics"?"on":"")+'">🖼️ Pictures</button>'+(window.gfSimLib?'<button type="button" data-tab="sims" class="'+(tab==="sims"?"on":"")+'">▶ Simulations</button>':'')+'</div>'+
+  '<input class="gflib-q" type="search" placeholder="'+(tab==="dict"?"Search a term, e.g. gerrymandering, monsoon, isogloss…":tab==="sims"?"Search simulations, e.g. tides, plates, migration…":tab==="pics"?"Search pictures, e.g. fjord, delta, Sahara…":"Search stops, e.g. Nile, monsoon, Silk Road…")+'" value="'+esc(q)+'"><button type="button" class="gflib-x" aria-label="Close">×</button></header>'+
+  '<div class="gflib-body">'+(tab==="dict"?dictHTML():tab==="sims"&&window.gfSimLib?gfSimLib.html(q):tab==="pics"?(window.gfDictVis?gfDictVis.picsHTML(q):''):stopsHTML())+'</div>';
  const qi=c.querySelector(".gflib-q");qi.oninput=()=>{q=qi.value;openT=null;render()};if(focus){qi.focus();try{qi.setSelectionRange(pos,pos)}catch(e){}}
  c.querySelector(".gflib-x").onclick=close;
  c.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;q="";render()});
@@ -92,7 +92,8 @@ function render(){if(!box)return;const c=box.querySelector(".gflib-c");const foc
  c.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>showTerm(b.dataset.go));
  c.querySelectorAll("[data-map]").forEach(b=>b.onclick=()=>termOnMap(b.dataset.map));
  c.querySelectorAll("[data-sid]").forEach(b=>b.onclick=()=>{const [id,i]=b.dataset.sid.split("|");playStop(id,+i)});
- try{if(window.gfDictVis)gfDictVis.wire(c,{showTerm,goMap,flyLL,ping,close})}catch(e){console.error(e)}}
+ try{if(window.gfDictVis)gfDictVis.wire(c,{showTerm,goMap,flyLL,ping,close})}catch(e){console.error(e)}
+ try{if(window.gfSimLib)gfSimLib.wire(c,{showTerm})}catch(e){console.error(e)}}
 
 /* ---------- ways in: the top bar and the Toolkit ---------- */
 const BOOK='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8 7.5h8M8 11h6"/></svg>';
