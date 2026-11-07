@@ -237,7 +237,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
  /* only on the plain Relief and Elevation pictures: on City Lights (a dark picture) and on maps coloured over the relief
     (Climate...) the sampled colour came out as a bright blue band along every coast */
- const plain=/^(relief|elevation)/i.test(String(I.texKey||""))&&(typeof allMapsColorMode==="undefined"||/^(relief|elevation)$/.test(allMapsColorMode));
+ const plain=/^relief/i.test(String(I.texKey||""))&&(typeof allMapsColorMode==="undefined"||allMapsColorMode==="relief");/* (not Elevation either: its depth-shaded sea showed the band as pale squares) */
  if(I.drewRaster&&!sat&&plain){try{const W=Math.max(5,Math.min(55,bandPx(pj,s)*1.3));if(seaC){const sig=colSig(I);let px=null;
    each(d=>{if(!d.ocean.length)return;/* each stretch of coast in the colour of the sea just off it (the picture's sea is lighter over
      shallows and darker over deeps: one colour for the whole view left pale bands round darker seas, as in the Gulf of Bothnia) */
