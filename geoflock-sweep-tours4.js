@@ -92,7 +92,6 @@ A("africa|The Nile",{photo:{f:"Nile River and delta from orbit.jpg",d:"photos/d0
 /* two photo pins at Giza (the same pyramids twice) and a "Sudan" pin beside the map's own Sudan label */
 A("africa|The pyramids",{phDrop:/^Egypt: Pyramids of Giza$/,pinsDrop:/^Sudan$/});
 A("africa|Africa’s other great rivers",{view:[-32,-22,40,18]});
-A("africa|The long shadow of the slave trade",{pinsDrop:/^Benin$/});
 /* the twin capitals close up and right of the card; the far-off rainforest and Sangha River pictures pulled the eye away */
 A("africa|Capitals face to face",{view:[9.5,-6.5,18.5,-2.5],globe:[15.3,-4.3,7],phDrop:/^(DR Congo: The Congo rainforest|Congo: The Sangha River)/});
 A("africa|A river country",{view:[-23,10.5,-11,16.5]});
@@ -180,7 +179,6 @@ A("bnations|Geography or institutions?",{mode:"gdp",sub:"percapita",phDrop:/^Sto
  body:"The Economy map shows money per person: the poorest countries cluster between the tropics. Writers such as Jared Diamond and the economist Jeffrey Sachs stress geography: climate, disease and soils. Acemoglu and Robinson reply that the same places were often richer than Europe’s colonies in temperate lands before 1500, and that colonisers set up worse institutions where they could exploit large populations."});
 
 /* Collapse */
-A("bcollapse|Montana: trouble in paradise",{pinsDrop:/^United States$/});
 /* Pitcairn's label sat behind the card; one of the two moai pictures (the card has its own) goes */
 A("bcollapse|Easter Island",{view:[-155,-40,-68,-15],phDrop:/^Rapa Nui \(Easter Island\)$/});
 A("bcollapse|Iceland’s blowing soil",{view:[-33,62.8,-12,67],pinsDrop:/^Iceland$/});
@@ -346,6 +344,20 @@ A("bbeagle|From the Beagle to the Origin",{view:[-95,-15,140,60]});
 /* Ibn Battuta: the whole-journey maps reach west to the Atlantic so Tangier, Fez and Timbuktu sit right of the card */
 A("brihla|The Travels of Ibn Battuta",{view:[-110,-14,126,58]});
 A("brihla|A book from memory",{view:[-120,-14,126,58]});
+
+/* Wording: jargon explained, one distance corrected (Cape Horn to the South Shetlands, across the Drake Passage, is
+   about 800 km) */
+A("europe|The smallest countries",{rep:[["Liechtenstein is one of only two countries surrounded by landlocked countries.","Liechtenstein is one of only two “doubly landlocked” countries, with Uzbekistan: you must cross two borders to reach the sea."]]});
+A("asia|Deserts and steppe",{rep:[["one of only two double-landlocked countries, with Liechtenstein.","one of only two “doubly landlocked” countries, with Liechtenstein: from either, you must cross two borders to reach the sea."]]});
+A("samerica|The far south",{rep:[["about 1,000 km from Antarctica across the Drake Passage","about 800 km from Antarctica across the Drake Passage"]]});
+
+/* New photo pins (Wikimedia Commons), where a picture explains the idea */
+A("europe|Changing wheels at the border",{view:[-34,33,48,66],ph:[{at:[22.22,48.43],label:"Chop, Ukraine: jacks that lift carriages for new wheels",col:"#d9682b",f:"Bogie change station at Chop station Ukraine.jpg",d:"photos/xc1d9e763dc601185.webp",by:"Maxim75",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Bogie_change_station_at_Chop_station_Ukraine.jpg"}]});
+A("asia|The Grand Canal",{pinsDrop:/^Yangzhou$/,ph:[{at:[119.43,32.39],label:"Yangzhou: barges still use the canal",col:"#d9682b",f:"Yangzhou-Modern-Grand-Canal-boats-3353.JPG",d:"photos/x69bd745ca76e7b74.webp",by:"Vmenkov",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:Yangzhou-Modern-Grand-Canal-boats-3353.JPG"}]});
+A("bcollapse|Montana: trouble in paradise",{pinsDrop:/^(United States|Butte|Missoula)$/,ph:[{at:[-112.5,46.02],label:"Butte: the Berkeley Pit from space",col:"#d9682b",f:"Berkeley Pit Butte, Montana.jpg",d:"photos/xdb67784f931d425c.webp",by:"NASA",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Berkeley_Pit_Butte%2C_Montana.jpg"}]});
+
+A("africa|The long shadow of the slave trade",{pinsDrop:/^(Benin|Ouidah)$/,ph:[{at:[2.09,6.33],label:"Ouidah: the Door of No Return",col:"#d9682b",f:"Door of no return.jpg",d:"photos/x252e5f06e3a68d5a.webp",by:"Francisco Anzola",lic:"CC BY 2.0",page:"https://commons.wikimedia.org/wiki/File:Door_of_no_return.jpg"}]});
+A("europe|Islands of the midnight sun",{pinsDrop:/^Global Seed Vault$/,ph:[{at:[15.49,78.24],label:"The Global Seed Vault",col:"#d9682b",f:"Svalbard Global Seed Vault February 2025.jpg",d:"photos/xde1ccd848b107e1c.webp",by:"Michael Major for Crop Trust",lic:"CC BY-SA 2.0",page:"https://commons.wikimedia.org/wiki/File:Svalbard_Global_Seed_Vault_February_2025.jpg"}]});
 
 /* ---------- patches go here ---------- */
 
