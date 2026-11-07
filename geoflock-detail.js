@@ -101,7 +101,9 @@ let ST=null,STK="",WT=0,WSIG="";
 function state(g){const sz=g.size(),k=(g.key?g.key():g.rot[0].toFixed(3)+","+g.rot[1].toFixed(3)+","+g.zoom.toFixed(4))+","+sz.w+","+sz.h+","+loads+","+allMapsColorMode;if(k===g._dstk&&g._dst)return(ST=g._dst);g._dstk=k;ST=g._dst=compute(g,sz);return ST}
 function compute(g,sz){const P=g.projection(),inv=q=>{try{const ll=P.invert(q);if(!ll||!isFinite(ll[0])||!isFinite(ll[1])||Math.abs(ll[0])>180.001||Math.abs(ll[1])>90.001)return null;const b=P(ll);if(!b||Math.hypot(b[0]-q[0],b[1]-q[1])>2)return null;return ll}catch(e){return null}};
  const c=inv([sz.w/2,sz.h/2]),c2=inv([sz.w/2+10,sz.h/2]);if(!c||!c2)return{on:false};
- const dpp=d3.geoDistance(c,c2)*180/Math.PI/10;let z=Math.round(Math.log2(360*Math.cos(c[1]*Math.PI/180)/(TILEPX*dpp)));z=Math.min(MAXZ,z);if(z<MINZ)return{on:false,z};
+ const dpp=d3.geoDistance(c,c2)*180/Math.PI/10;const z0=Math.min(MAXZ,Math.round(Math.log2(360*Math.cos(c[1]*Math.PI/180)/(TILEPX*dpp))));if(z0<MINZ)return{on:false,z:z0};
+ /* the tiles are read one level sharper than the screen needs (low-zoom tiles simplify lakes into blobs); z0 still decides what is shown */
+ let z=Math.min(MAXZ,z0+1);
  /* the tiles under a grid of points over the view */
  const pts=[];const N=40,M=28;for(let i=0;i<=N;i++)for(let j=0;j<=M;j++){const ll=inv([sz.w*i/N,sz.h*j/M]);if(ll)pts.push(ll)}
  let tiles;for(;;){const S=new Map(),n=Math.pow(2,z);pts.forEach(([lo,la])=>{la=Math.max(-85.05,Math.min(85.05,la));const x=Math.min(n-1,Math.floor((lo+180)/360*n)),r=la*Math.PI/180,y=Math.min(n-1,Math.max(0,Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n)));
@@ -113,7 +115,7 @@ function compute(g,sz){const P=g.projection(),inv=q=>{try{const ll=P.invert(q);i
  /* nearest first */const cx=(c[0]+180)/360*Math.pow(2,z);tiles.sort((a,b)=>Math.abs(a.x+.5-cx)-Math.abs(b.x+.5-cx));
  /* fetch only once the view has settled (not on every frame of a drag, a fly or a spin) */
  const ks=tiles.map(t=>t.k),sig=z+":"+ks.slice().sort().join(",");clearTimeout(WT);if(sig===WSIG)want(ks);else{WSIG=sig;WT=setTimeout(()=>{if(WSIG===sig){want(ks);redraw()}},260)}
- return{on:true,z,tiles,all:tiles.every(t=>t.d)}}
+ return{on:true,z:Math.min(z,z0),tz:z,tiles,all:tiles.every(t=>t.d)}}
 const on=g=>{if(!view(g))return null;const s=state(g);return s.on&&s.all?s:null};
 
 /* ---------- drawing ---------- */
@@ -132,11 +134,37 @@ function isLakeSea(o){if(o._lk!==undefined)return o._lk;o._lk=false;try{const L=
   for(let a=1;a<8;a++)for(let c=1;c<8;c++){const p=[b[0]+(b[2]-b[0])*a/8,b[1]+(b[3]-b[1])*c/8];if(inRings(o.rings,p))pts.push(p)}
   if(!pts.length)return false;let hit=0;pts.forEach(p=>{if(L.some(K=>d3.geoDistance(K.c,p)<=K.r+.01&&d3.geoContains(K,p)))hit++});
   o._lk=hit>=Math.max(1,pts.length*.4)}catch(e){}return o._lk}
-function bigLakes(d){return d.ocean.filter(isLakeSea).map(o=>{if(!o._K){o._K={cls:"lake",rings:o.rings,bb:bboxOf(o.rings),int:0};o._K._casp=undefined}return o._K})}
+function bigLakes(d){return d.ocean.filter(isLakeSea).map(o=>{if(!o._K){o._K={cls:"lake",rings:o.rings,bb:bboxOf(o.rings),int:0,_big:1};o._K._casp=undefined}return o._K})}
 let SEAL=null;function seaLakes(){if(SEAL)return SEAL;try{SEAL=globeOverlays().lakes.filter(L=>window.gfSeaLake&&gfSeaLake(L.n))}catch(e){SEAL=[]}return SEAL}
 function isSeaLake(K){if(K._sl!==undefined)return K._sl;const c=[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2];K._sl=seaLakes().some(L=>{try{return d3.geoContains(L,c)}catch(e){return false}});return K._sl}
 let CASP=null;function caspian(){if(CASP!==null)return CASP;try{CASP=globeOverlays().lakes.find(L=>/^Caspian/.test(L.n||""))||false}catch(e){CASP=false}return CASP}
 function isCaspian(K){if(K._casp!==undefined)return K._casp;const C=caspian();K._casp=!!(C&&K.bb[2]-K.bb[0]>.5&&d3.geoContains(C,[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2]));return K._casp}
+/* how many pixels about 25 km makes on screen (the coarse picture's coast can be off by about that much) */
+function bandPx(pj,s){if(s._bpx!=null)return s._bpx;let v=20;try{const t=s.tiles[0],n=Math.pow(2,t.z),lo=(t.x+.5)/n*360-180,m=Math.PI*(1-2*(t.y+.5)/n),la=Math.atan(Math.sinh(m))*180/Math.PI;
+ const a=pj(lo,la),b=pj(lo,la+.225);if(a&&b)v=Math.hypot(a[0]-b[0],a[1]-b[1])}catch(e){}return(s._bpx=v)}
+/* the picture's sea colour near the coast: pixels just off the coast that look like sea, their median */
+function seaCol(ctx,pj,s,W){if(s._sea!==undefined)return s._sea;let out=null;try{const T=ctx.getTransform(),R=[],G=[],B=[];let tries=0;
+ for(const t of s.tiles){const d=t.d;if(!d||!d.ocean)continue;for(const o of d.ocean){if(isLakeSea(o))continue;for(const r of o.rings){const step=Math.max(3,Math.floor(r.length/3/12))*3;
+   for(let i=0;i<r.length&&R.length<60&&tries<400;i+=step){if(r[i+2])continue;const q=pj(r[i],r[i+1]);if(!q)continue;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){tries++;const x=q[0]+dx*W*1.4,y=q[1]+dy*W*1.4,X=Math.round(T.a*x+T.c*y+T.e),Y=Math.round(T.b*x+T.d*y+T.f);
+     if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=ctx.getImageData(X,Y,1,1).data;if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}}
+ if(R.length>=5){const md=a=>a.sort((x,y)=>x-y)[a.length>>1];out="rgb("+md(R)+","+md(G)+","+md(B)+")"}}catch(e){out=null}return(s._sea=out)}
+/* water joined to the sea (river channels, estuaries, bays closed off by a line in the map data such as Lake Maracaibo's
+   Tablazo Bay, lagoons like Lagoa dos Patos) is drawn in the sea's colour, not the lakes' pale blue. A lake is joined when
+   it shares points with the sea in the same tile, touches water already found to be joined, or is a known sea lake. */
+const SEA_IDS=new Set();
+function vkeys(rings,set){rings.forEach(r=>{for(let i=0;i<r.length;i+=3){if(r[i+2])continue;set.add(r[i].toFixed(4)+","+r[i+1].toFixed(4))}})}
+function shares(K,set){let n=0;for(const r of K.rings)for(let i=0;i<r.length;i+=3){if(r[i+2])continue;if(set.has(r[i].toFixed(4)+","+r[i+1].toFixed(4))&&++n>=2)return true}return false}
+/* lakes right on the coast (lagoons and limans behind a sand bar, like those around Odessa): any point within about 2 km of the sea */
+const NEAR=.02;
+function coastGrid(d){const G=new Map();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>{for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const k=Math.floor(r[i]/NEAR)+","+Math.floor(r[i+1]/NEAR);let a=G.get(k);if(!a)G.set(k,a=[]);a.push(r[i],r[i+1])}})});return G}
+function nearCoast(K,G){if(!G.size)return false;for(const r of K.rings)for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const x=r[i],y=r[i+1],cx=Math.floor(x/NEAR),cy=Math.floor(y/NEAR);
+  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const P=G.get((cx+a)+","+(cy+b));if(!P)continue;for(let j=0;j<P.length;j+=2){const dx=(P[j]-x)*Math.cos(y*Math.PI/180),dy=P[j+1]-y;if(dx*dx+dy*dy<NEAR*NEAR)return true}}}return false}
+function seaLinks(d){if(d._seaDone)return;d._seaDone=1;try{const S=new Set();d.ocean.forEach(o=>{if(!isLakeSea(o))vkeys(o.rings,S)});const CG=coastGrid(d);
+ const L=d.lakes;L.forEach(K=>{K._sea=K.cls==="river"||(K.id!=null&&SEA_IDS.has(K.id))||(!isCaspian(K)&&isSeaLake(K))||(S.size>0&&shares(K,S))||(!isCaspian(K)&&nearCoast(K,CG))});
+ /* joined through other joined water (a bay, then the lake behind it) */
+ for(let pass=0;pass<4;pass++){const J=new Set();L.forEach(K=>{if(K._sea)vkeys(K.rings,J)});let more=false;L.forEach(K=>{if(!K._sea&&!isCaspian(K)&&J.size&&shares(K,J)){K._sea=true;more=true}});if(!more)break}
+ L.forEach(K=>{if(K._sea&&K.id!=null)SEA_IDS.add(K.id)})}catch(e){console.error(e)}}
 function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
  const borders=g.cfg.borders?g.cfg.borders():true,coast=s.z>=COASTZ,LT=window.gfRiverLate?gfRiverLate(g):1,z=g.zoom/LT;/* rivers: later on maps other than Relief and Elevation */
  /* each tile is drawn whole (begin, path, fill or stroke) so a tile drawn from its parent can be clipped to its own square */
@@ -146,13 +174,21 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
   ctx.globalCompositeOperation="destination-over";ctx.fillStyle=I.ocean||"#5797cf";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});ctx.restore()}
+ const seaC=(I.drewRaster&&!sat&&seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s)))))||null;
+ /* raster maps (Relief, Elevation...): the picture's own coast is coarse, and in places shows land where the sea is (the Gulf
+    of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
+ if(I.drewRaster&&!sat){try{const W=Math.max(6,Math.min(90,bandPx(pj,s)*2));const col=seaC;if(col){
+   each(d=>{if(!d.ocean.length)return;ctx.save();ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");
+    ctx.strokeStyle=col;ctx.lineWidth=W*2;ctx.lineJoin=ctx.lineCap="round";try{ctx.filter="blur("+Math.round(W/3)+"px)"}catch(e){}
+    ctx.beginPath();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(ctx,pj,r,true))});ctx.stroke();ctx.restore()})}}catch(e){console.error(e)}}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?(rel?(window._gfLakesClean?"#a8cbe5":"rgba(166,201,228,0.78)"):"#b9d8ea"):(I.ocean||"#5797cf");
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
   each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster?bigLakes(d).filter(K=>!isCaspian(K)):[]);
    /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
-   const SL=rel?L0.filter(isSeaLake):[],L=rel?L0.filter(K=>!isSeaLake(K)):L0;if(SL.length&&!ne){ctx.fillStyle="#6fa3cd";ctx.beginPath();SL.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")}
+   if(seaC)seaLinks(d);const SL=seaC?L0.filter(K=>K._sea||(K._big&&!isCaspian(K))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
+   if(SL.length&&(seaC||!ne)){ctx.fillStyle=seaC||"#6fa3cd";ctx.beginPath();SL.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")}
    /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
    [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
     const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
@@ -161,10 +197,10 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
      if(I.drewRaster||dry){ctx.globalAlpha=Math.min(1,a);ctx.strokeStyle=ls;if(dry)ctx.setLineDash([3,2]);ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>edgePath(ctx,pj,r,true)));ctx.stroke();ctx.setLineDash([])}})});ctx.globalAlpha=1})}
  if(ov.rivers){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
-  ctx.fillStyle=rivCol;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});
+  const RC=seaC||rivCol;ctx.fillStyle=RC;if(seaC)ctx.globalAlpha=1;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});ctx.globalAlpha=rivA;
   /* major rivers bold from the start; every other river fades in at its own zoom, by how far it reaches (long ones first,
      short ones later), so they do not all appear at once; small rivers and streams later still and thinner */
-  ctx.strokeStyle=rivCol;const B=new Map();
+  ctx.strokeStyle=RC;const B=new Map();
   each(d=>d.rivers.forEach(R=>{const t=R._t||(R._t=tier(R));let w,a;
    if(t==="major"){w=Math.min(1.8,.55+.07*z);a=rivA}
    else{let za=18*Math.pow(4/reach(R),.7);if(t==="minor")za=Math.max(za,55);if(t==="stream")za=Math.max(za,110);
