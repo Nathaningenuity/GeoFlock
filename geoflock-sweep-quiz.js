@@ -71,6 +71,11 @@ body.sky-night .gfsq-map{background:rgba(18,26,44,.8)}body.sky-night .summary-ca
 .gfsq-enc{text-align:center;font-size:14px;opacity:.85;margin:4px 0 8px}
 @media (max-width:520px){.gfsq-head{gap:10px}.gfsq-ring,.gfsq-ring svg{width:68px;height:68px;flex-basis:68px}.gfsq-ring b{font-size:18px}
  .gfsq-hl h2{font-size:20px!important}.gfsq-list{grid-template-columns:1fr;max-height:none}}
+/* Progress & Trophies on a phone: its sections share the class of the tour cards (tr-card), whose phone layout put
+   a 104px picture column into every section ("play / today / to / start / one"); the sections stay plain blocks */
+section.tr-card{display:block!important}
+/* Daily 5 and the other quick games in the night theme: the 1-4 key badges were light digits on a cream badge */
+body.sky-night .sp-opt kbd{background:rgba(255,255,255,.1);color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.28)}
 /* Library on a phone: the filter chips scroll sideways in one line each, so the terms and stops start on the first screen */
 .gflib-chips::-webkit-scrollbar{display:none}
 @media (max-width:560px){.gflib-chips{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;mask-image:linear-gradient(90deg,#000 88%,transparent)}.gflib-chips>*{flex:0 0 auto}}
