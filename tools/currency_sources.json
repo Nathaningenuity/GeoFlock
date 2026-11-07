@@ -1326,19 +1326,42 @@
   "page": "https://commons.wikimedia.org/wiki/File:1-Livre-syria-1957.jpg"
  },
  "jo": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "jo"
   ],
-  "exception": "Jordanian banknotes on Commons are hosted under \"use permitted by the Central Bank of Jordan\", which is not a free licence (PD/CC0/CC BY/CC BY-SA)."
+  "what": "The 1-dinar coin (1998 issue, still legal tender)",
+  "exception": "Jordanian notes on Commons are hosted under \"use permitted by the Central Bank of Jordan\", not a free licence; shows a freely licensed 1-dinar coin (1998 issue, still legal tender).",
+  "file": "JOR - 1 dinar.jpg",
+  "by": "Central Bank of Jordan (coin), Don Norris (photo)",
+  "lic": "CC BY 3.0",
+  "crop": [
+   0.5,
+   0.0,
+   1.0,
+   1.0
+  ],
+  "page": "https://commons.wikimedia.org/wiki/File:JOR_-_1_dinar.jpg"
  },
  "ils": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "il",
    "ps"
   ],
-  "exception": "Israeli new shekel notes and coins on Commons are hosted under \"use permitted by the Bank of Israel\", which is not a free licence (PD/CC0/CC BY/CC BY-SA)."
+  "what": "Front of the 50-shekel note (series C)",
+  "shared": "Shared currency, issued by the Bank of Israel: also used in Palestine",
+  "exception": "Scans of shekel notes on Commons are hosted under \"use permitted by the Bank of Israel\", not a free licence; shows a freely licensed photo of the current 50-shekel note.",
+  "file": "50 nis il.jpg",
+  "by": "Chananelp",
+  "lic": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:50_nis_il.jpg",
+  "crop": [
+   0.15,
+   0.272,
+   0.8,
+   0.722
+  ]
  },
  "eg": {
   "kind": "coin",
@@ -1419,11 +1442,16 @@
   "page": "https://commons.wikimedia.org/wiki/File:USDnotesNew.png"
  },
  "hu": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "hu"
   ],
-  "exception": "Hungarian forint notes on Commons are hosted under a Magyar Nemzeti Bank template, not a free licence; no freely licensed current coin found."
+  "what": "Front of the 2000-forint note",
+  "exception": "Scans of forint notes on Commons carry a Magyar Nemzeti Bank template, not a free licence; shows a freely licensed photo of the current 2000-forint note.",
+  "file": "Hungarian money 2000 (cropped).jpg",
+  "by": "YukiKoKo",
+  "lic": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Hungarian_money_2000_%28cropped%29.jpg"
  },
  "my": {
   "file": null,
@@ -1433,11 +1461,17 @@
   "exception": "No freely licensed image of a current ringgit note or coin on Commons."
  },
  "vn": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "vn"
   ],
-  "exception": "No freely licensed image of a current đồng note or coin on Commons."
+  "what": "Photo of 500,000-dong polymer notes fanned out (reverse)",
+  "exception": "No freely licensed scan of a current đồng note on Commons; shows a photo of fanned 500,000-dong notes.",
+  "file": "Several 500,000-dong banknotes fanned out on the reverse sides and stacked to form a circle-like shape.jpg",
+  "by": "HuangWending18072009",
+  "lic": "CC0",
+  "notrim": true,
+  "page": "https://commons.wikimedia.org/wiki/File:Several_500%2C000-dong_banknotes_fanned_out_on_the_reverse_sides_and_stacked_to_form_a_circle-like_shape.jpg"
  },
  "is": {
   "file": null,
@@ -1489,11 +1523,16 @@
   "exception": "No freely licensed image of a current (post-2018) dobra note or coin on Commons."
  },
  "sd": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "sd"
   ],
-  "exception": "No freely licensed image of a current Sudanese pound note or coin on Commons."
+  "what": "Sudanese pound coins (2006 series), both sides",
+  "exception": "No freely licensed image of a current Sudanese pound note on Commons; shows the current coins instead.",
+  "file": "SUDAN.png",
+  "by": "Hayko",
+  "lic": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:SUDAN.png"
  },
  "xaf": {
   "file": null,
@@ -1643,11 +1682,22 @@
   "page": "https://commons.wikimedia.org/wiki/File:100_Kuwaitian_fils_in_2012_Obverse.jpg"
  },
  "kr": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "kr"
   ],
-  "exception": "South Korean notes and coins on Commons are hosted under a Bank of Korea template (\"South Korean currency\"), not a free licence."
+  "what": "The 500-won coin (2016)",
+  "exception": "Scans of South Korean notes and coins on Commons carry a Bank of Korea template, not a free licence; shows a freely licensed photo of the current 500-won coin.",
+  "file": "Tiền Xu 500 won Hàn Quốc.jpg",
+  "by": "Lê Huỳnh Bộ",
+  "lic": "CC BY-SA 4.0",
+  "crop": [
+   0.13,
+   0.12,
+   0.83,
+   0.91
+  ],
+  "page": "https://commons.wikimedia.org/wiki/File:Ti%E1%BB%81n_Xu_500_won_H%C3%A0n_Qu%E1%BB%91c.jpg"
  },
  "eur-sk": {
   "file": "Slovenska 1 EURO cent coin.jpg",
@@ -1759,101 +1809,174 @@
   "countries": [
    "ug"
   ],
-  "exception": "A freely licensed candidate was found (File:UgandanShillings1000.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "exception": "No freely licensed image of a current Ugandan shilling note or coin on Commons."
  },
  "bn": {
   "file": null,
   "countries": [
    "bn"
   ],
-  "exception": "A freely licensed candidate was found (File:Brunei 5 dollar 2011 polymer note.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "exception": "No freely licensed image of a current Brunei dollar note or coin on Commons (only Japanese-occupation and Malaya issues)."
  },
  "np": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "np"
   ],
-  "exception": "A freely licensed candidate was found (File:NPR 1000 (obverse).jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 2-rupee coin (Mount Everest)",
+  "exception": "No freely licensed image of a current Nepalese rupee note on Commons; shows the current 2-rupee coin instead.",
+  "file": "2 rupee-Republic of Nepal.png",
+  "by": "Ashim nep",
+  "lic": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:2_rupee-Republic_of_Nepal.png"
  },
  "sg": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "sg"
   ],
-  "exception": "A freely licensed candidate was found (File:10 Singapore dollar front - Portrait Series.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "Singapore's second-series coins, both sides (still legal tender)",
+  "exception": "No freely licensed image of a current Singapore dollar note on Commons; shows a set of second-series coins, still legal tender.",
+  "file": "Singapore circulating coins.jpg",
+  "by": "Don's World Coin Gallery",
+  "lic": "CC BY-SA 3.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Singapore_circulating_coins.jpg"
  },
  "no": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "no"
   ],
-  "exception": "A freely licensed candidate was found (File:Norwegian 200 kroner observe.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 20-krone coin (Harald V)",
+  "exception": "No freely licensed image of a current Norwegian banknote on Commons; shows the current 20-krone coin instead.",
+  "file": "Norwegian 20kr front.png",
+  "by": "Jørgen og Ida",
+  "lic": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Norwegian_20kr_front.png"
  },
  "bz": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "bz"
   ],
-  "exception": "A freely licensed candidate was found (File:Belize dollar $2 banknote 2025 issue, front.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 1-dollar coin (the ship side)",
+  "exception": "No freely licensed image of a current Belize dollar note on Commons; shows the current 1-dollar coin instead.",
+  "file": "Belize 1 Dollar Coin.jpg",
+  "by": "Oargos",
+  "lic": "CC BY 4.0",
+  "crop": [
+   0.0,
+   0.0,
+   0.5,
+   1.0
+  ],
+  "page": "https://commons.wikimedia.org/wiki/File:Belize_1_Dollar_Coin.jpg"
  },
  "do": {
   "file": null,
   "countries": [
    "do"
   ],
-  "exception": "A freely licensed candidate was found (File:Dop2014notes 100 front.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "exception": "No freely licensed image of a current Dominican peso note or coin on Commons (only 19th-century issues)."
  },
  "py": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "py"
   ],
-  "exception": "A freely licensed candidate was found (File:2000 dos mil guaranies anverso.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 1000-guaraní coin (2008)",
+  "exception": "No freely licensed image of a current guaraní note on Commons; shows the current 1000-guaraní coin instead.",
+  "file": "Moneda de 1000 guaraníes 2008.webp",
+  "by": "Sacerdos Caesarum",
+  "lic": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Moneda_de_1000_guaran%C3%ADes_2008.webp"
  },
  "aud": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "au",
    "ki",
    "nr",
    "tv"
   ],
-  "exception": "A freely licensed candidate was found (File:2018 Australian fifty dollar note obverse.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "Front of the 100-dollar note (2020 series)",
+  "shared": "Shared currency, issued by the Reserve Bank of Australia: also used in Kiribati, Nauru and Tuvalu",
+  "file": "100dollarnoteaus.jpg",
+  "by": "BAVhah",
+  "lic": "CC BY-SA 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:100dollarnoteaus.jpg"
  },
  "nz": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "nz"
   ],
-  "exception": "A freely licensed candidate was found (File:New Zealand twenty-dollar banknote, Series 7.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 1-dollar coin (kiwi)",
+  "exception": "No freely licensed image of a current New Zealand dollar note on Commons; shows the current 1-dollar coin instead.",
+  "file": "1 NZD coin Reverse.jpg",
+  "by": "XiunaWiki",
+  "lic": "CC BY 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:1_NZD_coin_Reverse.jpg"
  },
  "eur-ie": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "ie"
   ],
-  "exception": "A freely licensed candidate was found (File:2 Euro, Ireland.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "Ireland's national side of the 2-euro coin (the harp)",
+  "shared": "Shared currency, issued by the Eurosystem (ECB and national central banks)",
+  "file": "2 Euro, Ireland.jpg",
+  "by": "Unknown author",
+  "lic": "CC BY 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:2_Euro%2C_Ireland.jpg"
  },
  "gb": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "gb"
   ],
-  "exception": "A freely licensed candidate was found (File:Pound sterling banknotes.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "Front of the 50-pound polymer note (Alan Turing)",
+  "exception": "No freely licensed flat scan of a current Bank of England note on Commons; shows a photo of the current 50-pound note.",
+  "file": "Alan Turing £50 Banknote.jpg",
+  "by": "Vintage Fan 5678",
+  "lic": "CC BY 4.0",
+  "crop": [
+   0.0,
+   0.27,
+   0.86,
+   0.7
+  ],
+  "page": "https://commons.wikimedia.org/wiki/File:Alan_Turing_%C2%A350_Banknote.jpg"
  },
  "mx": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "mx"
   ],
-  "exception": "A freely licensed candidate was found (File:Banco de México G $500 obverse.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 1-peso coin (2025)",
+  "exception": "No freely licensed image of a current Mexican peso note on Commons; shows the current 1-peso coin instead.",
+  "file": "1peso 2025.png",
+  "by": "GoVargasV",
+  "lic": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:1peso_2025.png"
  },
  "gy": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "gy"
   ],
-  "exception": "A freely licensed candidate was found (File:GYDnotes.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
+  "what": "The 1-dollar coin (rice harvest)",
+  "exception": "No freely licensed image of a current Guyanese dollar note on Commons; shows the current 1-dollar coin instead.",
+  "file": "Qayana-1-Dollar.jpg",
+  "by": "bilinmir",
+  "lic": "CC BY-SA 4.0",
+  "crop": [
+   0.0,
+   0.0,
+   0.5,
+   1.0
+  ],
+  "page": "https://commons.wikimedia.org/wiki/File:Qayana-1-Dollar.jpg"
  },
  "iq": {
   "file": null,
@@ -1874,158 +1997,41 @@
   "countries": [
    "dk"
   ],
-  "exception": "A freely licensed candidate was found (File:10 kroner coin 2011-.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see \"_pending\" in tools/currency_sources.json."
- },
- "_pending": {
-  "note": "Candidates found but not yet fetched and looked at (Wikimedia rate limit). To use one: fetch it, LOOK at it (right currency, current series, front, clean), then move it into the main list replacing the no-picture entry of the same key, and re-run tools/currency_media.py and tools/check_currency_media.py.",
-  "entries": {
-   "ug": {
-    "file": "UgandanShillings1000.jpg",
-    "kind": "note",
-    "countries": [
-     "ug"
-    ],
-    "what": "Front of the 1000-shilling note"
-   },
-   "bn": {
-    "file": "Brunei 5 dollar 2011 polymer note.jpg",
-    "kind": "note",
-    "countries": [
-     "bn"
-    ],
-    "what": "Front of the 5-dollar polymer note (2011)"
-   },
-   "np": {
-    "file": "NPR 1000 (obverse).jpg",
-    "kind": "note",
-    "countries": [
-     "np"
-    ],
-    "what": "Front of the 1000-rupee note"
-   },
-   "sg": {
-    "file": "10 Singapore dollar front - Portrait Series.jpg",
-    "kind": "note",
-    "countries": [
-     "sg"
-    ],
-    "what": "Front of the 10-dollar note (Portrait series)"
-   },
-   "no": {
-    "file": "Norwegian 200 kroner observe.jpg",
-    "kind": "note",
-    "countries": [
-     "no"
-    ],
-    "what": "Front of the 200-krone note (2017 series)"
-   },
-   "bz": {
-    "file": "Belize dollar $2 banknote 2025 issue, front.jpg",
-    "kind": "note",
-    "countries": [
-     "bz"
-    ],
-    "what": "Front of the 2-dollar note (2025 issue)"
-   },
-   "do": {
-    "file": "Dop2014notes 100 front.png",
-    "kind": "note",
-    "countries": [
-     "do"
-    ],
-    "what": "Front of the 100-peso note (2014 series)"
-   },
-   "py": {
-    "file": "2000 dos mil guaranies anverso.jpg",
-    "kind": "note",
-    "countries": [
-     "py"
-    ],
-    "what": "Front of the 2000-guaraní note"
-   },
-   "aud": {
-    "file": "2018 Australian fifty dollar note obverse.jpg",
-    "kind": "note",
-    "countries": [
-     "au",
-     "ki",
-     "nr",
-     "tv"
-    ],
-    "what": "Front of the 50-dollar note (2018 series)",
-    "shared": "Shared currency, issued by the Reserve Bank of Australia: also used in Kiribati, Nauru and Tuvalu"
-   },
-   "nz": {
-    "file": "New Zealand twenty-dollar banknote, Series 7.jpg",
-    "kind": "note",
-    "countries": [
-     "nz"
-    ],
-    "what": "Front of the 20-dollar note (Series 7)"
-   },
-   "eur-ie": {
-    "file": "2 Euro, Ireland.jpg",
-    "kind": "coin",
-    "countries": [
-     "ie"
-    ],
-    "what": "Ireland's national side of the 2-euro coin (the harp)",
-    "shared": "Shared currency, issued by the Eurosystem (ECB and national central banks)"
-   },
-   "gb": {
-    "file": "Pound sterling banknotes.png",
-    "kind": "note",
-    "countries": [
-     "gb"
-    ],
-    "what": "Bank of England notes"
-   },
-   "mx": {
-    "file": "Banco de México G $500 obverse.png",
-    "kind": "note",
-    "countries": [
-     "mx"
-    ],
-    "what": "Front of the 500-peso note (G series)"
-   },
-   "gy": {
-    "file": "GYDnotes.png",
-    "kind": "note",
-    "countries": [
-     "gy"
-    ],
-    "what": "Guyanese dollar notes"
-   },
-   "dk": {
-    "file": "10 kroner coin 2011-.jpg",
-    "kind": "coin",
-    "countries": [
-     "dk"
-    ],
-    "what": "The 10-krone coin (2011 design)",
-    "exception": "No freely licensed image of a current Danish krone note on Commons; shows the current 10-krone coin instead."
-   }
-  }
+  "exception": "No freely licensed image of a current Danish krone note or circulating coin on Commons (only historic notes and commemoratives)."
  },
  "ar": {
-  "file": null,
+  "kind": "note",
   "countries": [
    "ar"
   ],
-  "exception": "No freely licensed image of a current Argentine peso note or coin was found in the Commons categories checked (only photos of bundles and historic issues)."
+  "what": "Front of the 10,000-peso note (2024)",
+  "file": "Billete 100000 - anverso.jpg",
+  "by": "Argentine Government",
+  "lic": "CC BY 4.0",
+  "page": "https://commons.wikimedia.org/wiki/File:Billete_100000_-_anverso.jpg"
  },
  "co": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "co"
   ],
-  "exception": "No freely licensed image of a current Colombian peso note or coin was found in the Commons categories checked (only photos of bundles and historic issues)."
+  "what": "The 1000-peso coin (2015)",
+  "exception": "No freely licensed image of a current Colombian peso note on Commons; shows the current 1000-peso coin instead.",
+  "file": "Moneda 1 000 pesos colombianos.jpg",
+  "by": "SamLoq1248",
+  "lic": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:Moneda_1_000_pesos_colombianos.jpg"
  },
  "pe": {
-  "file": null,
+  "kind": "coin",
   "countries": [
    "pe"
   ],
-  "exception": "No freely licensed image of a current Peruvian sol note or coin was found in the Commons categories checked (only photos of bundles and historic issues)."
+  "what": "The 1-sol coin (2026), drawing of the front",
+  "exception": "No freely licensed image of a current Peruvian sol note on Commons; shows a drawing of the current 1-sol coin instead.",
+  "file": "1 SOL 2026 anverso.svg",
+  "by": "Marcomogollon",
+  "lic": "CC0",
+  "page": "https://commons.wikimedia.org/wiki/File:1_SOL_2026_anverso.svg"
  }
 }

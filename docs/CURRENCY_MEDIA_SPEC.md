@@ -59,7 +59,7 @@ Entries with an `exception` in `currency_sources.json` are listed below and repo
 
 ## Exceptions
 
-Checked against Wikimedia Commons in October 2026 (only PD / CC0 / CC BY / CC BY-SA files that Commons itself hosts). Commons search and the API were unavailable from this machine (rate-limited), so "none found" means none in the country's Commons banknote/coin categories or on the English Wikipedia article for the currency. Candidates that were found but could not be fetched and looked at before the rate limit closed in are kept under `_pending` in `tools/currency_sources.json`, ready to be checked and promoted.
+Checked against Wikimedia Commons in October 2026 (only PD / CC0 / CC BY / CC BY-SA files that Commons itself hosts). Commons search and the API were unavailable from this machine (rate-limited), so "none found" means none in the country's Commons banknote/coin categories or on the English Wikipedia article for the currency. Rechecked in November 2026 through the Commons category pages and file pages; the earlier "_pending" candidates did not exist on Commons and were dropped.
 
 **A real picture, but not the default (older issue, coin, photo or lower denomination):**
 
@@ -94,15 +94,18 @@ Checked against Wikimedia Commons in October 2026 (only PD / CC0 / CC BY / CC BY
 - **Barbados**: No freely licensed image of a current Barbados dollar note on Commons; shows a current 25-cent coin instead.
 - **South Africa**: No freely licensed image of the current (2023) rand series on Commons; shows the most recent free note (1993 series 10 rand).
 - **Mauritania**: No freely licensed image of a current (2017) ouguiya note was confirmed on Commons; shows the current 20-ouguiya coin.
+- **United Kingdom**: No freely licensed flat scan of a current Bank of England note on Commons; shows a photo of the current 50-pound note.
+- **Hungary, Israel, Palestine**: Scans on Commons carry the central bank's template, not a free licence; shows a freely licensed photo of a current note (2000 forint; 50 shekels).
+- **Vietnam**: No freely licensed scan of a current đồng note on Commons; shows a photo of fanned 500,000-dong notes.
+- **Singapore**: No freely licensed image of a current Singapore dollar note on Commons; shows a set of second-series coins, still legal tender.
+- **Sudan**: No freely licensed image of a current Sudanese pound note on Commons; shows the current coins.
+- **New Zealand, Norway, Peru, Colombia, Mexico, Paraguay, Belize, Nepal, Guyana, South Korea**: No freely licensed image of a current note on Commons; shows a current coin instead (1 dollar, 20 kroner, 1 sol (a drawing), 1000 pesos, 1 peso, 1000 guaraníes, 1 dollar, 2 rupees, 1 dollar, 500 won).
+- **Jordan**: Jordanian notes on Commons are hosted under "use permitted by the Central Bank of Jordan"; shows a freely licensed 1-dinar coin (1998 issue, still legal tender).
 
 **No freely licensed picture found; the card shows the neutral drawn note, with ⓘ saying so:**
 
 - **China**: The only scan of the fifth-series renminbi on Commons is under a deletion request, and no other freely licensed current note is hosted.
-- **Jordan**: Jordanian banknotes on Commons are hosted under "use permitted by the Central Bank of Jordan", which is not a free licence (PD/CC0/CC BY/CC BY-SA).
-- **Israel, Palestine**: Israeli new shekel notes and coins on Commons are hosted under "use permitted by the Bank of Israel", which is not a free licence (PD/CC0/CC BY/CC BY-SA).
-- **Hungary**: Hungarian forint notes on Commons are hosted under a Magyar Nemzeti Bank template, not a free licence; no freely licensed current coin found.
 - **Malaysia**: No freely licensed image of a current ringgit note or coin on Commons.
-- **Vietnam**: No freely licensed image of a current đồng note or coin on Commons.
 - **Iceland**: No freely licensed image of a current króna note or coin on Commons (only issues from the 1920s).
 - **Bahamas**: No freely licensed image of a current Bahamian dollar note or coin on Commons.
 - **Uruguay**: No freely licensed image of a current Uruguayan peso note or coin on Commons.
@@ -110,30 +113,14 @@ Checked against Wikimedia Commons in October 2026 (only PD / CC0 / CC BY / CC BY
 - **Botswana**: No freely licensed image of a pula note or coin on Commons.
 - **Mozambique**: No freely licensed image of a current (post-2006) metical note or coin on Commons.
 - **São Tomé and Príncipe**: No freely licensed image of a current (post-2018) dobra note or coin on Commons.
-- **Sudan**: No freely licensed image of a current Sudanese pound note or coin on Commons.
 - **Cameroon, Central African Republic, Chad, Congo, Equatorial Guinea, Gabon**: No freely licensed image of a BEAC (Central African CFA franc) note or coin on Commons.
 - **North Korea**: No freely licensed image of a current (post-2009) North Korean won note or coin on Commons.
 - **Qatar**: No freely licensed image of a current Qatari riyal note or coin on Commons.
 - **Sri Lanka**: No freely licensed image of a current Sri Lankan rupee note or circulating coin on Commons (only a commemorative proof coin).
-- **South Korea**: South Korean notes and coins on Commons are hosted under a Bank of Korea template ("South Korean currency"), not a free licence.
 - **Cuba**: No freely licensed image of a current Cuban peso note or coin on Commons (only bundles and 19th/20th-century issues).
-- **Uganda**: A freely licensed candidate was found (File:UgandanShillings1000.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Brunei**: A freely licensed candidate was found (File:Brunei 5 dollar 2011 polymer note.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Nepal**: A freely licensed candidate was found (File:NPR 1000 (obverse).jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Singapore**: A freely licensed candidate was found (File:10 Singapore dollar front - Portrait Series.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Norway**: A freely licensed candidate was found (File:Norwegian 200 kroner observe.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Belize**: A freely licensed candidate was found (File:Belize dollar $2 banknote 2025 issue, front.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Dominican Republic**: A freely licensed candidate was found (File:Dop2014notes 100 front.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Paraguay**: A freely licensed candidate was found (File:2000 dos mil guaranies anverso.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Australia, Kiribati, Nauru, Tuvalu**: A freely licensed candidate was found (File:2018 Australian fifty dollar note obverse.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **New Zealand**: A freely licensed candidate was found (File:New Zealand twenty-dollar banknote, Series 7.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Ireland**: A freely licensed candidate was found (File:2 Euro, Ireland.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **United Kingdom**: A freely licensed candidate was found (File:Pound sterling banknotes.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Mexico**: A freely licensed candidate was found (File:Banco de México G $500 obverse.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Guyana**: A freely licensed candidate was found (File:GYDnotes.png) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
+- **Uganda**: No freely licensed image of a current Ugandan shilling note or coin on Commons.
+- **Brunei**: No freely licensed image of a current Brunei dollar note or coin on Commons (only Japanese-occupation and Malaya issues).
+- **Dominican Republic**: No freely licensed image of a current Dominican peso note or coin on Commons (only 19th-century issues).
+- **Denmark**: No freely licensed image of a current Danish krone note or circulating coin on Commons (only historic notes and commemoratives).
 - **Iraq**: No freely licensed image of a current Iraqi dinar note on Commons was found.
 - **Poland**: No freely licensed image of a current złoty note or coin on Commons was found.
-- **Denmark**: A freely licensed candidate was found (File:10 kroner coin 2011-.jpg) but Wikimedia rate-limited this machine before it could be fetched and checked; see "_pending" in tools/currency_sources.json.
-- **Argentina**: No freely licensed image of a current Argentine peso note or coin was found in the Commons categories checked (only photos of bundles and historic issues).
-- **Colombia**: No freely licensed image of a current Colombian peso note or coin was found in the Commons categories checked (only photos of bundles and historic issues).
-- **Peru**: No freely licensed image of a current Peruvian sol note or coin was found in the Commons categories checked (only photos of bundles and historic issues).
