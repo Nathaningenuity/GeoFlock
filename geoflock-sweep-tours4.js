@@ -33,6 +33,8 @@ A("b80days|Arrested in Liverpool",{pinsDrop:/^(United Kingdom|Ireland)$/});
  ["Each page lists the island’s distances to its neighbours; this tour shows them with the ruler.","Each page lists the island’s distances to its neighbours, and so do the cards here."]];
  ["Atlas of Remote Islands","St Kilda","Lonely Island","Semisopochnoi","Bouvet Island","Tristan da Cunha","Tromelin","Christmas Island","Pingelap","Takuu","Howland",
   "Pukapuka","Napuka","Pitcairn","Rapa Nui","Floreana","Clipperton"].forEach(t=>{A("bremote|"+t,{rep:R})})}
+/* Pingelap: a "Micronesia" name pin beside the map's own Micronesia label */
+A("bremote|Pingelap",{pinsDrop:/^Micronesia$/});
 
 /* Europe */
 /* "7 in 10 left in Latvia" read as if seven in ten had left; the chart in the card counts those still there */
@@ -311,6 +313,39 @@ A("bflat|UPS: the parcel company that fixes laptops",{pinsDrop:/^United States$/
 A("bflat|Dalian: Japan’s back office",{view:[103,30,145,45],pinsDrop:/^(China|Japan|South Korea)$/,rep:[["Tokyo is about 1,700 km away (drag the ruler)","Tokyo is about 1,600 km away (drag the ruler)"]]});
 A("bflat|Drive-through orders from far away",{view:[-135,30,-82,44]});
 A("bflat|Is the world really flat?",{view:[-167,15,30,62]});
+
+/* The World Is Spiky: frames moved west so the American peaks (Boston, the Bay Area, Washington) and Lagos sit right of
+   the card */
+A("bspiky|Read the lights",{view:[-175,-45,160,72]});
+A("bspiky|Bos-Wash: one long city",{view:[-86,36.5,-67,44]});
+A("bspiky|Chi-Pitts and the Great Lakes",{view:[-101,37,-72,47]});
+A("bspiky|Greater Tokyo: the tallest peak",{view:[120,30,145,41]});
+A("bspiky|Europe’s banana",{view:[-21,40,22,57]});
+A("bspiky|India: peaks, not a plain",{view:[56,6,94,33]});
+A("bspiky|Where new ideas come from",{view:[-215,10,150,60]});
+A("bspiky|The peaks of science",{view:[-215,22,40,62]});
+A("bspiky|Africa’s lights",{view:[-75,-36,56,38]});
+A("bspiky|Who’s your city?",{view:[-167,24,-66,50]});
+A("bspiky|The creative class",{view:[-172,24,-60,52]});
+A("bspiky|Flat and spiky at once",{view:[-190,-30,160,68]});
+
+/* The Voyage of the Beagle: frames moved west so each landing sits right of the card; Tahiti and New Zealand framed
+   across the date line (New Zealand's Bay of Islands was off the map) */
+A("bbeagle|Plymouth, 1831: a young man joins",{view:[-48,10,8,54]});
+A("bbeagle|Giant bones at Punta Alta",{view:[-80,-44,-52,-30],pinsDrop:/^(Argentina|Uruguay)$/});
+A("bbeagle|Patagonia: a land that rose",{view:[-90,-56,-54,-38]});
+A("bbeagle|The earthquake at Concepción",{view:[-92,-44,-60,-30]});
+A("bbeagle|Seashells on the Andes",{view:[-82,-38,-64,-29],pinsDrop:/^Argentina$/});
+A("bbeagle|Galápagos: islands of difference",{view:[-108,-12,-72,6],pinsDrop:/^Ecuador$/});
+A("bbeagle|Tahiti and New Zealand",{view:[130,-48,215,-12],globe:[-170,-30,2]});
+A("bbeagle|Australia: a strange continent",{view:[86,-46,158,-24]});
+A("bbeagle|Coral atolls: Cocos (Keeling)",{view:[40,-30,175,22]});
+A("bbeagle|Home by the Cape",{view:[-125,-42,62,56]});
+A("bbeagle|From the Beagle to the Origin",{view:[-95,-15,140,60]});
+
+/* Ibn Battuta: the whole-journey maps reach west to the Atlantic so Tangier, Fez and Timbuktu sit right of the card */
+A("brihla|The Travels of Ibn Battuta",{view:[-110,-14,126,58]});
+A("brihla|A book from memory",{view:[-120,-14,126,58]});
 
 /* ---------- patches go here ---------- */
 
