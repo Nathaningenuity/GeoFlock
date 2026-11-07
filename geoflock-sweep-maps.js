@@ -6,7 +6,7 @@
    2. The Toolkit tray, while it is still in its first place (never dragged), stays at the bottom of the map when the map
       changes size, e.g. going from the flat map to the taller globe. Before, it kept its distance from the map's top and
       ended up across the middle of the globe.
-   3. The Thermometer card (bottom left of the map) moves up above the Toolkit tray instead of lying under it.
+   3. Cards in the map's lower left (Thermometer, Cross-section, the History story) keep clear of the Toolkit tray.
    4. Esc stops the Ruler: it ends the measuring mode (the ruler stays on the map; click it to measure again). */
 (function(){
 "use strict";
@@ -41,21 +41,39 @@
  let sig="";
  setInterval(()=>{try{if(moved||!window.gfKitLayout||innerWidth<=640||document.body.classList.contains("gf-fs"))return;const t=tray();if(!t||!t.classList.contains("gfkl-fixed")||t.classList.contains("gfkl-moving"))return;
   const h=t.parentElement;if(!h)return;const r=h.getBoundingClientRect();if(!r.width||!r.height)return;
-  const s=Math.round(r.width)+"x"+Math.round(r.height)+"|"+(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat?"f":"g");
+  /* the History timeline floats over the bottom of the globe: the tray goes just above it */
+  const dock=[...document.querySelectorAll(".hist-dock")].find(d=>d.getClientRects().length&&getComputedStyle(d).visibility!=="hidden");let lim=Math.min(r.bottom,innerHeight);
+  if(dock){const dr=dock.getBoundingClientRect();if(dr.top<lim&&dr.bottom>r.top+150&&dr.left<r.left+t.offsetWidth+12)lim=Math.min(lim,dr.top)}
+  const s=Math.round(r.width)+"x"+Math.round(r.height)+"|"+(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat?"f":"g")+"|"+(lim<Math.min(r.bottom,innerHeight)?"d":"");
   if(s===sig)return;const first=!sig;sig=s;const L=gfKitLayout.get();
   /* an older saved place counts as the first one if it is the default left edge (x 12) */
   if(first&&L.pn&&L.pn.x!==12){moved=true;try{localStorage.setItem(MK,"1")}catch(er){}return}
-  if(L.col)return;gfKitLayout.set({pn:null})}catch(e){}},400);
+  if(L.col)return;const oh=t.classList.contains("closed")?Math.max(t.offsetHeight,L.fh||0):t.offsetHeight;
+  const y=Math.round(lim-oh-6-r.top);if(y<4){gfKitLayout.set({pn:null});return}
+  if(!L.pn||L.pn.x!==12||Math.abs(L.pn.y-y)>2)gfKitLayout.set({pn:{x:12,y}})}catch(e){}},400);
 })();
 
-/* ---------- 3. the Thermometer card stays clear of the Toolkit tray ---------- */
-setInterval(()=>{try{const c=document.querySelector(".gfth:not(.gfth-float)"),t=document.getElementById("gfKit");if(!c)return;
- const h=c.parentElement;if(!h||!t||!t.getClientRects().length||getComputedStyle(t).visibility==="hidden"){if(c._gfSw){c.style.bottom="";c.style.maxHeight="";c._gfSw=0}return}
- const hr=h.getBoundingClientRect(),tr=t.getBoundingClientRect();
- /* where the card would be on its own: 10 px from the map's bottom left */
- const w=c.offsetWidth,l=hr.left+10,overX=tr.left<l+w&&tr.right>l,overY=tr.top<hr.bottom-10&&tr.bottom>hr.bottom-10-Math.min(c.offsetHeight,200);
- if(overX&&overY&&tr.top-hr.top>160){const b=Math.round(hr.bottom-tr.top+8);if(c.style.bottom!==b+"px"){c.style.bottom=b+"px";c.style.maxHeight=Math.max(140,Math.round(tr.top-hr.top-18))+"px"}c._gfSw=1}
- else if(c._gfSw){c.style.bottom="";c.style.maxHeight="";c._gfSw=0}}catch(e){}},300);
+/* ---------- 3. cards in the map's lower left stay clear of the Toolkit tray ----------
+   The Thermometer card and the Cross-section panel sit at the map's bottom left, where the tray floats too, and the
+   History story card hangs down from the top left over it. A card the tray would cover is lifted above the tray (or,
+   the History card, made shorter: its text scrolls); it goes back to its own place when the tray is elsewhere. */
+const LIFT=[".gfth:not(.gfth-float)",".gf-xs"],SHRINK=[".hist-story"];
+function trayRect(){const t=document.getElementById("gfKit");if(!t||!t.getClientRects().length||getComputedStyle(t).visibility==="hidden"||document.body.classList.contains("gf-fs")||innerWidth<=640)return null;return t.getBoundingClientRect()}
+function undo(c){if(c._gfSw){c.style.bottom="";c.style.maxHeight="";c._gfSw=0}}
+setInterval(()=>{try{const tr=trayRect();
+ document.querySelectorAll(LIFT.join(",")).forEach(c=>{const h=c.parentElement;if(!tr||!h||!c.getClientRects().length){undo(c);return}
+  const hr=h.getBoundingClientRect(),cs=getComputedStyle(c);
+  /* where the card would be on its own */
+  const l=c.getBoundingClientRect().left,w=c.offsetWidth,b0=parseFloat(c._gfSw?c._gfB0:cs.bottom)||10;if(!c._gfSw)c._gfB0=b0;
+  const hgt=c.offsetHeight,bot=hr.bottom-b0,top=bot-hgt;
+  const over=tr.left<l+w&&tr.right>l&&tr.top<bot&&tr.bottom>top;
+  if(over&&tr.top-hr.top>Math.min(hgt,160)+12){const b=Math.round(hr.bottom-tr.top+8);if(c.style.bottom!==b+"px"){c.style.bottom=b+"px";c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}c._gfSw=1}
+  else if(!over||c._gfSw)undo(c)});
+ document.querySelectorAll(SHRINK.join(",")).forEach(c=>{if(!tr||!c.getClientRects().length){undo(c);return}
+  if(c._gfSw){c.style.maxHeight=""}const r=c.getBoundingClientRect();
+  const over=tr.left<r.right&&tr.right>r.left&&tr.top<r.bottom&&tr.bottom>r.top;
+  if(over&&tr.top-r.top>170){c.style.maxHeight=Math.round(tr.top-r.top-10)+"px";c._gfSw=1}else undo(c)});
+}catch(e){}},300);
 
 /* ---------- 5. no seam on the globe at 180° ----------
    The globe's whole-world pictures (Satellite, Elevation, City Lights, Population…) were uploaded with their left and right
