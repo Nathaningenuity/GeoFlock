@@ -28,7 +28,7 @@ const grp=(key,G)=>({keyLabel:key,G,hi:[].concat(...G.map(g=>g.codes)),hiSoft:[]
 window.GF_SWEEP2=P;
 /* entries are merged, so one stop can be touched in several places below */
 const M=o=>{for(const k in o)P[k]=Object.assign(P[k]||{},o[k])};
-const KEYS=["body","stat","more","sub","G","view","globe","mode","on","card","hi","hiSoft","lines","legend","keyLabel","iconPins","gfRuler","pins","flatView"];
+const KEYS=["body","stat","more","sub","G","view","globe","mode","on","card","hi","hiSoft","lines","legend","keyLabel","iconPins","gfRuler","pins","flatView","flagAt"];
 function photos(S,X){
  /* photo pins: the stop's own list, less the dropped ones, plus ours; kept whatever other scripts set the list to later */
  const mine=(X.phAdd||[]).map(x=>{const i=libAdd(x);return{at:x.at,label:x.label,col:x.col||"#d9682b",icon:"photo",_f:x.f,img:i}});
@@ -110,6 +110,9 @@ M({
 });
 /* ---- Festivals ---- */
 M({
+ /* Kiritimati and American Samoa, first and last to midnight, sat at the two edges of a Greenwich-centred map: a frame
+    with the date line in view, from Samoa round to Edinburgh */
+ "festivals|Hogmanay and the race to midnight":{view:[-300,-45,20,70]},
  "festivals|Welcome back, Sun":{stat:"Longyearbyen goes about four months without the Sun, and celebrates when its rays first touch the old hospital steps, around 8 March"},
  "festivals|The biggest crowd on Earth":{stat:"The 2025 Kumbh Mela at Prayagraj counted over 600 million visits in six weeks: among the largest gatherings in history"},
 });
@@ -128,26 +131,40 @@ M({
 const LIB={
  stone1:{f:"Stonehenge from the north.jpg",d:"@057c2846f4914c3f",by:"Sumit Surai",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Stonehenge_from_the_north.jpg"},
  angkor1:{f:"Angkor Wat with its reflection (cropped).jpg",d:"@93cddba34de5857c",by:"Satdeep Gill",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Angkor_Wat_with_its_reflection_(cropped).jpg"},
- liberty1:{f:"Statue of Liberty, NY.jpg",d:"@1321c473a53e9b64",by:"William Warby",lic:"CC BY 2.0",page:"https://commons.wikimedia.org/wiki/File:Statue_of_Liberty,_NY.jpg"},
- taj1:{f:"Aks The Reflection Taj Mahal.jpg",d:"@1fecb26cdb4d4189",by:"Antrix3",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Aks_The_Reflection_Taj_Mahal.jpg"},
+ liberty1:{f:"View of Liberty Island from the ferry, NYC, 20231003 1607 2000.jpg",d:"@c86b080d4a95faa1",by:"Jakub Hałun",lic:"CC BY 4.0",page:"https://commons.wikimedia.org/wiki/File:View_of_Liberty_Island_from_the_ferry,_NYC,_20231003_1607_2000.jpg"},
+ taj1:{f:"Taj Mahal, Agra, India edit2.jpg",d:"@6b923b9f55fdc6c9",by:"Yann; edited by King of Hearts",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Taj_Mahal,_Agra,_India_edit2.jpg"},
 };
 const ph=(k,at,label,col)=>Object.assign({at,label,col},LIB[k]);
 M({
  /* a photo of Big Ben on a Stonehenge stop: the stones themselves instead of the temple icon */
  "landmarks|Stonehenge":{phDrop:/^(United Kingdom: Big Ben|Stonehenge$)/,phAdd:[ph("stone1",[-1.826,51.179],"Stonehenge")]},
  /* the pyramid three times on one spot: icon pin, photo pin and icon */
- "landmarks|The pyramids of Giza":{phDrop:/^Great Pyramid of Giza$/,iconDrop:true},
+ "landmarks|The pyramids of Giza":{phDrop:/^(Great Pyramid of Giza|Egypt: Pyramids of Giza)$/,iconDrop:true},
  "landmarks|Angkor Wat":{phDrop:/^Angkor Wat$/,iconDrop:true,phAdd:[ph("angkor1",[103.867,13.4125],"Angkor Wat")]},
  "landmarks|Machu Picchu":{phDrop:/^Machu Picchu$/,iconDrop:true},
  "landmarks|The Taj Mahal":{phDrop:/^Taj Mahal, Agra$/,iconDrop:true,phAdd:[ph("taj1",[78.042,27.175],"The Taj Mahal, Agra")]},
- "landmarks|The Statue of Liberty":{view:[-136,8,6,66],phDrop:/^(Statue of Liberty|United States: Grand Canyon)$/,iconDrop:true,phAdd:[ph("liberty1",[-74.0445,40.6892],"The Statue of Liberty")],
+ "landmarks|The Statue of Liberty":{view:[-136,8,16,66],phDrop:/^(Statue of Liberty|United States: Grand Canyon)$/,iconDrop:true,phAdd:[ph("liberty1",[-74.0445,40.6892],"Liberty Island, New York")],
   more:"It travelled in about 350 pieces packed in over 200 crates, and was put back together on its island in New York harbour. The green coating, called a patina, formed as the copper weathered and now protects it, so when officials talked of painting it, people objected. Its full name is “Liberty Enlightening the World”."},
  "landmarks|The Eiffel Tower":{phDrop:/^Eiffel Tower$/,iconDrop:true},
  "landmarks|The tower that leans to survive":{stat:"Pisa’s tower began to lean in 1178, five years into building; the same soft ground has helped it ride out at least four strong earthquakes"},
 });
 /* ---- Flags ---- */
 M({
- "flags|Pan-African colours":{more:"Because Ethiopia had kept its freedom, its colours came to stand for independence. A second family uses red, black and green, from Marcus Garvey’s movement in the 1920s: Kenya and Malawi fly those. Bolivia and Lithuania use green, gold and red too, by coincidence."},
+ /* Iceland's flag, and West Africa's, were under the card */
+ "flags|The Nordic cross":{view:[-62,52,40,72]},
+ "flags|Pan-African colours":{view:[-75,-36,55,38],more:"Because Ethiopia had kept its freedom, its colours came to stand for independence. A second family uses red, black and green, from Marcus Garvey’s movement in the 1920s: Kenya and Malawi fly those. Bolivia and Lithuania use green, gold and red too, by coincidence."},
+ /* Serbia, Slovakia, Slovenia, Croatia and Czechia were under the card, only Russia showed */
+ "flags|Pan-Slavic colours":{view:[-35,35,75,66]},
+ /* Algeria, Tunisia and Turkey were under the card */
+ "flags|The crescent and star":{view:[-90,-15,127,52]},
+ /* Malaysia, one of the two flags the card is about, was off the map */
+ "flags|Stars and stripes":{view:[-130,-15,125,60]},
+ /* Nauru's flag sat on the island itself (a few pixels across): it now floats to the west, over open sea */
+ "flags|Flags that are sea charts":{flagAt:{nr:[160.5,-3.2]}},
+ /* Guatemala and Haiti were under the card */
+ "flags|Weapons on flags":{view:[-150,-38,70,40],card:"left"},
+ /* Switzerland and Vatican City, the square flags the card names, had no flag on the map */
+ "flags|Not a rectangle":{view:[-75,10,110,60]},
  "flags|Pan-Arab colours":{stat:"Red, white, black and green, the colours of the 1916 Arab Revolt, live on in a dozen flags"},
 });
 
@@ -172,6 +189,8 @@ M({
  /* the key read "undefined" */
  "langrel|Hindu India, Hindu Bali":{view:[-40,-35,185,40],keyLabel:"Where most people are Hindu"},
  "langrel|It isn’t 2026 everywhere":{fn:S=>{const c=calYears();SET(S,"stat","In Ethiopia’s calendar it is now "+c.eth+"; in Nepal’s it is already "+c.nep)}},
+ /* the card had no picture of a Tower of Silence: one of the two above Yazd */
+ "langrel|Waiting for the vultures":{pinsDrop:/^Yazd, Iran$/,phAdd:[{at:[54.37,31.9],label:"Yazd: a Tower of Silence",col:"#d9682b",f:"Torre del silencio, Yazd, Irán, 2016-09-21, DD 65.jpg",d:"photos/s2yazdtower.webp",by:"Diego Delso",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Torre_del_silencio,_Yazd,_Ir%C3%A1n,_2016-09-21,_DD_65.jpg"}]},
  "langrel|Holy cities":{view:[-48,8,89,52],more:"Millions of pilgrims visit every year: nearly 2 million make the Hajj to Mecca, where only Muslims may enter."},
 });
 /* ---- Food ---- */
