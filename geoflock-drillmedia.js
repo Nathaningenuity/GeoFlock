@@ -21,11 +21,16 @@ function libPhoto(f){try{if(typeof PS_PHOTO_DATA==="undefined")return null;try{i
 /* the photo for a fact, or null */
 function photo(id,c){const lf=(IDX.lib[c]||{})[id];if(lf){const p=libPhoto(lf);if(p)return p}
  const f=(IDX.by[c]||{})[id];if(f){const C=IDX.credit[f]||{};return{src:"drillimg/"+f,by:C.by||"",lic:C.lic||"",C}}return null}
-/* a language's sample line (from the "Which language?" set) */
-const ALIAS={dari:"persian",farsi:"persian",tajik:"persian",filipino:"tagalog",mandarin:"chinese","standard chinese":"chinese",bokmål:"norwegian",kiswahili:"swahili",flemish:"dutch",moldovan:"romanian",montenegrin:"serbian",bosnian:"croatian"};
-function langImg(names){for(const nm of [].concat(names||[])){const r=langOne(ALIAS[String(nm).toLowerCase()]||nm);if(r)return r}return null}
-function langOne(name){const L=window.gfLangId&&gfLangId.LANGS;if(!L||!name)return null;const n=String(name).toLowerCase().replace(/\s*\(.*\)/,"").trim();
- const hit=L.find(x=>x[1].toLowerCase()===n)||L.find(x=>n.startsWith(x[1].toLowerCase())||x[1].toLowerCase().startsWith(n));return hit?{src:"lang/"+hit[0]+".webp",name:hit[1]}:null}
+/* a language's sample line: the "Which language?" set, plus the national languages it leaves out (Article 1 of the UDHR, from
+   the Unicode UDHR project texts) */
+const EXTRA=[["mly_latn","Malay"],["mos","Mooré"],["bam","Bambara"],["dzo","Dzongkha"],["div","Dhivehi"],["tsn","Setswana"],["sot","Sesotho"],["run","Kirundi"],["nya_chechewa","Chichewa"],["ssw","Swati"],["pbu","Pashto"],["ltz","Luxembourgish"],["tet","Tetum"],["sag","Sango"],["bis","Bislama"],["tpi","Tok Pisin"],["mah","Marshallese"],["crs","Seychellois Creole"],["pau","Palauan"],["bos_latn","Bosnian"]];
+const ALIAS={dari:"persian",farsi:"persian",filipino:"tagalog",mandarin:"chinese","standard chinese":"chinese",bokmål:"norwegian",kiswahili:"swahili",flemish:"dutch",moldovan:"romanian",montenegrin:"serbian"};
+/* a country's own national language goes first, where there is a sample of it, ahead of a colonial lingua franca */
+const PREF={bw:"Setswana",mw:"Chichewa",cf:"Sango",ht:"Haitian Creole",fj:"Fijian",zw:"Shona",sg:"Malay"};
+function langImg(names,c){names=[].concat(names||[]);if(c&&PREF[c]&&names.includes(PREF[c]))names=[PREF[c]].concat(names);for(const nm of names){const r=langOne(ALIAS[String(nm).toLowerCase()]||nm);if(r)return r}return null}
+function langOne(name){const L=((window.gfLangId&&gfLangId.LANGS)||[]).concat(EXTRA);if(!name)return null;const n=String(name).toLowerCase().replace(/\s*\(.*\)/,"").trim();
+ /* an exact name, else whole words only ("Malay" is not "Malayalam") */
+ const hit=L.find(x=>x[1].toLowerCase()===n)||L.find(x=>{const m=x[1].toLowerCase();return n.startsWith(m+" ")||m.startsWith(n+" ")});return hit?{src:"lang/"+hit[0]+".webp",name:hit[1]}:null}
 /* the clue for "Which country uses the …?": one plain neutral note with the currency's sign and nothing else
    (no code, no name, no colour per currency: a real banknote, or the ISO code, would name the country) */
 function note(v){return'<div class="dm-note"><span class="dm-sym">'+esc(v.sym||"¤")+'</span></div>'}
@@ -40,7 +45,7 @@ function html(id,c,cls,opt){const v=F(c);if(!v)return"";const k=cls||"",clue=!!(
   const cap=noCap?"":name;
   return'<figure class="dm dm-ph '+k+'" title="'+esc(tip)+'"><span class="dm-bg" style="background-image:url(&quot;'+esc(P.src)+'&quot;)"></span><img src="'+esc(P.src)+'" alt="'+esc(name)+'" loading="lazy">'+
    (cap?'<figcaption>'+esc(cap)+'</figcaption>':'')+'<span class="dm-cr" aria-hidden="true">ⓘ</span></figure>'}
- if(id==="lang"){const L=langImg(v.lang||[]);if(L)return'<figure class="dm dm-lang '+k+'"><img src="'+L.src+'" alt="A line of '+esc(L.name)+'" loading="lazy"><figcaption>'+(clue?'Which language is this?':esc(L.name))+'</figcaption></figure>'}
+ if(id==="lang"){const L=langImg(v.lang||[],c);if(L)return'<figure class="dm dm-lang '+k+'"><img src="'+L.src+'" alt="A line of '+esc(L.name)+'" loading="lazy"><figcaption>'+(clue?'Which language is this?':esc(L.name))+'</figcaption></figure>'}
  return'<figure class="dm dm-flag '+k+'"><img src="'+fl(c)+'" alt="" loading="lazy"></figure>'}
 window.gfDrillMedia={html,has:(id,c)=>!!(SUBJ[id]&&photo(id,c)),photo,langImg};
 const st=document.createElement("style");st.textContent=`
