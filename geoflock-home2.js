@@ -14,7 +14,12 @@ const nameOf=c=>T(()=>COUNTRIES.find(x=>x.c===c).n)||c;
 /* today's photo and its four choices (the right country and three from the same region) */
 let GQ=null;
 function guessToday(){const day=dayNum();if(GQ&&GQ.day===day)return GQ;const W=window.GF_WALL;if(!W||!W.game||!W.game.length)return null;
- const r=rng(day*7919+13);let g=null;for(let k=0;k<20&&!g;k++){const c=W.game[Math.floor(r()*W.game.length)];if(wallPhoto(c[2])&&T(()=>COUNTRIES.find(x=>x.c===c[4])))g=c}if(!g)return null;
+ /* a scenic view that is not given away at a glance: no famous buildings or landmarks */
+ const LM=new Set(T(()=>(window.GF_LANDMARKS||[]).map(x=>x[5]))||[]);
+ const FAMOUS=/abbey|monaster|temple|mosque|cathedral|church|basilica|castle|palace|fort\b|fortress|citadel|bridge|tower|pyramid|burj|kremlin|mont|saint|st\.? |shrine|pagoda|stupa|wat |statue|monument|mausoleum|tomb|parliament|square|old town|skyline|harbour|harbor|city|capital|krak|barbican|albaic|mostar|machu|petra|angkor|taj|colosseum|eiffel|opera|museum|stadium|gate|wall\b|ruins|amphitheat|acropolis|meroë|meroe|paradise island|jumeirah/i;
+ const ok=c=>wallPhoto(c[2])&&T(()=>COUNTRIES.find(x=>x.c===c[4]))&&!LM.has(c[2])&&!FAMOUS.test(c[3]||"")&&!FAMOUS.test(c[2]||"");
+ const pool=W.game.filter(ok),list=pool.length>=30?pool:W.game;
+ const r=rng(day*7919+13);let g=null;for(let k=0;k<20&&!g;k++){const c=list[Math.floor(r()*list.length)];if(wallPhoto(c[2])&&T(()=>COUNTRIES.find(x=>x.c===c[4])))g=c}if(!g)return null;
  const P=wallPhoto(g[2]),me=T(()=>COUNTRIES.find(x=>x.c===g[4]));
  const same=T(()=>COUNTRIES.filter(x=>x.c!==g[4]&&x.r===me.r))||[],all=T(()=>COUNTRIES.filter(x=>x.c!==g[4]))||[];
  const pick=[];const from=same.length>=3?same:all;while(pick.length<3&&from.length){const x=from[Math.floor(r()*from.length)];if(!pick.includes(x.c))pick.push(x.c)}
@@ -30,7 +35,9 @@ function guessHTML(){const G=guessToday();if(!G)return"";const p=guessState(),do
   (done?'<button type="button" class="h2-more" data-hgmore>Play today’s five photos →</button>':'')+'</div></div>'}
 /* country of the day */
 function codHTML(cod){if(!cod)return"";const p=T(()=>COUNTRY_PROFILES[cod.c])||{};const W=window.GF_WALL;
- const pr=W&&W.profile&&W.profile.find(x=>x[0]===cod.c),P=pr&&wallPhoto(pr[1]);
+ const pr=W&&W.profile&&W.profile.find(x=>x[0]===cod.c);let P=pr&&wallPhoto(pr[1]);
+ /* every country has a photo up top: its wall photo, else the first photo of its profile */
+ if(!P)P=T(()=>{const L=(PS_CPHOTO[cod.c]||[]).map(x=>PS_PHOTO_DATA[x[0]]).filter(q=>q&&q.d&&!(window.PS_FOOD_IMG&&PS_FOOD_IMG.has(PS_PHOTO_DATA.indexOf(q))));return L[0]||null});
  const facts=Array.isArray(p.trivia)?p.trivia:[],fact=facts.length?facts[Math.floor(Date.now()/864e5)%facts.length]:"";
  const line=[p.capital?"Capital "+p.capital:"",p.subregion||p.continent||"",p.population?p.population+" people":""].filter(Boolean).join(" · ");
  return'<button type="button" class="h2-card h2-cod" id="hiCod">'+(P?'<span class="h2-cod-ph"><img src="'+esc(src(P.d))+'" alt="" loading="lazy"></span>':'<span class="h2-cod-ph none"></span>')+
@@ -104,9 +111,9 @@ const css=document.createElement("style");css.textContent=`
 /* country of the day */
 .h2-cod{ display:flex; flex-direction:column; padding:0; cursor:pointer; }
 .h2-cod:hover{ transform:translateY(-1px); box-shadow:0 8px 24px rgba(20,40,70,.12); }
-.h2-cod-ph{ display:block; height:112px; overflow:hidden; flex:none; background:linear-gradient(135deg,#8fd1c4,#7cb4e8); } .h2-cod-ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+.h2-cod-ph{ display:block; height:150px; overflow:hidden; flex:none; background:linear-gradient(135deg,#8fd1c4,#7cb4e8); } .h2-cod-ph img{ width:100%; height:100%; object-fit:cover; display:block; }
 .h2-cod-body{ display:flex; flex-direction:column; gap:6px; padding:0 14px 12px; flex:1; }
-.h2-cod-h{ display:flex; align-items:flex-end; gap:10px; margin-top:-18px; }
+.h2-cod-h{ display:flex; align-items:flex-end; gap:10px; margin-top:-18px; } .h2-cod-h > span{ padding-top:22px; }
 .h2-cod-flag{ width:58px; height:39px; object-fit:cover; border-radius:6px; box-shadow:0 0 0 2px #fff, 0 3px 8px rgba(0,0,0,.2); flex:none; position:relative; }
 .h2-cod-h small{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; opacity:.6; } .h2-cod-h b{ font-size:18px; line-height:1.15; }
 .h2-cod-line{ font-size:12.5px; opacity:.75; }
