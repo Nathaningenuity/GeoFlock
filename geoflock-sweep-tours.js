@@ -91,6 +91,14 @@ const FIX={
  "rivers|Ten countries, one river":S=>FRAME(S,14,46,3.5,[-10,41,31,51]),
  "rivers|Running from the sea":S=>{LEFT(S);FRAME(S,-6,12,3,[-46,3,12,20])},
  "rivers|Rivers that flood themselves":S=>{LEFT(S);FRAME(S,90,63,2,[12,45,142,78])},
+ /* Volcanoes: Yellowstone itself, the Deccan Traps and Ol Doinyo Lengai were under the card */
+ "volcanoes|Yellowstone’s supervolcano":S=>FRAME(S,-114,44,4.2,[-128,40,-103,47.5]),
+ "volcanoes|Floods of lava: the Deccan Traps":S=>{LEFT(S);FRAME(S,72,18,3,[50,7,90,28])},
+ "volcanoes|Black lava: Ol Doinyo Lengai":S=>FRAME(S,36.6,-2.8,8,[33.6,-4.2,40.4,-1.6]),
+ /* Weather: the Bodélé dust source, the Great Plains' meeting point and Mawsynram were under the right-hand card */
+ "weather|The Sahara feeds the Amazon":S=>{LEFT(S);FRAME(S,-30,8,1.2,[-150,-16,30,30])},
+ "weather|Where air masses collide":S=>{LEFT(S);FRAME(S,-105,38,2,[-150,22,-75,54])},
+ "weather|The wettest place":S=>{LEFT(S);FRAME(S,90,25,6,[84,22,94.5,27.5])},
 /*@FIX*/
 };
 const TXT={
