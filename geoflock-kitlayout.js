@@ -18,6 +18,7 @@ let L={col:false,lenRow:null,lenCol:null,hidden:[]};try{Object.assign(L,JSON.par
 if(!L.v2){L.v2=1;if(!L.hidden.includes("gfk-people"))L.hidden.push("gfk-people");try{localStorage.setItem(KEY,JSON.stringify(L))}catch(e){}}
 /* the older docked layouts (a row on the map's bottom, a column on its left or right) become a floating row or column */
 if(L.dock&&L.dock!=="free")L.col=L.dock!=="bottom";
+if(!L.fsb){L.fsb=1;delete L.pf}
 const saveL=()=>{try{localStorage.setItem(KEY,JSON.stringify(L))}catch(e){}};
 const tray=()=>document.getElementById("gfKit");
 const host=()=>{const t=tray();return t&&t.parentElement};
@@ -29,7 +30,7 @@ const PK=()=>FS()?"pf":"pn";
 const PROPS=["position","left","top","right","bottom","translate","transform","margin","z-index","visibility"];
 const put=(t,k,v)=>{if(t.style.getPropertyValue(k)!==v||t.style.getPropertyPriority(k)!=="important")t.style.setProperty(k,v,"important")};
 /* the place where the tray first appears: the bottom left corner of the map (just above the timeline strip in full screen) */
-function defPos(t,oh){const h=host();if(FS())return{x:10,y:Math.round(innerHeight-oh-80)};
+function defPos(t,oh){const h=host();if(FS())return{x:10,y:Math.round(innerHeight-oh-4)};/* full screen: along the very bottom, over the History timeline */
  if(L.dock==="free"&&L.fx!=null&&h){const hr=h.getBoundingClientRect();if(hr.width)return{x:Math.round(hr.left+L.fx),y:Math.round(hr.top+(L.fy||0))}}
  const r=h&&h.getBoundingClientRect();if(r&&r.width&&r.bottom>60&&r.top<innerHeight-60)return{x:Math.round(r.left+12),y:Math.round(Math.min(r.bottom,innerHeight)-oh-6)};
  return{x:12,y:Math.round(innerHeight-oh-12)}}
