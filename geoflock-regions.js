@@ -187,18 +187,79 @@ const liveBox=(svg,c)=>{let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;regPaths(svg,c).forEac
    another tiny island's wider edge) the correct answer wins if it is any of them. Rings grow a little as you zoom in, and
    each one drops out once its country is big enough on screen to point at directly. */
 const RING_MAX=9,NS="http://www.w3.org/2000/svg",RCACHE=new Map;
-function piecesOf(svg,p){/* each separate island of a path, as boxes in map units (turned map included) */
+/* a path's own transform (the region shapes are drawn shifted into place), as a matrix from its coordinates to the map's */
+const elMatrix=(svg,p)=>{const t=p.getAttribute("transform")||"";if(!t&&p.parentNode===svg)return null;if(p._gfMk===t&&p._gfMp===p.parentNode)return p._gfM;let m=null;
+ try{const a=p.getScreenCTM(),b=svg.getScreenCTM();if(a&&b)m=b.inverse().multiply(a)}catch(e){}p._gfMk=t;p._gfMp=p.parentNode;p._gfM=m;return m};
+const mapXY=(m,x,y)=>m?[m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f]:[x,y];
+const mapBox=(m,b)=>{if(!m)return b;const q=[mapXY(m,b[0],b[1]),mapXY(m,b[2],b[1]),mapXY(m,b[0],b[3]),mapXY(m,b[2],b[3])];
+ return[Math.min(...q.map(v=>v[0])),Math.min(...q.map(v=>v[1])),Math.max(...q.map(v=>v[0])),Math.max(...q.map(v=>v[1]))]};
+function rawPieces(svg,p){/* each separate island of a path: its outline and its box, in the path's own units */
  const d=p.getAttribute("d")||"",key=d.length+"|"+d.slice(0,40)+"|"+d.slice(-40);if(RCACHE.has(key))return RCACHE.get(key);
  let out=[];const parts=/m/.test(d)?[d]:d.split(/(?=M)/).filter(x=>x.trim());const tmp=document.createElementNS(NS,"path");svg.appendChild(tmp);
- try{parts.forEach(q=>{tmp.setAttribute("d",q);const b=tmp.getBBox();if(b.width||b.height)out.push([b.x,b.y,b.x+b.width,b.y+b.height])})}catch(e){out=[]}tmp.remove();RCACHE.set(key,out);return out}
+ try{parts.forEach(q=>{tmp.setAttribute("d",q);const b=tmp.getBBox();if(b.width||b.height)out.push({d:q,b:[b.x,b.y,b.x+b.width,b.y+b.height]})})}catch(e){out=[]}tmp.remove();RCACHE.set(key,out);return out}
+/* the pieces as boxes where they really are on the map (a shifted region shape included) */
+function piecesOf(svg,p){const m=elMatrix(svg,p);return rawPieces(svg,p).map(q=>mapBox(m,q.b))}
 const ringScale=svg=>{const vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),px=svg.getBoundingClientRect().width||1;return(vb[2]||2000)/px};/* map units per screen pixel */
-const ringPx=svg=>{const vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),z=Math.log2(2000/(vb[2]||2000));return Math.max(4,Math.min(6.5,4+z*1.1))};/* 4 px fully zoomed out, 6.5 px zoomed in */
-function ringsDraw(svg){const g=svg.querySelector("g.gf-reg-rings");if(!g)return;const k=ringScale(svg),r=ringPx(svg)*k;
- g.querySelectorAll("circle").forEach(cl=>{cl.setAttribute("r",r.toFixed(3));/* drop the ring once the land itself is easy to point at */
+/* full screen: the page's own (gf-fs), the browser's Fullscreen API, or a browser window made full screen (F11) */
+const fsOn=()=>{try{return document.body.classList.contains("gf-fs")||!!document.fullscreenElement||(screen.width>0&&Math.abs(innerWidth-screen.width)<3&&Math.abs(innerHeight-screen.height)<3&&matchMedia("(pointer:fine)").matches)}catch(e){return false}};
+/* one on-screen size for every ring, used both to draw it and to take clicks in it: 4 px fully zoomed out, growing a little
+   as you zoom in, never above RING_CAP_PX; smaller again in full screen, where the map is big and the rings would crowd it */
+const RING_CAP_PX=7;
+const ringPx=svg=>{const vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),z=Math.log2(2000/(vb[2]||2000)),fs=fsOn(),lo=fs?3:4,hi=fs?5:6.5;
+ return Math.min(RING_CAP_PX,Math.max(lo,Math.min(hi,lo+z*1.1)))};
+function ringsDraw(svg){const g=svg.querySelector("g.gf-reg-rings"),k=ringScale(svg);
+ if(g){const r=ringPx(svg)*k;g.querySelectorAll("circle").forEach(cl=>{cl.setAttribute("r",r.toFixed(3));/* drop the ring once the land itself is easy to point at */
   cl.style.display=(+cl.dataset.sz)/k>=16?"none":""})}
-const ringsAt=(svg,x,y,slack)=>{const g=svg.querySelector("g.gf-reg-rings");if(!g)return[];const out=[];g.querySelectorAll("circle").forEach(cl=>{if(cl.style.display==="none")return;const r=+cl.getAttribute("r")*(slack||1),d=Math.hypot(+cl.getAttribute("cx")-x,+cl.getAttribute("cy")-y);if(d<=r)out.push([d,cl.dataset.c])});return out.sort((a,b)=>a[0]-b[0]).map(q=>q[1])};
+ /* the green ring round a small correct answer keeps its size on screen */
+ svg.querySelectorAll("circle.gf-reveal-ring").forEach(cl=>{const px=Math.max(+cl.dataset.px||10,(+cl.dataset.sz||0)/k/2+6);cl.setAttribute("r",(px*k).toFixed(3));cl.style.display=(+cl.dataset.sz||0)/k>=24?"none":""})}
 const svgPt=(svg,e)=>{const rc=svg.getBoundingClientRect(),vb=(svg.getAttribute("viewBox")||"").split(/[ ,]+/).map(Number),s=Math.max(vb[2]/rc.width,vb[3]/rc.height),ox=(rc.width*s-vb[2])/2,oy=(rc.height*s-vb[3])/2;return[vb[0]+(e.clientX-rc.left)*s-ox,vb[1]+(e.clientY-rc.top)*s-oy]};
-function answerRings(svg,target){svg.querySelectorAll("g.gf-reg-rings").forEach(g=>g.remove());
+/* how far (map units) a point is from a piece of land: 0 inside it, else to its nearest edge */
+const SAMPLE=document.createElementNS(NS,"path");
+const sampleIn=svg=>{let d=svg.querySelector("defs.gf-pick-defs");if(!d){d=document.createElementNS(NS,"defs");d.setAttribute("class","gf-pick-defs");svg.insertBefore(d,svg.firstChild)}if(SAMPLE.parentNode!==d)d.appendChild(SAMPLE)};
+function pieceDist(svg,m,q,x,y){let lx=x,ly=y;if(m){const i=m.inverse();lx=i.a*x+i.c*y+i.e;ly=i.b*x+i.d*y+i.f}
+ sampleIn(svg);SAMPLE.setAttribute("d",q.d);
+ try{const pt=svg.createSVGPoint();pt.x=lx;pt.y=ly;if(SAMPLE.isPointInFill(pt))return 0}catch(e){}
+ let best=Infinity;try{const L=SAMPLE.getTotalLength(),n=Math.max(16,Math.min(120,Math.ceil(L/.25)));
+  for(let i=0;i<n;i++){const s=SAMPLE.getPointAtLength(L*i/n),v=mapXY(m,s.x,s.y),d=Math.hypot(v[0]-x,v[1]-y);if(d<best)best=d}}catch(e){}
+ if(!isFinite(best)){const b=mapBox(m,q.b);best=Math.hypot(Math.max(0,b[0]-x,x-b[2]),Math.max(0,b[1]-y,y-b[3]))}return best}
+const WATER=/\b(map-lake|map-lake-minor|map-sea-hit|map-river-hit)\b/;
+/* the one place a press or hover at e stands for:
+   - on the land of a country that is an answer here: that country (a speck too small to press, under 3 px, may still win
+     when the press is right on it);
+   - in the sea: the nearest small place (by distance to its land, or to its ring's middle); it counts only when the press is
+     inside that place's own ring, which is drawn exactly as big as it takes clicks. Overlapping rings never let a press go
+     to anything but the nearest place.
+   anyLand: after the question, any country's land counts (to open its profile). */
+function pickAt(svg,e,anyLand){const G=svg._gfGroups||new Map,[x,y]=svgPt(svg,e),k=ringScale(svg),R=ringPx(svg)*k;
+ let land=null,landEl=null;
+ for(const el of document.elementsFromPoint(e.clientX,e.clientY)){if(!svg.contains(el)||el===svg)continue;const cls=el.getAttribute("class")||"";
+  if(WATER.test(cls))break;if(el.tagName!=="path"||/tiny-hit-overlay|hover-outline|fob-zone/.test(cls))continue;
+  let c=el._gfCode&&G.has(el._gfCode)?el._gfCode:null;if(!c&&anyLand&&el.id&&el.id!=="allMapsReliefLayer")c=idCode(el.id);
+  if(c){land=c;landEl=el;break}}
+ /* small places near the press */
+ const rings=new Map;svg.querySelectorAll("g.gf-reg-rings circle").forEach(cl=>{if(cl.style.display!=="none")rings.set(cl.dataset.c,cl)});
+ const near=[];G.forEach((g,code)=>{let dShape=Infinity,small=Infinity;
+  g.paths.forEach(p=>{const m=elMatrix(svg,p);rawPieces(svg,p).forEach(q=>{const b=mapBox(m,q.b),sz=Math.max(b[2]-b[0],b[3]-b[1])/k;if(sz>=24)return;
+   const bd=Math.hypot(Math.max(0,b[0]-x,x-b[2]),Math.max(0,b[1]-y,y-b[3]));if(bd>R+2*k)return;const d=pieceDist(svg,m,q,x,y);if(d<dShape){dShape=d;small=sz}})});
+  const cl=rings.get(code),dRing=cl?Math.hypot(+cl.getAttribute("cx")-x,+cl.getAttribute("cy")-y):Infinity;
+  const d=Math.min(dShape,dRing);if(d>R+2*k)return;near.push({code,d,dShape,dRing,small,inRing:dRing<=R,onShape:dShape<=1.5*k})});
+ near.sort((a,b)=>a.d-b.d);const best=near[0];
+ if(land){if(best&&best.code!==land&&best.small<3&&best.dShape<=2*k)return{code:best.code,via:"touch"};
+  return{code:land,via:"land",el:landEl}}
+ if(!best||!(best.inRing||best.onShape))return null;return{code:best.code,via:best.inRing?"ring":"shape"}}
+function idCode(id){id=String(id).toLowerCase();const reg=GF_REG.find(r=>(ATLAS_ID[r.c]||r.c)===id);if(reg)return reg.c;const ti=typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[id];return ti&&ti.countsAs&&!COUNTRY_BY_CODE[id]?ti.countsAs:id}
+function profileOf(code){if(!code)return null;const ti=typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[code];return COUNTRY_BY_CODE[code]||ti&&ti.countsAs&&COUNTRY_BY_CODE[ti.countsAs]||null}
+/* after a question: open a country's profile (the same panel the Maps page opens); the quiz stays exactly where it is,
+   and auto-next waits, so closing the profile comes back to the answered question */
+function quizProfile(code){const C=profileOf(code);if(!C||typeof openFlagZoom!=="function")return false;try{if(typeof clearAutoNextTimer==="function")clearAutoNextTimer()}catch(e){}openFlagZoom(C);return true}
+window.gfQuizProfile=quizProfile;
+/* each ring sits on its place's biggest piece of land, where that piece really is on the map */
+function ringsPlace(svg){const g=svg.querySelector("g.gf-reg-rings"),G=svg._gfGroups;if(!g||!G)return;
+ g.querySelectorAll("circle").forEach(cl=>{const grp=G.get(cl.dataset.c);const pcs=grp?grp.paths.flatMap(p=>piecesOf(svg,p)):[];if(!pcs.length){cl.remove();return}
+  const b=pcs.reduce((m,q)=>(q[2]-q[0])*(q[3]-q[1])>(m[2]-m[0])*(m[3]-m[1])?q:m,pcs[0]);cl.dataset.sz=Math.max(b[2]-b[0],b[3]-b[1]).toFixed(2);
+  cl.setAttribute("cx",((b[0]+b[2])/2).toFixed(2));cl.setAttribute("cy",((b[1]+b[3])/2).toFixed(2))});ringsDraw(svg)}
+function answerRings(svg,target){svg.querySelectorAll("g.gf-reg-rings, circle.gf-reveal-ring").forEach(g=>g.remove());
+ const wrap=svg.closest("#mapWrap");if(wrap)wrap.classList.add("gf-pick");
  /* the answers this question accepts: every clickable shape, grouped by the answer it gives */
  const groups=new Map;svg.querySelectorAll("path[id]").forEach(p=>{if(p.classList.contains("tiny-hit-overlay"))return;const h=hitTargetFor(p);if(!h.classList.contains("clickable")||!h.onclick)return;
   const id=p.id.toLowerCase(),reg=GF_REG.find(r=>(ATLAS_ID[r.c]||r.c)===id),ti=typeof TERRITORY_INFO!=="undefined"&&TERRITORY_INFO[id],code=reg&&regionOn(target)?reg.c:ti&&ti.countsAs||id;
@@ -209,24 +270,27 @@ function answerRings(svg,target){svg.querySelectorAll("g.gf-reg-rings").forEach(
  const g=document.createElementNS(NS,"g");g.setAttribute("class","gf-reg-rings");g.setAttribute("data-spin","no");g.setAttribute("pointer-events","none");
  groups.forEach((G,code)=>{if(pool&&!pool.has(code))return;const pcs=G.paths.flatMap(p=>piecesOf(svg,p));if(!pcs.length)return;
   if(pcs.some(b=>Math.max(b[2]-b[0],b[3]-b[1])>RING_MAX))return;
-  const b=pcs.reduce((m,q)=>(q[2]-q[0])*(q[3]-q[1])>(m[2]-m[0])*(m[3]-m[1])?q:m,pcs[0]);
-  const cl=document.createElementNS(NS,"circle");cl.setAttribute("class","gf-reg-ring");cl.dataset.c=code;cl.dataset.sz=Math.max(b[2]-b[0],b[3]-b[1]).toFixed(2);
-  cl.setAttribute("cx",((b[0]+b[2])/2).toFixed(2));cl.setAttribute("cy",((b[1]+b[3])/2).toFixed(2));g.appendChild(cl)});
- svg.appendChild(g);ringsDraw(svg);
+  const cl=document.createElementNS(NS,"circle");cl.setAttribute("class","gf-reg-ring");cl.dataset.c=code;g.appendChild(cl)});
+ svg.appendChild(g);ringsPlace(svg);
+ /* the region shapes are lined up with their countries just after the map is drawn: the rings follow them */
+ [80,500].forEach(ms=>setTimeout(()=>{try{if(svg.isConnected&&svg.contains(g))ringsPlace(svg)}catch(e){}},ms));
  if(!svg._gfRingObs){svg._gfRingObs=new MutationObserver(()=>ringsDraw(svg));svg._gfRingObs.observe(svg,{attributes:true,attributeFilter:["viewBox"]})}
  if(!svg._gfRingWired){svg._gfRingWired=true;
-  /* every answer under the pointer: rings around it first, then the land and wider island edges at that spot */
-  const under=e=>{const[x,y]=svgPt(svg,e),G=svg._gfGroups||new Map,codes=ringsAt(svg,x,y,1.15);let land=null;
-   document.elementsFromPoint(e.clientX,e.clientY).forEach(el=>{if(!svg.contains(el))return;const c=el._gfCode;if(!c||!G.has(c)||!el.classList.contains("clickable")||!el.onclick)return;const edge=el.classList.contains("tiny-hit-overlay");
-    if(!edge){if(land)return;land=c}if(!codes.includes(c))codes.push(c)});return{codes,land}};/* only the top land counts, plus the wider island edges */
-  let lit=null;const unlight=()=>{if(!lit)return;(svg._gfGroups.get(lit)||{hits:[]}).hits.forEach(h=>h.classList.remove("linked-hover"));lit=null;try{clearHoverOutline(svg)}catch(e){}};
-  svg.addEventListener("pointermove",e=>{try{if(typeof round!=="undefined"&&round.answered){unlight();return}const[x,y]=svgPt(svg,e),r=ringsAt(svg,x,y,1.15)[0];
-   if(r===lit)return;unlight();if(!r){const el=document.elementFromPoint(e.clientX,e.clientY);if(el&&el.onmouseenter&&svg.contains(el))el.onmouseenter(e);return}
-   const G=svg._gfGroups.get(r);if(!G)return;lit=r;G.hits.forEach(h=>h.classList.add("linked-hover"));try{showHoverOutline(svg,G.paths)}catch(err){}}catch(err){}});
+  const fob=()=>{const w=svg.closest("#mapWrap");return!!(w&&w.classList.contains("fob"))};
+  let lit=null;const unlight=()=>{if(!lit)return;(svg._gfGroups.get(lit)||{hits:[]}).hits.forEach(h=>h.classList.remove("linked-hover"));lit=null;svg.style.cursor="";try{clearHoverOutline(svg)}catch(e){}};
+  /* hover lights exactly what a press there would answer */
+  svg.addEventListener("pointermove",e=>{try{if(fob()||typeof round!=="undefined"&&round.answered){unlight();return}const r=pickAt(svg,e),c=r&&r.via!=="land"?r.code:null;
+   if(c===lit)return;unlight();if(!c)return;const G=svg._gfGroups.get(c);if(!G)return;lit=c;svg.style.cursor="pointer";G.hits.forEach(h=>h.classList.add("linked-hover"));try{showHoverOutline(svg,G.paths)}catch(err){}}catch(err){}});
   svg.addEventListener("pointerleave",unlight);
-  svg.addEventListener("click",e=>{try{const t=svg._gfTarget;if(!t||typeof round==="undefined"||round.answered)return;const{codes,land}=under(e);if(!codes.length)return;
-   const pick=codes.includes(t.c)?t.c:land||codes[0];if(pick===land&&pick!==t.c)return;/* plain miss on land: the map's own handler answers */
-   const G=svg._gfGroups.get(pick);if(!G)return;e.stopPropagation();e.preventDefault();unlight();handleMapClick(G.hits[0],pick,t)}catch(err){console.error(err)}},true)}}
+  let down=null;svg.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY]},true);
+  /* every press on the quiz map is settled here, once: one answer, or (after the question) one profile */
+  svg.addEventListener("click",e=>{try{if(fob())return;const t=svg._gfTarget;if(!t||typeof round==="undefined")return;
+   if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;/* a drag that pans the map */
+   e.stopPropagation();e.preventDefault();unlight();
+   if(round.answered){const r=pickAt(svg,e,true);if(r)quizProfile(r.code);return}
+   const r=pickAt(svg,e);if(!r)return;const G=svg._gfGroups.get(r.code);if(!G)return;
+   const hit=r.el?hitTargetFor(r.el.classList.contains("tiny-hit-overlay")?r.el.previousElementSibling:r.el):G.hits[0];
+   svg._gfLastPress=svgPt(svg,e);handleMapClick(hit,r.code,t)}catch(err){console.error(err)}},true)}}
 if(typeof wireMapClicks==="function"){const _wm=wireMapClicks;wireMapClicks=function(target){const x=_wm.apply(this,arguments);const svg=document.querySelector("#mapWrap svg");if(!svg)return x;
  try{if(regionOn(target)&&typeof handleMapClick==="function"){
  const only=typeof activeRegion!=="undefined"&&activeRegion===R,regIds=new Set(GF_REG.map(r=>ATLAS_ID[r.c]||r.c));
@@ -239,17 +303,76 @@ if(typeof wireMapClicks==="function"){const _wm=wireMapClicks;wireMapClicks=func
    const hit=hitTargetFor(p);hit.classList.add("clickable");hit.onclick=()=>handleMapClick(hit,r.c,target);hit.onmouseenter=hover;hit.onmouseleave=leave})})}
  }catch(e){console.error(e)}
  try{answerRings(svg,target)}catch(e){console.error(e)}return x}}
-/* a miss on a region: the base reveal looks the region up by its unturned box and an upper-case id, so it flies to the
-   wrong place and lights nothing; fly to where the region really is on this map and light it */
-if(typeof revealCorrectCountryOnQuizMap==="function"){const _rv=revealCorrectCountryOnQuizMap;revealCorrectCountryOnQuizMap=function(target){if(!(target&&target._sp&&BY[target.c]))return _rv.apply(this,arguments);try{
- const w=document.getElementById("mapWrap"),svg=w&&w.querySelector("svg");if(!svg)return;const b=liveBox(svg,target.c);
- if(b&&w._panZoom)pzFly(w,clampBoxStatic(enforceMinFrame(boxFromBounds(b,.6),60)));
- const parts=regPaths(svg,target.c).map(hitTargetFor);
- setTimeout(()=>parts.forEach(p=>p.classList.add("correct")),300)}catch(e){console.error(e)}}}
+/* a miss: show where the answer really is. The correct place turns green (with a green ring when it is small on screen),
+   and the map flies to a frame holding both the answer and the wrong press, so you see how far off you were. Boxes are
+   measured where the shapes really are on this map (the region shapes are drawn shifted into place). */
+let lastPressEl=null;
+if(typeof handleMapClick==="function"){const _hm=handleMapClick;handleMapClick=function(pathEl,code,target){if(typeof round!=="undefined"&&!round.answered)lastPressEl=pathEl||null;return _hm.apply(this,arguments)}}
+function answerPaths(svg,c){const ids=new Set([String(ATLAS_ID[c]||c).toLowerCase()]);try{(piecesByAnswerCode()[c]||[]).forEach(x=>ids.add(String(x).toLowerCase()))}catch(e){}
+ return[...svg.querySelectorAll("path[id]")].filter(p=>ids.has(p.id.toLowerCase())&&!p.classList.contains("tiny-hit-overlay")&&!p.closest("defs"))}
+/* the box round a set of shapes, keeping to the main body (far-off islands of a big country are left out) */
+function bodyBox(svg,paths){const pcs=paths.flatMap(p=>piecesOf(svg,p));if(!pcs.length)return null;
+ const area=b=>(b[2]-b[0])*(b[3]-b[1]),big=pcs.reduce((m,q)=>area(q)>area(m)?q:m,pcs[0]),span=Math.max(big[2]-big[0],big[3]-big[1]),reach=Math.max(30,span*1.5);
+ let b=big.slice();pcs.forEach(q=>{const gap=Math.max(0,q[0]-big[2],big[0]-q[2],q[1]-big[3],big[1]-q[3]);if(gap<=reach)b=[Math.min(b[0],q[0]),Math.min(b[1],q[1]),Math.max(b[2],q[2]),Math.max(b[3],q[3])]});return b}
+function revealFlat(target){const w=document.getElementById("mapWrap"),svg=w&&w.querySelector("svg");if(!svg)return false;
+ const parts=answerPaths(svg,target.c);if(!parts.length)return false;
+ parts.forEach(p=>{p.classList.add("correct");hitTargetFor(p).classList.add("correct")});
+ const tb=bodyBox(svg,parts);if(!tb)return false;
+ /* the wrong press: where it was, and the shape it landed on (when that is not huge) */
+ let u=tb.slice();const add=b=>{u=[Math.min(u[0],b[0]),Math.min(u[1],b[1]),Math.max(u[2],b[2]),Math.max(u[3],b[3])]};
+ const press=svg._gfLastPress;if(press)add([press[0],press[1],press[0],press[1]]);
+ if(lastPressEl&&svg.contains(lastPressEl)){const base=lastPressEl.classList.contains("tiny-hit-overlay")?lastPressEl.previousElementSibling:lastPressEl;
+  const wb=base&&bodyBox(svg,[base]);if(wb&&Math.max(wb[2]-wb[0],wb[3]-wb[1])<500)add(wb)}
+ /* a ring round the answer when it is small; it keeps its size on screen as the map flies */
+ const sz=Math.max(tb[2]-tb[0],tb[3]-tb[1]),cl=document.createElementNS(NS,"circle");cl.setAttribute("class","gf-reveal-ring");cl.setAttribute("data-spin","no");
+ cl.setAttribute("cx",((tb[0]+tb[2])/2).toFixed(2));cl.setAttribute("cy",((tb[1]+tb[3])/2).toFixed(2));cl.dataset.sz=sz.toFixed(2);cl.dataset.px="10";svg.appendChild(cl);
+ if(w._panZoom){let box=enforceMinFrame(boxFromBounds(u,.45),60);box=clampBoxStatic(box);pzFly(w,box)}
+ ringsDraw(svg);return true}
+if(typeof revealCorrectCountryOnQuizMap==="function"){const _rv=revealCorrectCountryOnQuizMap;revealCorrectCountryOnQuizMap=function(target){
+ try{if(target&&revealFlat(target)){try{flashHighlightCountry(document.querySelector("#mapWrap svg"),target.c,"var(--green)")}catch(e){}return}}catch(e){console.error(e)}
+ return _rv.apply(this,arguments)}}
 /* the globe's Find on map has the same country-only check: a region answers as itself there too */
 if(typeof qzAnswer==="function"){const _qa=qzAnswer;qzAnswer=function(code){try{const t=typeof round!=="undefined"&&round&&round.queue&&round.queue[round.idx];
  const k=Object.keys(ATLAS_ID).find(c=>ATLAS_ID[c]===code)||code,C=BY[k]&&COUNTRY_BY_CODE[k];
  if(C&&C._sp&&(t&&t._sp||typeof activeRegion!=="undefined"&&activeRegion===R)){COUNTRIES.push(C);try{return _qa.call(this,k)}finally{const i=COUNTRIES.lastIndexOf(C);if(i>=0)COUNTRIES.splice(i,1)}}}catch(e){console.error(e)}return _qa.apply(this,arguments)}}
+/* the globe's Find on map: the press is remembered where it landed; after a miss the globe turns and zooms to hold both
+   the answer and that press, the answer is green (its fill) with a green ring when it is small on screen, and after the
+   question a click on a country opens its profile */
+if(typeof GlobeView!=="undefined"&&typeof qzAnswer==="function"){
+ const P=GlobeView.prototype,_hit=P.hit;
+ P.hit=function(clientX,clientY){const h=_hit.apply(this,arguments);try{if(typeof qzGlobe!=="undefined"&&this===qzGlobe)this._gfPress=h?{ll:h.pointerLL||h.ll,code:h.code}:null}catch(e){}return h};
+ const ringEl=g=>{let s=g.host.querySelector("svg.gf-qz-ring");if(!s){s=document.createElementNS(NS,"svg");s.setAttribute("class","gf-qz-ring");s.innerHTML='<circle/>';g.host.appendChild(s)}return s};
+ const drawRing=g=>{const R=g._gfReveal;const s=g.host&&g.host.querySelector("svg.gf-qz-ring");if(!R){if(s)s.style.display="none";return}
+  try{const el=ringEl(g),pr=g.projection(),c=g.canvas.getBoundingClientRect(),h=g.host.getBoundingClientRect();
+   const ctr=[-g.rot[0],-g.rot[1]],vis=g._flat||d3.geoDistance(R.ll,ctr)<Math.PI/2-.02,p=vis&&pr(R.ll);
+   let rad=0;if(p&&R.f){const b=d3.geoPath(pr).bounds(R.f);if(b&&isFinite(b[0][0]))rad=Math.max(b[1][0]-b[0][0],b[1][1]-b[0][1])/2}
+   if(!p||rad>12){el.style.display="none";return}
+   const r=Math.max(10,rad+6);el.style.display="";el.style.left=(c.left-h.left+p[0]-r-3)+"px";el.style.top=(c.top-h.top+p[1]-r-3)+"px";el.setAttribute("width",2*r+6);el.setAttribute("height",2*r+6);
+   const ci=el.firstChild;ci.setAttribute("cx",r+3);ci.setAttribute("cy",r+3);ci.setAttribute("r",r)}catch(e){}};
+ const _r=P.render;P.render=function(){const out=_r.apply(this,arguments);try{if(typeof qzGlobe!=="undefined"&&this===qzGlobe)drawRing(this)}catch(e){}return out};
+ /* a new question: no ring */
+ if(typeof qzMount==="function"){const _m=qzMount;qzMount=function(){try{if(qzGlobe){qzGlobe._gfReveal=null;qzGlobe._gfPress=null}}catch(e){}const r=_m.apply(this,arguments);try{if(qzGlobe)drawRing(qzGlobe)}catch(e){}return r}}
+ const _qa=qzAnswer;qzAnswer=function(code){
+  /* after the question: a click is a visit to that country's profile */
+  try{if(typeof round!=="undefined"&&round&&round.answered&&qz&&qz.mode==="shown"){const k=Object.keys(ATLAS_ID).find(c=>ATLAS_ID[c]===code)||code;quizProfile(k);return}}catch(e){}
+  const was=typeof round!=="undefined"&&round&&round.answered,press=qzGlobe&&qzGlobe._gfPress;const r=_qa.apply(this,arguments);
+  try{if(was||!round.answered||!qzGlobe||!qz.clicked||qz.clicked===qz.target)return r;const g=qzGlobe;
+   const f=projFeatureFor(ATLAS_ID[qz.target]||qz.target,g.features)||projFeatureFor(qz.target,g.features);if(!f)return r;const tl=globeLabelPoint(f);
+   g._gfReveal={ll:tl,f};
+   /* both in view: the middle of the answer and the press, zoomed out just enough */
+   let pl=press&&press.ll;if(!pl){const wf=projFeatureFor(qz.clicked,g.features);if(wf)pl=globeLabelPoint(wf)}
+   let center=tl,rad=0;const b=d3.geoBounds(f);[[b[0][0],b[0][1]],[b[1][0],b[1][1]]].forEach(q=>{rad=Math.max(rad,d3.geoDistance(q,tl))});rad=Math.min(rad,.35);
+   if(pl){const dist=d3.geoDistance(tl,pl);center=d3.geoInterpolate(tl,pl)(.5);rad=Math.max(rad,dist/2)+Math.max(rad,.03)}
+   const zoom=Math.max(1,Math.min(6,.62/Math.max(.05,rad)));g.flyTo(f.properties&&f.properties.c||qz.target,{zoom,center});g.render()}catch(e){console.error(e)}return r}}
+/* after a question the answer's name (in the feedback line under the map, and in the fact strip) opens its profile */
+function nameLinks(){try{const t=typeof round!=="undefined"&&round&&round.answered&&round.queue&&round.queue[round.idx];if(!t)return;
+ const fb=document.getElementById("mapFeedback");if(fb&&!fb.querySelector(".gf-qprof")&&profileOf(t.c)){const ok=/^Correct!/.test(fb.textContent);
+  fb.textContent=ok?"Correct! ":"Correct answer: ";const b=document.createElement("button");b.type="button";b.className="gf-qprof";b.dataset.c=t.c;b.textContent=t.n;b.title="Open the profile of "+t.n;fb.appendChild(b)}
+ const mf=document.querySelector("#quizView .miss-fact b");if(mf&&!mf.classList.contains("gf-qprof")&&profileOf(t.c)){mf.classList.add("gf-qprof");mf.dataset.c=t.c;mf.title="Open the profile of "+t.n;mf.setAttribute("role","button");mf.tabIndex=0}}catch(e){}}
+if(typeof handleMapClick==="function"){const _h=handleMapClick;handleMapClick=function(){const r=_h.apply(this,arguments);nameLinks();setTimeout(nameLinks,30);return r}}
+{const _q=qzAnswer;if(typeof _q==="function")qzAnswer=function(){const r=_q.apply(this,arguments);nameLinks();setTimeout(nameLinks,30);return r}}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("#quizView .gf-qprof");if(!b||!b.dataset.c)return;e.preventDefault();e.stopPropagation();quizProfile(b.dataset.c)});
+document.addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const b=e.target.closest&&e.target.closest("#quizView b.gf-qprof");if(!b)return;e.preventDefault();quizProfile(b.dataset.c)});
 
 const st3=document.createElement("style");st3.textContent=`
 .gf-reg-st-prof{background:rgba(106,79,176,.09);border-radius:10px;padding:8px 10px;margin:6px 0 10px;font-size:14px;text-align:left}
@@ -268,6 +391,12 @@ const st3=document.createElement("style");st3.textContent=`
 
 .gf-pq-fb{min-height:24px;margin:12px auto 0;max-width:640px;font-size:14px}.gf-pq-end{padding:40px 0}.gf-pq-end h3{font-size:28px;margin:6px 0}
 @media (max-width:600px){.gf-pq-q{font-size:16px}.gf-pq-outline{height:240px}}
+.map-wrap svg circle.gf-reveal-ring{fill:none;stroke:var(--green,#3b7a57);stroke-width:2.2;vector-effect:non-scaling-stroke;pointer-events:none}
+#mapWrap.gf-pick svg path.tiny-hit-overlay{pointer-events:none}
+.qz-globe{position:relative}.qz-globe svg.gf-qz-ring{position:absolute;pointer-events:none;overflow:visible;z-index:3}
+.qz-globe svg.gf-qz-ring circle{fill:none;stroke:#3b7a57;stroke-width:2.4}
+#quizView .gf-qprof{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+#quizView .gf-qprof:hover,#quizView .gf-qprof:focus-visible{text-decoration-style:solid}
 `;document.head.appendChild(st3);
 /* "Show on map" from a region's profile: zoom the Maps page to it (from its outline, or around its capital) and flash it */
 try{const R0=GLOBE_ROBINSON0,feats=typeof projFeatures==="function"?projFeatures():[];GF_REG.forEach(r=>{if(COUNTRY_BBOX_ALLMAPS[r.c])return;let b=null;
@@ -427,8 +556,14 @@ if(typeof projFeatures==="function"){const _pf=projFeatures;projFeatures=functio
    parent country as that country is drawn now */
 (function(){const PAR={krd:"IQ",sml:"SO",abk:"GE",sos:"GE",ncy:"CY",tdr:"MD",xd:"CY"},RAW={};
  function raw(c){if(RAW[c])return RAW[c];try{const h=_gfRegHold(),p=h.querySelector('path[id="'+PAR[c]+'"]');if(!p)return null;const b=p.getBBox();return RAW[c]=[b.x,b.y,b.width,b.height]}catch(e){return null}}
+ const RAWR={};function rawReg(c){if(RAWR[c])return RAWR[c];try{const p=_gfRegHold().querySelector('path[id="'+c+'"]');if(!p)return null;const b=p.getBBox();if(!b.width)return null;return RAWR[c]=[b.x,b.y,b.width,b.height]}catch(e){return null}}
  function fix(svg){if(!svg||svg.closest("#gfRegHold"))return;for(const c in PAR){const el=svg.querySelector('path[id="'+c+'"]');if(!el)continue;const par=svg.querySelector('path[id="'+PAR[c]+'"]'),r=raw(c);if(!par||!r)continue;
-  let b;try{b=par.getBBox()}catch(e){continue}if(!b.width||!r[2])continue;const sx=b.width/r[2],sy=b.height/r[3],tx=b.x-r[0]*sx,ty=b.y-r[1]*sy,key=[sx,sy,tx,ty].map(v=>v.toFixed(3)).join(",");if(el._gfk===key)continue;el._gfk=key;
+  let b;try{b=par.getBBox()}catch(e){continue}if(!b.width||!r[2])continue;let sx=b.width/r[2],sy=b.height/r[3],tx=b.x-r[0]*sx,ty=b.y-r[1]*sy;
+  /* the shape's own outline may already have been moved with the map (a recentred frame): line up where it is now with
+     where it belongs, rather than moving it a second time */
+  const rr=rawReg(c);let cb=null;try{cb=el.getBBox()}catch(e){}
+  if(rr&&cb&&cb.width&&cb.height){const W=[rr[0]*sx+tx,rr[1]*sy+ty,rr[2]*sx,rr[3]*sy],ax=W[2]/cb.width,ay=W[3]/cb.height;sx=ax;sy=ay;tx=W[0]-cb.x*ax;ty=W[1]-cb.y*ay}
+  const key=[sx,sy,tx,ty].map(v=>v.toFixed(3)).join(",");if(el._gfk===key)continue;el._gfk=key;
   if(Math.abs(sx-1)<.001&&Math.abs(sy-1)<.001&&Math.abs(tx)<.01&&Math.abs(ty)<.01)el.removeAttribute("transform");else el.setAttribute("transform","matrix("+sx.toFixed(5)+",0,0,"+sy.toFixed(5)+","+tx.toFixed(3)+","+ty.toFixed(3)+")")}}
  const all=()=>document.querySelectorAll("svg").forEach(s=>{if(s.querySelector('path[id="sml"]'))fix(s)});window.gfRegFix=all;
  ["renderQuizCard","renderMapAtlasStudy","renderActiveView"].forEach(n=>{if(typeof window[n]!=="function")return;const f=window[n];window[n]=function(){const r=f.apply(this,arguments);try{all()}catch(e){}return r}});
