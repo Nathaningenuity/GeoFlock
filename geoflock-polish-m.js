@@ -72,5 +72,17 @@ function rhinos(){try{const T=PS_TOURS.bextinction,S=T&&T.steps.find(x=>x.title=
 function tall(im){try{if(im&&im.naturalWidth&&im.naturalHeight>im.naturalWidth*1.1&&im._gfTall!==im.src){im._gfTall=im.src;im.style.setProperty("object-position","50% "+(im.naturalHeight>im.naturalWidth*1.3?"6%":"15%"),"important")}}catch(e){}}
 document.addEventListener("load",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.closest&&t.closest(".ps-card"))tall(t)},true);
 setInterval(()=>{document.querySelectorAll(".ps-card img").forEach(tall)},1000);
+/* 7. photo pins' leader lines: redrawn every frame from the photo to where the place is on the map now (the globe turns
+   and the line was left pointing at the old spot, offshore of Lagos), ending in a dot on the place */
+(function(){let raf=0;function step(){raf=requestAnimationFrame(step);try{if(typeof ps==="undefined"||!ps||typeof psSteps!=="function")return;const S=psSteps()[ps.i],P=S&&S.phPins;if(!P||!P.length)return;
+ const L=document.querySelector(".ps-phpins");if(!L)return;const lead=L.querySelector("svg.ps-sq-lead");if(!lead)return;const lr=L.getBoundingClientRect();let h="";
+ L.querySelectorAll(".ps-sq").forEach(el=>{if(el.style.display==="none")return;const q=P[+el.dataset.ph];if(!q||!q.at)return;const xy=psScreen(q.at);if(!xy||!isFinite(xy[0]))return;
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2-lr.left,cy=r.top+r.height/2-lr.top;
+  /* from the nearest point of the photo's edge to the place */
+  const ex=Math.max(r.left-lr.left,Math.min(r.right-lr.left,xy[0])),ey=Math.max(r.top-lr.top,Math.min(r.bottom-lr.top,xy[1]));
+  if(Math.hypot(xy[0]-ex,xy[1]-ey)<6)return;
+  h+=`<line x1="${xy[0].toFixed(1)}" y1="${xy[1].toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}"/><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="3.2"/>`});
+ if(lead._gfh!==h||lead.innerHTML!==lead._gfo){lead._gfh=h;lead.innerHTML=h;lead._gfo=lead.innerHTML}}catch(e){}}
+ step()})();
 window.gfPolishM={dedupe};
 })();
