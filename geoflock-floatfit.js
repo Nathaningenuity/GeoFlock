@@ -43,7 +43,9 @@ function keepIn(p){const R=regOf(p);if(!R)return;/* only panels floating over th
 
 function wire(p){if(p._gff)return;p._gff=1;const R=regOf(p);
  /* 1. nothing inside reaches the map */
- STOP.forEach(t=>p.addEventListener(t,e=>e.stopPropagation(),{passive:true}));
+ /* (a press on a title bar goes on: each panel's own drag code listens for it on the page, and handles the map itself) */
+ const HANDLES=".ps-head,.hs-head,.gfk-grip,.gfk-ph,.gftq-h,.gf-dng-top";
+ STOP.forEach(t=>p.addEventListener(t,e=>{if((t==="pointerdown"||t==="mousedown"||t==="touchstart")&&e.target.closest&&e.target.closest(HANDLES)&&!e.target.closest("button"))return;e.stopPropagation()},{passive:true}));
  /* the size chosen before */
  const k=R.key(p),s=SIZE[k];if(s)setSize(p,s.w,s.h);
  /* 2-3. resize from the edges */
@@ -77,5 +79,13 @@ function scan(){REG.forEach(R=>document.querySelectorAll(R.sel).forEach(p=>{if(!
  if(!p._gffRes&&!p.matches(".gfk-moving,.hs-dragging,.gff-moving"))keepIn(p)}))}
 setInterval(scan,500);addEventListener("resize",scan);
 {const st=document.createElement("style");st.textContent=`body.gff-resizing,body.gff-resizing *{user-select:none!important;-webkit-user-select:none!important}`;document.head.appendChild(st)}
-window.gfFloatFit={scan,REG,SIZE};
+/* the tour card opens beside the map, in the page's margin, when there is room (it does not cover the map); once the reader
+   drags it, it stays where they put it for the rest of the tour */
+function cardOut(){try{if(typeof ps==="undefined"||!ps||!ps.card||!ps.card.isConnected||typeof psSetCardPos!=="function")return;
+ if(ps._gffUser||ps.card.classList.contains("ps-dragging")){if(ps.card.classList.contains("ps-dragging"))ps._gffUser=1;return}
+ const h=typeof psHostEl==="function"&&psHostEl();if(!h||!h.getBoundingClientRect)return;const r=h.getBoundingClientRect(),cw=ps.card.offsetWidth||340,gap=12;if(!r.width)return;
+ let x=null;if(r.left-gap-8>=cw)x=r.left-gap-cw;else if(innerWidth-r.right-gap-8>=cw)x=r.right+gap;if(x==null)return;
+ const y=Math.max(70,r.top);const c=ps.card.getBoundingClientRect();if(ps.card.parentNode===document.body&&Math.abs(c.left-x)<2&&Math.abs(c.top-y)<2)return;psSetCardPos(x,y)}catch(e){}}
+setInterval(cardOut,400);
+window.gfFloatFit={scan,REG,SIZE,cardOut};
 })();
