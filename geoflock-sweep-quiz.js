@@ -59,12 +59,21 @@ body.sky-night .gfsq-map .l{fill:rgba(255,255,255,.22)}
 body.sky-night .gfsq-map .d{stroke:#1b2433}
 body.sky-night .gfsq-nm:hover{color:#8cc8ff}
 .d5-review .gfsq-said,.wi-sum .gfsq-said{display:block;font-weight:400}
+.wi-sum .wi-sum-i>span{flex-wrap:wrap;row-gap:2px}.wi-sum .gfsq-said{flex-basis:100%;font-size:12px;line-height:1.3}
+.gfsq-map{background:rgba(255,255,255,.78);border-radius:14px;padding:6px 6px 4px}
+.summary-card .gfsq-map{background:none;padding:0}
+body.sky-night .gfsq-map{background:rgba(18,26,44,.8)}body.sky-night .summary-card .gfsq-map{background:none}
 .d5-review>div.gfsq-d5{display:flex;align-items:center;gap:8px;text-align:left}
 .d5-review>div.gfsq-d5 img{width:34px;border-radius:3px}
+.d5-review>div.gfsq-d5{border-left:4px solid var(--green,#2f9e6e)}.d5-review>div.gfsq-d5.miss{border-left-color:#e8a03c}
+.d5-grid i.no{background:#e8a03c!important;border-color:#e8a03c!important}
 .gfsq-more{margin-top:6px;text-align:left}.gfsq-more>summary{cursor:pointer;font-size:13px;font-weight:600;opacity:.8;padding:4px 2px}.gfsq-more>.gfsq-list{margin-top:4px}
 .gfsq-enc{text-align:center;font-size:14px;opacity:.85;margin:4px 0 8px}
 @media (max-width:520px){.gfsq-head{gap:10px}.gfsq-ring,.gfsq-ring svg{width:68px;height:68px;flex-basis:68px}.gfsq-ring b{font-size:18px}
  .gfsq-hl h2{font-size:20px!important}.gfsq-list{grid-template-columns:1fr;max-height:none}}
+/* Library on a phone: the filter chips scroll sideways in one line each, so the terms and stops start on the first screen */
+.gflib-chips::-webkit-scrollbar{display:none}
+@media (max-width:560px){.gflib-chips{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;mask-image:linear-gradient(90deg,#000 88%,transparent)}.gflib-chips>*{flex:0 0 auto}}
 `;
 function addCss(){if(document.getElementById("gfsqCss"))return;const s=document.createElement("style");s.id="gfsqCss";s.textContent=css;document.head.appendChild(s)}
 addCss();
@@ -101,11 +110,11 @@ function thumb(c,kind){try{
  return'<span class="gfsq-th"><img src="'+flagUrl(c,"w80")+'" alt="" loading="lazy"></span>'}catch(e){return'<span class="gfsq-th"></span>'}}
 
 /* one row: right answer with picture and profile link; a miss says gently what you said */
-function row(x,kind,rightLabel,saidLabel,note){
+function row(x,kind,rightLabel,saidLabel,note,verb){
  const nm=nameOf(x.c);const cap=rightLabel&&rightLabel!==nm?rightLabel:"";
  return'<div class="gfsq-row'+(x.ok?"":" miss")+'">'+thumb(x.c,kind)+'<span class="gfsq-tx"><button type="button" class="gfsq-nm" data-gfsq-prof="'+esc(x.c)+'" title="Open the profile of '+esc(nm)+'">'+esc(nm)+"</button>"+
   (cap?'<span class="gfsq-cap">'+esc(cap)+"</span>":"")+
-  (!x.ok?'<span class="gfsq-said">'+(saidLabel?"you said "+esc(saidLabel)+" · it’s "+esc(rightLabel||nm):"skipped · it’s "+esc(rightLabel||nm))+(note?" · "+esc(note):"")+"</span>":(x.retry?'<span class="gfsq-said" style="color:inherit;opacity:.7">got it on the second try</span>':""))+
+  (!x.ok?'<span class="gfsq-said">'+(saidLabel?"you "+(verb||"said")+" "+esc(saidLabel)+" · it’s "+esc(rightLabel||nm):"skipped · it’s "+esc(rightLabel||nm))+(note?" · "+esc(note):"")+"</span>":(x.retry?'<span class="gfsq-said" style="color:inherit;opacity:.7">got it on the second try</span>':""))+
   '</span><i class="gfsq-ok" aria-hidden="true"></i></div>'}
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-gfsq-prof]");if(!b)return;const c=CBC(b.dataset.gfsqProf);if(c&&has("openFlagZoom")){e.preventDefault();openFlagZoom(c)}});
 
@@ -117,13 +126,13 @@ wrap("handleAnswer",o=>function(btn){said={label:btnLabel(btn)};return o.apply(t
 wrap("submitOutlineChoice",o=>function(btn){said={label:btnLabel(btn)};return o.apply(this,arguments)});
 wrap("submitTypeAnswer",o=>function(code,label){said={code:code,label:label};return o.apply(this,arguments)});
 wrap("submitOutlineAnswer",o=>function(code){said={code:code};return o.apply(this,arguments)});
-wrap("handleMapClick",o=>function(el,code){said={code:code};return o.apply(this,arguments)});
-wrap("qzAnswer",o=>function(code){said={code:code};return o.apply(this,arguments)});
+wrap("handleMapClick",o=>function(el,code){said={code:code,click:true};return o.apply(this,arguments)});
+wrap("qzAnswer",o=>function(code){said={code:code,click:true};return o.apply(this,arguments)});
 wrap("skipTypeAnswer",o=>function(){said={skip:true};return o.apply(this,arguments)});
 wrap("skipMultiBlank",o=>function(){said={skip:true};return o.apply(this,arguments)});
 wrap("finalizeMultiBlank",o=>function(t,inputs){try{said={label:[...(inputs||[])].map(i=>i.value).filter(Boolean).join(" / ")}}catch(e){}return o.apply(this,arguments)});
 wrap("finalizeMultiChoice",o=>function(){try{said={label:(typeof multiSelected!=="undefined"?[...multiSelected].join(" / "):"")}}catch(e){}return o.apply(this,arguments)});
-wrap("fobAnswer",o=>function(t,ll){try{said={ll:ll}}catch(e){}return o.apply(this,arguments)});
+wrap("fobAnswer",o=>function(t,ll){try{said={ll:ll,click:true}}catch(e){}return o.apply(this,arguments)});
 wrap("finalizeAnswer",o=>function(target,ok){try{if(typeof round!=="undefined"&&round&&target){const L=round._gfsq||(round._gfsq=[]);
   L.push({c:target.c,ok:!!ok,said:said,part:round.pp?round.pp.part:0,carry:!!(round.pp&&round.pp.isCarry)})}}catch(e){}said=null;return o.apply(this,arguments)});
 
@@ -137,7 +146,7 @@ function fromRound(r){/* a round restored from storage has no log: rebuild from 
  const n=Math.min(r.queue.length,r.idx+(r.answered?1:0)),miss=new Set((r.missed||[]).map(c=>c.c));return r.queue.slice(0,n).map(c=>({c:c.c,ok:!miss.has(c.c),said:null}))}
 function reviewHTML(list,kind,title){if(!list.length)return"";
  const misses=list.filter(x=>!x.ok),hits=list.filter(x=>x.ok);
- const R=x=>row(x,kind,rightLabel(x.c),saidLabel(x.said),x.fixed?"you got it later":x.back?"it comes back later in this round":"");
+ const R=x=>row(x,kind,rightLabel(x.c),saidLabel(x.said),x.fixed?"you got it later":x.back?"it comes back later in this round":"",x.said&&x.said.click?"clicked":"said");
  /* the misses first; a long run of right answers folds away under one line */
  const fold=misses.length&&hits.length>4;
  return'<div class="gfsq-sec">'+esc(title||"Your answers")+(misses.length?" · "+misses.length+" to practise":"")+"</div>"+
@@ -188,7 +197,7 @@ wrap("ppD5Credit",o=>function(q,ok){try{if(typeof d5!=="undefined"&&d5){const P=
 wrap("d5Render",o=>function(){const r=o.apply(this,arguments);try{const v=document.getElementById("d5Host"),rv=v&&v.querySelector(".d5-review");if(!rv||rv.dataset.gfsq)return r;rv.dataset.gfsq="1";
  const qs=d5.qs,rec=d5Rec().rec,P=d5Picks()[String(d5.day)]||[],n=qs.length,score=rec.ans.filter(Boolean).length;
  const lab=(q,c)=>{try{return q.kind==="cap"?v4Cap(c):nameOf(c)}catch(e){return nameOf(c)}};
- rv.innerHTML=qs.map((q,j)=>{const ok=!!rec.ans[j],p=P[j];return'<div class="gfsq-d5 '+(ok?"ok":"no")+'"><img src="'+flagUrl(q.a,"w80")+'" alt=""><span style="flex:1"><span>'+esc(q.label)+'</span><br><button type="button" class="gfsq-nm" data-gfsq-prof="'+esc(q.a)+'">'+esc(lab(q,q.a))+"</button>"+
+ rv.innerHTML=qs.map((q,j)=>{const ok=!!rec.ans[j],p=P[j];return'<div class="gfsq-d5'+(ok?"":" miss")+'"><img src="'+flagUrl(q.a,"w80")+'" alt=""><span style="flex:1"><span>'+esc(q.label)+'</span><br><button type="button" class="gfsq-nm" data-gfsq-prof="'+esc(q.a)+'">'+esc(lab(q,q.a))+"</button>"+
   (!ok&&p&&p!==q.a?'<span class="gfsq-said">you said '+esc(lab(q,p))+" · it’s "+esc(lab(q,q.a))+"</span>":"")+'</span><i class="gfsq-ok" style="background:'+(ok?"#2f9e6e":"#e8a03c")+'"></i></div>'}).join("");
  const fin=v.querySelector(".sp-final");if(fin&&!v.querySelector(".gfsq-enc"))fin.insertAdjacentHTML("afterend",'<p class="gfsq-enc">'+esc(cheer(Math.round(100*score/n)))+"</p>");
  const m=miniMap(qs.map((q,j)=>({c:q.a,ok:!!rec.ans[j]})));if(m)rv.insertAdjacentHTML("afterend",m);
@@ -199,7 +208,7 @@ wrap("d5Render",o=>function(){const r=o.apply(this,arguments);try{const v=docume
 wrap("wiRender",o=>function(){const r=o.apply(this,arguments);try{if(typeof wi==="undefined"||wi.state!=="end")return r;const v=document.getElementById("gamesView"),s=v&&v.querySelector(".wi-sum");if(!s||s.dataset.gfsq)return r;s.dataset.gfsq="1";
  const rows=[...s.querySelectorAll(".wi-sum-i")];wi.log.forEach((l,j)=>{const el=rows[j];if(!el)return;const sp=el.querySelector("span");if(!sp)return;const c=CBC(l.c);if(!c)return;
   sp.innerHTML='<img class="wi-fl" src="'+flagUrl(l.c,"w40")+'" alt=""><button type="button" class="gfsq-nm" data-gfsq-prof="'+esc(l.c)+'">'+esc(c.n)+"</button>"+(!l.ok&&l.g1&&l.g1!==l.c?'<span class="gfsq-said">you said '+esc(nameOf(l.g1))+" · it’s "+esc(c.n)+"</span>":"")});
- const fin=v.querySelector(".wi-final");if(fin&&!v.querySelector(".gfsq-enc")){const pct=Math.round(100*(wi.total||0)/25000);fin.insertAdjacentHTML("afterend",'<p class="gfsq-enc">'+esc(cheer(Math.min(100,pct+10)))+"</p>")}
+ const fin=v.querySelector(".wi-final");if(fin&&!v.querySelector(".gfsq-enc")&&wi.log.length){const pct=Math.round(100*wi.log.filter(l=>l.ok).length/wi.log.length);fin.insertAdjacentHTML("afterend",'<p class="gfsq-enc">'+esc(cheer(pct))+"</p>")}
  const m=miniMap(wi.log.map(l=>({c:l.c,ok:!!l.ok})));if(m)s.insertAdjacentHTML("afterend",m);
 }catch(e){console.error(e)}return r});
 wrap("wiFinish",o=>function(){try{if(typeof wi!=="undefined"&&wi.guesses){wi._g1=wi.guesses.length?wi.guesses[0].c:null}}catch(e){}const r=o.apply(this,arguments);try{const l=wi.log[wi.log.length-1];if(l&&l.g1===undefined)l.g1=wi._g1}catch(e){}return r});
