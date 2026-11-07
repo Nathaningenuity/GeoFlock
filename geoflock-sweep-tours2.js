@@ -301,7 +301,8 @@ M({
 M({
  "literature|The Tale of Genji":{phDrop:/^Kyoto$/},
  "literature|Dante’s journey":{phDrop:/^Florence$/},
- "literature|The great Russian novels":{pinsDrop:/^Moscow$/},
+ /* St Petersburg (Dostoevsky) was cut off at the top edge */
+ "literature|The great Russian novels":{pinsDrop:/^Moscow$/,view:[12,47.5,46,63.5]},
  "literature|Weeping at the campsite":{body:"In the dry steppes and deserts of Arabia (rusty red and orange on the climate map), Bedouin herders moved with the rains and the grass, so tribes camped together for a season and then went their separate ways. That is why the classical ode, the qasida, opens with the poet at the traces of an old camp, hearth stones half buried in sand, weeping for a beloved whose tribe has moved on. Then he rides off across the desert on his camel."},
  "literature|Homer’s Troy and Ithaca":{body:"The Iliad tells of the Trojan War; the Odyssey follows Odysseus on his ten-year voyage home. The Lotus-eaters, the Cyclops, the bag of winds, the giants who sink eleven of his ships, the witch Circe, the Underworld, the Sirens, Scylla and Charybdis: each danger waits on its own island or strait. He spends seven years on Calypso’s island before the Phaeacians carry him home. A sea full of islands suits such a story: an archipelago is a plot already cut into chapters.",
   stat:"Troy to Ithaca is about 500 km as the crow flies; Odysseus’s way home, as readers have mapped it, is over 5,000 km and takes him ten years"},
@@ -309,6 +310,13 @@ M({
 /* ---- Philosophy ---- */
 M({
  "philosophy|Córdoba: reason and revelation":{body:"Ibn Rushd (Averroes, born 1126) and Moses Maimonides (born 1138) both grew up in Córdoba, in al-Andalus, where Muslims, Jews and Christians lived side by side. Both tried to square reason with revelation. Ibn Rushd argued that truth cannot contradict truth, so careful reasoning and the Qur’an must agree; Maimonides, that where the Bible seems to clash with reason, it should be read as a metaphor. The question can’t be avoided when rival scriptures share one city."},
+ /* the History map widened this stop to fit the whole Dutch Republic, colonies included: a world map with Amsterdam a dot
+    under the card. It stays on the Netherlands (the _histWide flag tells the History map the frame is settled) */
+ "philosophy|Amsterdam: a refuge for ideas":{flatView:null,fn:S=>{S._histWide=1}},
+ /* Geneva (Rousseau) and Vienna (Wittgenstein) were cut off at the right-hand edge */
+ "philosophy|Edinburgh: what can experience teach us?":{view:[-25,43,18,60]},
+ "philosophy|Vienna: the limits of language":{view:[-30,44,30,57]},
+ "philosophy|Paris: condemned to be free":{view:[-30,35,22,57]},
  "philosophy|Fragmentation: Greece’s many constitutions":{stat:"Aristotle’s school collected 158 constitutions to compare: Greece’s mountains and islands supplied the sample"},
 });
 /* ---- Mythology ---- */
@@ -383,7 +391,7 @@ M({
  "landmarks|The race for the sky":{view:[-29,-10,126,45]},
  "flags|Maps on flags":{view:[2.5,30,41,48]},
  "art|The first artists":{view:[-105,-35,128,65]},
- "music|Vienna, city of music":{view:[-3,44,18.5,54.5]},
+ "music|Vienna, city of music":{view:[0,43.5,25,54.5]},
  "music|Down the Mississippi: blues and jazz":{view:[-112,24,-62,47],card:"left"},
  "literature|One Thousand and One Nights":{view:[-47,8,68,60]},
  "maths|Zero and algebra go west":{view:[-55,4,82,56]},
