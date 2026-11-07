@@ -172,5 +172,15 @@ function climCut(){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="climate")retur
  psLaunchTour=function(id){if(id==="climate"){try{if(typeof ps!=="undefined"&&ps&&ps.tour==="climate"){}else climCut()}catch(e){}}return _l.apply(this,arguments)};psLaunchTour._gfCc=1},500)}
 /* every climate stop: on the Climate map, without the wind arrows and jet-stream lines of the Currents layer */
 function climStop(S){if(!S||S._gfCs)return;S._gfCs=1;if(S.mode==="satellite")SET(S,"mode",undefined);if(Array.isArray(S.on)&&S.on.includes("currents"))SET(S,"on",S.on.filter(x=>x!=="currents"));if(S.gfCur)SET(S,"gfCur",null)}
+/* 14. City Lights as seen from space: on opening it, borders, rivers, lakes, names and cities are switched off (any can be
+   switched back on there); on leaving, each switch goes back to how it was. Not inside tours, which set their own. */
+(function(){const IDS=["allMapsBordersToggle","allMapsRiversToggle","allMapsLakesToggle","allMapsLandformsToggle"];/* (names: geoflock-nightx.js keeps City Lights its own setting, off by default; cities: each map keeps its own, and City Lights starts with none) */
+ try{if(typeof allMapsCitiesByMode!=="undefined"&&allMapsCitiesByMode.night===undefined)allMapsCitiesByMode.night=false}catch(e){}
+ let was=null,saved=null;
+ setInterval(()=>{try{if(typeof appMode==="undefined"||appMode!=="allmaps")return;const tour=typeof ps!=="undefined"&&ps;const night=allMapsColorMode==="night";
+  if(night&&!was&&!tour){saved={};IDS.forEach(id=>{const c=document.getElementById(id);if(c){saved[id]=c.checked;if(c.checked)c.click()}})}
+  /* back: each switch as it was (tried for a few seconds, as the map's own switching can reset some of them) */
+  if(!night&&saved){if(was)saved._n=0;let left=0;IDS.forEach(id=>{const c=document.getElementById(id);if(c&&saved[id]!=null&&c.checked!==saved[id]){c.click();left++}});if(++saved._n>8||!left&&saved._n>3)saved=null}
+  was=night}catch(e){}},500)})();
 window.gfPolishM={dedupe};
 })();
