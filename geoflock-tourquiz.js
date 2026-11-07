@@ -154,6 +154,8 @@ let n=0;const t=setInterval(()=>{const a=wrapTq(),b=wrapEnd();if(typeof psGo==="
 window.gfTourQuiz={start,stop,pool,draw,available};
 {const s=document.createElement("style");s.textContent=`
 .tr-foot.gftq-done .tr-prog,.tr-foot.gftq-done .tr-progtxt{display:none}
+.tr-foot.gftq-done{background:none!important;box-shadow:none!important;padding:0!important;flex-wrap:wrap;gap:8px}.tr-foot.gftq-done>.gftq-go,.tr-foot.gftq-done>.tr-go{flex:1 1 auto;margin-left:0!important;justify-content:center;text-align:center;min-width:0}
+.tr-foot .gftq-go,.tr-foot .tr-go.gftq-second{max-width:100%;box-sizing:border-box}
 .tr-foot .gftq-go{margin-left:auto;padding:7px 11px;border-radius:999px;border:1.5px solid var(--tc,#d9682b);background:transparent;color:var(--tc,#d9682b);font:inherit;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
 .tr-foot .gftq-go+.tr-go,.tr-foot .tr-go+.gftq-go{margin-left:6px}.tr-foot .gftq-go:hover{background:rgba(217,104,43,.1)}
 .tr-foot .gftq-go.lead{background:var(--tc,#d9682b);color:#fff;border-color:transparent}.tr-foot .gftq-go small{font-weight:700;opacity:.9}
