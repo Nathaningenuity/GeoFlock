@@ -43,9 +43,14 @@ function photos(S,X){
  const d=Object.getOwnPropertyDescriptor(S,"phPins");let base=d&&("value" in d)?d.value:S.phPins;let cache=null,ck=null;
  const get0=d&&d.get?d.get.bind(S):null,set0=d&&d.set?d.set.bind(S):null;
  try{Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,
-  get(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}relink(b);return cache},
+  get(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}relink(b);reg(cache);return cache},
   set(v){if(set0)set0(v);else base=v;ck=null}})}catch(e){}
- S._sqPruned=-1}
+ /* (no forced re-prune: the app's pruner drops any photo pin whose label has no picture registered; reg() registers them) */}
+/* every photo pin kept or added here has its picture registered under its label (PS_SQ_IMG), which is what the app's
+   pin pruner (psSqPrune) and the pin drawing look up */
+function reg(L){try{if(typeof PS_PHOTO_DATA==="undefined")return;const M=window.PS_SQ_IMG=window.PS_SQ_IMG||{};(L||[]).forEach(q=>{if(!q||!q.label||M[q.label]!=null)return;
+ let v=q.img!=null&&q.img>=0?q.img:q._gfImg!=null?q._gfImg:null;let f=q._f;try{if(!f&&typeof GF_SQ_FILE!=="undefined")f=GF_SQ_FILE[q.label]}catch(e){}
+ if(v==null&&f){const i=PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d);if(i>=0)v=i}if(v!=null)M[q.label]=v})}catch(e){}}
 /* The Religions and Languages tours were built for the Culture map, but geoflock-tourhist.js moved every stop of a tour
    with any History-map stop onto the History map, where the Culture map's layers (religion, language family, script)
    are not drawn: "each country is coloured by its largest religion" showed plain political colours. Such a stop now
@@ -321,33 +326,43 @@ M({
 });
 /* ---- Mythology ---- */
 M({
- "mythology|Merlin’s stones":{phDup:true},
+ /* Ireland, where the legend says the stones came from, was under the card */
+ "mythology|Merlin’s stones":{phDup:true,view:[-22,49,4,60.5]},
  /* Uluru has nothing to do with the drowned coasts of this stop */
  "mythology|Stories that remember the sea":{phDrop:/^Uluru$/},
  "mythology|Troy":{rep:[["whose empire is lit on this map","whose empire is coloured on this map"]]},
  "mythology|Where the gods were born":{rep:[["their empire is lit here as it was in 1500","their empire is coloured here as it was in 1500"]]},
+ /* Lake Kariba and its dam were half under the card; the lake label now sits on the lake */
+ "mythology|The river god and the dam":{view:[17.5,-22,33.5,-12],pinsMove:{"Lake Kariba":[27.9,-17]}},
  "mythology|Mount Kailash":{stat:"Mount Kailash is sacred to four religions, and nobody has ever climbed it"},
 });
 /* ---- Science ---- */
 M({
- "science|Ibn al-Haytham and light":{phDrop:/^Cairo$/},
+ "science|Ibn al-Haytham and light":{phDrop:/^Cairo$/,view:[0,20,52,40]},
+ /* two photo pins and a label on one spot in Samarkand: the observatory model stays, the label goes */
+ "science|Ulugh Beg’s observatory":{pinsDrop:/^Ulugh Beg’s observatory, Samarkand$/,view:[38,30,80,48]},
  "science|Galileo’s telescope":{pinsDrop:/^Florence$/,phLabel:{"Florence’s cathedral":"Florence: his last years"}},
  "science|Greenwich and longitude":{phDup:true,phDrop:/^Greenwich’s prime meridian$/},
+ /* the Galápagos, the subject, were under the card */
+ "science|Darwin in the Galápagos":{view:[-112,-10,-76,6]},
+ /* the Big Island was half under the card */
+ "science|The curve from a volcano":{view:[-163,17.5,-151,23.5]},
  "science|The natural nuclear reactor":{stat:"About 2 billion years ago a natural nuclear reactor started up by itself underground in Gabon, and ran on and off for hundreds of thousands of years"},
 });
 /* ---- Maths ---- */
 M({
  "maths|Counting in sixties":{pinsDrop:/^Babylon$/},
+ /* Madhava's coast was at the card's edge */
+ "maths|The Kerala school":{view:[63,6,85,15.5]},
  "maths|Eratosthenes measures the Earth":{phDrop:/^The Nile at Aswan$/},
 });
 /* ---- Psychology: places the cards name, which had no label on the map ---- */
 M({
  "psychology|Hokkaido’s frontier":{pinsAdd:[[[142.6,43.5],"Hokkaido: settled in the late 1800s","point"]]},
- "psychology|Winter in Tromsø":{pinsAdd:[[[-82.53,27.34],"Sarasota, Florida: 1.4%","point"]]},
- "psychology|Heat and tempers":{pinsAdd:[[[-112.07,33.45],"Phoenix: summer days above 40 °C","point"]]},
- "psychology|A world of right angles":{pinsAdd:[[[21.5,-21.5],"Kalahari: San foragers, hardly fooled","point"]]},
- "psychology|City minds":{pinsAdd:[[[12.57,55.68],"Copenhagen","point"]]},
- "psychology|Rice south, wheat north":{pinsAdd:[[[116.4,39.9],"Beijing: wheat","point"],[[121.47,31.23],"Shanghai: rice","point"]]},
+ "psychology|Winter in Tromsø":{view:[-185,10,45,85],pinsAdd:[[[-82.53,27.34],"Sarasota, Florida: 1.4%","point"]]},
+ "psychology|Heat and tempers":{view:[-156,22,-64,50]},
+ "psychology|City minds":{view:[-6,52,20,60]},
+ "psychology|One soil, two Germanys":{view:[-14,46,24,57]},
 });
 /* ---- Inventions ---- */
 M({
