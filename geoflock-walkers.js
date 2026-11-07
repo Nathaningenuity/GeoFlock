@@ -47,7 +47,7 @@
    marks:[{ll:[64,47],html:NEANCARD,w:250,h:62,title:"Neanderthals"}]},
   "humans|Africa joins Asia":{emoji:["🐘","🦧"],name:"Elephants and apes walking out of Africa",size:28,per:2},
   "humans|Denny, child of two kinds":{fig:[NEAN,DENI],name:"A Neanderthal and a Denisovan",size:46,per:1},
-  "islandlife|Christmas Island’s red crabs":{img:CRAB,name:"Red crabs on their way to the sea",size:18,per:2,dur:6500,lines:coast.map(c=>[CI,c])}};
+  "islandlife|Christmas Island’s red crabs":{img:CRAB,name:"Red crabs on their way to the sea",size:15,per:1,dur:6500,lines:coast.map((c,i)=>{const a=i/10*2*Math.PI+.3;return[[CI[0]+Math.cos(a)*.3,CI[1]+Math.sin(a)*.25],c]})}};
  /* travellers on other tours: [tour, stop, emoji (or one per route), what it is, options] */
  const NOFLIP=new Set(["⛵","🦋","🚀","🛶","🛷","🚆"]),SHIP="⛵",STEAM="🚢",CANOE="🛶",CAMEL="🐪";
  [["amigration","Animals on the move",["🕊️","🕊️","🐦","🦋","🐋"],"Animals on their yearly journeys",{per:1}],

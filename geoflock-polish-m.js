@@ -16,7 +16,7 @@ function dedupe(S){try{if(!S||!Array.isArray(S.phPins))return;const P=(window.GF
   const dup=people.some(pp=>(pp.f&&q._f&&pp.f===q._f)||(pp.at&&q.at&&Math.hypot(pp.at[0]-q.at[0],pp.at[1]-q.at[1])<.2&&pp.sn.length>2&&lab.includes(pp.sn)&&!/home|house|grave|tomb|museum/.test(lab)));
   if(dup)S.phPins.splice(i,1)}}catch(e){console.error(e)}}
 function wrapGo(){if(typeof psGo!=="function"||psGo._gfM)return typeof psGo==="function";const _g=psGo;
- psGo=function(i){try{sameLat();brandt();animalsNature()}catch(e){}try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];extras(S);dedupe(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfM=1;return true}
+ psGo=function(i){try{sameLat();brandt();animalsNature()}catch(e){}try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];extras(S);dedupe(S);stopFix(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfM=1;return true}
 let n=0;const t=setInterval(()=>{const a=wrapKey(),b=wrapGo();if(a&&b||++n>60)clearInterval(t)},500);
 /* 3. the Climate map's colours were softened (hot desert a rusty orange-red, cold desert pale salmon): the cards say so */
 const TXT=[["(red and orange on the climate map laid over it)","(rusty red and orange on the climate map laid over it)"],
@@ -26,6 +26,9 @@ function fixText(){try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).forEach(S
 /* 4. photo pins added to stops when they open (other scripts lock and reset a stop's photo pins after load, so these are
    added at the moment the stop is shown): each picture joins the photo library, the text pin or paw icon it replaces goes */
 const PH={
+ /* Island life: the Komodo dragon itself (the card shows the island-rule chart instead) and the Aldabra tortoise */
+ "islandlife|Island giants":{add:[{at:[119.45,-8.55],label:"Komodo dragon, 3 m long",col:"#1f8a7a",f:"Komodo dragon (Varanus komodoensis) walking in Komodo National Park, Indonesia.png",d:"photos/xfc364f6e6f7eeaf0.webp",by:"Komodoinside",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Komodo_dragon_%28Varanus_komodoensis%29_walking_in_Komodo_National_Park%2C_Indonesia.png"},
+  {at:[46.35,-9.42],label:"Aldabra giant tortoise",col:"#1f8a7a",f:"Aldabra giant tortoise (Aldabrachelys gigantea) in Curieuse Island - 02.jpg",d:"photos/x4cbc28ee4deef088.webp",by:"NorbertNagel",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Aldabra_giant_tortoise_%28Aldabrachelys_gigantea%29_in_Curieuse_Island_-_02.jpg"}]},
  /* Literature: legend says the great odes were hung on the Kaaba in Mecca, hence their name, the Mu'allaqat ("the hung ones") */
  "literature|Weeping at the campsite":{add:[{at:[39.83,21.42],label:"The Kaaba: where legend hung the odes",f:"The Kaaba during Hajj.jpg",d:"photos/da9206e8f82900f76.webp",by:"Adli Wahid",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:The_Kaaba_during_Hajj.jpg"}],dropPins:/^Mecca$/},
  /* Extinction: the rhinos themselves, at the sanctuary (the calf from the card's picture, cropped, so not a repeat of it) */
@@ -124,5 +127,21 @@ function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode=
 /* 11. tours on the Nature map: no fading veil, the biome colours and the relief under them show at full strength */
 (function(){let n=0;const t=setInterval(()=>{if(typeof psDimFill!=="function"){if(++n>40)clearInterval(t);return}if(psDimFill._gfNat){clearInterval(t);return}const _d=psDimFill;
  psDimFill=function(){try{const T=ps&&PS_TOURS[ps.tour],S=ps&&psSteps()[ps.i],m=(S&&S.mode)||(T&&T.map&&T.map.mode);if(m==="nature")return"rgba(0,0,0,0)"}catch(e){}return _d.apply(this,arguments)};psDimFill._gfNat=1;clearInterval(t)},500)})();
+/* 12. per-stop framing fixes, applied each time the stop opens (other scripts re-fit some views after load) */
+const SET=(S,k,v)=>{try{Object.defineProperty(S,k,{configurable:true,enumerable:true,writable:true,value:v})}catch(e){}};
+const GAL=S=>{SET(S,"view",[-92.1,-1.6,-89,0.8]);SET(S,"globe",[-90.5,-0.5,9]);SET(S,"hi",[]);SET(S,"hiSoft",[]);
+  if(Array.isArray(S.pins))SET(S,"pins",S.pins.filter(q=>!(Array.isArray(q)&&/^Ecuador$/.test(q[1]))))};
+const FIX={
+ "islandlife|The Galápagos":GAL,"islandlife|One finch, many finches":GAL,
+ /* Christmas Island close up, outlined like any highlighted country; no magnifier needed at this zoom */
+ "islandlife|Christmas Island’s red crabs":S=>{SET(S,"hi",["cx"]);
+  /* the island is only about 20 px across even at full zoom: its photo pins point at a ring just round it, never across it */
+  if(Array.isArray(S.phPins))S.phPins.forEach(q=>{if(q&&!q.ringKm){q.at=[105.63,-10.49];q.ringKm=16}})},
+ /* Island giants: wide enough for Aldabra; Komodo has its own photo pin */
+ "islandlife|Island giants":S=>{SET(S,"view",[38,-45,180,12])},
+ /* Island dwarfs: the whole world, so Wrangel's mammoths, the Key deer and the island fox show too */
+ "islandlife|Island dwarfs":S=>{SET(S,"view",[-150,-5,185,78]);SET(S,"globe",[20,40,1]);
+  if(Array.isArray(S.phPins))S.phPins.forEach(q=>{if(q&&q.at&&q.at[0]<-179)q.at=[179.4,71.2]})}};
+function stopFix(S){try{if(!S||typeof ps==="undefined"||!ps)return;const f=FIX[ps.tour+"|"+S.title];if(f)f(S)}catch(e){console.error(e)}}
 window.gfPolishM={dedupe};
 })();
