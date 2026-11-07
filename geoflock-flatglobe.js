@@ -373,7 +373,9 @@ function gfTourFrame(g,S){if(ps&&ps._gfDlHome===undefined)ps._gfDlHome=g._gfDl||
  let wide=false;if(v){let a=v[0],b=v[2];if(b<a)b+=360;wide=b-a>=120}
  /* a wide (world or half-world) stop is never turned more than it needs: a big turn makes the familiar map look strange */
  if(wide)want=gfMinTurn(v);
- else if(S.spin!=null&&!(S.flatViewW&&!gfFrameFits(S.flatViewW,S.spin)))want=nrm(S.spin);else if(gfFrameFits(v,cur))want=cur;else if(gfFrameFits(v,0))want=0;else{let a=v[0],b=v[2];if(b<a)b+=360;want=nrm(-Math.round((a+b)/2/5)*5)}
+ /* every other stop is centred on itself: the meridian through the middle of its view runs down the middle of the map,
+    where the map is least stretched (Africa on Greenwich-ish, the Galápagos on 90°W, never a Pacific-centred Africa) */
+ else if(v){let a=v[0],b=v[2];if(b<a)b+=360;want=nrm(-Math.round((a+b)/2))}else{let a=v[0],b=v[2];if(b<a)b+=360;want=nrm(-Math.round((a+b)/2/5)*5)}
  if(Math.abs(nrm(want-cur))>1e-6){g._gfOx=0;g._gfDl=want;g.request()}}
 window.gfTourFrame=gfTourFrame;
 (function(){const fix=()=>{if(typeof psScreen!=="function"||typeof psGlobeTarget!=="function"||psScreen._gfFlat)return false;
