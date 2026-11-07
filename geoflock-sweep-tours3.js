@@ -36,7 +36,6 @@ const NEW={
  kemal:{f:"Mustafa Kemal in Gallipoli.jpg",d:"photos/t3c723d34ee3f3df21.webp",by:"Unknown author",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Mustafa_Kemal_in_Gallipoli.jpg"},
  churchill:{f:"Winston Churchill 1945 (2x3 cropped).jpg",d:"photos/t39ef90376a95b0ef3.webp",by:"Central Office of Information",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Winston_Churchill_1945_(2x3_cropped).jpg"},
  yermak:{f:"Vasily Surikov - Yermak's Conquest of Siberia - Google Art Project.jpg",d:"photos/t3dcf89d924e20ccbf.webp",by:"Vasily Surikov",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Vasily_Surikov_-_Yermak%27s_Conquest_of_Siberia_-_Google_Art_Project.jpg"},
- jiaozi:{f:"Jiao zi.jpg",d:"photos/t3ecae30853c01816d.webp",by:"Unknown author",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Jiao_zi.jpg"},
  gorbachev:{f:"RIAN archive 770913 The final speech of the General Secretary of the CPSU Central Committee M. Gorbachev cropped.jpg",d:"photos/t329d3db1d218f89ac.webp",by:"Yuryi Abramochkin / RIA Novosti",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:RIAN_archive_770913_The_final_speech_of_the_General_Secretary_of_the_CPSU_Central_Committee_M._Gorbachev_cropped.jpg"},
  pervomaisk:{f:"Pervomaisk missile base.JPG",d:"photos/t34eb0506e8279c188.webp",by:"Michael",lic:"CC BY 3.0",page:"https://commons.wikimedia.org/wiki/File:Pervomaisk_missile_base.JPG"},
 };
@@ -148,8 +147,26 @@ Object.assign(P,{
 });
 /* ---- Money on the map ---- */
 Object.assign(P,{
- /* a print of a Song-dynasty note, where the first notes were used */
- "currencies|Paper money from China":{pinsDrop:/^Chengdu/,phAdd:[np("jiaozi",[104.07,30.67],"Chengdu: the first paper notes")]},
+ /* the opening map was the world of AD 200, with photos of Wall Street and Hong Kong on it: today's map instead */
+ "currencies|Money on the map":{sub:"2026"},
+ /* the Bank of England's own map: 1715, Great Britain, rather than 1700, where a “United Kingdom” label sat on the
+    separate kingdoms of England and Scotland */
+ "currencies|The pound sterling":{sub:"1715"},
+ /* Panama City twice on one spot */
+ "currencies|Dollarisation":{phDrop:/^Panama City$/},
+ /* the map of 1919 still drew the Austro-Hungarian Empire: 1925, the Germany of the hyperinflation */
+ "currencies|Germany, 1923":{sub:"1925"},
+});
+/* ---- Conflicts and peace ---- */
+Object.assign(P,{
+ /* today's missions (South Sudan, the Central African Republic, Kosovo) were labelled on the colonial map of 1950 */
+ "conflicts|Blue helmets":{sub:"2026"},
+ /* the map of 1945 has no Pakistan, yet a “Pakistan” label pointed into British India: today's map */
+ "conflicts|Kashmir":{sub:"2026"},
+ /* the Bakassi peninsula sat on the bottom edge of the map */
+ "conflicts|Settled in court":{view:[-25,-7,22,56]},
+ /* the arrows' labels piled up over Europe and the Middle East on a whole-world map: Colombia to Iran, a little closer */
+ "conflicts|Refugees: where people go":{view:[-95,-25,80,62]},
 });
 /* ---- GDP ---- */
 Object.assign(P,{
@@ -174,7 +191,17 @@ Object.assign(P,{
 /* ---- Ancient civilisations ---- */
 Object.assign(P,{
  /* it pointed to Empires and independence, a tour that is no longer on any shelf: the next tour is Medieval empires */
+ /* Rosetta, on the coast, was hidden under the year at the top of the map */
+ "hancient|Egypt and the pyramids":{view:[24,20,40,35]},
  "hancient|Now explore":{body:"Then take the Medieval empires tour, which picks up the story from about 500 AD."},
+});
+/* ---- Medieval empires ---- */
+Object.assign(P,{
+ /* places on the edge of the map: Kaifeng (top), Jerusalem (right corner), Lalibela (bottom), Novgorod (right) */
+ "hmedieval|Rice from Champa":{view:[96,8,126,40.5]},
+ "hmedieval|The Crusades":{view:[-12,25,50,56]},
+ "hmedieval|Churches carved down into rock":{view:[22,4,52,36]},
+ "hmedieval|Letters on birch bark":{view:[0,50,42,66]},
 });
 /* ---- Revolutions and industry ---- */
 Object.assign(P,{
@@ -195,6 +222,11 @@ Object.assign(P,{
 /* ---- Asia ---- */
 Object.assign(P,{
  /* country postcards that had nothing to do with the stop */
+ /* the stat names Spain, which was off the left edge; Java sat on the bottom-right corner */
+ "hasia|Islam’s rapid spread":{view:[-12,-12,128,50]},
+ /* photos and labels at the top edge sat under the map's year (Lumbini, Fergana) */
+ "hasia|Buddhism spreads":{view:[60,-14,145,54]},
+ "hasia|The Mughals":{view:[56,5,98,45.5]},
  "hasia|Angkor":{phDrop:/^(Thailand: Wat Arun, Bangkok|Laos: Kuang Si Falls)$/},
  "hasia|Gandhi and the princes":{phDrop:/^(India: Taj Mahal|Pakistan: K2)$/},
  "hasia|The Vietnam War":{phDrop:/^(Vietnam: Ha Long Bay|Cambodia: Angkor Wat)$/},
@@ -203,7 +235,12 @@ Object.assign(P,{
 /* ---- Africa ---- */
 Object.assign(P,{
  /* the Meroë pyramids twice on one spot */
- "hafrica|Kush against Rome":{phDrop:/^Sudan: Pyramids of Meroë$/},
+ /* the 1914 empires' colours made the opening map zoom out to the Atlantic and South America */
+ "hafrica|Africa’s history":{fn:S=>{S._histWide=1}},
+ /* photos at the top edge sat under the map's year (Aswan, the Alps, Oman), Zanzibar on the bottom edge */
+ "hafrica|Kush against Rome":{phDrop:/^Sudan: Pyramids of Meroë$/,view:[22,12,42,29.5]},
+ "hafrica|Carthage against Rome":{view:[-10,27,28,50.5]},
+ "hafrica|The Swahili coast":{view:[25,-18,80,32]},
  "hafrica|Two Benins":{phDrop:/^Nigeria: Zuma Rock$/},
  /* the stop quotes Nkrumah: Ghana's independence stamp with his portrait */
  "hafrica|Freedom, one by one":{phAdd:[{at:[-0.2,5.6],label:"Kwame Nkrumah on Ghana’s 1957 stamp",f:"KwameNkrumahOnGhanianIndependenceDay6March1957PostageStamp.JPG"}]},
@@ -211,6 +248,13 @@ Object.assign(P,{
 });
 /* ---- North America ---- */
 Object.assign(P,{
+ /* the empire's colour (Spain, Britain, the US) made the History map zoom out to the whole world; these stops stay on
+    their own region */
+ "hnamerica|Spain in the US":{fn:S=>{S._histWide=1}},
+ "hnamerica|Thirteen colonies":{fn:S=>{S._histWide=1}},
+ "hnamerica|Coast to coast by rail":{fn:S=>{S._histWide=1}},
+ /* Columbus's landing and portrait sat under the year at the top edge */
+ "hnamerica|The Taíno meet Columbus":{view:[-88,13,-62,29.5]},
  "hnamerica|Cahokia":{phDrop:/^United States: Grand Canyon$/},
  "hnamerica|The Taíno meet Columbus":{phDrop:/^(Cuba: Viñales Valley|Haiti: Citadelle Laferrière)$/},
 });
@@ -218,6 +262,8 @@ Object.assign(P,{
 Object.assign(P,{
   /* the grass rope bridge the text describes */
  "hsamerica|The Inca roads":{phAdd:[np("qeswachaka",[-71.4,-14.38],"Q’eswachaka: a grass rope bridge")]},
+ /* Caracas, where Bolívar's march began, sat on the top edge with its label cut off */
+ "hsamerica|The liberators":{view:[-90,-47,-46,17]},
  "hsamerica|Caral":{phDrop:/^Peru: Machu Picchu$/},
  "hsamerica|The Nazca lines":{phDrop:/^Peru: Machu Picchu$/},
  /* Rio twice on one spot */
