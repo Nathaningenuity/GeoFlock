@@ -68,7 +68,7 @@ function start(id,opts){try{if(typeof ps!=="undefined"&&ps)psEnd()}catch(e){}if(
  /* the whole world in view to start */try{const g=amGlobe;if(g){if(g._flat){g.zoom=1;g.request()}else g.lookAt(g.rot?-g.rot[0]:20,10,1)}}catch(e){}
  render();pos()}
 function stop(silent){if(!Z)return;try{gfPickQ=null}catch(e){}unarmPlace();if(Z.p)Z.p.remove();clearMark();Z=null}
-function dots(){return'<div class="gftq-dots">'+Z.L.map((q,i)=>{const r=Z.res[i];return'<i class="'+(i===Z.k?"cur ":"")+(r==null?"":r>=1?"ok":r>0?"half":"no")+'"></i>'}).join("")+"</div>"}
+function dots(){return'<div class="gftq-dots">'+Z.L.slice(0,10).map((q,i)=>{const r=Z.res[i];return'<i class="'+(i===Z.k?"cur ":"")+(r==null?"":r>=1?"ok":r>0?"half":"no")+'"></i>'}).join("")+"</div>"}
 const TYPE={mem:"From the tour",why:"Why?",map:"On the map",beyond:"Beyond the tour",use:"Use the idea"};
 /* on a map question the panel must not sit on the answer: if the place is under it, move to the other side of the map */
 function dodge(q){if(!Z||!Z.p)return;Z.p.classList.toggle("gftq-mapq",!!(q.pick||q.ll));let ll=q.ll;try{if(!ll&&q.pick){const c=COUNTRY_CENTROIDS[q.pick[0]];if(c)ll=[c[1],c[0]]}}catch(e){}
@@ -77,7 +77,7 @@ function dodge(q){if(!Z||!Z.p)return;Z.p.classList.toggle("gftq-mapq",!!(q.pick|
  setTimeout(go,80);setTimeout(go,700)}
 function render(){const q=Z.L[Z.k],p=Z.p;const lvl=q.d||3;
  p.innerHTML='<div class="gftq-h"><span>'+esc(tourName(Z.id))+' · quiz</span><button type="button" class="gftq-x" aria-label="Close">×</button></div>'+dots()+
-  '<div class="gftq-meta"><span>Question '+(Z.k+1)+' of '+Z.L.length+'</span><span class="gftq-lv">'+"●".repeat(Math.min(5,lvl))+"○".repeat(5-Math.min(5,lvl))+'</span><span class="gftq-t">'+esc(TYPE[q.t]||"")+'</span></div>'+
+  '<div class="gftq-meta"><span>'+(Z.k>=10?'<b class="gftq-bonus">⭐ Bonus question: get it right for '+(Math.round(Z.score)>=7?'gold':'silver')+'</b>':'Question '+(Z.k+1)+' of 10')+'</span><span class="gftq-lv">'+"●".repeat(Math.min(5,lvl))+"○".repeat(5-Math.min(5,lvl))+'</span><span class="gftq-t">'+esc(TYPE[q.t]||"")+'</span></div>'+
   '<p class="gftq-q">'+esc(q.q)+'</p>'+(q.img?'<img class="gftq-img" alt="" src="'+esc(q.img)+'">':"")+
   (q.pick?'<div class="gftq-act">👆 Click the country on the map</div>':q.ll?'<div class="gftq-act">📍 Click the place on the map</div>':'<div class="gftq-o">'+q.o.map((o,j)=>'<button type="button" data-j="'+j+'"><i>'+"ABCD"[j]+'</i>'+esc(o)+'</button>').join("")+'</div>')+
   '<div class="gftq-f"><button type="button" class="gftq-skip">Skip</button></div>';
@@ -100,15 +100,20 @@ function answer(v,how,skipped){if(!Z)return;const q=Z.L[Z.k],p=Z.p;try{gfPickQ=n
  const f=p.querySelector(".gftq-f");f.innerHTML='<div class="gftq-why '+(v>=1?"ok":v>0?"half":"no")+'"><b>'+(skipped?"Skipped.":v>=1?"Right!":v>0?"Close!":"Not quite.")+'</b> '+(res?res+". ":"")+esc(q.why||"")+
   (stamp?'<span class="gftq-stamp">Ink stamp: '+esc((COUNTRY_BY_CODE[stamp]||{}).n||stamp)+'</span>':"")+'</div><div class="gftq-acts">'+back+'<button type="button" class="gftq-next">'+(Z.k+1<Z.L.length?"Next →":"See your score →")+'</button></div>';
  const ma=p.querySelector(".gftq-act");if(ma)ma.remove();p.querySelector(".gftq-dots").outerHTML=dots();
- f.querySelector(".gftq-next").onclick=()=>{if(++Z.k<Z.L.length)render();else finish()};
+ f.querySelector(".gftq-next").onclick=()=>{if(++Z.k<Z.L.length)render();else if(bonus())render();else finish()};
  const b=f.querySelector(".gftq-back");if(b)b.onclick=()=>goStop(Z.id,q.st);save()}
 function goStop(id,title){const keep=Z;stop(true);try{psLaunchTour(id);setTimeout(()=>{try{const i=psSteps().findIndex(s=>s.title===title);if(i>=0)psGo(i)}catch(e){}},900)}catch(e){console.error(e)}}
-function medalOf(s){return s==null?{icon:"",name:""}:s>=9?{icon:"🥇",name:"Gold"}:s>=7?{icon:"🥈",name:"Silver"}:s>=5?{icon:"🥉",name:"Bronze"}:{icon:"",name:""}}
-function finish(){const sc=Math.round(Z.score*10)/10,S=st(),R=S[Z.id]=S[Z.id]||{};R.runs=(R.runs||0)+1;const prev=R.best;R.best=Math.max(R.best||0,sc);save();
+function medalOf(s){return s==null?{icon:"",name:""}:s>=8?{icon:"🥇",name:"Gold"}:s>=6?{icon:"🥈",name:"Silver"}:s>=5?{icon:"🥉",name:"Bronze"}:{icon:"",name:""}}
+/* one point short of the next level (5 → silver at 6, 7 → gold at 8): one bonus question, worth that point */
+function bonus(){try{if(Z.bonus||Z.L.length!==10)return false;const sc=Math.round(Z.score*10)/10;if(sc!==5&&sc!==7)return false;
+ const used=new Set(Z.L.map(q=>q._k||q.q)),P=pool(Z.id).filter(q=>!used.has(q._k||q.q));if(!P.length)return false;
+ const pick=P.slice().sort((a,b)=>Math.abs((a.d||3)-3)-Math.abs((b.d||3)-3))[Math.floor(Math.random()*Math.min(4,P.length))];
+ Z.L.push(prep(pick));Z.bonus=true;return true}catch(e){console.error(e);return false}}
+function finish(){if(Z.L.length>10){Z.score=Math.min(10,Z.score)}const sc=Math.round(Z.score*10)/10,S=st(),R=S[Z.id]=S[Z.id]||{};R.runs=(R.runs||0)+1;const prev=R.best;R.best=Math.max(R.best||0,sc);save();
  try{if(typeof xpGain==="function")xpGain(Math.round(sc*3),"tour quiz")}catch(e){}
  const m=medalOf(sc),miss=Z.L.map((q,i)=>[q,Z.res[i]]).filter(([,r])=>!(r>=1));
  const card=document.createElement("div");card.className="gftq-res";card.innerHTML='<div class="gftq-rbox" role="dialog" aria-label="Quiz results"><button type="button" class="gftq-x" aria-label="Close">×</button>'+
-  '<div class="gftq-rh">'+(m.icon?'<span class="gftq-medal">'+m.icon+'</span>':"")+'<div><small>'+esc(tourName(Z.id))+' · tour quiz</small><b>'+sc+' / 10</b><span>'+(sc>=9?"Mastered!":sc>=7?"Very good.":sc>=5?"Good going.":sc>=3?"A start: a second run gets easier.":"Every run teaches something: try again.")+(prev!=null&&sc>prev?" New best!":"")+'</span></div></div>'+
+  '<div class="gftq-rh">'+(m.icon?'<span class="gftq-medal">'+m.icon+'</span>':"")+'<div><small>'+esc(tourName(Z.id))+' · tour quiz</small><b>'+sc+' / 10</b><span>'+(sc>=8?"Mastered!":sc>=6?"Passed: very good.":sc>=5?"Good going.":sc>=3?"A start: a second run gets easier.":"Every run teaches something: try again.")+(prev!=null&&sc>prev?" New best!":"")+'</span></div></div>'+
   (Z.stamps.length?'<div class="gftq-rs"><small>Ink stamps earned</small>'+Z.stamps.map(c=>'<span>'+esc((COUNTRY_BY_CODE[c]||{}).n||c)+'</span>').join("")+'</div>':"")+
   (miss.length?'<div class="gftq-rm"><small>To look at again</small>'+miss.map(([q])=>'<div><p>'+esc(q.q)+'</p><em>'+esc(q.o?q.o[q.a]:q.pick?q.pick.map(c=>(COUNTRY_BY_CODE[c]||{}).n||c).join(" or "):"")+'</em>'+(q.st?'<button type="button" data-st="'+esc(q.st)+'">Back to this stop</button>':"")+'</div>').join("")+'</div>':"")+
   '<div class="gftq-ra"><button type="button" class="gftq-again">Another round</button><button type="button" class="gftq-done">Done</button></div></div>';
@@ -142,6 +147,11 @@ function mark(ll){addMark(ll,"it");try{const g=amGlobe;if(g._flat){g.zoom=1;g.re
 /* ---------- the quiz on the tours' tiles and lists ---------- */
 function decorate(){try{document.querySelectorAll("[data-tour]").forEach(el=>{const id=el.dataset.tour,r=st()[id];if(!r||r.best==null||el.querySelector(".gftq-tile"))return;const m=medalOf(r.best);if(!m.icon)return;
   const b=document.createElement("span");b.className="gftq-tile";b.title="Tour quiz: best "+r.best+"/10";b.textContent=m.icon;el.appendChild(b)})}catch(e){}}
+/* the mark on a tour's picture: ✓ finished, ★ finished and quiz passed (6+), 👑 mastered (quiz 8+) */
+function levelMarks(){try{document.querySelectorAll("#toursView .tr-card").forEach(c=>{const t=c.querySelector(".tr-thumb[data-tour-go]"),m=c.querySelector(".tr-done");if(!t||!m)return;const r=st()[t.dataset.tourGo]||{},b=r.best;
+  const L=b>=8?["👑","Mastered: tour finished and quiz 8/10 or more","l3"]:b>=6?["★","Passed: tour finished and quiz 6/10 or more","l2"]:["✓","Finished","l1"];
+  if(m.dataset.lv!==L[2]){m.dataset.lv=L[2];m.textContent=L[0];m.title=L[1];m.className="tr-done gftq-"+L[2]}})}catch(e){}}
+setInterval(levelMarks,800);
 function cards(){try{document.querySelectorAll("#toursView .tr-card .tr-foot").forEach(f=>{if(f.querySelector(".gftq-go"))return;const go=f.querySelector(".tr-go[data-tour-go]");if(!go)return;
   const id=go.dataset.tourGo;if(!available(id))return;const r=st()[id]||{},m=medalOf(r.best),done=/Finished/.test((f.querySelector(".tr-progtxt")||{}).textContent||"");
   const q=document.createElement("button");q.type="button";q.className="gftq-go"+(done?" lead":"");q.dataset.gftqGo=id;
@@ -151,8 +161,10 @@ function cards(){try{document.querySelectorAll("#toursView .tr-card .tr-foot").f
 setInterval(cards,700);
 setInterval(()=>{decorate();invite()},1500);
 let n=0;const t=setInterval(()=>{const a=wrapTq(),b=wrapEnd();if(typeof psGo==="function"&&!psGo._gftq){const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);setTimeout(invite,300);setTimeout(invite,1200);return r};psGo._gftq=1}if(a&&b&&psGo._gftq||++n>60)clearInterval(t)},500);
-window.gfTourQuiz={start,stop,pool,draw,available};
+window.gfTourQuiz={start,stop,pool,draw,available,_z:()=>Z};
 {const s=document.createElement("style");s.textContent=`
+.tr-done.gftq-l2{background:#c9a227!important;color:#fff!important}.tr-done.gftq-l3{background:linear-gradient(135deg,#f7d774,#d99a1e)!important;font-size:17px!important}
+.gftq-bonus{color:#c26a00}
 .tr-foot.gftq-done .tr-prog,.tr-foot.gftq-done .tr-progtxt{display:none}
 .tr-foot.gftq-done{background:none!important;box-shadow:none!important;padding:0!important;flex-wrap:wrap;gap:8px}.tr-foot.gftq-done>.gftq-go,.tr-foot.gftq-done>.tr-go{flex:1 1 auto;margin-left:0!important;justify-content:center;text-align:center;min-width:0}
 .tr-foot .gftq-go,.tr-foot .tr-go.gftq-second{max-width:100%;box-sizing:border-box}
