@@ -182,5 +182,8 @@ function climStop(S){if(!S||S._gfCs)return;S._gfCs=1;if(S.mode==="satellite")SET
   /* back: each switch as it was (tried for a few seconds, as the map's own switching can reset some of them) */
   if(!night&&saved){if(was)saved._n=0;let left=0;IDS.forEach(id=>{const c=document.getElementById(id);if(c&&saved[id]!=null&&c.checked!==saved[id]){c.click();left++}});if(++saved._n>8||!left&&saved._n>3)saved=null}
   was=night}catch(e){}},500)})();
+/* 15. gentler terrain shading by default on the picture relief styles (0.3 looked heavy); a value someone set stays */
+(function(){let n=0;const t=setInterval(()=>{if(typeof gfMS!=="function"){if(++n>40)clearInterval(t);return}clearInterval(t);
+ try{const M=gfMS();if(!M.shadeV3){M.shadeV3=1;if(M.shadeB==null||Math.abs(M.shadeB-.3)<1e-6)M.shadeB=.16;try{gfMSsave()}catch(e){}try{gfMsRefresh()}catch(e){}try{gfGlobeDirty()}catch(e){}}}catch(e){}},300)})();
 window.gfPolishM={dedupe};
 })();
