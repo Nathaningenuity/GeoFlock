@@ -107,6 +107,49 @@ function notice(){if(S.shut||shutNow||document.getElementById("gfPerfNote"))retu
  n.querySelector(".gpn-x").onclick=()=>{shutNow=true;n.remove()};
  n.querySelector(".gpn-never").onclick=()=>{S.shut=1;save();n.remove()};
  n.querySelector(".gpn-sharp input").onchange=e=>{S.ov=e.target.checked?"sharp":null;save();apply()}}
+/* ---------- the page's class switches that change nothing ----------
+   Measured (globe drag on Relief): every pointer move took a class off the page that was not on it (the layer
+   tooltip's), and the page counts any write to its classes as a change and draws the whole globe again at once, outside
+   the frame. That was a second full globe drawing for each move, the largest single cost of a drag (about 2 of the 3
+   seconds spent drawing). Adding a class the page already has, or removing one it does not have, now writes nothing. */
+{const fix=()=>{const b=document.body;if(!b){document.addEventListener("DOMContentLoaded",fix,{once:true});return}const cl=b.classList;if(cl._gfNoop)return;cl._gfNoop=1;
+ const A=DOMTokenList.prototype.add,R=DOMTokenList.prototype.remove,okT=t=>typeof t==="string"&&t&&!/\s/.test(t);
+ cl.add=function(...t){if(t.length&&t.every(x=>okT(x)&&this.contains(x)))return;return A.apply(this,t)};
+ cl.remove=function(...t){if(t.length&&t.every(x=>okT(x)&&!this.contains(x)))return;return R.apply(this,t)}};fix()}
+/* ---------- point-in-shape tests that skip the far-away pieces ----------
+   Measured (History map playing): working out which modern names to show under each year's empires tested every
+   country's label point against every polity, about 12 of the 17 seconds of drawing in a 6 s pan; the same set of
+   polities lasts many years, and each year was worked out again. On the globe, finding a spot inside a country near the
+   rim (for its name) was about a third of each frame, mostly the same kind of test. Now:
+   - a point is tested only against the pieces (islands, exclaves) whose bounding box holds it: the same answer, since a
+     piece cannot contain a point outside its own box;
+   - the History map's names are kept for each set of polities (that set is one fixed list, so its answer never changes). */
+(function(){
+ if(typeof d3==="undefined"||!d3.geoContains||!d3.geoBounds)return;
+ const GC=d3.geoContains,PB=new WeakMap,E=1e-4;
+ const pb=P=>{let b=PB.get(P);if(b===undefined){try{b=d3.geoBounds({type:"Polygon",coordinates:P});if(!b||!isFinite(b[0][0])||!isFinite(b[0][1]))b=null}catch(e){b=null}PB.set(P,b)}return b};
+ const inB=(b,ll)=>{if(!b)return true;const la=ll[1];if(!(la>=b[0][1]-E&&la<=b[1][1]+E))return false;const w=b[0][0],e=b[1][0];if(e-w>=360-E)return true;
+  let lo=ll[0];if(lo<-180||lo>180)lo=((lo+180)%360+360)%360-180;return w<=e?lo>=w-E&&lo<=e+E:lo>=w-E||lo<=e+E};
+ function fast(o,ll){try{const g=o&&o.type==="Feature"?o.geometry:o;if(!g||!ll||!isFinite(ll[0])||!isFinite(ll[1]))return GC(o,ll);
+  if(g.type==="Polygon")return inB(pb(g.coordinates),ll)?GC(g,ll):false;
+  if(g.type==="MultiPolygon"){const C=g.coordinates;for(let i=0;i<C.length;i++){const P=C[i];if(P&&P.length&&inB(pb(P),ll)&&GC({type:"Polygon",coordinates:P},ll))return true}return false}}catch(e){}return GC(o,ll)}
+ let depth=0;const withFast=fn=>{if(d3.geoContains!==GC&&!depth)return fn();depth++;d3.geoContains=fast;try{return fn()}finally{if(!--depth)d3.geoContains=GC}};
+ window.gfFastContains=fast;
+ const hookVA=()=>{try{const P=GlobeView.prototype,f=P._visibleAnchor;if(!f||f._gfFast)return;const w=function(){return withFast(()=>f.apply(this,arguments))};w._gfFast=1;P._visibleAnchor=w}catch(e){}};
+ const hookHM=()=>{try{if(typeof gfHistModern!=="function"||gfHistModern._gfFast)return;const f=gfHistModern,byFr=new WeakMap;
+  const w=function(){let fr=null,pf=null;try{fr=histFeatures(histIdx);pf=projFeatures()}catch(e){}const ok=fr&&typeof fr==="object"&&fr.length&&pf&&pf.length;
+   if(ok){const m=byFr.get(fr);if(m&&m.pf===pf&&m.n===pf.length){try{gfHistNames[histIdx]=m.r}catch(e){}return m.r}}
+   /* (a year's names worked out before its borders had loaded are not kept) */if(ok){try{delete gfHistNames[histIdx]}catch(e){}}
+   const r=withFast(()=>f.apply(this,arguments));if(ok&&r)byFr.set(fr,{pf,n:pf.length,r});return r};w._gfFast=1;window.gfHistModern=w}catch(e){}};
+ hookVA();hookHM();setTimeout(()=>{hookVA();hookHM()},0);
+ /* the visible pieces of a country (the globe and the flat map leave out islands that are out of view) come back as the
+    same object while they are the same pieces: the flat map keeps every shape ready drawn by the object, and a new
+    object each frame made it trace those outlines again while panning zoomed in */
+ try{if(typeof globeVisibleParts==="function"&&!globeVisibleParts._gfSame){const f=globeVisibleParts,M=new WeakMap;
+  const w=function(F,lodF){const r=f.apply(this,arguments);if(!r||r===lodF||!lodF||typeof lodF!=="object"||!r.geometry||!Array.isArray(r.geometry.coordinates))return r;
+   const k=r.geometry.coordinates,c=M.get(lodF);if(c&&c.properties===r.properties&&c.geometry.type===r.geometry.type){const q=c.geometry.coordinates;if(q.length===k.length){let same=true;for(let i=0;i<k.length;i++)if(q[i]!==k[i]){same=false;break}if(same)return c}}
+   M.set(lodF,r);return r};w._gfSame=1;globeVisibleParts=w}}catch(e){}
+})();
 /* ---------- decoration that never stops costs every frame on every device ----------
    Measured: the six blurred background clouds drifting forever (a 34 px blur moved and turned every frame) took the
    page from 25 to 8 frames a second at rest; the star twinkle and the twinkle on a map button cost a little more.
