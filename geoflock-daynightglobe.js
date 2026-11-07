@@ -39,7 +39,7 @@ function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let
  {const c0=c,cy=-g.rot[1];if(E-W>110){W=Math.max(W,c0-55);E=Math.min(E,c0+55)}if(N-Sx>80){N=Math.min(N,cy+40);Sx=Math.max(Sx,cy-40)}}
  /* a margin wider than the fade at the patch's edge, so the fade stays off screen */
  const mx=Math.max(.5,(E-W)*.08),my=Math.max(.5,(N-Sx)*.08);N=Math.min(85,N+my);Sx=Math.max(-85,Sx-my);W-=mx;E+=mx;
- if(W<-180||E>180){/* across the date line: keep the larger side */if(W<-180){if(-180-W>E+180)return null;W=-180}if(E>180){if(E-180>180-W)return null;E=180}}return[W,N,E,Sx]}catch(e){return null}}
+ /* across the date line the patch simply runs past ±180° (the tiles wrap round, and the shader reads longitudes from the patch's west edge) */if(E-W>=359)return null;return[W,N,E,Sx]}catch(e){return null}}
 function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){PDBG="not globe";return null}
  const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),ppdNeed=g.projection().scale()*Math.PI/180*dpr,z=gfGibs.level(ppdNeed);
  if(z==null){if(st.P){try{G.gl.deleteTexture(st.P.t)}catch(e){}st.P=null}return null}
@@ -49,7 +49,7 @@ function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amG
  const moving=g._gfDown||g._flying||now-pViewT<120;
  PDBG="z"+z+(moving?" moving":"")+(spin?" spin":"");if(!moving){let b=viewBounds(g);
    /* a fast spin (more than a view's width in 30 s) gets no patch: it would be gone before it loaded */
-   if(b&&spin){const d=((window.GFS&&GFS.degPerS)||6)*30/Math.max(1,g.zoom);if(d>b[2]-b[0])b=null;else b=[Math.max(-180,b[0]-d),b[1],Math.min(180,b[2]+d),b[3]]}PDBG+=" b="+JSON.stringify(b);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
+   if(b&&spin){const d=((window.GFS&&GFS.degPerS)||6)*30/Math.max(1,g.zoom);if(d>b[2]-b[0])b=null;else {b=[b[0]-d,b[1],b[2]+d,b[3]];if(b[2]-b[0]>=359)b=null}}PDBG+=" b="+JSON.stringify(b);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
    /* a patch counts only if it is for this globe and none of its tiles failed (else it is made again after a few seconds) */
    if(st.P&&st.P.miss&&!st.P.part&&performance.now()-st.P.at>4000&&st.key===key){st.key="";st.P.at=performance.now()}
    const P=st.P&&st.P.G===G&&!st.P.miss?st.P:null,v=spin?viewBounds(g)||b:b,inside=P&&P.z===z&&v[0]>=P.b[0]&&v[2]<=P.b[2]&&v[1]<=P.b[1]&&v[3]>=P.b[3];
@@ -141,11 +141,11 @@ void main(){
   vec3 day = textureGrad(uSat, vec2(u, v), gx, gy).rgb;
   vec3 ngt = textureGrad(uNight, vec2(u, v), gx, gy).rgb;
   /* sharper daylight picture where a patch of NASA tiles covers the view; the tiles' sea is clear, so our sea stays */
-  if(uDPatchOn > 0.5){ float ld = mod(degrees(lam) + 180.0, 360.0) - 180.0, pd = degrees(phi);
+  if(uDPatchOn > 0.5){ float ld = uDPB.x + mod(degrees(lam) - uDPB.x, 360.0), pd = degrees(phi);
     vec2 pv = vec2((ld - uDPB.x) / (uDPB.z - uDPB.x), (uDPB.y - pd) / (uDPB.y - uDPB.w));
     if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uDPatch, pv); day = mix(day, pc.rgb, pc.a * pedge(pv)); } }
   /* sharper night lights where a patch of NASA tiles covers the view (uPB: west, north, east, south in degrees) */
-  if(uPatchOn > 0.5){ float ld = mod(degrees(lam) + 180.0, 360.0) - 180.0, pd = degrees(phi);
+  if(uPatchOn > 0.5){ float ld = uPB.x + mod(degrees(lam) - uPB.x, 360.0), pd = degrees(phi);
     vec2 pv = vec2((ld - uPB.x) / (uPB.z - uPB.x), (uPB.y - pd) / (uPB.y - uPB.w));
     if(pv.x >= 0.0 && pv.x <= 1.0 && pv.y >= 0.0 && pv.y <= 1.0){ vec4 pc = texture(uPatch, pv); ngt = mix(ngt, pc.rgb, pc.a * pedge(pv)); } }
   float s = dot(nrm(phi, lam), uSun);
