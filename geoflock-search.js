@@ -133,13 +133,18 @@ function photoOf(f){if(!f)return null;try{if(typeof gfMergeExtra==="function")gf
    depending on length, compared with the whole name and with its beginning (for names still being typed) */
 const squash=s=>s.replace(/(.)\1+/g,"$1").replace(/ph/g,"f").replace(/y/g,"i").replace(/ou/g,"u").replace(/ck/g,"k");
 function lev(a,b,max){if(Math.abs(a.length-b.length)>max)return max+1;let p=Array.from({length:b.length+1},(_,i)=>i);for(let i=1;i<=a.length;i++){const c=[i];let lo=i;for(let j=1;j<=b.length;j++){c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));lo=Math.min(lo,c[j])}if(lo>max)return max+1;p=c}return p[b.length]}
-function score(q,keys){let best=9;const sq=squash(q),max=q.length>=8?2:q.length>=4?1:0;
+/* "island", "islands", "isles" and a plural "s" don't change what is meant: "clipperton islands" finds Clipperton Island,
+   "christmas islands" Christmas Island, "canary island" the Canary Islands. Both sides are compared without them */
+const fold=s=>s.replace(/\b(islands?|isles?|atolls?)\b/g," ").replace(/\b(\w{3,})s\b/g,"$1").replace(/\s+/g," ").trim();
+const foldKeys=keys=>keys.map(fold);
+function score(q,keys,fkeys){let best=9;const sq=squash(q),max=q.length>=8?2:q.length>=4?1:0,fq=fold(q);
+ if(fq.length>=3&&(fkeys||foldKeys(keys)).includes(fq))best=.3;
  for(const k of keys){if(k===q)return 0;if(k.startsWith(q))best=Math.min(best,1);else if(k.split(/[ -]/).some(w=>w.startsWith(q)))best=Math.min(best,2);else if(q.length>=4&&k.includes(q))best=Math.min(best,3);
   if(best>3&&max){const sk=squash(k);if(sk===sq||sk.startsWith(sq))best=Math.min(best,4);else{const d=Math.min(lev(sq,sk,max),lev(sq,sk.slice(0,sq.length),max));if(d<=max)best=Math.min(best,4+d)}}}
  return best}
-function find(q,all){q=norm(q);if(q.length<2)return[];const out=[];build().forEach(e=>{let best=score(q,e.keys);
+function find(q,all){q=norm(q);if(q.length<2)return[];const out=[],fq=fold(q);build().forEach(e=>{let best=score(q,e.keys,e.fkeys||(e.fkeys=foldKeys(e.keys)));
  /* a place whose own name is what was typed beats one that only has it as another name (Tahiti the island before the Society Islands) */
- if(best===0&&norm(e.n)!==q)best=.5;if(best<9)out.push([best,e.fame||3,e])});
+ if(best===0&&norm(e.n)!==q)best=.5;if(best===.3&&e.fkeys[0]!==fq)best=.6;if(best<9)out.push([best,e.fame||3,e])});
  out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2].n.length-b[2].n.length);return all?out.slice(0,8):out.slice(0,7).map(x=>x[2])}
 const active=()=>typeof appMode!=="undefined"&&appMode==="allmaps"&&!(typeof proj!=="undefined"&&proj.on)&&!(()=>{const d=document.getElementById("gfDeep");return d&&!d.hidden})();
 const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof amGlobe!=="undefined"&&!!amGlobe}catch(e){return false}};

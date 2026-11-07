@@ -332,15 +332,23 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
 (function(){const fix=()=>{if(typeof amtToLL!=="function"||amtToLL._gfFlat)return false;const _a=amtToLL;
   amtToLL=function(cx,cy){try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(g&&g._flat&&g.host&&g.host.isConnected&&g.host.offsetParent){const r=g.canvas.getBoundingClientRect();if(cx<r.left||cx>r.right||cy<r.top||cy>r.bottom)return null;const p=g.projection(),ll=p.invert([cx-r.left,cy-r.top]);return ll&&isFinite(ll[0])?ll:null}}catch(e){}return _a.apply(this,arguments)};amtToLL._gfFlat=1;return true};
  if(!fix()){const t=setInterval(()=>{if(fix())clearInterval(t)},500)}})();
-/* a small hovered country's outline (Monaco, San Marino) is drawn again last, over the city dots and the labels: only its
-   real border, never the enlarged hover area of a tiny place (that showed as a strange ring) */
-(function(){const P=GlobeView.prototype,_r=P._render;P._render=function(){const r=_r.apply(this,arguments);try{const code=this.hot,ctx=this.ctx;if(!code||!ctx)return r;
-  const fs=(this._base||[]).filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return r;
-  /* only small countries (Monaco, San Marino): bigger ones keep their normal outline under the labels */let pa=0;try{const gp=d3.geoPath(this.projection());fs.forEach(f=>{pa+=gp.area(f)})}catch(e){return r}if(!(pa<900))return r;
-  const dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
-  if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
-  const path=d3.geoPath(this.projection(),ctx);ctx.lineJoin="round";
-  fs.forEach(f=>{ctx.beginPath();path(f);ctx.strokeStyle="#ffffff";ctx.lineWidth=2*Math.max(.35,Math.min(1.2,.42*Math.pow(this.zoom,.6)));ctx.stroke()});/* as thin as the normal highlight *//* the same white line as the normal highlight */ctx.restore()}catch(e){}return r}})();
+/* a small hovered or searched country (Monaco, San Marino, Saint Pierre and Miquelon, Bermuda) is outlined last, over the
+   city dots and the labels: only its real border, never the enlarged hover area of a tiny place (that showed as a strange
+   ring). The usual white line straddles the border, and on a place only a few pixels wide it filled the whole place with
+   white: here the line is drawn just outside the coast, so the land and its relief stay visible inside, under a light tint */
+(function(){const P=GlobeView.prototype,_r=P._render;
+ const small=(g,code)=>{const fs=(g._base||[]).filter(f=>f&&f.properties&&f.properties.c===code);if(!fs.length)return null;let pa=0;try{const gp=d3.geoPath(g.projection());fs.forEach(f=>{pa+=gp.area(f)})}catch(e){return null}return pa<900?fs:null};
+ P._render=function(){const code=this.hot;let fs=null;try{if(code&&this.ctx)fs=small(this,code)}catch(e){}
+  /* the main drawing leaves this place's outline to the code below */
+  if(fs)this.hot=null;let r;try{r=_r.apply(this,arguments)}finally{if(fs&&this.hot===null)this.hot=code}if(!fs)return r;
+  try{const ctx=this.ctx,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),{w,h}=this.size();ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);
+   if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,this.size().r,0,2*Math.PI);ctx.clip()}
+   const path=d3.geoPath(this.projection(),ctx),lw=2*Math.max(.35,Math.min(1.2,.42*Math.pow(this.zoom,.6)));ctx.lineJoin="round";
+   const shape=()=>{ctx.beginPath();fs.forEach(f=>path(f))};
+   shape();ctx.fillStyle="rgba(255,255,255,.16)";ctx.fill();
+   /* only the outer half of a line twice as wide: as wide as the normal highlight, and none of it on the land */
+   ctx.beginPath();ctx.rect(-10,-10,w+20,h+20);fs.forEach(f=>path(f));ctx.clip("evenodd");
+   shape();ctx.strokeStyle="#ffffff";ctx.lineWidth=lw*2;ctx.stroke();ctx.restore()}catch(e){}return r}})();
 /* jumping to a country frames its mainland (with the pieces right next to it); far-off islands that belong to it (the
    Azores, the Canaries, Hawaii…) are simply shown if they fit, not used to centre or size the view */
 (function(){const P=GlobeView.prototype,_fly=P.flyTo;if(!_fly)return;
