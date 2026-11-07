@@ -13,7 +13,7 @@ window.gfMaxZoom=256;
 const MINZ=5,COASTZ=7,MAXZ=14,TILEPX=256,MAXTILES=36,PAR=10;
 let URL0="https://tiles.openfreemap.org/planet/20261101_080013_pt/{z}/{x}/{y}.pbf",urlP=null;
 function tileUrl(){if(!urlP)urlP=fetch("https://tiles.openfreemap.org/planet").then(r=>r.json()).then(j=>{if(j&&j.tiles&&j.tiles[0])URL0=j.tiles[0];return URL0}).catch(()=>URL0);return urlP}
-const view=g=>{try{if(g&&g._gfProj)return!!(typeof proj!=="undefined"&&proj.on);return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==="allmaps"&&allMapsColorMode!=="history"}catch(e){return false}};
+const view=g=>{try{if(g&&g._gfProj)return!!(typeof proj!=="undefined"&&proj.on);return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==="allmaps"&&allMapsColorMode!=="history"&&allMapsColorMode!=="night"/* City Lights: no detailed outlines */}catch(e){return false}};
 /* other views (the Projections map) get a redraw when tiles arrive */
 const REDRAW=new Set();const redraw=()=>{try{amGlobe&&amGlobe.request()}catch(e){}REDRAW.forEach(f=>{try{f()}catch(e){}})};
 
