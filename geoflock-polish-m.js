@@ -119,7 +119,7 @@ function sameLat(){let n=0;try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).f
 /* 10. the Animals tour runs on the Nature map's Biomes view (animals live by biome); its cover is the map of its seventeen animal photos */
 function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode="nature";if(T.m)T.m.mode="nature";if(T.map)T.map.mode="nature";else T.map={mode:"nature"};
  (T.steps||[]).forEach(S=>{if(S&&(!S.mode||S.mode==="relief")&&!S.sub){S.mode="nature";if(!S.nsub)S.nsub="biomes"}});
- try{if(typeof TOUR_THUMBS!=="undefined")TOUR_THUMBS.animals="photos/cover_animals.webp?v=2"}catch(e){}return true}catch(e){return false}}
+ try{if(typeof TOUR_THUMBS!=="undefined")TOUR_THUMBS.animals="photos/cover_animals.webp?v=3"}catch(e){}return true}catch(e){return false}}
 [0,1500,4000,9000].forEach(ms=>setTimeout(animalsNature,ms));
 /* 11. tours on the Nature map: no fading veil, the biome colours and the relief under them show at full strength */
 (function(){let n=0;const t=setInterval(()=>{if(typeof psDimFill!=="function"){if(++n>40)clearInterval(t);return}if(psDimFill._gfNat){clearInterval(t);return}const _d=psDimFill;
