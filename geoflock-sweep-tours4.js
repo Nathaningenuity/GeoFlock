@@ -225,6 +225,93 @@ A("bjourneywest|Over the Pamirs",{view:[62,33,82,41.5]});
 A("bjourneywest|Home along the Taklamakan",{view:[60,33,112,44],stat:"The Taklamakan, about 1,000 km across, is one of the largest sand deserts on Earth",
  rep:[["Xuanzang took the southern road around it, from oasis to oasis.","Xuanzang took the southern road around it, from oasis to oasis (drag the ruler across the sand)."]]});
 
+/* The Silk Roads: the western end of each road (Constantinople, Venice, Antioch, Birka, Genoa, Duisburg...) sat under the
+   card; frames moved west. Country-name pins beside the map's own labels go. */
+A("bsilkroads|The Silk Roads",{view:[-70,0,125,58]});
+A("bsilkroads|Now explore",{view:[-70,0,125,58]});
+A("bsilkroads|The world’s centre",{view:[5,18,95,52]});
+A("bsilkroads|Persia’s royal road",{view:[6,24,58,44]});
+A("bsilkroads|Silk and heavenly horses",{view:[-10,22,115,48]});
+A("bsilkroads|Roads of faith",{view:[-10,15,118,46]});
+A("bsilkroads|Furs, slaves and silver",{view:[-18,28,62,64]});
+A("bsilkroads|Crusades and Italian fortunes",{view:[-20,26,46,50]});
+A("bsilkroads|The Mongol road",{view:[-50,15,130,58]});
+A("bsilkroads|The Black Death",{view:[-45,30,82,56]});
+A("bsilkroads|The Great Game",{view:[48,30.3,79.2,43.5]});
+A("bsilkroads|The road of black gold",{view:[28,22,64,44]});
+A("bsilkroads|The road of wheat",{view:[12,38,54,56],pinsDrop:/^Ukraine$/});
+A("bsilkroads|1979 and after",{view:[14,18,80,44],pinsDrop:/^(Iran|Afghanistan|Iraq)$/});
+A("bsilkroads|The new Silk Roads",{view:[-60,0,125,58],pinsDrop:/^China$/});
+
+/* Plagues and Peoples: frames moved west so the western end of each route sits right of the card (Kansas and Boston in
+   1918, Hispaniola and Seville in 1520, London and Bergen in 1348, Marseille in 541...) */
+A("bplagues|Born among parasites",{view:[-46,-36,62,24]});
+A("bplagues|Crowds, farms and new diseases",{view:[10,22,62,44],pinsDrop:/^(Iraq|Syria|Turkey|Iran)$/});
+A("bplagues|Four pools of disease",{view:[-60,0,135,56]});
+A("bplagues|The pools meet: Rome and Han China",{view:[-60,4,128,52]});
+A("bplagues|The Plague of Justinian",{view:[-28,22,48,50]});
+A("bplagues|From Caffa to Europe, 1346–1351",{view:[-42,28,52,64]});
+A("bplagues|Forty days: the first quarantines",{view:[-15,36,32,49]});
+A("bplagues|Smallpox conquers Mexico",{view:[-160,-2,-2,42]});
+A("bplagues|Fevers that guarded Africa",{view:[-140,-10,20,35]});
+A("bplagues|Cholera follows the pilgrims and the armies",{view:[-60,8,100,60]});
+A("bplagues|The influenza of 1918",{view:[-180,-2,28,60]});
+A("bplagues|The end of smallpox",{view:[-52,-12,60,58],pinsDrop:/^Somalia$/});
+A("bplagues|The contest goes on",{view:[-60,-25,130,45],pinsDrop:/^DR Congo$/});
+
+/* A History of the World in Twelve Maps: frames moved west so the European end of each map's story (the Canaries,
+   Ceuta, Hereford, Saint-Dié, Amsterdam, London) sits right of the card */
+A("b12maps|The world on a clay tablet",{pinsDrop:/^Iraq$/});
+A("b12maps|Ptolemy’s Geography",{view:[-110,-30,172,72]});
+A("b12maps|Al-Idrisi’s map for a Norman king",{view:[-90,-6,132,60]});
+A("b12maps|The Hereford Mappa Mundi",{view:[-62,-7,79,70]});
+A("b12maps|The Kangnido: a Korean view of the world",{view:[-80,-40,152,62],pinsDrop:/^North Korea$/});
+A("b12maps|Waldseemüller names America",{view:[-160,-42,28,62]});
+A("b12maps|Blaeu: maps for money",{view:[-90,-42,150,58]});
+A("b12maps|The Cassinis measure France",{view:[-16,40.5,14,52.5],pinsDrop:/^France$/});
+A("b12maps|Mackinder’s heartland",{view:[-90,10,150,78]});
+
+/* One Thousand and One Nights: frames moved west so Baghdad, Cairo, Madagascar and the western ports sit right of the card */
+A("b1001|One Thousand and One Nights",{view:[-44,-25,125,55]});
+A("b1001|Now explore",{view:[-44,-25,125,55]});
+A("b1001|Shahrazad’s frame",{view:[5,15,95,50]});
+A("b1001|Where the tales came from",{view:[-19,5,95,45]});
+A("b1001|Basra: Sindbad sets out",{view:[22,19,64,36]});
+A("b1001|The Roc and the valley of diamonds",{view:[4,-30,95,28]});
+A("b1001|Camphor, cloves and nutmeg",{view:[40,-14,140,14]});
+A("b1001|Mamluk Cairo",{view:[15,20,48,38]});
+A("b1001|The City of Brass",{view:[-21,20,40,40]});
+
+/* The Sixth Extinction: frames moved west so the western end of each story (Kentucky, Funk Island, Chicxulub, Washington
+   state, Gibraltar) sits right of the card; country names beside the map's own labels and a second white-nose bat go */
+A("bextinction|The Panamanian golden frog",{view:[-92,5,-76,13],pinsDrop:/^Panama$/});
+A("bextinction|Cuvier’s mastodon",{view:[-160,18,12,62]});
+A("bextinction|The great auk",{view:[-95,40,0,68]});
+A("bextinction|Gubbio: the clay at the end of the dinosaurs",{view:[-160,8,22,52]});
+A("bextinction|Trees climbing the Andes",{pinsDrop:/^Peru$/});
+A("bextinction|Bats and white-nose syndrome",{view:[-165,26,-62,52],pinsDrop:/^United States$/,phDrop:/^Bat with white-nose$/});
+A("bextinction|The last Sumatran rhinos",{view:[80,-10,122,10],pinsDrop:/^(Indonesia|Malaysia)$/});
+/* the lost giants: the world map centred on the Atlantic, so the American mammoth and ground sloth show beside Australia's */
+A("bextinction|Where people arrived, big animals vanished",{globe:[10,0,1]});
+A("bextinction|Neanderthals in us",{view:[-60,30,95,62]});
+A("bextinction|The Frozen Zoo",{view:[-200,10,-100,40]});
+
+/* The World Is Flat: frames moved west so the American end of each story sits right of the card; country-name pins
+   beside the map's own labels go */
+A("bflat|Bangalore: the field is levelled",{pinsDrop:/^India$/});
+A("bflat|Three ages of globalisation",{view:[-150,-5,90,62]});
+A("bflat|Netscape and the web",{view:[-132,30,-110,42]});
+A("bflat|Fibre under the sea",{view:[-129,-15,150,62]});
+A("bflat|Y2K: India’s big break",{view:[55,5,95,32],pinsDrop:/^India$/});
+A("bflat|Working while America sleeps",{view:[-170,-30,100,62]});
+A("bflat|China joins the world’s factory floor",{pinsDrop:/^China$/});
+A("bflat|Walmart’s supply chain",{view:[-156,15,-70,52],pinsDrop:/^United States$/});
+A("bflat|The Dell laptop and peace",{view:[65,-5,145,42],pinsDrop:/^(China|South Korea|Taiwan)$/});
+A("bflat|UPS: the parcel company that fixes laptops",{pinsDrop:/^United States$/});
+A("bflat|Dalian: Japan’s back office",{view:[103,30,145,45],pinsDrop:/^(China|Japan|South Korea)$/,rep:[["Tokyo is about 1,700 km away (drag the ruler)","Tokyo is about 1,600 km away (drag the ruler)"]]});
+A("bflat|Drive-through orders from far away",{view:[-135,30,-82,44]});
+A("bflat|Is the world really flat?",{view:[-167,15,30,62]});
+
 /* ---------- patches go here ---------- */
 
 function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f);
