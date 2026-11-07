@@ -214,7 +214,12 @@ function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>glob
 /* zoomed in, an island or lake is drawn from the map's detailed coast (geoflock-detail.js) instead of its rough outline */
 function sharp(e){try{const kind=e.cat==="lakes"?"lake":e.cat==="islands"||e.cat==="groups"?"coast":null;if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return e.g;
  const k=amGlobe._dstk||"";if(e._shK===k)return e._sh||e.g;e._shK=k;if(!e._bb){const b=d3.geoBounds(e.g);e._bb=[b[0][0],b[0][1],b[1][0],b[1][1]]}
- e._sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;return e._sh||e.g}catch(x){return e.g}}
+ let sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;
+ /* the detailed shapes are every island (or lake) found near it: keep only those inside its own outline, and use them only
+    when they make up most of it (a big island crossing many map tiles is not in the detailed set, only its small neighbours) */
+ if(sh&&sh.coordinates){const own=sh.coordinates.filter(P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return d3.geoContains(e.g,c)}catch(x){return false}});
+  const A=d3.geoArea(e.g)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own}:null}
+ e._sh=sh;return e._sh||e.g}catch(x){return e.g}}
 function globeDrawOne(ctx,p,e){fixWind(e);const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(sharp(e));if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
  else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
