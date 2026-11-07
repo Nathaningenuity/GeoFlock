@@ -111,10 +111,10 @@ function sameLat(){let n=0;try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).f
   const add=" Go further north and the gap grows: Churchill, on Hudson Bay, and Kirkwall, in Orkney off the north of Scotland, are both near 58.8°N, yet in January Churchill averages about −26 °C and Kirkwall about +4 °C.";
   if(typeof S.body==="string"&&!S.body.includes("Churchill"))S.body+=add})}catch(e){console.error(e)}return n}
 [0,1500,4000,9000].forEach(ms=>setTimeout(sameLat,ms));
-/* 10. the Animals tour runs on the Nature map's Biomes view (animals live by biome), and wears the Biomes tour's cover */
+/* 10. the Animals tour runs on the Nature map's Biomes view (animals live by biome); its cover is the map of its seventeen animal photos */
 function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode="nature";if(T.m)T.m.mode="nature";if(T.map)T.map.mode="nature";else T.map={mode:"nature"};
  (T.steps||[]).forEach(S=>{if(S&&(!S.mode||S.mode==="relief")&&!S.sub){S.mode="nature";if(!S.nsub)S.nsub="biomes"}});
- try{if(typeof TOUR_THUMBS!=="undefined"&&TOUR_THUMBS.biomes)TOUR_THUMBS.animals=TOUR_THUMBS.biomes}catch(e){}return true}catch(e){return false}}
+ try{if(typeof TOUR_THUMBS!=="undefined")TOUR_THUMBS.animals="photos/cover_animals.webp"}catch(e){}return true}catch(e){return false}}
 [0,1500,4000,9000].forEach(ms=>setTimeout(animalsNature,ms));
 window.gfPolishM={dedupe};
 })();
