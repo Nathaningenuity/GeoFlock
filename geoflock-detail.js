@@ -44,6 +44,9 @@ const area=r=>{let a=0;for(let i=0;i<r.length-1;i++)a+=r[i][0]*r[i+1][1]-r[i+1][
 function clipRing(r,E){let P=r;const sides=[[p=>p[0]>=0,(a,b)=>{const t=(0-a[0])/(b[0]-a[0]);return[0,a[1]+t*(b[1]-a[1])]}],[p=>p[0]<=E,(a,b)=>{const t=(E-a[0])/(b[0]-a[0]);return[E,a[1]+t*(b[1]-a[1])]}],
   [p=>p[1]>=0,(a,b)=>{const t=(0-a[1])/(b[1]-a[1]);return[a[0]+t*(b[0]-a[0]),0]}],[p=>p[1]<=E,(a,b)=>{const t=(E-a[1])/(b[1]-a[1]);return[a[0]+t*(b[0]-a[0]),E]}]];
  for(const[ins,cut]of sides){const Q=[];for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],ia=ins(a),ib=ins(b);if(ia){Q.push(a);if(!ib)Q.push(cut(a,b))}else if(ib)Q.push(cut(a,b))}P=Q;if(P.length<3)return null}return P}
+/* a ring cut to one side of x=X (s=1 keeps x<=X, s=-1 keeps x>=X) */
+function cutX(r,X,s){const ins=p=>s*(p[0]-X)<=0,Q=[];for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length],ia=ins(a),ib=ins(b);
+  if(ia)Q.push(a);if(ia!==ib){const t=(X-a[0])/(b[0]-a[0]);Q.push([X,a[1]+t*(b[1]-a[1])])}}return Q.length>=3?Q:null}
 function clipLine(l,E){const out=[];let cur=null;for(let i=1;i<l.length;i++){let[x0,y0]=l[i-1],[x1,y1]=l[i];let t0=0,t1=1;const dx=x1-x0,dy=y1-y0;let ok=true;
   for(const[p,q]of[[-dx,x0],[dx,E-x0],[-dy,y0],[dy,E-y0]]){if(p===0){if(q<0){ok=false;break}}else{const r=q/p;if(p<0){if(r>t1){ok=false;break}if(r>t0)t0=r}else{if(r<t0){ok=false;break}if(r<t1)t1=r}}}
   if(!ok){cur=null;continue}const a=[x0+t0*dx,y0+t0*dy],b=[x0+t1*dx,y0+t1*dy];if(!cur||t0>0){cur=[a];out.push(cur)}cur.push(b);if(t1<1)cur=null}return out}
@@ -54,7 +57,10 @@ function bboxOf(rs){let a=1e9,b=1e9,c=-1e9,d=-1e9;rs.forEach(r=>{for(let i=0;i<r
 const nm=t=>t["name:en"]||t.name_en||t.name_int||t.name||"";
 function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],rivers:[],borders:[],names:[]};
  if(L.water){const E=L.water.ext;T.feats(L.water).forEach(f=>{if(f.type!==3||!f.geom)return;const cls=f.tags.class;const rings=parts(f.geom);
-   /* group: an outer ring (positive area) followed by its holes */const lls=[];rings.forEach(r=>{if(r.length<4)return;/* not cut to the tile here (cutting big lakes made broken shapes): the drawing clips each tile to its square */const c=r.slice(0,-1);if(c.length<3)return;lls.push(toLL(c,z,tx,ty,E,true))});
+   /* group: an outer ring (positive area) followed by its holes */const lls=[],n2=Math.pow(2,z);rings.forEach(r=>{if(r.length<4)return;/* not cut to the tile here (cutting big lakes made broken shapes): the drawing clips each tile to its square */let c=r.slice(0,-1);
+   /* except at the world's east and west edges: the tile's buffer past 180° (or -180°) wraps to the far side of the flat map, and the
+      sea ring jumping across the whole map turned land into sea there (New Zealand's North Island). Cut there only, on that side only */
+   if(tx===n2-1)c=cutX(c,E,1);if(tx===0&&c)c=cutX(c,0,-1);if(!c||c.length<3)return;lls.push(toLL(c,z,tx,ty,E,true))});
    /* outlines and holes by nesting, not by the tiles' winding (Lake Huron came wound the wrong way and vanished): a ring inside
       an odd number of others is a hole; each ring is then turned so outlines and holes wind opposite ways (filled "nonzero") */
    const depth=lls.map((r,i)=>lls.reduce((n,o,j)=>n+(j!==i&&o.length>8&&inRings([o],[r[0],r[1]])?1:0),0));
@@ -87,13 +93,28 @@ function inRings(rs,p){let c=false;for(const r of rs){for(let i=0,j=r.length-3;i
 /* ---------- tiles: which are wanted, loading, cache ---------- */
 const CACHE=new Map();let inflight=0,queue=[],loads=0;
 const key=(z,x,y)=>z+"/"+x+"/"+y;
-function want(list){queue=list.filter(k=>!CACHE.has(k));pump()}
+/* a tile no longer wanted (the view moved on) is not fetched, and one on its way is dropped */
+const CTRL=new Map();
+function want(list){queue=list.filter(k=>!CACHE.has(k));const W=new Set(list);CTRL.forEach((c,k)=>{if(!W.has(k)){try{c.abort()}catch(e){}}});pump()}
 function pump(){while(inflight<PAR&&queue.length){const k=queue.shift();if(CACHE.has(k))continue;CACHE.set(k,{st:"load"});inflight++;
-  const[z,x,y]=k.split("/").map(Number);
-  tileUrl().then(u=>fetch(u.replace("{z}",z).replace("{x}",x).replace("{y}",y))).then(r=>r.ok?r.arrayBuffer():null).then(b=>{
-   let d=null;try{d=b&&b.byteLength?build(new Uint8Array(b),z,x,y):{lakes:[],ocean:[],rivers:[],borders:[],names:[]}}catch(e){console.error("tile",k,e);d={lakes:[],ocean:[],rivers:[],borders:[],names:[]}}
-   CACHE.set(k,{st:"ok",d,t:performance.now()})}).catch(()=>{CACHE.delete(k)}).finally(()=>{inflight--;loads++;trim();redraw();pump()})}}
-function trim(){if(CACHE.size<500)return;const live=new Set((ST&&ST.tiles||[]).map(t=>t.k));[...CACHE.entries()].filter(([k,v])=>v.st==="ok"&&!live.has(k)).sort((a,b)=>a[1].t-b[1].t).slice(0,150).forEach(([k])=>CACHE.delete(k))}
+  const[z,x,y]=k.split("/").map(Number),ac=typeof AbortController!=="undefined"?new AbortController():null;if(ac)CTRL.set(k,ac);
+  /* the tile is only kept as it came here; it is read later, when the map is still (see parseSoon) */
+  tileUrl().then(u=>fetch(u.replace("{z}",z).replace("{x}",x).replace("{y}",y),ac?{signal:ac.signal}:undefined)).then(r=>r.ok?r.arrayBuffer():null).then(b=>{
+   CACHE.set(k,{st:"raw",b,z,x,y,t:performance.now()});parseSoon()}).catch(()=>{CACHE.delete(k)}).finally(()=>{CTRL.delete(k);inflight--;trim();pump()})}}
+/* reading tiles (decoding, sorting rings, finding lakes) is done in idle time and never while the map is being zoomed or
+   dragged: the map keeps its coarse lakes, rivers and coast until the tiles are read, then the sharp ones take over */
+const EMPTY=()=>({lakes:[],ocean:[],rivers:[],borders:[],names:[]});let PQ=false;
+const busy=()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;return!!(g&&(g._moving||performance.now()-(g._viewT||0)<300))}catch(e){return false}};
+/* in slices of about 12 ms between frames (idle callbacks hardly come on a page that animates, and the tiles came in seconds late) */
+function parseSoon(delay){if(PQ)return;PQ=true;setTimeout(parseIdle,delay||0)}
+function parseIdle(){PQ=false;if(busy()){parseSoon(120);return}
+ const live=new Set((ST&&ST.tiles||[]).map(t=>t.k)),raws=[...CACHE.entries()].filter(e=>e[1].st==="raw").sort((a,b)=>(live.has(b[0])?1:0)-(live.has(a[0])?1:0));if(!raws.length)return;
+ const t0=performance.now();let did=0;
+ for(const[k,v]of raws){if(did&&performance.now()-t0>12)break;
+  let d;try{d=v.b&&v.b.byteLength?build(new Uint8Array(v.b),v.z,v.x,v.y):EMPTY()}catch(e){console.error("tile",k,e);d=EMPTY()}
+  try{d.ocean.forEach(isLakeSea)}catch(e){}CACHE.set(k,{st:"ok",d,t:performance.now()});loads++;did++}
+ redraw();if(raws.length>did)parseSoon(20)}
+function trim(){if(CACHE.size<500)return;const live=new Set((ST&&ST.tiles||[]).map(t=>t.k));[...CACHE.entries()].filter(([k,v])=>(v.st==="ok"||v.st==="raw")&&!live.has(k)).sort((a,b)=>a[1].t-b[1].t).slice(0,150).forEach(([k])=>CACHE.delete(k))}
 const got=k=>{const c=CACHE.get(k);return c&&c.st==="ok"?c.d:null};
 
 /* ---------- what the view needs ---------- */
@@ -152,15 +173,15 @@ function isCaspian(K){if(K._casp!==undefined)return K._casp;const C=caspian();K.
 function bandPx(pj,s){if(s._bpx!=null)return s._bpx;let v=20;try{const t=s.tiles[0],n=Math.pow(2,t.z),lo=(t.x+.5)/n*360-180,m=Math.PI*(1-2*(t.y+.5)/n),la=Math.atan(Math.sinh(m))*180/Math.PI;
  const a=pj(lo,la),b=pj(lo,la+.225);if(a&&b)v=Math.hypot(a[0]-b[0],a[1]-b[1])}catch(e){}return(s._bpx=v)}
 /* the picture's sea colour near the coast: pixels just off the coast that look like sea, their median */
-function seaCol(ctx,pj,s,W){if(s._sea!==undefined)return s._sea;let out=null;try{const T=ctx.getTransform(),R=[],G=[],B=[];let tries=0;
+function seaCol(ctx,pj,s,W){if(s._sea!==undefined)return s._sea;if(!STILL){PEND=true;return null}let out=null;try{const T=ctx.getTransform(),R=[],G=[],B=[];let tries=0;const S=snap(ctx);if(!S.d)throw 0;const px1=(X,Y)=>{const o=(Y*S.w+X)*4;return[S.d[o],S.d[o+1],S.d[o+2]]};
  for(const t of s.tiles){const d=t.d;if(!d||!d.ocean)continue;/* the open sea; with none in view, the Caspian (the picture shows it as sea) */const SRC=d.ocean.filter(o=>!isLakeSea(o));if(!SRC.length)d.lakes.concat(bigLakes(d)).forEach(K=>{if(isCaspian(K))SRC.push(K)});for(const o of SRC){for(const r of o.rings){const step=Math.max(3,Math.floor(r.length/3/12))*3;
    for(let i=0;i<r.length&&R.length<60&&tries<400;i+=step){if(r[i+2])continue;const q=pj(r[i],r[i+1]);if(!q)continue;
     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){tries++;const x=q[0]+dx*W*1.4,y=q[1]+dy*W*1.4,X=Math.round(T.a*x+T.c*y+T.e),Y=Math.round(T.b*x+T.d*y+T.f);
-     if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=ctx.getImageData(X,Y,1,1).data;if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}}
+     if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=px1(X,Y);if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}}
  /* no sea pixels along a coast: points well inside the Caspian */
  if(R.length<5){for(const t of s.tiles){const d=t.d;if(!d)continue;for(const K of d.lakes.concat(bigLakes(d))){if(!isCaspian(K))continue;const b=K.bb;
    for(let a=1;a<6;a++)for(let c=1;c<6;c++){const ll=[b[0]+(b[2]-b[0])*a/6,b[1]+(b[3]-b[1])*c/6];if(!inRings(K.rings,ll))continue;const q=pj(ll[0],ll[1]);if(!q)continue;
-    const X=Math.round(T.a*q[0]+T.c*q[1]+T.e),Y=Math.round(T.b*q[0]+T.d*q[1]+T.f);if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=ctx.getImageData(X,Y,1,1).data;if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}
+    const X=Math.round(T.a*q[0]+T.c*q[1]+T.e),Y=Math.round(T.b*q[0]+T.d*q[1]+T.f);if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=px1(X,Y);if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}
  if(R.length>=5){const md=a=>a.sort((x,y)=>x-y)[a.length>>1];out="rgb("+md(R)+","+md(G)+","+md(B)+")"}}catch(e){out=null}/* a failed look is not remembered: the picture may not be drawn yet */if(out)s._sea=out;return out}
 /* water joined to the sea (river channels, estuaries, bays closed off by a line in the map data such as Lake Maracaibo's
    Tablazo Bay, lagoons like Lagoa dos Patos) is drawn in the sea's colour, not the lakes' pale blue. A lake is joined when
@@ -186,15 +207,23 @@ function seaLinks(d){if(d._seaDone)return;d._seaDone=1;try{const S=new Set();d.o
 const CH=24;/* points per stretch */
 function colSig(I){let a="";try{const st=gfMS().style;a=st+"|"+JSON.stringify((window.gfReliefAdj&&gfReliefAdj.ADJ&&gfReliefAdj.ADJ[st])||"")+"|"+(window.gfLakeColor&&gfLakeColor())}catch(e){}return I.texKey+"|"+a+"|"+(window._gfSeaSig||"")}
 /* reads single pixels of the picture as drawn so far, in screen terms (one read of a small square around each point) */
-function pixReader(ctx){const T=ctx.getTransform();return(x,y)=>{const X=Math.round(T.a*x+T.c*y+T.e),Y=Math.round(T.b*x+T.d*y+T.f);if(X<1||Y<1||X>=ctx.canvas.width-1||Y>=ctx.canvas.height-1)return null;
-  const d=ctx.getImageData(X-1,Y-1,3,3).data;let r=0,g=0,b=0;for(let i=0;i<36;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2]}return[r/9,g/9,b/9]}}
-function chunkCol(px,pj,r,a,b,W){const R=[],G=[],B=[];const step=Math.max(1,Math.floor((b-a)/4));
+/* the picture is read once per frame, as a whole, the first time a colour is needed: hundreds of small reads each stalled the
+   drawing (a zoom ran at a few frames a second) */
+let FRAME=0,SNAP=null;
+function snap(ctx){const c=ctx.canvas;if(!SNAP||SNAP.f!==FRAME||SNAP.c!==c){let d=null;try{d=ctx.getImageData(0,0,c.width,c.height).data}catch(e){}SNAP={f:FRAME,c,d,w:c.width,h:c.height}}return SNAP}
+function pixReader(ctx){const T=ctx.getTransform(),cw=ctx.canvas.width,chh=ctx.canvas.height;let S=null;return(x,y)=>{const X=Math.round(T.a*x+T.c*y+T.e),Y=Math.round(T.b*x+T.d*y+T.f);if(X<1||Y<1||X>=cw-1||Y>=chh-1)return null;
+  if(!S)S=snap(ctx);if(!S.d)return null;const d=S.d;let r=0,g=0,b=0;for(let j=-1;j<=1;j++){let o=((Y+j)*S.w+X-1)*4;for(let i=0;i<3;i++,o+=4){r+=d[o];g+=d[o+1];b+=d[o+2]}}return[r/9,g/9,b/9]}}
+function chunkCol(px,pj,r,a,b,W){const R=[],G=[],B=[];const step=Math.max(1,Math.floor((b-a)/4));let seen=0;
  for(let k=a;k<b;k+=step){const i=k*3;if(r[i+2])continue;const q=pj(r[i],r[i+1]);if(!q)continue;
-  for(const f of[1.6,2.4])for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]]){const p=px(q[0]+dx*W*f,q[1]+dy*W*f);if(p&&p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}
- if(R.length<3)return null;const md=v=>Math.round(v.sort((x,y)=>x-y)[v.length>>1]);return"rgb("+md(R)+","+md(G)+","+md(B)+")"}
+  for(const f of[1.6,2.4])for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]]){const p=px(q[0]+dx*W*f,q[1]+dy*W*f);if(p)seen++;if(p&&p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}
+ /* "": looked, no sea there (remembered); undefined: not on screen (tried again later) */if(R.length<3)return seen?"":undefined;const md=v=>Math.round(v.sort((x,y)=>x-y)[v.length>>1]);return"rgb("+md(R)+","+md(G)+","+md(B)+")"}
 function edgeSpan(ctx,pj,r,a,b){let pen=false;const n=r.length/3;for(let k=a;k<b-1;k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){pen=false;continue}const p=pj(r[i],r[i+1]),q=pj(r[j],r[j+1]);if(!p||!q){pen=false;continue}if(!pen){ctx.moveTo(p[0],p[1]);pen=true}ctx.lineTo(q[0],q[1])}
  if(b===n){const i=(n-1)*3;if(!(r[i+2]&r[2])){const p=pj(r[i],r[i+1]),q=pj(r[0],r[1]);if(p&&q){if(!pen)ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1])}}}}
-function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
+/* while the map moves, no new colours are read (the last ones and the view's sea colour stand in); once it is still they are
+   read a few milliseconds' worth per frame, and the map is drawn again until all are in */
+let STILL=true,PEND=false,PT=0,T0=0;
+function draw(g,ctx,I){const s=on(g);if(!s)return;FRAME++;STILL=!(g._moving||performance.now()-(g._viewT||0)<300);PEND=false;T0=performance.now();try{draw1(g,ctx,I,s)}finally{if(PEND){clearTimeout(PT);PT=setTimeout(redraw,STILL?0:200)}}}
+function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
  const borders=g.cfg.borders?g.cfg.borders():true,coast=s.z>=COASTZ,LT=window.gfRiverLate?gfRiverLate(g):1,z=g.zoom/LT;/* rivers: later on maps other than Relief and Elevation */
  /* each tile is drawn whole (begin, path, fill or stroke) so a tile drawn from its parent can be clipped to its own square */
  const each=fn=>s.tiles.forEach(t=>{if(!t.d)return;ctx.save();if(!boxClip(ctx,pj,t)){ctx.restore();return}try{fn(t.d)}finally{ctx.restore()}});
@@ -211,7 +240,7 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
      shallows and darker over deeps: one colour for the whole view left pale bands round darker seas, as in the Gulf of Bothnia) */
     const G=new Map();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach((r,ri)=>{const n=r.length/3;for(let c0=0;c0<n;c0+=CH){const id=ri+":"+c0;
       if(!o._bc||o._bc.sig!==sig)o._bc={sig,m:new Map()};let col=o._bc.m.get(id);
-      if(col===undefined){if(!px)px=pixReader(ctx);col=chunkCol(px,pj,r,c0,Math.min(n,c0+CH+1),W);if(col)o._bc.m.set(id,col)}
+      if(col===undefined){if(!STILL||performance.now()-T0>8)PEND=true;else{if(!px)px=pixReader(ctx);col=chunkCol(px,pj,r,c0,Math.min(n,c0+CH+1),W);if(col!==undefined)o._bc.m.set(id,col)}}
       col=col||seaC;let a=G.get(col);if(!a)G.set(col,a=[]);a.push([r,c0,Math.min(n,c0+CH+1)])}})});
     ctx.save();ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");
     ctx.lineWidth=W*2;ctx.lineJoin=ctx.lineCap="round";try{ctx.filter="blur("+Math.round(W/3)+"px)"}catch(e){}
