@@ -43,7 +43,7 @@ A("asia|Two Koreas",{stat:"One people, divided in 1945 and split into two states
 A("africa|The kingdom in the sky",{rep:[["Its rivers supply water to Johannesburg through tunnels, which is one of its main exports.","Its rivers also supply Johannesburg through long tunnels: water is one of Lesotho’s main exports."]]});
 
 /* Stat lines that ran to two or three lines, made to land faster (the detail is still in the card) */
-A("oceania|Water from under the desert",{stat:"Under a fifth of Australia lies a vast store of underground water, some of it two million years old"});
+A("oceania|Water from under the desert",{stat:"Beneath more than a fifth of Australia lies a vast store of underground water, some of it two million years old"});
 A("bggs|The Chatham Islands, 1835",{stat:"Two peoples from the same Polynesian ancestors met again after centuries apart: the farmers overwhelmed the foragers"});
 A("bnations|Printing held back",{stat:"The Ottoman Empire’s first Muslim-run printing press opened in 1727, nearly 300 years after Gutenberg’s"});
 A("brihla|The Travels of Ibn Battuta",{stat:"From 1325 to 1354 a young scholar from Tangier travelled some 117,000 km, perhaps farther than anyone before the age of steam"});
@@ -100,6 +100,56 @@ A("africa|South Africa’s balancing act",{view:[7,-36,34,-21],phDrop:/^South Af
 A("africa|The city that nearly ran dry",{view:[4,-37,34,-23]});
 A("africa|The real southern tip",{view:[14.2,-36.5,22.2,-33],phDrop:/^South Africa: Table Mountain/});
 
+/* North America: the whole-continent views reach west past the date line, so Alaska and the Pacific coast come out from
+   under the card */
+["North America","Three giants","Three languages","Now explore"].forEach(t=>A("namerica|"+t,{view:[-205,5,-45,80]}));
+A("namerica|Canada’s water",{phDrop:/^Canada: Moraine Lake/});/* the card's own photo already */
+A("namerica|The longest border",{view:[-175,38,-60,72]});
+A("namerica|Greenland belongs to North America",{view:[-130,28,22,84]});
+A("namerica|Alaska breaks every record",{view:[-215,36,-83,72]});
+A("namerica|Mountains and rivers",{view:[-205,15,-55,72]});
+A("namerica|A capital that sinks",{view:[-118.6,12,-88.6,27],phDrop:/^Mexico: Chichén Itzá/});
+A("namerica|Smaller than Texas",{view:[-118,6,-76,37]});
+A("namerica|The Panama Canal",{view:[-90,4,-74,12.5]});
+A("namerica|The Caribbean",{view:[-100,9,-58,28]});
+A("namerica|Cuba",{view:[-91,18.5,-73,25.5]});
+A("namerica|Haiti’s revolution",{view:[-79,16.5,-67,21.5],pinsDrop:/^(Haiti|Dominican Republic)$/});
+
+/* South America: the continent sits right of the card (the Andes and the Pacific coast were under it) */
+["South America","Now explore"].forEach(t=>A("samerica|"+t,{view:[-130,-57,-25,14]}));
+A("samerica|Further east than you think",{view:[-160,-60,0,50]});
+A("samerica|Brazil is half the continent",{view:[-118,-36,5,16]});
+A("samerica|A line from 1494",{view:[-110,-57,-25,14],pinsDrop:/^Brazil$/});
+A("samerica|Living high in the Andes",{view:[-115,-56,-50,12]});
+A("samerica|A ribbon of a country",{view:[-100,-57,-50,-16]});
+A("samerica|The Amazon basin",{view:[-100,-22,-44,8]});
+/* the map's colours are not named: the Cerrado is drawn on the map, and the climate palette has since changed */
+A("samerica|Turning bad soil into soybeans",{rep:[["The Cerrado, the tropical savanna (light blue on the map) south of the Amazon rainforest (dark blue), has","The Cerrado, the tropical savanna south of the Amazon rainforest, has"]]});
+A("samerica|The Inca Empire",{view:[-95,-36,-60,2]});
+/* Rio's pin showed the Maracanã stadium, built in 1950; the Paço Imperial was the royal palace from 1808 */
+A("samerica|Europe ruled from Rio",{phDrop:/^(Rio de Janeiro: capital, 1808–1821|Brazil: Christ the Redeemer)/,
+ ph:[{at:[-43.174,-22.903],label:"Paço Imperial: the king’s palace in Rio",f:"Paço Imperial ao entardecer.jpg",d:"@4505c64d931a9bfc",by:"Guilherme Soares",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Pa%C3%A7o_Imperial_ao_entardecer.jpg"}]});
+A("samerica|Rich from frozen beef",{view:[-80,-41,-50,-28]});
+A("samerica|Two great waterfalls",{view:[-110,-62,-25,21]});
+A("samerica|Two landlocked countries",{view:[-80,-28,-53,-9]});
+/* the islands were under the card; the tortoise pin repeated both the islands' pin spot and the card's own tortoise photo */
+A("samerica|Darwin’s islands",{view:[-105,-10,-75,5],phDrop:/^Ecuador: Galápagos tortoise/});
+A("samerica|The far south",{view:[-100,-60,-50,-38]});
+A("samerica|Two-thirds of Guyana",{view:[-73,0,-53,10]});
+
+/* Oceania: Australia sits clear of the card on the whole-region views */
+["Australia is most of it","Now explore"].forEach(t=>A("oceania|"+t,{view:[80,-50,180,8]}));
+A("oceania|Oceania",{view:[80,-50,236,22]});
+A("oceania|The red centre",{view:[95,-40,156,-10],pinsDrop:/^Australia$/});
+A("oceania|Goyder’s Line",{pinsDrop:/^Australia$/});
+A("oceania|Only in Australia",{view:[80,-47,160,-7]});
+A("oceania|Water from under the desert",{view:[100,-36,158,-9],pinsDrop:/^Australia$/});
+/* two photo pins on the same spot in Funafuti */
+A("oceania|Tuvalu’s lucky letters",{phDrop:/^Funafuti, Tuvalu’s capital$/});
+
+/* Antarctica: the penguin and whale pictures off the coast near 80°E were cut off at the bottom of the globe */
+A("antarctica|Life at the edge",{globe:[50,-76,1.1]});
+
 /* ---------- patches go here ---------- */
 
 function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f);
@@ -118,9 +168,12 @@ function apply(S){try{if(!S||typeof ps==="undefined"||!ps)return;const X=P[ps.to
  TXT.forEach(k=>{if(typeof X[k]==="string"&&S[k]!==X[k])SET(S,k,X[k])});
  if(X.rep&&!S._gfT4r){S._gfT4r=1;TXT.forEach(k=>{let v=S[k];if(typeof v!=="string")return;X.rep.forEach(([a,b])=>{if(v.includes(a))v=v.split(a).join(b)});if(v!==S[k])SET(S,k,v)})}
  RAW.forEach(k=>{if(!(k in X))return;if(typeof X[k]==="function"){if(S["_gfT4_"+k]!==1){S["_gfT4_"+k]=1;SET(S,k,X[k](S[k],S))}}else if(S[k]!==X[k])SET(S,k,X[k])});
- if(Array.isArray(S.pins)&&(X.pinsDrop||X.relabel)){let L=S.pins.filter(q=>!(X.pinsDrop&&Array.isArray(q)&&X.pinsDrop.test(String(q[1]))));
-  if(X.relabel)L=L.map(q=>Array.isArray(q)&&X.relabel[q[1]]?[q[0],X.relabel[q[1]]].concat(q.slice(2)):q);
-  if(L.length!==S.pins.length||L.some((q,i)=>q!==S.pins[i]))SET(S,"pins",L)}
+ /* text pins: dropped and renamed on every read, since other scripts add the highlighted countries' name pins later */
+ if((X.pinsDrop||X.relabel)&&!S._gfT4d){S._gfT4d=1;let base=S.pins;
+  /* cleaned in place on each read, so pins pushed onto the list later are caught too */
+  const fix=()=>{if(!Array.isArray(base))return;for(let i=base.length-1;i>=0;i--){const q=base[i];if(!Array.isArray(q))continue;
+   if(X.pinsDrop&&X.pinsDrop.test(String(q[1])))base.splice(i,1);else if(X.relabel&&X.relabel[q[1]])base[i]=[q[0],X.relabel[q[1]]].concat(q.slice(2))}};
+  try{Object.defineProperty(S,"pins",{configurable:true,enumerable:true,get(){fix();return base},set(v){base=v}})}catch(e){}}
  if(X.pinsAdd&&!S._gfT4a){S._gfT4a=1;SET(S,"pins",(S.pins||[]).concat(X.pinsAdd.filter(q=>!(S.pins||[]).some(x=>Array.isArray(x)&&x[1]===q[1]))))}
  if(X.ph||X.phDrop)photos(S,X);
  /* the card's own photo (PS_PHOTO, by tour and stop title) */
