@@ -28,6 +28,26 @@
    return orig.call(gfGibs,z,P.w0,cy,P.cw,ch,pw,rh,TW,TH,kind,prog?(pc=>{P.pic=pc;tick()}):undefined).then(pc=>{P.pic=pc;return pc})}))
    .then(pics=>{paint();const miss=pics.reduce((m,p)=>m+((p&&p._gfMiss)||0),0);if(miss)c._gfMiss=miss;pics.forEach(p=>{try{p.width=0}catch(er){}});return c})}})();
 
+/* ---------- shared: the layout checks below run only when something could have changed ----------
+   They measure the page (getBoundingClientRect forces a layout), so they are not run on every tick: only when the tray,
+   the map or a watched card changed size (ResizeObserver), the window was scrolled or resized, or a cheap signature
+   (tray place, map style, which cards exist) changed, and otherwise every 1.5 s; never while the map is moving or the
+   page is hidden. */
+const DIRTY={kit:true,cards:true};const mark=()=>{DIRTY.kit=DIRTY.cards=true};
+const RO=typeof ResizeObserver==="function"?new ResizeObserver(mark):null,SEEN=new WeakSet();
+function watch(el){if(el&&RO&&!SEEN.has(el)){SEEN.add(el);try{RO.observe(el)}catch(e){}}}
+addEventListener("resize",mark,{passive:true});addEventListener("scroll",mark,{passive:true,capture:true});
+function busy(){try{if(document.hidden||typeof appMode==="undefined"||appMode!=="allmaps")return true;const g=typeof amGlobe!=="undefined"&&amGlobe;return!!(g&&(g._moving||g._flying||g._gfDown))}catch(e){return true}}
+let cheapSig="";
+function cheap(){const t=document.getElementById("gfKit");let s="";try{s=(t?t.style.left+t.style.top+t.className:"-")+"|"+(typeof allMapsColorMode!=="undefined"?allMapsColorMode:"")+"|"+(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat?"f":"g")+"|"+document.body.classList.contains("gf-fs")+"|"}catch(e){}
+ /* a card that is new (or was rebuilt) is watched; watching it reports its size once, which marks the page for a check */
+ document.querySelectorAll(".gfth,.gf-xs,.gf-learn,.gfk-coord,.hist-story,.hist-dock").forEach(watch);
+ if(s!==cheapSig){cheapSig=s;mark()}if(t){watch(t);watch(t.parentElement)}}
+/* things can also move without changing size (a card sliding in, the History timeline settling), so while the map is
+   still the page is checked again every 1.5 s anyway */
+let lastFull=0;setInterval(()=>{if(busy())return;cheap();const n=Date.now();if(n-lastFull>1500){lastFull=n;mark()}},250);
+window.gfSweepMapsDbg=()=>({dirty:Object.assign({},DIRTY),busy:busy(),sig:cheapSig});
+
 /* ---------- 2. the Toolkit tray keeps to the bottom of the map until it is moved by hand ---------- */
 (function(){
  const MK="gfKitMovedByHand";let moved=false;try{moved=localStorage.getItem(MK)==="1"}catch(e){}
@@ -40,10 +60,10 @@
  /* "Reset" in the ⚙ menu puts it back to its first place */
  document.addEventListener("click",e=>{if(e.target&&e.target.closest&&e.target.closest(".gfkl-menu [data-reset]")){moved=false;try{localStorage.removeItem(MK)}catch(er){}}},true);
  let sig="";
- setInterval(()=>{try{if(moved||!window.gfKitLayout||innerWidth<=640||document.body.classList.contains("gf-fs"))return;const t=tray();if(!t||!t.classList.contains("gfkl-fixed")||t.classList.contains("gfkl-moving"))return;
+ setInterval(()=>{try{if(moved||!DIRTY.kit||busy())return;DIRTY.kit=false;if(!window.gfKitLayout||innerWidth<=640||document.body.classList.contains("gf-fs"))return;const t=tray();if(!t||!t.classList.contains("gfkl-fixed")||t.classList.contains("gfkl-moving"))return;
   const h=t.parentElement;if(!h)return;const r=h.getBoundingClientRect();if(!r.width||!r.height)return;
   /* the History timeline floats over the bottom of the globe: the tray goes just above it */
-  const dock=[...document.querySelectorAll(".hist-dock")].find(d=>d.getClientRects().length&&getComputedStyle(d).visibility!=="hidden");let lim=Math.min(r.bottom,innerHeight);
+  const dock=[...document.querySelectorAll(".hist-dock")].map(d=>(watch(d),d)).find(d=>d.getClientRects().length&&getComputedStyle(d).visibility!=="hidden");let lim=Math.min(r.bottom,innerHeight);
   if(dock){const dr=dock.getBoundingClientRect();if(dr.top<lim&&dr.bottom>r.top+150&&dr.left<r.left+t.offsetWidth+12)lim=Math.min(lim,dr.top)}
   const s=Math.round(r.width)+"x"+Math.round(r.height)+"|"+(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat?"f":"g")+"|"+(lim<Math.min(r.bottom,innerHeight)?"d":"");
   if(s===sig)return;const first=!sig;sig=s;const L=gfKitLayout.get();
@@ -60,19 +80,21 @@
    the History card, made shorter: its text scrolls); it goes back to its own place when the tray is elsewhere. */
 const LIFT=[".gfth:not(.gfth-float)",".gf-xs",".gf-learn",".gfk-coord"],SHRINK=[".hist-story"];
 function trayRect(){const t=document.getElementById("gfKit");if(!t||!t.getClientRects().length||getComputedStyle(t).visibility==="hidden"||document.body.classList.contains("gf-fs")||innerWidth<=640)return null;return t.getBoundingClientRect()}
-function undo(c){if(c._gfSw){c.style.removeProperty("bottom");c.style.maxHeight="";c._gfSw=0}}
-setInterval(()=>{try{const tr=trayRect();
- document.querySelectorAll(LIFT.join(",")).forEach(c=>{const h=c.parentElement;if(!tr||!h||!c.getClientRects().length){undo(c);return}
+/* the card's own inline max-height (the History card sets one) is put back as it was */
+function keepMH(c){if(!c._gfSw)c._gfMH0=c.style.maxHeight}
+function undo(c){if(c._gfSw){c.style.removeProperty("bottom");c.style.maxHeight=c._gfMH0||"";c._gfSw=0}}
+setInterval(()=>{try{if(!DIRTY.cards||busy())return;DIRTY.cards=false;const tr=trayRect();
+ document.querySelectorAll(LIFT.join(",")).forEach(c=>{watch(c);const h=c.parentElement;if(!tr||!h||!c.getClientRects().length){undo(c);return}
   const hr=h.getBoundingClientRect(),cs=getComputedStyle(c),R=c.getBoundingClientRect();
   /* where the card would be on its own: where it is now, less any lift given to it */
   if(!c._gfSw)c._gfB0=parseFloat(cs.bottom)||0;const b0=c._gfB0,lift=c._gfSw?(parseFloat(c.style.bottom)||b0)-b0:0,top=R.top+lift,bot=R.bottom+lift,hgt=R.height;
   const over=tr.left<R.right&&tr.right>R.left&&tr.top<bot&&tr.bottom>top;
-  if(over&&tr.top-hr.top>Math.min(hgt,160)+12){const b=Math.round(b0+bot-tr.top+8);if(c.style.bottom!==b+"px"){c.style.setProperty("bottom",b+"px","important");if(hgt>100){c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}}c._gfSw=1}
+  if(over&&tr.top-hr.top>Math.min(hgt,160)+12){const b=Math.round(b0+bot-tr.top+8);keepMH(c);if(c.style.bottom!==b+"px"){c.style.setProperty("bottom",b+"px","important");if(hgt>100){c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}}c._gfSw=1}
   else if(c._gfSw)undo(c)});
- document.querySelectorAll(SHRINK.join(",")).forEach(c=>{if(!tr||!c.getClientRects().length){undo(c);return}
-  if(c._gfSw){c.style.maxHeight=""}const r=c.getBoundingClientRect();
+ document.querySelectorAll(SHRINK.join(",")).forEach(c=>{watch(c);if(!tr||!c.getClientRects().length){undo(c);return}
+  keepMH(c);if(c._gfSw){c.style.maxHeight=c._gfMH0||""}const r=c.getBoundingClientRect();
   const over=tr.left<r.right&&tr.right>r.left&&tr.top<r.bottom&&tr.bottom>r.top;
-  if(over&&tr.top-r.top>170){c.style.maxHeight=Math.round(tr.top-r.top-10)+"px";c._gfSw=1}else undo(c)});
+  if(over&&tr.top-r.top>170){c.style.maxHeight="min("+(c._gfMH0||"100vh")+", "+Math.round(tr.top-r.top-10)+"px)";c._gfSw=1}else undo(c)});
 }catch(e){}},300);
 
 /* ---------- 5. no seam on the globe at 180° ----------
