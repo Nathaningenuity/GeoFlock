@@ -46,10 +46,13 @@ function wrapTq(){if(typeof tqStamp!=="function"||tqStamp._gfOne)return!!(typeof
 /* ---------- end of tour: one question, then the invitation ---------- */
 function wrapEnd(){if(typeof tqFor!=="function"||tqFor._gfOne)return!!(typeof tqFor==="function");const _f=tqFor;
  tqFor=function(){const r=_f.apply(this,arguments);if(r&&r.kind==="recap"&&r.list&&r.list.length>1){const L=r.list,pick=L.find(q=>q.pick)||L[Math.floor(Math.random()*L.length)];return{kind:"recap",list:[pick]}}return r};tqFor._gfOne=1;return true}
-function invite(){try{if(typeof ps==="undefined"||!ps||!ps.card)return;const S=psSteps();if(ps.i!==S.length-1)return;const id=ps.tour;if(!available(id)||ps.card.querySelector(".gftq-inv"))return;
- const r=st()[id]||{},medal=medalOf(r.best);const d=document.createElement("div");d.className="gftq-inv";
- d.innerHTML='<div><b>'+(r.runs?"Try the tour quiz again":"Master this tour")+'</b><span>10 questions, from easy to hard'+(r.best!=null?' · your best: '+r.best+'/10 '+medal.icon:"")+'</span></div><button type="button">Take the quiz →</button>';
- d.querySelector("button").onclick=()=>start(id);const at=ps.card.querySelector(".ps-stat")||ps.card.querySelector(".ps-title");if(at&&at.parentNode)at.parentNode.insertBefore(d,at.nextSibling);else{const nav=ps.card.querySelector(".ps-nav");if(nav&&nav.parentNode)nav.parentNode.insertBefore(d,nav);else ps.card.appendChild(d)}}catch(e){console.error(e)}}
+/* the last stop: its "Done" button becomes "Quiz myself", which ends the tour and opens the quiz. If the tour's own closing
+   question is still to answer, the tour stays open (that question shows first) and the next press goes on to the quiz. */
+function invite(){try{if(typeof ps==="undefined"||!ps||!ps.card)return;const S=psSteps();if(ps.i!==S.length-1)return;const id=ps.tour;if(!available(id))return;
+ const r=st()[id]||{},m=medalOf(r.best);ps.card.querySelectorAll(".ps-next[data-ps-end]:not([data-gftq-end])").forEach(b=>{b.dataset.gftqEnd=id;b.classList.add("gftq-endbtn");
+  b.textContent=(r.runs?"Quiz myself again":"Quiz myself")+" →";b.title="10 questions, from easy to hard"+(r.best!=null?" · your best: "+r.best+"/10 "+m.icon:"")})}catch(e){console.error(e)}}
+document.addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest("[data-gftq-end]");if(!b)return;const id=b.dataset.gftqEnd;
+ setTimeout(()=>{try{if(typeof ps==="undefined"||!ps||ps.tour!==id)start(id)}catch(err){console.error(err)}},350)},true);
 /* ---------- the quiz ---------- */
 let Z=null;
 /* the map on show (the globe or the flat map): the panel sits fixed over its top-left corner */
@@ -132,10 +135,23 @@ function mark(ll){addMark(ll,"it");try{const g=amGlobe;if(g._flat){g.zoom=1;g.re
 /* ---------- the quiz on the tours' tiles and lists ---------- */
 function decorate(){try{document.querySelectorAll("[data-tour]").forEach(el=>{const id=el.dataset.tour,r=st()[id];if(!r||r.best==null||el.querySelector(".gftq-tile"))return;const m=medalOf(r.best);if(!m.icon)return;
   const b=document.createElement("span");b.className="gftq-tile";b.title="Tour quiz: best "+r.best+"/10";b.textContent=m.icon;el.appendChild(b)})}catch(e){}}
-setInterval(decorate,1500);
+function cards(){try{document.querySelectorAll("#toursView .tr-card .tr-foot").forEach(f=>{if(f.querySelector(".gftq-go"))return;const go=f.querySelector(".tr-go[data-tour-go]");if(!go)return;
+  const id=go.dataset.tourGo;if(!available(id))return;const r=st()[id]||{},m=medalOf(r.best),done=/Finished/.test((f.querySelector(".tr-progtxt")||{}).textContent||"");
+  const q=document.createElement("button");q.type="button";q.className="gftq-go"+(done?" lead":"");q.dataset.gftqGo=id;
+  q.innerHTML=(done?"Quiz myself":"Quiz")+(m.icon?' <small>'+m.icon+"</small>":"");q.title="The tour quiz: 10 questions, from easy to hard"+(r.best!=null?" · your best: "+r.best+"/10":"");
+  q.onclick=e=>{e.stopPropagation();start(id)};
+  if(done){f.classList.add("gftq-done");go.textContent="Replay";go.classList.add("gftq-second")}go.before(q)})}catch(e){console.error(e)}}
+setInterval(cards,700);
+setInterval(()=>{decorate();invite()},1500);
 let n=0;const t=setInterval(()=>{const a=wrapTq(),b=wrapEnd();if(typeof psGo==="function"&&!psGo._gftq){const _g=psGo;psGo=function(){const r=_g.apply(this,arguments);setTimeout(invite,300);setTimeout(invite,1200);return r};psGo._gftq=1}if(a&&b&&psGo._gftq||++n>60)clearInterval(t)},500);
 window.gfTourQuiz={start,stop,pool,draw,available};
 {const s=document.createElement("style");s.textContent=`
+.tr-foot.gftq-done .tr-prog,.tr-foot.gftq-done .tr-progtxt{display:none}
+.tr-foot .gftq-go{margin-left:auto;padding:7px 11px;border-radius:999px;border:1.5px solid var(--tc,#d9682b);background:transparent;color:var(--tc,#d9682b);font:inherit;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+.tr-foot .gftq-go+.tr-go,.tr-foot .tr-go+.gftq-go{margin-left:6px}.tr-foot .gftq-go:hover{background:rgba(217,104,43,.1)}
+.tr-foot .gftq-go.lead{background:var(--tc,#d9682b);color:#fff;border-color:transparent}.tr-foot .gftq-go small{font-weight:700;opacity:.9}
+.tr-foot .tr-go.gftq-second{padding-left:12px!important;padding-right:12px!important;background:transparent!important;color:inherit!important;opacity:.75;box-shadow:none!important;border:1.5px solid rgba(127,127,127,.35)!important}
+.gftq-endbtn{background:linear-gradient(135deg,#e8743b,#d9682b)!important;color:#fff!important}
 .gftq-inv{display:flex;align-items:center;gap:10px;margin:10px 0 6px;padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,#fff3d6,#ffe2b8);color:#5a3a12}
 .gftq-inv div{flex:1;display:flex;flex-direction:column;line-height:1.25}.gftq-inv b{font-size:14px}.gftq-inv span{font-size:12px;opacity:.85}
 .gftq-inv button{border:0;border-radius:999px;padding:8px 14px;font-weight:800;background:#e8601c;color:#fff;cursor:pointer;white-space:nowrap}
