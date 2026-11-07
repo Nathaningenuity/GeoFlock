@@ -45,6 +45,10 @@ const PH={
  /* a world map is too crowded with names for figures: each animal goes into its own label instead */
   /* invasives: the stop already has rabbits, pythons, lionfish and Escobar's hippos; the cane toads in Australia join them */
  "animals|Animals out of place":{add:[{at:[146,-19],label:"Cane toads",col:"#8a6a3a",f:"Cane toad.jpg",d:"photos/x66b8c1fe5e548d29.webp",by:"Sam Fraser-Smith",lic:"CC BY 2.0",page:"https://www.flickr.com/photos/8379434@N07/3795687193"}]},
+ /* tigers and lions: a big label on each continent, and the animals themselves where they live */
+ "animals|Tigers and lions":{pinsAdd:[[[[22,2],[26,8],[18,-4]],"🦁 Lions: Africa","area"],[[[96,38],[102,42],[90,36]],"🐯 Tigers: Asia","area"]],
+  sym:[{at:[35,-2.5],e:"lion",n:"Lions, Serengeti"},{at:[23,-19.3],e:"lion",n:"Lions, Okavango"},{at:[31.6,-24],e:"lion",n:"Lions, Kruger"},{at:[70.8,21.1],e:"lion",n:"Asiatic lions, Gir"},
+   {at:[80.5,22.3],e:"tiger",n:"Tigers, central India"},{at:[89.2,21.9],e:"tiger",n:"Tigers, the Sundarbans"},{at:[102,4.5],e:"tiger",n:"Malayan tigers"},{at:[101.5,-1.5],e:"tiger",n:"Sumatran tigers"},{at:[135,46.5],e:"tiger",n:"Siberian tigers"}]},
  "*|Animals worth taming":{dropIcons:"paw",relabel:{"Horse: the western steppe":"🐎 Horse: the western steppe","Sheep, goats, cattle, pigs":"🐑 Sheep, goats, cattle, pigs","Dromedary camel":"🐪 Dromedary camel","Bactrian camel":"🐫 Bactrian camel","Yak":"🐂 Yak","Water buffalo":"🐃 Water buffalo","Donkey":"🐴 Donkey","Llama and alpaca":"🦙 Llama and alpaca","Zebra: never tamed":"🦓 Zebra: never tamed"}},
 };
 function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f);if(i<0){PS_PHOTO_DATA.push({f:x.f,d:x.d,by:x.by,lic:x.lic,page:x.page});i=PS_PHOTO_DATA.length-1}
@@ -57,6 +61,7 @@ function extras(S){try{if(!S||typeof ps==="undefined"||!ps)return;const X=PH[ps.
   try{Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,get(){if(ck!==base){ck=base;cache=merged()}return cache},set(v){base=Array.isArray(v)?v.filter(q=>!mine.includes(q)):[]}})}catch(e){}
   S._sqPruned=-1}else X.add.forEach(libAdd);
  if(X.relabel&&Array.isArray(S.pins)&&!S._gfRl){S._gfRl=1;setProp(S,"pins",S.pins.map(q=>Array.isArray(q)&&X.relabel[q[1]]?[q[0],X.relabel[q[1]]].concat(q.slice(2)):q))}
+ if(X.pinsAdd&&!S._gfPa){S._gfPa=1;setProp(S,"pins",(S.pins||[]).concat(X.pinsAdd.filter(q=>!(S.pins||[]).some(x=>Array.isArray(x)&&x[1]===q[1]))))}
  if(X.dropPins&&Array.isArray(S.pins)){const L=S.pins.filter(q=>!(Array.isArray(q)&&X.dropPins.test(String(q[1]))));if(L.length!==S.pins.length)setProp(S,"pins",L)}
  if(X.dropIcons&&Array.isArray(S.iconPins)){const keep=X.keepIconsAt||[];const L=S.iconPins.filter(q=>q.icon!==X.dropIcons||keep.some(a=>Math.hypot(a[0]-q.at[0],a[1]-q.at[1])<.5));
   const L2=X.sym?L.filter(q=>!(q.icon===X.dropIcons)):L;if(L2.length!==S.iconPins.length)setProp(S,"iconPins",L2);S._gfIcons=1}
@@ -116,5 +121,8 @@ function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode=
  (T.steps||[]).forEach(S=>{if(S&&(!S.mode||S.mode==="relief")&&!S.sub){S.mode="nature";if(!S.nsub)S.nsub="biomes"}});
  try{if(typeof TOUR_THUMBS!=="undefined")TOUR_THUMBS.animals="photos/cover_animals.webp?v=2"}catch(e){}return true}catch(e){return false}}
 [0,1500,4000,9000].forEach(ms=>setTimeout(animalsNature,ms));
+/* 11. tours on the Nature map: no fading veil, the biome colours and the relief under them show at full strength */
+(function(){let n=0;const t=setInterval(()=>{if(typeof psDimFill!=="function"){if(++n>40)clearInterval(t);return}if(psDimFill._gfNat){clearInterval(t);return}const _d=psDimFill;
+ psDimFill=function(){try{const T=ps&&PS_TOURS[ps.tour],S=ps&&psSteps()[ps.i],m=(S&&S.mode)||(T&&T.map&&T.map.mode);if(m==="nature")return"rgba(0,0,0,0)"}catch(e){}return _d.apply(this,arguments)};psDimFill._gfNat=1;clearInterval(t)},500)})();
 window.gfPolishM={dedupe};
 })();

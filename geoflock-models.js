@@ -209,7 +209,7 @@ body:not(.light-theme) .gfm-ph small{ color:#ffab6b; }
 document.head.appendChild(css);
 
 /* ================= 1. the Suggested path on the Tours page ================= */
-const SUGG=[["geo","Geography"],["pop","Population"],["plates","Tectonics"],["climate","Climate"],["explorers","Explorers"],["hempires","History"]];
+const SUGG=[["geo","Geography"],["pop","Population"],["plates","Tectonics"],["climate","Climate"],["animals","Nature"],["hempires","History"]];
 const prog=id=>{try{return(stats.tourProg||{})[id]||null}catch(e){return null}};
 const stopsOf=id=>Math.max(1,(PS_TOURS[id].steps||[]).length-2);
 const atOf=id=>{const p=prog(id);return p?Math.min(stopsOf(id),Math.max(0,p.max||0)):0};
