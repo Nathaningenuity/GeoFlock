@@ -32,7 +32,8 @@ let CLIM=null,climP=null;
 function climData(){if(CLIM)return CLIM;if(climP||typeof GLOBE_CLIMATE_IMG==="undefined")return null;
  climP=new Promise(res=>{const im=new Image;im.onload=()=>{try{const c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im,0,0);
    CLIM={w:c.width,h:c.height,d:x.getImageData(0,0,c.width,c.height).data,cells:new Map};req()}catch(e){console.error(e)}res()};im.onerror=()=>res();im.src=GLOBE_CLIMATE_IMG});return null}
-const climCol=i=>typeof GLOBE_CLIMATE_COLS!=="undefined"?GLOBE_CLIMATE_COLS[i-1]:null;
+/* in the Climate map's own (softened) colours: hot desert a warm orange-red, not pure red */
+const climCol=i=>{if(typeof GLOBE_CLIMATE_COLS==="undefined")return null;const c=GLOBE_CLIMATE_COLS[i-1];try{if(c&&typeof gfClimSoft==="function")return gfClimSoft(c)}catch(e){}return c};
 /* the zones as runs of equal cells (half a degree, at most six degrees long) inside the box */
 function climCells(box){const C=climData();if(!C)return null;const key=box.join(",");if(C.cells.has(key))return C.cells.get(key);const R=.5,out=[];
  const at=(lon,lat)=>{const x=Math.min(C.w-1,Math.max(0,Math.floor((lon+180)/360*C.w))),y=Math.min(C.h-1,Math.max(0,Math.floor((90-lat)/180*C.h)));return C.d[(y*C.w+x)*4]};
