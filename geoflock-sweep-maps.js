@@ -6,7 +6,8 @@
    2. The Toolkit tray, while it is still in its first place (never dragged), stays at the bottom of the map when the map
       changes size, e.g. going from the flat map to the taller globe. Before, it kept its distance from the map's top and
       ended up across the middle of the globe.
-   3. Cards in the map's lower left (Thermometer, Cross-section, the History story) keep clear of the Toolkit tray.
+   3. Cards and pills along the map's bottom (Thermometer, Cross-section, the History story, the "Click a country" tip and
+      the coordinates) keep clear of the Toolkit tray, so none is hidden under it and every × can be reached.
    4. Esc stops the Ruler: it ends the measuring mode (the ruler stays on the map; click it to measure again). */
 (function(){
 "use strict";
@@ -54,21 +55,20 @@
 })();
 
 /* ---------- 3. cards in the map's lower left stay clear of the Toolkit tray ----------
-   The Thermometer card and the Cross-section panel sit at the map's bottom left, where the tray floats too, and the
-   History story card hangs down from the top left over it. A card the tray would cover is lifted above the tray (or,
+   The Thermometer card, the Cross-section panel, the "Click a country" tip and the coordinates sit along the map's bottom,
+   where the tray floats too, and the History story card hangs down from the top left over it. A card the tray would cover is lifted above the tray (or,
    the History card, made shorter: its text scrolls); it goes back to its own place when the tray is elsewhere. */
-const LIFT=[".gfth:not(.gfth-float)",".gf-xs"],SHRINK=[".hist-story"];
+const LIFT=[".gfth:not(.gfth-float)",".gf-xs",".gf-learn",".gfk-coord"],SHRINK=[".hist-story"];
 function trayRect(){const t=document.getElementById("gfKit");if(!t||!t.getClientRects().length||getComputedStyle(t).visibility==="hidden"||document.body.classList.contains("gf-fs")||innerWidth<=640)return null;return t.getBoundingClientRect()}
-function undo(c){if(c._gfSw){c.style.bottom="";c.style.maxHeight="";c._gfSw=0}}
+function undo(c){if(c._gfSw){c.style.removeProperty("bottom");c.style.maxHeight="";c._gfSw=0}}
 setInterval(()=>{try{const tr=trayRect();
  document.querySelectorAll(LIFT.join(",")).forEach(c=>{const h=c.parentElement;if(!tr||!h||!c.getClientRects().length){undo(c);return}
-  const hr=h.getBoundingClientRect(),cs=getComputedStyle(c);
-  /* where the card would be on its own */
-  const l=c.getBoundingClientRect().left,w=c.offsetWidth,b0=parseFloat(c._gfSw?c._gfB0:cs.bottom)||10;if(!c._gfSw)c._gfB0=b0;
-  const hgt=c.offsetHeight,bot=hr.bottom-b0,top=bot-hgt;
-  const over=tr.left<l+w&&tr.right>l&&tr.top<bot&&tr.bottom>top;
-  if(over&&tr.top-hr.top>Math.min(hgt,160)+12){const b=Math.round(hr.bottom-tr.top+8);if(c.style.bottom!==b+"px"){c.style.bottom=b+"px";c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}c._gfSw=1}
-  else if(!over||c._gfSw)undo(c)});
+  const hr=h.getBoundingClientRect(),cs=getComputedStyle(c),R=c.getBoundingClientRect();
+  /* where the card would be on its own: where it is now, less any lift given to it */
+  if(!c._gfSw)c._gfB0=parseFloat(cs.bottom)||0;const b0=c._gfB0,lift=c._gfSw?(parseFloat(c.style.bottom)||b0)-b0:0,top=R.top+lift,bot=R.bottom+lift,hgt=R.height;
+  const over=tr.left<R.right&&tr.right>R.left&&tr.top<bot&&tr.bottom>top;
+  if(over&&tr.top-hr.top>Math.min(hgt,160)+12){const b=Math.round(b0+bot-tr.top+8);if(c.style.bottom!==b+"px"){c.style.setProperty("bottom",b+"px","important");if(hgt>100){c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}}c._gfSw=1}
+  else if(c._gfSw)undo(c)});
  document.querySelectorAll(SHRINK.join(",")).forEach(c=>{if(!tr||!c.getClientRects().length){undo(c);return}
   if(c._gfSw){c.style.maxHeight=""}const r=c.getBoundingClientRect();
   const over=tr.left<r.right&&tr.right>r.left&&tr.top<r.bottom&&tr.bottom>r.top;
