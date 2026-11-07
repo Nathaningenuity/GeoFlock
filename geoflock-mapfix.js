@@ -266,7 +266,8 @@ body.dark-theme .flag-zoom-close, body.sky-night .flag-zoom-close{ color:rgba(23
 /* 11. */
 if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
  const NAMES=["N","NE","E","SE","S","SW","W","NW"];const dirName=a=>NAMES[Math.round(((a%360)+360)%360/45)%8];
- const val=()=>{try{return Math.round((typeof gfShadeV==="function"?gfShadeV():gfMS().shadeB)*100)}catch(e){return 30}};
+ /* the slider's full travel is 0 to 0.6 (beyond that the relief looked too harsh) */const SMAX=.6;
+ const val=()=>{try{return Math.round(Math.min(SMAX,(typeof gfShadeV==="function"?gfShadeV():gfMS().shadeB))/SMAX*100)}catch(e){return 27}};
  function sync(row){const M=gfMS(),sun=row.querySelector(".gf-sh-sun"),a=M.sun*Math.PI/180;sun.setAttribute("cx",(20+13*Math.sin(a)).toFixed(1));sun.setAttribute("cy",(20-13*Math.cos(a)).toFixed(1));
   row.querySelector(".gf-sh-dir").textContent=dirName(M.sun);const r=row.querySelector("input");if(document.activeElement!==r)r.value=val()}
  function apply(){try{gfMSsave()}catch(e){}try{gfMsRefresh()}catch(e){}try{if(typeof gfMsPanelSync==="function")gfMsPanelSync()}catch(e){}try{gfGlobeDirty()}catch(e){}}
@@ -276,7 +277,7 @@ if(typeof gfMS==="function"&&typeof gfMsRefresh==="function"){
   const dial=row.querySelector("svg"),r=row.querySelector("input");
   const ang=ev=>{const b=dial.getBoundingClientRect(),dx=ev.clientX-(b.left+b.width/2),dy=ev.clientY-(b.top+b.height/2);gfMS().sun=Math.round((Math.atan2(dx,-dy)*180/Math.PI+360)%360/5)*5;sync(row)};
   dial.onpointerdown=ev=>{dial.setPointerCapture(ev.pointerId);ang(ev);dial.onpointermove=ang};dial.onpointerup=()=>{dial.onpointermove=null;apply()};
-  r.oninput=()=>{};r.onchange=()=>{const M=gfMS();if(typeof GF_STYLES!=="undefined"&&GF_STYLES[M.style])M.shadeG=r.value/100;else M.shadeB=r.value/100;apply()};
+  r.oninput=()=>{};r.onchange=()=>{const M=gfMS();if(typeof GF_STYLES!=="undefined"&&GF_STYLES[M.style])M.shadeG=r.value/100*SMAX;else M.shadeB=r.value/100*SMAX;apply()};
   ["pointerdown","mousedown","click","wheel","touchstart"].forEach(t=>row.addEventListener(t,e=>e.stopPropagation(),{passive:t==="wheel"||t==="touchstart"}));
   return row}
  let row=null;
