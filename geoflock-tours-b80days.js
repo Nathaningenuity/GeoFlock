@@ -224,7 +224,5 @@ function prep(St){try{const K=St&&KEEP.get(St);if(!K||!K.length)return;if(typeof
  if((St.phPins||[]).length!==K.length){St.phPins=K.map(q=>Object.assign({},q));St._sqPruned=-1;return true}}catch(e){console.error(e)}}
 function restore(){try{if(!mine())return;if(prep(psSteps()[ps.i])){if(typeof psPhPinsSync==="function")psPhPinsSync();if(typeof psPlacePins==="function")psPlacePins(true)}}catch(e){console.error(e)}}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(mine())prep(psSteps()[i])}catch(e){}const r=_g.apply(this,arguments);restore();setTimeout(restore,300);return r}}
-/* cover for the Guided tours page card */
-try{if(typeof TOUR_THUMBS!=="undefined"){const C={b80days:"East and West Shaking hands at the laying of last rail Union Pacific Railroad - Restoration.jpg"};
- const set=()=>{for(const id in C){if(TOUR_THUMBS[id])continue;const p=findP(C[id]);if(p&&p.d&&/^photos\//.test(p.d))TOUR_THUMBS[id]=p.d}};set();addEventListener("load",()=>setTimeout(set,1500))}}catch(e){}
+/* card cover: set in geoflock-tours-books1.js (own()) */
 })();
