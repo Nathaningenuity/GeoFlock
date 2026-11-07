@@ -18,11 +18,21 @@ const FIX={
  "pop|Europe’s Blue Banana":S=>FRAME(S,-1,50,3.5,[-16,42.5,14,57]),
  /* Population: the whole of Russia shows, European Russia beside the card instead of under it */
  "pop|Russia lives west of the Urals":S=>FRAME(S,45,58,1.2,[-95,35,185,78]),
- /* Geography: the stop is about Antarctica, which the flat map cannot show (it ends near 60°S): this one stop opens on
-    the globe, turned so the Sahara and Antarctica are both in sight */
  /* Elevation: Beringia was half under the card (Chukotka side): the whole land bridge beside it */
  "elev|Land the sea swallowed":S=>FRAME(S,-178,63,3,[147,53,-150,73]),
+ /* Animal migration: routes that ran along the left of the map, under the card */
+ "amigration|Humpback whales":S=>FRAME(S,-80,-25,1.4,[-130,-72,-30,20]),
+ "amigration|Eels to the Sargasso Sea":S=>FRAME(S,-60,36,1.5,[-138,10,20,62]),
+ "amigration|Locust swarms":S=>FRAME(S,-60,17,1.3,[-161,-5,42,40]),
+ /* Geography: the stop is about Antarctica, which the flat map cannot show (it ends near 60°S): this one stop opens on
+    the globe, turned so the Sahara and Antarctica are both in sight */
  "geo|The biggest desert is icy":S=>{SET(S,"autoGlobe",1);SET(S,"globe",[22,-32,1])},
+ /* Climate: Calgary and Winnipeg, the cold half of the comparison, were under the card */
+ "climate|London is mild for its latitude":S=>FRAME(S,-60,47,1.8,[-205,25,12,66]),
+ /* Climate: the Arctic cannot be seen on the flat map (only its southern edge, along the top): this stop opens on the
+    globe, looking down on the Arctic Ocean */
+ "climate|The fastest-warming place":S=>{SET(S,"autoGlobe",1);SET(S,"globe",[-30,78,1.3])},
+/*@FIX*/
 };
 const TXT={
  "projections|Now explore":{re:[["body","Drag countries is now on.","Dragging countries is now on."]]},
@@ -53,6 +63,17 @@ const TXT={
  "geo|The river with the most water":{re:[["body","More than the next seven biggest rivers combined, and by some measures","That is more than the next seven biggest rivers combined. By some measures"]]},
  /* the climate map's colours as they now look (ice cap is white, hot desert rusty red) */
  "geo|The biggest desert is icy":{re:[["more","Only ice cap (dark grey) and hot desert (red) are lit.","Only the ice caps (white) and the hot deserts (rusty red) are coloured in."]]},
+ /* a list with no verb opened the card */
+ "climate|Fjords: carved on windy west coasts":{re:[["body","Norway, southern Chile, British Columbia and Alaska, New Zealand’s Fiordland. Westerly","They line the coasts of Norway, southern Chile, British Columbia and Alaska, and New Zealand’s Fiordland. Westerly"]]},
+ /* the stat line and the text said the same words ("with no mountains in between to keep them apart") */
+ "weather|Where air masses collide":{stat:"Over the Great Plains three kinds of air meet head-on"},
+ /* Lakes: the stat and the text both said "bigger than Germany" */
+ "lakes|The biggest lake is called a sea":{re:[["body","At about 371,000 km², it is bigger than Germany: drag Germany over it to compare.","It covers about 371,000 km²: drag Germany over it to compare."]]},
+ /* "They" had nothing to point back to */
+ "lakes|Lakes in a crack":{re:[["body","They fill a crack in Africa’s crust,","It and its neighbours fill a crack in Africa’s crust,"]]},
+ /* "All four rivers" before the card had named them */
+ "rivers|Cradles of civilisation":{re:[["body","All four rivers ran through dry land,","The Nile, the Tigris and Euphrates, the Indus and the Yellow River all ran through dry land,"]]},
+/*@TXT*/
 };
 function text(S,key){const X=TXT[key];if(!X||S._gfSwT===X)return;S._gfSwT=X;
  ["title","stat","body","more"].forEach(k=>{const v=X[k];if(typeof v==="string")SET(S,k,v)});
@@ -61,9 +82,21 @@ function apply(S){try{if(!S||typeof ps==="undefined"||!ps)return;const key=ps.to
 /* text fixes also before a stop opens (stop lists and search show titles and stats) */
 function textAll(){try{if(typeof PS_TOURS==="undefined")return;for(const k in TXT){const i=k.indexOf("|"),T=PS_TOURS[k.slice(0,i)];if(!T)continue;const S=(T.steps||[]).find(s=>s&&(s.title===k.slice(i+1)||s._gfSwT===TXT[k]));if(S)text(S,k)}}catch(e){}}
 window.gfSweepTours={FIX,TXT,apply};
+/* the Toolkit tray floats over the map's bottom left corner, where a tall tour card has its Back button: the card is
+   made just short enough to end above the tray (its text scrolls, as it already does when the map is small) */
+window.gfSweepTours.kitGap=()=>{try{const c=typeof ps!=="undefined"&&ps&&ps.card,k=document.getElementById("gfKit");if(!c||!c.isConnected)return;
+ let cap=0;if(k&&k.offsetParent!==null){const cr=c.getBoundingClientRect(),kr=k.getBoundingClientRect(),host=c.offsetParent?c.offsetParent.clientHeight:900;
+  const natural=cr.top+Math.min(c.scrollHeight,480,host-24);
+  if(kr.width&&kr.right>cr.left+8&&kr.left<cr.right-8&&kr.top<natural+4&&kr.top>cr.top+180)cap=Math.floor(kr.top-cr.top-8)}
+ if((c._gfMh||0)!==cap){c._gfMh=cap;if(cap)c.style.setProperty("max-height",cap+"px","important");else c.style.removeProperty("max-height")}}catch(e){}};
 if(window._gfSwInstalled){textAll();return}window._gfSwInstalled=1;
 function wrap(){if(typeof psGo!=="function")return false;if(psGo._gfSw)return true;const _g=psGo;
  psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];window.gfSweepTours.apply(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfSw=1;return true}
 let n=0;const t=setInterval(()=>{if(wrap()||++n>80)clearInterval(t)},500);
+setInterval(()=>{try{window.gfSweepTours.kitGap()}catch(e){}},400);
+/* Biomes, Forests and Animals tours light one biome by pressing its swatch in the Nature key; since a swatch press also
+   opens the biome's card (a full-screen panel over a blurred map), a press made by a tour, not a person, closes it again */
+document.addEventListener("click",e=>{try{if(!e.isTrusted&&e.target&&e.target.closest&&e.target.closest(".gf-nat-sw")&&typeof ps!=="undefined"&&ps)
+ setTimeout(()=>document.querySelectorAll(".gf-nat-back").forEach(x=>x.remove()),0)}catch(err){}},true);
 [0,2000,6000,12000].forEach(ms=>setTimeout(()=>{try{window.gfSweepTours&&textAll()}catch(e){}},ms));
 })();
