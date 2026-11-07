@@ -86,6 +86,11 @@ const FIX={
  "ranges|Africa’s high ground":S=>FRAME(S,34,-8,1.6,[5,-36,62,18]),
  /* the Cascades' dry side (Ellensburg) sat beside the card but Seattle and the coast were under it */
  "ranges|Rain shadows":S=>FRAME(S,-122.5,47.3,4.5,[-135,45,-118,49.4]),
+ /* Rivers: each river's far end was under the card (the Danube's source in the Black Forest; the Niger's delta in
+    Nigeria; the Lena) */
+ "rivers|Ten countries, one river":S=>FRAME(S,14,46,3.5,[-10,41,31,51]),
+ "rivers|Running from the sea":S=>{LEFT(S);FRAME(S,-6,12,3,[-46,3,12,20])},
+ "rivers|Rivers that flood themselves":S=>{LEFT(S);FRAME(S,90,63,2,[12,45,142,78])},
 /*@FIX*/
 };
 const TXT={
