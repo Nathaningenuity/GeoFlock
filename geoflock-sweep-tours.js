@@ -79,6 +79,13 @@ const FIX={
  "ocean|The great whales":S=>DROPPH(S,["Grytviken, South Georgia"]),
  /* the turtle photo stood exactly on the Bermuda photo: it moves out into the sea */
  "ocean|The Sargasso Sea":S=>{(S.phPins||[]).forEach(q=>{if(q&&q.label==="Green sea turtle")q.at=[-68,29.5]})},
+ /* Mountain ranges: the far half of each subject was under the card (Scotland and Scandinavia's pieces of the old range;
+    the Appalachians' north end; Lesotho) */
+ "ranges|Scotland’s mountains are in America":S=>FRAME(S,-20,48,1.1,[-100,22,75,72]),
+ "ranges|Old mountains: the Appalachians":S=>{LEFT(S);FRAME(S,-76,40,2.4,[-96,30,-62,49])},
+ "ranges|Africa’s high ground":S=>FRAME(S,34,-8,1.6,[5,-36,62,18]),
+ /* the Cascades' dry side (Ellensburg) sat beside the card but Seattle and the coast were under it */
+ "ranges|Rain shadows":S=>FRAME(S,-122.5,47.3,4.5,[-135,45,-118,49.4]),
 /*@FIX*/
 };
 const TXT={
@@ -125,6 +132,10 @@ const TXT={
  /* the text repeated the stat line word for word */
  "hazards|Now explore":{re:[["body","Hover any country to see its name and neighbours. Try the","Try the"]]},
  "environment|Now explore":{re:[["body","Hover any country to see its name and neighbours. Try the","Try the"]]},
+ /* the climate map's colours as they are now: tundra grey, ice cap white, hot desert rusty red, hot grassland amber */
+ "climate|Ice far from the poles":{re:[["more","Only tundra (light grey) and ice cap (dark grey) are lit.","Only tundra (grey) and ice cap (white) are lit."]]},
+ "climate|The desert belts":{re:[["more","Only hot desert (red) and hot grassland (orange) are lit,","Only hot desert (rusty red) and hot grassland (amber) are lit,"]]},
+ "climate|The driest place, and the Andes’ trick":{re:[["more","Only deserts (reds)","Only deserts (rusty red and pale salmon)"]]},
 /*@TXT*/
 };
 function text(S,key){const X=TXT[key];if(!X)return;
