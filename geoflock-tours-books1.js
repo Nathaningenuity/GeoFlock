@@ -464,7 +464,8 @@ function prep(St){try{const K=St&&KEEP.get(St);if(!K||!K.length)return;if(typeof
 function restore(){try{if(!mine())return;if(prep(psSteps()[ps.i])){if(typeof psPhPinsSync==="function")psPhPinsSync();if(typeof psPlacePins==="function")psPlacePins(true)}}catch(e){console.error(e)}}
 if(typeof psGo==="function"){const _g=psGo;psGo=function(i){try{if(mine())prep(psSteps()[i])}catch(e){}const r=_g.apply(this,arguments);restore();setTimeout(restore,300);return r}}
 /* covers for the Guided tours page cards */
-try{if(typeof TOUR_THUMBS!=="undefined"){const C={bggs:"Llama on Machu Picchu.jpg",bnations:"Cerro Rico over Potosí, Bolivia.jpg",bcollapse:"Ahu Tongariki cropped.jpg"};
+try{if(typeof TOUR_THUMBS!=="undefined"){const C={bggs:"Llama on Machu Picchu.jpg",bcollapse:"Ahu Tongariki cropped.jpg"};
  const set=()=>{for(const id in C){if(TOUR_THUMBS[id])continue;const p=findP(C[id]);if(p&&p.d&&/^photos\//.test(p.d))TOUR_THUMBS[id]=p.d}};/* Prisoners of Geography: a shaded relief map of Europe, chosen by the user */
- const own=()=>{TOUR_THUMBS.bprisoners="photos/cover_bprisoners.webp"};own();set();addEventListener("load",()=>{own();setTimeout(()=>{own();set()},1500)})}}catch(e){}
+ /* Why Nations Fail: the Korean peninsula at night from the ISS (NASA, public domain): dark North, bright South */
+ const own=()=>{TOUR_THUMBS.bprisoners="photos/cover_bprisoners.webp";TOUR_THUMBS.bnations="photos/cover_bnations.webp"};own();set();addEventListener("load",()=>{own();setTimeout(()=>{own();set()},1500)})}}catch(e){}
 })();
