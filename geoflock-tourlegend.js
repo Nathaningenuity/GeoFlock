@@ -75,7 +75,10 @@ function tourKey(){const el=typeof flkEl==="function"?flkEl():document.getElemen
  if(!want||phone||(!lit&&rowOnScreen(lg))){el.style.display="none";el.classList.remove("gf-tl-on");return}
  el.style.display="";el.classList.add("open","gf-tl-on");
  if(el._k===k&&el.querySelector(".flk-h"))return;el._k=k;
- el.innerHTML='<div class="flk-h"><b>'+esc(title)+'</b><small class="gf-tl-tag">Map key</small></div>'+keyHTML(lg,lit)}
+ el.innerHTML='<div class="flk-h"><b>'+esc(title)+'</b><small class="gf-tl-tag">Map key</small><button type="button" class="gf-tl-fold" aria-label="Fold the map key" title="Fold / unfold the map key">▾</button></div>'+keyHTML(lg,lit);
+ /* the reader can fold the key during a tour too (kept while the page is open) */
+ let f=false;try{f=sessionStorage.getItem("gfTourKeyFold")==="1"}catch(e){}el.classList.toggle("gf-tl-folded",f);
+ const b=el.querySelector(".gf-tl-fold");if(b){b.setAttribute("aria-expanded",String(!f));b.onclick=e=>{e.stopPropagation();const now=!el.classList.contains("gf-tl-folded");el.classList.toggle("gf-tl-folded",now);b.setAttribute("aria-expanded",String(!now));try{sessionStorage.setItem("gfTourKeyFold",now?"1":"0")}catch(err){}}}}
 const POS=["left","top","right","bottom"];
 function clearPos(el){if(el._gftlPos&&POS.every(k=>el.style.getPropertyValue(k)===el._gftlPos[k]))POS.forEach(k=>el.style.removeProperty(k));el._gftlPos=null}
 function leaveKey(){document.querySelectorAll(".gf-tl-incard").forEach(x=>x.remove());const el=document.getElementById("flKey");if(!el)return;el.classList.remove("gf-tl-on");el._k=null;el.innerHTML="";clearPos(el)}
@@ -144,6 +147,12 @@ const css=document.createElement("style");css.textContent=`
 #flKey.gf-tl-on .flk-h{ display:flex; align-items:baseline; gap:8px; }
 #flKey.gf-tl-on .gf-tl-tag{ margin-left:auto; font-size:10.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; opacity:.55; }
 #flKey.gf-tl-on .flk-body{ overflow:auto; }
+#flKey.gf-tl-on .gf-tl-fold{ flex:0 0 auto; width:24px; height:24px; margin:-3px -4px -3px 2px; border:0; border-radius:50%; background:rgba(127,127,127,.14); color:inherit; font-size:13px; line-height:1; cursor:pointer; transition:transform .2s; }
+#flKey.gf-tl-on .gf-tl-fold:hover{ background:rgba(127,127,127,.26); }
+#flKey.gf-tl-on.gf-tl-folded .gf-tl-fold{ transform:rotate(-90deg); }
+#flKey.gf-tl-on.gf-tl-folded > :not(.flk-h){ display:none !important; }
+#flKey.gf-tl-on.gf-tl-folded{ height:auto !important; max-height:none !important; }
+#flKey.gf-tl-on.gf-tl-folded{ width:auto; min-width:150px; }
 #flKey .gf-tl-txt, .gf-tl-incard .gf-tl-txt{ margin:4px 0 0; font-size:12px; line-height:1.4; opacity:.85; }
 .gf-tl-incard{ margin:10px 0 4px; padding:8px 10px; border-radius:12px; border:1px solid rgba(127,140,180,.28); background:rgba(127,140,180,.07); font-size:12px; }
 .gf-tl-incard .gf-tl-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:2px; }
