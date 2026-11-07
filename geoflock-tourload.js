@@ -37,7 +37,10 @@ setInterval(()=>{try{
   else if(age>90000){want=null;hide()}}
  if(!want){
   const busy=on()&&((window.gfMapLoading===true&&Date.now()-(window.gfMapLoadingAt||0)<1500)||(psStepMode()==="history"&&window.GF_HIST2&&GF_HIST2.loading&&GF_HIST2.loading())||(typeof allMapsColorMode!=="undefined"&&psStepMode()&&psStepMode()!==allMapsColorMode));
-  if(busy){if(!busySince)busySince=Date.now();if(Date.now()-busySince>500)show("Loading the map…")}
+  /* a map that differs from the stop's (the reader picked another one) is not loading: the chip only shows while the map
+     reports loading, or for the first few seconds of a switch */
+  const real=on()&&window.gfMapLoading===true&&Date.now()-(window.gfMapLoadingAt||0)<1500;
+  if(busy){if(!busySince)busySince=Date.now();const t=Date.now()-busySince;if(t>500&&(real||t<6000))show("Loading the map…");else if(t>=6000&&chip&&!chip.querySelector(".gftl-btn"))hide()}
   else{busySince=0;if(chip&&!chip.hidden&&!chip.querySelector(".gftl-btn"))hide()}}
  /* the address follows the tour */
  let h="";if(on()){h="#tour="+encodeURIComponent(ps.tour)+(ps.i>0?"&stop="+(ps.i+1):"")}

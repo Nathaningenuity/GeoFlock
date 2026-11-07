@@ -16,7 +16,7 @@ function dedupe(S){try{if(!S||!Array.isArray(S.phPins))return;const P=(window.GF
   const dup=people.some(pp=>(pp.f&&q._f&&pp.f===q._f)||(pp.at&&q.at&&Math.hypot(pp.at[0]-q.at[0],pp.at[1]-q.at[1])<.2&&pp.sn.length>2&&lab.includes(pp.sn)&&!/home|house|grave|tomb|museum/.test(lab)));
   if(dup)S.phPins.splice(i,1)}}catch(e){console.error(e)}}
 function wrapGo(){if(typeof psGo!=="function"||psGo._gfM)return typeof psGo==="function";const _g=psGo;
- psGo=function(i){try{sameLat();brandt()}catch(e){}try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];extras(S);dedupe(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfM=1;return true}
+ psGo=function(i){try{sameLat();brandt();animalsNature()}catch(e){}try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];extras(S);dedupe(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfM=1;return true}
 let n=0;const t=setInterval(()=>{const a=wrapKey(),b=wrapGo();if(a&&b||++n>60)clearInterval(t)},500);
 /* 3. the Climate map's colours were softened (hot desert a rusty orange-red, cold desert pale salmon): the cards say so */
 const TXT=[["(red and orange on the climate map laid over it)","(rusty red and orange on the climate map laid over it)"],
@@ -109,5 +109,10 @@ function sameLat(){let n=0;try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).f
   const add=" Go further north and the gap grows: Churchill, on Hudson Bay, and Kirkwall, in Orkney off the north of Scotland, are both near 58.8°N, yet in January Churchill averages about −26 °C and Kirkwall about +4 °C.";
   if(typeof S.body==="string"&&!S.body.includes("Churchill"))S.body+=add})}catch(e){console.error(e)}return n}
 [0,1500,4000,9000].forEach(ms=>setTimeout(sameLat,ms));
+/* 10. the Animals tour runs on the Nature map's Biomes view (animals live by biome), and wears the Biomes tour's cover */
+function animalsNature(){try{const T=PS_TOURS.animals;if(!T)return false;T.mode="nature";if(T.m)T.m.mode="nature";if(T.map)T.map.mode="nature";else T.map={mode:"nature"};
+ (T.steps||[]).forEach(S=>{if(S&&(!S.mode||S.mode==="relief")&&!S.sub){S.mode="nature";if(!S.nsub)S.nsub="biomes"}});
+ try{if(typeof TOUR_THUMBS!=="undefined"&&TOUR_THUMBS.biomes)TOUR_THUMBS.animals=TOUR_THUMBS.biomes}catch(e){}return true}catch(e){return false}}
+[0,1500,4000,9000].forEach(ms=>setTimeout(animalsNature,ms));
 window.gfPolishM={dedupe};
 })();
