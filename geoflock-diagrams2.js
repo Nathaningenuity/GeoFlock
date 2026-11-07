@@ -47,6 +47,7 @@ const add=(k,cat)=>{DG[k].cat=cat;try{if(!SIM_KEYS.includes(k))SIM_KEYS.push(k);
 function make(key,o){const nT=o.tabs?o.tabs.length:1,t0=a=>clamp(parseInt(a,10)||0,0,nT-1);
   DG[key]={title:o.title,src:o.src,
    svg:a=>'<svg viewBox="0 0 300 '+o.h+'">'+(o.tabs?dgTabs(o.tabs,t0(a),4,8):"")+o.frame(t0(a))+'</svg>',
+   _d:(svg,s)=>o.draw(svg,s,false),
    init:(svg,a)=>{svg._s=Object.assign({tab:t0(a)},o.state?o.state(t0(a),a):{});o.draw(svg,svg._s,true);if(o.tick)simLoop(svg,dt=>o.tick(svg,svg._s,dt))},
    drag:(svg,n,x,y)=>{const s=svg._s;if(s&&o.drag){o.drag(svg,s,n,x,y);o.draw(svg,s,false)}},
    act:(svg,a)=>{const s=svg._s;if(!s)return false;if(o.tabs){const i=tabIdx(a,s.tab,nT);if(i!=null){s.tab=i;tabSel(svg,i);if(o.onTab)o.onTab(svg,s);o.draw(svg,s,true);return true}}
@@ -206,7 +207,7 @@ make("glacier",{title:"A glacier shrinks and grows",
    h+='<path d="M6,70 L40,34 L62,52 L88,30 L118,58 L150,44 L190,74 L230,64 L296,96 L296,166 L6,166Z" fill="#c7d3df"/><path d="M40,34 l-8,9 l5,-1 l3,4 l3,-4 l5,1Z M88,30 l-9,10 l5,-1 l4,4 l3,-4 l6,1Z" fill="#fff"/>';
    const pts=[];for(let x=6;x<=296;x+=3)pts.push([x,bedM(x)]);h+='<path d="'+ln(pts)+'L296,166L6,166Z" fill="#8f7a66"/>';
    /* trimline: how high the ice reached in 1850 */
-   const tl=[];for(let x=X0;x<=term(100);x+=4){const L=term(100)-X0,th=26*Math.sqrt(Math.max(0,1-(x-X0)/L));tl.push([x,bed(x)-th])}
+   const tl=[];for(let x=X0;x<=term(100);x+=4){const L=term(100)-X0,th=34*Math.sqrt(Math.max(0,1-(x-X0)/L));tl.push([x,bed(x)-th])}
    h+='<path d="'+ln(tl)+'" fill="none" stroke="#6a5745" stroke-width=".8" stroke-dasharray="2 2"'+tip("Trimline: the scar showing how thick the ice was in 1850")+'/>';
    const mor=(yy,lab)=>{const xx=term(vol(yy,0));return '<path d="M'+f1(xx-6)+','+f1(bed(xx))+' q6,-6 12,0Z" fill="#6f5d4c"'+tip("A moraine: a ridge of rubble dumped by the glacier’s snout around "+yy)+'/>'+(lab?T(f1(xx),f1(bed(xx)+8),yy,'font-size="5.4" text-anchor="middle" fill="#fff"'):"")};
    h+=T(MOR+4,bedM(MOR)+9,"1850",'font-size="5.6" font-weight="700" text-anchor="middle" fill="#fff"');
@@ -216,7 +217,7 @@ make("glacier",{title:"A glacier shrinks and grows",
      if(lp.length>2){h+='<path d="M'+f1(lp[0][0])+','+f1(lakeY)+ln(lp).replace("M","L")+'L'+f1(lp[lp.length-1][0])+','+f1(lakeY)+'Z" fill="#4a9bd6"'+tip("A lake dammed by the old moraine, filling the hollow the ice dug")+'/>';
        if(lp.length>8)h+=T(f1((lp[0][0]+lp[lp.length-1][0])/2),f1(lakeY+6),"new lake",'font-size="5.6" font-weight="700" text-anchor="middle" fill="#fff"')}}
    /* the glacier: thick at the top, thin at the snout */
-   const L=xt-X0,H=26*Math.pow(v/100,.32),gs=[];for(let x=X0;x<=xt;x+=2){const th=H*Math.sqrt(Math.max(0,1-(x-X0)/L));gs.push([x,bed(x)-th])}gs.push([xt,bed(xt)]);
+   const L=xt-X0,H=34*Math.pow(v/100,.32),gs=[];for(let x=X0;x<=xt;x+=2){const th=H*Math.sqrt(Math.max(0,1-(x-X0)/L));gs.push([x,bed(x)-th])}gs.push([xt,bed(xt)]);
    const back=[];for(let x=xt;x>=X0;x-=4)back.push([x,bed(x)+1]);
    h+='<path d="'+ln(gs)+ln(back).replace("M","L")+'Z" fill="#dff1fb" stroke="#7fb6dc" stroke-width=".8"'+tip("The glacier: "+Math.round(v)+"% of its 1850 ice")+'/>';
    const ela=lerp(88,74,(y-1850)/250);h+='<path d="M6,'+f1(ela)+' L296,'+f1(ela)+'" stroke="#2f6ea8" stroke-width=".8" stroke-dasharray="4 3"/>'+T(292,f1(ela-2.5),"snow line: snow builds up above it, ice melts below",'font-size="5.6" font-weight="700" text-anchor="end" fill="#2f6ea8"');
@@ -228,13 +229,13 @@ make("glacier",{title:"A glacier shrinks and grows",
    const dep=dx=>{const a=Math.abs(dx),V=Math.max(0,96*(1-a/118)),U=a<92?116*(1-Math.pow(a/92,3.2)):0;return lerp(V,U,m)};
    const surf=x=>{const dx=x-CX;let y=52+dep(dx)+3*Math.sin(x/9);if(x<70&&x>36&&m>.4)y=Math.min(y+0,y);return y};
    const ice=t<.3?0:t<.5?sstep(.3,.45,t):1-sstep(.5,.66,t),iceY=lerp(170,66,ice);
-   h+='<path d="M6,60 L30,40 L54,50 L70,36 L96,50 L210,48 L240,34 L262,46 L296,38 L296,170 L6,170Z" fill="#c7d3df"/>';
+   h+='<path d="M6,60 L30,40 L54,50 L70,36 L96,50 L210,48 L240,34 L262,46 L296,38 L296,72 L6,72Z" fill="#c7d3df"/>';
    if(ice>0)h+='<rect x="6" y="'+f1(iceY)+'" width="290" height="'+f1(170-iceY)+'" fill="#e2f3fc"/>'+(ice>.5?T(CX,f1(Math.min(iceY+30,140)),"glacier",'font-size="7" font-weight="800" text-anchor="middle" fill="#2f6ea8"'):"");
    const sea=sstep(.8,.95,t),seaY=lerp(172,104,sea);if(sea>0)h+='<rect x="6" y="'+f1(seaY)+'" width="290" height="'+f1(170-seaY)+'" fill="#2d6ea8"/>';
    const pts=[];for(let x=6;x<=296;x+=2)pts.push([x,surf(x)]);
    let rock='<path d="'+ln(pts)+'L296,170L6,170Z" fill="#8f7a66"'+tip(m<.5?"A V-shaped valley, cut by a river":"A U-shaped valley, ground out by ice")+'/>';
    /* a hanging side valley high on the left wall */
-   const hv=sstep(.45,.65,t);if(hv>0){const hx=CX-84,hy=surf(hx),fy=surf(CX-40);rock+='<path d="M'+f1(hx-16)+','+f1(hy-12)+' L'+f1(hx-2)+','+f1(hy)+' L'+f1(hx+2)+','+f1(hy-10)+'Z" fill="#c7d3df" opacity="'+f1(hv)+'"/>';
+   const hv=sstep(.45,.65,t);if(hv>0){const hx=CX-84,hy=surf(hx),fy=surf(CX-40);rock+='<path d="M'+f1(hx-30)+','+f1(surf(hx-30)-1)+' Q'+f1(hx-14)+','+f1(hy-3)+' '+f1(hx)+','+f1(hy)+'" fill="none" stroke="#3d8fd1" stroke-width="1.6" opacity="'+f1(hv)+'"/>';
      if(t>.62&&t<.86)rock+='<path d="M'+f1(hx)+','+f1(hy)+' Q'+f1(hx+6)+','+f1(hy+10)+' '+f1(hx+10)+','+f1(fy-2)+'" fill="none" stroke="#dff1ff" stroke-width="2.2" stroke-dasharray="3 2"'+tip("A waterfall drops from the hanging valley")+'/>';
      if(t>.6)b+=T(f1(hx-6),f1(hy-16),"hanging valley",'font-size="5.8" font-weight="700" text-anchor="middle" fill="'+INK+'"')}
    h+=rock;if(t<.3)h+='<path d="M'+(CX-4)+','+f1(surf(CX)-1)+' h8" stroke="#3d8fd1" stroke-width="3" stroke-linecap="round"/>'+T(CX,f1(surf(CX)-6),"river",'font-size="6" font-weight="700" text-anchor="middle" fill="#1d5f99"');
@@ -257,15 +258,15 @@ add("glacier","water");
 const MX=101,MY=78,R=62;
 const PRE=[["Nile",.38,.52,.1,"Arcuate"],["Mississippi",.86,.09,.05,"Bird’s-foot"],["Tiber",.14,.8,.06,"Cuspate"],["Ganges–Brahmaputra",.14,.14,.72,"Tide-shaped"]];
 const PTS=PRE.concat([["São Francisco",.05,.88,.07],["Mekong",.28,.34,.38],["Po",.5,.42,.08]]);
-const TOP=[249,44],BL=[210,138],BR=[288,138];
+const TOP=[249,58],BL=[210,140],BR=[288,140];
 const toXY=(r,w,t)=>[r*TOP[0]+w*BL[0]+t*BR[0],r*TOP[1]+w*BL[1]+t*BR[1]];
 function toW(x,y){const [x1,y1]=TOP,[x2,y2]=BL,[x3,y3]=BR,d=(y2-y3)*(x1-x3)+(x3-x2)*(y1-y3);let a=((y2-y3)*(x-x3)+(x3-x2)*(y-y3))/d,b=((y3-y1)*(x-x3)+(x1-x3)*(y-y3))/d,c=1-a-b;a=Math.max(0,a);b=Math.max(0,b);c=Math.max(0,c);const s=a+b+c;return[a/s,b/s,c/s]}
 const FING=[.82,1.32,1.78,2.3],FUN=[.62,1.02,1.42,1.82,2.22,2.56];
 function rad(th,w){const [wr,ww,wt]=w,s=Math.sin(th);
-  const rR=R*(.22+.78*Math.max(...FING.map(f=>Math.exp(-Math.pow((th-f)/.075,2)))));
-  const rA=R*.78*Math.pow(s,.45),rC=R*.72*Math.pow(Math.max(0,1-Math.abs(th-Math.PI/2)/(Math.PI/2)),1.7);
+  const rR=R*(.3*Math.pow(s,.3)+.7*Math.max(...FING.map(f=>Math.exp(-Math.pow((th-f)/.075,2)))));
+  const rA=R*.8*Math.pow(s,.18),c=Math.abs(Math.cos(th)),rC=1/(c/(R*1.15)+s/(R*.75));
   const rW=lerp(rA,rC,sstep(.55,.88,ww/(ww+wr+.001)));
-  const rT=R*.8*Math.pow(s,.6)*(1-.5*FUN.reduce((a,f)=>a+Math.exp(-Math.pow((th-f)/.055,2)),0));
+  const rT=R*.82*Math.pow(s,.3)*(1-.5*FUN.reduce((a,f)=>a+Math.exp(-Math.pow((th-f)/.055,2)),0));
   return wr*rR+ww*rW+wt*rT}
 function kind(w){const [wr,ww,wt]=w;return wt>.45?3:wr>.62?1:ww>.66?2:0}
 const TXT=["<b>Arcuate (fan-shaped).</b> River and waves roughly balance, so mud spreads into a smooth, curved fan crossed by many channels, like the Nile’s Δ.",
@@ -279,7 +280,7 @@ make("deltas",{title:"Why deltas come in different shapes",
  frame:()=>{let h='<defs><clipPath id="dgDeClip"><rect x="6" y="26" width="190" height="146" rx="8"/></clipPath></defs><g clip-path="url(#dgDeClip)"><rect x="6" y="26" width="190" height="146" fill="#2f78bd"/><g class="de-map"></g></g>';
   h+='<g transform="translate(202,26)"><rect width="94" height="146" rx="9" fill="'+PAN+'"/>'+T(7,12,"What wins?",'font-size="8.4" font-weight="900" fill="'+INK+'"')+T(7,21,"drag the dot",'font-size="5.8" font-weight="700" fill="#c0561d"')+'</g>';
   h+='<path d="M'+TOP+' L'+BL+' L'+BR+'Z" fill="#fff" stroke="#c4d0dc"/>';
-  [[TOP,"River",0,-4,"middle"],[BL,"Waves",-2,10,"start"],[BR,"Tides",2,10,"end"]].forEach(([p,n,dx,dy,a])=>{h+=T(p[0]+dx,p[1]+dy,n,'font-size="6.6" font-weight="800" text-anchor="'+a+'" fill="'+INK+'"')});
+  [[TOP,"River",0,-3,"middle"],[BL,"Waves",-2,10,"start"],[BR,"Tides",2,10,"end"]].forEach(([p,n,dx,dy,a])=>{h+=T(p[0]+dx,p[1]+dy,n,'font-size="6.6" font-weight="800" text-anchor="'+a+'" fill="'+INK+'"')});
   PTS.forEach(p=>{const xy=toXY(p[1],p[2],p[3]);h+='<circle cx="'+f1(xy[0])+'" cy="'+f1(xy[1])+'" r="1.8" fill="#9aa8b8"'+tip(p[0]+(p[4]?" ("+p[4].toLowerCase()+")":""))+'/>'});
   h+='<g class="de-lab"></g><g class="dg-handle de-dot" data-drag="d"><circle r="12" fill="transparent"/><circle r="5" fill="'+ACC+'" stroke="#fff" stroke-width="1.6"/></g>';
   h+='<text class="de-k" x="249" y="158" font-size="7.6" font-weight="900" text-anchor="middle" fill="'+INK+'"></text><text class="de-near" x="249" y="167" font-size="5.8" text-anchor="middle" fill="'+SUB+'"></text>';
@@ -315,8 +316,8 @@ const SEA=128;
 const ST=[[0,"A crack","Waves attack a weak line in the headland, such as a joint or fault in the rock."],[.12,"A sea cave","Waves pound and scour the crack, and pebbles they throw grind it into a cave."],
  [.36,"An arch","The cave breaks through the headland, leaving an arch, like Durdle Door in England."],[.56,"A stack","The arch roof falls in, leaving a pillar of rock standing alone: a sea stack, like the Twelve Apostles."],
  [.76,"A stump","Waves wear away the foot of the stack until it topples, leaving a stump covered at high tide. New caves start in the cliff behind."]];
-const ROCK={1:{nm:"Chalk",h:100,rate:.25,step:8,c:"#f1ede2",c2:"#ddd6c4",txt:"Firm chalk stands in tall, steep cliffs. Waves cut a notch at the foot until the overhang falls and the cliff steps back, leaving a flat wave-cut platform, seen at low tide. Dover’s cliffs have retreated roughly 20–30 cm a year lately."},
- 2:{nm:"Boulder clay",h:20,rate:1.8,step:4,c:"#b48a62",c2:"#9c7652",txt:"Boulder clay is soft rubble left by ice-age glaciers. On England’s Holderness coast the sea takes about 1.8 m a year on average, one of the fastest-eroding coastlines in Europe; around 30 villages have gone."}};
+const ROCK={1:{nm:"Chalk",h:100,rate:.25,step:8,c:"#f1ede2",c2:"#ddd6c4",txt:"Firm chalk stands in tall, steep cliffs. Waves cut a notch at the foot until the overhang falls and the cliff steps back, leaving a wave-cut platform. Dover’s cliffs lose roughly 20–30 cm a year."},
+ 2:{nm:"Boulder clay",h:20,rate:1.8,step:4,c:"#b48a62",c2:"#9c7652",txt:"Boulder clay is soft rubble left by ice-age glaciers. On England’s Holderness coast the sea takes about 1.8 m a year, one of Europe’s fastest-eroding coasts; around 30 villages have gone."}};
 const K=.9,X0=70,WL=140;
 make("coasterode",{title:"How waves wear back a coast",
  src:"Stages of headland erosion after standard textbook models. Cliff retreat: Dover chalk roughly 0.2–0.3 m a year (Hurst and others, 2016); Holderness boulder clay about 1.8 m a year (East Riding of Yorkshire Council). Cliff scenes drawn to scale, 0.9 px per metre",
@@ -336,7 +337,7 @@ make("coasterode",{title:"How waves wear back a coast",
      if(stump<.6)b+=T(cx-30,top-6,"cliff",'font-size="6.4" font-weight="700" text-anchor="middle" fill="'+INK+'"')}
    h='<path d="'+body+'" fill="#d9c49a" stroke="#a88e62" stroke-width=".8"/>'+h;
    for(let i=1;i<6;i++){const yy=top+i*12;h+='<path d="M6,'+yy+' L'+(fall>0?cx-16-i*1.2:end-2)+','+yy+'" stroke="#c2aa7c" stroke-width=".7"/>'}
-   if(fall===0){h+='<path d="M'+cx+','+(SEA+4)+' L'+(cx+2)+','+(top+16)+'" stroke="#6b5636" stroke-width="'+f1(1+cave*1.5)+'"/>';
+   if(fall===0){if(!arch)h+='<path d="M'+cx+','+(SEA+4)+' L'+(cx+2)+','+(top+16)+'" stroke="#6b5636" stroke-width="'+f1(1+cave*1.5)+'"/>';
      if(cave>0){const cw=4+cave*18,ch=6+cave*30;h+='<path d="M'+f1(cx-cw)+','+(SEA+2)+' Q'+f1(cx-cw)+','+f1(SEA-ch)+' '+cx+','+f1(SEA-ch)+' Q'+f1(cx+cw)+','+f1(SEA-ch)+' '+f1(cx+cw)+','+(SEA+2)+'Z" fill="'+(arch?"#cfe7f7":"#3a2e22")+'"'+tip(arch?"An arch: the cave has broken right through":"A sea cave")+'/>';
        b+=T(cx,f1(SEA-ch-5),arch?"arch":"cave",'font-size="7" font-weight="800" text-anchor="middle" fill="'+INK+'"')}
      else b+=T(cx+6,top+12,"crack",'font-size="6.4" font-weight="800" fill="'+INK+'"')}
@@ -360,13 +361,13 @@ make("coasterode",{title:"How waves wear back a coast",
    let lost=0;[[100,"farm"],[140,"houses"],[172,"church"]].forEach(([m,nm],i)=>{const hx=X0+m*K;if(hx>296)return;const gone=hx<xf+slope+2;if(gone){lost++;return}
      const y0=top-3;h+='<g'+tip(nm+", "+m+" m from where the edge was")+'><rect x="'+f1(hx-4)+'" y="'+f1(y0-6)+'" width="8" height="6" fill="#e8e1d2" stroke="#7a6a55" stroke-width=".5"/><path d="M'+f1(hx-5)+','+f1(y0-6)+' L'+f1(hx)+','+f1(y0-10)+' L'+f1(hx+5)+','+f1(y0-6)+'Z" fill="#b5533c"/>'+(nm==="church"?'<rect x="'+f1(hx+2)+'" y="'+f1(y0-14)+'" width="2.4" height="8" fill="#e8e1d2"/>':"")+'</g>'});
    const L0=X0;h+='<path d="M'+L0+','+f1(top-14)+' v10" stroke="'+ACC+'" stroke-width="1" stroke-dasharray="2 1.5"/>';b+=T(L0+2,f1(top-16),"edge in year 0",'font-size="5.6" font-weight="700" fill="#c0561d"');
-   b+='<g transform="translate(14,34)"><rect width="104" height="'+(lost?40:30)+'" rx="6" fill="#fff" fill-opacity=".88"/>'+T(6,11,R.nm+": about "+(R.rate<1?Math.round(R.rate*100)+" cm":R.rate+" m")+" a year",'font-size="6" font-weight="800" fill="'+INK+'"')+T(6,22,"After "+yr+" years: "+(ret<10?ret.toFixed(1):Math.round(ret))+" m lost",'font-size="6.4" font-weight="800" fill="'+ACC+'"')+(lost?T(6,33,lost+(lost>1?" buildings":" building")+" gone over the edge",'font-size="6" font-weight="700" fill="#b5533c"'):"")+'</g>';
+   b+='<g transform="translate('+(s.tab===1?186:14)+',34)"><rect width="104" height="'+(lost?40:30)+'" rx="6" fill="#fff" fill-opacity=".88"/>'+T(6,11,R.nm+": about "+(R.rate<1?Math.round(R.rate*100)+" cm":R.rate+" m")+" a year",'font-size="6" font-weight="800" fill="'+INK+'"')+T(6,22,"After "+yr+" years: "+(ret<10?ret.toFixed(1):Math.round(ret))+" m lost",'font-size="6.4" font-weight="800" fill="'+ACC+'"')+(lost?T(6,33,lost+(lost>1?" buildings":" building")+" gone over the edge",'font-size="6" font-weight="700" fill="#b5533c"'):"")+'</g>';
    setPara(svg,"co-p",R.txt);txt(svg,".g2-sll-v","Years");setSlider(svg,"v",14,206,272,s.yr,yr+" years")}
   const A=q(svg,".co-a");if(A)A.innerHTML=h;const B=q(svg,".co-b");if(B)B.innerHTML=b},
  drag:(svg,s,n,x)=>{const f=clamp((x-14)/272,0,1);if(s.tab===0)s.p=f;else s.yr=f},
  tick:(svg,s,dt)=>{s.t+=dt;const fx=q(svg,".co-fx");if(!fx)return;let h="";const y=s.tab===0?SEA:WL-8;
   for(let i=0;i<7;i++){const x=((s.t*18+i*44)%300);h+='<path d="M'+f1(x)+','+f1(y+4+i%3*7)+' q5,-3 10,0 t10,0" fill="none" stroke="#fff" stroke-width="1" opacity=".7"/>'}
-  const fxX=s.tab===0?(s.p<.56?250:null):s.face;if(fxX!=null){const k=(s.t*1.3)%1;h+='<path d="M'+f1(fxX-2)+','+f1(y+1)+' q-'+f1(4+8*k)+',-'+f1(10*Math.sin(k*Math.PI))+' -'+f1(8+10*k)+',0" fill="none" stroke="#fff" stroke-width="1.6" opacity="'+f1(1-k)+'"/>'}
+  const fxX=s.tab===0?(s.p<.56?250:null):s.face;if(fxX!=null){const k=(s.t*1.3)%1;h+='<path d="M'+f1(fxX-2)+','+f1(y+1)+' q'+f1(-(4+8*k))+','+f1(-10*Math.sin(k*Math.PI))+' '+f1(-(8+10*k))+',0" fill="none" stroke="#fff" stroke-width="1.6" opacity="'+f1(1-k)+'"/>'}
   fx.innerHTML=h}});
 add("coasterode","water");
 })();
@@ -390,7 +391,7 @@ make("upwell",{title:"Upwelling and El Niño",
    h+='<path d="M6,'+SS+' L'+CO+','+SS+' L'+ln(tc.slice().reverse()).slice(1)+'Z" fill="#3f8fd0"'+tip("Warm surface water")+'/>';
    h+='<path d="'+ln(tc)+'" fill="none" stroke="#9fd0ff" stroke-width=".8" stroke-dasharray="3 2"/>';
    h+='<path d="M6,172 L6,150 Q90,146 130,120 Q150,104 '+CO+','+(SS+2)+' L196,'+(SS-8)+' L196,172Z" fill="#7d6a58"/><path d="M'+CO+','+(SS+1)+' L170,'+(SS-6)+' L182,30 L190,'+(SS-20)+' L196,'+(SS-12)+' L196,'+(SS+2)+'Z" fill="#b59a74"/><path d="M182,30 l-3,5 l3,-1 l3,1Z" fill="#fff"/>';
-   b+=T(184,SS-24,"Peru",'font-size="6.4" font-weight="800" text-anchor="middle" fill="'+INK+'"')+T(12,SS-4,"Pacific Ocean (west)",'font-size="6" font-weight="700" fill="#1d5f99"')+T(14,SS+18,"warm",'font-size="6" font-weight="800" fill="#fff"')+T(14,140,"cold, deep water, full of nutrients",'font-size="6" font-weight="700" fill="#cfe6fa"');
+   b+=T(184,SS-24,"Peru",'font-size="6.4" font-weight="800" text-anchor="middle" fill="'+INK+'"')+T(74,SS-4,"Pacific Ocean (west)",'font-size="6" font-weight="700" fill="#1d5f99"')+T(14,SS+18,"warm",'font-size="6" font-weight="800" fill="#fff"')+T(14,140,"cold, deep water, full of nutrients",'font-size="6" font-weight="700" fill="#cfe6fa"');
    /* seen from above */
    b+='<g transform="translate(12,30)"><rect width="56" height="22" rx="4" fill="#fff" fill-opacity=".85"/><path d="M44,2 L46,20" stroke="#7d6a58" stroke-width="3"/>'+T(4,8,"from above:",'font-size="5" fill="'+SUB+'"')+
      '<path d="M38,18 L38,6 m-2.5,3 l2.5,-3 l2.5,3" stroke="'+INK+'" stroke-width="'+f1(.6+w*1.4)+'" fill="none"/>'+T(4,15,"wind N",'font-size="5" font-weight="800" fill="'+INK+'"')+'<path d="M34,14 L22,14 m3,-2.5 l-3,2.5 l3,2.5" stroke="#3d8fd1" stroke-width="'+f1(.6+w*1.4)+'" fill="none"/>'+T(4,21,"water W",'font-size="5" font-weight="800" fill="#1d5f99"')+'</g>';
@@ -405,8 +406,8 @@ make("upwell",{title:"Upwelling and El Niño",
   else{const k=s.k,ph=k<.33?0:k<.8?1:2;const td=lerp(52,10,k),cx=lerp(150,34,k);
    h+='<rect x="6" y="26" width="190" height="44" fill="#d9ecf9"/><rect x="6" y="70" width="190" height="102" fill="#1d4f86"/>';
    const tl=[];for(let x=6;x<=196;x+=4){const u=(x-6)/190;tl.push([x,70+lerp(56,td,Math.pow(u,1.3))])}
-   for(let i=0;i<19;i++){const x=6+i*10,u=i/18,warm=lerp(1,lerp(.15,1,1-k),Math.pow(u,1.5));h+='<rect x="'+x+'" y="70" width="10.4" height="40" fill="'+(warm>.75?"#e2603a":warm>.5?"#e99550":warm>.3?"#7ab3d8":"#4f8fc4")+'"/>'}
-   h+='<path d="M6,70 L196,70 L'+ln(tl.slice().reverse()).slice(1)+'Z" fill="#e2603a" opacity=".35"/><path d="'+ln(tl)+'" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3 2"'+tip("Thermocline: the boundary between warm surface water and cold deep water")+'/>';
+   for(let i=0;i<19;i++){const x=6+i*10,u=i/18,warm=lerp(1,lerp(.15,1,1-k),Math.pow(u,1.5));const ty=70+lerp(56,td,Math.pow((x+5-6)/190,1.3));h+='<rect x="'+x+'" y="70" width="10.4" height="'+f1(ty-70)+'" fill="'+(warm>.75?"#e2603a":warm>.5?"#e99550":warm>.3?"#7ab3d8":"#4f8fc4")+'"/>'}
+   h+='<path d="'+ln(tl)+'" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3 2"'+tip("Thermocline: the boundary between warm surface water and cold deep water")+'/>';
    h+='<path d="M6,70 L6,48 L20,50 L28,70Z" fill="#7d9a5a"/><path d="M196,70 L196,40 L186,46 L182,70Z" fill="#b59a74"/>';
    /* the rising air, cloud and rain, then air sinking in the east */
    h+='<g'+tip("Rising warm, moist air builds storm clouds and rain")+'><ellipse cx="'+f1(cx)+'" cy="36" rx="22" ry="7" fill="#fff"/><ellipse cx="'+f1(cx-10)+'" cy="40" rx="12" ry="6" fill="#eef3f8"/><ellipse cx="'+f1(cx+12)+'" cy="40" rx="13" ry="6" fill="#eef3f8"/></g>';
@@ -433,7 +434,356 @@ make("upwell",{title:"Upwelling and El Niño",
 add("upwell","water");
 })();
 
-/* @@PART3@@ */
+/* ================================================================ 6. How a city spreads */
+(function(){
+const CX=101,CY=99,CS=5,NX=38,NY=29,ROADS=[18,108,198,292].map(a=>a*Math.PI/180),RB=7,RU0=10.5;
+const TOWNS=ROADS.map(a=>[Math.cos(a)*12.5,Math.sin(a)*12.5]);
+const pop=t=>.3+2.4/(1+Math.exp(-(t-1965)/18));
+const dSprawl=t=>t<1945?lerp(9000,7000,(t-1900)/45):7000*Math.exp(-(t-1945)/36);
+const river=(x,y)=>Math.abs(y-(Math.sin(x/4)*1.2+2.5))<.9;
+let CELLS=null;
+function cells(){if(CELLS)return CELLS;CELLS=[];for(let i=0;i<NX;i++)for(let j=0;j<NY;j++){const x=(i*CS+8-CX)/CS,y=(j*CS+28-CY)/CS;if(river(x,y))continue;const d=Math.hypot(x,y);
+  let rd=9;ROADS.forEach(a=>{const ux=Math.cos(a),uy=Math.sin(a),t=x*ux+y*uy;if(t>0)rd=Math.min(rd,Math.abs(-x*uy+y*ux))});
+  const sc=d*(1-.38*Math.exp(-rd*rd/2.5))+rnd(i*97+j)*1.6;
+  CELLS.push({px:i*CS+8,py:j*CS+28,x,y,d,sc,tw:Math.min(...TOWNS.map(T=>Math.hypot(x-T[0],y-T[1])))+rnd(i+j*31)*.8})}
+  CELLS.sort((a,b)=>a.sc-b.sc);return CELLS}
+/* how many cells are built in year t under each policy; a cell, once built, stays built */
+function plan(mode,t){const P=pop(t)*1e6,C=cells();let built=[],d=dSprawl(t);
+  if(mode===0||t<1947||(mode===2&&t<1979)){const n=Math.round(P/d/(CS*CS*.16)/1);built=C.slice(0,Math.min(C.length,Math.round(P/d/4)))}
+  else if(mode===1){const sh=.22*sstep(1947,1990,t),din=lerp(7000,4800,sstep(1947,2020,t)),nin=Math.round(P*(1-sh)/din/4);
+    const inside=C.filter(c=>c.d<RB);built=inside.slice(0,nin);const nt=Math.round(P*sh/3200/4);const out=C.filter(c=>c.d>RB+3).sort((a,b)=>a.tw-b.tw);built=built.concat(out.slice(0,nt));d=P/(built.length*4)}
+  else{const ru=RU0+1.5*sstep(1979,2020,t),cap=C.filter(c=>c.d<ru);const d79=dSprawl(1979),want=Math.round(P/Math.max(d79,P/(cap.length*4))/4);built=cap.slice(0,Math.min(cap.length,want));d=P/(built.length*4)}
+  return{built,P,area:built.length*4,d:P/(built.length*4)}}
+const TXT=["<b>Sprawl.</b> With cars, cheap land and no limits, new homes spread out along the roads at low density: more land per person, longer drives.",
+ "<b>Greenbelt.</b> A ring of protected countryside stops the city growing outwards, so it stays denser and growth leaps to new towns beyond the belt, as around London.",
+ "<b>Growth boundary.</b> A line drawn round the city in 1979 protects farms and forest outside it; inside, the city fills in with denser homes near transit, as in Portland, Oregon."];
+make("urban",{title:"How a city spreads",
+ src:"A model city, not a real one: the same population growth under three planning policies. Densities are typical of US sprawl, London and Portland",
+ tabs:["Sprawl","Greenbelt","Growth boundary"],h:214,
+ state:()=>({yr:1}),
+ frame:()=>{let h='<defs><clipPath id="dgUrClip"><rect x="6" y="26" width="190" height="146" rx="8"/></clipPath></defs><g clip-path="url(#dgUrClip)"><rect x="6" y="26" width="190" height="146" fill="#dfe8c8"/><g class="ur-a"></g></g>';
+  h+=panel(202,26,94,146,"ur",[["Year","yr",26],["People","pp",43],["Built-up area","ar",60],["People per km²","dn",77],["Countryside built on","lo",94]]);
+  h+='<g transform="translate(209,140)">'+[["#7d3b2f","before 1945"],["#cf7350","1945–79"],["#f0b27a","1980 on"]].map((c,i)=>'<rect x="0" y="'+(i*9)+'" width="7" height="6" fill="'+c[0]+'"/>'+T(10,i*9+5.5,c[1],'font-size="5.6" fill="'+SUB+'"')).join("")+'</g>';
+  h+=para("ur-p",8,175,288,22,6.3)+slider("y",14,206,272,"Year");return h},
+ draw:(svg,s)=>{const t=Math.round(1900+120*s.yr),m=s.tab,R=plan(m,t);let h="";
+  /* the river and roads */
+  let rp=[];for(let x=-21;x<=21;x+=.5)rp.push([CX+x*CS,CY+(Math.sin(x/4)*1.2+2.5)*CS]);h+='<path d="'+ln(rp)+'" fill="none" stroke="#6fb3e0" stroke-width="5"/>';
+  ROADS.forEach(a=>{h+='<path d="M'+CX+','+CY+' L'+f1(CX+Math.cos(a)*130)+','+f1(CY+Math.sin(a)*130)+'" stroke="#fff" stroke-width="1.4" opacity=".9"/>'});
+  if(m===1&&t>=1947)h+='<circle cx="'+CX+'" cy="'+CY+'" r="'+((RB+1.5)*CS)+'" fill="none" stroke="#5c9a46" stroke-width="'+(3*CS)+'" opacity=".55"'+tip("The greenbelt: farms, woods and parks where building is restricted")+'/>';
+  if(m===2&&t>=1979){const ru=RU0+1.5*sstep(1979,2020,t);h+='<circle cx="'+CX+'" cy="'+CY+'" r="'+f1(ru*CS)+'" fill="none" stroke="#2f7a3a" stroke-width="1.4" stroke-dasharray="4 3"'+tip("The urban growth boundary")+'/>'}
+  /* built cells, coloured by when they were built */
+  const yrs=[1945,1979];const prev=yrs.map(y=>y<t?new Set(plan(m,y).built):null);const g=["","",""];
+  R.built.forEach(c=>{const k=prev[0]&&prev[0].has(c)?0:prev[1]&&prev[1].has(c)?1:2;const kk=t<=1945?0:t<=1979&&k===2?1:k;g[kk]+="M"+c.px+","+c.py+"h4.4v4.4h-4.4z"});
+  ["#7d3b2f","#cf7350","#f0b27a"].forEach((c,i)=>{if(g[i])h+='<path d="'+g[i]+'" fill="'+c+'"/>'});
+  ROADS.forEach(a=>{h+='<path d="M'+CX+','+CY+' L'+f1(CX+Math.cos(a)*130)+','+f1(CY+Math.sin(a)*130)+'" stroke="#fff" stroke-width=".8" opacity=".6"/>'});
+  if(m===1&&t>=1965)h+=T(CX,f1(CY-(RB+1.5)*CS+2),"greenbelt",'font-size="6" font-weight="800" text-anchor="middle" fill="#2f5f22"');
+  if(m===2&&t>=1979)h+=T(CX,f1(CY-(RU0+1.5)*CS-3),"growth boundary",'font-size="6" font-weight="800" text-anchor="middle" fill="#2f5f22"');
+  h+=T(12,168,"each square: 4 km²",'font-size="5.6" fill="'+SUB+'"');
+  const A=q(svg,".ur-a");if(A)A.innerHTML=h;
+  const base=plan(0,1900).area;
+  txt(svg,".ur-nm",["Sprawl","Greenbelt","Growth boundary"][m]);txt(svg,".ur-yr",t+"");txt(svg,".ur-pp",(R.P/1e6).toFixed(1)+" million");txt(svg,".ur-ar",fmt(R.area)+" km²");txt(svg,".ur-dn",fmt(Math.round(R.d/100)*100));txt(svg,".ur-lo",fmt(Math.max(0,R.area-base))+" km²");
+  setPara(svg,"ur-p",TXT[m]);setSlider(svg,"y",14,206,272,s.yr,t+"")},
+ drag:(svg,s,n,x)=>{s.yr=clamp((x-14)/272,0,1)}});
+add("urban","econ");
+})();
+
+/* ================================================================ 7. A waterfall walks backwards */
+(function(){
+const XS=270,TOP=70,CAP=12,GF=124,KM=240/11;
+make("waterfall",{title:"How a waterfall walks backwards",
+ src:"Niagara Falls: the gorge is about 11 km long and the falls began at the Niagara Escarpment roughly 12,500 years ago. Rates from the US Geological Survey and the Niagara Parks Commission. Heights stretched about 20 times",
+ h:206,state:()=>({p:1,t:0}),
+ frame:()=>{let h='<defs><clipPath id="dgWfClip"><rect x="6" y="6" width="290" height="150" rx="8"/></clipPath></defs><g clip-path="url(#dgWfClip)"><rect x="6" y="6" width="290" height="150" fill="#dcedf9"/><g class="wf-a"></g><g class="wf-fx"></g></g><g class="wf-b"></g>';
+  h+=para("wf-p",8,159,288,26,6.3)+slider("y",14,198,272,"Years since the ice left");return h},
+ draw:(svg,s)=>{const yrs=Math.round(s.p*12500),km=11*s.p,xf=XS-km*KM,u=((km*5)%1),ov=u*7;let h="",b="";
+  /* layers: hard cap rock on soft shale */
+  h+='<rect x="6" y="'+TOP+'" width="290" height="'+CAP+'" fill="#9a8f80"'+tip("Hard cap rock (dolostone): wears away slowly")+'/>';
+  h+='<rect x="6" y="'+(TOP+CAP)+'" width="290" height="80" fill="#6f6a72"'+tip("Soft shale: wears away fast")+'/>';
+  for(let i=0;i<4;i++)h+='<path d="M6,'+(TOP+CAP+12+i*14)+' H296" stroke="#615c64" stroke-width=".8"/>';
+  /* cut away the gorge downstream of the falls, with the undercut beneath the lip */
+  h+='<path d="M'+f1(xf)+','+(TOP-1)+' L296,'+(TOP-1)+' L296,'+GF+' L'+f1(xf+12)+','+GF+' Q'+f1(xf+4)+','+(GF+10)+' '+f1(xf-ov+2)+','+(GF-4)+' L'+f1(xf-ov)+','+(TOP+CAP)+' L'+f1(xf)+','+(TOP+CAP)+'Z" fill="#dcedf9"/>';
+  h+='<path d="M'+XS+','+(TOP-1)+' L296,'+(TOP-1)+' L296,'+GF+' L'+XS+','+GF+'Z" fill="#dcedf9"/><path d="M'+XS+','+GF+' L296,'+GF+' L296,160 L'+XS+',160Z" fill="#7a7468"/>';
+  h+='<path d="M'+f1(xf+10)+','+GF+' L296,'+GF+'" stroke="#3d8fd1" stroke-width="4"/><path d="M6,'+(TOP-1.5)+' L'+f1(xf)+','+(TOP-1.5)+'" stroke="#3d8fd1" stroke-width="3"/>';
+  h+='<path d="M'+f1(xf+2)+','+(GF+2)+' q8,8 16,0" fill="#2f78bd"'+tip("Plunge pool: swirling water scours the soft rock")+'/>';
+  for(let i=0;i<4;i++)h+='<path d="M'+f1(xf+12+i*7+rnd(i)*3)+','+GF+' l3,-4 l4,1 l1,3Z" fill="#9a8f80"/>';
+  h+='<path d="M6,'+(TOP-1)+' L6,30 L60,40 L120,36 L200,44 L296,40 L296,'+(TOP-1)+'Z" fill="#cfe2c0" opacity=".0"/>';
+  b+=T(14,TOP-6,"river",'font-size="6.4" font-weight="700" fill="#1d5f99"')+T(f1(Math.min(xf+40,260)),GF-6,km>1.5?"gorge":"",'font-size="7" font-weight="800" text-anchor="middle" fill="'+INK+'"');
+  b+=T(14,TOP+CAP-3,"hard cap rock",'font-size="6" font-weight="700" fill="#fff"')+T(14,TOP+CAP+16,"soft shale",'font-size="6" font-weight="700" fill="#e6e1ea"');
+  b+='<path d="M'+XS+',22 v'+(TOP-24)+'" stroke="'+INK+'" stroke-width=".6" stroke-dasharray="2 2"/>'+T(XS-2,20,"where the falls began",'font-size="5.8" font-weight="700" text-anchor="end" fill="'+INK+'"');
+  if(km>1)b+='<path d="M'+f1(xf)+',30 H'+XS+'" stroke="'+ACC+'" stroke-width="1"/><path d="M'+f1(xf)+',27 v6 M'+XS+',27 v6" stroke="'+ACC+'" stroke-width="1"/>'+T(f1((xf+XS)/2),27,km.toFixed(1)+" km",'font-size="7" font-weight="800" text-anchor="middle" fill="#c0561d"');
+  if(ov>2.5)b+=T(f1(xf-ov-3),TOP+CAP+8,"undercut",'font-size="5.8" font-weight="700" text-anchor="end" fill="#fff"');
+  s.xf=xf;const A=q(svg,".wf-a");if(A)A.innerHTML=h;const B=q(svg,".wf-b");if(B)B.innerHTML=b;
+  setPara(svg,"wf-p",s.p>.98?"<b>Today.</b> The falls have moved back about 11 km, about 1 m a year in the 1800s. Since much of the water is now taken for power, the rate has dropped to roughly 30 cm a year.":
+   "Spray and swirling water scour the soft shale under the hard cap rock. The lip is left hanging until it breaks off, and the falls step back upstream, leaving a gorge behind them.");
+  setSlider(svg,"y",14,198,272,s.p,fmt(yrs)+" years")},
+ drag:(svg,s,n,x)=>{s.p=clamp((x-14)/272,0,1)},
+ tick:(svg,s,dt)=>{s.t+=dt;const fx=q(svg,".wf-fx");if(!fx||s.xf==null)return;const xf=s.xf,off=(s.t*30)%8;
+  fx.innerHTML='<path d="M'+f1(xf)+','+(TOP-1)+' Q'+f1(xf+5)+','+(TOP+4)+' '+f1(xf+7)+','+(GF-2)+'" fill="none" stroke="#a9d6f5" stroke-width="5" stroke-dasharray="5 3" stroke-dashoffset="'+f1(-off)+'"/><ellipse cx="'+f1(xf+10)+'" cy="'+(GF-3)+'" rx="'+f1(9+Math.sin(s.t*7)*1.5)+'" ry="4" fill="#fff" opacity=".7"/>'}});
+add("waterfall","water");
+})();
+
+/* ================================================================ 8. Kinds of fault */
+(function(){
+const SY=78,BY=166,L=14,Rr=188;
+const K=[{nm:"Normal fault",f:"Pulled apart (tension)",m:"Upper block slides down",mk:"Steep scarps, rift valleys",ex:"East African Rift",ex2:"Basin and Range, USA",p:"When the crust is stretched, the block above a sloping crack slides down it, leaving a step in the ground called a fault scarp."},
+ {nm:"Reverse fault",f:"Squeezed (compression)",m:"Upper block pushed up",mk:"Mountains, thrust sheets",ex:"The Himalaya, the Andes",ex2:"where plates collide",p:"When the crust is squeezed, the block above the crack is shoved up and over the other. Low-angle ones, called thrusts, stack rock into mountains."},
+ {nm:"Strike-slip fault",f:"Sheared sideways",m:"Blocks slide past",mk:"Bent roads and streams",ex:"San Andreas, California",ex2:"about 5 cm a year",p:"The blocks slide past each other sideways. On the San Andreas Fault, Los Angeles rides north-west on the Pacific plate towards San Francisco."},
+ {nm:"Rift valley",f:"Pulled apart (tension)",m:"Middle block drops",mk:"Long valleys and lakes",ex:"East African Rift",ex2:"a few mm a year",p:"Between two normal faults a long block drops down, making a rift valley. Its floor fills with long, deep lakes like Tanganyika, and hot rock rises beneath."}];
+const LAY=["#c9a46a","#a8774a","#d8c08c","#8f6a4a","#b88e5c","#7a5a40"];
+function strata(id){let h='<g clip-path="url(#'+id+')"><rect x="-300" y="'+(SY-80)+'" width="900" height="400" fill="#b88e5c"/>';for(let i=0;i<8;i++)h+='<rect x="-300" y="'+(SY+i*13)+'" width="900" height="13" fill="'+LAY[i%6]+'"/>';return h+'<rect x="-300" y="'+(SY-4)+'" width="900" height="4" fill="#6aa84f"/></g>'}
+make("faults",{title:"Three kinds of fault, and a rift valley",
+ src:"Fault types after the US Geological Survey. Rates: San Andreas about 3–5 cm a year; the East African Rift a few millimetres a year. Block diagrams are schematic",
+ tabs:["Normal","Reverse","Strike-slip","Rift valley"],h:214,
+ state:()=>({d:.6}),
+ frame:()=>{let h='<defs><clipPath id="dgFaFr"><rect x="'+L+'" y="30" width="'+(Rr-L)+'" height="'+(BY-30)+'"/></clipPath><clipPath id="dgFaClip"><rect x="6" y="26" width="190" height="146" rx="8"/></clipPath></defs><g clip-path="url(#dgFaClip)"><rect x="6" y="26" width="190" height="146" fill="#dceefa"/><g class="fa-a"></g></g><g class="fa-b"></g>';
+  h+=panel(202,26,94,146,"fa",[["Forces","f",26],["Movement","m",45],["Makes","mk",64],["Example","ex",83]]);
+  h+='<text class="fa-ex2" x="209" y="125" font-size="5.8" fill="'+SUB+'"></text>';
+  h+=para("fa-p",8,175,288,22,6.3)+slider("d",14,206,272,"Movement");return h},
+ draw:(svg,s)=>{const k=s.tab,D=K[k],d=s.d*26;let h="",b="";const fr=uid(svg,"dgFaFr");
+  const arrow=(x,y,dx,c)=>'<path d="M'+x+','+y+' h'+dx+' m'+(dx>0?-4:4)+',-3 l'+(dx>0?4:-4)+',3 l'+(dx>0?-4:4)+',3" fill="none" stroke="'+(c||"#c0392b")+'" stroke-width="1.8"/>';
+  if(k<2){const ft=[92,SY],ux=.5,uy=.866,dir=k===0?1:-1,dx=ux*d*dir,dy=uy*d*dir,id=svg._fid||(svg._fid="fa"+Math.random().toString(36).slice(2,7));
+   const fw=[[-300,SY-80],[ft[0]-80*ux*0+ (-80)*0,SY-80],[ft[0],SY],[ft[0]+ux*300,SY+uy*300],[-300,SY+uy*300]];
+   const hw=[[ft[0],SY],[ft[0]-80*ux/uy*0,SY],[ft[0]-ux*100,SY-uy*100],[600,SY-uy*100],[600,SY+uy*300],[ft[0]+ux*300,SY+uy*300]];
+   const fwp=[[-300,SY-90],[ft[0]-ux*100,SY-uy*100],[ft[0]+ux*300,SY+uy*300],[-300,SY+300]],hwp=[[ft[0]-ux*100,SY-uy*100],[600,SY-uy*100],[600,SY+300],[ft[0]+ux*300,SY+uy*300]];
+   h+='<defs><clipPath id="'+id+'f"><path d="'+ln(fwp)+'Z"/></clipPath><clipPath id="'+id+'h"><path d="'+ln(hwp)+'Z"/></clipPath></defs><g clip-path="url(#'+fr+')">';
+   h+='<rect x="'+L+'" y="30" width="'+(Rr-L)+'" height="'+(SY-30)+'" fill="#dceefa"/>';
+   h+=strata(id+'f').replace('<rect x="-300" y="'+(SY-80)+'"','<rect x="-300" y="'+SY+'"')+'<g transform="translate('+f1(dx)+','+f1(dy)+')">'+strata(id+'h').replace('<rect x="-300" y="'+(SY-80)+'"','<rect x="-300" y="'+SY+'"')+'</g>';
+   h+='<path d="M'+f1(ft[0]-ux*20)+','+f1(SY-uy*20)+' L'+f1(ft[0]+ux*120)+','+f1(SY+uy*120)+'" stroke="#3a2a1a" stroke-width="1.2" stroke-dasharray="4 2"/></g>';
+   b+=T(50,SY+40,"footwall",'font-size="6.4" font-weight="800" fill="#fff"')+T(150,SY+40,"hanging wall",'font-size="6.4" font-weight="800" text-anchor="middle" fill="#fff"')+T(f1(ft[0]+ux*60+4),f1(SY+uy*60),"fault",'font-size="6.4" font-weight="800" fill="#3a2a1a"');
+   if(d>3&&k===0)b+=T(f1(ft[0]+8),f1(SY+dy/2+2),"scarp",'font-size="6" font-weight="800" fill="'+INK+'"');
+   b+=k===0?arrow(30,46,-14)+arrow(172,46,14):arrow(16,46,14)+arrow(186,46,-14);
+   b+='<path d="M'+f1(ft[0]+ux*80+14)+','+f1(SY+uy*80-4)+' l'+f1(dir*ux*12)+','+f1(dir*uy*12)+'" stroke="'+ACC+'" stroke-width="1.6"/>'}
+  else if(k===2){const dd=s.d*60;h+='<rect x="'+L+'" y="30" width="'+(Rr-L)+'" height="'+(BY-30)+'" fill="#d8c79a"/>';
+   const blk=(x0,x1,off,c)=>{let g='<g clip-path="url(#'+fr+')"><g transform="translate(0,'+f1(off)+')"><rect x="'+x0+'" y="-60" width="'+(x1-x0)+'" height="300" fill="'+c+'"/>';
+     for(let i=-2;i<9;i++)g+='<path d="M'+x0+','+(i*24+40)+' h'+(x1-x0)+'" stroke="#c3b07c" stroke-width=".5"/>';
+     g+='<path d="M'+x0+',104 H'+x1+'" stroke="#5b6b80" stroke-width="5"/><path d="M'+x0+',104 H'+x1+'" stroke="#fff" stroke-width=".8" stroke-dasharray="4 4"/>';
+     g+='<path d="M'+x0+',64 C'+(x0+20)+',58 '+(x1-20)+',70 '+x1+',64" fill="none" stroke="#3d8fd1" stroke-width="2"/>';return g+'</g></g>'};
+   h+=blk(L,101,-dd,"#d3c08d")+blk(101,Rr,0,"#c7b685");
+   h+='<path d="M101,30 V'+BY+'" stroke="#3a2a1a" stroke-width="1.4" stroke-dasharray="4 2"/>';
+   const la=[52,150-dd],sf=[150,56];b+='<circle cx="52" cy="'+f1(la[1])+'" r="3" fill="#c0392b" stroke="#fff"/>'+T(58,f1(la[1]+2),"Los Angeles",'font-size="6" font-weight="800" fill="'+INK+'"');
+   b+='<circle cx="150" cy="56" r="3" fill="'+INK+'" stroke="#fff"/>'+T(156,58,"San Francisco",'font-size="6" font-weight="800" fill="'+INK+'"').replace('x="156"','x="146" text-anchor="end"');
+   b+=T(20,40,"Pacific plate",'font-size="6.2" font-weight="800" fill="#7a5a30"')+T(182,40,"North American plate",'font-size="6.2" font-weight="800" text-anchor="end" fill="#7a5a30"');
+   b+='<path d="M30,160 v-14 m-3,4 l3,-4 l3,4" stroke="#c0392b" stroke-width="1.6" fill="none"/>'+T(36,158,"N",'font-size="6" font-weight="800" fill="'+INK+'"')+T(101,BY+4,"",'');
+   b+=T(56,100,"road",'font-size="5.8" font-weight="700" fill="#fff"').replace('y="100"','y="'+f1(100-dd)+'"')}
+  else{const e=s.d*12,dd=e*1.732,a=[61,SY],c=[141,SY],ap=[101,SY+69],id=svg._fid||(svg._fid="fa"+Math.random().toString(36).slice(2,7));
+   const Lb=[[-300,SY-90],[a[0]-30*.577,SY-30],[ap[0],ap[1]],[101,400],[-300,400]],Rb=[[600,SY-90],[c[0]+30*.577,SY-30],[ap[0],ap[1]],[101,400],[600,400]],Gb=[[a[0]-30*.577,SY-30],[c[0]+30*.577,SY-30],ap];
+   h+='<defs><clipPath id="'+id+'l"><path d="'+ln(Lb)+'Z"/></clipPath><clipPath id="'+id+'r"><path d="'+ln(Rb)+'Z"/></clipPath><clipPath id="'+id+'g"><path d="'+ln(Gb)+'Z"/></clipPath></defs><g clip-path="url(#'+fr+')">';
+   h+='<rect x="'+f1(101-e-2)+'" y="'+(SY+40)+'" width="'+f1(2*e+4)+'" height="200" fill="#e8622c"'+tip("Hot rock rises where the crust thins")+'/>';
+   const S=x=>strata(id+x).replace('<rect x="-300" y="'+(SY-80)+'"','<rect x="-300" y="'+SY+'"');
+   h+='<g transform="translate('+f1(-e)+',0)">'+S("l")+'</g><g transform="translate('+f1(e)+',0)">'+S("r")+'</g><g transform="translate(0,'+f1(dd)+')">'+S("g")+'</g>';
+   if(dd>6){const w=lerp(a[0],c[0],.5),lw=(c[0]-a[0])/2+e-4;h+='<rect x="'+f1(101-lw+2)+'" y="'+f1(SY+dd*.35)+'" width="'+f1(2*lw-4)+'" height="'+f1(dd*.65+.5)+'" fill="#2a74c4"'+tip("A rift lake, long and deep, like Tanganyika (1,470 m deep)")+'/>';b+=T(101,f1(SY+dd*.35+dd*.4+3),"rift lake",'font-size="6.2" font-weight="800" text-anchor="middle" fill="#fff"')}
+   h+='</g>';b+=arrow(30,46,-14)+arrow(172,46,14)+T(101,SY-8,"rift valley",'font-size="6.6" font-weight="800" text-anchor="middle" fill="'+INK+'"');}
+  const A=q(svg,".fa-a");if(A)A.innerHTML=h;const B=q(svg,".fa-b");if(B)B.innerHTML=b;
+  txt(svg,".fa-nm",D.nm);["f","m","mk","ex"].forEach(c=>txt(svg,".fa-"+c,D[c]));txt(svg,".fa-ex2",D.ex2);setPara(svg,"fa-p",D.p);
+  setSlider(svg,"d",14,206,272,s.d,k===2?Math.round(s.d*15)+" million years":k===3?"pulled "+Math.round(s.d*100)+"%":Math.round(s.d*100)+"%")},
+ drag:(svg,s,n,x)=>{s.d=clamp((x-14)/272,0,1)}});
+add("faults","plates");
+})();
+
+/* ================================================================ 9. Three ways to make rain */
+(function(){
+const G=160,PK=13;/* ground y; pixels per km */
+const K=[{nm:"Convectional",T0:30,lift:"Heat from the ground",cl:"Towering cumulonimbus",rn:"Short, heavy, with thunder",wh:"Tropics; summer afternoons",
+   p:"The Sun heats the ground, and warm air rises in bubbles. It cools as it climbs; when it reaches its dew point, cloud forms, building into towering thunderstorms."},
+ {nm:"Frontal",T0:15,lift:"Warm air slides over cold",cl:"Thick layers (nimbostratus)",rn:"Long, steady rain",wh:"Mid-latitudes, like Britain",
+   p:"Where a warm air mass meets a cold one, the lighter warm air is pushed up over the cold, dense air along the front. It cools, and a wide sheet of cloud brings hours of rain."},
+ {nm:"Relief",T0:20,lift:"Mountains in the wind’s way",cl:"Cloud on the windward side",rn:"Wet side, dry rain shadow",wh:"Mawsynram, India; west Norway",
+   p:"Wind meets mountains and is forced up. It cools and rains on the windward side; going down the far side it warms again, arriving warm and dry: a rain shadow."}];
+const mtn=x=>Math.max(0,2.6*Math.exp(-Math.pow((x-118)/34,2)));
+function path(k,u){if(k===0){const x=58+6*Math.sin(u*9);return[x,u*10.5]}
+  if(k===1){const x=lerp(12,196,u);return[x,x<40?0:(x-40)*.035]}
+  const x=lerp(8,196,u);return[x,mtn(x)+.15]}
+make("rain",{title:"Three ways to make rain",
+ src:"Air cools by about 10 °C per km as it rises until it is saturated, then by about 6 °C per km. Cloud base is roughly 125 m for every 1 °C between the air temperature and its dew point (World Meteorological Organization). Schematic",
+ tabs:["Convectional","Frontal","Relief"],h:214,
+ state:()=>({h:.6,u:0,t:0}),
+ frame:()=>{let h='<defs><linearGradient id="dgRaSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb2df"/><stop offset="1" stop-color="#e3f1fb"/></linearGradient><clipPath id="dgRaClip"><rect x="6" y="26" width="190" height="146" rx="8"/></clipPath></defs><g clip-path="url(#dgRaClip)"><rect x="6" y="26" width="190" height="146" fill="url(#dgRaSky)"/><g class="ra-a"></g><g class="ra-fx"></g></g><g class="ra-b"></g>';
+  h+=panel(202,26,94,146,"ra",[["Air is lifted by","l",26],["Cloud","c",45],["Rain","r",64],["Typical of","w",83]]);
+  h+='<g transform="translate(202,26)">'+T(7,104,"The rising air now",'font-size="5.7" fill="'+SUB+'"')+'<text class="ra-z" x="7" y="114" font-size="7.4" font-weight="900" fill="'+INK+'"></text><text class="ra-cb" x="7" y="128" font-size="6" font-weight="700" fill="#2f6ea8"></text><text class="ra-cb2" x="7" y="137" font-size="5.6" fill="'+SUB+'"></text></g>';
+  h+=para("ra-p",8,175,288,22,6.3)+slider("h",14,206,272,"How damp is the air?");return h},
+ draw:(svg,s)=>{const k=s.tab,D=K[k],cb=lerp(2.6,.3,s.h),cy=G-cb*PK;let h="",b="";s.cb=cb;
+  if(k===0){h+='<rect x="6" y="'+G+'" width="190" height="20" fill="#7a9a54"/><circle cx="176" cy="40" r="9" fill="#ffd34d"/>';for(let i=0;i<6;i++)h+='<path d="M'+(70+i*16)+','+(G-2)+' q3,-5 0,-10 q-3,-5 0,-10" fill="none" stroke="#f0a050" stroke-width=".8" opacity=".7"/>';
+   const top=G-10*PK;h+='<path d="M30,'+f1(cy)+' Q32,'+f1(cy-30)+' 44,'+f1(top+20)+' Q40,'+f1(top+4)+' 20,'+f1(top+2)+' L120,'+f1(top)+' Q86,'+f1(top+6)+' 84,'+f1(top+20)+' Q94,'+f1(cy-30)+' 92,'+f1(cy)+'Z" fill="#f4f7fa" stroke="#c9d4df"'+tip("Cumulonimbus: a thundercloud up to 10 km or more tall")+'/>';
+   h+='<path d="M28,'+f1(cy)+' H96" stroke="#9aa8b8" stroke-width="2"/>';s.rx=[34,88]}
+  else if(k===1){const fl=x=>G-(x-40)*.035*PK;h+='<path d="M40,'+G+' L196,'+f1(fl(196))+' L196,'+G+'Z" fill="#6fa3d6" opacity=".75"'+tip("Cold, dense air pushes in under the warm air")+'/>';h+='<rect x="6" y="'+G+'" width="190" height="20" fill="#7a9a54"/>';
+   const x0=Math.max(40,40+cb/.035),pts=[];for(let x=x0;x<=196;x+=4)pts.push([x,fl(x)-2]);for(let x=196;x>=x0;x-=4)pts.push([x,fl(x)-lerp(16,44,(x-x0)/150)]);
+   if(pts.length>4)h+='<path d="'+ln(pts)+'Z" fill="#e9eef3" stroke="#c4ced8"'+tip("A wide sheet of layered cloud along the front")+'/>';h+='<path d="M40,'+G+' L196,'+f1(fl(196))+'" stroke="#c0392b" stroke-width="1.6"/>';for(let x=60;x<190;x+=24)h+='<circle cx="'+x+'" cy="'+f1(fl(x)-1)+'" r="3" fill="#c0392b"/>';
+   b+=T(14,G-8,"warm air",'font-size="6.6" font-weight="800" fill="#c0561d"')+T(180,G-6,"cold air",'font-size="6.6" font-weight="800" text-anchor="end" fill="#1d5f99"')+T(100,f1(fl(100)+12),"front",'font-size="6" font-weight="800" fill="#1d5f99"');s.rx=[x0+4,Math.min(196,x0+110)]}
+  else{const pts=[];for(let x=6;x<=196;x+=2)pts.push([x,G-mtn(x)*PK]);h+='<path d="'+ln(pts)+'L196,180L6,180Z" fill="#8a9a64"/>';
+   h+='<path d="'+ln(pts.filter(p=>p[0]>118))+'L196,180L118,180Z" fill="#c9b07a"/>';
+   if(cb<2.6){const xs=pts.filter(p=>p[0]<=118&&(G-p[1])/PK>=cb);if(xs.length){const x0=xs[0][0];h+='<path d="M'+f1(x0-4)+','+f1(cy)+' Q'+f1(x0+10)+','+f1(cy-18)+' 100,'+f1(Math.min(cy,G-2.6*PK)-14)+' Q122,'+f1(G-2.6*PK-18)+' 128,'+f1(G-2.6*PK+4)+' Z" fill="#eef2f6" stroke="#c4ced8"/>';s.rx=[x0,116]}else s.rx=null}else s.rx=null;
+   b+=T(30,G+12,"windward: wet",'font-size="6.2" font-weight="800" fill="#fff"')+T(186,G+12,"lee: dry",'font-size="6.2" font-weight="800" text-anchor="end" fill="#7a5a2a"')+T(14,40,"wind →",'font-size="6.6" font-weight="800" fill="'+INK+'"');
+   if(cb>=2.6||!s.rx)b+=T(101,50,"Air too dry: cloud base above the mountain",'font-size="6" font-weight="800" text-anchor="middle" fill="#b5533c"')}
+  h+='<path d="M6,'+f1(cy)+' H196" stroke="#2f6ea8" stroke-width=".7" stroke-dasharray="3 3"/>';b+=T(192,f1(cy-2),"cloud base",'font-size="5.6" font-weight="700" text-anchor="end" fill="#2f6ea8"');
+  for(let km=2;km<=10;km+=2)b+=T(9,f1(G-km*PK+2),km+" km",'font-size="5" fill="'+SUB+'"');
+  const A=q(svg,".ra-a");if(A)A.innerHTML=h;const B=q(svg,".ra-b");if(B)B.innerHTML=b;
+  txt(svg,".ra-nm",D.nm);txt(svg,".ra-l",D.lift);txt(svg,".ra-c",D.cl);txt(svg,".ra-r",D.rn);txt(svg,".ra-w",D.wh);
+  txt(svg,".ra-cb","Cloud base: "+fmt(Math.round(cb*10)*100)+" m");txt(svg,".ra-cb2",s.h>.7?"damp air: low cloud, more rain":s.h<.3?"dry air: cloud forms high up":"");
+  setPara(svg,"ra-p",D.p);setSlider(svg,"h",14,206,272,s.h,s.h<.3?"dry":s.h<.7?"fairly damp":"very damp")},
+ onTab:(svg,s)=>{s.u=0},
+ drag:(svg,s,n,x)=>{s.h=clamp((x-14)/272,0,1)},
+ tick:(svg,s,dt)=>{const k=s.tab,D=K[k],fx=q(svg,".ra-fx");if(!fx)return;s.t+=dt;s.u=(s.u+dt/7)%1;
+  /* follow one parcel of air and its temperature */
+  let T0=D.T0,z0=0,Tn=T0,zm=0;const N=40;for(let i=0;i<=N;i++){const [x,z]=path(k,s.u*i/N);const dz=z-z0;z0=z;Tn-=dz*(dz>0&&z>s.cb?6:9.8)}
+  const [x,z]=path(k,s.u),y=G-z*PK,sat=z>=s.cb-.02;let h='<circle cx="'+f1(x)+'" cy="'+f1(y)+'" r="5" fill="'+(sat?"#fff":"#f6b26b")+'" stroke="'+(sat?"#9aa8b8":"#e07a2c")+'" stroke-width="1"/>'+T(f1(x+7),f1(y+2),Math.round(Tn)+" °C",'font-size="6.4" font-weight="900" fill="'+INK+'" stroke="#fff" stroke-width="2" paint-order="stroke"');
+  if(s.rx){const n=Math.round(4+s.h*12),top=G-s.cb*PK;for(let i=0;i<n;i++){const rx=lerp(s.rx[0],s.rx[1],rnd(i)),ry=top+((s.t*60+rnd(i+20)*80)%Math.max(8,G-top-(k===2?mtn(rx)*PK:0)));h+='<path d="M'+f1(rx)+','+f1(ry)+' l-1,4" stroke="#3d8fd1" stroke-width="1"/>'}}
+  fx.innerHTML=h;txt(svg,".ra-z",(z*1000<50?"at the ground":fmt(Math.round(z*10)*100)+" m up")+", "+Math.round(Tn)+" °C"+(sat?", in cloud":""))}});
+add("rain","climate");
+})();
+/* ================================================================ 10. Soils compared */
+(function(){
+const Y0=74,CM=.5;/* top of the soil; px per cm */
+const S=[{nm:"Latosol (oxisol)",k:"rain",top:"Thin: about 15 cm",fert:"Poor: rain washes it out",why:"Heat and rain rot leaves fast",use:"Years after the forest is cleared",
+  H:[["O","Leaf litter",5,"#3a2a1a"],["A","Thin topsoil",10,"#5b3a24"],["B","Deep red clay: iron and aluminium left behind",300,"#b5532c"]],
+  p:"The forest’s nutrients are in its plants, not its soil. Clear it and within a few years rain washes the thin topsoil away; the red clay can bake hard in the sun.",
+  pc:"Nutrients mostly held in the trees"},
+ {nm:"Chernozem",k:"grass",top:"Deep: up to 1 m, black",fert:"Very rich",why:"Grass roots die and rot each year",use:"Years after the prairie is ploughed",
+  H:[["O","Thin litter",3,"#3a2e22"],["A","Deep black topsoil, full of humus",95,"#2a2320"],["B","Brown subsoil with white lime",45,"#6b5240"],["C","Loess: fine wind-blown dust",60,"#c9b48a"]],
+  p:"Ploughing breaks the grass roots that held the soil together. In a drought the bare topsoil blows away in dust storms, as in the US Dust Bowl of the 1930s.",
+  pc:"The world’s richest farm soils: Ukraine, the prairies, the pampas"},
+ {nm:"Podzol",k:"taiga",top:"Thin and acid",fert:"Poor",why:"Cold slows rotting; acid water leaches",use:"Years after the forest is felled",
+  H:[["O","Needles, slow to rot",10,"#3a2e22"],["A","Thin, dark topsoil",5,"#4a3a30"],["E","Bleached grey: acid water washed it out",18,"#cfc8bd"],["B","Rusty layer where iron collects",25,"#a5582a"],["C","Broken bedrock",80,"#9a8a72"]],
+  p:"Needles make acid water that drains down, washing iron out of the upper soil (leaving a pale grey layer) and dumping it lower down as a rusty band.",
+  pc:"Under the taiga of Canada, Scandinavia and Russia"},
+ {nm:"Desert soil (aridisol)",k:"desert",top:"Very thin, pale",fert:"Little humus, can be salty",why:"Too dry for plants to add much",use:"Years of irrigation without drainage",
+  H:[["A","Pale, sandy topsoil",6,"#d7b98a"],["B","Subsoil with lime",38,"#c99a6a"],["K","Hard layer of lime (calcrete)",10,"#efe7d6"],["C","Weathered rock",100,"#b08a5e"]],
+  p:"Irrigating dry land without draining it lets water evaporate at the surface, leaving its salt behind: a white crust that kills crops. This is salinisation.",
+  pc:"Little rain means little rotting and few plants"}];
+make("soils",{title:"Soils compared",
+ src:"Simplified soil profiles after the FAO World Reference Base and USDA soil taxonomy; depths are typical, not exact. Changes after clearing are schematic",
+ tabs:["Rainforest","Grassland","Taiga","Desert"],h:214,
+ state:()=>({y:0}),
+ frame:()=>{let h='<defs><clipPath id="dgSoClip"><rect x="6" y="26" width="190" height="146" rx="8"/></clipPath></defs><g clip-path="url(#dgSoClip)"><rect x="6" y="26" width="190" height="146" fill="#dcedf9"/><g class="so-a"></g></g><g class="so-b"></g>';
+  h+=panel(202,26,94,146,"so",[["Topsoil","t",26],["Fertility","f",45],["Why","w",64]]);
+  h+='<g transform="translate(202,26)"><foreignObject x="5" y="86" width="86" height="56"><div xmlns="http://www.w3.org/1999/xhtml" class="so-pc" style="font:500 5.8px/1.32 Inter,system-ui,sans-serif;color:'+SUB+'"></div></foreignObject></g>';
+  h+=para("so-p",8,175,288,22,6.3)+slider("y",14,206,272,"Years");return h},
+ draw:(svg,s)=>{const D=S[s.tab],yv=s.y;let h="",b="";const k=D.k;
+  /* what grows on top */
+  const ground='<rect x="6" y="'+(Y0-2)+'" width="190" height="3" fill="'+(k==="desert"?"#d9bf8f":"#6b8f3a")+'"/>';
+  let plants="";const clear=yv>.02;
+  if(k==="rain"&&!clear)for(let i=0;i<5;i++){const x=24+i*38;plants+='<path d="M'+x+','+Y0+' v-26" stroke="#5a3f28" stroke-width="2.4"/><ellipse cx="'+x+'" cy="'+(Y0-34)+'" rx="18" ry="11" fill="'+(i%2?"#2f7a3a":"#3d8f45")+'"/>'}
+  if(k==="grass")for(let i=0;i<34;i++){const x=10+i*5.4;plants+=clear?'<path d="M'+x+','+(Y0-2)+' l2,-2 l2,2" stroke="#a88e5c" stroke-width=".8" fill="none"/>':'<path d="M'+x+','+Y0+' l-1.5,-9 M'+x+','+Y0+' l1.5,-8 M'+x+','+Y0+' v-11" stroke="#6f9a3a" stroke-width=".9"/>'}
+  if(k==="taiga"&&!clear)for(let i=0;i<6;i++){const x=20+i*32;plants+='<path d="M'+x+','+(Y0-40)+' l-9,30 h18Z M'+x+','+(Y0-44)+' l-7,20 h14Z" fill="#2c5e3a"/><path d="M'+x+','+(Y0-10)+' v10" stroke="#4a3426" stroke-width="2"/>'}
+  if(k==="desert"){if(!clear)for(let i=0;i<3;i++){const x=40+i*60;plants+='<path d="M'+x+','+Y0+' v-20 M'+x+','+(Y0-12)+' h-5 v-6 M'+x+','+(Y0-9)+' h5 v-7" stroke="#4f8a4a" stroke-width="3" stroke-linecap="round" fill="none"/>'}
+    else plants+='<path d="M20,'+(Y0-2)+' h160" stroke="#3d8fd1" stroke-width="1.5" stroke-dasharray="6 6"/>'+T(100,Y0-6,"irrigation water",'font-size="6" font-weight="700" text-anchor="middle" fill="#1d5f99"')}
+  if(clear&&k!=="desert"&&k!=="grass")plants+='<path d="M30,'+(Y0-2)+' l14,-1 M120,'+(Y0-2)+' l12,-2" stroke="#7a5a3a" stroke-width="2"/>'+T(100,Y0-8,"cleared",'font-size="6.4" font-weight="800" text-anchor="middle" fill="#7a5a3a"');
+  if(k==="grass"&&clear)plants+=T(100,Y0-10,"ploughed",'font-size="6.4" font-weight="800" text-anchor="middle" fill="#7a5a3a"');
+  /* the horizons, changed by the years after clearing */
+  let y=Y0;const loss=k==="rain"?sstep(0,.25,yv):k==="grass"?sstep(0,1,yv)*.35:k==="taiga"?sstep(0,.5,yv)*.5:0;
+  D.H.forEach((L,i)=>{let th=L[2]*CM;if(k==="rain"&&i<2)th*=1-loss;if(k==="grass"&&L[0]==="A")th*=1-loss;if(k==="taiga"&&L[0]==="O")th*=1-loss;
+   if(th<.3)return;const c=L[3];h+='<rect x="6" y="'+f1(y)+'" width="190" height="'+f1(Math.min(th,180-y))+'" fill="'+c+'"'+tip(L[0]+" horizon: "+L[1]+", about "+L[2]+" cm")+'/>';
+   if(L[0]==="B"&&k==="grass")for(let j=0;j<10;j++)h+='<circle cx="'+f1(20+rnd(j)*160)+'" cy="'+f1(y+4+rnd(j+9)*(th-8))+'" r="1.3" fill="#efe9dc"/>';
+   if(th>6&&y<168){const dark=["#2a2320","#3a2a1a","#3a2e22","#5b3a24","#4a3a30","#6b5240"].includes(c);b+=T(12,f1(Math.min(y+th/2+3,166)),L[0],'font-size="8" font-weight="900" fill="'+(dark?"#fff":INK)+'"')+T(24,f1(Math.min(y+th/2+3,166)),L[1],'font-size="5.8" font-weight="700" fill="'+(dark?"#f2e8da":INK)+'"')}
+   y+=th});
+  if(k==="desert"&&yv>.02){const c=sstep(0,1,yv)*6;h+='<rect x="6" y="'+(Y0-1)+'" width="190" height="'+f1(c+1)+'" fill="#f6f3ec"'+tip("Salt crust left as irrigation water evaporates")+'/>';b+=T(150,f1(Y0+c+7),"salt crust",'font-size="6" font-weight="800" fill="'+INK+'"')}
+  if(k==="grass"&&yv>.05)for(let i=0;i<8;i++)h+='<circle cx="'+f1(30+rnd(i)*150)+'" cy="'+f1(Y0-14-rnd(i+3)*20)+'" r="'+f1(1.5+rnd(i+6)*2.5)+'" fill="#a8845a" opacity="'+f1(.25+yv*.35)+'"/>';
+  /* roots */
+  let roots="";if(!clear){const deep=k==="grass"?85:k==="desert"?60:k==="rain"?14:18;for(let i=0;i<9;i++){const x=16+i*21;roots+='<path d="M'+x+','+Y0+' q'+(rnd(i)*8-4)+','+f1(deep*.5)+' '+(rnd(i+2)*10-5)+','+deep+'" stroke="#e8d8b8" stroke-width=".6" fill="none" opacity=".7"/>'}}
+  /* depth scale */
+  for(let m=0;m<=1.5;m+=.5)b+='<path d="M190,'+f1(Y0+m*100*CM)+' h6" stroke="'+INK+'" stroke-width=".6"/>'+T(188,f1(Y0+m*100*CM+2),m+" m",'font-size="5.4" text-anchor="end" fill="'+INK+'" stroke="#fff" stroke-width="1.6" paint-order="stroke"');
+  const A=q(svg,".so-a");if(A)A.innerHTML=h+roots+ground+plants;const B=q(svg,".so-b");if(B)B.innerHTML=b;
+  txt(svg,".so-nm",D.nm);txt(svg,".so-t",D.top);txt(svg,".so-f",D.fert);txt(svg,".so-w",D.why);setPara(svg,"so-pc",D.pc);
+  setPara(svg,"so-p",yv<.02?"Drag the slider to see what happens when people change the land.":D.p);txt(svg,".g2-sll-y",D.use);setSlider(svg,"y",14,206,272,yv,Math.round(yv*50)+" years")},
+ drag:(svg,s,n,x)=>{s.y=clamp((x-14)/272,0,1)}});
+add("soils","water");
+})();
+
+/* ================================================================ 11. How dry land turns to desert */
+(function(){
+const GY=120,NS=36;
+function reset(s){Object.assign(s,{V:.55,S:.85,yr:0,acc:0,R:.6,G:.35,reg:0,rf:1,hist:[]})}
+make("desert",{title:"How land turns to desert, and back",
+ src:"A simple model of a dry grazing land like the Sahel: plants protect the soil, and bare soil grows fewer plants. After studies of Sahel droughts and regreening (UN Convention to Combat Desertification; Reij and others, 2009). Not a forecast",
+ h:212,state:()=>{const s={};reset(s);return s},
+ frame:()=>{let h='<defs><linearGradient id="dgDsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8ea"/><stop offset="1" stop-color="#f3ead6"/></linearGradient><clipPath id="dgDsClip"><rect x="6" y="6" width="190" height="150" rx="8"/></clipPath></defs><g clip-path="url(#dgDsClip)"><rect x="6" y="6" width="190" height="150" fill="url(#dgDsSky)"/><g class="ds-a"></g></g>';
+  h+=panel(202,6,94,150,"ds",[["Year","yr",26],["Plant cover","v",43],["Topsoil","s",60]]);
+  h+='<g transform="translate(202,6)"><g class="ds-ch"></g><foreignObject x="5" y="104" width="86" height="44"><div xmlns="http://www.w3.org/1999/xhtml" class="ds-t" style="font:500 5.7px/1.3 Inter,system-ui,sans-serif;color:'+SUB+'"></div></foreignObject></g>';
+  h+=slider("r",14,178,124,"Rain")+slider("g",162,178,124,"Animals grazing");
+  h+=btn("reg",14,193,104,"Regreening: off")+btn("drought",124,193,80,"A drought")+btn("reset",210,193,80,"Start again");return h},
+ draw:(svg,s)=>{const V=s.V,S=s.S;let h="";
+  const soil=6*S;h+='<rect x="6" y="'+GY+'" width="190" height="40" fill="#d7b98a"/><rect x="6" y="'+GY+'" width="190" height="'+f1(soil)+'" fill="#7a5a3a"'+tip("Topsoil: what holds water and food for plants")+'/>';
+  /* a dune creeping in when the soil has blown away */
+  const dn=clamp((.55-S)/.5,0,1);if(dn>0)h+='<path d="M6,'+GY+' L6,'+f1(GY-34*dn)+' Q'+f1(20+80*dn)+','+f1(GY-30*dn)+' '+f1(30+120*dn)+','+GY+'Z" fill="#e6c78c"'+tip("Sand drifts over the bare land")+'/>';
+  if(s.reg)for(let i=0;i<8;i++){const x=20+i*22;h+='<path d="M'+x+','+(GY+1)+' a5,3 0 0 0 10,0" fill="#5a4030" stroke="#3a2a1a" stroke-width=".5"'+tip("Zaï pits and stone lines catch rain and manure")+'/>'}
+  for(let i=0;i<NS;i++){if(rnd(i)>V*1.15)continue;const x=10+i*5.2+rnd(i+50)*3;const tree=rnd(i+90)<.28&&V>.35;
+   h+=tree?'<path d="M'+f1(x)+','+GY+' v-14" stroke="#5a3f28" stroke-width="1.4"/><ellipse cx="'+f1(x)+'" cy="'+(GY-17)+'" rx="8" ry="4" fill="#5d8a3a"/>':'<path d="M'+f1(x)+','+GY+' l-2,-6 M'+f1(x)+','+GY+' l2,-6 M'+f1(x)+','+GY+' v-7" stroke="'+(V>.3?"#7aa43a":"#b8a55a")+'" stroke-width="1"/>'}
+  const nA=Math.round(s.G*7);for(let i=0;i<nA;i++){const x=24+i*23+rnd(i)*6;h+='<g transform="translate('+f1(x)+','+(GY-6)+')"><ellipse cx="0" cy="0" rx="5" ry="3" fill="#efe7d6" stroke="#6b5a48" stroke-width=".5"/><path d="M-3,2 v4 M3,2 v4" stroke="#6b5a48" stroke-width=".8"/><circle cx="5.5" cy="-2" r="1.8" fill="#efe7d6" stroke="#6b5a48" stroke-width=".5"/></g>'}
+  h+='<path d="M90,'+GY+' l-8,-12 h16Z" fill="#c9a46a"/><path d="M84,'+(GY-8)+' h12" stroke="#7a5a3a"/>';
+  if(V<.25)for(let i=0;i<6;i++)h+='<ellipse cx="'+f1(40+i*26+((s.yr*18)%26))+'" cy="'+f1(GY-8-rnd(i)*20)+'" rx="'+f1(8+rnd(i+4)*10)+'" ry="3" fill="#c8a87a" opacity="'+f1((.25-V)*2.2)+'"/>';
+  const rr=s.R*s.rf;for(let i=0;i<Math.round(rr*12);i++)h+='<path d="M'+f1(20+rnd(i+200)*170)+','+f1(18+rnd(i+300)*40)+' l-1.5,5" stroke="#3d8fd1" stroke-width=".8"/>';
+  h+='<circle cx="176" cy="24" r="'+f1(7+4*(1-s.R))+'" fill="#ffd34d"/>';
+  const A=q(svg,".ds-a");if(A)A.innerHTML=h;
+  /* little history chart of plant cover */
+  let c='<rect x="7" y="78" width="80" height="22" rx="3" fill="#fff"/>'+T(9,76,"plant cover, last 40 years",'font-size="5" fill="'+SUB+'"');const H=s.hist;if(H.length>1)c+='<path d="'+ln(H.map((v,i)=>[7+80*i/39,99-v*20]))+'" fill="none" stroke="#5d8a3a" stroke-width="1.2"/>';
+  const C=q(svg,".ds-ch");if(C)C.innerHTML=c;
+  txt(svg,".ds-nm",V>.45?"Green and grazed":V>.25?"Getting thin":S>.4?"Bare and dusty":"Turning to desert");
+  txt(svg,".ds-yr",Math.floor(s.yr)+"");txt(svg,".ds-v",Math.round(V*100)+"%");txt(svg,".ds-s",S>.75?"Healthy":S>.5?"Thinning":S>.3?"Blowing away":"Mostly gone");
+  setPara(svg,"ds-t",s.reg?"Regreening: pits, stone lines and protected young trees catch rain and rebuild the soil, as farmers in Niger and Burkina Faso have done.":"Try a drought with lots of animals. Then bring the rain back: does the land recover on its own?");
+  const mm=Math.round(100+s.R*500);setSlider(svg,"r",14,178,124,s.R,mm+" mm a year");setSlider(svg,"g",162,178,124,s.G,s.G<.25?"few":s.G<.6?"some":"many");
+  btnOn(svg,"reg",!!s.reg);txt(svg,".g2-btn-reg .sm-btn-t","Regreening: "+(s.reg?"on":"off"))},
+ drag:(svg,s,n,x)=>{if(n==="r")s.R=clamp((x-14)/124,0,1);if(n==="g")s.G=clamp((x-162)/124,0,1)},
+ act:(svg,s,a)=>{if(a==="reg"){s.reg=s.reg?0:1;return true}if(a==="drought"){s.R=.15;return true}if(a==="reset"){reset(s);return true}return false},
+ tick:(svg,s,dt)=>{s.rf=s.rf||1;s.acc+=dt*2.2;let ch=false;while(s.acc>=1){s.acc--;s.yr++;ch=true;
+   s.rf=.75+.5*rnd(s.yr*7.3);const Ry=s.R*s.rf,K=Math.min(1,clamp((Ry*500)/450,0,1)*(.3+.7*s.S)*(s.reg?1.25:1));
+   const V=s.V;s.V=clamp(V+Math.max(-.22*V,.5*V*(1-V/Math.max(K,.02)))-s.G*.42*V/(V+.15)*.6+.006,0,1);
+   s.S=clamp(s.S+.05*(s.V-.32)+(s.reg?.03:0),.05,1);s.hist.push(s.V);if(s.hist.length>40)s.hist.shift()}
+  if(ch)DG.desert._d(svg,s)}});
+add("desert","climate");
+})();
+
+/* ================================================================ 12. Water underground */
+(function(){
+const AQ0=96,AQ1=142;/* aquifer top and the clay beneath, roughly */
+const surf=x=>x<70?lerp(40,86,x/70)+4*Math.sin(x/9):x<130?86+(x-70)*.05:x<160?92+10*Math.exp(-Math.pow((x-146)/9,2)):x<200?91:90;
+const clayTop=x=>AQ1-x*.04;
+const wt0=x=>x<60?lerp(58,86,x/60):x<146?lerp(86,100,(x-60)/86):lerp(100,104,(x-146)/150);
+const WELLS=[228,262],QM=[34,22],QX=108;
+make("aquifer",{title:"Water underground",
+ src:"Schematic cross-section after the US Geological Survey’s groundwater primers. The High Plains (Ogallala) aquifer under the US Great Plains has dropped by more than 30 m in places since the 1950s (USGS). Qanats after UNESCO’s Persian Qanat listing",
+ h:212,state:()=>({p:0,D:0,yr:0,t:0}),
+ frame:()=>{let h='<defs><linearGradient id="dgAqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8ea"/><stop offset="1" stop-color="#f3ead6"/></linearGradient><pattern id="dgAqSand" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#e2c995"/><circle cx="1.5" cy="1.5" r=".7" fill="#c9a970"/><circle cx="4.5" cy="4.2" r=".7" fill="#c9a970"/></pattern><clipPath id="dgAqClip"><rect x="6" y="6" width="290" height="150" rx="8"/></clipPath></defs>';
+  h+='<g clip-path="url(#dgAqClip)"><rect x="6" y="6" width="290" height="150" fill="url(#dgAqSky)"/><g class="aq-a"></g><g class="aq-fx"></g></g><g class="aq-b"></g>';
+  h+=para("aq-p",8,158,288,22,6.2)+slider("p",14,198,150,"Pumping by farm wells");
+  h+='<g transform="translate(176,182)"><text class="aq-yr" x="0" y="8" font-size="7" font-weight="900" fill="'+INK+'"></text><text class="aq-st" x="0" y="19" font-size="6" font-weight="700" fill="'+SUB+'"></text><text class="aq-st2" x="0" y="28" font-size="6" font-weight="700" fill="'+SUB+'"></text></g>';return h},
+ draw:(svg,s)=>{const D=s.D;let h="",b="";
+  const drop=x=>D*(.5+.5*clamp((x-60)/120,0,1))*(.6+.4*Math.exp(-Math.pow((x-245)/40,2)));
+  const wt=x=>wt0(x)+drop(x);
+  /* rock layers */
+  const sp=[];for(let x=6;x<=296;x+=3)sp.push([x,surf(x)]);
+  h+='<path d="'+ln(sp)+'L296,160L6,160Z" fill="url(#'+uid(svg,"dgAqSand")+')"'+tip("Aquifer: sand and gravel full of tiny gaps that hold water")+'/>';
+  const cp=[];for(let x=6;x<=296;x+=6)cp.push([x,clayTop(x)]);h+='<path d="'+ln(cp)+'L296,160L6,160Z" fill="#7d6e62"'+tip("Clay: water cannot pass through it")+'/>';
+  /* saturated zone below the water table */
+  const wp=[];for(let x=6;x<=296;x+=3)wp.push([x,Math.max(wt(x),surf(x))]);const cb=[];for(let x=296;x>=6;x-=6)cb.push([x,clayTop(x)]);
+  h+='<path d="'+ln(wp)+ln(cb).replace("M","L")+'Z" fill="#3d8fd1" opacity=".55"'+tip("Groundwater: below the water table every gap is full of water")+'/>';
+  h+='<path d="'+ln(wp)+'" fill="none" stroke="#1d5f99" stroke-width="1" stroke-dasharray="4 2"/>';
+  h+='<path d="'+ln(sp)+'" fill="none" stroke="#7a9a54" stroke-width="2.4"/>';
+  /* qanat: mother well in the hills, a gently sloping tunnel out to the fields */
+  const qIn=surf(QM[0])+QM[1],qOut=surf(QX),qOn=wt(QM[0])<qIn-2;
+  h+='<path d="M'+QM[0]+','+f1(surf(QM[0]))+' V'+f1(qIn)+' L'+QX+','+f1(qOut)+'" fill="none" stroke="#4a3a2a" stroke-width="2"/>';
+  for(let i=1;i<5;i++){const x=QM[0]+i*(QX-QM[0])/5,y=lerp(qIn,qOut,i/5);h+='<path d="M'+f1(x)+','+f1(surf(x))+' V'+f1(y)+'" stroke="#4a3a2a" stroke-width=".8"/><circle cx="'+f1(x)+'" cy="'+f1(surf(x)-1)+'" r="1.6" fill="#8a7a62"/>'}
+  b+=T(QM[0]-2,f1(surf(QM[0])-6),"qanat",'font-size="6.4" font-weight="800" fill="'+INK+'"')+T(f1(QX+2),f1(qOut-10),qOn?"fields watered":"qanat dry",'font-size="5.8" font-weight="700" fill="'+(qOn?"#2f7a3a":"#b5533c")+'"');
+  /* the oasis where the water table meets the hollow */
+  const ox=146,oy=surf(ox),spring=wt(ox)<oy-.5;if(spring)h+='<ellipse cx="'+ox+'" cy="'+f1(oy-1)+'" rx="'+f1(5+Math.min(4,(oy-wt(ox))))+'" ry="2" fill="#2a74c4"'+tip("An oasis: the water table reaches the surface")+'/>';
+  for(let i=0;i<3;i++){const x=ox-14+i*13;h+='<path d="M'+x+','+f1(surf(x))+' q1,-8 0,-16" stroke="#7a5a3a" stroke-width="1.6" fill="none"/><path d="M'+x+','+f1(surf(x)-16)+' l-7,3 M'+x+','+f1(surf(x)-16)+' l7,3 M'+x+','+f1(surf(x)-16)+' l-4,-5 M'+x+','+f1(surf(x)-16)+' l4,-5" stroke="'+(spring?"#3d8f45":"#a89a5a")+'" stroke-width="1.6"/>'}
+  b+=T(ox,f1(oy+10),spring?"oasis":"oasis dried up",'font-size="6.2" font-weight="800" text-anchor="middle" fill="'+(spring?"#fff":"#b5533c")+'"');
+  /* farm wells with pumps */
+  let dry=0;WELLS.forEach((x,i)=>{const bot=clayTop(x)-12,on=wt(x)<bot-3;if(!on)dry++;h+='<path d="M'+x+','+f1(surf(x)-8)+' V'+f1(bot)+'" stroke="#5b6b80" stroke-width="2"/><rect x="'+(x-4)+'" y="'+f1(surf(x)-13)+'" width="8" height="6" rx="1" fill="'+INK+'"/>';
+    if(s.p>.02&&on)h+='<path d="M'+(x+4)+','+f1(surf(x)-10)+' q8,-4 14,4" stroke="#3d8fd1" stroke-width="1.4" fill="none"/>'});
+  b+=T(245,f1(surf(245)-17),"farm wells",'font-size="6.2" font-weight="800" text-anchor="middle" fill="'+INK+'"');
+  b+=T(10,f1(clayTop(10)+12),"clay",'font-size="6" font-weight="800" fill="#fff"')+T(170,128,"aquifer",'font-size="6.4" font-weight="800" fill="#fff"')+T(292,f1(wt(292)-3),"water table",'font-size="5.8" font-weight="800" text-anchor="end" fill="#1d5f99"');
+  b+=T(14,14,"rain soaks into the hills",'font-size="5.8" font-weight="700" fill="#1d5f99"');
+  s.qOn=qOn;s.spring=spring;
+  const A=q(svg,".aq-a");if(A)A.innerHTML=h;const B=q(svg,".aq-b");if(B)B.innerHTML=b;
+  txt(svg,".aq-yr","After "+Math.floor(s.yr)+" years");txt(svg,".aq-st","Water table under the farm: "+Math.round(9+D*.9)+" m down");txt(svg,".aq-st2",dry?(dry===2?"Wells dry: drill deeper or stop":"One well has run dry"):"Wells pumping");
+  setPara(svg,"aq-p",D<3?"Rain soaks into the hills and slowly refills the aquifer. Where the water table meets the ground, water comes out as a spring or an oasis; a qanat taps it without pumps.":"Pumping faster than rain refills the aquifer lowers the water table. Springs, oases and qanats dry up first, then wells need drilling deeper.");
+  setSlider(svg,"p",14,198,150,s.p,s.p<.05?"none":s.p<.4?"a little":s.p<.75?"a lot":"far too much")},
+ drag:(svg,s,n,x)=>{s.p=clamp((x-14)/150,0,1)},
+ tick:(svg,s,dt)=>{s.t+=dt;const tgt=s.p*s.p*40-(s.p<.12?0:0),old=s.D;s.D+=(tgt-s.D)*Math.min(1,dt*.35);if(Math.abs(tgt-s.D)>.05)s.yr+=dt*6;if(Math.abs(old-s.D)>.02)DG.aquifer._d(svg,s);
+  const fx=q(svg,".aq-fx");if(!fx)return;let h="";for(let i=0;i<10;i++){const x=12+i*6,y=20+((s.t*50+i*13)%24);h+='<path d="M'+x+','+f1(y)+' l-1,4" stroke="#3d8fd1" stroke-width=".8"/>'}
+  if(s.qOn){const qIn=surf(QM[0])+QM[1],qOut=surf(QX);for(let i=0;i<4;i++){const u=((s.t*.25)+i/4)%1;h+='<circle cx="'+f1(lerp(QM[0],QX,u))+'" cy="'+f1(lerp(qIn,qOut,u)-1)+'" r="1.3" fill="#3d8fd1"/>'}}
+  fx.innerHTML=h}});
+add("aquifer","water");
+})();
 
 /* ================================================================ wiring: tour stops and dictionary terms */
 const STOPS={};const TERMS={};
@@ -462,6 +812,19 @@ Object.assign(TERMS,{"Glacier":"glacier:0","Moraine":"glacier:0","Fjord":"glacie
  "Delta":"deltas:0","Arcuate delta":"deltas:0","Bird's-foot delta":"deltas:1","Cuspate delta":"deltas:2",
  "Sea stack":"coasterode:0","Headland":"coasterode:0","Coastal erosion":"coasterode:2",
  "Upwelling":"upwell:0","Humboldt Current":"upwell:0","Cold current":"upwell:0","El Niño":"upwell:1","La Niña":"upwell:1","Trade winds":"upwell:1"});
+Object.assign(STOPS,{
+ "hg6c|Urban sprawl":"urban:0","hg6c|Suburbanisation":"urban:0","hg6c|Greenbelts":"urban:1","hg6c|Smart growth":"urban:2",
+ "rivers|The waterfall that walks backwards":"waterfall",
+ "plates|Africa is splitting":"faults:3","plates|Los Angeles is coming":"faults:2","plates|Squeezing up the Andes":"faults:1",
+ "climate|The rain belt":"rain:0","weather|The lightning capital":"rain:0","weather|Where air masses collide":"rain:1",
+ "biomes|Tropical rainforest":"soils:0","biomes|Grasslands: steppe, prairie and pampas":"soils:1","biomes|Taiga":"soils:2","biomes|The desert biome":"soils:3","hg5d|The Dust Bowl":"soils:1",
+ "hg5d|Spreading deserts":"desert","deserts|Making deserts, and stopping them":"desert","hazards|The Sahel droughts":"desert","environment|A wall of trees":"desert",
+ "deserts|Oases and qanats":"aquifer"});
+Object.assign(TERMS,{"Urban sprawl":"urban:0","Suburbanization":"urban:0","Greenbelt":"urban:1","Urban growth boundary":"urban:2","Smart growth":"urban:2",
+ "Waterfall":"waterfall","Gorge":"waterfall","Fault":"faults:0","Rift valley":"faults:3","Graben":"faults:3",
+ "Convectional rainfall":"rain:0","Precipitation":"rain:0","Lapse rate":"rain:0","Dew point":"rain:0","Frontal precipitation":"rain:1","Front":"rain:1","Air mass":"rain:1","Orographic precipitation":"rain:2",
+ "Soil":"soils:1","Soil horizon":"soils:2","Chernozem":"soils:1","Laterite":"soils:0","Humus":"soils:1","Salinization":"soils:3","Soil erosion":"soils:1",
+ "Desertification":"desert","Aquifer":"aquifer","Water table":"aquifer","Groundwater":"aquifer","Oasis":"aquifer","Qanat":"aquifer"});
 Object.assign(TERMS,{"Volcano":"vtypes:6","Shield volcano":"vtypes:0","Stratovolcano":"vtypes:1","Cinder cone":"vtypes:2","Caldera":"vtypes:3","Supervolcano":"vtypes:3","Lava":"vtypes:0"});
 
 finish();
