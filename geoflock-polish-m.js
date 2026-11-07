@@ -84,5 +84,18 @@ setInterval(()=>{document.querySelectorAll(".ps-card img").forEach(tall)},1000);
   h+=`<line x1="${xy[0].toFixed(1)}" y1="${xy[1].toFixed(1)}" x2="${ex.toFixed(1)}" y2="${ey.toFixed(1)}"/><circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="3.2"/>`});
  if(lead._gfh!==h||lead.innerHTML!==lead._gfo){lead._gfh=h;lead.innerHTML=h;lead._gfo=lead.innerHTML}}catch(e){}}
  step()})();
+/* 8. "The Global South" (Economy tour): the Brandt line puts North Korea on the southern side (down Korea's east coast and
+   along the DMZ), crosses the Pacific north of the island nations (south of Hawaii), and Australia and New Zealand get a
+   loop of their own, so Papua New Guinea, the Solomons, Fiji and the rest of the Pacific are in the South */
+function brandt(){try{if(typeof GDP_BRANDT==="undefined")return false;let S=null;for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).forEach(x=>{if(x&&x.title==="The Global South"&&x.lines&&x.lines.some(l=>l.coords===GDP_BRANDT))S=x});
+ if(!S)return false;if(S._gfBr)return true;S._gfBr=1;const B=GDP_BRANDT,at=(lo,la)=>B.findIndex(q=>q[0]===lo&&q[1]===la);
+ const iUS=at(-117.1,32.5),iK=at(131.1,42.9),iY=at(123.5,37),iP=at(130,5);if(iUS<0||iK<0||iY<0||iP<0)return false;
+ const KOREA=[[130.75,42.3],[130.2,41.6],[129.7,40.8],[129.1,39.9],[128.6,39.1],[128.36,38.61],[127.9,38.32],[127.3,38.3],[126.7,37.95],[126.1,37.72],[125.2,37.65],[124.3,37.5]];
+ const MAIN=[[-179.9,15],[-160,15],[-135,12],[-125,15],[-121,20]].concat(B.slice(iUS,iK+1),KOREA,B.slice(iY,iP+1),[[134,10],[150,12],[170,15],[179.9,15]]);
+ const AUS=[[113,-20.5],[114,-13],[123,-11.6],[131,-10.6],[137,-10.6],[141.6,-9.9],[143.5,-9.6],[146,-12.5],[151,-15.5],[155.5,-21],[158,-27],[164,-30],[172,-29.5],[179.9,-33],[179.9,-49],[170,-53.5],[160,-50],[148,-46],[135,-40.5],[115,-37.5],[110,-32],[110,-24],[113,-20.5]];
+ Object.defineProperty(S,"lines",{configurable:true,enumerable:true,writable:true,value:[{coords:MAIN,kind:"red"},{coords:AUS,kind:"red"}]});
+ if(typeof S.body==="string")S.body=S.body.replace("North of the red line: North America, Europe, Russia, Japan, Australia and New Zealand.","North of the red line: North America, Europe, Russia, Japan and South Korea, with Australia and New Zealand ringed on their own.").replace("South of it: Latin America, Africa and most of Asia,","South of it: Latin America, Africa, most of Asia (North Korea too) and the Pacific islands,");
+ return true}catch(e){console.error(e);return false}}
+[0,1500,4000,9000].forEach(ms=>setTimeout(brandt,ms));
 window.gfPolishM={dedupe};
 })();
