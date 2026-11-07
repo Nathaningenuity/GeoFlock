@@ -106,9 +106,9 @@ if(typeof gfGlobeKey==="function"){const VG={key:null,sig:null,busy:false,n:0};c
   try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(e){}}
  gfGlobeKey=function(){try{const M=gfMS();
   /* the plain relief with hill shading: the full-resolution texture with the shading laid smoothly over it */
-  if(allMapsColorMode==="relief"&&!gfStyleGen()&&M.style!=="classic"&&!gfSeaLevel()&&M.shadeB>.02){const sk=M.sun+"|"+M.shadeB;
+  if(allMapsColorMode==="relief"&&!gfStyleGen()&&M.style!=="classic"&&!gfSeaLevel()&&M.shadeB>.02){/* the picture underneath is part of the key: your own shades (Palette) make a new one */let ik="";try{const im=globeImages("relief",()=>gfGlobeDirty());const o=im&&im.length?im:null;if(o){if(!VG.ids)VG.ids=new WeakMap();if(!VG.ids.has(o))VG.ids.set(o,VG.ids.n=(VG.ids.n||0)+1);ik=VG.ids.get(o)}}catch(e){}const sk=M.sun+"|"+M.shadeB,vk=sk+"|"+ik;
    if(!(GFL.canv.shade&&GFL.shadeKey===sk)){try{gfMsRefresh()}catch(e){}clearTimeout(VG.t);VG.t=setTimeout(gfGlobeDirty,700);return VG.key}
-   if(VG.sig===sk&&VG.key)return VG.key;if(!VG.busy){VG.busy=true;setTimeout(()=>{try{gfElev(()=>{try{build(sk)}catch(e){console.error(e);VG.busy=false}})}catch(e){VG.busy=false}},30)}return VG.key}}catch(e){}
+   if(VG.sig===vk&&VG.key)return VG.key;if(!VG.busy){VG.busy=true;setTimeout(()=>{try{gfElev(()=>{try{build(vk)}catch(e){console.error(e);VG.busy=false}})}catch(e){VG.busy=false}},30)}return VG.key}}catch(e){}
   return _gk.apply(this,arguments)}}
 /* 5. */
 if(typeof flatLabelsLikeGlobe==="function"&&window.SVGGraphicsElement){const BB=new WeakMap();let on=0;const _gb=SVGGraphicsElement.prototype.getBBox;
