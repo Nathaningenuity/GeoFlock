@@ -65,11 +65,17 @@ function drawFlat(force){const w=wrapEl(),svg=w&&w.querySelector(":scope > svg")
  const relief=svg.querySelector("#allMapsReliefLayer");if(relief){if(relief.nextSibling!==g)relief.after(g)}else if(g.parentNode!==svg)svg.insertBefore(g,svg.firstChild);
  const path=d3.geoPath(P());let h="";
  feats().forEach(x=>{const d=path(x.f);if(!d)return;h+='<path d="'+d+'" style="fill:'+x.col+';fill-opacity:'+x.op+(x.thin?";stroke:#fff;stroke-width:.35;stroke-opacity:.8":x.line?";stroke:#fff;stroke-width:1.6;stroke-opacity:1;paint-order:stroke":";stroke:none")+'"/>'});
- g.innerHTML=h}
+ g.innerHTML=h;
+ if(focus!=null){const on=feats().filter(x=>x.id===focus);if(on.length){const sp=path({type:"Sphere"}),d=on.map(x=>path(x.f)||"").join("");
+  g.innerHTML+='<path d="'+sp+d+'" style="fill:#f1efe9;fill-opacity:.62;fill-rule:evenodd;stroke:none"/><path d="'+d+'" style="fill:'+on[0].col+';fill-opacity:.85;stroke:#fff;stroke-width:1.2"/>'}}}
 function globe(){try{if(typeof amGlobe!=="undefined"&&amGlobe)amGlobe.request?amGlobe.request():amGlobe.render()}catch(e){}}
 if(typeof GlobeView!=="undefined"){const _dm=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){
  try{if(vecOn()&&typeof amGlobe!=="undefined"&&this===amGlobe){const path=d3.geoPath(p,ctx);ctx.save();
-  feats().forEach(x=>{ctx.beginPath();path(x.f);ctx.globalAlpha=Math.min(.8,x.op*.95);ctx.fillStyle=x.col;ctx.fill();if(x.line){ctx.globalAlpha=x.thin?.55:.9;ctx.strokeStyle="#fff";ctx.lineWidth=x.thin?.5:1;ctx.stroke()}});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
+  const F=feats();F.forEach(x=>{ctx.beginPath();path(x.f);ctx.globalAlpha=Math.min(.8,x.op*.95);ctx.fillStyle=x.col;ctx.fill();if(x.line){ctx.globalAlpha=x.thin?.55:.9;ctx.strokeStyle="#fff";ctx.lineWidth=x.thin?.5:1;ctx.stroke()}});
+  /* one biome (or realm, or footprint class) picked: everything else fades under a pale veil, and the picked one is outlined */
+  if(focus!=null){const on=F.filter(x=>x.id===focus);if(on.length){ctx.beginPath();path({type:"Sphere"});on.forEach(x=>path(x.f));ctx.globalAlpha=.62;ctx.fillStyle="#f1efe9";ctx.fill("evenodd");
+   ctx.beginPath();on.forEach(x=>path(x.f));ctx.globalAlpha=.85;ctx.fillStyle=on[0].col;ctx.fill();ctx.globalAlpha=1;ctx.lineWidth=1.2;ctx.strokeStyle="#fff";ctx.stroke()}}
+  ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)}}
 
 /* ---------- what is under the pointer ---------- */
 const boxes=new WeakMap;
