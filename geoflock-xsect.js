@@ -405,7 +405,11 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
  let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="Cross-section">'+defs+'<rect x="'+ml+'" y="'+mt+'" width="'+(W-ml-mr)+'" height="'+(H-mt-mb)+'" fill="url(#gfxsSky)"/>';
  const step=niceStep((e1-e0)/4);for(let e=Math.ceil(e0/step)*step;e<=e1+1e-6;e+=step){s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(e)+'" y2="'+Y(e)+'" stroke="#000" stroke-opacity=".08"/><text x="'+(ml-5)+'" y="'+(Y(e)+4)+'" text-anchor="end" font-size="11" fill="#5b6575">'+fmtE(e)+'</text>'}
  const kstep=niceStep(kmax/6);for(let k=0;k<=kmax+1;k+=kstep)s+='<text x="'+X(k)+'" y="'+(H-mb+13)+'" text-anchor="middle" font-size="10.5" fill="#5b6575">'+Math.round(k).toLocaleString()+(k===0?(comp?" km to the sea":" km"):"")+'</text>';
- const lbl=(x,y,t,o)=>{o=o||{};const anc=x>W-mr-120?"end":x<ml+70?"start":"middle";return'<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" text-anchor="'+anc+'" font-size="'+(o.fs||10)+'" font-weight="'+(o.fw||700)+'" fill="'+(o.c||"#1d2433")+'" stroke="#fff" stroke-width="2.6" paint-order="stroke">'+esc(t)+'</text>'};
+ /* labels never sit on each other: one that would is moved up (or down) a line, or left out */
+ const BOX=[];const lbl=(x,y,t,o)=>{o=o||{};const anc=o.a||(x>W-mr-120?"end":x<ml+70?"start":"middle");const fs=o.fs||10,tw=String(t).length*fs*.56+4;if(anc==="start"&&x+tw>W-mr-2)x=Math.max(ml+2,W-mr-2-tw);if(anc==="middle"){if(x+tw/2>W-mr-2)x=W-mr-2-tw/2;if(x-tw/2<ml+2)x=ml+2+tw/2}const x0=anc==="start"?x:anc==="end"?x-tw:x-tw/2;
+  const hit=yy=>BOX.some(b=>x0<b[2]&&x0+tw>b[0]&&yy-fs<b[3]&&yy+2>b[1]);let yy=y;
+  if(hit(yy)){const tries=[-1,-2,1,-3,2].map(k=>y+k*(fs+3)).filter(v=>v>mt+fs&&v<H-mb-4);yy=tries.find(v=>!hit(v));if(yy==null){if(!o.must)return"";yy=y}}
+  BOX.push([x0,yy-fs,x0+tw,yy+2]);y=yy;return'<text x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" text-anchor="'+anc+'" font-size="'+(o.fs||10)+'" font-weight="'+(o.fw||700)+'" fill="'+(o.c||"#1d2433")+'" stroke="#fff" stroke-width="2.6" paint-order="stroke">'+esc(t)+'</text>'};
  const inWin=e=>e>=e0-1&&e<=e1+1;
  /* where a line leaves the top of the window: an arrow says how high it goes, and that you can scroll up */
  const overTop=(L,col)=>{const P=L.P;if(!rv||yv.span==="all")return"";const mx=Math.max(...P.map(p=>p.e));if(mx<=e1)return"";let i=P.findIndex(p=>p.e<=e1);if(i<0)i=P.length-1;const x=X(xKey(P[i]));
@@ -447,7 +451,7 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
     const L0=xm-tw/2,R0=xm+tw/2;if(LX.some(q=>L0<q[1]+6&&R0>q[0]-6))return;LX.push([L0,R0]);
     s+=lbl(xm,Y(k.lv)-6,t,{c:"#1f5f9e",fs:10.5,fw:800})})}
   /* navigable stretches: a pale band along the bottom and a short note */
-  if(St&&St.nav)St.nav.forEach(([a,b,t])=>{const A=findPt(P,a),B=findPt(P,b);if(!A||!B)return;const xa=X(A.km),xb=X(B.km);s+='<line x1="'+xa.toFixed(1)+'" x2="'+xa.toFixed(1)+'" y1="'+(Y(e0+(e1-e0)*.42)+4)+'" y2="'+(H-mb-7)+'" stroke="#2f7fd0" stroke-dasharray="3 3" stroke-opacity=".6"/><rect x="'+xa.toFixed(1)+'" y="'+(H-mb-7)+'" width="'+Math.max(2,xb-xa).toFixed(1)+'" height="7" fill="#2f7fd0" fill-opacity=".55" rx="2"/>'+(xb-xa>60?lbl(xa+4,Y(e0+(e1-e0)*.42),"⛴ "+t+" →",{c:"#1f5f9e",fs:10.5,fw:800}):"")});
+  if(St&&St.nav)St.nav.forEach(([a,b,t])=>{const A=findPt(P,a),B=findPt(P,b);if(!A||!B)return;const xa=X(A.km),xb=X(B.km);s+='<line x1="'+xa.toFixed(1)+'" x2="'+xa.toFixed(1)+'" y1="'+(Y(e0+(e1-e0)*.42)+4)+'" y2="'+(H-mb-7)+'" stroke="#2f7fd0" stroke-dasharray="3 3" stroke-opacity=".6"/><rect x="'+xa.toFixed(1)+'" y="'+(H-mb-7)+'" width="'+Math.max(2,xb-xa).toFixed(1)+'" height="7" fill="#2f7fd0" fill-opacity=".55" rx="2"/>'+(xb-xa>60?lbl(xa+4,Y(e0+(e1-e0)*.42),"⛴ "+t+" →",{c:"#1f5f9e",fs:10.5,fw:800,a:"start"}):"")});
   const placed=[];const free=(x,w)=>{if(placed.some(q=>Math.abs(q-x)<w))return false;placed.push(x);return true};
   /* spans (a whole set of rapids) get a bracket and a name */
   if(St&&St.spans)St.spans.forEach(([a,b,t])=>{const A=findPt(P,a),B=findPt(P,b);if(!A||!B||!inWin(A.e))return;const xa=X(A.km),xb=Math.max(X(B.km),xa+6),y=Math.max(mt+24,Y(A.e)-12);
@@ -457,7 +461,7 @@ function chartSVG(){const Ps=lines.filter(L=>L.P&&L.P.length);if(!Ps.length)retu
    const nm=nmOf(p.n),pass=p.k==="dam_top"?damPass(p.n):null;s+=lbl(x,Y(p.e)-7,nm+" −"+Math.round(p.e-nx.e)+" m"+(pass?PASSMARK[pass]:""))});
   if(St&&St.lab)St.lab.forEach(([a,t])=>{const A=findPt(P,a);if(!A||!inWin(A.e))return;const x=X(A.km);if(!free(x,50))return;s+='<circle cx="'+x.toFixed(1)+'" cy="'+Y(A.e).toFixed(1)+'" r="3" fill="#1d2433"/>'+lbl(x,Y(A.e)-8,t,{fw:700,c:"#33415a"})});
   if(e0<0)s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+yz+'" y2="'+yz+'" stroke="#1f63a8" stroke-dasharray="4 3" stroke-opacity=".6"/>';
-  if(L.river){s+=overTop(L);const src=P[0];if(inWin(src.e))s+=lbl(X(src.km)+4,Y(src.e)-8,"Source "+fmtE(src.e),{fw:800,c:"#3b2a1a",fs:11})}
+  if(L.river){s+=overTop(L);const src=P[0];if(inWin(src.e))s+=lbl(X(src.km)+4,Y(src.e)-8,"Source "+fmtE(src.e),{fw:800,c:"#3b2a1a",fs:11,a:"start",must:1})}
   else{let hi=P[0],lo=P[0];P.forEach(p=>{if(p.e>hi.e)hi=p;if(p.e<lo.e)lo=p});
    s+=lbl(Math.max(ml+34,X(hi.km)),Y(hi.e)-5,"▲ "+fmtE(hi.e),{fs:11.5,fw:800,c:"#3b2a1a"});
    if(lo.e<-50)s+='<text x="'+X(lo.km)+'" y="'+(Y(lo.e)+14)+'" text-anchor="middle" font-size="11.5" font-weight="800" fill="#fff">▼ '+fmtE(lo.e)+'</text>';
