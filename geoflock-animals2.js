@@ -34,6 +34,8 @@ const asPin=x=>({at:x.at.slice(),label:x.label,col:x.col,icon:"photo",_f:x.f,img
 
 /* ---------- photo pins on the existing stops ---------- */
 const EDIT={
+ /* South Africa's animal on the world map: elephants (Kruger), not the springbok */
+ "Seventeen wild countries":{drop:/^Springbok$/,add:[pin("African elephants",[31.5,-24.0],"Elephants at Amboseli national park against Mount Kilimanjaro.jpg",GRN)]},
  "The Wallace Line":{drop:/^(Bornean elephant|Tree-kangaroo|Cassowary|Cockatoo|Kangaroo|Komodo dragon)$/,add:[
    pin("Philippine tarsier",[124.1,9.8],"Philippine tarsier (Carlito syrichta fraterculus) Bohol.jpg"),
    pin("Komodo dragon, Komodo Island",[119.49,-8.55],"Komodo dragon, Varanus komodoensis, Komodo Island, Indonesia, 20250822 1319 2752.jpg"),
