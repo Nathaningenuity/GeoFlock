@@ -10,6 +10,10 @@ const SET=(S,k,v)=>{try{Object.defineProperty(S,k,{configurable:true,enumerable:
 const FRAME=(S,lon,lat,z,view)=>{SET(S,"globe",[lon,lat,z]);if(view){SET(S,"view",view);if(S.flatView)SET(S,"flatView",view)}};
 /* keep the card on the left at this stop (see "the tour card stands on the right" below: S.card is reset by other scripts) */
 const LEFT=S=>SET(S,"_gfSwLeft",1);
+/* photo pins that repeat another one at the same spot (the same mountain twice, an older and a newer photo pin of one
+   place): left out whenever the stop's photo pins are read, whatever script sets them */
+const DROPPH=(S,labels)=>{try{let base=S.phPins;const f=()=>Array.isArray(base)?base.filter(q=>!(q&&labels.includes(q.label))):base;let ck=null,cache=null;
+ Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,get(){if(ck!==base){ck=base;cache=f()}return cache},set(v){base=v}})}catch(e){}};
 const dropPins=(S,re)=>{if(Array.isArray(S.pins)){const L=S.pins.filter(q=>!(Array.isArray(q)&&re.test(String(q[1]))));if(L.length!==S.pins.length)SET(S,"pins",L)}};
 const FIX={
  /* Population: Java was framed on Borneo with Java itself cut off at the bottom edge */
@@ -66,6 +70,15 @@ const FIX={
  "lakes|Lakes scraped by ice":S=>{LEFT(S);FRAME(S,-60,58,1.1,[-205,38,42,74])},
  /* Earth at night: Lagos and Nigeria's lights, which the text names, were under the card */
  "night|The dim continent":S=>SET(S,"globe",[10,2,1.4]),
+ /* the same place pinned twice with photos (one pin was made from the card's photo, the other was there already) */
+ "ranges|The Andes":S=>DROPPH(S,["Aconcagua"]),
+ "volcanoes|Kilimanjaro and the Rift":S=>DROPPH(S,["Kilimanjaro"]),
+ "ice|Ice on the equator":S=>DROPPH(S,["Kilimanjaro"]),
+ "hazards|The loudest sound":S=>DROPPH(S,["Krakatoa"]),
+ "forests|Cloud forests":S=>DROPPH(S,["Monteverde forest"]),
+ "ocean|The great whales":S=>DROPPH(S,["Grytviken, South Georgia"]),
+ /* the turtle photo stood exactly on the Bermuda photo: it moves out into the sea */
+ "ocean|The Sargasso Sea":S=>{(S.phPins||[]).forEach(q=>{if(q&&q.label==="Green sea turtle")q.at=[-68,29.5]})},
 /*@FIX*/
 };
 const TXT={
