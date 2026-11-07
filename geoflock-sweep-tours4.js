@@ -78,7 +78,7 @@ A("asia|Birthplace of religions",{view:[-7,10,92,42]});
 A("asia|The Silk Road",{view:[-21,20,115,50]});
 A("asia|Asia’s giant cities",{view:[27,-12,145,42]});
 A("asia|The two giants’ neighbours",{view:[-65,10,150,75]});
-A("asia|Islands of fire",{view:[42,-14,168,58]});
+A("asia|Islands of fire",{view:[42,-14,168,58],pinsDrop:/^(Japan|Philippines)$/});
 A("asia|Two Koreas",{view:[112,32,134,44]});
 A("asia|Two rice baskets on a pole",{pinsDrop:/^Vietnam$/});
 
@@ -104,12 +104,12 @@ A("africa|The real southern tip",{view:[14.2,-36.5,22.2,-33],phDrop:/^South Afri
 /* North America: the whole-continent views reach west past the date line, so Alaska and the Pacific coast come out from
    under the card */
 ["North America","Three giants","Three languages","Now explore"].forEach(t=>A("namerica|"+t,{view:[-205,5,-45,80]}));
-A("namerica|Canada’s water",{phDrop:/^Canada: Moraine Lake/});/* the card's own photo already */
+A("namerica|Canada’s water",{view:[-175,41,-52,75],phDrop:/^Canada: Moraine Lake/});/* the card's own photo already */
 A("namerica|The longest border",{view:[-205,36,-55,72]});
 A("namerica|Greenland belongs to North America",{view:[-130,28,22,84]});
 A("namerica|Alaska breaks every record",{view:[-215,36,-83,72]});
 A("namerica|Mountains and rivers",{view:[-205,15,-55,72]});
-A("namerica|A capital that sinks",{view:[-118.6,12,-88.6,27],phDrop:/^Mexico: Chichén Itzá/});
+A("namerica|A capital that sinks",{view:[-118.6,12,-88.6,27],pinsDrop:/^Mexico$/,phDrop:/^Mexico: Chichén Itzá/});
 A("namerica|Smaller than Texas",{view:[-118,6,-76,37]});
 A("namerica|The Panama Canal",{view:[-90,4,-74,12.5]});
 A("namerica|The Caribbean",{view:[-100,9,-58,28]});
@@ -121,8 +121,8 @@ A("namerica|Haiti’s revolution",{view:[-79,16.5,-67,21.5],pinsDrop:/^(Haiti|Do
 A("samerica|Further east than you think",{view:[-160,-60,0,50]});
 A("samerica|Brazil is half the continent",{view:[-118,-36,5,16]});
 A("samerica|A line from 1494",{view:[-110,-57,-25,14],pinsDrop:/^Brazil$/});
-A("samerica|Living high in the Andes",{view:[-115,-56,-50,12]});
-A("samerica|A ribbon of a country",{view:[-100,-57,-50,-16]});
+A("samerica|Living high in the Andes",{view:[-115,-56,-50,12],pinsDrop:/^(Argentina|Chile)$/});
+A("samerica|A ribbon of a country",{view:[-100,-57,-50,-16],pinsDrop:/^Chile$/});
 A("samerica|The Amazon basin",{view:[-100,-22,-44,8]});
 /* the map's colours are not named: the Cerrado is drawn on the map, and the climate palette has since changed */
 A("samerica|Turning bad soil into soybeans",{rep:[["The Cerrado, the tropical savanna (light blue on the map) south of the Amazon rainforest (dark blue), has","The Cerrado, the tropical savanna south of the Amazon rainforest, has"]]});
@@ -130,9 +130,9 @@ A("samerica|The Inca Empire",{view:[-95,-36,-60,2]});
 /* Rio's pin showed the Maracanã stadium, built in 1950; the Paço Imperial was the royal palace from 1808 */
 A("samerica|Europe ruled from Rio",{view:[-80,-32,5,45],pinsDrop:/^Brazil$/,phDrop:/^(Rio de Janeiro: capital, 1808–1821|Brazil: Christ the Redeemer)/,
  ph:[{at:[-43.174,-22.903],label:"Paço Imperial: the king’s palace in Rio",f:"Paço Imperial ao entardecer.jpg",d:"@4505c64d931a9bfc",by:"Guilherme Soares",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Pa%C3%A7o_Imperial_ao_entardecer.jpg"}]});
-A("samerica|Rich from frozen beef",{view:[-80,-41,-50,-28]});
-A("samerica|Two great waterfalls",{view:[-110,-62,-25,21]});
-A("samerica|Two landlocked countries",{view:[-80,-28,-53,-9]});
+A("samerica|Rich from frozen beef",{view:[-80,-41,-50,-28],pinsDrop:/^Argentina$/});
+A("samerica|Two great waterfalls",{view:[-110,-62,-25,21],pinsDrop:/^(Venezuela|Argentina|Brazil)$/});
+A("samerica|Two landlocked countries",{view:[-80,-28,-53,-9],pinsDrop:/^Bolivia$/});
 /* the islands were under the card; the tortoise pin repeated both the islands' pin spot and the card's own tortoise photo */
 A("samerica|Darwin’s islands",{view:[-105,-10,-75,5],pinsDrop:/^Ecuador$/,phDrop:/^Ecuador: Galápagos tortoise/});
 A("samerica|The far south",{view:[-100,-60,-50,-38]});
