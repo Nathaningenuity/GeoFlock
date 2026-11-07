@@ -35,20 +35,30 @@ const PH={
   {at:[-100,42],label:"Woolly mammoth",col:"#8a6a3a",f:"Woolly mammoth model Royal BC Museum in Victoria.jpg",d:"photos/x273402151e175b35.webp",by:"Thomas Quine",lic:"CC BY 2.0",page:"https://commons.wikimedia.org/wiki/File:Woolly_mammoth_model_Royal_BC_Museum_in_Victoria.jpg"},
   {at:[-62,-34],label:"Giant ground sloth",col:"#8a6a3a",f:"Megatherium americanum skeleton at the Natural History Museum, London.jpg",d:"photos/b6074a5fa5cae2cb3.webp",by:"APK",lic:"CC BY 4.0",page:"https://commons.wikimedia.org/wiki/File:Megatherium_americanum_skeleton_at_the_Natural_History_Museum,_London.jpg"},
   {at:[46.9,-19],label:"Elephant bird",col:"#8a6a3a",f:"Aepyornis maximus.jpg",d:"photos/dc98305d4662f0449.webp",by:"Monnier",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Aepyornis_maximus.jpg"}],
-  dropIcons:"paw",keepIconsAt:[[134,-25]],sym:[{at:[134,-25],e:"kangaroo",n:"Giant kangaroos and wombats, gone about 45,000 years ago"}]}};
+  dropIcons:"paw",keepIconsAt:[[134,-25]],sym:[{at:[134,-25],e:"kangaroo",n:"Giant kangaroos and wombats, gone about 45,000 years ago"}]},
+ /* the rest of the tours' paw prints: the animal itself, as a photo where the library has one, else an animal figure */
+ "*|The Roc and the valley of diamonds":{add:[{at:[46.9,-19],label:"Elephant bird: the real Roc?",col:"#8a6a3a",f:"Aepyornis maximus.jpg",d:"photos/dc98305d4662f0449.webp",by:"Monnier",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Aepyornis_maximus.jpg"}],dropIcons:"paw",sym:[]},
+ "*|Tortoises, mockingbirds and finches":{add:[{at:[-89.6,-0.9],label:"A San Cristóbal mockingbird",col:"#8a6a3a",f:"Galapagos mockingbird.JPG",d:"photos/b928f93c6694e2d74.webp",by:"Charles J. Sharp",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:Galapagos_mockingbird.JPG"}],dropIcons:"paw",sym:[{at:[-90.45,-1.28],e:"turtle",n:"Floreana’s tortoises"},{at:[-90.77,-0.24],e:"bird",n:"Finches on Santiago"}]},
+ "*|The Panamanian golden frog":{add:[{at:[-80.13,8.6],label:"Panamanian golden frog",col:"#c99a1a",f:"Atelopus zeteki1.jpg",d:"photos/b4bb1c11712e581dd.webp",by:"Brian Gratwicke",lic:"CC BY 2.0",page:"https://commons.wikimedia.org/wiki/File:Atelopus_zeteki1.jpg"}],dropIcons:"paw",sym:[]},
+ "*|Cuvier’s mastodon":{add:[{at:[-84.75,38.88],label:"Mastodon bones",col:"#8a6a3a",f:"Mastodon AMNH 9951.jpg",d:"photos/d52dbe96dccd01889.webp",by:"AbstractionBlue",lic:"CC BY 4.0",page:"https://commons.wikimedia.org/wiki/File:Mastodon_AMNH_9951.jpg"}],dropIcons:"paw",sym:[]},
+ "*|Bats and white-nose syndrome":{add:[{at:[-74.4,42.69],label:"A bat with white-nose",col:"#8a6a3a",f:"Little brown bat white-nose syndrome on muzzle, nose (5751822293).jpg",d:"photos/b28b5170d894cc605.webp",by:"U.S. Fish and Wildlife Service Headquarters",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Little_brown_bat_white-nose_syndrome_on_muzzle,_nose_(5751822293).jpg"}],dropIcons:"paw",sym:[]},
+ /* a world map is too crowded with names for figures: each animal goes into its own label instead */
+ "*|Animals worth taming":{dropIcons:"paw",relabel:{"Horse: the western steppe":"🐎 Horse: the western steppe","Sheep, goats, cattle, pigs":"🐑 Sheep, goats, cattle, pigs","Dromedary camel":"🐪 Dromedary camel","Bactrian camel":"🐫 Bactrian camel","Yak":"🐂 Yak","Water buffalo":"🐃 Water buffalo","Donkey":"🐴 Donkey","Llama and alpaca":"🦙 Llama and alpaca","Zebra: never tamed":"🦓 Zebra: never tamed"}},
+};
 function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f);if(i<0){PS_PHOTO_DATA.push({f:x.f,d:x.d,by:x.by,lic:x.lic,page:x.page});i=PS_PHOTO_DATA.length-1}
  try{if(typeof GF_SQ_FILE!=="undefined")GF_SQ_FILE[x.label]=x.f}catch(e){}try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};PS_SQ_IMG[x.label]=i}catch(e){}return i}catch(e){return -1}}
 function setProp(S,k,v){try{S[k]=v}catch(e){}if(S[k]!==v)try{Object.defineProperty(S,k,{configurable:true,enumerable:true,writable:true,value:v})}catch(e){}}
-function extras(S){try{if(!S||typeof ps==="undefined"||!ps)return;const X=PH[ps.tour+"|"+S.title];if(!X)return;
+function extras(S){try{if(!S||typeof ps==="undefined"||!ps)return;const X=PH[ps.tour+"|"+S.title]||PH["*|"+S.title];if(!X)return;X.add=X.add||[];
  /* the stop's photo pins always include these, whatever other scripts set the list to later */
  if(!S._gfXp){S._gfXp=1;const mine=X.add.map(x=>{const i=libAdd(x);return{at:x.at,label:x.label,col:x.col||"#d9682b",icon:"photo",_f:x.f,img:i}});
   let base=Array.isArray(S.phPins)?S.phPins.slice():[];const merged=()=>base.filter(q=>!mine.some(m=>q&&m.label===q.label)).concat(mine);let cache=null,ck=null;
   try{Object.defineProperty(S,"phPins",{configurable:true,enumerable:true,get(){if(ck!==base){ck=base;cache=merged()}return cache},set(v){base=Array.isArray(v)?v.filter(q=>!mine.includes(q)):[]}})}catch(e){}
   S._sqPruned=-1}else X.add.forEach(libAdd);
+ if(X.relabel&&Array.isArray(S.pins)&&!S._gfRl){S._gfRl=1;setProp(S,"pins",S.pins.map(q=>Array.isArray(q)&&X.relabel[q[1]]?[q[0],X.relabel[q[1]]].concat(q.slice(2)):q))}
  if(X.dropPins&&Array.isArray(S.pins)){const L=S.pins.filter(q=>!(Array.isArray(q)&&X.dropPins.test(String(q[1]))));if(L.length!==S.pins.length)setProp(S,"pins",L)}
  if(X.dropIcons&&Array.isArray(S.iconPins)){const keep=X.keepIconsAt||[];const L=S.iconPins.filter(q=>q.icon!==X.dropIcons||keep.some(a=>Math.hypot(a[0]-q.at[0],a[1]-q.at[1])<.5));
   const L2=X.sym?L.filter(q=>!(q.icon===X.dropIcons)):L;if(L2.length!==S.iconPins.length)setProp(S,"iconPins",L2);S._gfIcons=1}
- if(X.sym&&!S._gfXs){S._gfXs=1;const m=((S.gfSym&&S.gfSym.marks)||[]).concat(X.sym.map(z=>({at:z.at,e:"gfw_"+z.e,sz:32,reach:1.6,gap:3,_gfw:z.e,_n:z.n})));setProp(S,"gfSym",{marks:m});
+ if(X.sym&&X.sym.length&&!S._gfXs){S._gfXs=1;const m=((S.gfSym&&S.gfSym.marks)||[]).concat(X.sym.map(z=>({at:z.at,e:"gfw_"+z.e,sz:32,reach:1.6,gap:3,_gfw:z.e,_n:z.n})));setProp(S,"gfSym",{marks:m});
   try{const st=PS_TOURS[ps.tour].steps;if(!st._gfSym)Object.defineProperty(st,"_gfSym",{configurable:true,writable:true,value:1})}catch(e){}}}catch(e){console.error(e)}}
 /* the rhino figure at Leuser (wild rhinos still live there), in place of its paw print */
 function rhinos(){try{const T=PS_TOURS.bextinction,S=T&&T.steps.find(x=>x.title==="The last Sumatran rhinos");if(!S)return false;if(S._gfRh)return true;S._gfRh=1;
