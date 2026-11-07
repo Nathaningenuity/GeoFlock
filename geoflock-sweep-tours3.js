@@ -215,7 +215,15 @@ Object.assign(P,{
 /* ---- The World Wars ---- */
 Object.assign(P,{
  /* unemployment rose to about a quarter by 1933; it did not happen at once in 1929 */
- "hwars|Crash and dictators":{stat:"After the Wall Street Crash of October 1929, unemployment in the US climbed to about one worker in four by 1933"},
+ /* places on the map's edges or under its year: Ypres, Ankara, Finland, Brest and Madrid, Germany and Italy, Auschwitz */
+ "hwars|The Western Front":{view:[-4,45.5,12,54.5]},
+ "hwars|A new Middle East":{view:[15,12,58,45.5]},
+ "hwars|Four empires fall":{view:[-18,34,42,70]},
+ "hwars|Why “Spanish” flu?":{view:[-135,-12,15,62]},
+ "hwars|The Holocaust":{view:[13,46,29.5,55.73]},
+ /* the Italian Empire's colour made the map zoom out to all of Africa: El Alamein's 60 km gap again */
+ "hwars|The line that couldn’t be outflanked":{fn:S=>{S._histWide=1}},
+ "hwars|Crash and dictators":{view:[-130,5,35,75],stat:"After the Wall Street Crash of October 1929, unemployment in the US climbed to about one worker in four by 1933"},
 });
 /* ---- Europe ---- */
 Object.assign(P,{
@@ -307,6 +315,17 @@ Object.assign(P,{
  /* the 2025 core was said twice, in the stat and again in the text */
  "hantarctica|Reading the ice":{re:[["more","The cores show that carbon dioxide is now far higher than at any time in the last 800,000 years, and in 2025 a new core reached ice over a million years old.","The older cores already show that carbon dioxide is now far higher than at any time in the last 800,000 years; the new one will take the record further back."]]},
 });
+/* ---- The world since 1991 ---- */
+Object.assign(P,{
+ /* the map was centred on southern China with Taiwan squeezed on its right edge; the ruler on the map reads 145 km */
+ "hsince91|The chip island":{view:[110,17,134,31],re:[["body","about 150 km across the strait from mainland China","about 145 km across the strait from mainland China"]]},
+ /* Vukovar under the year; Mosul under the year and Basra on the corner; the pirates' route to Suez and Tunisia's
+    Sidi Bouzid off the top edge */
+ "hsince91|Yugoslavia breaks apart":{view:[6,38,24,49.5]},
+ "hsince91|The Iraq War":{view:[30,26,52,40.5]},
+ "hsince91|Pirates of the Gulf of Aden":{view:[24,-4,70,33]},
+ "hsince91|The Arab Spring":{view:[-18,6,56,42]},
+});
 /* ---- Explorers ---- */
 /* ---- Gunpowder and sea; World Wars; Cold War; since 1991 ---- */
 Object.assign(P,{
@@ -319,6 +338,15 @@ Object.assign(P,{
  "hgunpowder|Japan closes its doors":{fn:S=>{S._histWide=1}},
  "hgunpowder|Russia across Siberia":{phAdd:[np("yermak",[68.4,58.1],"Yermak takes Sibir, 1582 (painted 1895)")]},
  "hwars|Gallipoli":{phAdd:[np("kemal",[26.75,40.5],"Mustafa Kemal at Gallipoli, 1915",{person:1})]},
+ /* NATO's two founders across the Atlantic, the US and Canada, were off the left edge */
+ "hcoldwar|NATO and the Warsaw Pact":{view:[-130,22,62,76]},
+ /* Lahore under the year; Beijing on the right edge with the Middle East filling the map */
+ "hcoldwar|Partition of India":{view:[55,5,100,40]},
+ "hcoldwar|China’s revolution":{view:[70,5,142,55]},
+ /* the empires' and the Soviet colour made these maps zoom out to the whole world */
+ "hcoldwar|The Year of Africa":{fn:S=>{S._histWide=1}},
+ "hcoldwar|The uranium from Congo":{fn:S=>{S._histWide=1}},
+ "hcoldwar|The end of the Soviet Union":{fn:S=>{S._histWide=1}},
  /* Gorbachev on television on 25 December 1991, resigning as the last Soviet leader */
  "hcoldwar|The end of the Soviet Union":{phAdd:[np("gorbachev",[47,59],"Mikhail Gorbachev resigns, 25 December 1991",{person:1})]},
  "hcoldwar|The Iron Curtain":{phAdd:[np("churchill",[-0.13,51.5],"Winston Churchill",{person:1})]},
