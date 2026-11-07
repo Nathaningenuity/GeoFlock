@@ -81,7 +81,7 @@ const FIX={
  "ocean|The Sargasso Sea":S=>{(S.phPins||[]).forEach(q=>{if(q&&q.label==="Green sea turtle")q.at=[-68,29.5]})},
  /* Mountain ranges: the far half of each subject was under the card (Scotland and Scandinavia's pieces of the old range;
     the Appalachians' north end; Lesotho) */
- "ranges|Scotland’s mountains are in America":S=>FRAME(S,-20,48,1.1,[-100,22,75,72]),
+ "ranges|Scotland’s mountains are in America":S=>{LEFT(S);FRAME(S,-50,50,1.2,[-160,22,14,72])},
  "ranges|Old mountains: the Appalachians":S=>{LEFT(S);FRAME(S,-76,40,2.4,[-96,30,-62,49])},
  "ranges|Africa’s high ground":S=>FRAME(S,34,-8,1.6,[5,-36,62,18]),
  /* the Cascades' dry side (Ellensburg) sat beside the card but Seattle and the coast were under it */
@@ -141,9 +141,9 @@ const TXT={
 function text(S,key){const X=TXT[key];if(!X)return;
  /* pattern fixes run every time (another script may write the text again) */
  (X.fix||[]).forEach(([k,re,b])=>{if(typeof S[k]==="string"){const v=S[k].replace(re,b);if(v!==S[k])SET(S,k,v)}});
- if(S._gfSwT===X)return;S._gfSwT=X;
- ["title","stat","body","more"].forEach(k=>{const v=X[k];if(typeof v==="string")SET(S,k,v)});
- (X.re||[]).forEach(([k,a,b])=>{if(typeof S[k]==="string"&&S[k].includes(a))SET(S,k,S[k].split(a).join(b))})}
+ /* whole-field and phrase replacements are checked every time too: some scripts write a stop's text again later */
+ ["title","stat","body","more"].forEach(k=>{const v=X[k];if(typeof v==="string"&&S[k]!==v)SET(S,k,v)});
+ (X.re||[]).forEach(([k,a,b])=>{if(typeof S[k]==="string"&&S[k].includes(a)&&!S[k].includes(b))SET(S,k,S[k].split(a).join(b))})}
 function apply(S){try{if(!S||typeof ps==="undefined"||!ps)return;const key=ps.tour+"|"+S.title;text(S,key);const f=FIX[key];if(f&&S._gfSwF!==f){S._gfSwF=f;f(S)}}catch(e){console.error(e)}}
 /* text fixes also before a stop opens (stop lists and search show titles and stats) */
 function textAll(){try{if(typeof PS_TOURS==="undefined")return;for(const k in TXT){const i=k.indexOf("|"),T=PS_TOURS[k.slice(0,i)];if(!T)continue;const S=(T.steps||[]).find(s=>s&&(s.title===k.slice(i+1)||s._gfSwT===TXT[k]));if(S)text(S,k)}}catch(e){}}
