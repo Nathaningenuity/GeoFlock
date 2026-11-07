@@ -88,7 +88,7 @@ function render(){const q=Z.L[Z.k],p=Z.p;const lvl=q.d||3;
  p.innerHTML='<div class="gftq-h"><span>'+esc(tourName(Z.id))+' · quiz</span><button type="button" class="gftq-x" aria-label="Close">×</button></div>'+dots()+
   '<div class="gftq-meta"><span>'+(Z.k>=10?'<b class="gftq-bonus">⭐ Bonus question: get it right for '+(Math.round(Z.score)>=7?'gold':'silver')+'</b>':'Question '+(Z.k+1)+' of 10')+'</span><span class="gftq-lv">'+"●".repeat(Math.min(5,lvl))+"○".repeat(5-Math.min(5,lvl))+'</span><span class="gftq-t">'+esc(TYPE[q.t]||"")+'</span></div>'+
   '<p class="gftq-q">'+esc(q.q)+'</p>'+(q.img?'<img class="gftq-img" alt="" src="'+esc(q.img)+'">':"")+
-  (q.pick?'<div class="gftq-act">👆 Click the country on the map</div>':q.ll?'<div class="gftq-act">📍 Click the place on the map</div>':'<div class="gftq-o">'+q.o.map((o,j)=>'<button type="button" data-j="'+j+'"><i>'+"ABCD"[j]+'</i>'+esc(o)+'</button>').join("")+'</div>')+
+  (q.pick?'<div class="gftq-act">📍 Drop a pin on the country</div>':q.ll?'<div class="gftq-act">📍 Click the place on the map</div>':'<div class="gftq-o">'+q.o.map((o,j)=>'<button type="button" data-j="'+j+'"><i>'+"ABCD"[j]+'</i>'+esc(o)+'</button>').join("")+'</div>')+
   (Z.resumed&&Z.k>0&&Z.res[Z.k]==null?'<div class="gftq-resume">Picking up where you left off: '+Math.round(Z.score*10)/10+' so far.</div>':"")+
   '<div class="gftq-f"><button type="button" class="gftq-skip">Skip</button>'+overBtn()+'</div>';Z.resumed=false;
  p.querySelector(".gftq-x").onclick=()=>{stop()};p.querySelector(".gftq-skip").onclick=()=>answer(0,null,true);wireOver(p);
@@ -97,7 +97,8 @@ function render(){const q=Z.L[Z.k],p=Z.p;const lvl=q.d||3;
  /* a map question starts with the whole world in view */
  if(q.pick||q.ll)try{const g=amGlobe;if(g._flat){g.zoom=1;g.request()}else g.lookAt(g.rot?-g.rot[0]:20,15,1)}catch(e){}
  dodge(q);
- if(q.pick){try{gfPickQ=(code,name)=>{gfPickQ=null;const ok=q.pick.includes(String(code).toLowerCase());answer(ok?1:0,{code,name})}}catch(e){}}
+ /* a country question works like a place question: drop a pin, see which country it is in, then confirm */
+ if(q.pick)armPlace(ll=>{const c=pendC||cAt(ll),code=c&&c.code,name=c&&c.name;answer(code&&q.pick.includes(String(code).toLowerCase())?1:0,code?{code,name}:{code:"",name:"the sea"})},true);
  if(q.ll)armPlace(ll=>{const km=d3.geoDistance(ll,q.ll)*6371,R=q.km||300;answer(km<=R?1:km<=R*3?.5:0,{ll,km})})}
 function answer(v,how,skipped){if(!Z)return;const q=Z.L[Z.k],p=Z.p;try{gfPickQ=null}catch(e){}unarmPlace();Z.res[Z.k]=v;Z.score+=v;
  const S=st(),R=S[Z.id]=S[Z.id]||{};R.seen=R.seen||{};R.miss=R.miss||{};R.seen[q._k]=Date.now();if(v>=1)delete R.miss[q._k];else R.miss[q._k]=1;
@@ -133,18 +134,29 @@ function finish(){if(Z.L.length>10){Z.score=Math.min(10,Z.score)}const sc=Math.r
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){const r=document.querySelector(".gftq-res");if(r){r.remove();return}if(Z&&!e.defaultPrevented){stop()}}});
 /* ---------- clicking a place on the map ---------- */
 let placeCb=null,downAt=null;
-function armPlace(cb){placeCb=cb;pendLL=null;document.body.classList.add("gftq-placing")}
+let pendC=null,placeCountry=false;
+/* the country under a point: the map's own hit test at that point on the screen */
+/* the country a point is in, from the country shapes themselves (works on every map, whatever it colours) */
+let CF=null;function cAt(ll){try{if(!CF)CF=projFeatures().filter(f=>f.geometry&&f.properties&&f.properties.c);let best=null;
+ for(const f of CF){if(d3.geoContains(f,ll)){const a=d3.geoArea(f);if(!best||a<best.a)best={f,a}}}if(!best)return null;
+ const code=String(best.f.properties.c).toLowerCase();return{code,name:(COUNTRY_BY_CODE[code]||{}).n||code.toUpperCase()}}catch(e){return null}}
+function armPlace(cb,country){placeCb=cb;placeCountry=!!country;pendC=null;pendLL=null;document.body.classList.add("gftq-placing")}
 function unarmPlace(){placeCb=null;document.body.classList.remove("gftq-placing")}
 function llAt(x,y){try{const g=amGlobe,r=g.canvas.getBoundingClientRect(),ll=g.projection().invert([x-r.left,y-r.top]);return ll&&isFinite(ll[0])?ll:null}catch(e){return null}}
 document.addEventListener("pointerdown",e=>{if(placeCb)downAt=[e.clientX,e.clientY]},true);
 document.addEventListener("click",e=>{if(!placeCb||!downAt)return;try{if(!amGlobe||Z&&Z.p&&Z.p.contains(e.target)||e.target.closest&&e.target.closest("button,.gfk-tray,.gfk-panel"))return;const r=amGlobe.canvas.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return}catch(er){return}
  if(Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>6)return;const ll=llAt(e.clientX,e.clientY);if(!ll)return;e.stopPropagation();e.preventDefault();
  /* drop (or move) your pin; nothing is marked until you confirm it */
- pendLL=ll;let m=marks.find(x=>x.classList.contains("you"));if(m){m._ll=ll;place(m);m.classList.remove("drop");void m.offsetWidth;m.classList.add("drop")}else{markYou(ll);m=marks[marks.length-1];if(m){m.innerHTML=PIN;m.classList.add("drop")}}
+ pendLL=ll;window._gftqPinT=Date.now();if(placeCountry)pendC=cAt(ll);let m=marks.find(x=>x.classList.contains("you"));if(m){m._ll=ll;place(m);m.classList.remove("drop");void m.offsetWidth;m.classList.add("drop")}else{markYou(ll);m=marks[marks.length-1];if(m){m.innerHTML=PIN;m.classList.add("drop")}}
  confirmUI()},true);
+/* while a pin is being placed, a click on a country drops the pin: no country profile opens */
+(function hookFz(){if(typeof openFlagZoom!=="function"){setTimeout(hookFz,800);return}if(openFlagZoom._gftq)return;const _f=openFlagZoom;
+ openFlagZoom=function(){if(placeCb||document.body.classList.contains("gftq-placing")||Date.now()-(window._gftqPinT||0)<800)return;return _f.apply(this,arguments)};openFlagZoom._gftq=1})();
 let pendLL=null;const PIN='<svg viewBox="0 0 24 34" width="26" height="36"><path d="M12 33C12 33 2 19 2 12a10 10 0 0 1 20 0c0 7-10 21-10 21z" fill="#e8601c" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg>';
-function confirmUI(){try{if(!Z||!Z.p)return;const a=Z.p.querySelector(".gftq-act");if(!a)return;let b=a.querySelector(".gftq-ok");
- if(!b){a.innerHTML='📍 Your pin is down: click the map again to move it, then <button type="button" class="gftq-ok">Confirm my pin ✓</button>';b=a.querySelector(".gftq-ok");
+function confirmUI(){try{if(!Z||!Z.p)return;const a=Z.p.querySelector(".gftq-act");if(!a)return;
+ if(placeCountry){a.innerHTML='📍 Your pin is in <b>'+esc(pendC?pendC.name:"the sea")+'</b>. Is this the country you mean? <button type="button" class="gftq-ok">Yes, confirm ✓</button> <small>(or click the map again to move it)</small>'}
+ let b=a.querySelector(".gftq-ok");
+ if(!b||placeCountry){if(!placeCountry)a.innerHTML='📍 Your pin is down: click the map again to move it, then <button type="button" class="gftq-ok">Confirm my pin ✓</button>';b=a.querySelector(".gftq-ok");
   b.onclick=e=>{e.stopPropagation();if(!pendLL||!placeCb)return;const cb=placeCb,ll=pendLL;placeCb=null;pendLL=null;a.textContent="📍 Pin confirmed";cb(ll)}}}catch(e){}}
 /* markers: where you clicked, and where it is */
 let marks=[];

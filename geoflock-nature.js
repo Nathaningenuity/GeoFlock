@@ -94,14 +94,14 @@ document.addEventListener("pointermove",e=>{if(!vecOn()||document.querySelector(
 document.addEventListener("pointerleave",tipHide);
 let down=null;document.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY]},true);
 /* clicking opens the card for what is there (instead of the country) */
-const _oz=openFlagZoom;openFlagZoom=function(){try{if(vecOn()&&typeof appMode!=="undefined"&&appMode==="allmaps"&&down&&!(typeof ps!=="undefined"&&ps)){const h=hit(llAt(down[0],down[1]));if(h&&h.kind!=="foot"){const at=down.slice(),r=_oz.apply(this,arguments);pill(h,at);return r}}}catch(e){console.error(e)}return _oz.apply(this,arguments)};
+const _oz=openFlagZoom;openFlagZoom=function(){try{if(!document.body.classList.contains("gftq-placing")&&vecOn()&&typeof appMode!=="undefined"&&appMode==="allmaps"&&down&&!(typeof ps!=="undefined"&&ps)){const h=hit(llAt(down[0],down[1]));if(h&&h.kind!=="foot"){const at=down.slice(),r=_oz.apply(this,arguments);pill(h,at);return r}}}catch(e){console.error(e)}return _oz.apply(this,arguments)};
 /* a country click opens the country's profile as on every map; a small pill where you clicked opens the biome (or ecoregion,
    or realm) there */
 function pill(h,at){document.querySelectorAll(".gf-nat-pill").forEach(x=>x.remove());const b=document.createElement("button");b.type="button";b.className="gf-nat-pill";
  b.innerHTML="🌿 Biome here: "+esc(h.d.n||"")+" <i>▸</i>";try{tipHide()}catch(e){}document.body.appendChild(b);setTimeout(()=>{try{tipHide()}catch(e){}},300);
  b.onclick=e=>{e.stopPropagation();b.remove();card(h)};setTimeout(()=>{b.classList.add("out");setTimeout(()=>b.remove(),400)},6000)}
 {const st=document.createElement("style");st.textContent=".gf-nat-pill{position:fixed;z-index:12050;left:50%;top:14px;transform:translateX(-50%);border:0;border-radius:999px;padding:7px 13px;background:#2e7d4f;color:#fff;font:700 13px system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer;transition:opacity .35s}.gf-nat-pill i{font-style:normal;opacity:.8;margin-left:3px}.gf-nat-pill.out{opacity:0}";document.head.appendChild(st)}
-document.addEventListener("click",e=>{if(!vecOn()||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;if(window.gfClickGuard&&!gfClickGuard.ok(e))return;const t=e.target;if(!t.closest||!t.closest("#allMapsWrap > svg, #amGlobeHost")||t.closest("path[data-code],path[id],.gf-ly-pt"))return;
+document.addEventListener("click",e=>{if(document.body.classList.contains("gftq-placing"))return;if(!vecOn()||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;if(window.gfClickGuard&&!gfClickGuard.ok(e))return;const t=e.target;if(!t.closest||!t.closest("#allMapsWrap > svg, #amGlobeHost")||t.closest("path[data-code],path[id],.gf-ly-pt"))return;
  /* in the sea (no country under the pointer) */
  /* over a country, its profile opens (with the biome pill): the card here is for the sea and other places outside countries */
  try{const g=typeof amGlobe!=="undefined"&&amGlobe,c=g&&g.hit&&g.hit(e.clientX,e.clientY);if(c&&c.code)return}catch(err){}
