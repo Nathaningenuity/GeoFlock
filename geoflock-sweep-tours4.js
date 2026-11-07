@@ -177,6 +177,54 @@ A("bnations|Growth that cannot last?",{pinsDrop:/^(Russia|China)$/});
 A("bnations|Geography or institutions?",{mode:"gdp",sub:"percapita",phDrop:/^Stockholm$/,
  body:"The Economy map shows money per person: the poorest countries cluster between the tropics. Writers such as Jared Diamond and the economist Jeffrey Sachs stress geography: climate, disease and soils. Acemoglu and Robinson reply that the same places were often richer than Europe’s colonies in temperate lands before 1500, and that colonisers set up worse institutions where they could exploit large populations."});
 
+/* Collapse */
+A("bcollapse|Montana: trouble in paradise",{pinsDrop:/^United States$/});
+/* Pitcairn's label sat behind the card; one of the two moai pictures (the card has its own) goes */
+A("bcollapse|Easter Island",{view:[-155,-40,-68,-15],phDrop:/^Rapa Nui \(Easter Island\)$/});
+A("bcollapse|Iceland’s blowing soil",{view:[-33,62.8,-12,67],pinsDrop:/^Iceland$/});
+A("bcollapse|The Norse in Greenland",{view:[-105,48,8,76]});
+A("bcollapse|Too many people, too little land",{pinsDrop:/^Rwanda$/});
+/* the border between forest and bare hills only shows close up */
+A("bcollapse|Hispaniola: one island, two paths",{globe:[-71.7,18.9,9]});
+A("bcollapse|Australia: mining the soil",{pinsDrop:/^Australia$/});
+A("bcollapse|An oil field that saved the forest",{pinsDrop:/^Papua New Guinea$/});
+A("bcollapse|We are all in the polder",{pinsDrop:/^Netherlands$/});
+
+/* Candide: frames moved west so each place sits right of the card (South America, Lisbon, Salé, Buenos Aires,
+   Paramaribo, Portsmouth and Edinburgh were under it); country names that repeated the map's labels go */
+A("bcandide|Candide",{view:[-140,-45,60,62]});
+A("bcandide|Now explore",{view:[-140,-45,60,62]});
+A("bcandide|Westphalia: the best of all possible castles",{view:[-8,46,22,56]});
+A("bcandide|Bulgars and Abares",{view:[-14,44,26,57]});
+A("bcandide|Lisbon, 1 November 1755",{view:[-28,31,1,44]});
+A("bcandide|An auto-da-fé to stop the earthquakes",{view:[-16.5,36.3,-3,42.6]});
+A("bcandide|The old woman’s story",{view:[-30,28,44,62]});
+A("bcandide|From Cádiz to Buenos Aires",{view:[-100,-40,0,42]});
+A("bcandide|The Jesuits of Paraguay",{view:[-78,-35,-44,-17],pinsDrop:/^(Paraguay|Argentina|Brazil)$/});
+A("bcandide|The golden land",{view:[-100,-20,-46,13]});
+A("bcandide|Suriname: the price of sugar",{view:[-90,-10,18,20]});
+A("bcandide|Bordeaux and Paris",{view:[-90,-2,12,56]});
+A("bcandide|Portsmouth: to encourage the others",{view:[-20,36,14,55]});
+A("bcandide|Six kings at the Carnival",{view:[-18,36,36,62]});
+A("bcandide|Voltaire’s own garden",{view:[-6,44.5,10,53.5]});
+
+/* Journey to the West: the walk runs west, and its western places sat under the card; frames moved west */
+A("bjourneywest|Journey to the West",{view:[30,5,122,50]});
+A("bjourneywest|Now explore",{view:[30,5,122,50]});
+A("bjourneywest|Monkey, Pigsy and Sandy",{view:[54,10,125,46]});
+A("bjourneywest|The khan of the Western Turks",{view:[58,36,84,48]});
+A("bjourneywest|Leaving Chang’an against orders",{view:[84,26,120,44]});
+A("bjourneywest|Alone across the Gobi",{view:[82,36,106,45]});
+A("bjourneywest|A king who would not let him go",{view:[78,39,98,46]});
+A("bjourneywest|Kucha and the icy Tian Shan",{view:[66,38,88,45.5]});
+A("bjourneywest|Samarkand and the Iron Gate",{view:[52,33,76,44]});
+A("bjourneywest|Gandhara and Kashmir",{view:[58,29,82,38.5]});
+A("bjourneywest|Harsha’s India",{view:[66,20,92,32]});
+A("bjourneywest|Nalanda",{view:[58,8,96,30]});
+A("bjourneywest|Over the Pamirs",{view:[62,33,82,41.5]});
+A("bjourneywest|Home along the Taklamakan",{view:[60,33,112,44],stat:"The Taklamakan, about 1,000 km across, is one of the largest sand deserts on Earth",
+ rep:[["Xuanzang took the southern road around it, from oasis to oasis.","Xuanzang took the southern road around it, from oasis to oasis (drag the ruler across the sand)."]]});
+
 /* ---------- patches go here ---------- */
 
 function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f);
