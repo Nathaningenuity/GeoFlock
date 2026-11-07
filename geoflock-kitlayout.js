@@ -33,6 +33,9 @@ function defPos(t,oh){const h=host();if(FS())return{x:10,y:Math.round(innerHeigh
  if(L.dock==="free"&&L.fx!=null&&h){const hr=h.getBoundingClientRect();if(hr.width)return{x:Math.round(hr.left+L.fx),y:Math.round(hr.top+(L.fy||0))}}
  const r=h&&h.getBoundingClientRect();if(r&&r.width&&r.bottom>60&&r.top<innerHeight-60)return{x:Math.round(r.left+12),y:Math.round(Math.min(r.bottom,innerHeight)-oh-6)};
  return{x:12,y:Math.round(innerHeight-oh-12)}}
+/* where the tray may sit: in full screen anywhere on the screen; otherwise inside the map (or the screen, if the map is smaller) */
+function bounds(w,th){const h=host();if(FS()||!h)return{l:4,r:innerWidth-w-4,t:4,b:innerHeight-th-4};const r=h.getBoundingClientRect();
+ const l=r.left+4,rr=r.right-w-4,t=r.top+4,b=r.bottom-th-4;return{l:Math.min(l,Math.max(4,rr)),r:Math.max(l,rr),t:Math.min(t,Math.max(4,b)),b:Math.max(t,b)}}
 let shown=true;
 function apply(){const t=tray();if(!t)return;const f=t.querySelector(".gfk-felt");if(!f)return;
  f.querySelectorAll(".gfk-slot").forEach(b=>{b.classList.toggle("gfkl-hide",L.hidden.includes(keyOf(b)))});
@@ -47,10 +50,14 @@ function apply(){const t=tray();if(!t)return;const f=t.querySelector(".gfk-felt"
  const w=t.offsetWidth||300,th=t.offsetHeight||120,closed=t.classList.contains("closed");
  /* folding keeps the bottom edge where it was: the tray folds down, not up (the open height is remembered) */
  if(!closed&&th>40)L.fh=th;const oh=closed?Math.max(th,L.fh||th):th;
- const k=PK();if(!L[k]||!isFinite(L[k].x)||!isFinite(L[k].y)){L[k]=defPos(t,oh);saveL()}
- const P=L[k],fold=closed?oh-th:0;
- /* always wholly on the screen (the place itself is kept, so a window made small and large again gives it back) */
- const x=Math.max(4,Math.min(innerWidth-w-4,P.x)),y=Math.max(4,Math.min(innerHeight-th-4,P.y+fold));
+ const k=PK(),h0=host(),HR=!FS()&&h0?h0.getBoundingClientRect():null;
+ /* outside full screen the place is kept relative to the map (L.rel): the tray rides with the map when the page scrolls and
+    stays inside the map, so it never sits on the History timeline or other bars under it */
+ if(k==="pn"&&HR&&L.pn&&!L.rel&&isFinite(L.pn.x)){L.pn={x:Math.round(L.pn.x-HR.left),y:Math.round(L.pn.y-HR.top)};L.rel=1;saveL()}
+ if(!L[k]||!isFinite(L[k].x)||!isFinite(L[k].y)){const d=defPos(t,oh);L[k]=k==="pn"&&HR?{x:Math.round(d.x-HR.left),y:Math.round(d.y-HR.top)}:d;if(k==="pn")L.rel=1;saveL()}
+ const P=L[k],fold=closed?oh-th:0,B=bounds(w,th);
+ const ax=k==="pn"&&HR?HR.left+P.x:P.x,ay=k==="pn"&&HR?HR.top+P.y:P.y;
+ const x=Math.max(B.l,Math.min(B.r,ax)),y=Math.max(B.t,Math.min(B.b,ay+fold));
  put(t,"left",Math.round(x)+"px");put(t,"top",Math.round(y)+"px");
  /* the map scrolled wholly out of view: hidden where it is */
  const h=host(),hr=h&&!FS()?h.getBoundingClientRect():null;const vis=!hr||!hr.height||(hr.bottom>0&&hr.top<innerHeight);
@@ -80,8 +87,9 @@ function wire(){const t=tray();if(!t||t._gfkl)return;const tab=t.querySelector("
   /* (a folded tray's place is that of the open tray: it is drawn lower by the height it will open to) */
   const th=t.offsetHeight||120,fold=t.classList.contains("closed")&&L.fh?Math.max(0,L.fh-th):0,w=t.offsetWidth||300;
   /* kept on the screen while dragged: what is shown is where it will stay */
-  const x=Math.max(4,Math.min(innerWidth-w-4,e.clientX-drag.dx)),y=Math.max(4,Math.min(innerHeight-th-4,e.clientY-drag.dy));
-  L[drag.k]={x:Math.round(x),y:Math.round(y-fold)};apply()});
+  const B=bounds(w,th),x=Math.max(B.l,Math.min(B.r,e.clientX-drag.dx)),y=Math.max(B.t,Math.min(B.b,e.clientY-drag.dy));
+  const h=host(),hr=drag.k==="pn"&&h?h.getBoundingClientRect():{left:0,top:0};
+  L[drag.k]={x:Math.round(x-hr.left),y:Math.round(y-fold-hr.top)};apply()});
  tab.addEventListener("pointerup",e=>{if(drag&&e.pointerId===drag.id)endDrag(false)});
  tab.addEventListener("pointercancel",e=>{if(drag&&e.pointerId===drag.id)endDrag(true)});
  tab.addEventListener("lostpointercapture",e=>{if(drag&&e.pointerId===drag.id)endDrag(false)});
