@@ -16,7 +16,7 @@ function dedupe(S){try{if(!S||!Array.isArray(S.phPins))return;const P=(window.GF
   const dup=people.some(pp=>(pp.f&&q._f&&pp.f===q._f)||(pp.at&&q.at&&Math.hypot(pp.at[0]-q.at[0],pp.at[1]-q.at[1])<.2&&pp.sn.length>2&&lab.includes(pp.sn)&&!/home|house|grave|tomb|museum/.test(lab)));
   if(dup)S.phPins.splice(i,1)}}catch(e){console.error(e)}}
 function wrapGo(){if(typeof psGo!=="function"||psGo._gfM)return typeof psGo==="function";const _g=psGo;
- psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];extras(S);dedupe(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfM=1;return true}
+ psGo=function(i){try{sameLat();brandt()}catch(e){}try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];extras(S);dedupe(S)}catch(e){}return _g.apply(this,arguments)};psGo._gfM=1;return true}
 let n=0;const t=setInterval(()=>{const a=wrapKey(),b=wrapGo();if(a&&b||++n>60)clearInterval(t)},500);
 /* 3. the Climate map's colours were softened (hot desert a rusty orange-red, cold desert pale salmon): the cards say so */
 const TXT=[["(red and orange on the climate map laid over it)","(rusty red and orange on the climate map laid over it)"],
@@ -97,5 +97,17 @@ function brandt(){try{if(typeof GDP_BRANDT==="undefined")return false;let S=null
  if(typeof S.body==="string")S.body=S.body.replace("North of the red line: North America, Europe, Russia, Japan, Australia and New Zealand.","North of the red line: North America, Europe, Russia, Japan and South Korea, with Australia and New Zealand ringed on their own.").replace("South of it: Latin America, Africa and most of Asia,","South of it: Latin America, Africa, most of Asia (North Korea too) and the Pacific islands,");
  return true}catch(e){console.error(e);return false}}
 [0,1500,4000,9000].forEach(ms=>setTimeout(brandt,ms));
+/* 9. "Further north than you think": the same latitude, two climates. A third parallel at about 58.8°N joins Churchill on
+   Hudson Bay (January average about −26 °C) and Kirkwall in Orkney (about +4 °C), each with a thermometer
+   (Environment Canada and Met Office 1991–2020 normals, rounded) */
+function sameLat(){let n=0;try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).forEach(S=>{if(!S||S.title!=="Further north than you think"||S._gfSl)return;S._gfSl=1;n++;
+  const P=[];for(let lo=-94;lo<=-3;lo+=2)P.push([lo,58.8]);P.push([-2.96,58.8]);
+  const L=(S.lines||[]).concat([{coords:P,kind:"dash",parallel:true}]);Object.defineProperty(S,"lines",{configurable:true,enumerable:true,writable:true,value:L});
+  const M=((S.gfSym&&S.gfSym.marks)||[]).concat([{at:[-94.17,58.77],thermo:"cold",sz:30,reach:1.6,gap:2},{at:[-2.96,58.98],thermo:"hot",sz:30,reach:2.2,gap:2}]);
+  Object.defineProperty(S,"gfSym",{configurable:true,enumerable:true,writable:true,value:{marks:M}});try{if(!PS_TOURS[t].steps._gfSym)Object.defineProperty(PS_TOURS[t].steps,"_gfSym",{configurable:true,writable:true,value:1})}catch(e){}
+  S.pins=(S.pins||[]).concat([[[-94.17,58.77],"Churchill: −26 °C in January","point"],[[-2.96,58.98],"Kirkwall, Orkney: +4 °C in January","point"]]);
+  const add=" Go further north and the gap grows: Churchill, on Hudson Bay, and Kirkwall, in Orkney off the north of Scotland, are both near 58.8°N, yet in January Churchill averages about −26 °C and Kirkwall about +4 °C.";
+  if(typeof S.body==="string"&&!S.body.includes("Churchill"))S.body+=add})}catch(e){console.error(e)}return n}
+[0,1500,4000,9000].forEach(ms=>setTimeout(sameLat,ms));
 window.gfPolishM={dedupe};
 })();
