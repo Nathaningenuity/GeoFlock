@@ -154,8 +154,9 @@ S({title:"Iceland: fire and ice",view:[-25.5,62.8,-12.5,67],globe:[-19,64.9,6.5]
  body:"In 2010 a modest eruption under the Eyjafjallajökull glacier sent ash high over Europe, closing much of its airspace for about six days and cancelling around 100,000 flights. Since 2021 lava has broken out again and again on the Reykjanes peninsula near Grindavík.",
  more:"The worst was Laki in 1783–84: a 27 km line of craters poured out lava and poisonous gas for eight months. Crops and livestock died, and about a fifth of Iceland’s people died in the famine that followed."}),
 S({title:"Yellowstone’s supervolcano",view:[-120,40,-104,47.5],globe:[-111,44,4.2],card:"left",on:["hazards"],
- lines:[{coords:[[-117.5,42.3],[-115.5,42.8],[-113.8,43.2],[-112.4,43.7],[-111.3,44.2],[-110.6,44.5]],kind:"flow"},{circle:[-110.6,44.5],km:35,kind:"circle"}],
- pins:[[[-110.6,44.5],"Yellowstone caldera","point"],[[-116.5,42.6],"Older eruptions: the hot spot’s track","point"]],
+ /* the hot spot's track stops at the caldera's edge; the caldera is ringed, Yellowstone Lake (inside it) highlighted and left clear */
+ lk:["Yellowstone Lake"],lines:[{coords:[[-117.5,42.3],[-115.5,42.8],[-113.8,43.2],[-112.4,43.7],[-111.25,44.15]],kind:"flow"},{circle:[-110.55,44.47],km:42,kind:"amber"}],
+ pins:[[[-110.15,44.8],"Yellowstone caldera (ringed)","point"],[[-116.5,42.6],"Older eruptions: the hot spot’s track","point"]],
  phPins:[ph([-110.83,44.46],"Old Faithful"),ph([-110.84,44.525],"Grand Prismatic Spring")],
  stat:"Yellowstone has had three giant eruptions in 2.1 million years, the last about 631,000 years ago",
  body:"Under Yellowstone is a hot spot like Hawaii’s, but under a continent. As North America drifted over it, it left a trail of old eruptions across Idaho. The last giant one blew out a crater, or caldera, about 70 km long.",
