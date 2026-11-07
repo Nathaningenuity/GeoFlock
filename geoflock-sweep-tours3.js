@@ -206,6 +206,10 @@ Object.assign(P,{
 /* ---- Revolutions and industry ---- */
 Object.assign(P,{
  /* Fortune set out in 1848; the plants left China over the next three years */
+ /* Boston on the top edge; Hong Kong and Shanghai on the right edge; Africa pushed right, with Brazil in view */
+ "hrevolutions|American independence":{view:[-85,33,-64,46]},
+ "hrevolutions|The Opium Wars":{view:[60,-2,130,42]},
+ "hrevolutions|The Scramble for Africa":{view:[-22,-36,55,38]},
  "hrevolutions|The great tea theft":{stat:"From 1848 a Scottish botanist, disguised as a Chinese official, smuggled about 20,000 tea plants out of China"},
 });
 /* ---- The World Wars ---- */
@@ -216,6 +220,14 @@ Object.assign(P,{
 /* ---- Europe ---- */
 Object.assign(P,{
  /* the Brussels photo stood near Wavre, and a fairy-tale castle had nothing to do with coal: the Ruhr's great colliery instead */
+ /* the empire's colour made the History map zoom out to the whole world: Napoleon's Europe and the Ottomans at Vienna
+    stay on Europe */
+ "heurope|Napoleon’s Europe":{fn:S=>{S._histWide=1}},
+ "heurope|The Turks at Vienna":{fn:S=>{S._histWide=1}},
+ /* places at the top or right edge, under the map's year: the Altar Stone's Scotland, Florence, Bergen and Novgorod */
+ "heurope|Europe’s first artists":{view:[-14,42,10,61]},
+ "heurope|The Renaissance":{view:[4.5,35.6,20.5,50]},
+ "heurope|The Hanseatic League":{view:[-12,46,40,65]},
  "heurope|Coal, rivers and ports":{phDrop:/^(Belgium: Grand-Place, Brussels|Germany: Neuschwanstein Castle)$/,
   phAdd:[{at:[7.04,51.49],label:"Zollverein colliery, the Ruhr",f:"Zollverein Coal Mine, Essen.jpg"}]},
 });
@@ -298,6 +310,13 @@ Object.assign(P,{
 /* ---- Explorers ---- */
 /* ---- Gunpowder and sea; World Wars; Cold War; since 1991 ---- */
 Object.assign(P,{
+ /* Vienna under the year at the top; Tenochtitlan and Machu Picchu on the top and bottom edges; Potosí, where the
+    galleons' silver came from, off the right edge */
+ "hgunpowder|The Ottomans at their height":{view:[-20,10,55,56]},
+ "hgunpowder|Aztecs and Inca fall":{view:[-115,-25,-50,30]},
+ "hgunpowder|Silver and the Manila galleons":{view:[20,-40,300,55]},
+ /* Tokugawa Japan's colour made the map zoom out to Mongolia and the Pacific */
+ "hgunpowder|Japan closes its doors":{fn:S=>{S._histWide=1}},
  "hgunpowder|Russia across Siberia":{phAdd:[np("yermak",[68.4,58.1],"Yermak takes Sibir, 1582 (painted 1895)")]},
  "hwars|Gallipoli":{phAdd:[np("kemal",[26.75,40.5],"Mustafa Kemal at Gallipoli, 1915",{person:1})]},
  /* Gorbachev on television on 25 December 1991, resigning as the last Soviet leader */
@@ -308,6 +327,11 @@ Object.assign(P,{
 Object.assign(P,{
  /* Lewis and Clark never went near the Grand Canyon */
  "explorers|Lewis and Clark":{phDrop:/^United States: Grand Canyon$/},
+ /* Hawaii, Tahiti and Rapa Nui were squeezed onto the left edge of a world map centred on Africa: the Pacific instead */
+ "explorers|Sailing by the stars":{view:[140,-50,-70,32]},
+ /* Marseille's statue of Pytheas sat on the bottom edge; Chang'an, where Zhang Qian set out, on the right edge */
+ "explorers|The man nobody believed":{view:[-35,34,25,72]},
+ "explorers|The envoy who opened the Silk Road":{view:[35,18,130,55]},
 });
 /* ---- Empires and independence, Modern history (overview tours, not on a shelf) ---- */
 Object.assign(P,{
