@@ -196,7 +196,7 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
   each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster?bigLakes(d).filter(K=>!isCaspian(K)):[]);
    /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
-   if(seaC)seaLinks(d);const SL=seaC?L0.filter(K=>K._sea||(K._big&&!isCaspian(K))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
+   if(seaC)seaLinks(d);/* big lakes that the tiles store as sea (Lake Albert, the Great Lakes) stay lakes, unless they are a known sea lake (Maracaibo) */const SL=seaC?L0.filter(K=>K._sea||(K._big&&!isCaspian(K)&&window.gfSeaLake&&gfSeaLake(K.n||""))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
    if(SL.length&&(seaC||!ne)){ctx.fillStyle=seaC||"#6fa3cd";ctx.beginPath();SL.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")}
    /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
    [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;

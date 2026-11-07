@@ -169,7 +169,7 @@ window.gfTourQuiz={start,stop,pool,draw,available};
 .gftq-f{margin-top:10px}.gftq-skip{border:0;background:none;color:#8a7458;font:inherit;font-size:13px;cursor:pointer;text-decoration:underline}
 .gftq-why{padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.45}.gftq-why.ok{background:#e8f6ee}.gftq-why.no{background:#fbe9e4}.gftq-why.half{background:#fbf3d8}
 .gftq-stamp{display:inline-block;margin-top:6px;padding:2px 9px;border-radius:999px;border:1.5px dashed #a0522d;color:#a0522d;font-size:12px;font-weight:800}
-.gftq-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.gftq-acts button{border:0;border-radius:999px;padding:8px 16px;font-weight:800;cursor:pointer}
+.gftq-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;position:sticky;bottom:-14px;z-index:3;padding:10px 0 12px;background:linear-gradient(to bottom,rgba(255,250,240,0),#fffaf0 35%)}/* Next stays in view while the panel scrolls */.gftq-acts button{border:0;border-radius:999px;padding:8px 16px;font-weight:800;cursor:pointer}
 .gftq-next{background:#e8601c;color:#fff}.gftq-back{background:#f0e6d2;color:#5a3a12}
 body.gftq-placing .globe-host canvas{cursor:crosshair!important}
 .gftq-mk{position:absolute;z-index:30;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none}

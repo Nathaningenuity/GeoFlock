@@ -75,3 +75,10 @@ body.sky-night .gftl{ background:rgba(16,24,44,.95); color:#e6eefc; } body.sky-n
 document.head.appendChild(css);
 window.gfTourLink=id=>location.origin+location.pathname+"#tour="+encodeURIComponent(id);
 })();
+
+/* a stop that switches to the round globe sometimes lands before the globe is ready, and the globe stays turned to wherever it
+   was (the Ring of Fire showed the Atlantic): once the globe is up, it is turned to the stop's own view if it is far from it */
+(function(){function aim(i){window._gfAimLog=(window._gfAimLog||[]).concat([i]);try{if(typeof ps==="undefined"||!ps||ps.i!==i)return;const S=psSteps()[i],g=typeof amGlobe!=="undefined"?amGlobe:null;if(!S||!S.globe||!g||g._flat||ps._gfAimed===S)return;
+ const c=[-g.rot[0],-g.rot[1]],t=[S.globe[0],S.globe[1]];if(d3.geoDistance(c,t)<.35)return;ps._gfAimed=S;
+ const z0=g.zoom,z1=S.globe[2]||z0,ip=d3.geoInterpolate(c,t),st=performance.now();const step=n=>{const k=Math.min(1,(n-st)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,q=ip(e);g.rot=[-q[0],-q[1]];g.zoom=z0+(z1-z0)*e;g.render&&g.render();if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}catch(e){}}
+ let n=0;const t=setInterval(()=>{if(typeof psGo!=="function"||psGo._gfAim){if(++n>60)clearInterval(t);return}const _g=psGo;psGo=function(i){const r=_g.apply(this,arguments);try{const j=ps&&ps.i;if(ps)ps._gfAimed=null;[1200,2600].forEach(ms=>setTimeout(()=>aim(j),ms))}catch(e){}return r};psGo._gfAim=1;clearInterval(t)},400);window.gfAim=aim})();
