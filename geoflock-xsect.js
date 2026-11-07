@@ -92,6 +92,7 @@ const css=document.createElement("style");css.textContent=`
 .gf-xs-hist button{ border:1.5px solid rgba(0,0,0,.12); background:transparent; color:inherit; border-radius:999px; padding:2px 9px; font:700 12px system-ui; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
 .gf-xs-hist button i{ width:9px; height:9px; border-radius:50%; background:var(--c); } .gf-xs-hist button.on{ border-color:var(--c); background:color-mix(in srgb,var(--c) 14%,transparent); }
 :is(body.dark,body.dark-theme,body.sky-night) .gf-xs-hist button{ border-color:rgba(255,255,255,.18); }
+.gf-xs.gf-xs-free{ position:fixed!important; z-index:9000; }
 .gf-xs{ position:absolute; left:10px; right:58px; bottom:10px; z-index:41; background:#fff; border-radius:14px; box-shadow:0 6px 24px rgba(0,0,0,.25); padding:10px 12px 8px; font:13px/1.35 system-ui,sans-serif; color:#1d2433; }
 body.dark .gf-xs{ background:#1c2333; color:#e8ecf3; }
 .gf-xs-hctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px; }
@@ -169,7 +170,7 @@ function icons(show){const g=G(),spots=[];const btns=g&&g.host.querySelector(".g
 function chip(){icons(mode()==="elevation")}
 function start(o){const g=G();if(!g)return;on=true;loadDEM().then(()=>{if(!lines.length&&hist.length)showHist(hist.length-1);else renderPanel()}).catch(()=>{});mount();if(!lines.length&&hist.length){lines=[hist[hist.length-1]];title=lines[0].title}renderPanel();/* never drawing on opening: drawing starts only from its button (or when a caller asks for it outright) */if(o&&o.draw)armed=true;try{if(armed)gfOneTool.claim("xsect")}catch(e){}renderPanel();loop()}
 function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventListener("pointerdown",e=>{if(e.target.closest(".gf-xs-rz")){e.preventDefault();e.stopPropagation();
-  const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),sv=panel.querySelector("svg"),sh=sv?sv.getBoundingClientRect().height:190,x0=e.clientX,y0=e.clientY;
+  const h=(panel.parentNode===document.body?{left:0,top:0,right:innerWidth,bottom:innerHeight,width:innerWidth,height:innerHeight}:panel.parentNode.getBoundingClientRect()),r=panel.getBoundingClientRect(),sv=panel.querySelector("svg"),sh=sv?sv.getBoundingClientRect().height:190,x0=e.clientX,y0=e.clientY;
   panel.style.left=(r.left-h.left)+"px";panel.style.top=(r.top-h.top)+"px";panel.style.right="auto";panel.style.bottom="auto";
   const W=e.target.closest(".gf-xs-rz").classList.contains("w"),top0=panel.style.top;
   /* the top edge: the panel keeps its bottom where it is and the chart grows upward */
@@ -177,13 +178,15 @@ function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventL
   const mv=ev=>{if(W)panel.style.width=Math.max(300,Math.min(innerWidth-20,r.width+ev.clientX-x0))+"px";else if(sv)panel.style.setProperty("--xs-h",Math.max(90,Math.min(innerHeight*.7,sh-(ev.clientY-y0)))+"px")};
   const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up);return}
  if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
- const h=panel.parentNode.getBoundingClientRect(),r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
+ /* dragged by its title bar it floats over the whole page, not only the map */
+ const r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;if(panel.parentNode!==document.body){document.body.appendChild(panel);panel.classList.add("gf-xs-free");panel.style.left=r.left+"px";panel.style.top=r.top+"px"}
+ const h={left:0,top:0,width:innerWidth,height:innerHeight};panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
  const mv=ev=>{panel.style.left=Math.max(-r.width+80,Math.min(h.width-80,ev.clientX-h.left-dx))+"px";panel.style.top=Math.max(0,Math.min(h.height-40,ev.clientY-h.top-dy))+"px"};
  const upx=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",upx,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",upx,true)},true)}
 function stop(){on=false;armed=false;drawing=null;lines=[];hover=null;badges=[];try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(e){}if(panel){panel.remove();panel=null}if(ov){ov.remove();ov=null}cancelAnimationFrame(raf);chip()}
 function mount(){const g=G();if(!g)return;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
  if(!ov||ov.parentNode!==h){ov=document.createElement("canvas");ov.className="gf-xs-ov";h.appendChild(ov)}
- if(!panel||panel.parentNode!==h){panel=document.createElement("div");panel.className="gf-xs";h.appendChild(panel)}dragPanel();
+ if(!panel||(panel.parentNode!==h&&panel.parentNode!==document.body)){panel=document.createElement("div");panel.className="gf-xs";h.appendChild(panel)}dragPanel();
  }
 /* ---------- drawing on the map ---------- */
 const inPanel=e=>e.target.closest&&e.target.closest(".gf-xs,.globe-btns,.gfk-tray,.gfk-panel,button,a,input,select");
