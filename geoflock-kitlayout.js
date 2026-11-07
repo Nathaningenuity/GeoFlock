@@ -21,7 +21,9 @@ function apply(){const t=tray();if(!t)return;const f=t.querySelector(".gfk-felt"
  if(L.dock==="free"){t.classList.toggle("gfkl-col",!!L.col);t.classList.remove("gfkl-left","gfkl-right");t.classList.toggle("gfkl-free",true);
   f.style.maxWidth=!L.col&&L.lenRow?Math.max(130,L.lenRow)+"px":"";f.style.maxHeight=L.col?(L.lenCol?Math.max(130,Math.min(L.lenCol,innerHeight-90)):Math.max(160,Math.min(innerHeight-90,520)))+"px":"";
   t.style.right="auto";t.style.bottom="auto";const hr=h?h.getBoundingClientRect():{left:0,top:0},w=t.offsetWidth||300,th=t.offsetHeight||120;
-  const x=Math.max(-hr.left+4,Math.min(innerWidth-hr.left-w-4,L.fx||0)),y=Math.max(-hr.top+4,Math.min(innerHeight-hr.top-th-4,L.fy||0));
+  /* folding keeps the bottom edge where it was: the tray folds down, not up (the open height is remembered) */
+  const closed=t.classList.contains("closed");if(!closed&&th>40)L.fh=th;const fy=(L.fy||0)+(closed&&L.fh?L.fh-th:0);
+  const x=Math.max(-hr.left+4,Math.min(innerWidth-hr.left-w-4,L.fx||0)),y=Math.max(-hr.top+4,Math.min(innerHeight-hr.top-th-4,fy));
   t.style.left=x+"px";t.style.top=y+"px";f.querySelectorAll(".gfk-slot").forEach(b=>{b.classList.toggle("gfkl-hide",L.hidden.includes(keyOf(b)))});return}
  t.classList.remove("gfkl-free");
  if(L.dock==="bottom"){t.style.left=Math.max(0,Math.min(hw-140,L.x||12))+"px";t.style.right="auto";t.style.top="auto";if(t._gfx!==2)t.style.bottom="0";/* lifted above the History timeline in full screen (geoflock-fsfix.js): left there */
@@ -103,3 +105,8 @@ body.sky-night .gfkl-menu{ background:#1d2440; color:#e8ecf6; }
 @media (max-width:640px){ .gfkl-rz,.gfkl-grip{ display:none; } }`;document.head.appendChild(css);
 window.gfKitLayout={get:()=>JSON.parse(JSON.stringify(L)),set:o=>{Object.assign(L,o);saveL();apply()},apply};
 })();
+
+/* during a guided tour the toolkit hangs just below the map, off it (in full screen it keeps its place) */
+{const st=document.createElement("style");st.textContent=`body.gf-touring:not(.gf-fs) #amGlobeHost > .gfk-tray,body.gf-touring:not(.gf-fs) #allMapsWrap > .gfk-tray{top:calc(100% + 6px)!important;bottom:auto!important;left:0!important;right:auto!important;translate:none!important}`;document.head.appendChild(st)}
+/* re-place the free tray when it is folded or opened */
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#gfKit .gfk-tab"))setTimeout(()=>{try{window.gfKitLayout&&gfKitLayout.apply()}catch(err){}},30)});
