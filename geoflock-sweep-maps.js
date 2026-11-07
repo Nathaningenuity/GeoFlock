@@ -51,7 +51,7 @@
   if(first&&L.pn&&L.pn.x!==12){moved=true;try{localStorage.setItem(MK,"1")}catch(er){}return}
   if(L.col)return;const oh=t.classList.contains("closed")?Math.max(t.offsetHeight,L.fh||0):t.offsetHeight;
   const y=Math.round(lim-oh-6-r.top);if(y<4){gfKitLayout.set({pn:null});return}
-  if(!L.pn||L.pn.x!==12||Math.abs(L.pn.y-y)>2)gfKitLayout.set({pn:{x:12,y}})}catch(e){}},400);
+  if(!L.pn||L.pn.x!==12||Math.abs(L.pn.y-y)>2)gfKitLayout.set({pn:{x:12,y}})}catch(e){}},200);
 })();
 
 /* ---------- 3. cards in the map's lower left stay clear of the Toolkit tray ----------
