@@ -56,9 +56,9 @@ A("bextinction|Ischia: a sea turning sour",{stat:"Off Ischia, volcanic vents bub
 
 /* Europe: the tour card covers the left of the map, so views that put the subject at the centre-left are moved for it to
    sit right of the card; Ireland, Iceland and Portugal show on the whole-Europe views */
-A("europe|Europe",{view:[-48,33,45,71]});
-A("europe|The European Union",{view:[-48,33,45,71]});
-A("europe|Now explore",{view:[-48,33,45,71]});
+A("europe|Europe",{view:[-62,33,45,71]});
+A("europe|The European Union",{view:[-62,33,45,71]});
+A("europe|Now explore",{view:[-62,33,45,71]});
 A("europe|A city on two continents",{view:[24.5,39.8,31.5,42.2],globe:[29,41,9]});
 A("europe|Russia, cut off from Russia",{view:[8,51,30,59.5],pinsDrop:/^(Poland|Lithuania)$/});
 A("europe|Europe’s great rivers",{view:[-35,38,62,62]});
@@ -68,17 +68,17 @@ A("europe|Greenland icy, Iceland green",{pinsDrop:/^Iceland$/});
 A("europe|Choirs and good government",{pinsDrop:/^Italy$/});
 
 /* Asia: views widened to the west, so the Middle East, Central Asia and the west of Siberia are not hidden under the card */
-{const W=[-10,-12,150,62];["Asia","Most people","The biggest countries","Asia’s economies","Now explore"].forEach(t=>A("asia|"+t,{view:W}))}
-A("asia|Asia’s high peaks",{view:[52,22,104,46]});
+{const W=[-55,-12,150,62];["Asia","Most people","The biggest countries","Asia’s economies","Now explore"].forEach(t=>A("asia|"+t,{view:W}))}
+A("asia|Asia’s high peaks",{view:[48,22,104,46]});
 A("asia|The rains that feed Asia",{view:[30,-5,135,40]});
 A("asia|Asia’s water tower",{view:[40,5,125,45]});
-A("asia|Deserts and steppe",{view:[10,15,125,55]});
-A("asia|Siberia",{view:[25,42,180,78]});
-A("asia|Birthplace of religions",{view:[5,10,92,42]});
-A("asia|The Silk Road",{view:[-5,20,115,50]});
-A("asia|Asia’s giant cities",{view:[45,-12,145,42]});
-A("asia|The two giants’ neighbours",{view:[-15,10,150,75]});
-A("asia|Islands of fire",{view:[80,-14,168,58]});
+A("asia|Deserts and steppe",{view:[-23,15,125,55]});
+A("asia|Siberia",{view:[-27,40,180,78]});
+A("asia|Birthplace of religions",{view:[-7,10,92,42]});
+A("asia|The Silk Road",{view:[-21,20,115,50]});
+A("asia|Asia’s giant cities",{view:[27,-12,145,42]});
+A("asia|The two giants’ neighbours",{view:[-65,10,150,75]});
+A("asia|Islands of fire",{view:[42,-14,168,58]});
 A("asia|Two Koreas",{view:[112,32,134,44]});
 A("asia|Two rice baskets on a pole",{pinsDrop:/^Vietnam$/});
 
@@ -140,7 +140,6 @@ A("samerica|Two-thirds of Guyana",{view:[-73,0,-53,10]});
 
 /* Oceania: Australia sits clear of the card on the whole-region views */
 ["Australia is most of it","Now explore"].forEach(t=>A("oceania|"+t,{view:[80,-50,180,8]}));
-A("oceania|Oceania",{view:[80,-50,236,22]});
 A("oceania|The red centre",{view:[95,-40,156,-10],pinsDrop:/^Australia$/});
 A("oceania|Goyder’s Line",{pinsDrop:/^Australia$/});
 A("oceania|Only in Australia",{view:[80,-47,160,-7]});
