@@ -32,5 +32,11 @@ function campsite(){try{const T=PS_TOURS.literature,S=T&&T.steps.find(x=>x.title
  if(!Array.isArray(S.phPins))S.phPins=[];if(!S.phPins.some(q=>q&&q.label===KAL))S.phPins.push({at:[39.83,21.42],label:KAL,col:"#d9682b",icon:"photo",_f:KA.f,img:idx});
  if(Array.isArray(S.pins)){const i=S.pins.findIndex(q=>Array.isArray(q)&&q[1]==="Mecca");if(i>=0)S.pins.splice(i,1)}S._sqPruned=-1;return true}catch(e){console.error(e);return false}}
 [0,1500,4000,9000].forEach(ms=>setTimeout(campsite,ms));
+/* 5. tall photos: the photo viewer fits them inside the window (it sized by width only, so a standing bird lost its head
+   and feet off the top and bottom), and a tour card crops them from near the top, where heads and faces are */
+{const st=document.createElement("style");st.textContent=`.ps-lightbox figure{width:auto!important}.ps-lightbox figure img{width:auto!important;max-width:100%!important;max-height:calc(100vh - 120px)!important;margin:0 auto}`;document.head.appendChild(st)}
+function tall(im){try{if(im&&im.naturalWidth&&im.naturalHeight>im.naturalWidth*1.1&&im._gfTall!==im.src){im._gfTall=im.src;im.style.setProperty("object-position","50% "+(im.naturalHeight>im.naturalWidth*1.3?"6%":"15%"),"important")}}catch(e){}}
+document.addEventListener("load",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.closest&&t.closest(".ps-card"))tall(t)},true);
+setInterval(()=>{document.querySelectorAll(".ps-card img").forEach(tall)},1000);
 window.gfPolishM={dedupe};
 })();
