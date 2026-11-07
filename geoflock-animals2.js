@@ -45,16 +45,22 @@ const EDIT={
   more:"New species are still found there every few days. Scarlet ibises nest in the mangroves at the river’s mouth; the red crabs and shrimps they eat turn them red. About a fifth of the forest has been cleared since the 1970s, mostly for cattle ranches and soy farms; scientists worry that past a certain point, parts of it could dry out into savanna."},
  "Elephant country":{add:[pin("Springbok",[23.6,-21.4],"Springbok herd, South Africa.jpg")],
   more:"Africa had millions of elephants a century ago; now there are about 415,000, because of hunting for ivory and the loss of land to farms. African elephants are the biggest land animals; Asian elephants are smaller, with smaller ears. On the dry Kalahari grasslands to the south live springbok, antelope that can go for months without drinking, getting their water from the plants they eat."},
- "On the edge":{drop:/^(Sumatran rhino|Mountain gorilla|Snow leopard|Saiga)$/,add:[
-   pin("Sumatran rhino calf",[101.5,-1.2],"Sumatran Rhino 2 (calf).jpg",RED),
-   pin("Snow leopard",[86,31.5],"Panthera uncia - Zoo Karlsruhe.jpg",RED),
-   pin("Golden poison frog",[-76.9,5.6],"Golden poison frog.jpg",RED),
-   pin("Saiga",[66.5,48.6],"Saiga antelope at the Stepnoi Sanctuary.jpg",GRN),
-   pin("Mountain gorilla",[29.55,-1.45],"Mountain gorilla (Gorilla beringei beringei) female with baby.jpg",GRN),
-   pin("Bald eagle: back from DDT",[-94,46],"Bald eagle about to fly in Alaska (2016).jpg",GRN)],
+ "On the edge":{drop:/^(Sumatran rhino|Mountain gorilla|Snow leopard|Saiga|Golden poison frog|Bald eagle: back from DDT)$/,add:[
+   pin("Sumatran rhino: fewer than 50 left",[101.5,-1.2],"Sumatran Rhino 2 (calf).jpg",RED),
+   pin("Snow leopard: about 4,000 to 6,500",[86,31.5],"Panthera uncia - Zoo Karlsruhe.jpg",RED),
+   pin("Golden poison frog: in one small patch",[-76.9,5.6],"Golden poison frog.jpg",RED),
+   pin("Saiga: over 1 million again",[66.5,48.6],"Saiga antelope at the Stepnoi Sanctuary.jpg",GRN),
+   pin("Mountain gorilla: about 1,060",[29.55,-1.45],"Mountain gorilla (Gorilla beringei beringei) female with baby.jpg",GRN),
+   pin("Bald eagle: over 300,000",[-94,46],"Bald eagle about to fly in Alaska (2016).jpg",GRN)],
   view:[-180,-58,180,80],globe:[10,20,0.95],
   body:"Red photos are animals still sliding: fewer than 50 Sumatran rhinos are left, scattered in Sumatra’s forests; snow leopards are hard to count in their high mountains; and the golden poison frog, one of the most poisonous animals on Earth, is losing its small patch of Colombian rainforest to farms and mines. Green photos are comebacks: saiga antelope, mountain gorillas and the bald eagle, like the tigers, lions and pandas of the last stops, show that protection works.",
-  more:"What worked was nearly always the same: guarded reserves, an end to hunting, and local people who gain from the animals living. The saiga died in hundreds of thousands in 2015, yet they now number well over a million. Mountain gorillas, about 250 in the 1980s, passed 1,000 thanks to rangers and gorilla tourism. In 1963 only about 400 pairs of bald eagles nested in the lower 48 United States, their eggs thinned by the pesticide DDT; after DDT was banned in 1972 they came back to over 300,000 birds. Far from this map, fewer than ten vaquitas survive in the Gulf of California, drowned in illegal fishing nets, and wild axolotls cling on in the canals of Mexico City."}
+  more:"What worked was nearly always the same: guarded reserves, an end to hunting, and local people who gain from the animals living. The saiga died in hundreds of thousands in 2015, yet they now number well over a million. Mountain gorillas, about 250 in the 1980s, passed 1,000 thanks to rangers and gorilla tourism. In 1963 only about 400 pairs of bald eagles nested in the lower 48 United States, their eggs thinned by the pesticide DDT; after DDT was banned in 1972 they came back to over 300,000 birds. Mexico’s vaquitas and axolotls are on the next stop."},
+ /* the vaquita joins the axolotl: two Mexican animals at the very edge, one in the sea, one in a city's canals */
+ "The axolotl’s last lake":{add:[pin("Vaquita: about 6 to 8 left",[-114.7,31.0],"Vaquita6 Olson NOAA.jpg",RED)],
+  view:[-117.5,16.5,-96,32.5],globe:[-106,24.5,3],
+  stat:"Two of Mexico’s animals are almost gone: wild axolotls survive only in the canals of one city, and only about 6 to 8 vaquitas are left in the sea",
+  body:"Axolotls are salamanders that never grow up: they keep their feathery gills and live in water all their lives, and they can regrow lost legs and even parts of the heart and brain. Their home was the great lake on which the Aztecs built Tenochtitlan; as Mexico City drained it, only the canals of Xochimilco were left. To the north-west, in the top of the Gulf of California, lives the vaquita, the world’s smallest porpoise. It drowns in gillnets set for the totoaba, a big fish whose swim bladder sells for thousands of dollars.",
+  more:"Surveys in Xochimilco found about 6,000 axolotls per km² in 1998 and only about 35 in 2014, because of dirty water and the carp and tilapia that eat their eggs; farmers who keep their canals clean now act as axolotl refuges. A 2024 survey saw only about six to eight vaquitas, but they looked healthy and still had calves, so the species could recover if the nets stop."}
 };
 /* a stop whose photo-pin list was cut after the photos were drawn (another script drops a pin that repeats the card's
    photo) kept the old photos, each now joined to the wrong place: draw them again from the list as it is */
