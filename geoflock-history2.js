@@ -441,6 +441,8 @@ const st=document.createElement("style");st.textContent=`.hist-track.hist2 .hist
 .hist-dock .hist-track{padding:16px 10px 20px}.hist-dock .hist-ticks{top:36px}.hist-dock .hist-tick span{font-size:10px}
 .hist-dock.hd-fs{z-index:5;padding-left:18px;padding-right:18px}
 .hist-dock.hd-below{position:relative;left:auto;bottom:auto;margin-top:8px;margin-bottom:2px;box-shadow:0 3px 12px rgba(20,30,50,.12)}
+/* outside full screen the timeline stays on the screen: it sticks to the bottom of the window until the page is scrolled down to where it sits */
+body:not(.gf-fs) .hist-dock.hd-below{position:sticky;bottom:8px;z-index:40;box-shadow:0 4px 18px rgba(20,30,50,.22)}
 @media (max-width:640px){.hist-dock{padding:0 6px;border-radius:12px}.hist-dock .hd-year{min-width:50px;font-size:14px}.hist-dock .hist-btn{width:28px;height:28px}.hist-dock .hist-tick span{font-size:9px}}
 .globe-host.hd-over > .hist-story:not(.hs-free){max-height:calc(100% - var(--hd-space,80px) - 60px) !important}
 body .globe-host.hd-over.hd-over:has(> .hist-dock) #gfLearn{bottom:calc(var(--hd-space,80px) + 2px) !important}
@@ -471,3 +473,22 @@ body.sky-night .gf-hload,body.dark .gf-hload{background:rgba(22,29,52,.97);color
   else if(!ov.hidden){ov.hidden=true;try{amGlobe&&amGlobe.request&&amGlobe.request()}catch(e){}}},200)}
 window.GF_HIST2={usesNew:()=>useNew(),loading:()=>Object.keys(LOADING).length>0,years:YEARS,periods:PERIODS,go:y=>{const i=YEARS.findIndex(v=>v>=y);histSet(i<0?N-1:i)},year:()=>curY,setYear:y=>setYear(y),frame:()=>frame(),labels:()=>{const o=LBL.get(frame()._id+"#"+labMode()+"#"+fxKey());return o&&o.set},tr:()=>TR,imp:p=>impOf(p),focusInfo:()=>{const fr=frame();return{focus:histFocus,old:tourOld,y:curY,any:!!histFocus&&focusAny(fr),names:histFocus?[...new Set(fr.filter(f=>inFocus(f.properties)).map(f=>f.properties.n))].slice(0,6):[]}},featsAt:async y=>{for(let i=0;i<200&&!CH[chunkOf(y)];i++){need(y);await new Promise(r=>setTimeout(r,100))}return frameAt(y)||[]}};
 })();
+
+/* ================= the History map recommends the history tours, in order =================
+   The tours on this map start with the seven eras, oldest first, and the one offered is the first era not yet finished:
+   ancient civilisations, then medieval empires, and so on (a tour already open, or just chosen, is kept). */
+(function(){const ERAS=["hancient","hmedieval","hgunpowder","hrevolutions","hwars","hcoldwar","hsince91"];
+ function wrap(){if(typeof psCtx!=="function"||psCtx._gfEras)return typeof psCtx==="function";const _c=psCtx;
+  psCtx=function(){const c=_c.apply(this,arguments);try{if(c&&Array.isArray(c.tours)&&c.tours.includes("hancient")){const eras=ERAS.filter(k=>c.tours.includes(k));
+    c.tours=eras.concat(c.tours.filter(k=>!eras.includes(k)));
+    const kept=(typeof ps!=="undefined"&&ps&&c.tours.includes(ps.tour))||(typeof psWanted!=="undefined"&&psWanted&&c.tours.includes(psWanted));
+    if(!kept){const P=(typeof stats!=="undefined"&&stats&&stats.tourProg)||{};c.tour=eras.find(k=>!(P[k]&&P[k].done))||eras[0]}}}catch(e){console.error(e)}return c};psCtx._gfEras=1;return true}
+ if(!wrap()){let n=0;const t=setInterval(()=>{if(wrap()||++n>40)clearInterval(t)},300)}})();
+
+/* ================= the story card starts below the guided-tour button =================
+   Until the reader moves it, the card keeps clear of the tour button at the top of the map (it can appear after the card). */
+(function(){function clear(){try{const p=document.querySelector(".hist-story");if(!p||!p.offsetParent||p.classList.contains("hs-dragging"))return;try{if(sessionStorage.getItem("gfHistCardPos"))return}catch(e){}/* moved by the reader: left where it is */
+  const b=document.querySelector(".ps-launcher");if(!b||!b.offsetParent)return;const a=b.getBoundingClientRect(),r=p.getBoundingClientRect();
+  if(r.left<a.right&&r.right>a.left&&r.top<a.bottom+6&&r.bottom>a.top){const dy=Math.round(a.bottom+8-r.top);const cs=getComputedStyle(p);
+   if(cs.position==="fixed"){p.style.top=(r.top+dy)+"px"}else{p.style.marginTop=((parseFloat(cs.marginTop)||0)+dy)+"px"}}}catch(e){}}
+ setInterval(clear,500)})();

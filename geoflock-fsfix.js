@@ -135,8 +135,8 @@ function bottomSync(){const g=G();const host=g&&g.host&&vis(g.host)?g.host:docum
  if(fs()){els.forEach(e=>{if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}});
   const dock=document.querySelector("#allMapsView .hist-dock");const d=dock&&vis(dock)?dock.getBoundingClientRect():null;
   ["#allMapsView .gfk-tray","#allMapsView .gfk-coord"].forEach(sel=>{const e=document.querySelector(sel);if(!e)return;
-   if(d){e.style.removeProperty("bottom");const r=e.getBoundingClientRect();const need=r.bottom>d.top-4&&r.left<d.right&&r.right>d.left;
-    if(need||e._gfx===2){e.style.setProperty("bottom",Math.round(innerHeight-d.top+6)+"px","important");e._gfx=2}}
+   /* straight from the timeline's top, without letting go first (measuring after a reset made it jump up and down) */
+   if(d){const r=e.getBoundingClientRect();if(e._gfx===2||(r.left<d.right&&r.right>d.left)){const b=Math.round(innerHeight-d.top+6)+"px";if(e.style.getPropertyValue("bottom")!==b||e.style.getPropertyPriority("bottom")!=="important")e.style.setProperty("bottom",b,"important");e._gfx=2}}
    else if(e._gfx===2){e.style.removeProperty("bottom");e._gfx=0}});return}
  els.forEach(e=>{if(e._gfx===2){e.style.removeProperty("bottom");e._gfx=0}});
  const hr=host.getBoundingClientRect();const over=hr.bottom-innerHeight+6;
@@ -144,7 +144,10 @@ function bottomSync(){const g=G();const host=g&&g.host&&vis(g.host)?g.host:docum
  els.forEach(e=>{if(!host.contains(e)&&!e.closest(".globe-wrap-rel, #allMapsWrap")){return}
   /* during a guided tour the tour places the folded tray itself, just under its card (geoflock-tourload.js) */
   const own=e.classList.contains("gfk-tray")&&(document.body.classList.contains("gf-touring")||e._gftl||(typeof ps!=="undefined"&&ps));
-  if(lift&&!own){e.style.translate="0 "+(-Math.round(lift))+"px";e._gfx=1}else if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}})}
+  /* the History timeline, stuck to the bottom of the window: the tray stays above it */
+  let up=lift;if(!own&&e.classList.contains("gfk-tray")){const dk=document.querySelector("#allMapsView .hist-dock.hd-below");if(dk&&vis(dk)){const dr=dk.getBoundingClientRect(),r=e.getBoundingClientRect(),cur=e._gfx===1?(parseFloat((e.style.translate||"").split(" ")[1])||0):0,nb=r.bottom-cur;
+   if(r.left<dr.right&&r.right>dr.left&&dr.top<innerHeight&&nb>dr.top-6)up=Math.max(up,nb-(dr.top-6))}}
+  if(up>.5&&!own){const v="0 "+(-Math.round(up))+"px";if(e.style.translate!==v)e.style.translate=v;e._gfx=1}else if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}})}
 
 /* 7. the sun panel: a fold, and a place clear of the toolkit */
 let dngMin=false;

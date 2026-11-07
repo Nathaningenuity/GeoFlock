@@ -24,7 +24,7 @@ function apply(){const t=tray();if(!t)return;const f=t.querySelector(".gfk-felt"
   const x=Math.max(-hr.left+4,Math.min(innerWidth-hr.left-w-4,L.fx||0)),y=Math.max(-hr.top+4,Math.min(innerHeight-hr.top-th-4,L.fy||0));
   t.style.left=x+"px";t.style.top=y+"px";f.querySelectorAll(".gfk-slot").forEach(b=>{b.classList.toggle("gfkl-hide",L.hidden.includes(keyOf(b)))});return}
  t.classList.remove("gfkl-free");
- if(L.dock==="bottom"){t.style.left=Math.max(0,Math.min(hw-140,L.x||12))+"px";t.style.right="auto";t.style.top="auto";t.style.bottom="0";
+ if(L.dock==="bottom"){t.style.left=Math.max(0,Math.min(hw-140,L.x||12))+"px";t.style.right="auto";t.style.top="auto";if(t._gfx!==2)t.style.bottom="0";/* lifted above the History timeline in full screen (geoflock-fsfix.js): left there */
   f.style.maxHeight="";f.style.maxWidth=L.lenRow?Math.max(130,L.lenRow)+"px":"";}
  else{t.style.bottom="auto";t.style.top="58px";if(L.dock==="left"){t.style.left="6px";t.style.right="auto"}else{t.style.left="auto";t.style.right="54px"}
   f.style.maxWidth="";f.style.maxHeight=(L.lenCol?Math.max(130,Math.min(L.lenCol,hh-90)):Math.max(160,hh-90))+"px"}
