@@ -2,7 +2,8 @@
    Commons, credited), a small diagram drawn here for ideas a photo cannot show (the demographic transition, a population
    pyramid, a rain shadow, latitude and longitude, the rank-size rule, von Thünen's rings), or a little map of its example
    place drawn from the map's own country shapes. The library's Pictures tab lists every photo (terms and famous places,
-   GF_ICONIC) and can be searched; a picture opens its term, or for a place shows it large with a button to fly the map there. */
+   GF_ICONIC, the tour and map library, country profiles, landmarks) and can be searched by word or by place; a picture opens
+   its term, or shows it large with a button to fly the map there. */
 (function(){
 "use strict";
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
@@ -53,26 +54,151 @@ function drawMini(cv){try{if(cv._done)return;cv._done=1;
 function visual(e){const P=IMG()[e.t];if(P&&P.d)return'<figure class="gfdv-fig"><img loading="lazy" alt="'+esc(e.t)+'" src="'+esc(P.d)+'"><figcaption>'+esc(P.caption||"")+credit(P)+'</figcaption></figure>';
  if(DIAG[e.t])return DIAG[e.t]();return mini(e)}
 /* ---------- the Pictures tab ---------- */
-function allPics(){const L=[];const D=(window.GF_DICT||[]);Object.entries(IMG()).forEach(([t,P])=>{if(P&&P.d)L.push({kind:"term",t,P,cap:P.caption||t})});ICON().forEach(P=>{if(P&&P.d)L.push({kind:"place",t:P.name||P.caption,P,cap:P.caption||P.name})});
- /* every other picture on the site: the tour and map photo library, found by its title, the stops and pins that show it */
- const seen=new Set(L.map(x=>x.P.d));lib().forEach(x=>{if(!seen.has(x.P.d)){seen.add(x.P.d);L.push(x)}});return L}
+/* Every picture on the site goes into one index, made the first time the tab opens (not at page load): dictionary photos,
+   famous places (GF_ICONIC), the tour and map photo library (titled by the stops and pins that show it), each country's
+   profile photos, landmark photos (GF_LANDMARKS carry their country), capital photos, tagged photos, and tour photo pins and
+   stop photos, which are placed in the country that contains their coordinates (a picture of the map's own country
+   shapes, read pixel by pixel, with the smallest countries tested exactly). A search for a country or a city returns
+   every picture paired with that place, its own first: country names match as whole names, so "Port of Spain" is not
+   Spain. Any other search also shows the other pictures of the places its pictures belong to. */
+const nrm=s=>" "+String(s==null?"":s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`]/g,"").replace(/[^a-z0-9]+/g," ").trim()+" ";
+const OKD=/^(photos\/|data:|https?:)/;
+/* which country a point is in */
+let CCL=null;
+function ccLookup(){if(CCL)return CCL;const memo=new Map();CCL=ll=>null;
+ try{const F=projFeatures().filter(f=>f&&f.geometry&&f.properties&&f.properties.c);const W=3000,H=1500;
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d",{willReadFrequently:true});
+  const path=d3.geoPath(d3.geoEquirectangular().scale(W/(2*Math.PI)).translate([W/2,H/2]).precision(0),x);
+  const small=[],codes=[];
+  F.forEach(f=>{const c=String(f.properties.c).toLowerCase(),b=d3.geoBounds(f),dx=b[1][0]-b[0][0],dy=b[1][1]-b[0][1];
+   if(dx>=0&&dx<.7&&dy<.7){small.push({f,b,c});return}
+   const id=codes.push(c);x.beginPath();path(f);x.fillStyle="rgb("+(id&255)+","+(id>>8)+","+((id*67)%251+4)+")";x.fill()});
+  const D=x.getImageData(0,0,W,H).data,G=new Uint16Array(W*H);
+  for(let i=0,o=0;i<G.length;i++,o+=4){if(D[o+3]!==255)continue;const id=D[o]|(D[o+1]<<8);if(id&&D[o+2]===(id*67)%251+4)G[i]=id}
+  cv.width=cv.height=1;
+  const inB=(b,ll,m)=>ll[0]>=b[0][0]-m&&ll[0]<=b[1][0]+m&&ll[1]>=b[0][1]-m&&ll[1]<=b[1][1]+m;
+  CCL=ll=>{const k=ll[0].toFixed(3)+","+ll[1].toFixed(3);if(memo.has(k))return memo.get(k);let r=null;
+   for(const s of small)if(inB(s.b,ll,0)&&d3.geoContains(s.f,ll)){r=s.c;break}
+   if(!r){const px=Math.floor((ll[0]+180)/360*W),py=Math.floor((90-ll[1])/180*H),g=(a,b)=>b<0||b>=H?0:G[b*W+((a%W)+W)%W];
+    let id=g(px,py);
+    /* on a coast the point can land just off the drawn shore: take the nearest country within a few pixels (about 40 km) */
+    for(let rad=1;!id&&rad<=3;rad++){let best=1e9;for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){const v=g(px+dx,py+dy),d=dx*dx+dy*dy;if(v&&d<best){best=d;id=v}}}
+    if(id)r=codes[id-1]}
+   if(!r)for(const s of small)if(inB(s.b,ll,.25)){r=s.c;break}
+   memo.set(k,r);return r}}catch(e){console.error(e)}
+ return CCL}
+/* other names people type for some countries */
+const ALIAS={us:["usa","united states of america","the united states"],gb:["uk","britain","great britain"],cd:["drc","democratic republic of the congo","congo kinshasa"],cg:["republic of the congo","congo brazzaville"],
+ ci:["ivory coast"],cz:["czech republic"],mm:["burma"],tr:["turkiye"],sz:["swaziland"],mk:["macedonia"],cv:["cape verde"],tl:["east timor"],va:["vatican","the vatican","holy see"],ae:["uae","emirates"],
+ nl:["holland","the netherlands"],kr:["korea","republic of korea"],kp:["dprk"],bs:["the bahamas"],gm:["the gambia"],mo:["macao"],ru:["russian federation"],ps:["palestinian territories"]};
+/* names that contain a country's name but are somewhere else, or are not places at all */
+const EXTRA_MASK=["northern ireland","new jersey","new mexico","new guinea","gulf of mexico","guinea pig","guinea pigs","guinea fowl","guinea worm","wild turkey","turkey vulture","panama hat","panama hats"];
+let IDX=null,IDXN=-1,PL=null,MASK=new Map();
+const cname=c=>{try{const C=COUNTRY_BY_CODE[c];if(C)return C.n}catch(e){}return String(c).toUpperCase()};
+function buildIdx(){const D=window.PS_PHOTO_DATA||(typeof PS_PHOTO_DATA!=="undefined"?PS_PHOTO_DATA:[]);
+ if(IDX&&IDXN===D.length)return IDX;try{if(typeof gfMergeExtra==="function")gfMergeExtra()}catch(e){}IDXN=D.length;
+ const L=[],byD=new Map(),byF=new Map();D.forEach((P,i)=>{if(P&&P.f&&!byF.has(P.f))byF.set(P.f,i)});
+ const get=(P,kind,t)=>{const k=P&&P.d?String(P.d):"";if(!OKD.test(k))return null;let x=byD.get(k);
+  if(!x){x={i:L.length,kind,t:t||"Photo",P,parts:[],cc:{},own:{},ll:[]};byD.set(k,x);L.push(x)}return x};
+ const txt=(x,...a)=>{if(x)a.forEach(s=>{s=String(s==null?"":s).replace(/​/g,"").trim();if(s&&!x.parts.includes(s))x.parts.push(s)})};
+ const pin=(x,c,r)=>{if(!x||!c)return;c=String(c).toLowerCase();if(x.cc[c]==null||x.cc[c]>r)x.cc[c]=r};
+ const at=(x,ll)=>{if(x&&ll&&isFinite(ll[0])&&isFinite(ll[1])&&!x.ll.some(q=>Math.abs(q[0]-ll[0])<.01&&Math.abs(q[1]-ll[1])<.01))x.ll.push([+ll[0],+ll[1]])};
+ const byFile=f=>{const i=byF.get(f);return i==null?null:D[i]};
+ /* dictionary terms and famous places keep their own click (the term, or the big view with a fly-there button) */
+ Object.entries(IMG()).forEach(([t,P])=>{const x=get(P,"term",t);txt(x,t,P.caption)});
+ ICON().forEach(P=>{const x=get(P,"place",P.name||P.caption);txt(x,P.name,P.caption);if(P.ll)at(x,P.ll)});
+ /* each country's profile photos, in the profile's order */
+ try{const CP=window.PS_CPHOTO||{};for(const c in CP)(CP[c]||[]).forEach(([i,cap],k)=>{const x=get(D[i],"photo",cap);if(!x)return;txt(x,cap);pin(x,c,0);if(x.own[c]==null)x.own[c]=k})}catch(e){}
+ /* landmarks: name, place and country */
+ try{(window.GF_LANDMARKS||[]).forEach(r=>{const x=get(byFile(r[5]),"photo",r[0]);if(!x)return;txt(x,r[0],...(r[6]||[]));pin(x,r[3],1);at(x,[r[1],r[2]])})}catch(e){}
+ /* capital photos */
+ try{const dI=new Map();D.forEach((P,i)=>{if(P&&P.d&&!dI.has(P.d))dI.set(typeof gfSrc==="function"?gfSrc(P.d):P.d,i)});
+  Object.values(COUNTRY_BY_CODE).forEach(C=>{const s=typeof gfCapPhoto==="function"?gfCapPhoto(C.c):null;if(!s)return;const i=dI.get(s.src);if(i==null)return;const cap=(C.caps||[])[0];
+   const x=get(D[i],"photo",cap?cap+", the capital":C.n);txt(x,cap,cap?cap+", the capital":"");pin(x,C.c,1);if(x)(x.capOf=x.capOf||[]).push(C.c)})}catch(e){}
+ /* tagged photos (a name and a country) and the name index of the Maps search */
+ try{const T=window.PS_PHOTO_TAGS||{};for(const k in T){const h=T[k];const x=get(D[h.img],"photo",h.cap);txt(x,h.cap,k);pin(x,h.c,1)}}catch(e){}
+ try{const N=window.GF_NAMEPH||{};for(const k in N){const x=get(byFile(N[k]),"photo",null);txt(x,k)}}catch(e){}
+ try{((window.GF_WALL||{}).gameIdx||[]).forEach(g=>{const x=get(D[g.i],"photo",g.label);txt(x,g.label);pin(x,g.c,1);at(x,g.at)})}catch(e){}
+ /* the whole tour and map library: titles from the stops and pins that show each photo */
+ lib().forEach(y=>{const x=get(y.P,"photo",y.t);if(!x)return;txt(x,y.t,y.P.caption,y.cap)});
+ /* tour photo pins, stop photos and their places */
+ const SQ=window.PS_SQ_IMG||{};
+ try{for(const id in PS_TOURS){const T=PS_TOURS[id];(T&&T.steps||[]).forEach(S=>{const ti=String(S.title||"").replace(/​/g,"");
+  (S.phPins||[]).forEach(q=>{if(!q||!q.label)return;const i=q.img!=null?q.img:SQ[q.label];if(i==null)return;const x=get(D[i],"photo",q.label);txt(x,q.label,ti);at(x,q.at)});
+  (S.photoPins||[]).forEach(q=>{if(!q)return;const i=q.img!=null?q.img:SQ[q.label];if(i==null)return;const x=get(D[i],"photo",q.label);txt(x,q.label,ti);at(x,q.at)});
+  [S.ph,S.photo].forEach(f=>{if(typeof f==="string"){const x=get(byFile(f),"photo",ti);txt(x,ti)}})})}}catch(e){}
+ try{(window.PS_SQ_LIB||[]).forEach(q=>{const x=get(D[q.img],"photo",(q.names||[])[0]);txt(x,...(q.names||[]));at(x,q.at)})}catch(e){}
+ try{(window.GF_STOP_PHOTOS||[]).forEach(q=>{const x=get(byFile(q.f)||q,"photo",q.label);txt(x,q.label,q.stop);at(x,q.at)})}catch(e){}
+ /* place everything that has coordinates */
+ const cc=ccLookup();L.forEach(x=>{x.ll.forEach(ll=>pin(x,cc(ll),2));x.txt=nrm(x.t+" "+x.parts.join(" ")+" "+String(x.P.f||"").replace(/\.\w+$/,""))});
+ /* place names: countries and cities, with where each city is */
+ PL=new Map();const addPL=(k,f)=>{k=nrm(k).trim();if(k.length<3)return;const e=PL.get(k)||{countries:[],cities:[]};f(e);PL.set(k,e)};
+ try{Object.values(COUNTRY_BY_CODE).forEach(C=>{[C.n].concat(ALIAS[C.c]||[]).forEach(n=>addPL(n,e=>{if(!e.countries.includes(C.c))e.countries.push(C.c)}))})}catch(e){}
+ try{projFeatures().forEach(f=>{const p=f.properties||{},c=String(p.c||"").toLowerCase();if(c&&p.n&&!/\./.test(p.n)&&p.n.toLowerCase()!==c&&!(window.COUNTRY_BY_CODE||{})[c])addPL(p.n,e=>{if(!e.countries.includes(c))e.countries.push(c)})})}catch(e){}
+ const capOf=new Map();try{Object.values(COUNTRY_BY_CODE).forEach(C=>(C.caps||[]).forEach(n=>capOf.set(nrm(n).trim(),C.c)))}catch(e){}
+ try{(pfmOrig("ALLMAPS_CITIES")||[]).forEach(r=>{const ll=GLOBE_ROBINSON0.invert([r[3],r[4]]);if(!ll)return;const k=nrm(r[0]).trim(),c=capOf.get(k)||cc(ll);addPL(r[0],e=>e.cities.push({n:r[0],ll,c}))})}catch(e){}
+ capOf.forEach((c,k)=>{if(!(PL.get(k)||{cities:[]}).cities.length)addPL(k,e=>e.cities.push({n:k.replace(/\b\w/g,m=>m.toUpperCase()),ll:null,c}))});
+ MASK=new Map();IDX=L;return L}
+/* a whole-name match in a picture's words, leaving out longer names that are other places ("Port of Spain" is not Spain) */
+function masks(ph,c){const k=ph+"|"+c;if(MASK.has(k))return MASK.get(k);const w=" "+ph+" ",out=[];
+ PL.forEach((e,n)=>{if(n===ph||!(" "+n+" ").includes(w))return;if(e.countries.some(x=>x!==c)||e.cities.some(x=>x.c!==c))out.push(n)});
+ EXTRA_MASK.forEach(n=>{if(n!==ph&&(" "+n+" ").includes(w))out.push(n)});out.sort((a,b)=>b.length-a.length);
+ const re=out.length?new RegExp("(?<= )(?:"+out.join("|")+")(?= )","g"):null;MASK.set(k,re);return re}
+function named(x,ph,c){const w=" "+ph+" ";if(!x.txt.includes(w))return false;const re=masks(ph,c);return re?x.txt.replace(re," ").includes(w):true}
+const near=(x,ll,km)=>ll&&x.ll.some(q=>d3.geoDistance(q,ll)*6371<km);
+/* the pictures of a country, its own first: profile photos, then landmarks, capital and tagged photos, then those taken there, then those whose words name it */
+function countryPics(c,names){const I=IDX,R=[];
+ I.forEach(x=>{let r=x.cc[c];if(r==null){if(!names.some(n=>named(x,n,c)))return;r=Object.keys(x.cc).length?4:3}R.push([r,r===0?x.own[c]||0:0,x.i,x])});
+ return R.sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2]-b[2]).map(a=>a[3])}
+function cityPics(city,ph){const R=[];IDX.forEach(x=>{const nr=near(x,city.ll,30),nm=named(x,ph,city.c),cap=x.capOf&&x.capOf.includes(city.c)&&nrm(x.t).includes(" "+ph+" ");
+ if(!nr&&!nm&&!cap)return;R.push([cap?0:nr&&nm?0:nr?1:2,x.i,x])});return R.sort((a,b)=>a[0]-b[0]||a[1]-b[1]).map(a=>a[2])}
+const ownPics=c=>countryPics(c,namesOf(c)).filter(x=>x.cc[c]!=null||!Object.keys(x.cc).length);
+const namesOf=c=>{const n=[nrm(cname(c)).trim()].concat((ALIAS[c]||[]).map(a=>nrm(a).trim()));PL.forEach((e,k)=>{if(e.countries.includes(c)&&!n.includes(k))n.push(k)});return n};
+function placeSearch(ph,pl,rest){const keep=x=>rest.every(w=>x.txt.includes(w));const S=[],shown=new Set();
+ const sec=(h,L,cap)=>{const out=[];L.forEach(x=>{if(!shown.has(x.i)&&keep(x)){shown.add(x.i);out.push(x)}});if(out.length)S.push({h,L:cap?out.slice(0,cap):out,n:out.length})};
+ pl.countries.forEach(c=>{const L=countryPics(c,namesOf(c));sec(cname(c),L.filter(x=>x.cc[c]!=null||!Object.keys(x.cc).length));sec("Elsewhere, naming "+cname(c),L)});
+ pl.cities.forEach(city=>{if(pl.countries.includes(city.c))return;sec(city.n+(city.c?", "+cname(city.c):""),cityPics(city,ph))});
+ /* the city's country: its other pictures */
+ pl.cities.forEach(city=>{if(city.c&&!pl.countries.includes(city.c)&&S.length)sec("More from "+cname(city.c),ownPics(city.c),60)});
+ pl.countries.forEach(c=>{pl.cities.forEach(city=>{if(city.c===c)sec("Around "+city.n,cityPics(city,ph))})});
+ return S}
+function textSearch(W,Q){const I=IDX,A=[];I.forEach(x=>{if(!W.every(w=>x.txt.includes(w)))return;A.push([x.txt.includes(" "+Q+" ")?0:W.every(w=>x.txt.includes(" "+w+" "))?1:W.every(w=>x.txt.includes(" "+w))?2:3,x.i,x])});
+ const L=A.sort((a,b)=>a[0]-b[0]||a[1]-b[1]).map(a=>a[2]),S=[];if(!L.length)return S;S.push({h:"",L,n:L.length});
+ /* the places these pictures belong to: their other pictures */
+ if(L.length<=80){const cnt=new Map();L.forEach(x=>{const ks=Object.keys(x.cc).filter(k=>x.cc[k]<=2);ks.forEach(k=>cnt.set(k,(cnt.get(k)||0)+1))});
+  const shown=new Set(L.map(x=>x.i));[...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([c])=>{const out=ownPics(c).filter(x=>!shown.has(x.i));out.forEach(x=>shown.add(x.i));if(out.length)S.push({h:"More from "+cname(c),L:out.slice(0,30),n:out.length})})}
+ return S}
+function picSearch(q){const I=buildIdx(),Q=nrm(q).trim();if(!Q)return[{h:"",L:I,n:I.length}];const W=Q.split(" ");
+ for(let len=W.length;len>=1;len--)for(let s=0;s+len<=W.length;s++){const ph=W.slice(s,s+len).join(" "),pl=PL.get(ph);if(!pl)continue;
+  const S=placeSearch(ph,pl,W.slice(0,s).concat(W.slice(s+len)));if(S.length)return S}
+ return textSearch(W,Q)}
 let LIB=null,LIBN=-1;
 function lib(){const D=window.PS_PHOTO_DATA||(typeof PS_PHOTO_DATA!=="undefined"?PS_PHOTO_DATA:null);if(!D)return[];if(LIB&&LIBN===D.length)return LIB;LIBN=D.length;
- const ctx=new Map(),add=(i,t)=>{if(i==null||i<0||!t)return;t=String(t).replace(/\u200b/g,"").replace(/^[^|]*\|/,"");const a=ctx.get(i)||[];if(!a.includes(t))a.push(t);ctx.set(i,a)};
+ const ctx=new Map(),add=(i,t)=>{if(i==null||i<0||!t)return;t=String(t).replace(/​/g,"").replace(/^[^|]*\|/,"");const a=ctx.get(i)||[];if(!a.includes(t))a.push(t);ctx.set(i,a)};
  try{const PP=window.PS_PHOTO||(typeof PS_PHOTO!=="undefined"?PS_PHOTO:{});for(const k in PP)add(PP[k],k)}catch(e){}
  try{const SQ=window.PS_SQ_IMG||{};for(const k in SQ)add(SQ[k],k)}catch(e){}
  const nice=f=>String(f||"").replace(/\.(jpe?g|png|webp|gif|tiff?|svg)$/i,"").replace(/[_]+/g," ").replace(/\s*\((\d{6,}|cropped|\d+)\)\s*/gi," ").replace(/\s+-\s+\d{4}.*$/,"").replace(/\s{2,}/g," ").trim();
- LIB=[];D.forEach((P,i)=>{if(!P||!P.d||!/^(photos\/|data:|https?:)/.test(P.d))return;const c=ctx.get(i)||[];const t=c.find(x=>x.length<48)||nice(P.f)||"Photo";
+ LIB=[];D.forEach((P,i)=>{if(!P||!P.d||!OKD.test(P.d))return;const c=ctx.get(i)||[];const t=c.find(x=>x.length<48)||nice(P.f)||"Photo";
   LIB.push({kind:"photo",t,P:Object.assign({name:t,caption:c.filter(x=>x!==t).slice(0,3).join(" · ")||nice(P.f)},P),cap:nice(P.f)+" "+c.join(" ")})});return LIB}
-function picsHTML(q){const Q=String(q||"").toLowerCase().trim(),W=Q.split(/\s+/).filter(Boolean),A=allPics().filter(x=>{const h=(x.t+" "+x.cap).toLowerCase();return W.every(w=>h.includes(w))}),L=A.slice(0,240);
- if(!allPics().length)return'<p class="gflib-empty">Pictures are on their way.</p>';
- return'<div class="gfdv-grid">'+(L.length?L.map((x,i)=>'<button type="button" class="gfdv-tile" data-pk="'+esc(x.kind)+'" data-pt="'+esc(x.t)+'"><img loading="lazy" alt="" src="'+esc(x.P.d)+'"><span>'+esc(x.t)+'</span></button>').join(""):'<p class="gflib-empty">No picture matches “'+esc(q)+'”.</p>')+'</div>'+(A.length>L.length?'<p class="gflib-empty">'+A.length.toLocaleString()+' pictures: type to narrow them down.</p>':'')}
+let BUILDING=0;
+function picsHTML(q){
+ /* the first time: say so, gather the pictures just after the tab has drawn, then show the results */
+ if(!IDX){if(!BUILDING){BUILDING=1;setTimeout(()=>{try{buildIdx()}catch(e){console.error(e)}BUILDING=0;const qi=document.querySelector(".gflib:not([hidden]) .gflib-q");if(qi&&document.querySelector(".gflib .gfdv-wait"))qi.dispatchEvent(new Event("input"))},40)}
+  return'<p class="gflib-empty gfdv-wait">Gathering every picture on the site…</p>'}
+ let S;try{S=picSearch(q)}catch(e){console.error(e);S=[]}
+ if(!IDX||!IDX.length)return'<p class="gflib-empty">Pictures are on their way.</p>';
+ let left=240,total=0;const tile=x=>'<button type="button" class="gfdv-tile" data-pi="'+x.i+'"><img loading="lazy" alt="" src="'+esc(x.P.d)+'"><span>'+esc(x.t)+'</span></button>';
+ const body=S.map(s=>{total+=s.n;if(left<=0)return"";const L=s.L.slice(0,left);left-=L.length;
+  return(s.h?'<h4 class="gfdv-sec">'+esc(s.h)+' <i>'+s.n.toLocaleString()+(s.n===1?' picture':' pictures')+'</i></h4>':'')+'<div class="gfdv-grid">'+L.map(tile).join("")+'</div>'}).join("");
+ if(!S.length)return'<p class="gflib-empty">No picture matches “'+esc(q)+'”.</p>';
+ return body+(total>240?'<p class="gflib-empty">'+total.toLocaleString()+' pictures: type to narrow them down.</p>':'')}
+function view(x){const cap=x.parts.filter(s=>s!==x.t&&s.length<90).slice(0,3).join(" · ");return Object.assign({},x.P,{name:x.t,caption:x.P.caption&&x.kind!=="photo"?x.P.caption:cap,ll:x.P.ll||x.ll[0]||null})}
 function big(P,api){const el=document.createElement("div");el.className="gfdv-lb";el.innerHTML='<div class="gfdv-lbox"><button type="button" class="gfdv-lx" aria-label="Close">×</button><img alt="" src="'+esc(P.d)+'"><div><b>'+esc(P.name||"")+'</b><p>'+esc(P.caption||"")+'</p>'+credit(P)+(P.ll?'<button type="button" class="gfdv-go">🗺️ Fly there on the map</button>':'')+'</div></div>';
  document.body.appendChild(el);const x=()=>el.remove();el.onclick=ev=>{if(ev.target===el)x()};el.querySelector(".gfdv-lx").onclick=x;
  const g=el.querySelector(".gfdv-go");if(g)g.onclick=()=>{x();try{api.close();api.goMap("satellite",()=>{api.flyLL(P.ll,6);setTimeout(()=>api.ping(P.ll,P.name),950)})}catch(e){}}}
 function wire(c,api){c.querySelectorAll(".gfdv-mm canvas").forEach(drawMini);
  c.querySelectorAll(".gfdv-dtm").forEach(d=>{const sl=d.querySelector("input"),b=d.querySelector("b"),cap=d.querySelector(".gfdv-cap"),T=JSON.parse(cap.dataset.st);const up=()=>{const v=+sl.value;b.textContent=v;cap.textContent=T[v-1];d.querySelectorAll(".gfdv-st").forEach(r=>r.setAttribute("opacity",+r.dataset.s===v-1?.22:0))};sl.oninput=up;up()});
- c.querySelectorAll(".gfdv-tile").forEach(b=>b.onclick=()=>{const k=b.dataset.pk,t=b.dataset.pt;if(k==="term")api.showTerm(t);else if(k==="photo"){const x=lib().find(x=>x.t===t);if(x)big(x.P,api)}else{const P=ICON().find(x=>(x.name||x.caption)===t);if(P)big(P,api)}})}
+ c.querySelectorAll(".gfdv-tile").forEach(b=>b.onclick=()=>{const x=IDX&&IDX[+b.dataset.pi];if(!x)return;if(x.kind==="term")api.showTerm(x.t);else big(view(x),api)})}
 window.gfDictVis={visual,picsHTML,wire,DIAG};
 {const s=document.createElement("style");s.textContent=`
 .gfdv-fig{margin:4px 0 10px}.gfdv-fig img{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:10px}.gfdv-fig figcaption{font-size:12.5px;color:#6a5a44;margin-top:4px}
@@ -81,6 +207,7 @@ window.gfDictVis={visual,picsHTML,wire,DIAG};
 .gfdv-dg{margin:4px 0 10px;padding:8px;border-radius:10px;background:#fbf6ea;border:1px solid #e3d6bc}.gfdv-dg svg{display:block;width:100%;max-width:440px;height:auto}.gfdv-cap{font-size:12.5px;color:#5a4a36;margin:4px 0 0}
 .gfdv-sl{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#5a4a36}.gfdv-sl input{flex:1;max-width:240px}
 .gfdv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.gfdv-tile{border:0;padding:0;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.gfdv-sec{margin:14px 0 8px;font:800 14px system-ui;color:#3d2a16}.gfdv-sec:first-child{margin-top:2px}.gfdv-sec i{font-style:normal;font-weight:600;opacity:.6;font-size:12px}body.sky-night .gfdv-sec{color:#e8ecf6}
 .gfdv-tile img{display:block;width:100%;height:100px;object-fit:cover}.gfdv-tile span{display:block;padding:6px 8px;font-size:12.5px;font-weight:700;color:#3d2a16}
 .gfdv-lb{position:fixed;inset:0;z-index:3100;background:rgba(10,8,6,.7);display:flex;align-items:center;justify-content:center;padding:16px}
 .gfdv-lbox{position:relative;max-width:min(980px,100%);max-height:92vh;overflow:auto;background:#fffaf0;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}.gfdv-lbox img{max-width:100%;max-height:68vh;object-fit:contain;border-radius:10px;align-self:center}
