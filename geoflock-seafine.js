@@ -18,6 +18,8 @@ function viewKey(g,lv){const{w,h}=g.size();return[lv,w,h,g.zoom.toFixed(4),g.rot
 /* the coarse ocean mask (the world grid's sea, filled from the open ocean): is this point in the sea? */
 function oceanAt(ll){try{if(typeof GFE==="undefined"||!GFE.ready)return null;const m=GFE.ocean||(typeof gfOceanMask==="function"?gfOceanMask():null);if(!m)return null;const p=GLOBE_ROBINSON0(ll);if(!p)return null;
  const W=GFE.W,H=GFE.H,y=Math.floor((p[1]+6.688)/1014.376*H),x=Math.floor(p[0]/2e3*W);if(y<0||y>=H||x<0||x>=W)return null;return!!m[y*W+x]}catch(e){return null}}
+/* is the coarse ocean mask's sea within a cell or two of this point? */
+function oceanNear(ll){if(!ll)return false;for(const d of[0,.06,.12,.2])for(const[a,b]of[[0,0],[d,0],[-d,0],[0,d],[0,-d],[d,d],[-d,-d],[d,-d],[-d,d]]){if(!d&&(a||b))continue;if(oceanAt([ll[0]+a,ll[1]+b]))return true}return false}
 /* the world grid's height at a point (NaN: unknown) and whether it is land */
 function coarseAt(ll){try{if(typeof GFE==="undefined"||!GFE.ready)return NaN;const p=GLOBE_ROBINSON0(ll);if(!p)return NaN;const W=GFE.W,H=GFE.H,y=Math.floor((p[1]+6.688)/1014.376*H),x=Math.floor(p[0]/2e3*W);if(y<0||y>=H||x<0||x>=W)return NaN;const i=y*W+x;
  const v=GFE.land[i]&&GFE.zf?GFE.zf[i]:GFE.z[i];return GFE.land[i]?Math.max(v,.5):Math.min(v,-1)}catch(e){return NaN}}
@@ -49,8 +51,19 @@ async function build(g,key,lv){const id=++job;const{w,h}=g.size(),pr=g.projectio
   while(qh<qt){const k=Q[qh++],i=k%GW;for(const m of[i>0?k-1:-1,i<GW-1?k+1:-1,k-GW,k+GW]){if(m<0||m>=N||wet[m])continue;const e=E[m];if(e===e&&e<lv){wet[m]=2;Q[qt++]=m}}}
   for(let k=0;k<N;k++)if(wet[k]===2){const i=k%GW,dry=m=>m>=0&&m<N&&E[m]===E[m]&&!wet[m];const edge=(i>0&&dry(k-1))||(i<GW-1&&dry(k+1))||dry(k-GW)||dry(k+GW);
    const o=k*4;if(edge){px[o]=24;px[o+1]=84;px[o+2]=150;px[o+3]=255}else{px[o]=74;px[o+1]=158;px[o+2]=226;px[o+3]=215}}}
- else if(lv<0){/* the sea lowered: sea floor above the new level becomes land */
-  for(let k=0;k<N;k++)if(sea[k]&&E[k]>=lv){const o=k*4;px[o]=214;px[o+1]=196;px[o+2]=140;px[o+3]=235}}
+ else if(lv<0){/* the sea lowered: sea floor above the new level becomes land. The coarse ocean mask is about 10 km a
+   cell, so the shallow water along today's coasts often lies in a cell it calls land: the sea is grown from the mask
+   through every spot at or below today's sea level that joins it, or that band stayed blue between the land and the
+   exposed shelf (and coarse islands left blue holes in it). Inland lows (the Caspian, the Dead Sea) are not joined. */
+  const Q=new Int32Array(N);let qh=0,qt=0;for(let k=0;k<N;k++)if(sea[k])Q[qt++]=k;
+  if(!qt)/* zoomed in on a coast that the coarse mask counts as land: seed from the open sea close by */
+   for(let k=0;k<N;k++)if(E[k]<=0.5&&oceanNear(LL[k])){sea[k]=1;Q[qt++]=k}
+  while(qh<qt){const k=Q[qh++],i=k%GW;for(const m of[i>0?k-1:-1,i<GW-1?k+1:-1,k-GW,k+GW]){if(m<0||m>=N||sea[m]||!(E[m]<=0.5))continue;sea[m]=1;Q[qt++]=m}}
+  for(let k=0;k<N;k++)if(sea[k]&&E[k]>=lv){const o=k*4;px[o]=214;px[o+1]=196;px[o+2]=140;px[o+3]=235}
+  /* the map's own coastline lies a sample or so off the heights' one: the low shore next to the exposed floor is
+     drawn as floor too, or a thin blue line of today's sea stays between them */
+  const fl=k=>k>=0&&k<N&&sea[k]&&E[k]>=lv;
+  for(let k=0;k<N;k++){if(sea[k]||!(E[k]<8))continue;const i=k%GW;if((i>0&&fl(k-1))||(i<GW-1&&fl(k+1))||fl(k-GW)||fl(k+GW)){const o=k*4;px[o]=214;px[o+1]=196;px[o+2]=140;px[o+3]=235}}}
  DBG.probe=ll=>{const q=pr(ll);if(!q)return null;const k=Math.floor(q[1]/STEP)*GW+Math.floor(q[0]/STEP);return{k,E:E[k],CE:CE[k],sea:sea[k],ll:LL[k],a:px[k*4+3]}};
  x.putImageData(D,0,0);return{key,c,z}}
 function schedule(){clearTimeout(timer);timer=setTimeout(async()=>{const g=G(),lv=level();if(!g||!lv){OV=null;return}const key=viewKey(g,lv);if(OV&&OV.key===key)return;
