@@ -13,9 +13,9 @@ function sync(){try{
  const host=typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host;
  const show=!!v&&host&&host.isConnected&&host.offsetParent&&appMode==="allmaps"&&!(typeof ps!=="undefined"&&ps);
  if(!show){if(el)el.hidden=true;return}
- /* above the map, not on it; in full screen (no room outside the map) along its very top */
- const fs=document.body.classList.contains("gf-fs");if(!el){el=document.createElement("div");el.className="gf-seanote";el.setAttribute("role","status")}
- const sw=document.getElementById("globalSearchWrap");if(fs||!sw||!sw.offsetParent){if(el.parentNode!==host)host.appendChild(el);el.classList.add("gf-sn-fs")}else{/* in the row of switches, next to the search box */if(el.nextElementSibling!==sw)sw.before(el);el.classList.remove("gf-sn-fs")}
+ /* floats over the top of the map, never in the row of switches (joining that row made the switches jump about) */
+ if(!el){el=document.createElement("div");el.className="gf-seanote gf-sn-fs";el.setAttribute("role","status")}
+ if(el.parentNode!==host)host.appendChild(el);
  const k=String(v);if(el._k!==k){el._k=k;el.innerHTML='<span>🌊 Sea level is set to <b>'+txt(v)+'</b>'+(v<=-100?' (Ice Age)':v>=60?' (all ice melted)':'')+'</span><button type="button">Back to today</button>';el.querySelector("button").onclick=e=>{e.stopPropagation();back()}}
  el.hidden=false}catch(e){}}
 setInterval(sync,700);
@@ -24,7 +24,7 @@ const st=document.createElement("style");st.textContent=`
   padding:6px 8px 6px 14px; border-radius:999px; background:rgba(14,40,80,.88); color:#eaf4ff; font:600 13px system-ui,sans-serif;
   box-shadow:0 4px 14px rgba(0,0,0,.25); white-space:nowrap; pointer-events:auto; }
 .gf-seanote[hidden]{ display:none; }
-.gf-seanote.gf-sn-fs{ position:absolute; top:8px; left:50%; transform:translateX(-50%); margin:0; }
+.gf-seanote.gf-sn-fs{ position:absolute; top:62px; left:50%; transform:translateX(-50%); margin:0; }
 .gf-seanote b{ color:#9fe0ff; }
 .gf-seanote button{ border:0; border-radius:999px; padding:5px 12px; background:#2a8fd6; color:#fff; font:700 12.5px system-ui,sans-serif; cursor:pointer; }
 .gf-seanote button:hover{ background:#3aa0e6; }`;document.head.appendChild(st);
