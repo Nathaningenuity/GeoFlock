@@ -79,7 +79,11 @@ function render(){const{el,L,k}=D,S=L[k],P=photo(S);
 function go(d){if(!D)return;const k=D.k+d;if(k<0||k>=D.L.length)return;D.k=k;D.cmp=false;render()}
 document.addEventListener("keydown",e=>{if(!D)return;if(e.key==="Escape"){close();e.preventDefault()}else if(e.key==="ArrowRight"){go(1);e.preventDefault()}else if(e.key==="ArrowLeft"){go(-1);e.preventDefault()}},true);
 /* the button in Projections */
-function addButton(){const sw=document.querySelector("#projView .proj-switches");if(!sw||sw.querySelector(".gfom-open"))return;const b=document.createElement("button");b.type="button";b.className="gfom-open";b.innerHTML="📜 Old maps <small>from 600 BC to today</small>";b.onclick=()=>open();sw.prepend(b)}
+/* a chip like the projections', in brown, at the end of their row */
+function addButton(){const row=document.querySelector("#projView #projChips")||document.querySelector("#projView .proj-chips");if(!row||row.querySelector(".gfom-open"))return;
+ document.querySelectorAll("#projView .proj-switches .gfom-open").forEach(x=>x.remove());
+ const b=document.createElement("button");b.type="button";b.className="chip gfom-open";b.title="Old maps: how people drew the world, from 600 BC to today";b.textContent="📜 Old maps";
+ b.addEventListener("click",e=>{e.stopPropagation();open()});row.appendChild(b)}
 setInterval(addButton,1200);
 /* the Twelve Maps book tour: a button on its map stops */
 function tourBtn(){try{if(typeof ps==="undefined"||!ps||ps.tour!=="b12maps"||!ps.card)return;const S=psSteps()[ps.i],sl=SLIDES.find(x=>x.stop===S.title);if(!sl||!photo(sl)||ps.card.querySelector(".gfom-tb"))return;
@@ -87,7 +91,7 @@ function tourBtn(){try{if(typeof ps==="undefined"||!ps||ps.tour!=="b12maps"||!ps
 setInterval(tourBtn,700);
 window.gfOldMaps={open,close,SLIDES};
 {const s=document.createElement("style");s.textContent=`
-.gfom-open{display:inline-flex;align-items:center;gap:6px;margin-right:12px;border:0;border-radius:999px;padding:7px 14px;font-weight:800;background:#7a4f24;color:#fff6e6;cursor:pointer}.gfom-open small{font-weight:600;opacity:.8}
+#projChips .chip.gfom-open,.proj-chips .chip.gfom-open{background:#7a4f24!important;color:#fff6e6!important;border-color:#5e3b18!important}#projChips .chip.gfom-open:hover,.proj-chips .chip.gfom-open:hover{background:#8d5d2c!important}
 .gfom-tb{display:block;margin:8px 0;border:0;border-radius:999px;padding:7px 14px;font-weight:800;background:#7a4f24;color:#fff6e6;cursor:pointer}
 .gfom{position:fixed;inset:0;z-index:3000;background:rgba(20,14,8,.72);display:flex;align-items:center;justify-content:center;padding:14px}
 .gfom-box{width:min(1240px,100%);height:min(820px,100%);display:flex;flex-direction:column;background:#f6ecd8;color:#2a2014;border-radius:18px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.5)}
