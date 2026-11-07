@@ -142,6 +142,17 @@ const FIX={
  /* Island dwarfs: the whole world, so Wrangel's mammoths, the Key deer and the island fox show too */
  "islandlife|Island dwarfs":S=>{SET(S,"view",[-150,-5,185,78]);SET(S,"globe",[20,40,1]);
   if(Array.isArray(S.phPins))S.phPins.forEach(q=>{if(q&&q.at&&q.at[0]<-179)q.at=[179.4,71.2]})}};
-function stopFix(S){try{if(!S||typeof ps==="undefined"||!ps)return;const f=FIX[ps.tour+"|"+S.title];if(f)f(S)}catch(e){console.error(e)}}
+/* Remote islands: each island is a few pixels across, so nothing may sit on it. No distance ruler (its orange handles
+   covered the island; the distances are in the text), no name pin on the island, photo pins point at the ring, and the
+   island keeps its white ring. */
+function remote(S){if(S._gfRem)return;S._gfRem=1;const R=(S.lines||[]).find(l=>l&&l.circle&&l.km);
+ if(S.gfRuler)SET(S,"gfRuler",null);if(!R)return;const c=R.circle;let km=R.km;
+ const near=at=>at&&Math.hypot((at[0]-c[0])*Math.cos(c[1]*Math.PI/180),at[1]-c[1])*111.2<km*1.6;
+ /* centred on the island (the old views also took in the ruler's far end, and some crossed the date line) */
+ if(c[1]>-80&&c[1]<80){const k=Math.cos(c[1]*Math.PI/180),hw=Math.min(14,7/Math.max(.35,k));SET(S,"view",[c[0]-hw,c[1]-4.5,c[0]+hw,c[1]+4.5]);SET(S,"globe",[c[0],c[1],5]);
+  const r=Math.max(12,Math.round(2*hw*111.32*k*.025));R.km=r;km=r;(S.phPins||[]).forEach(q=>{if(q&&q.ringKm)q.ringKm=r})}
+ if(Array.isArray(S.pins)){const L=S.pins.filter(q=>!(Array.isArray(q)&&Array.isArray(q[0])&&typeof q[0][0]==="number"&&near(q[0])));if(L.length!==S.pins.length)SET(S,"pins",L)}
+ const ph=S.phPins;if(Array.isArray(ph))ph.forEach(q=>{if(q&&near(q.at)){q.at=c.slice();q.ringKm=km}})}
+function stopFix(S){try{if(!S||typeof ps==="undefined"||!ps)return;if(ps.tour==="bremote")remote(S);const f=FIX[ps.tour+"|"+S.title];if(f)f(S)}catch(e){console.error(e)}}
 window.gfPolishM={dedupe};
 })();

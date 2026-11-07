@@ -133,7 +133,8 @@ IDS.forEach(id=>{const T=TOURS[id],modes=[...new Set(T.steps.map(s=>s.mode).filt
 const mine=()=>typeof ps!=="undefined"&&ps&&IDS.includes(ps.tour);
 
 /* ---------- movers (geoflock-walkers.js) and thermometers (geoflock-tourthermo.js) ---------- */
-const THERMO={"Lonely Island":[[I.lonely[0],I.lonely[1],"Lonely Island"]],"Clipperton":[[I.clipperton[0],I.clipperton[1],"Clipperton"]]};
+/* set beside the island, clear of its ring, so the thermometer never covers it */
+const THERMO={"Lonely Island":[[I.lonely[0]+2.6,I.lonely[1]+.1,"Lonely Island"]],"Clipperton":[[I.clipperton[0]+.5,I.clipperton[1]+.1,"Clipperton"]]};
 function addMovers(){try{const Wk=window.gfWalkers;if(Wk){
   /* red crabs: the same walkers as the Island life tour's stop, marching from the forest to the coast */
   const crab=Wk["islandlife|Christmas Island’s red crabs"];if(crab)Wk["bremote|Christmas Island"]=Object.assign({},crab,{size:16});
