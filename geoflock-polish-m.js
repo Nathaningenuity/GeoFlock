@@ -23,5 +23,14 @@ const TXT=[["(red and orange on the climate map laid over it)","(rusty red and o
  ["The bright red areas on the climate map are deserts: hot deserts in deep red, cooler ones in pink.","The rusty red areas on the climate map are deserts: hot deserts in deep orange-red, cooler ones in pale salmon."]];
 function fixText(){try{for(const t in PS_TOURS)(PS_TOURS[t].steps||[]).forEach(S=>{["body","more","stat"].forEach(k=>{let v=S[k];if(typeof v!=="string")return;TXT.forEach(([a,b])=>{if(v.includes(a))v=v.split(a).join(b)});if(v!==S[k])try{S[k]=v}catch(e){}})})}catch(e){}}
 [0,1500,4000,9000].forEach(ms=>setTimeout(fixText,ms));
+/* 4. "Weeping at the campsite" (Literature): a picture on the map. Legend says the great odes were hung on the Kaaba in
+   Mecca, which gave them their name, the Mu'allaqat ("the hung ones"); the plain "Mecca" label becomes that photo pin. */
+const KA={f:"The Kaaba during Hajj.jpg",d:"photos/da9206e8f82900f76.webp",by:"Adli Wahid",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:The_Kaaba_during_Hajj.jpg"},KAL="The Kaaba: where legend hung the odes";
+function campsite(){try{const T=PS_TOURS.literature,S=T&&T.steps.find(x=>x.title==="Weeping at the campsite");if(!S||typeof PS_PHOTO_DATA==="undefined")return false;
+ if(!PS_PHOTO_DATA.some(x=>x&&x.f===KA.f))PS_PHOTO_DATA.push(Object.assign({},KA));const idx=PS_PHOTO_DATA.findIndex(x=>x&&x.f===KA.f);
+ try{if(typeof GF_SQ_FILE!=="undefined")GF_SQ_FILE[KAL]=KA.f}catch(e){}try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};if(typeof PS_SQ_IMG!=="undefined")PS_SQ_IMG[KAL]=idx}catch(e){}
+ if(!Array.isArray(S.phPins))S.phPins=[];if(!S.phPins.some(q=>q&&q.label===KAL))S.phPins.push({at:[39.83,21.42],label:KAL,col:"#d9682b",icon:"photo",_f:KA.f,img:idx});
+ if(Array.isArray(S.pins)){const i=S.pins.findIndex(q=>Array.isArray(q)&&q[1]==="Mecca");if(i>=0)S.pins.splice(i,1)}S._sqPruned=-1;return true}catch(e){console.error(e);return false}}
+[0,1500,4000,9000].forEach(ms=>setTimeout(campsite,ms));
 window.gfPolishM={dedupe};
 })();
