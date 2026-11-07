@@ -52,12 +52,17 @@ const SLIDES=[
   text:"The first photos of the whole Earth showed what no map can: a ball with no edges and no borders. Today satellite mosaics like this one are the base of Google Earth and of this app’s Satellite map.",
   look:["No borders at all","Clouds over the oceans and the Equator","The real colours of forests and deserts"]}
 ];
+/* more maps, from before, during and after the age of exploration (GF_OLDMAP_MORE), all in date order */
+{const Y={babylon:-600,ptolemy:150,idrisi:1154,hereford:1300,catalan:1375,kangnido:1402,waldseemuller:1507,ribeiro:1529,mercator:1569,hondius:1630,cassini:1756,mackinder:1904,bluemarble:1972,peters:1973};
+ SLIDES.forEach(S=>{if(S.sortYear==null)S.sortYear=Y[S.id]!=null?Y[S.id]:2000});
+ (window.GF_OLDMAP_MORE||[]).forEach(M=>{if(!SLIDES.some(S=>S.id===M.id))SLIDES.push(Object.assign({x:M.id},M))});
+ SLIDES.sort((a,b)=>a.sortYear-b.sortYear)}
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 function photo(S){try{const X=window.GF_OLDMAP_PHOTOS||{};if(S.x&&X[S.x])return X[S.x];if(typeof gfMergeExtra==="function")gfMergeExtra();if(S.f){const P=PS_PHOTO_DATA.find(p=>p&&p.f===S.f&&p.d);if(P)return P}}catch(e){}return null}
 const src=P=>{try{return typeof gfSrc==="function"?gfSrc(P.d):P.d}catch(e){return P.d}};
 let D=null;
 function slides(){return SLIDES.filter(S=>photo(S))}
-function open(at){const L=slides();if(!L.length)return;let k=Math.max(0,L.findIndex(S=>S.id===at||S.stop===at));if(k<0)k=0;
+function open(at){const L=slides();if(!L.length)return;let k=at==null?0:Math.max(0,L.findIndex(S=>S.id===at||S.stop===at));if(k<0)k=0;
  close();const el=document.createElement("div");el.className="gfom";el.setAttribute("role","dialog");el.setAttribute("aria-label","Old maps");document.body.appendChild(el);D={el,L,k,cmp:false};render();
  el.addEventListener("click",e=>{if(e.target===el)close()})}
 function close(){if(D){D.el.remove();D=null}}
