@@ -145,11 +145,15 @@ function bandPx(pj,s){if(s._bpx!=null)return s._bpx;let v=20;try{const t=s.tiles
  const a=pj(lo,la),b=pj(lo,la+.225);if(a&&b)v=Math.hypot(a[0]-b[0],a[1]-b[1])}catch(e){}return(s._bpx=v)}
 /* the picture's sea colour near the coast: pixels just off the coast that look like sea, their median */
 function seaCol(ctx,pj,s,W){if(s._sea!==undefined)return s._sea;let out=null;try{const T=ctx.getTransform(),R=[],G=[],B=[];let tries=0;
- for(const t of s.tiles){const d=t.d;if(!d||!d.ocean)continue;for(const o of d.ocean){if(isLakeSea(o))continue;for(const r of o.rings){const step=Math.max(3,Math.floor(r.length/3/12))*3;
+ for(const t of s.tiles){const d=t.d;if(!d||!d.ocean)continue;/* the open sea; with none in view, the Caspian (the picture shows it as sea) */const SRC=d.ocean.filter(o=>!isLakeSea(o));if(!SRC.length)d.lakes.concat(bigLakes(d)).forEach(K=>{if(isCaspian(K))SRC.push(K)});for(const o of SRC){for(const r of o.rings){const step=Math.max(3,Math.floor(r.length/3/12))*3;
    for(let i=0;i<r.length&&R.length<60&&tries<400;i+=step){if(r[i+2])continue;const q=pj(r[i],r[i+1]);if(!q)continue;
     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){tries++;const x=q[0]+dx*W*1.4,y=q[1]+dy*W*1.4,X=Math.round(T.a*x+T.c*y+T.e),Y=Math.round(T.b*x+T.d*y+T.f);
      if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=ctx.getImageData(X,Y,1,1).data;if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}}
- if(R.length>=5){const md=a=>a.sort((x,y)=>x-y)[a.length>>1];out="rgb("+md(R)+","+md(G)+","+md(B)+")"}}catch(e){out=null}return(s._sea=out)}
+ /* no sea pixels along a coast: points well inside the Caspian */
+ if(R.length<5){for(const t of s.tiles){const d=t.d;if(!d)continue;for(const K of d.lakes.concat(bigLakes(d))){if(!isCaspian(K))continue;const b=K.bb;
+   for(let a=1;a<6;a++)for(let c=1;c<6;c++){const ll=[b[0]+(b[2]-b[0])*a/6,b[1]+(b[3]-b[1])*c/6];if(!inRings(K.rings,ll))continue;const q=pj(ll[0],ll[1]);if(!q)continue;
+    const X=Math.round(T.a*q[0]+T.c*q[1]+T.e),Y=Math.round(T.b*q[0]+T.d*q[1]+T.f);if(X<0||Y<0||X>=ctx.canvas.width||Y>=ctx.canvas.height)continue;const p=ctx.getImageData(X,Y,1,1).data;if(p[2]>p[0]+25&&p[2]>=p[1]){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}}}
+ if(R.length>=5){const md=a=>a.sort((x,y)=>x-y)[a.length>>1];out="rgb("+md(R)+","+md(G)+","+md(B)+")"}}catch(e){out=null}/* a failed look is not remembered: the picture may not be drawn yet */if(out)s._sea=out;return out}
 /* water joined to the sea (river channels, estuaries, bays closed off by a line in the map data such as Lake Maracaibo's
    Tablazo Bay, lagoons like Lagoa dos Patos) is drawn in the sea's colour, not the lakes' pale blue. A lake is joined when
    it shares points with the sea in the same tile, touches water already found to be joined, or is a known sea lake. */
@@ -162,9 +166,13 @@ function coastGrid(d){const G=new Map();d.ocean.forEach(o=>{if(isLakeSea(o))retu
 function nearCoast(K,G){if(!G.size)return false;for(const r of K.rings)for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const x=r[i],y=r[i+1],cx=Math.floor(x/NEAR),cy=Math.floor(y/NEAR);
   for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const P=G.get((cx+a)+","+(cy+b));if(!P)continue;for(let j=0;j<P.length;j+=2){const dx=(P[j]-x)*Math.cos(y*Math.PI/180),dy=P[j+1]-y;if(dx*dx+dy*dy<NEAR*NEAR)return true}}}return false}
 function seaLinks(d){if(d._seaDone)return;d._seaDone=1;try{const S=new Set();d.ocean.forEach(o=>{if(!isLakeSea(o))vkeys(o.rings,S)});const CG=coastGrid(d);
- const L=d.lakes;L.forEach(K=>{K._sea=K.cls==="river"||(K.id!=null&&SEA_IDS.has(K.id))||(!isCaspian(K)&&isSeaLake(K))||(S.size>0&&shares(K,S))||(!isCaspian(K)&&nearCoast(K,CG))});
+ /* the Caspian is drawn as sea by the picture: water joined to it (Garabogazköl) is sea-coloured too */
+ d.lakes.concat(bigLakes(d)).forEach(K=>{if(!isCaspian(K))return;vkeys(K.rings,S);K.rings.forEach(r=>{for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const k=Math.floor(r[i]/NEAR)+","+Math.floor(r[i+1]/NEAR);let a=CG.get(k);if(!a)CG.set(k,a=[]);a.push(r[i],r[i+1])}})});
+ const L=d.lakes;/* only water joined to the sea directly counts: river channels are sea-coloured as rivers, but do not pass the sea on to
+    the lakes and reservoirs along them (Sobradinho on the São Francisco stays a lake) */
+ L.forEach(K=>{if(K.cls==="river"){K._sea=false;return}K._sea=(K.id!=null&&SEA_IDS.has(K.id))||(!isCaspian(K)&&isSeaLake(K))||(S.size>0&&shares(K,S))||(!isCaspian(K)&&nearCoast(K,CG))});
  /* joined through other joined water (a bay, then the lake behind it) */
- for(let pass=0;pass<4;pass++){const J=new Set();L.forEach(K=>{if(K._sea)vkeys(K.rings,J)});let more=false;L.forEach(K=>{if(!K._sea&&!isCaspian(K)&&J.size&&shares(K,J)){K._sea=true;more=true}});if(!more)break}
+ for(let pass=0;pass<4;pass++){const J=new Set();L.forEach(K=>{if(K._sea&&K.cls!=="river")vkeys(K.rings,J)});let more=false;L.forEach(K=>{if(!K._sea&&K.cls!=="river"&&!isCaspian(K)&&J.size&&shares(K,J)){K._sea=true;more=true}});if(!more)break}
  L.forEach(K=>{if(K._sea&&K.id!=null)SEA_IDS.add(K.id)})}catch(e){console.error(e)}}
 function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&I.texKey==="relief";
  const borders=g.cfg.borders?g.cfg.borders():true,coast=s.z>=COASTZ,LT=window.gfRiverLate?gfRiverLate(g):1,z=g.zoom/LT;/* rivers: later on maps other than Relief and Elevation */
@@ -175,7 +183,7 @@ function draw(g,ctx,I){const s=on(g);if(!s)return;JUMP=g._gfProj?g.size().w*.25:
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
   ctx.globalCompositeOperation="destination-over";ctx.fillStyle=I.ocean||"#5797cf";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});ctx.restore()}
- const seaC=(I.drewRaster&&!sat&&seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s)))))||null;if(seaC)window._gfSeaC=seaC;
+ const seaC=I.drewRaster&&!sat?(seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s))))||window._gfSeaC||"rgb(38,116,185)"):null;/* no open sea in view (the Caspian): the last sea colour seen */if(seaC)window._gfSeaC=seaC;
  /* raster maps (Relief, Elevation...): the picture's own coast is coarse, and in places shows land where the sea is (the Gulf
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
  if(I.drewRaster&&!sat){try{const W=Math.max(6,Math.min(90,bandPx(pj,s)*2));const col=seaC;if(col){
@@ -248,7 +256,7 @@ function sharpFor(g,kind,bb,ll){const s=on(g);if(!s)return null;const w=bb[2]-bb
   if(kind==="lake")d.lakes.forEach(K=>{if(K.cls==="river"||!inB(K.bb))return;K.polys.forEach(p=>polys.push(d3poly(p).coordinates))});
   else d.ocean.forEach(o=>o.rings.forEach(r=>{let edge=false;for(let i=2;i<r.length;i+=3)if(r[i]){edge=true;break}if(edge)return;const b=bboxOf([r]);if(!inB(b)||b[2]-b[0]<1e-4)return;polys.push(d3poly([r]).coordinates)}))});
  if(!polys.length)return null;return{type:"MultiPolygon",coordinates:polys}}
-window.gfDetail={sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),covers:g=>!!on(g),ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
+window.gfDetail={sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:K._sea,casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>!!on(g),ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
 setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.host;if(!h)return;let c=h.querySelector(".gf-dt-cred");const v=!!(g&&on(g));if(v&&!c){c=document.createElement("div");c.className="gf-dt-cred";c.innerHTML='Detail © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';h.appendChild(c)}if(c)c.hidden=!v}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=".gf-dt-cred{position:absolute;right:62px;bottom:4px;z-index:6;font:500 9.5px system-ui,sans-serif;color:#33475b;background:rgba(255,255,255,.62);padding:1px 6px;border-radius:6px;pointer-events:auto}.gf-dt-cred a{color:inherit}.gf-dt-cred[hidden]{display:none}";document.head.appendChild(st)}
