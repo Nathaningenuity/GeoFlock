@@ -30,8 +30,8 @@ function guessHTML(){const G=guessToday();if(!G)return"";const p=guessState(),do
  const cr=[G.by,G.lic].filter(Boolean).join(" · ");
  return'<div class="h2-card h2-guess'+(done?" done":"")+'"><img class="h2-guess-img" src="'+esc(G.src)+'" alt="Today’s photo: where is this?" loading="lazy">'+
   '<div class="h2-guess-top"><span class="h2-tag">📷 Where is this?</span><span class="h2-cr" title="Photo: '+esc(cr||"Wikimedia Commons")+'">ⓘ</span></div>'+
-  '<div class="h2-guess-foot">'+(done?'<div class="h2-guess-res"><b>'+(ok?"✓ Right! ":"✗ It’s ")+(ok?"":esc(nameOf(G.c))+". ")+'</b><span>'+esc(G.cap)+'</span></div>':'<div class="h2-guess-q">Guess today’s photo</div>')+
-  '<div class="h2-opts">'+G.opts.map(c=>'<button type="button" data-hg="'+c+'"'+(done?" disabled":"")+' class="'+(done&&c===G.c?"ok":done&&c===p?"no":"")+'"><img src="'+esc(T(()=>flagUrl(c,"w40"))||"")+'" alt="">'+esc(nameOf(c))+'</button>').join("")+'</div>'+
+  '<div class="h2-guess-foot">'+(done?'<div class="h2-guess-res"><b>'+(ok?"✓ Right! ":"It’s ")+(ok?"":esc(nameOf(G.c))+". ")+'</b><span>'+esc(G.cap)+'</span></div>':'<div class="h2-guess-q">Guess today’s photo</div>')+
+  '<div class="h2-opts">'+G.opts.map(c=>'<button type="button" data-hg="'+c+'"'+(done?" disabled":"")+' class="'+(done&&c===G.c?"ok":"")+'"><img src="'+esc(T(()=>flagUrl(c,"w40"))||"")+'" alt="">'+esc(nameOf(c))+'</button>').join("")+'</div>'+
   (done?'<button type="button" class="h2-more" data-hgmore>Play today’s five photos →</button>':'')+'</div></div>'}
 /* country of the day */
 function codHTML(cod){if(!cod)return"";const p=T(()=>COUNTRY_PROFILES[cod.c])||{};const W=window.GF_WALL;
