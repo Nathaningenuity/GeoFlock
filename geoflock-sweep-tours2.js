@@ -106,7 +106,7 @@ function text(){try{for(const k in P){const X=P[k],i=k.indexOf("|"),T=PS_TOURS[k
 
 /* ---- Sports ---- */
 M({
- "sports|The world’s game":{view:[-125,-58,70,72],stat:"Only eight countries won the first 22 World Cups; Brazil won the most"},
+ "sports|The world’s game":{stat:"Only eight countries won the first 22 World Cups; Brazil won the most"},
  "sports|The jump into thin air":{stat:"At the 1968 Olympics, 2,240 m up in Mexico City, Bob Beamon long-jumped 8.90 m: 55 cm further than anyone before"},
  "sports|The Olympic map":{more:"Africa’s first Olympic event is the Youth Olympic Games in Dakar, Senegal, held from 31 October to 13 November 2026. Rio de Janeiro, in 2016, is still the only South American host; Brisbane hosts in 2032."},
  /* Hawaii and Tahiti were under the card on a Greenwich-centred world map: a Pacific frame that still reaches Paris */
@@ -430,13 +430,10 @@ M({
  "culture|Europe’s odd ones out":{view:[-52,33,62,71]},
  "culture|How the world writes":{view:[-22,16,58,52]},
  "culture|Sign languages have borders too":{view:[-135,8,8,64]},
- "langrel|Catholicism moved west":{view:[-168,-56,16,62]},
  "langrel|The Reformation went south":{view:[-140,-36,20,72]},
- "langrel|Two homes for most Jews":{view:[-161,15,40,62]},
  "langrel|The most Muslim countries are not Arab":{view:[-24,-14,124,44],card:"left"},
  "langrel|Buddhism left home":{view:[12,-12,140,50]},
  "langrel|Sikhism’s Punjab":{view:[-210,-8,92,72]},
- "langrel|Waiting for the vultures":{view:[35,12,80,32]},
  "food|Chocolate moved to Africa":{view:[-170,-32,34,42]},
  "food|The first noodles":{view:[-85,-5,141,58]},
  "food|Dishes that travelled":{view:[-230,-10,19,65]},
