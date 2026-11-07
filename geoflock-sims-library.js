@@ -633,11 +633,43 @@ mk("slsealevel",{title:"Sea-level rise on a low coast",cat:"water",h:216,
 /* ===================================================================== the dictionary */
 /* term → simulation (key or key:tab). Terms already given a simulation by geoflock-diagrams2.js keep theirs unless named here. */
 const TERMS={
- "Hotspot":"hawaii","Seamount":"hawaii:1","Island arc":"platebound:1",
- "Plate tectonics":"plates","Tectonic plate":"plates","Continental drift":"plates","Divergent boundary":"platebound:0","Seafloor spreading":"platebound:0","Mid-ocean ridge":"platebound:0",
- "Convergent boundary":"platebound:1","Subduction zone":"platebound:1","Ocean trench":"platebound:1","Fold mountains":"platebound:2","Orogeny":"platebound:2","Transform boundary":"platebound:3",
- "Meander":"meander","Oxbow lake":"meander","Floodplain":"meander",
- "Tide":"tides","Tidal range":"tides","Spring tide":"tides","Neap tide":"tides","Tidal power":"tides"
+ /* the solid Earth */
+ "Plate tectonics":"plates","Tectonic plate":"plates","Ring of Fire":"plates","Continental drift":"pangaea","Pangaea":"pangaea","Gondwana":"pangaea",
+ "Divergent boundary":"platebound:0","Seafloor spreading":"platebound:0","Mid-ocean ridge":"platebound:0","Convergent boundary":"platebound:1","Subduction zone":"platebound:1","Ocean trench":"platebound:1","Island arc":"platebound:1",
+ "Fold mountains":"platebound:2","Orogeny":"platebound:2","Transform boundary":"platebound:3","Hotspot":"hawaii","Seamount":"hawaii:1",
+ "Lithosphere":"geology","Asthenosphere":"geology","Crust":"geology","Mantle":"geology","Core":"geology","Magma":"volcano","Pyroclastic flow":"volcano","Volcanic eruption":"volcano",
+ "Rock cycle":"rockcycle","Igneous rock":"rockcycle","Sedimentary rock":"rockcycle","Metamorphic rock":"rockcycle","Sediment":"rockcycle","Weathering":"rockcycle",
+ "Earthquake":"epicentre","Epicenter":"epicentre","Richter scale":"quake","Tsunami":"tsunami","Isostasy":"slisostasy","Ice sheet":"slisostasy",
+ /* rivers, coasts, the sea */
+ "Meander":"meander","Oxbow lake":"meander","Floodplain":"meander","Erosion":"meander","Deposition":"meander","Levee":"meander","River":"meander",
+ "Longshore drift":"sllongshore","Spit":"sllongshore","Beach":"sllongshore","Barrier island":"sllongshore","Tombolo":"sllongshore",
+ "Tide":"tides","Tidal range":"tides","Spring tide":"tides","Neap tide":"tides","Tidal power":"tides",
+ "Sea-level rise":"slsealevel","Storm surge":"slsealevel","Coastline":"slsealevel","Water cycle":"slwater","Evaporation":"slwater",
+ "Ocean acidification":"oceanph","Dead zone":"deadzone","Eutrophication":"deadzone","Fertilizer runoff":"deadzone","Overfishing":"fishery","Tragedy of the commons":"fishery","Dam":"nileflow","Reservoir":"nileflow",
+ "Last Glacial Maximum":"humsea","Beringia":"humsea","Doggerland":"humsea","Ice age":"humsea","Wallace Line":"wallace","Biogeographic realm":"wallace",
+ /* weather and climate */
+ "Rain shadow":"rainshadow","Foehn wind":"rainshadow","Coriolis effect":"coriolis","Wind":"slwind","Air pressure":"slwind","High-pressure system":"slwind","Low-pressure system":"slwind",
+ "Sea breeze":"slseabreeze","Local wind":"slseabreeze","Monsoon":"monsoon","Tropical monsoon climate":"monsoon","El Niño":"slnino","La Niña":"slnino",
+ "Greenhouse effect":"slgreenhouse","Greenhouse gas":"slgreenhouse","Climate change":"co2","Carbon cycle":"slcarbon","Carbon sink":"slcarbon","Photosynthesis":"slcarbon","Fossil fuel":"slcarbon","Carbon footprint":"slcarbon",
+ "Urban heat island":"sluhi","Microclimate":"sluhi","Tropical cyclone":"hurricane","Saffir–Simpson scale":"hurricane","Insolation":"sunangle","Altitudinal zonation":"climb",
+ "Solstice":"sldaylen","Equinox":"sldaylen","Arctic Circle":"sldaylen","Antarctic Circle":"sldaylen","Tropic of Cancer":"sldaylen","Tropic of Capricorn":"sldaylen","Tropics":"seasons",
+ "Hadley cell":"chadley","ITCZ":"chadley","Subtropical high":"chadley","Horse latitudes":"chadley","Continentality":"ccont","Maritime effect":"cmar","Mediterranean climate":"cmed",
+ /* maps */
+ "Latitude":"sllatlon","Longitude":"sllatlon","Equator":"sllatlon","Prime meridian":"sllatlon","Hemisphere":"sllatlon","Absolute location":"sllatlon","Globe":"sllatlon",
+ "Map projection":"sltissot:2","Distortion":"sltissot:0","Mercator projection":"sltissot:0","Web Mercator":"sltissot:0","Conformal projection":"sltissot:0","Robinson projection":"sltissot:1","Equal-area projection":"sltissot:2","Gall–Peters projection":"sltissot:3","Azimuthal projection":"sltissot:4",
+ "Time zone":"slsuntime","Greenwich Mean Time":"slsuntime","International Date Line":"worldclock",
+ "Contour line":"slcontours","Topographic map":"slcontours","Isoline map":"slcontours","Relief":"slcontours","Topography":"slcontours","Elevation":"slcontours",
+ /* people, cities, farming, trade */
+ "Demographic transition model":"dtm","DTM Stage 1":"dtm","DTM Stage 2":"dtm","DTM Stage 3":"dtm","DTM Stage 4":"dtm","DTM Stage 5":"dtm",
+ "Population pyramid":"pyramid","Cohort":"pyramid","Dependency ratio":"pyramid","Aging population":"pyramid","Baby boom":"pyramid","Population momentum":"pyramid",
+ "Doubling time":"doubling","Exponential growth":"doubling","Rate of natural increase":"doubling",
+ "Gravity model":"gravity","Distance decay":"gravity","Spatial interaction":"gravity","Friction of distance":"gravity",
+ "Von Thünen model":"vonthunen","Bid-rent theory":"vonthunen",
+ "Concentric zone model":"citymodels:0","Sector model":"citymodels:1","Multiple nuclei model":"citymodels:2","Central business district":"citymodels:0","Zone in transition":"citymodels:0",
+ "Central place theory":"slcentral","Threshold":"slcentral","Range (of a good)":"slcentral","Market area":"slcentral","Hinterland":"slcentral",
+ "Rank-size rule":"ranksize","Primate city":"ranksize","Weber's least-cost theory":"weber","Bulk-reducing industry":"weber","Bulk-gaining industry":"weber",
+ "Choke point":"chokes","Silk Road":"silkroad","Container port":"boxes","Break-of-bulk point":"boxes","Light pollution":"stars",
+ "Island biogeography":"islmw","Species richness":"islspa","Adaptive radiation":"islbeak","Habitat fragmentation":"islfrag","Ecological succession":"islkrak","Primary succession":"islkrak"
 };
 const simOf=t=>{let k=TERMS[t];if(!k){try{const D2=window.gfDiag2&&gfDiag2.TERMS;const v=D2&&D2[t];if(v&&isSim(String(v).split(":")[0]))k=v}catch(e){}}return k&&DG[String(k).split(":")[0]]?k:null};
 function isSim(k){try{return(typeof SIM_KEYS!=="undefined"&&SIM_KEYS.includes(k))||!!(DG[k]&&(DG[k].drag||DG[k].act))}catch(e){return false}}
@@ -662,8 +694,30 @@ const DESC={
  hawaii:"Slide the Pacific plate back over the Hawaiian plume: real coastlines, island ages, volcanoes that grow and sink.",
  plates:"Every plate boundary on Earth, coloured by how the plates meet, and cities carried along for 50 million years.",
  platebound:"Pull apart, sink under, crash together, slide past: four textured cross-sections you can run like a clock.",
- meander:"Bends grow on a real-looking flood plain until the river cuts through the neck and leaves an oxbow lake.",
- tides:"Drag the Moon round the Earth: two bulges, two tides a day, spring tides and neap tides."};
+ meander:"Bends grow on a flood plain until the river cuts through the neck and leaves an oxbow lake.",
+ tides:"Drag the Moon round the Earth: two bulges, two tides a day, spring tides and neap tides.",
+ monsoon:"Month by month over a real map of South Asia: the wind turns round and Mumbai’s rain arrives.",
+ gravity:"Fifteen real US cities: tap one to see which others it pulls on hardest, and how distance weakens the pull.",
+ mercator:"Drag real Greenland, Australia, Brazil or DR Congo north and south on a Mercator map.",
+ citymodels:"Burgess, Hoyt and Harris–Ullman drawn as city plans: tap a zone, let the city grow.",
+ vonthunen:"Rings of farming round a market town; change the transport cost, add a river, raise the grain price.",
+ tsunami:"The 2004 wave crossing the Bay of Bengal on the real depth profile: fast in deep water, tall near land.",
+ sldaylen:"Pick any latitude and date: hours of daylight, sunrise and sunset, the midnight sun and the polar night.",
+ slgreenhouse:"Turn up the greenhouse gases and watch the energy flows and the ground temperature change.",
+ slisostasy:"Load the crust with an ice sheet, then melt it: the land rises for thousands of years.",
+ slseabreeze:"Run a summer day on the coast: the breeze blows in from the sea by day and out by night.",
+ slnino:"Slide from La Niña to El Niño: warm water, trade winds and rain move across the Pacific.",
+ sluhi:"Temperatures across a city by day and night; add wind or trees and see the heat island shrink.",
+ slcarbon:"Set how much fossil fuel we burn: see where the carbon goes and how fast CO₂ in the air rises.",
+ slwater:"Follow one drop of water through ocean, air, rivers, ice and rock, with the real odds and times.",
+ sllatlon:"Drag a pin on a spinning globe and read its latitude and longitude, and the nearest big city.",
+ sltissot:"The same circle on five world maps: see which ones keep areas true and which keep shapes.",
+ slsuntime:"Drag the Sun across a world map and compare each city’s clock with where the Sun really is.",
+ slwind:"Drag a high and a low: isobars, wind arrows, the Earth’s spin and friction near the ground.",
+ slcontours:"Read hills from contour lines: change the interval and draw a cross-section between two points.",
+ sllongshore:"Waves at an angle push sand along the beach: groynes trap it and a spit grows across the estuary.",
+ slcentral:"Hexagons of market areas: the further people travel for something, the fewer, bigger places supply it.",
+ slsealevel:"Raise the sea on a low coast with dunes, marsh and a town, with or without a storm surge."};
 let SL={cat:"all",open:null};
 function allSims(){let L=[];try{L=(typeof SIM_KEYS!=="undefined"?SIM_KEYS.slice():[])}catch(e){}K.SIMS.concat(NEW).forEach(k=>{if(!L.includes(k))L.push(k)});return L.filter(k=>DG[k])}
 const termsFor=k=>{const out=[];const all=Object.assign({},(window.gfDiag2&&gfDiag2.TERMS)||{},TERMS);Object.keys(all).forEach(t=>{if(String(all[t]).split(":")[0]===k&&(!dictTerms().length||dictTerms().includes(t)))out.push(t)});return out};

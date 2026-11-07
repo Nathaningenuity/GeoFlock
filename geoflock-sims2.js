@@ -539,6 +539,221 @@ make("tides",{title:"Two tides a day, spring and neap",cat:"water",h:222,y0:4,
  tick:(svg,s,dt)=>{if(!s.play)return;s.h+=dt*4;s.ph=(s.ph+dt*4/24)%29.53;DG.tides._d(svg,s)}});
 })();
 
+/* ================================================================ 6. Why the monsoon switches on and off */
+(function(){
+const MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
+/* Mumbai (Santacruz) mean monthly rainfall, mm, IMD normals 1971–2000, rounded */
+const RAIN=[1,1,0,1,11,523,800,530,312,56,17,5];
+/* the summer monsoon's strength by month: −1 the dry north-east wind of winter, +1 the wet south-west wind of summer */
+const W=[-1,-.9,-.6,-.2,.25,.85,1,1,.7,-.1,-.6,-.9];
+/* the rain belt (ITCZ / monsoon trough), latitude by month, rounded */
+const ITCZ=[-5,-4,0,5,10,18,24,24,18,8,0,-4];
+const at=(A,m)=>{const i=Math.floor(m)%12,j=(i+1)%12,u=m-Math.floor(m);return A[i]*(1-u)+A[j]*u};
+let PM=null;const proj=()=>PM||(PM=d3.geoMercator().fitExtent([[6,6],[200,150]],{type:"MultiPoint",coordinates:[[55,-6],[102,36]]}));
+make("monsoon",{title:"Why the monsoon switches on and off",cat:"climate",h:214,
+ src:"Rain: Mumbai (Santacruz), India Meteorological Department normals 1971–2000, rounded (about 2,250 mm a year, 95% from June to September). Winds and rain belt: long-term averages, simplified.",
+ defs:()=>'<linearGradient id="dgMoSea" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1d4f86"/><stop offset="1" stop-color="#3f86c4"/></linearGradient><linearGradient id="dgMoLand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8a27a"/><stop offset=".5" stop-color="#c9b98a"/><stop offset="1" stop-color="#9fb874"/></linearGradient>',
+ frame:()=>{const P=proj(),pa=d3.geoPath(P);let h='<clipPath id="dgMoClip"><rect x="6" y="6" width="194" height="144" rx="8"/></clipPath><g clip-path="url(#dgMoClip)"><rect x="6" y="6" width="194" height="144" fill="url(#dgMoSea)"/>'+
+  '<path d="'+landPath("mon",P,f=>{try{const b=d3.geoBounds(f);return b[1][1]>-12&&b[0][1]<45&&b[1][0]>45&&b[0][0]<110}catch(e){return false}})+'" fill="url(#dgMoLand)" stroke="#8e8462" stroke-width=".4"/>';
+  /* the Himalayas and the Tibetan plateau */
+  const hm=[[73,35],[78,33],[84,29],[88,28],[92,28],[96,29]].map(P);h+='<path d="'+ln(hm)+'" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/><path d="'+ln(hm)+'" fill="none" stroke="#8a7a6a" stroke-width="1" stroke-dasharray="2 2"/>';
+  const t=P([86,33.5]);h+=T(f1(t[0]),f1(t[1]),"Himalayas",'text-anchor="middle" font-size="6" font-weight="800" fill="#5a4a3a"');
+  [["Arabian Sea",64,14],["Bay of Bengal",89,14],["India",79,22]].forEach(([n,lo,la])=>{const p=P([lo,la]);h+=T(f1(p[0]),f1(p[1]),n,'text-anchor="middle" font-size="6.2" font-weight="800" fill="'+(n==="India"?"#4a3a2a":"#d8ecfa")+'"')});
+  const mb=P([72.9,19.1]);h+='<circle cx="'+f1(mb[0])+'" cy="'+f1(mb[1])+'" r="2.2" fill="'+ACC+'" stroke="#fff" stroke-width=".7"/>'+T(f1(mb[0]-3),f1(mb[1]+2),"Mumbai",'text-anchor="end" font-size="5.8" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"');
+  h+='<g class="mo-w"></g></g><rect x="6" y="6" width="194" height="144" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>';
+  h+='<g transform="translate(206,6)"><rect width="88" height="144" rx="8" fill="#fff"/>'+T(6,12,"Rain in Mumbai",'font-size="6.6" font-weight="800" fill="'+INK+'"')+T(6,20,"mm each month",'font-size="5.6" fill="'+SUB+'"')+'<g class="mo-b"></g></g>';
+  h+='<text class="mo-big" x="8" y="162" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("mo-tx",8,165,286,26,6.3)+slider("m",14,200,206,"Month")+btn("play",232,192,62,"▶ Play")+hint(8,212,"Drag through the year: the wind turns round and the rain belt moves");
+  return h},
+ state:()=>({m:6,play:0,ph:0}),
+ draw:(svg,s)=>{const P=proj(),m=s.m,w=at(W,m),lat=at(ITCZ,m);let h="";
+  /* the rain belt */
+  const y=P([80,lat])[1];h+='<path d="M6,'+f1(y)+' C60,'+f1(y-5)+' 120,'+f1(y+6)+' 200,'+f1(y-3)+'" fill="none" stroke="#fff" stroke-width="7" opacity=".18"/><path d="M6,'+f1(y)+' C60,'+f1(y-5)+' 120,'+f1(y+6)+' 200,'+f1(y-3)+'" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="4 3"/>'+T(196,f1(y-5),"rain belt (ITCZ)",'text-anchor="end" font-size="5.6" font-weight="800" fill="#fff"');
+  /* clouds and rain over the land when the wet wind blows */
+  if(w>.2){const k=w;[[73,19],[76,12],[88,24],[91,25],[80,22],[84,20]].forEach(([lo,la],i)=>{const p=P([lo,la]);h+='<g transform="translate('+f1(p[0])+','+f1(p[1]-6)+') scale('+f2(.6+k*.5)+')" opacity="'+f2(.4+k*.6)+'"><circle cx="-4" cy="0" r="5" fill="#f4f7fb"/><circle cx="3" cy="-2" r="6" fill="#f4f7fb"/><circle cx="9" cy="1" r="4" fill="#f4f7fb"/><path d="M-4,6 l-1.5,5 M1,6 l-1.5,6 M6,6 l-1.5,5" stroke="#4a9ad8" stroke-width="1"/></g>'})}
+  /* the wind */
+  const a=w>0?-Math.PI/4-.15:Math.PI*3/4+.1,sp=Math.abs(w);for(let j=0;j<5;j++)for(let i=0;i<6;i++){const lo=58+i*8+(j%2)*4,la=-2+j*7.5,p=P([lo,la]);const L=4+sp*9,ph=(s.ph*sp*.8+i*.13+j*.29)%1;
+   const x0=p[0]+Math.cos(a)*L*(ph-.5)*1.2,y0=p[1]+Math.sin(a)*L*(ph-.5)*1.2;if(sp>.12)h+=arrow(x0,y0,x0+Math.cos(a)*L,y0+Math.sin(a)*L,w>0?"#e8f6ff":"#ffe7c4",1.1,3.4)}
+  /* the pressure that drives it */
+  const hp=P([w>0?72:92,w>0?28:32.5]);h+=T(f1(hp[0]),f1(hp[1]),w>0?"L":"H",'text-anchor="middle" font-size="14" font-weight="900" fill="'+(w>0?"#c0392b":"#1d4f86")+'" stroke="#fff" stroke-width="2" paint-order="stroke"')+T(f1(hp[0]),f1(hp[1]+8),w>0?"hot land, low pressure":"cold land, high pressure",'text-anchor="middle" font-size="5.4" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"');
+  setHTML(svg,".mo-w",h);
+  let b="";const bx=6,bw=6,bh=96,by=124;RAIN.forEach((v,i)=>{const H=v/850*bh,on=i===Math.round(m)%12;b+='<rect x="'+f1(bx+i*bw*1.2)+'" y="'+f1(by-H)+'" width="'+bw+'" height="'+f1(Math.max(.6,H))+'" fill="'+(on?ACC:"#3d8fd1")+'"'+tip(MON[i]+": about "+v+" mm")+'/>'+T(f1(bx+i*bw*1.2+bw/2),by+7,MON[i][0],'text-anchor="middle" font-size="5" fill="'+SUB+'"')});
+  const mi=Math.round(m)%12;b+=T(6,138,MON[mi]+": "+RAIN[mi]+" mm",'font-size="6.6" font-weight="900" fill="'+INK+'"');setHTML(svg,".mo-b",b);
+  txt(svg,".mo-big",w>.2?MON[mi]+": the wet south-west monsoon":w<-.2?MON[mi]+": the dry north-east monsoon":MON[mi]+": the wind is turning round");
+  setPara(svg,"mo-tx",w>.2?"The land has heated far more than the sea, so air rises over India and moist sea air pours in. It rises against the Western Ghats and the Himalayas and falls as heavy rain.":w<-.2?"The land is now colder than the sea, so air sinks over Asia and dry wind blows out to sea. Hardly any rain falls for months.":"Between the seasons the winds are light and changeable; the first storms come before the monsoon breaks in June.");
+  setSlider(svg,"m",14,200,206,m/11.99,MON[mi]);btnOn(svg,"play",!!s.play,s.play?"❚❚ Pause":"▶ Play")},
+ drag:(svg,s,n,x)=>{s.play=0;s.m=clamp((x-14)/206,0,1)*11.99},
+ act:(svg,s,a)=>{if(a==="play"){s.play=!s.play;return true}},
+ tick:(svg,s,dt)=>{s.ph+=dt;if(s.play)s.m=(s.m+dt*.9)%12;DG.monsoon._d(svg,s)}});
+})();
+
+/* ================================================================ 7. The gravity model, on a real map */
+(function(){
+/* US metropolitan areas, 2020 census, millions (rounded) */
+const C=[["New York",-74,40.7,19.8],["Los Angeles",-118.2,34.05,13.2],["Chicago",-87.6,41.9,9.6],["Dallas",-96.8,32.8,7.6],["Houston",-95.4,29.8,7.1],["Washington",-77,38.9,6.4],["Philadelphia",-75.2,40,6.2],["Miami",-80.2,25.8,6.1],["Atlanta",-84.4,33.75,6.1],["Boston",-71.1,42.4,4.9],["Phoenix",-112.1,33.45,4.8],["San Francisco",-122.4,37.8,4.7],["Seattle",-122.3,47.6,4],["Denver",-105,39.7,2.96],["Minneapolis",-93.3,45,3.7]];
+const dist=(a,b)=>{const x=Math.sin((b[2]-a[2])*R/2),y=Math.sin((b[1]-a[1])*R/2);return 2*6371*Math.asin(Math.sqrt(x*x+Math.cos(a[2]*R)*Math.cos(b[2]*R)*y*y))};
+let PG=null;const proj=()=>PG||(PG=d3.geoAlbers().rotate([96,0]).center([0,38]).parallels([29.5,45.5]).fitExtent([[24,18],[276,132]],{type:"MultiPoint",coordinates:[[-124,48.5],[-67,45],[-80,24.5],[-117,32],[-97,26]]}));
+make("gravity",{title:"The gravity model",cat:"people",h:204,
+ src:"Interaction = population × population ÷ distance^b (after Reilly 1931 and Zipf 1946); b = 2 is the classic value. Metro populations: US Census 2020, rounded; distances along great circles. Real flows (flights, phone calls, migration) follow this pattern roughly.",
+ defs:()=>'<linearGradient id="dgGvLand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3dcc0"/><stop offset="1" stop-color="#d4cba8"/></linearGradient>',
+ frame:()=>{const P=proj();return'<rect x="6" y="6" width="288" height="136" rx="8" fill="#d7e8f5"/><clipPath id="dgGvClip"><rect x="6" y="6" width="288" height="136" rx="8"/></clipPath><g clip-path="url(#dgGvClip)"><path d="'+landPath("grav",P,f=>{try{const b=d3.geoBounds(f);return b[1][1]>15&&b[0][0]<-50&&b[1][0]>-170}catch(e){return false}})+'" fill="url(#dgGvLand)" stroke="#a89a6a" stroke-width=".4"/><g class="gv-f"></g><g class="gv-c"></g></g>'+
+  '<text class="gv-big" x="8" y="154" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("gv-tx",8,157,286,20,6.3)+btn("b1",8,180,88,"distance")+btn("b2",100,180,88,"distance²")+btn("b3",192,180,100,"distance³")+hint(8,202,"Tap a city to see its pull on the others; change how fast distance weakens it")},
+ state:()=>({o:2,b:2}),
+ draw:(svg,s)=>{const P=proj(),O=C[s.o];let f="",c="";const I=C.map((B,i)=>i===s.o?0:O[3]*B[3]/Math.pow(dist(O,B)/1000,s.b));const mx=Math.max(...I);
+  const order=C.map((B,i)=>[I[i],i]).sort((a,b)=>a[0]-b[0]);
+  order.forEach(([v,i])=>{if(i===s.o)return;const a=P([O[1],O[2]]),b=P([C[i][1],C[i][2]]),k=v/mx;f+='<path d="M'+f1(a[0])+','+f1(a[1])+' Q'+f1((a[0]+b[0])/2)+','+f1((a[1]+b[1])/2-Math.hypot(b[0]-a[0],b[1]-a[1])*.12)+' '+f1(b[0])+','+f1(b[1])+'" fill="none" stroke="'+ACC+'" stroke-width="'+f2(.4+k*6)+'" opacity="'+f2(.25+k*.7)+'" stroke-linecap="round"'+tip(O[0]+" ↔ "+C[i][0]+": "+fmt(dist(O,C[i]))+" km · pull "+Math.round(k*100)+" (the strongest = 100)")+'/>'});
+  C.forEach((B,i)=>{const p=P([B[1],B[2]]),r=1.4+Math.sqrt(B[3])*1.1,on=i===s.o;c+='<g data-act="o:'+i+'" style="cursor:pointer"'+tip(B[0]+": "+B[3]+" million people")+'><circle cx="'+f1(p[0])+'" cy="'+f1(p[1])+'" r="'+f1(r+4)+'" fill="transparent"/><circle cx="'+f1(p[0])+'" cy="'+f1(p[1])+'" r="'+f1(r)+'" fill="'+(on?ACC:"#2f6fb0")+'" stroke="#fff" stroke-width=".8"/>'+(on||B[3]>6?T(f1(p[0]+r+1.5),f1(p[1]+2),B[0],'font-size="5.8" font-weight="800" fill="'+INK+'" stroke="#fff" stroke-width="1.6" stroke-opacity=".8" paint-order="stroke"'):"")+'</g>'});
+  setHTML(svg,".gv-f",f);setHTML(svg,".gv-c",c);
+  const top=order.slice(-3).reverse().map(([v,i])=>C[i][0]+" ("+fmt(dist(O,C[i]))+" km)");
+  txt(svg,".gv-big",O[0]+" pulls hardest on "+top[0]);
+  setPara(svg,"gv-tx","Next: "+top.slice(1).join(", ")+". "+(s.b>=2?"Halve the distance and the pull is "+Math.pow(2,s.b)+" times stronger; big cities far apart pull less than smaller ones close by.":"With distance counting less, big cities pull each other even across the country."));
+  [1,2,3].forEach(k=>btnOn(svg,"b"+k,s.b===k))},
+ act:(svg,s,a)=>{let m=/^o:(\d+)/.exec(a);if(m){s.o=+m[1];return true}m=/^b(\d)$/.exec(a);if(m){s.b=+m[1];return true}}});
+})();
+
+/* ================================================================ 8. How much Mercator inflates: drag real countries */
+(function(){
+const SH=[["Greenland","304",2166086],["Australia","036",7692024],["Brazil","076",8515767],["DR Congo","180",2344858]];
+let PM=null;const proj=()=>PM||(PM=d3.geoMercator().fitExtent([[8,26],[292,150]],{type:"MultiPoint",coordinates:[[-180,-60],[180,80]]}).clipExtent([[8,26],[292,150]]));
+const featOf=id=>landFeatures().find(f=>String(f.id)===id);
+/* move a shape on the globe so its middle sits at (lon, lat), keeping its true size */
+function moved(f,c0,c1){if(!f)return null;const r1=d3.geoRotation([-c0[0],-c0[1]]),r2=d3.geoRotation([-c1[0],-c1[1]]);const mv=p=>r2.invert(r1(p));
+ const g=f.geometry,map=rings=>rings.map(r=>r.map(mv));return{type:g.type,coordinates:g.type==="Polygon"?map(g.coordinates):g.coordinates.map(map)}}
+const CTR={};const ctr=(i)=>{if(CTR[i])return CTR[i];const f=featOf(SH[i][1]);return CTR[i]=f?d3.geoCentroid(f):[0,0]};
+make("mercator",{title:"How much Mercator inflates",cat:"maps",h:200,tabs:SH.map(x=>x[0]),
+ src:"Real outlines (the map’s own Natural Earth shapes) moved on the globe at their true size, then drawn on a Mercator map, which stretches areas by 1/cos²(latitude). Areas: UN Statistics Division, rounded.",
+ frame:()=>{const P=proj(),pa=d3.geoPath(P);return'<rect x="8" y="26" width="284" height="124" fill="#d7e8f5"/><path d="'+landPath("merc",P,f=>{try{return d3.geoBounds(f)[1][1]>-60}catch(e){return false}})+'" fill="#e0d8bc" stroke="#b5a980" stroke-width=".3"/><path d="'+(pa(d3.geoGraticule().step([30,20])())||"").replace(/(\.\d)\d+/g,"$1")+'" fill="none" stroke="#fff" stroke-width=".5"/><g class="mc-s"></g><rect x="8" y="26" width="284" height="124" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+
+  '<text class="mc-big" x="8" y="162" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("mc-tx",8,165,286,20,6.3)+hint(8,196,"Drag the orange shape north and south: its true size never changes")},
+ state:()=>({c:[[ -30,72],[134,-25],[-53,-10],[23,-3]].map(x=>x.slice())}),
+ draw:(svg,s)=>{const P=proj(),pa=d3.geoPath(P),i=s.tab,f=featOf(SH[i][1]);if(!f){setHTML(svg,".mc-s",T(150,90,"loading the map…",'text-anchor="middle"'));return}
+  const c0=ctr(i);if(!s.init){s.init=1;s.c=SH.map((x,k)=>ctr(k).slice())}const c1=s.c[i];const g=moved(f,c0,c1);
+  const home=pa(f.geometry),now=pa(g),cp=P(c1);
+  setHTML(svg,".mc-s",'<path d="'+home+'" fill="none" stroke="#7a6a4a" stroke-width=".8" stroke-dasharray="2 1.5"/><g class="dg-handle" data-drag="m"><path d="'+now+'" fill="'+ACC+'" fill-opacity=".75" stroke="#b5501a" stroke-width=".8"/>'+(cp?'<circle cx="'+f1(cp[0])+'" cy="'+f1(cp[1])+'" r="14" fill="transparent"/>':"")+'</g>');
+  const k=1/Math.pow(Math.cos(c1[1]*R),2),k0=1/Math.pow(Math.cos(c0[1]*R),2);
+  txt(svg,".mc-big",SH[i][0]+" at "+Math.abs(Math.round(c1[1]))+"°"+(c1[1]>=0?"N":"S")+": drawn "+(k<1.08?"about true size":k.toFixed(1)+"× too big"));
+  setPara(svg,"mc-tx","True area "+fmt(SH[i][2])+" km², the same wherever it goes. At home (dashed) Mercator draws it "+k0.toFixed(1)+"× too big"+(SH[i][0]==="Greenland"?"; Africa is really 14 times bigger than Greenland.":"."))},
+ drag:(svg,s,n,x,y)=>{const ll=proj().invert([x,y]);if(!ll||!isFinite(ll[1]))return false;s.c[s.tab]=[ll[0],clamp(ll[1],-72,78)]}});
+})();
+
+/* ================================================================ 9. Three models of the city, drawn as city plans */
+(function(){
+const ZN=[["Central business district","#d9573a","Offices, shops and banks: land is dearest here, so buildings go up"],["Factories and old housing","#8a7a6a","Industry, warehouses and run-down housing; Burgess called it the zone in transition"],
+ ["Working-class homes","#e8a24a","Rows of small houses close to the factories and the jobs"],["Middle-class homes","#7fb6e0","Bigger houses with gardens, a longer trip to work"],["Commuter suburbs","#3a6fb5","Wealthy homes and villages; people travel in by train or car"]];
+const MD=[["Concentric zones","Burgess (1925), drawn from Chicago: the city grows outward in rings; each zone pushes into the next (invasion and succession)."],
+ ["Sectors","Hoyt (1939): wedges follow transport lines. Industry runs along the railway and the river; the rich move outward along the best side."],
+ ["Multiple nuclei","Harris and Ullman (1945): a car city grows around several centres: the old downtown, an industrial district, a suburban business centre."]];
+const W=194,H=124,X0=6,Y0=26,CX=150,CY=64;/* centre on the lake shore, as in Chicago */
+function zoneAt(m,x,y,g){if(x>172+6*Math.sin(y/9))return-1;/* the lake */const dx=x-CX,dy=y-CY,r=Math.hypot(dx,dy)/(.7+.5*g),a=Math.atan2(dy,dx);
+ if(m===0)return r<12?0:r<26?1:r<44?2:r<66?3:4;
+ if(m===1){if(r<12)return 0;const ind=Math.abs(Math.atan2(Math.sin(a-2.5),Math.cos(a-2.5)))<.32,rich=Math.abs(Math.atan2(Math.sin(a+1.75),Math.cos(a+1.75)))<.38,low=Math.abs(Math.atan2(Math.sin(a-2.5),Math.cos(a-2.5)))<.8;return ind&&r<90?1:rich?(r<70?4:4):low?2:r<70?3:4}
+ const N=[[CX,CY,0,1],[CX-62,CY+30,1,.8],[CX-80,CY-36,0,.55],[CX-38,CY-46,4,.9],[CX-18,CY+40,2,1]];let best=4,bd=1e9;N.forEach(([nx,ny,z,w])=>{const d=Math.hypot(x-nx,y-ny)/(w*(.7+.5*g));if(d<bd){bd=d;best=z}});
+ if(bd>34)return Math.hypot(x-CX,y-CY)>90*(.7+.5*g)?4:3;return best===0&&Math.hypot(x-CX,y-CY)>14*(.7+.5*g)&&Math.hypot(x-(CX-80),y-(CY-36))>10?3:best}
+const C=new Map();
+function plan(m,g){const key=m+":"+Math.round(g*10);if(C.has(key))return C.get(key);const S=2,cw=W*S,ch=H*S,c=document.createElement("canvas");c.width=cw;c.height=ch;const x=c.getContext("2d"),im=x.createImageData(cw,ch),D=im.data;
+ const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];const ZC=ZN.map(z=>hex(z[1]));
+ for(let py=0;py<ch;py++)for(let px=0;px<cw;px++){const ux=px/S,uy=py/S,z=zoneAt(m,ux,uy,g),k=(py*cw+px)*4;let c3;
+  if(z<0){const t=.5+.5*Math.sin(px*.15+py*.03);c3=[70+t*10,140+t*12,200+t*10]}
+  else{const bs=z===0?7:z===1?11:z===2?6:z===3?8:12,bx=Math.floor(ux/bs),by=Math.floor(uy/bs),fx=ux-bx*bs,fy=uy-by*bs,rr=rnd(bx*31.7+by*7.3+z),road=fx<.9||fy<.9;
+   if(road)c3=z===4?[214,206,170]:[226,222,214];
+   else if(z===0){const top=fx>bs-2.2||fy>bs-2.2;c3=top?[90,100,118]:[150+rr*50,160+rr*45,178+rr*40]}
+   else if(z===1){c3=rr<.6?[150+rr*20,146+rr*18,138]:[132,110,90];if((Math.floor(fx*2))%3===0&&rr<.6)c3=[120,120,118]}
+   else if(z===2){const row=Math.floor(fy/1.5)%2;c3=row?[176,86,60]:[200,110,80];if(fx>bs-1.2)c3=[214,200,170]}
+   else if(z===3){const house=Math.abs(fx-bs/2)<2&&Math.abs(fy-bs/2)<2;c3=house?[204,120,92]:[150+rr*20,190,120]}
+   else{const house=rr<.3&&Math.abs(fx-bs/2)<1.6&&Math.abs(fy-bs/2)<1.6,tree=rnd(Math.floor(ux*1.3)*3.1+Math.floor(uy*1.3)*7.7)<.25;c3=house?[220,210,196]:tree?[70,120,60]:[150+rr*25,186,110]}
+   const t=ZC[z];c3=[c3[0]*.6+t[0]*.4,c3[1]*.6+t[1]*.4,c3[2]*.6+t[2]*.4]}
+  D[k]=c3[0];D[k+1]=c3[1];D[k+2]=c3[2];D[k+3]=255}
+ x.putImageData(im,0,0);const u=c.toDataURL();if(C.size>40)C.clear();C.set(key,u);return u}
+make("citymodels",{title:"Three models of the city",cat:"people",h:212,tabs:MD.map(x=>x[0]),
+ src:"Burgess (1925), Hoyt (1939), Harris and Ullman (1945), drawn as city plans on a lake shore like Chicago’s. Simplified: real cities mix all three.",
+ frame:()=>'<image class="cm-i" x="'+X0+'" y="'+Y0+'" width="'+W+'" height="'+H+'" preserveAspectRatio="none"/><rect x="'+X0+'" y="'+Y0+'" width="'+W+'" height="'+H+'" fill="transparent" data-drag="pick"/><g class="cm-sel"></g><rect x="'+X0+'" y="'+Y0+'" width="'+W+'" height="'+H+'" rx="2" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+T(190,Y0+12,"lake",'text-anchor="end" font-size="6.2" font-weight="800" fill="#fff"')+
+  '<g transform="translate(206,26)"><rect width="88" height="124" rx="8" fill="#fff"/><g class="cm-l"></g></g>'+para("cm-tx",8,154,286,24,6.3)+slider("g",14,192,206,"The city grows")+hint(8,208,"Tap a zone on the plan; drag to let the city grow outward"),
+ state:(tab,a)=>({g:.5,sel:0}),
+ draw:(svg,s)=>{const im=q(svg,".cm-i");const u=plan(s.tab,s.g);if(im&&im.getAttribute("href")!==u)im.setAttribute("href",u);
+  let l="";ZN.forEach((z,i)=>{const y=8+i*22,on=i===s.sel;l+='<g data-act="z:'+i+'" style="cursor:pointer"><rect x="4" y="'+(y-5)+'" width="80" height="20" rx="5" fill="'+(on?"#f3f6fa":"#fff")+'" stroke="'+(on?z[1]:"none")+'"/><rect x="8" y="'+(y-1)+'" width="9" height="9" rx="2" fill="'+z[1]+'"/>'+T(21,y+6,z[0].replace("Central business district","CBD").replace("Factories and old housing","Factories, old housing"),'font-size="5.8" font-weight="'+(on?900:700)+'" fill="'+INK+'"')+'</g>'});setHTML(svg,".cm-l",l);
+  setPara(svg,"cm-tx","<b>"+ZN[s.sel][0]+".</b> "+ZN[s.sel][2]+". <i>"+MD[s.tab][1]+"</i>");
+  setSlider(svg,"g",14,192,206,s.g,s.g<.33?"1900":s.g<.66?"1930":"1960")},
+ drag:(svg,s,n,x,y)=>{if(n==="g"){s.g=clamp((x-14)/206,0,1);return}const z=zoneAt(s.tab,x-X0,y-Y0,s.g);if(z>=0)s.sel=z},
+ act:(svg,s,a)=>{const m=/^z:(\d)/.exec(a);if(m){s.sel=+m[1];return true}}});
+})();
+
+/* ================================================================ 10. Von Thünen's rings on a landscape */
+(function(){
+/* rent per km² = yield × (price − cost) − yield × freight × distance (von Thünen 1826); numbers chosen so that one unit is about one km */
+const USE=[["Market gardens and dairy","#7cbf5a",100,10],["Forest (firewood, timber)","#2f6a3a",70,4],["Grain","#e3c45a",48,1.2],["Ranching","#c9b98a",20,.25]];
+const MX=6,MY=26,MW=180,MH=124,TX=96,TY=88;
+function rentAt(d,k){let best=-1,bv=0;USE.forEach((u,i)=>{const v=u[2]-u[3]*k*d;if(v>bv){bv=v;best=i}});return[best,bv]}
+const C=new Map();
+function land(k,river){const key=Math.round(k*20)+":"+river;if(C.has(key))return C.get(key);const S=2,cw=MW*S,ch=MH*S,c=document.createElement("canvas");c.width=cw;c.height=ch;const x=c.getContext("2d"),im=x.createImageData(cw,ch),D=im.data;
+ for(let py=0;py<ch;py++)for(let px=0;px<cw;px++){const ux=px/S,uy=py/S,dx=ux-(TX-MX),dy=uy-(TY-MY);let d=Math.hypot(dx,dy)*.5;
+  const ry=(TY-MY)+5*Math.sin(ux/16);if(river)d=Math.min(d,(Math.abs(dx)*.25+Math.abs(uy-ry))*.5);/* boats carry goods cheaply along the river */
+  const[u]=rentAt(d,k),kk=(py*cw+px)*4,r=rnd(Math.floor(ux/5)*13.1+Math.floor(uy/4)*7.7);let c3;
+  if(river&&Math.abs(uy-ry)<1.6)c3=[70,140,205];
+  else if(Math.hypot(dx,dy)<4)c3=((Math.floor(ux)+Math.floor(uy))%3===0)?[226,222,214]:[150+r*40,140+r*30,130];
+  else if(u===0){const plot=Math.floor(ux/3)+Math.floor(uy/3)*7;c3=[[120,180,80],[160,120,170],[110,160,70],[190,150,90],[90,150,70]][Math.floor(rnd(plot)*5)]}
+  else if(u===1){const n=rnd(Math.floor(ux*1.4)*3.7+Math.floor(uy*1.4)*9.1);c3=[40+n*40,90+n*40,50+n*20]}
+  else if(u===2){const stripe=Math.floor((ux+uy*.3)*1.6)%2;c3=r<.5?(stripe?[232,200,96]:[220,186,80]):(stripe?[214,196,110]:[200,180,100])}
+  else if(u===3){c3=[196+r*14,190+r*10,140];if(rnd(Math.floor(ux*.9)*5.3+Math.floor(uy*.9)*2.9)<.05)c3=[110,80,60]}
+  else c3=[166,150,124];
+  D[kk]=c3[0];D[kk+1]=c3[1];D[kk+2]=c3[2];D[kk+3]=255}
+ x.putImageData(im,0,0);const u=c.toDataURL();if(C.size>60)C.clear();C.set(key,u);return u}
+make("vonthunen",{title:"Von Thünen’s rings: rent falls with distance",cat:"econ",h:214,
+ src:"After J. H. von Thünen, The Isolated State (1826): each crop’s rent = yield × (price − cost) − yield × freight × distance; the land goes to the crop that pays most. Numbers are made up but keep his order.",
+ frame:()=>'<image class="vt-i" x="'+MX+'" y="'+MY+'" width="'+MW+'" height="'+MH+'" preserveAspectRatio="none"/><rect x="'+MX+'" y="'+MY+'" width="'+MW+'" height="'+MH+'" rx="2" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+
+  '<g transform="translate('+TX+','+TY+')"><circle r="4.5" fill="#fff" opacity=".6"/><path d="M-1,-8 h2 v-4 h-2Z M-3,-8 h6 v6 h-6Z" fill="#8a3a2a"/></g>'+T(TX,TY+12,"market town",'text-anchor="middle" font-size="6" font-weight="900" fill="#fff" stroke="#1d3047" stroke-width="1.8" paint-order="stroke"')+
+  '<g transform="translate(192,26)"><rect width="102" height="124" rx="8" fill="#fff"/><g class="vt-c"></g></g>'+para("vt-tx",8,154,286,22,6.3)+slider("k",14,192,140,"Transport cost")+btn("river",160,184,64,"No river")+btn("price",228,184,66,"Grain price ↑")+hint(8,210,"Drag the transport cost; add a river and the rings stretch along it"),
+ state:()=>({k:1,river:0,price:0}),
+ draw:(svg,s)=>{if(s.price)USE[2][2]=62;else USE[2][2]=48;const im=q(svg,".vt-i"),u=land(s.k,s.river)+"";if(im&&im.getAttribute("href")!==u)im.setAttribute("href",u);
+  /* the rent lines */const X0=10,X1=96,Y0=14,Y1=92,dm=90,xd=d=>X0+d/dm*(X1-X0),yr=v=>Y1-v/100*(Y1-Y0);let c=T(4,9,"Rent each crop can pay",'font-size="6" font-weight="800" fill="'+INK+'"');
+  c+='<path d="M'+X0+','+Y1+'H'+X1+'M'+X0+','+Y0+'V'+Y1+'" stroke="#9fb2c4" stroke-width=".6"/>'+T(X1,Y1+7,"distance →",'text-anchor="end" font-size="5" fill="'+SUB+'"');
+  USE.forEach(u=>{const d0=u[2]/(u[3]*s.k);c+='<path d="M'+f1(xd(0))+','+f1(yr(u[2]))+'L'+f1(xd(Math.min(dm,d0)))+','+f1(yr(Math.max(0,u[2]-u[3]*s.k*Math.min(dm,d0))))+'" stroke="'+u[1]+'" stroke-width="1.4"/>'});
+  let env=[];for(let d=0;d<=dm;d+=1){const[,v]=rentAt(d,s.k);env.push([xd(d),yr(v)])}c+='<path d="'+ln(env)+'" fill="none" stroke="#1d3047" stroke-width=".8" stroke-dasharray="2 1.5"/>';
+  USE.forEach((u,i)=>{c+='<rect x="6" y="'+(100+i*6.4)+'" width="6" height="4.6" fill="'+u[1]+'"/>'+T(15,104+i*6.4,u[0],'font-size="5" fill="'+INK+'"')});setHTML(svg,".vt-c",c);
+  const rings=[];let last=-1,start=0;for(let d=0;d<=90;d+=.5){const[u]=rentAt(d,s.k);if(u!==last){if(last>=0)rings.push(USE[last][0].split(" (")[0]+" "+Math.round(start)+"–"+Math.round(d)+" km");last=u;start=d}}if(last>=0)rings.push(USE[last][0].split(" (")[0]+" "+Math.round(start)+"+ km");
+  setPara(svg,"vt-tx",(s.river?"Boats carry goods cheaply, so each ring stretches along the river. ":"Close to town, crops that are heavy or go off quickly pay the most rent; further out, only cheap, light-to-move uses pay. ")+"Rings: "+rings.slice(0,3).join(", ")+".");
+  setSlider(svg,"k",14,192,140,(s.k-.5)/1.5,s.k<.8?"low (railways)":s.k>1.4?"high (ox carts)":"medium");btnOn(svg,"river",!!s.river,s.river?"River":"No river");btnOn(svg,"price",!!s.price,s.price?"Grain price up":"Grain price ↑")},
+ drag:(svg,s,n,x)=>{s.k=.5+clamp((x-14)/140,0,1)*1.5},
+ act:(svg,s,a)=>{if(a==="river"){s.river=s.river?0:1;return true}if(a==="price"){s.price=!s.price;C.clear();return true}}});
+})();
+
+/* ================================================================ 11. The 2004 tsunami crosses the Bay of Bengal */
+(function(){
+/* depth along the path from the earthquake off Sumatra to Sri Lanka (km from the epicentre, metres), rounded from GEBCO */
+const PROF=[[0,-3000],[100,-4500],[300,-4300],[550,-3300],[640,-2100],[740,-3400],[900,-4200],[1400,-4100],[1500,-3200],[1555,-700],[1575,-100],[1600,0]];
+const EQ=[95.85,3.32],SL=[81.85,7.2];/* epicentre (USGS) and the coast of eastern Sri Lanka */
+const depth=x=>{for(let i=1;i<PROF.length;i++)if(x<=PROF[i][0]){const a=PROF[i-1],b=PROF[i],u=(x-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*u}return 0};
+/* time to reach each point: the wave runs at the square root of g × depth */
+const TT=[0];for(let x=1;x<=1600;x++){const d=Math.max(5,-depth(x-.5));TT.push(TT[x-1]+1000/Math.sqrt(9.81*d)/3600)}
+const posAt=t=>{let x=0;while(x<1600&&TT[x+1]<=t)x++;return x};
+let PM=null;const proj=()=>PM||(PM=d3.geoMercator().fitExtent([[6,6],[294,92]],{type:"MultiPoint",coordinates:[[76,0],[101,15]]}));
+make("tsunami",{title:"Why a tsunami slows down and rears up near land",cat:"water",h:218,
+ src:"26 December 2004, magnitude 9.1 off Sumatra (USGS). Wave speed = √(g × depth); height grows as depth shrinks (Green’s law, height ∝ depth^−¼), from about 0.6 m in deep water. It reached Sri Lanka about 2 hours later (NOAA NCEI). Depths rounded from GEBCO.",
+ defs:()=>'<linearGradient id="dgTsSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f86c4"/><stop offset="1" stop-color="#0f2f5a"/></linearGradient>',
+ frame:()=>{const P=proj();return'<clipPath id="dgTsClip"><rect x="6" y="6" width="288" height="86" rx="8"/></clipPath><g clip-path="url(#dgTsClip)"><rect x="6" y="6" width="288" height="86" fill="#2a6aa6"/><path d="'+landPath("tsu",P,f=>{try{const b=d3.geoBounds(f);return b[1][1]>-12&&b[0][1]<30&&b[1][0]>60&&b[0][0]<110}catch(e){return false}})+'" fill="#cbbf98" stroke="#8e8462" stroke-width=".4"/><g class="ts-m"></g></g><rect x="6" y="6" width="288" height="86" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+
+  '<g class="ts-p"></g><text class="ts-big" x="8" y="174" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="ts-sub" x="8" y="184" font-size="6.4" font-weight="700" fill="'+SUB+'"></text>'+slider("t",14,204,206,"Time after the earthquake")+btn("play",232,196,62,"▶ Play")+hint(8,216,"Drag the time: the wave races across deep water, then slows and grows")},
+ state:()=>({t:.6,play:0}),
+ draw:(svg,s)=>{const P=proj(),t=s.t,x=posAt(t),d=-depth(Math.min(1599,x)),sp=Math.sqrt(9.81*Math.max(5,d))*3.6,hgt=.6*Math.pow(4000/Math.max(10,d),.25);
+  /* the wave front on the map: faster where the sea is deep (west), slower in the shallow Andaman Sea (east) */
+  let ring=[];for(let a=0;a<=360;a+=6){const th=a*R,v=560+230*Math.cos(th-Math.PI*1.03),dist=Math.min(2600,v*t),p=d3.geoDestination?null:null;
+   const ll=dest(EQ,a,dist);const q2=P(ll);if(q2)ring.push(q2)}
+  let m='<path d="'+ln(ring)+'Z" fill="#9fd8f7" fill-opacity=".18" stroke="#fff" stroke-width="1.4"/>';const e=P(EQ),sl=P(SL);
+  m+='<path d="M'+f1(e[0])+','+f1(e[1])+'L'+f1(sl[0])+','+f1(sl[1])+'" stroke="#ffd24a" stroke-width=".8" stroke-dasharray="3 2"/><path d="M'+f1(e[0])+','+f1(e[1]-5)+' l1.6,3.4 3.6,.4 -2.7,2.4 .8,3.6 -3.3,-1.9 -3.3,1.9 .8,-3.6 -2.7,-2.4 3.6,-.4Z" fill="#ffd24a" stroke="#c0561d" stroke-width=".5"/>';
+  [["Sri Lanka",80.7,7.9],["India",79,14],["Sumatra",98.5,1.6],["Thailand",99.6,10.5],["Andaman Is.",92.8,11.8]].forEach(([n,lo,la])=>{const p=P([lo,la]);m+=T(f1(p[0]),f1(p[1]),n,'text-anchor="middle" font-size="5.8" font-weight="800" fill="#4a3a2a"')});
+  setHTML(svg,".ts-m",m);
+  /* the profile */const X0=6,X1=294,Y0=100,Y1=164,SLY=112,xd=k=>X0+k/1600*(X1-X0),yd=v=>SLY+(-v)/4600*(Y1-SLY-2);let p='<rect x="'+X0+'" y="'+Y0+'" width="'+(X1-X0)+'" height="'+(SLY-Y0)+'" fill="#e6f1fa"/>';
+  const bed=[];for(let k=0;k<=1600;k+=10)bed.push([xd(k),yd(depth(k))]);p+='<path d="M'+X0+','+SLY+'H'+X1+'V'+Y1+'H'+X0+'Z" fill="url(#'+uid(svg,"dgTsSea")+')"/><path d="'+ln(bed)+'L'+X1+','+Y1+'L'+X0+','+Y1+'Z" fill="#7a5a3a"/>';
+  /* the wave: a long low hump in deep water that grows steep near the coast */const wx=xd(x),wl=Math.max(6,Math.min(60,sp/14)),A=Math.min(9,hgt*1.6);p+='<path d="M'+f1(wx-wl)+','+SLY+' Q'+f1(wx)+','+f1(SLY-A*2)+' '+f1(wx+wl*.4)+','+SLY+'Z" fill="#9fd8f7" stroke="#fff" stroke-width=".6"/>';
+  p+=T(X0+4,Y0+9,"Sumatra",'font-size="5.8" font-weight="800" fill="'+INK+'"')+T(X1-4,Y0+9,"Sri Lanka",'text-anchor="end" font-size="5.8" font-weight="800" fill="'+INK+'"')+T(xd(640),f1(yd(-2100)+10),"Ninety East Ridge",'text-anchor="middle" font-size="5.4" font-weight="700" fill="#f6e7da"')+T(xd(1100),Y1-4,"4 km deep",'text-anchor="middle" font-size="5.6" font-weight="800" fill="#cfe4f7"');
+  setHTML(svg,".ts-p",p);
+  const hh=Math.floor(t),mm=Math.round((t-hh)*60)%60;
+  txt(svg,".ts-big",x>=1599?"Landfall in Sri Lanka, about 2 hours after the quake":fmt(sp)+" km/h over water "+fmt(d)+" m deep · wave about "+(Math.round(hgt*10)/10)+" m high");
+  txt(svg,".ts-sub",x>=1599?"Run-up on the beaches reached up to about 10 m; some 35,000 people died in Sri Lanka":sp>500?"As fast as a jet airliner, but so low and long that ships at sea barely notice it":"In shallow water it slows down, the back catches up with the front, and it rears up");
+  setSlider(svg,"t",14,204,206,t/2.3,hh+" h "+String(mm).padStart(2,"0")+" min");btnOn(svg,"play",!!s.play,s.play?"❚❚ Pause":"▶ Play")},
+ drag:(svg,s,n,x)=>{s.play=0;s.t=clamp((x-14)/206,0,1)*2.3},
+ act:(svg,s,a)=>{if(a==="play"){if(!s.play&&s.t>=2.29)s.t=0;s.play=!s.play;return true}},
+ tick:(svg,s,dt)=>{if(!s.play)return;s.t=Math.min(2.3,s.t+dt*.25);if(s.t>=2.3)s.play=0;DG.tsunami._d(svg,s)}});
+/* a point at a distance (km) and bearing (degrees) from a start point */
+function dest(p,brg,km){const d=km/6371,b=brg*R,la=p[1]*R,lo=p[0]*R,la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(b)),lo2=lo+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2));return[lo2/R,la2/R]}
+})();
+
 /* rebuild a diagram's fixed parts for its current tab, keeping its state (for diagrams whose frame differs by tab) */
 function rebuild(svg,key){const s=svg._s;if(!s)return;const D=DG[key];const tmp=document.createElement("div");let h=D.svg(String(s.tab));h=typeof dgPaint==="function"?dgPaint(h):h;
  /* keep the unique ids the figure was given */
