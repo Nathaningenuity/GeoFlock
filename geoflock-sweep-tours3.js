@@ -20,16 +20,32 @@ const CL=v=>v==null?v:JSON.parse(JSON.stringify(v));
 function rec(f){try{const L=[];if(typeof PS_PHOTO_DATA!=="undefined")L.push(PS_PHOTO_DATA);["GF_EXTRA_PHOTOS","GF_PORTRAIT_PHOTOS","GF_STOP_PHOTOS"].forEach(n=>{if(Array.isArray(window[n]))L.push(window[n])});
  try{if(window.GF_TOUR_PH&&Array.isArray(GF_TOUR_PH.photos))L.push(GF_TOUR_PH.photos)}catch(e){}
  for(const A of L){const r=A.find(q=>q&&q.f===f&&q.d);if(r)return r}}catch(e){}return null}
-function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f&&q.d);
+function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;
+ /* a picture another stop already shows, found by that stop's pin label */
+ if(!x.f&&x.fromLabel){const S=window.PS_SQ_IMG||{};let i=S[x.fromLabel];if(typeof i!=="number"||!PS_PHOTO_DATA[i]){try{const f=GF_SQ_FILE[x.fromLabel];i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===f&&q.d)}catch(e){i=-1}}
+  if(i>=0){x.f=PS_PHOTO_DATA[i].f;S[x.label]=i;window.PS_SQ_IMG=S;try{GF_SQ_FILE[x.label]=x.f}catch(e){}}return i}
+ let i=PS_PHOTO_DATA.findIndex(q=>q&&q.f===x.f&&q.d);
  if(i<0){const r=x.d?x:rec(x.f);if(!r)return -1;PS_PHOTO_DATA.push({f:x.f,d:r.d,by:r.by,lic:r.lic,page:r.page});i=PS_PHOTO_DATA.length-1}
  try{if(typeof GF_SQ_FILE!=="undefined")GF_SQ_FILE[x.label]=x.f}catch(e){}try{window.PS_SQ_IMG=window.PS_SQ_IMG||{};PS_SQ_IMG[x.label]=i}catch(e){}return i}catch(e){return -1}}
 const lab=q=>Array.isArray(q)?String(q[1]||""):String(q&&q.label||"");
 const P={};
+/* new pictures for this sweep (Wikimedia Commons, free licences), saved in photos/ */
+const NEW={
+ qeswachaka:{f:"Inka suspension bridge Qeswachaka DSC 2730.jpg",d:"photos/t3dd161d93a74bb3f6.webp",by:"Aga Khan (IT)",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Inka_suspension_bridge_Qeswachaka_DSC_2730.jpg"},
+ tupaia:{f:"Tupaia's map, c. 1769.jpg",d:"photos/t377d8bd3416f44d61.webp",by:"Tupaia, copied by James Cook",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Tupaia%27s_map,_c._1769.jpg"},
+ kemal:{f:"Mustafa Kemal in Gallipoli.jpg",d:"photos/t3c723d34ee3f3df21.webp",by:"Unknown author",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Mustafa_Kemal_in_Gallipoli.jpg"},
+ churchill:{f:"Winston Churchill 1945 (2x3 cropped).jpg",d:"photos/t39ef90376a95b0ef3.webp",by:"Central Office of Information",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Winston_Churchill_1945_(2x3_cropped).jpg"},
+ yermak:{f:"Vasily Surikov - Yermak's Conquest of Siberia - Google Art Project.jpg",d:"photos/t3dcf89d924e20ccbf.webp",by:"Vasily Surikov",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Vasily_Surikov_-_Yermak%27s_Conquest_of_Siberia_-_Google_Art_Project.jpg"},
+ jiaozi:{f:"Jiao zi.jpg",d:"photos/t3ecae30853c01816d.webp",by:"Unknown author",lic:"Public domain",page:"https://commons.wikimedia.org/wiki/File:Jiao_zi.jpg"},
+ gorbachev:{f:"RIAN archive 770913 The final speech of the General Secretary of the CPSU Central Committee M. Gorbachev cropped.jpg",d:"photos/t329d3db1d218f89ac.webp",by:"Yuryi Abramochkin / RIA Novosti",lic:"CC BY-SA 3.0",page:"https://commons.wikimedia.org/wiki/File:RIAN_archive_770913_The_final_speech_of_the_General_Secretary_of_the_CPSU_Central_Committee_M._Gorbachev_cropped.jpg"},
+ pervomaisk:{f:"Pervomaisk missile base.JPG",d:"photos/t34eb0506e8279c188.webp",by:"Michael",lic:"CC BY 3.0",page:"https://commons.wikimedia.org/wiki/File:Pervomaisk_missile_base.JPG"},
+};
+const np=(k,at,label,o)=>Object.assign({at,label},NEW[k],o||{});
 window.GF_SWEEP3=P;
 const KEYS=["view","globe","mode","on","hi","hiSoft","lines","legend","keyLabel","iconPins","gfRuler","pins","flatView"];
 function photos(S,X){
  /* photo pins: the stop's own list, less the dropped ones, plus ours; kept whatever other scripts set the list to later */
- const mine=(X.phAdd||[]).map(x=>{const i=libAdd(x);return i<0?null:{at:x.at,label:x.label,col:x.col||"#d9682b",icon:"photo",_f:x.f,img:i,person:x.person?1:undefined}}).filter(Boolean);
+ const mine=(X.phAdd||[]).map(x=>{const i=libAdd(x);return i<0?null:{at:x.at,label:x.label,col:x.col||(x.person?"#3d3466":"#d9682b"),icon:"photo",_f:x.f,img:i,person:x.person?1:undefined}}).filter(Boolean);
  const fix=L=>(Array.isArray(L)?L:[]).filter(q=>q&&!(X.phDrop&&!q.person&&X.phDrop.test(lab(q)))&&!mine.some(m=>m.label===q.label)).map(q=>{
    if(X.phMove&&X.phMove[q.label]){q=Object.assign({},q,{at:X.phMove[q.label].slice()})}
    if(X.phLabel&&X.phLabel[q.label]){q=Object.assign({},q,{label:X.phLabel[q.label]})}return q}).concat(mine);
@@ -45,8 +61,8 @@ function text(S,X){["body","stat","more","sub"].forEach(f=>{if(f in X&&S[f]!==X[
 const MINE=new Set("govmap politics capitals geopol borders regions gdp transport energy resources currencies conflicts hancient hmedieval hgunpowder hrevolutions hwars hcoldwar hsince91 hempires hmodern explorers heurope hasia hafrica hnamerica hsamerica hoceania hantarctica".split(" "));
 /* a country named twice: by its flag tag and again by a plain label (Togo, Gabon, Rwanda and Mozambique on the
    Commonwealth stop): the plain label goes */
-function flagDup(S){try{if(!Array.isArray(S.flagTags)||!S.flagTags.length||!Array.isArray(S.pins))return;const N=new Set(S.flagTags.map(f=>String(f&&f.name||"").toLowerCase()));
- const L=S.pins.filter(q=>!(Array.isArray(q)&&N.has(lab(q).toLowerCase())));if(L.length!==S.pins.length)SET(S,"pins",L)}catch(e){}}
+function flagDup(S){try{if(!Array.isArray(S.flagTags)||!S.flagTags.length||!Array.isArray(S.pins))return false;const N=new Set(S.flagTags.map(f=>String(f&&f.name||"").toLowerCase()));
+ const L=S.pins.filter(q=>!(Array.isArray(q)&&N.has(lab(q).toLowerCase())));if(L.length!==S.pins.length){SET(S,"pins",L);return true}}catch(e){}return false}
 function apply(tour,S){if(MINE.has(tour))flagDup(S);const X=P[tour+"|"+S.title];if(!X)return;
  try{text(S,X);KEYS.forEach(k=>{if(k in X)SET(S,k,CL(X[k]))});
   if(X.pinsDrop||X.pinsAdd||X.pinsMove){let L=(Array.isArray(S.pins)?S.pins:[]).filter(q=>!(X.pinsDrop&&X.pinsDrop.test(lab(q))));
@@ -57,7 +73,9 @@ function apply(tour,S){if(MINE.has(tour))flagDup(S);const X=P[tour+"|"+S.title];
   if(X.fn)X.fn(S)}catch(e){console.error(e)}}
 function cur(){try{return typeof ps!=="undefined"&&ps&&ps.tour}catch(e){return null}}
 function wrapGo(){if(typeof psGo!=="function"||typeof psSteps!=="function")return false;if(psGo._gfS3)return true;const _g=psGo;
- psGo=function(i){try{const t=cur();if(t){const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];if(S)apply(t,S)}}catch(e){console.error(e)}return _g.apply(this,arguments)};psGo._gfS3=1;return true}
+ psGo=function(i){let S=null;try{const t=cur();if(t){const L=psSteps();S=L[Math.max(0,Math.min(L.length-1,i))];if(S)apply(t,S)}}catch(e){console.error(e)}const r=_g.apply(this,arguments);
+  /* flag tags are added while the stop is drawn: plain labels that repeat them go afterwards */
+  try{if(S&&MINE.has(cur())&&flagDup(S)&&typeof psDrawPins==="function")psDrawPins()}catch(e){}return r};psGo._gfS3=1;return true}
 /* wrapped after geoflock-polish-m.js has wrapped it, so these run first and its fixes still follow; checked again later in case
    a later script replaced psGo without keeping the wrapper */
 let n=0;const t=setInterval(()=>{wrapGo();if(++n>80)clearInterval(t)},700);
@@ -98,7 +116,12 @@ Object.assign(P,{
 });
 /* ---- Special regions ---- */
 Object.assign(P,{
- "regions|Denmark’s far north":{stat:"Greenland is about 50 times bigger than Denmark, yet only about 57,000 people live there"},
+ /* the map was centred on Canada, with Greenland squeezed against the top edge: now Greenland, Iceland, the Faroes and
+    Denmark itself; the card no longer says the size twice */
+ "regions|Denmark’s far north":{stat:"Greenland is about 50 times bigger than Denmark, yet only about 57,000 people live there",
+  re:[["body","Drag Denmark around Greenland: Greenland is about 50 times bigger, with about 57,000 people.","Drag Denmark’s outline around Greenland to compare their sizes."]],view:[-78,54,22,84],globe:[-28,68,1.6]},
+ /* Puerto Rico, about 3.2 million people, outnumbers 18 states (Nevada and Iowa are a little bigger) */
+ "regions|America’s islands":{re:[["body","Puerto Rico alone has more people than 20 US states.","Puerto Rico alone has more people than 18 of the 50 US states."]]},
 });
 /* ---- Geopolitics ---- */
 Object.assign(P,{
@@ -115,20 +138,35 @@ Object.assign(P,{
  /* “the white powder made from bauxite”: named, so the “Alumina by sea” label makes sense */
  "resources|Frozen electricity":{re:[["body","So it is cheaper to ship the white powder made from bauxite ore across the world (the arrow shows one route) to where power is cheap.","So it is cheaper to ship alumina, the white powder refined from bauxite ore, across the world (the arrow shows one route) to where power is cheap."]]},
  "resources|America pumps the most":{phDrop:/^United States: Grand Canyon$/},
- "resources|China and coal":{phDrop:/^(India: Taj Mahal|Indonesia: Borobudur)$/},
+ "resources|China and coal":{phDrop:/^(India: Taj Mahal|Indonesia: Borobudur)$/,
+  phAdd:[{at:[112.43,39.33],label:"Shuozhou, Shanxi: a coal power plant",f:"Shuozhou coal power plant.JPG"}]},
+ /* a rainforest photo standing on the copper mines of Katanga */
+ "resources|Congo’s cobalt":{phDrop:/Congo rainforest/},
  "resources|Gold":{phDrop:/^South Africa: Table Mountain/},
  "resources|Rare earths aren’t rare":{phDrop:/^China: Great Wall/},
  "resources|Phosphate":{phDrop:/^Morocco: Chefchaouen$/},
 });
+/* ---- Money on the map ---- */
+Object.assign(P,{
+ /* a print of a Song-dynasty note, where the first notes were used */
+ "currencies|Paper money from China":{pinsDrop:/^Chengdu/,phAdd:[np("jiaozi",[104.07,30.67],"Chengdu: the first paper notes")]},
+});
 /* ---- GDP ---- */
 Object.assign(P,{
+ /* an Afghan lake on the opening world map of economies */
+ "gdp|The world’s money map":{phDrop:/Band-e Amir/},
  "gdp|China’s rise":{phDrop:/^China: Great Wall/},
+ /* “…and the Pacific islands, including the Caucasus and Central Asia” read as if the Caucasus were Pacific islands */
+ "gdp|The Global South":{re:[["body","South of it: Latin America, Africa, most of Asia (North Korea too) and the Pacific islands, including the Caucasus and Central Asia.","South of it: Latin America, Africa, the Pacific islands and most of Asia, including the Caucasus, Central Asia and North Korea."]]},
  "gdp|Rich in resources, poor in income":{phDrop:/^DR Congo: The Congo rainforest$/},
 });
 /* ---- Transport and trade ---- */
 Object.assign(P,{
  "transport|The Belt and Road":{phDrop:/^China: Great Wall/},
  "transport|China’s fast trains":{phDrop:/^China: Great Wall/},
+ /* the route runs from Hong Kong over Alaska to Memphis, but the map stopped at Alaska, with Anchorage on its edge:
+    now the whole North Pacific, across the date line */
+ "transport|Planes stop in Alaska":{view:[100,10,-78,72],globe:[-165,50,1.3]},
 });
 
 /* ================================ History ================================ */
@@ -167,6 +205,8 @@ Object.assign(P,{
  /* the Meroë pyramids twice on one spot */
  "hafrica|Kush against Rome":{phDrop:/^Sudan: Pyramids of Meroë$/},
  "hafrica|Two Benins":{phDrop:/^Nigeria: Zuma Rock$/},
+ /* the stop quotes Nkrumah: Ghana's independence stamp with his portrait */
+ "hafrica|Freedom, one by one":{phAdd:[{at:[-0.2,5.6],label:"Kwame Nkrumah on Ghana’s 1957 stamp",f:"KwameNkrumahOnGhanianIndependenceDay6March1957PostageStamp.JPG"}]},
  "hafrica|Apartheid’s fake countries":{phDrop:/^South Africa: Table Mountain/},
 });
 /* ---- North America ---- */
@@ -176,27 +216,49 @@ Object.assign(P,{
 });
 /* ---- South America ---- */
 Object.assign(P,{
+  /* the grass rope bridge the text describes */
+ "hsamerica|The Inca roads":{phAdd:[np("qeswachaka",[-71.4,-14.38],"Q’eswachaka: a grass rope bridge")]},
  "hsamerica|Caral":{phDrop:/^Peru: Machu Picchu$/},
  "hsamerica|The Nazca lines":{phDrop:/^Peru: Machu Picchu$/},
  /* Rio twice on one spot */
  "hsamerica|Brazil’s sugar coast":{phDrop:/^Brazil: Christ the Redeemer/},
  "hsamerica|The Paraguayan War":{phDrop:/^(Brazil: Christ the Redeemer, Rio|Paraguay: Jesuit mission of Trinidad)$/},
  "hsamerica|Bolivia loses the sea":{phDrop:/^Bolivia: Sunset on the Salar de Uyuni$/},
- "hsamerica|Years of military rule":{phDrop:/^(Argentina: Perito Moreno Glacier|Bolivia: Sunset on the Salar de Uyuni|Brazil: Christ the Redeemer, Rio)$/},
+ "hsamerica|Years of military rule":{phDrop:/^(Argentina: Perito Moreno Glacier|Bolivia: Sunset on the Salar de Uyuni|Brazil: Christ the Redeemer, Rio)$/,
+  phAdd:[{at:[-58.37,-34.61],label:"Mothers of the Plaza de Mayo, Buenos Aires",f:"La Asociación Madres de Plaza de Mayo Línea Fundadora recibe el título de Honoris Causa de la UNLP.jpg"}]},
  "hsamerica|The Falklands War":{phDrop:/^Argentina: Perito Moreno Glacier$/},
 });
 /* ---- Oceania ---- */
 Object.assign(P,{
- "hoceania|Women vote first":{phDrop:/^(Australia: Sydney Opera House|Finland: Northern lights over Lapland)$/},
+ /* the British Empire's colour made the History map zoom out to the whole world; the stop is about New Zealand and
+    Australia's east coast */
+ "hoceania|Tupaia and Captain Cook":{fn:S=>{S._histWide=1}},
+ /* the new nations shown on the map of 1955, under the label of the British Western Pacific Territories: now 1995 */
+ "hoceania|New Pacific nations":{sub:"1995"},
+ "hoceania|Women vote first":{phDrop:/^(Australia: Sydney Opera House|Finland: Northern lights over Lapland)$/,
+  phAdd:[{at:[172.63,-43.53],label:"Kate Sheppard memorial, Christchurch",f:"Kate Sheppard National Memorial, Christchurch, New Zealand.jpg"}]},
+ /* Tupaia's own chart of the islands round Tahiti, at Raiatea, his home island */
+ "hoceania|Voyagers of the open Pacific":{phAdd:[np("tupaia",[-151.45,-16.8],"Tupaia’s chart of the islands, 1769")]},
  "hoceania|Federation":{phDrop:/^(Australia: Sydney Opera House|New Zealand: Aoraki \/ Mount Cook)$/},
  "hoceania|The Anzac legend":{phDrop:/^Australia: Sydney Opera House$/},
 });
 /* ---- Antarctica ---- */
 Object.assign(P,{
+ /* the globe faced Africa and South America, and Antarctica, the subject, was out of sight below them */
+ "hantarctica|A continent for science":{globe:[10,-58,1]},
  /* the 2025 core was said twice, in the stat and again in the text */
  "hantarctica|Reading the ice":{re:[["more","The cores show that carbon dioxide is now far higher than at any time in the last 800,000 years, and in 2025 a new core reached ice over a million years old.","The older cores already show that carbon dioxide is now far higher than at any time in the last 800,000 years; the new one will take the record further back."]]},
 });
 /* ---- Explorers ---- */
+/* ---- Gunpowder and sea; World Wars; Cold War; since 1991 ---- */
+Object.assign(P,{
+ "hgunpowder|Russia across Siberia":{phAdd:[np("yermak",[68.4,58.1],"Yermak takes Sibir, 1582 (painted 1895)")]},
+ "hwars|Gallipoli":{phAdd:[np("kemal",[26.75,40.5],"Mustafa Kemal at Gallipoli, 1915",{person:1})]},
+ /* Gorbachev on television on 25 December 1991, resigning as the last Soviet leader */
+ "hcoldwar|The end of the Soviet Union":{phAdd:[np("gorbachev",[47,59],"Mikhail Gorbachev resigns, 25 December 1991",{person:1})]},
+ "hcoldwar|The Iron Curtain":{phAdd:[np("churchill",[-0.13,51.5],"Winston Churchill",{person:1})]},
+ "hsince91|Giving up the bomb":{pinsDrop:/^Pervomaisk/,phAdd:[np("pervomaisk",[31.0,48.05],"Pervomaisk: a missile base, now a museum")]},
+});
 Object.assign(P,{
  /* Lewis and Clark never went near the Grand Canyon */
  "explorers|Lewis and Clark":{phDrop:/^United States: Grand Canyon$/},
