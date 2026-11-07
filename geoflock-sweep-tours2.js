@@ -412,6 +412,16 @@ M({
 M({
 });
 
+/* ---- shorter stat lines ---- */
+M({
+ "migration|Called in to rebuild":{stat:"Germany invited Turkish “guest workers” for a few years from 1961; many stayed, and about 3 million people of Turkish descent now live there"},
+ "maths|The flood that invented geometry":{stat:"‘Geometry’ means ‘earth-measuring’: Herodotus said it began because the Nile kept washing field boundaries away"},
+ /* the Nineveh tablet itself is from the 600s BC, about when Genesis was being written down; its story is far older (Babylonian versions go back to about 1800 BC) */
+ "mythology|The flood":{stat:"A clay tablet from Nineveh tells of a great flood, a boat and a bird sent to find land: a story much older than the Bible’s Noah"},
+ "science|The curve from a volcano":{stat:"Since 1958, CO₂ in the air has been measured on Mauna Loa: about 315 molecules in every million then, over 420 now"},
+ "science|The eclipse that tested Einstein":{stat:"On 29 May 1919 two teams watched the Sun go dark, in Brazil and on an island off Africa, to put Einstein’s theory of gravity to the test"},
+});
+
 /* ---- framing: views that keep each stop's places clear of the card (the card covers the left two-fifths of the map
    on a laptop screen), centred on the subject ---- */
 M({
