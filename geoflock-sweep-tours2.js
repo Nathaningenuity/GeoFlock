@@ -22,8 +22,13 @@ function libAdd(x){try{if(typeof PS_PHOTO_DATA==="undefined")return -1;let i=PS_
 const has=q=>!!(q&&(q._f||q.img!=null&&q.img>=0||q._gfImg!=null));
 const lab=q=>Array.isArray(q)?String(q[1]||""):String(q&&q.label||"");
 const P={};
+/* coloured groups of countries with their own key (S.G), for stops whose map layer (a language family or script "sub")
+   does not draw on the History map the tour runs on; hi lists the same countries */
+const grp=(key,G)=>({keyLabel:key,G,hi:[].concat(...G.map(g=>g.codes)),hiSoft:[]});
 window.GF_SWEEP2=P;
-const KEYS=["body","stat","more","sub","view","globe","mode","on","card","hi","hiSoft","lines","legend","keyLabel","iconPins","gfRuler","pins","flatView"];
+/* entries are merged, so one stop can be touched in several places below */
+const M=o=>{for(const k in o)P[k]=Object.assign(P[k]||{},o[k])};
+const KEYS=["body","stat","more","sub","G","view","globe","mode","on","card","hi","hiSoft","lines","legend","keyLabel","iconPins","gfRuler","pins","flatView"];
 function photos(S,X){
  /* photo pins: the stop's own list, less the dropped ones, plus ours; kept whatever other scripts set the list to later */
  const mine=(X.phAdd||[]).map(x=>{const i=libAdd(x);return{at:x.at,label:x.label,col:x.col||"#d9682b",icon:"photo",_f:x.f,img:i}});
@@ -41,14 +46,46 @@ function photos(S,X){
   get(){const b=get0?get0():base;if(ck!==b||!cache){ck=b;cache=fix(b)}relink(b);return cache},
   set(v){if(set0)set0(v);else base=v;ck=null}})}catch(e){}
  S._sqPruned=-1}
-function apply(tour,S){const X=P[tour+"|"+S.title];if(!X)return;
+/* The Religions and Languages tours were built for the Culture map, but geoflock-tourhist.js moved every stop of a tour
+   with any History-map stop onto the History map, where the Culture map's layers (religion, language family, script)
+   are not drawn: "each country is coloured by its largest religion" showed plain political colours. Such a stop now
+   colours its countries from the Culture map's own data (TH_THEMES), as key groups (S.G), the way the History map shows
+   any tour highlight. A focus ("rel/cat", "lang/ger+rom") colours only those groups; "_" keeps the stop's own highlight. */
+const TH_TOURS=new Set(["culture","langrel"]);
+function thAuto(tour,S,X){try{if(!TH_TOURS.has(tour)||!S||!S.sub||(X&&X.G))return;const m=String(S.sub).match(/^(rel|lang|script|drive)(?:\/(.+))?$/);if(!m||m[2]==="_")return;
+ const T=PS_TOURS[tour];if(T&&T.map&&T.map.mode==="culture"&&(S.mode||"culture")==="culture")return;
+ const key=m[1],th=typeof TH_THEMES!=="undefined"&&TH_THEMES[key];if(!th||!th.cats)return;
+ const want=m[2]?m[2].split("+"):th.cats.map(c=>c[0]);const all=typeof COUNTRY_POPULATION!=="undefined"?Object.keys(COUNTRY_POPULATION):Object.keys(th.data||{});
+ const of=c=>{try{return typeof thCatOf==="function"?thCatOf(c,key):th.data[c]||th.fallback}catch(e){return null}};
+ const G=[];want.forEach(k=>{const row=th.cats.find(c=>c[0]===k);if(!row)return;const codes=all.filter(c=>of(c)===k);if(codes.length)G.push({t:row[1],c:row[2],codes})});
+ if(!G.length)return;SET(S,"G",G);SET(S,"hi",[].concat(...G.map(g=>g.codes)));SET(S,"hiSoft",[]);
+ if(!S.keyLabel||S.keyLabel==="undefined")SET(S,"keyLabel",m[2]&&G.length===1?G[0].t:th.title||"")}catch(e){console.error(e)}}
+/* Better still, the two tours go back on the Culture map they were built for: the stops about religions, languages and
+   scripts show its layers (with their focus: Catholics only, the Uralic family only...), and only the stops that are
+   really about an empire of the past (AD 300, AD 800, 1783) use the History map. Without this the History map stayed
+   at the year of the last history stop, so "Catholicism moved west" showed the Abbasid Caliphate and the Khazars. */
+const TH_RE=/^(rel|lang|script|drive)(\/|$)/;
+const TH_RELIEF={"culture|Iceland can still read its sagas":"lang","culture|Whistling across the valleys":"lang"};
+function thFix(id){try{const T=PS_TOURS[id];if(!T||!TH_TOURS.has(id))return;try{if(window.gfTourHist)gfTourHist.convert(T)}catch(e){}
+ if(T.map)T.map.mode="culture";T.stopModes=true;(T.steps||[]).forEach(S=>{if(!S)return;const k=id+"|"+S.title;
+  if(TH_RELIEF[k]){SET(S,"mode","culture");SET(S,"sub",TH_RELIEF[k]);return}
+  if(S.sub&&TH_RE.test(String(S.sub))&&S.mode!=="culture"&&S.mode!=="politics")SET(S,"mode","culture");
+  /* a bare year ("800") is what geoflock-tourhist.js gives a stop it moved: the real History stops name an empire too ("800/isl") */
+  else if(S.mode==="history"&&/^(bc)?\d+$/.test(String(S.sub||""))){SET(S,"mode","culture");SET(S,"sub",id==="langrel"?"rel":"lang")}})}catch(e){console.error(e)}}
+[2000,6000,13000].forEach(ms=>setTimeout(()=>TH_TOURS.forEach(thFix),ms));
+{let n=0;const t=setInterval(()=>{if(typeof psLaunchTour!=="function"){if(++n>60)clearInterval(t);return}clearInterval(t);if(psLaunchTour._gfS2)return;const _l=psLaunchTour;
+ psLaunchTour=function(id){try{thFix(id)}catch(e){}return _l.apply(this,arguments)};psLaunchTour._gfS2=1},500)}
+function apply(tour,S){if(TH_TOURS.has(tour))thFix(tour);const X=P[tour+"|"+S.title];thAuto(tour,S,X);if(!X)return;
  try{KEYS.forEach(k=>{if(k in X)SET(S,k,CL(X[k]))});
   if(X.pinsDrop||X.pinsAdd||X.pinsMove){let L=(Array.isArray(S.pins)?S.pins:[]).filter(q=>!(X.pinsDrop&&X.pinsDrop.test(lab(q))));
    if(X.pinsMove)L=L.map(q=>Array.isArray(q)&&X.pinsMove[q[1]]?[X.pinsMove[q[1]].slice()].concat(q.slice(1)):q);
    if(X.pinsAdd)L=L.filter(q=>!X.pinsAdd.some(a=>a[1]===lab(q))).concat(CL(X.pinsAdd));SET(S,"pins",L)}
   if(X.iconDrop&&Array.isArray(S.iconPins))SET(S,"iconPins",X.iconDrop===true?[]:S.iconPins.filter(q=>!X.iconDrop.test(q.icon)));
   if(X.phAdd||X.phDrop||X.phMove||X.phLabel||X.phDup)photos(S,X);
+  if(X.rep)rep(S,X);
   if(X.fn)X.fn(S)}catch(e){console.error(e)}}
+/* rep: [[old,new],...] small wording fixes inside body/more/stat */
+function rep(S,X){["body","more","stat"].forEach(f=>{let v=S[f];if(typeof v!=="string")return;X.rep.forEach(([a,b])=>{if(v.includes(a))v=v.split(a).join(b)});if(v!==S[f])SET(S,f,v)})}
 function cur(){try{return typeof ps!=="undefined"&&ps&&ps.tour}catch(e){return null}}
 function wrapGo(){if(typeof psGo!=="function"||typeof psSteps!=="function")return false;if(psGo._gfS2)return true;const _g=psGo;
  psGo=function(i){try{const t=cur();if(t){const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];if(S)apply(t,S)}}catch(e){console.error(e)}return _g.apply(this,arguments)};psGo._gfS2=1;return true}
@@ -57,25 +94,27 @@ function wrapGo(){if(typeof psGo!=="function"||typeof psSteps!=="function")retur
 let n=0;const t=setInterval(()=>{wrapGo();if(++n>80)clearInterval(t)},700);
 /* text: also written into the tour data straight away, so lists, search and quizzes that read the cards see it */
 function text(){try{for(const k in P){const X=P[k],i=k.indexOf("|"),T=PS_TOURS[k.slice(0,i)];if(!T)continue;
- const S=(T.steps||[]).find(s=>s&&s.title===k.slice(i+1));if(!S)continue;["body","stat","more","sub"].forEach(f=>{if(f in X&&S[f]!==X[f])SET(S,f,X[f])})}}catch(e){}}
+ const S=(T.steps||[]).find(s=>s&&s.title===k.slice(i+1));if(!S)continue;["body","stat","more","sub"].forEach(f=>{if(f in X&&S[f]!==X[f])SET(S,f,X[f])});if(X.rep)rep(S,X)}}catch(e){}}
 [0,1500,4000,9000,15000].forEach(ms=>setTimeout(text,ms));
 
 /* ================================ People & culture ================================ */
 
 /* ---- Sports ---- */
-Object.assign(P,{
- "sports|The world’s game":{stat:"Only eight countries won the first 22 World Cups; Brazil won the most"},
+M({
+ "sports|The world’s game":{view:[-125,-58,70,72],stat:"Only eight countries won the first 22 World Cups; Brazil won the most"},
  "sports|The jump into thin air":{stat:"At the 1968 Olympics, 2,240 m up in Mexico City, Bob Beamon long-jumped 8.90 m: 55 cm further than anyone before"},
  "sports|The Olympic map":{more:"Africa’s first Olympic event is the Youth Olympic Games in Dakar, Senegal, held from 31 October to 13 November 2026. Rio de Janeiro, in 2016, is still the only South American host; Brisbane hosts in 2032."},
+ /* Hawaii and Tahiti were under the card on a Greenwich-centred world map: a Pacific frame that still reaches Paris */
+ "sports|Surfing from Hawaii":{view:[-282,-45,8,64]},
  "sports|Runners from the highlands":{stat:"Every men’s marathon world record set from 2003 to 2023 went to a Kenyan or an Ethiopian"},
 });
 /* ---- Festivals ---- */
-Object.assign(P,{
+M({
  "festivals|Welcome back, Sun":{stat:"Longyearbyen goes about four months without the Sun, and celebrates when its rays first touch the old hospital steps, around 8 March"},
  "festivals|The biggest crowd on Earth":{stat:"The 2025 Kumbh Mela at Prayagraj counted over 600 million visits in six weeks: among the largest gatherings in history"},
 });
 /* ---- Houses ---- */
-Object.assign(P,{
+M({
  /* a Leiden label on a stop about Amsterdam, and two Amsterdam photos on the same spot */
  "houses|The Dutch canal house":{pinsDrop:/^Leiden$/,phDrop:/^Amsterdam$/},
  /* two Hong Kong photos on the same spot */
@@ -93,7 +132,7 @@ const LIB={
  taj1:{f:"Aks The Reflection Taj Mahal.jpg",d:"@1fecb26cdb4d4189",by:"Antrix3",lic:"CC BY-SA 4.0",page:"https://commons.wikimedia.org/wiki/File:Aks_The_Reflection_Taj_Mahal.jpg"},
 };
 const ph=(k,at,label,col)=>Object.assign({at,label,col},LIB[k]);
-Object.assign(P,{
+M({
  /* a photo of Big Ben on a Stonehenge stop: the stones themselves instead of the temple icon */
  "landmarks|Stonehenge":{phDrop:/^(United Kingdom: Big Ben|Stonehenge$)/,phAdd:[ph("stone1",[-1.826,51.179],"Stonehenge")]},
  /* the pyramid three times on one spot: icon pin, photo pin and icon */
@@ -107,15 +146,21 @@ Object.assign(P,{
  "landmarks|The tower that leans to survive":{stat:"Pisa’s tower began to lean in 1178, five years into building; the same soft ground has helped it ride out at least four strong earthquakes"},
 });
 /* ---- Flags ---- */
-Object.assign(P,{
+M({
  "flags|Pan-African colours":{more:"Because Ethiopia had kept its freedom, its colours came to stand for independence. A second family uses red, black and green, from Marcus Garvey’s movement in the 1920s: Kenya and Malawi fly those. Bolivia and Lithuania use green, gold and red too, by coincidence."},
  "flags|Pan-Arab colours":{stat:"Red, white, black and green, the colours of the 1916 Arab Revolt, live on in a dozen flags"},
 });
 
 /* ---- Languages and writing ---- */
-Object.assign(P,{
+M({
+ /* the language-family and script colours these cards describe did not show (the History map has no such layer):
+    the countries are now coloured, with a key */
+ "culture|One family of languages":{view:[-75,5,95,68],globe:[30,45,1.2]},
+ "culture|Madagascar speaks Bornean":{view:[-25,-34,150,30],globe:[85,-8,1.2]},
  "culture|The Spanish Empire":{stat:"Spanish began in one corner of Spain; its empire carried it across the Americas, and 20 countries now speak it"},
  "culture|Portuguese: the colony outgrew the country":{stat:"Brazil has 20 times as many people as Portugal, so most Portuguese speakers are Brazilian"},
+ /* the Armenian alphabet had a picture, the Georgian one none: a Tbilisi street sign in Georgian letters */
+ "culture|Two neighbours, two alphabets":{phAdd:[{at:[44.8,41.69],label:"Tbilisi: Georgian letters",col:"#d9682b",f:"Old Street Sign in Tbilisi, Georgia.jpg",d:"@1ca07a2cc676f3f2",by:"AlexandreAssatiani",lic:"CC BY 4.0",page:"https://commons.wikimedia.org/wiki/File:Old_Street_Sign_in_Tbilisi,_Georgia.jpg"}]},
  "culture|Iceland can still read its sagas":{stat:"Icelanders can read their 800-year-old sagas with little help; English speakers need a translation for Chaucer, written 150 years later"},
  "culture|Tones need wet air?":{stat:"Languages with many tones, like Cantonese, are rare in deserts and cold, dry places; linguists argue about why"},
 });
@@ -123,24 +168,27 @@ Object.assign(P,{
 /* the Ethiopian and Nepali years worked out for today's date (Ethiopia's year begins on 11 September, Nepal's in mid-April) */
 function calYears(){const d=new Date(),y=d.getFullYear(),m=d.getMonth(),dd=d.getDate();
  return{eth:(m>8||m===8&&dd>=11)?y-7:y-8,nep:(m>3||m===3&&dd>=14)?y+57:y+56,y}}
-Object.assign(P,{
+M({
  /* the key read "undefined" */
  "langrel|Hindu India, Hindu Bali":{view:[-40,-35,185,40],keyLabel:"Where most people are Hindu"},
  "langrel|It isn’t 2026 everywhere":{fn:S=>{const c=calYears();SET(S,"stat","In Ethiopia’s calendar it is now "+c.eth+"; in Nepal’s it is already "+c.nep)}},
  "langrel|Holy cities":{view:[-48,8,89,52],more:"Millions of pilgrims visit every year: nearly 2 million make the Hajj to Mecca, where only Muslims may enter."},
 });
 /* ---- Food ---- */
-Object.assign(P,{
+M({
  /* the rice cradle was labelled twice, and wheat and maize had both a label and an icon at the same spot */
  "food|Three grains, three cradles":{pinsDrop:/^(Yangtze: rice|Wheat: the Fertile Crescent|Maize: southern Mexico)$/},
+ "food|Milk drinkers’ map":{rep:[["in northern Europe (lit),","in northern Europe (coloured on the map),"]]},
  "food|Maize without the recipe":{stat:"Maize left Mexico without its cooking method, and in the US South a disease spread that struck about 3 million people"},
+ /* the "te" countries of western Europe, half of the story, were under the card */
+ "food|Tea, or chai?":{view:[-110,-40,142,70],globe:[60,35,1]},
  "food|The Spice Islands":{view:[-119,-40,135,50],hi:["id"],
   body:"The Maluku Islands, the “Spice Islands”, were the only source of cloves, and the tiny Banda Islands the only source of nutmeg. Drag the ruler: the Bandas are about 12,500 km from Venice.",
   more:"Spices passed through many traders’ hands on the way to Europe, growing dearer each time; by some accounts nutmeg was worth more than its weight in gold. The Dutch took the Bandas by force in 1621, killing, enslaving or driving out most of the islanders. In 1667 a peace treaty let the Dutch keep Run, a tiny nutmeg island, while the English kept Manhattan. Black pepper first came from India’s Malabar Coast, but today Vietnam exports the most, about 250,000 tonnes a year."},
 });
 
 /* ---- Cities ---- */
-Object.assign(P,{
+M({
  /* the Levant, where most of these cities are, sat under the card: the view is now centred on it, Varanasi still in */
  "cities|The oldest cities":{view:[-12,14,89,47],globe:[40,30,1.5],
   body:"Some cities have been lived in, on and off, since the first farmers. Jericho, Damascus, Aleppo and Byblos, in the Middle East, are among the oldest; Athens and Varanasi, in India, have been lived in for over 3,000 years."},
@@ -164,7 +212,7 @@ Object.assign(P,{
  "cities|Cities at the extremes":{stat:"Yakutsk’s January averages below −35 °C; Kuwait City’s summer days often pass 45 °C"},
 });
 /* ---- Migration ---- */
-Object.assign(P,{
+M({
  "migration|America the magnet":{view:[-156,20,-70,53],phDrop:/Grand Canyon/},
  "migration|Mexico to the US":{phDrop:/Grand Canyon/},
  /* Moraine Lake is a fine view, but says nothing about newcomers */
@@ -183,8 +231,8 @@ Object.assign(P,{
  "migration|Lebanon’s global family":{stat:"Far more people of Lebanese descent live abroad than in Lebanon itself, perhaps several times more"},
 });
 /* ---- People ---- */
-Object.assign(P,{
- "people|Too few to replace":{stat:"About two in three people live where families are too small to replace their parents"},
+M({
+ "people|Too few to replace":{pinsMove:{"China: about 1.0":[110,27]},stat:"About two in three people live where families are too small to replace their parents"},
  "people|Switzerland, land of newcomers":{
   more:"Most of Switzerland’s newcomers come from elsewhere in Europe, especially Italy, Germany, Portugal and France, drawn by high wages. In the UAE nearly nine in ten people were born abroad, and in Qatar about three in four. At the other extreme, China, India and Indonesia, home to over a third of humanity, have almost no immigrants."},
  "people|Machines, not hands":{stat:"Only about 2 in 100 American workers farm, yet the US grows nearly a third of the world’s maize (corn)"},
@@ -194,7 +242,7 @@ Object.assign(P,{
 /* ---- Music and sport (not on any shelf at present, kept tidy all the same) ---- */
 /* generic country photos (the Grand Canyon, Neuschwanstein, Mount Fuji...) that said nothing about music or sport */
 const GENERIC=/^(Brazil: Christ the Redeemer, Rio|Germany: Neuschwanstein Castle|Argentina: Perito Moreno Glacier|United States: Grand Canyon|Japan: Mount Fuji|Dominican Republic: Santo Domingo|Nigeria: Zuma Rock|Kenya: Maasai Mara|Senegal: Gorée Island|Jamaica: Dunn’s River Falls)$/;
-Object.assign(P,{
+M({
  "musicsport|Football conquers the world":{phDrop:GENERIC},
  "musicsport|Three hosts, 48 teams":{phDrop:GENERIC},
  "musicsport|Africa’s first Olympics":{phDrop:GENERIC,stat:"Dakar, in Senegal, hosts the Youth Olympic Games from 31 October to 13 November 2026: the first Olympic event ever held in Africa"},
@@ -206,7 +254,7 @@ Object.assign(P,{
 
 /* ================================ Ideas & arts ================================ */
 /* ---- Art and architecture ---- */
-Object.assign(P,{
+M({
  /* plain labels that sat on top of photo pins of the same places */
  "art|Pyramids and ziggurats":{pinsDrop:/^(Ur|Meroë)$/},
  "art|The Parthenon":{phDrop:/^The Acropolis, Athens$/},
@@ -223,7 +271,7 @@ Object.assign(P,{
  "art|Dots in the desert":{stat:"One of the world’s best-known art movements began in 1971, with a mural on a school wall in a remote desert settlement"},
 });
 /* ---- Music ---- */
-Object.assign(P,{
+M({
  "music|Steelpan from Trinidad":{phDup:true},
  "music|Reggae in Kingston":{phDrop:/^Kingston$/},
  "music|Samba and bossa nova":{phDrop:/^Christ the Redeemer, Rio$/},
@@ -231,7 +279,7 @@ Object.assign(P,{
  "music|K-pop":{stat:"South Korea’s ‘Gangnam Style’ was the first YouTube video to reach a billion views, in 2012"},
 });
 /* ---- Literature ---- */
-Object.assign(P,{
+M({
  "literature|The Tale of Genji":{phDrop:/^Kyoto$/},
  "literature|Dante’s journey":{phDrop:/^Florence$/},
  "literature|The great Russian novels":{pinsDrop:/^Moscow$/},
@@ -240,31 +288,33 @@ Object.assign(P,{
   stat:"Troy to Ithaca is about 500 km as the crow flies; Odysseus’s way home, as readers have mapped it, is over 5,000 km and takes him ten years"},
 });
 /* ---- Philosophy ---- */
-Object.assign(P,{
+M({
  "philosophy|Córdoba: reason and revelation":{body:"Ibn Rushd (Averroes, born 1126) and Moses Maimonides (born 1138) both grew up in Córdoba, in al-Andalus, where Muslims, Jews and Christians lived side by side. Both tried to square reason with revelation. Ibn Rushd argued that truth cannot contradict truth, so careful reasoning and the Qur’an must agree; Maimonides, that where the Bible seems to clash with reason, it should be read as a metaphor. The question can’t be avoided when rival scriptures share one city."},
  "philosophy|Fragmentation: Greece’s many constitutions":{stat:"Aristotle’s school collected 158 constitutions to compare: Greece’s mountains and islands supplied the sample"},
 });
 /* ---- Mythology ---- */
-Object.assign(P,{
+M({
  "mythology|Merlin’s stones":{phDup:true},
  /* Uluru has nothing to do with the drowned coasts of this stop */
  "mythology|Stories that remember the sea":{phDrop:/^Uluru$/},
+ "mythology|Troy":{rep:[["whose empire is lit on this map","whose empire is coloured on this map"]]},
+ "mythology|Where the gods were born":{rep:[["their empire is lit here as it was in 1500","their empire is coloured here as it was in 1500"]]},
  "mythology|Mount Kailash":{stat:"Mount Kailash is sacred to four religions, and nobody has ever climbed it"},
 });
 /* ---- Science ---- */
-Object.assign(P,{
+M({
  "science|Ibn al-Haytham and light":{phDrop:/^Cairo$/},
  "science|Galileo’s telescope":{pinsDrop:/^Florence$/,phLabel:{"Florence’s cathedral":"Florence: his last years"}},
  "science|Greenwich and longitude":{phDup:true,phDrop:/^Greenwich’s prime meridian$/},
  "science|The natural nuclear reactor":{stat:"About 2 billion years ago a natural nuclear reactor started up by itself underground in Gabon, and ran on and off for hundreds of thousands of years"},
 });
 /* ---- Maths ---- */
-Object.assign(P,{
+M({
  "maths|Counting in sixties":{pinsDrop:/^Babylon$/},
  "maths|Eratosthenes measures the Earth":{phDrop:/^The Nile at Aswan$/},
 });
 /* ---- Psychology: places the cards name, which had no label on the map ---- */
-Object.assign(P,{
+M({
  "psychology|Hokkaido’s frontier":{pinsAdd:[[[142.6,43.5],"Hokkaido: settled in the late 1800s","point"]]},
  "psychology|Winter in Tromsø":{pinsAdd:[[[-82.53,27.34],"Sarasota, Florida: 1.4%","point"]]},
  "psychology|Heat and tempers":{pinsAdd:[[[-112.07,33.45],"Phoenix: summer days above 40 °C","point"]]},
@@ -273,7 +323,7 @@ Object.assign(P,{
  "psychology|Rice south, wheat north":{pinsAdd:[[[116.4,39.9],"Beijing: wheat","point"],[[121.47,31.23],"Shanghai: rice","point"]]},
 });
 /* ---- Inventions ---- */
-Object.assign(P,{
+M({
  /* generic country photos (the Great Wall, a Seoul palace, Big Ben) that had nothing to do with the stops */
  "inventions|China’s Four Great Inventions":{phDrop:/^(China: Great Wall of China|South Korea: Gyeongbokgung Palace)$/},
  "inventions|The first vaccine":{view:[-58,-5,73,58],phDrop:/^United Kingdom: Big Ben/},
@@ -282,17 +332,17 @@ Object.assign(P,{
  "inventions|The first bouncing balls":{stat:"About 3,600 years ago people in Mexico were making rubber balls that bounced, some 3,000 years before any European saw rubber"},
 });
 /* ---- Words ---- */
-Object.assign(P,{
+M({
  "words|Papua New Guinea: 840 languages":{pinsDrop:/^(Goroka|Vanuatu: over 100 languages)$/,phLabel:{"An Asaro mud man":"Goroka: an Asaro mud man","Port Vila, Vanuatu":"Vanuatu: over 100 languages"}},
  "words|Saints and rivers":{pinsDrop:/^Rio de Janeiro$/},
 });
 /* ---- Learning ---- */
-Object.assign(P,{
+M({
 });
 
 /* ---- framing: views that keep each stop's places clear of the card (the card covers the left two-fifths of the map
    on a laptop screen), centred on the subject ---- */
-Object.assign(P,{
+M({
  "cities|The biggest cities":{view:[23,-12,144,46]},
  "migration|Called in to rebuild":{view:[-162,8,34,62]},
  "people|Russia’s missing men":{view:[-8,22,95,75]},
@@ -306,7 +356,7 @@ Object.assign(P,{
  "langrel|Buddhism left home":{view:[12,-12,140,50]},
  "langrel|Sikhism’s Punjab":{view:[-210,-8,92,72]},
  "langrel|Waiting for the vultures":{view:[35,12,80,32]},
- "food|Chocolate moved to Africa":{view:[-168,-30,10,40]},
+ "food|Chocolate moved to Africa":{view:[-170,-32,34,42]},
  "food|The first noodles":{view:[-85,-5,141,58]},
  "food|Dishes that travelled":{view:[-230,-10,19,65]},
  "festivals|Carnival":{view:[-172,-38,16,62]},
