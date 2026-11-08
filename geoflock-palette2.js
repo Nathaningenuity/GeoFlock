@@ -8,7 +8,11 @@ const style=()=>{try{return gfMS().style}catch(e){return null}};
 window.gfLakeColor=function(){const s=style();return(s&&LAKE[s])||null};
 const DEF_LAKE="#a8cbe5";
 function legendRefresh(){try{const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief"&&typeof allMapsLegendHTML==="function")lg.innerHTML=allMapsLegendHTML()}catch(e){}}
-function repaint(){window._gfSeaSig=Date.now();try{GFG.sig=null;gfGlobeDirty()}catch(e){}try{amGlobe&&amGlobe.request()}catch(e){}try{typeof renderAllMaps==="function"&&renderAllMaps()}catch(e){}legendRefresh()}
+/* the flat map's lakes are coloured by a stylesheet rule (marked important): a rule of our own, a step stronger, carries the chosen colour */
+function lakeCss(){let st=document.getElementById("gfLakeCss");const c=gfLakeColor();if(!c){if(st)st.textContent="";return}if(!st){st=document.createElement("style");st.id="gfLakeCss";document.head.appendChild(st)}
+ st.textContent='html:root body #allMapsWrap.map-wrap.relief-mode:not(.climate-mode):not(.night-mode):not(.elev-mode):not(.dens-mode):not(.sat-mode) svg path:is(.map-lake, .map-lake-minor):not(.lake-hover):not(:hover){ fill:'+c+' !important; }'}
+setInterval(()=>{const k=style()+"|"+gfLakeColor();if(k!==lakeCss._k){lakeCss._k=k;lakeCss()}},500);
+function repaint(){lakeCss._k=style()+"|"+gfLakeColor();lakeCss();window._gfSeaSig=Date.now();try{GFG.sig=null;gfGlobeDirty()}catch(e){}try{amGlobe&&amGlobe.request()}catch(e){}try{typeof renderAllMaps==="function"&&renderAllMaps()}catch(e){}legendRefresh()}
 /* ---- the key ---- */
 function wrapLegend(){if(typeof reliefLegendHTML!=="function"||reliefLegendHTML._gfP2)return typeof reliefLegendHTML==="function";const _r=reliefLegendHTML;
  reliefLegendHTML=function(){let h=_r.apply(this,arguments);try{const st=style();
@@ -34,6 +38,7 @@ function addWell(){const p=document.getElementById("gfkPal");if(!p||typeof allMa
 new MutationObserver(addWell).observe(document.body,{childList:true,subtree:true});
 /* every colour change in the Palette: the key follows (the shades are painted a moment later) */
 document.addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#gfkPal")){window._gfSeaSig=Date.now();legendRefresh();setTimeout(legendRefresh,1500);setTimeout(legendRefresh,4000)}},true);
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#gfkPal [data-ra-reset]")){/* back to the original: the lakes too */const st=style();if(st&&LAKE[st]){delete LAKE[st];try{localStorage.setItem(KEY,JSON.stringify(LAKE))}catch(err){}const i=document.querySelector("#gfkPal [data-lake]");if(i)i.value=DEF_LAKE;repaint()}}},true);
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#gfkPal [data-st], #gfkPal [data-ra-reset]")){setTimeout(legendRefresh,300);setTimeout(legendRefresh,1500)}},true);
 })();
 document.addEventListener("input",e=>{if(e.target.closest&&e.target.closest("#gfkPal"))window._gfSeaSig=Date.now()},true);
