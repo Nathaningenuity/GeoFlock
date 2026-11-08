@@ -143,6 +143,8 @@ function bottomSync(){const g=G();const host=g&&g.host&&vis(g.host)?g.host:docum
  const hr=host.getBoundingClientRect();const over=hr.bottom-innerHeight+6;
  const lift=hr.top<innerHeight-260&&over>0?Math.min(over,hr.height*.45):0;
  els.forEach(e=>{if(!host.contains(e)&&!e.closest(".globe-wrap-rel, #allMapsWrap")){return}
+  /* the History timeline keeps to the bottom of the window itself (geoflock-history2.js): it is not lifted */
+  if(e.classList.contains("hist-dock")){if(e._gfx===1){e.style.removeProperty("translate");e._gfx=0}return}
   /* during a guided tour the tour places the folded tray itself, just under its card (geoflock-tourload.js) */
   const own=e.classList.contains("gfk-tray")&&(document.body.classList.contains("gf-touring")||e._gftl||(typeof ps!=="undefined"&&ps));
   /* the History timeline, stuck to the bottom of the window: the tray stays above it */

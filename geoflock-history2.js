@@ -407,12 +407,17 @@ function placeDock(d,h){const fs=document.body.classList.contains("gf-fs"),phone
     const half=(r.left+r.right)/2<mid?mid-r.right-8:r.left-8-mid,ww=Math.min(w,2*half);if(ww>=440){w=ww;continue}
     if(!fs){ok=false;break}bottom=hr.bottom-r.top+6;w=want;again=true;break}if(!ok||!again)break}
   if(ok){d.style.width=Math.round(w)+"px";d.style.left=Math.round(mid-hr.left-w/2)+"px";d.style.bottom=Math.round(bottom)+"px";d.style.marginLeft="";d.style.marginTop="";h.style.setProperty("--hd-space",Math.round(bottom+dh+8)+"px");h.classList.add("hd-over");return}}
+ /* a map taller than the window (it runs off the bottom of the screen): the timeline stays at the bottom of the window,
+    where the toolkit covers it, instead of hanging under the map out of sight or halfway up the screen */
+ if(!phone&&hr.bottom>innerHeight-4&&hr.top<innerHeight-120){if(d.parentNode!==h)h.appendChild(d);d.classList.remove("hd-below");h.classList.remove("hd-over");
+  d.style.position="fixed";d.style.width=Math.round(want)+"px";d.style.left=Math.round(mid-want/2)+"px";d.style.bottom="6px";d.style.marginLeft="";d.style.marginTop="";return}
+ d.style.position="";
  /* no room on the map: just under it */
  h.classList.remove("hd-over");if(d.previousElementSibling!==h)h.after(d);d.classList.add("hd-below");const pr=d.parentNode.getBoundingClientRect(),w=phone?pr.width:Math.min(want,pr.width);
  d.style.left=d.style.bottom="";d.style.width=Math.round(w)+"px";d.style.marginLeft=phone?"0px":Math.max(0,Math.round(mid-pr.left-w/2))+"px";
  /* buttons that hang below the map (phones) must not cover it */
  let mt=8;h.querySelectorAll(".globe-btns, .gfk-tray").forEach(x=>{const r=x.getBoundingClientRect();if(r.height&&r.bottom>hr.bottom&&getComputedStyle(x).position==="absolute")mt=Math.max(mt,Math.round(r.bottom-hr.bottom+8))});d.style.marginTop=mt+"px"}
-addEventListener("resize",()=>{try{dockSync();freeCard(true)}catch(e){}});setInterval(()=>{try{if(histOn()&&useNew())dockSync();else{const d=document.querySelector(".hist-dock");if(d)d.remove()}}catch(e){}},400);
+addEventListener("resize",()=>{try{dockSync();freeCard(true)}catch(e){}});addEventListener("scroll",()=>{try{if(document.querySelector(".hist-dock"))dockSync()}catch(e){}},{passive:true});setInterval(()=>{try{if(histOn()&&useNew())dockSync();else{const d=document.querySelector(".hist-dock");if(d)d.remove()}}catch(e){}},400);
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest(".gfk-tab"))setTimeout(()=>{try{dockSync()}catch(err){}},30)});
 
 /* ================= the story card: drag it anywhere in the window =================
