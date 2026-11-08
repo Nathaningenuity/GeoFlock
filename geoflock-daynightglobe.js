@@ -41,7 +41,7 @@ function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let
  const mx=Math.max(.5,(E-W)*.08),my=Math.max(.5,(N-Sx)*.08);N=Math.min(85,N+my);Sx=Math.max(-85,Sx-my);W-=mx;E+=mx;
  /* across the date line the patch simply runs past ±180° (the tiles wrap round, and the shader reads longitudes from the patch's west edge) */if(E-W>=359)return null;return[W,N,E,Sx]}catch(e){return null}}
 function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){PDBG="not globe";return null}
- const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),ppdNeed=g.projection().scale()*Math.PI/180*dpr,z=gfGibs.level(ppdNeed);
+ const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),ppdNeed=g.projection().scale()*Math.PI/180*dpr;let z=gfGibs.level(ppdNeed);
  if(z==null){if(st.P){try{G.gl.deleteTexture(st.P.t)}catch(e){}st.P=null}return null}
  /* the gentle auto-spin alone does not count as moving: the patch is made wider instead, to cover ~30 s of it */
  let spin=false;try{spin=typeof gfSpinWanted==="function"&&gfSpinWanted(g)&&!g._gfDown&&!g._flying}catch(e){}
@@ -49,7 +49,11 @@ function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amG
  const moving=g._gfDown||g._flying||now-pViewT<120;
  PDBG="z"+z+(moving?" moving":"")+(spin?" spin":"");if(!moving){let b=viewBounds(g);
    /* a fast spin (more than a view's width in 30 s) gets no patch: it would be gone before it loaded */
-   if(b&&spin){const d=((window.GFS&&GFS.degPerS)||6)*30/Math.max(1,g.zoom);if(d>b[2]-b[0])b=null;else {b=[b[0]-d,b[1],b[2]+d,b[3]];if(b[2]-b[0]>=359)b=null}}PDBG+=" b="+JSON.stringify(b);if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
+   if(b&&spin){const d=((window.GFS&&GFS.degPerS)||6)*30/Math.max(1,g.zoom);if(d>b[2]-b[0])b=null;else {b=[b[0]-d,b[1],b[2]+d,b[3]];if(b[2]-b[0]>=359)b=null}}PDBG+=" b="+JSON.stringify(b);
+   /* not more than about 40 tiles at once: on a sharp (Retina) screen a Europe-wide view asked for ~120 tiles of 512 px and the
+      sharp picture never came; a level coarser is still far sharper than the built-in picture */
+   if(b){const cnt=zz=>{const td=gfGibs.tdeg(zz);return Math.ceil((b[2]-b[0])/td+1)*Math.ceil((b[1]-b[3])/td+1)};while(z>4&&cnt(z)>40)z--;PDBG+=" z→"+z+" n="+cnt(z)}
+   if(b){const key=z+"|"+b.map(v=>v.toFixed(2)).join(",");
    /* a patch counts only if it is for this globe and none of its tiles failed (else it is made again after a few seconds) */
    if(st.P&&st.P.miss&&!st.P.part&&performance.now()-st.P.at>4000&&st.key===key){st.key="";st.P.at=performance.now()}
    const P=st.P&&st.P.G===G&&!st.P.miss?st.P:null,v=spin?viewBounds(g)||b:b,inside=P&&P.z===z&&v[0]>=P.b[0]&&v[2]<=P.b[2]&&v[1]<=P.b[1]&&v[3]>=P.b[3];
