@@ -66,7 +66,14 @@ function load(k){if(k<0||!IDX||k>=IDX.chunks.length||CH[k]||LOADING[k])return;LO
  fc.features.forEach(f=>{const g=f.geometry;if(!g)return;let P=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:null;if(!P)return;
   P=P.map(poly=>poly.map(dens));P.forEach(poly=>{try{if(d3.geoArea({type:"Polygon",coordinates:poly})>2*Math.PI)poly.forEach(r=>r.reverse())}catch(e){}});
   f.geometry={type:"MultiPolygon",coordinates:P};f._b=d3.geoBounds(f);f.properties.imp=impOf(f.properties);out.push(f)});
- out.sort((a,b)=>(a.properties.o?1:0)-(b.properties.o?1:0)||b.properties.a-a.properties.a);
+ /* Crimea from 2014: Russia's outline takes it in (as the source data follows who holds it) while Ukraine's keeps it (as
+    almost every country recognises): it is drawn once more on top, striped in both colours, as annexed and disputed */
+ out.filter(f=>f.properties.n==="Russia"&&f.properties.s>=2014&&f.properties.s<2015).concat(out.filter(f=>f.properties.n==="Russia"&&f.properties.s>2018&&f.properties.s<2019)).forEach(f=>{
+  const P=f.geometry.coordinates.find(poly=>{try{const b=d3.geoBounds({type:"Polygon",coordinates:poly});return b[0][0]>31.5&&b[1][0]<37.5&&b[0][1]>43.5&&b[1][1]<46.6}catch(e){return false}});
+  if(!P)return;const g={type:"MultiPolygon",coordinates:[P]};const uk=out.find(u=>u.properties.n==="Ukraine");
+  const nf={type:"Feature",geometry:g,properties:{n:"Crimea (annexed by Russia, 2014)",s:f.properties.s,e:f.properties.e,c:f.properties.c,a:2.6,o:1,w:"Q7835",hatch:[uk?uk.properties.c:"#ddcda4",f.properties.c]}};
+  nf._b=d3.geoBounds(nf);nf.properties.imp=impOf(nf.properties);out.push(nf)});
+ out.sort((a,b)=>(a.properties.o?1:0)-(b.properties.o?1:0)||(a.properties.hatch?1:0)-(b.properties.hatch?1:0)||b.properties.a-a.properties.a);
  CH[k]=out;delete LOADING[k];FC.clear();warm(out);if(useNew()&&histOn()&&chunkOf(curY)===k){histShown=-1;setYear(curY,false,tourOn())}}).catch(()=>{delete LOADING[k]})}
 function need(y){if(!IDX){ensureIdx();return}const k=chunkOf(y);load(k);load(k+1);if(k>0)load(k-1)}
 /* the polities alive in the shown year. The same set of polities is always the same array, so a change of borders
@@ -219,13 +226,17 @@ function linePath(f,dl){if(!dl)return fillPath(f,0);const C=pcFor(dl);let pa=C.s
 /* a chunk's shapes are prepared a few at a time in spare moments, so playing into it does not stall */
 function warm(list){const dl=(()=>{try{return amGlobe&&amGlobe._gfDl||0}catch(e){return 0}})();let i=0;const step=()=>{const t=performance.now();while(i<list.length&&performance.now()-t<12){fillPath(list[i],dl);i++}if(i<list.length)(window.requestIdleCallback||setTimeout)(step,{timeout:200})};setTimeout(step,50)}
 const ROB0=d3.geoRobinson().scale(1).translate([0,0]),XR=ROB0([180,0])[0],YR=Math.abs(ROB0([0,90])[1]);
+/* the striped fill (Crimea after 2014: Ukraine's colour with Russia's across it): a repeating pattern held at a fixed size on
+   the screen, whatever the map's own scaling */
+const HT=new Map();function hatchFill(c,H,g){const k=H.join("|");let t=HT.get(k);if(!t){t=document.createElement("canvas");const n=12;t.width=t.height=n;const x=t.getContext("2d");x.fillStyle=H[0];x.fillRect(0,0,n,n);x.strokeStyle=H[1];x.lineWidth=4.2;x.beginPath();for(const o of[-n,0,n]){x.moveTo(o,n);x.lineTo(o+n,0)}x.stroke();HT.set(k,t)}
+ const pat=c.createPattern(t,"repeat");try{const s2=(window.devicePixelRatio||1)*.6*(g||1);pat.setTransform(c.getTransform().inverse().multiply(new DOMMatrix([s2,0,0,s2,0,0])))}catch(e){}return pat}
 /* draws the polities onto a canvas; on the flat map with the ready-made shapes, on the globe through the projection */
 function paint(c,feats,V,ox,oy,g,noLine){g=g||1;c.save();c.lineJoin="round";
  if(V.flat){const k=V.A*V.S*g;c.setTransform(k,0,0,k,ox,oy);const dl=V.dl;
-  feats.forEach(f=>{c.fillStyle=histFill(f.properties);c.fill(fillPath(f,dl));if(!noLine&&f.properties.k!==0){c.lineWidth=(f.properties.o?.55:.45)/V.S;c.strokeStyle=LINE();c.stroke(linePath(f,dl))}})}
+  feats.forEach(f=>{c.fillStyle=histFill(f.properties);if(f.properties.hatch)c.fillStyle=hatchFill(c,f.properties.hatch,g);c.fill(fillPath(f,dl));if(!noLine&&f.properties.k!==0){c.lineWidth=(f.properties.o?.55:.45)/V.S;c.strokeStyle=LINE();c.stroke(linePath(f,dl))}})}
  else{c.setTransform(g===1?V.M:new DOMMatrix([g,0,0,g,0,0]).multiply(V.M));const path=gpath(V.p,c),ctr=V.ctr;
   feats.forEach(f=>{const b=f._b;let x1=b[1][0];if(x1<b[0][0])x1+=360;if(x1-b[0][0]<170){const cc=[(b[0][0]+x1)/2,(b[0][1]+b[1][1])/2],r=Math.max(d3.geoDistance(cc,b[0]),d3.geoDistance(cc,b[1]),d3.geoDistance(cc,[b[0][0],b[1][1]]),d3.geoDistance(cc,[x1,b[0][1]]));if(d3.geoDistance(cc,ctr)-r>1.6)return}
-   c.beginPath();path(f);c.fillStyle=histFill(f.properties);c.fill();if(!noLine&&f.properties.k!==0){c.lineWidth=f.properties.o?.55:.45;c.strokeStyle=LINE();c.stroke()}})}
+   /* the striped Crimea is drawn by the flat pass only (here its stripes spread over the whole globe) */if(f.properties.hatch)return;c.beginPath();path(f);c.fillStyle=histFill(f.properties);c.fill();if(!noLine&&f.properties.k!==0){c.lineWidth=f.properties.o?.55:.45;c.strokeStyle=LINE();c.stroke()}})}
  c.restore()}
 /* layer pictures are reused, not made anew for every change */
 const SPARE=[];const getCv=()=>SPARE.pop()||document.createElement("canvas");const putCv=cv=>{if(cv&&SPARE.length<3&&SPARE.indexOf(cv)<0)SPARE.push(cv)};
