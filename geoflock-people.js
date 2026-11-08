@@ -28,18 +28,25 @@ function countryGrid(){if(CIDX)return CIDX;try{const F=projFeatures().filter(f=>
  const pr=d3.geoEquirectangular().scale(W/(2*Math.PI)).translate([W/2,H/2]).precision(.2),path=d3.geoPath(pr,x);CODES=[null];
  F.forEach(f=>{const id=CODES.length;CODES.push(String(f.properties.c).toLowerCase());x.fillStyle="rgb("+(id>>8)+","+(id&255)+",255)";x.beginPath();path(f);x.fill()});
  const d=x.getImageData(0,0,W,H).data,a=new Uint16Array(W*H);for(let i=0,j=0;i<a.length;i++,j+=4)if(d[j+2]===255&&d[j+3]===255)a[i]=(d[j]<<8)|d[j+1];CIDX=a;c.width=0}catch(e){console.error(e);CIDX=new Uint16Array(1)}return CIDX}
-function mask(rings){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;rings.forEach(r=>r.forEach(([lo,la])=>{x0=Math.min(x0,lo);x1=Math.max(x1,lo);y0=Math.min(y0,la);y1=Math.max(y1,la)}));
+/* a ring that crosses the 180° line jumps from +180 to -180: drawn as it is, the fill ran the long way round the world (Russia
+   took in a band across Canada, the Atlantic and Scandinavia). Each ring is made continuous, and the part past ±180 drawn again
+   on the other side */
+function unwrap(r){const o=[];let off=0,prev=null;for(const q of r){let L=q[0]+off;if(prev!==null){if(L-prev>180){off-=360;L-=360}else if(L-prev<-180){off+=360;L+=360}}o.push([L,q[1]]);prev=L}return o}
+function bboxR(rings){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;rings.forEach(r=>unwrap(r).forEach(([lo,la])=>{x0=Math.min(x0,lo);x1=Math.max(x1,lo);y0=Math.min(y0,la);y1=Math.max(y1,la)}));if(x0<-180||x1>180){x0=-180;x1=180}return[x0,x1,y0,y1]}
+function drawRings(x,rings,c0,r0){rings.forEach(r0r=>{const u=unwrap(r0r);let mn=1e9,mx=-1e9;u.forEach(q=>{if(q[0]<mn)mn=q[0];if(q[0]>mx)mx=q[0]});const sh=[0];if(mx>180)sh.push(-360);if(mn<-180)sh.push(360);
+  sh.forEach(d=>u.forEach(([lo,la],i)=>{const px=(lo+d+180)/STEP-c0,py=(90-la)/STEP-r0;i?x.lineTo(px,py):x.moveTo(px,py)}))})}
+function mask(rings){const[x0,x1,y0,y1]=bboxR(rings);
  const c0=Math.max(0,Math.floor((x0+180)/STEP)),c1=Math.min(W-1,Math.ceil((x1+180)/STEP)),r0=Math.max(0,Math.floor((90-y1)/STEP)),r1=Math.min(H-1,Math.ceil((90-y0)/STEP));
  const w=c1-c0+1,h=r1-r0+1;if(w<1||h<1)return null;const cv=document.createElement("canvas");cv.width=w;cv.height=h;const x=cv.getContext("2d",{willReadFrequently:true});x.fillStyle="#fff";x.beginPath();
- rings.forEach(r=>r.forEach(([lo,la],i)=>{const px=(lo+180)/STEP-c0,py=(90-la)/STEP-r0;i?x.lineTo(px,py):x.moveTo(px,py)}));x.fill("evenodd");
+ drawRings(x,rings,c0,r0);x.fill("evenodd");
  const d=x.getImageData(0,0,w,h).data;cv.width=0;return{c0,r0,w,h,at:(i,j)=>d[(j*w+i)*4+3]>=128}}
 /* union or overlap of several areas: each drawn on the same frame of cells, then combined cell by cell */
-function comboMask(list,op){if(!list.length)return null;const box=R=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;R.forEach(r=>r.forEach(([lo,la])=>{x0=Math.min(x0,lo);x1=Math.max(x1,lo);y0=Math.min(y0,la);y1=Math.max(y1,la)}));return[x0,x1,y0,y1]};
+function comboMask(list,op){if(!list.length)return null;const box=bboxR;
  const B=list.map(box);let F=op==="inter"?[Math.max(...B.map(b=>b[0])),Math.min(...B.map(b=>b[1])),Math.max(...B.map(b=>b[2])),Math.min(...B.map(b=>b[3]))]:[Math.min(...B.map(b=>b[0])),Math.max(...B.map(b=>b[1])),Math.min(...B.map(b=>b[2])),Math.max(...B.map(b=>b[3]))];
  if(F[0]>F[1]||F[2]>F[3])return{c0:0,r0:0,w:0,h:0,at:()=>false};
  const c0=Math.max(0,Math.floor((F[0]+180)/STEP)),c1=Math.min(W-1,Math.ceil((F[1]+180)/STEP)),r0=Math.max(0,Math.floor((90-F[3])/STEP)),r1=Math.min(H-1,Math.ceil((90-F[2])/STEP));const w=c1-c0+1,h=r1-r0+1;if(w<1||h<1)return null;
  const acc=new Uint8Array(w*h);const cv=document.createElement("canvas");cv.width=w;cv.height=h;const x=cv.getContext("2d",{willReadFrequently:true});
- list.forEach(rings=>{x.clearRect(0,0,w,h);x.fillStyle="#fff";x.beginPath();rings.forEach(r=>r.forEach(([lo,la],i)=>{const px=(lo+180)/STEP-c0,py=(90-la)/STEP-r0;i?x.lineTo(px,py):x.moveTo(px,py)}));x.fill("evenodd");const d=x.getImageData(0,0,w,h).data;for(let i=0;i<w*h;i++)if(d[i*4+3]>=128)acc[i]++});
+ list.forEach(rings=>{x.clearRect(0,0,w,h);x.fillStyle="#fff";x.beginPath();drawRings(x,rings,c0,r0);x.fill("evenodd");const d=x.getImageData(0,0,w,h).data;for(let i=0;i<w*h;i++)if(d[i*4+3]>=128)acc[i]++});
  cv.width=0;const need=op==="inter"?list.length:1;return{c0,r0,w,h,at:(i,j)=>acc[j*w+i]>=need}}
 /* the area of the cells in a mask (km²), for combined shapes */
 function maskKm2(m){let a=0;const c=111.32*STEP;for(let j=0;j<m.h;j++){const la=90-(m.r0+j+.5)*STEP,ca=c*c*Math.cos(la*Math.PI/180);for(let i=0;i<m.w;i++)if(m.at(i,j))a+=ca}return a}
@@ -55,7 +62,7 @@ function cutSide(C,lo,la){const x=lo*C.k,y=la,X=C.X;if(C.loop){let c=false;for(l
 function countRings(rings,cuts,mm){const m=mm||mask(rings);if(!m||!POP)return null;cuts=cuts||[];const CP=cuts.map(cutPrep).filter(Boolean);const CI=countryGrid();let tot=0,cx=0,cy=0;const parts={},cty={};const KEY=CP.length?new Array(m.w*m.h):null,PA=CP.length?new Float64Array(m.w*m.h):null,PV=CP.length?new Float64Array(m.w*m.h):null,PX=CP.length?new Float64Array(m.w*m.h):null,PY=CP.length?new Float64Array(m.w*m.h):null;
  for(let j=0;j<m.h;j++)for(let i=0;i<m.w;i++){if(!m.at(i,j))continue;const gi=(m.r0+j)*W+(m.c0+i),v=POP[gi];const lo=(m.c0+i+.5)*STEP-180,la=90-(m.r0+j+.5)*STEP;
   /* every cell of the shape gets its side of each cut (empty desert too), so the pieces join up across it */
-  if(KEY){let k="";for(const C of CP)k+=cutSide(C,lo,la)?"1":"0";KEY[j*m.w+i]=k;PA[j*m.w+i]=Math.cos(la*Math.PI/180)}
+  if(KEY){let k="";for(const C of CP)if(C.loop)k+=cutSide(C,lo,la)?"1":"0";KEY[j*m.w+i]=k;PA[j*m.w+i]=Math.cos(la*Math.PI/180)}
   if(!v)continue;tot+=v;cx+=lo*v;cy+=la*v;
   const ci=CI.length>1?CI[gi]:0;cty[ci]=(cty[ci]||0)+v;if(PV){const q=j*m.w+i;PV[q]=v;PX[q]=lo;PY[q]=la}
   }
@@ -66,8 +73,32 @@ function countRings(rings,cuts,mm){const m=mm||mask(rings);if(!m||!POP)return nu
   const fill=(lab,ok,id,i0)=>{st.length=0;st.push(i0);lab[i0]=id;while(st.length){const q=st.pop(),x=q%m.w,y=(q-x)/m.w;
    for(const n of [x>0?q-1:-1,x<m.w-1?q+1:-1,y>0?q-m.w:-1,y<m.h-1?q+m.w:-1])if(n>=0&&lab[n]<0&&ok(q,n)){lab[n]=id;st.push(n)}}};
   const inM=q=>m.at(q%m.w,(q-q%m.w)/m.w);let nb=0,nc=0;const size=[],cBase=[],cKey=[];
+  /* an open cut is a wall across the shape, drawn cell by cell along the line; each end is carried on only while it is still
+     inside the shape (so a cut ending just short of the coast still goes across). The pieces are what the walls separate.
+     (It used to be carried on 90° beyond its ends and every cell took the side of the nearest bit of that long line, so a
+     cut along the Urals gave north-east Siberia to the European side.) */
+  const WALL=new Uint8Array(N),gx=lo=>(lo+180)/STEP-m.c0,gy=la=>(90-la)/STEP-m.r0;
+  const mark=(x,y)=>{x=Math.floor(x);y=Math.floor(y);if(x>=0&&y>=0&&x<m.w&&y<m.h)WALL[y*m.w+x]=1};
+  const seg=(x0,y0,x1,y1)=>{const n=Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))*2)+1;let px=null,py=null;for(let t=0;t<=n;t++){const x=x0+(x1-x0)*t/n,y=y0+(y1-y0)*t/n;mark(x,y);
+    /* no diagonal gaps: a step that changes both row and column marks the corner cell too */if(px!=null&&Math.floor(x)!==Math.floor(px)&&Math.floor(y)!==Math.floor(py))mark(x,py);px=x;py=y}};
+  const inside=(x,y)=>{x=Math.floor(x);y=Math.floor(y);return x>=0&&y>=0&&x<m.w&&y<m.h&&m.at(x,y)};
+  cuts.forEach((c,ci)=>{const C=cutPrep(c);if(!C||C.loop)return;const P=c.map(q=>[gx(q[0]),gy(q[1])]);for(let i=1;i<P.length;i++)seg(P[i-1][0],P[i-1][1],P[i][0],P[i][1]);
+   const go=(a,b)=>{let dx=a[0]-b[0],dy=a[1]-b[1];const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;let x=a[0],y=a[1];
+    /* an end already outside the shape (drawn past the coast) needs nothing more; one inside goes on until it leaves */if(!inside(x,y))return;for(let s2=0;s2<20000;s2++){x+=dx*.5;y+=dy*.5;if(!inside(x,y))break;mark(x,y);mark(x-dx*.5,y)}};
+   if(P.length>1){go(P[0],P[1]);go(P[P.length-1],P[P.length-2])}});
   for(let q=0;q<N;q++)if(base[q]<0&&inM(q))fill(base,(a,n)=>inM(n),nb++,q);
-  for(let q=0;q<N;q++)if(comp[q]<0&&KEY[q]!=null){const id=nc++;fill(comp,(a,n)=>KEY[n]===KEY[q],id,q);cBase[id]=base[q];cKey[id]=KEY[q];size[id]=0}
+  for(let q=0;q<N;q++)if(comp[q]<0&&KEY[q]!=null&&!WALL[q]){const id=nc++;fill(comp,(a,n)=>KEY[n]===KEY[q]&&!WALL[n],id,q);cBase[id]=base[q];cKey[id]=KEY[q];size[id]=0}
+  /* a separate bit of the shape the walls do not cross (an island, Chukotka past 180°) belongs with the nearest piece of a
+     bit that was cut: found by spreading out from the cut pieces over the grid (round the world when it spans it) */
+  if(cuts.some(c=>{const C=cutPrep(c);return C&&!C.loop})){const nIn={};for(let q=0;q<N;q++)if(comp[q]>=0){const b2=base[q];(nIn[b2]=nIn[b2]||new Set).add(comp[q])}
+   const split=new Set(Object.keys(nIn).filter(b2=>nIn[b2].size>1).map(Number));
+   if(split.size){const near=new Int32Array(N).fill(-1),Q=new Int32Array(N);let h2=0,t2=0;for(let q=0;q<N;q++)if(comp[q]>=0&&split.has(base[q])){near[q]=comp[q];Q[t2++]=q}
+    const wrap=m.c0===0&&m.w>=W;
+    while(h2<t2){const q=Q[h2++],x=q%m.w;for(const n of [x>0?q-1:(wrap?q+m.w-1:-1),x<m.w-1?q+1:(wrap?q-m.w+1:-1),q-m.w,q+m.w])if(n>=0&&n<N&&near[n]<0){near[n]=near[q];Q[t2++]=n}}
+    const to={};for(let q=0;q<N;q++){const id=comp[q];if(id<0||split.has(base[q])||to[id]!==undefined)continue;const nid=near[q];to[id]=nid>=0&&cKey[nid]===cKey[id]?nid:id}
+    for(let q=0;q<N;q++){const id=comp[q];if(id>=0&&to[id]!==undefined)comp[q]=to[id]}}}
+  /* the wall's own cells go to a piece next to them */
+  for(let pass=0;pass<4;pass++){let left=0;for(let q=0;q<N;q++){if(comp[q]>=0||KEY[q]==null)continue;const x=q%m.w;let got=-1;for(const n of [x>0?q-1:-1,x<m.w-1?q+1:-1,q-m.w,q+m.w])if(n>=0&&n<N&&comp[n]>=0&&KEY[n]===KEY[q]){got=comp[n];break}if(got>=0)comp[q]=got;else left++}if(!left)break}
   for(let q=0;q<N;q++)if(comp[q]>=0)size[comp[q]]++;
   /* within each island, the pieces with the same side-pattern, biggest first, numbered 0,1,2…; slivers along a cut join piece 0 */
   const ord={},grp={};for(let id=0;id<nc;id++){const g=cBase[id]+"|"+cKey[id];(grp[g]=grp[g]||[]).push(id)}
@@ -218,6 +249,8 @@ function fillWin(){if(!win)return;if(!isOpen()){closeWin();return}const o=cur(),
 setInterval(()=>{if(win&&!isOpen())closeWin()},700);
 function after(){try{T().render();T().geoList()}catch(e){}render()}
 /* the Geometry set calls this to fill its People section */
+/* for checks from the console: count a set of rings with cuts ([[lon,lat],...] each) */
+window.gfPeopleCount=async(rings,cuts)=>{await load();return countRings(rings,cuts)};
 window.gfPeopleExt=function(el){box=el;load().then(render).catch(()=>{});render();loop()};
 window.gfPeopleExt.pick=m=>{if(pickMode!==m){pickMode=m;syncCursor();render()}};
 try{gfOneTool.on("people",()=>{if(pickMode){pickMode=null;syncCursor();render()}})}catch(e){}
