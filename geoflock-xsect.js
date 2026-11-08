@@ -193,7 +193,10 @@ const inPanel=e=>e.target.closest&&e.target.closest(".gf-xs,.globe-btns,.gfk-tra
 function local(e){const g=G();const r=g.canvas.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
 /* what is drawn is kept as places (longitude, latitude), so it stays on the map when you zoom or pan while drawing;
    a finished line keeps its control points (the two ends of a straight line, the points of a freehand path) to edit */
-const inv=p=>{try{const q=G().projection().invert(p);return q&&isFinite(q[0])&&isFinite(q[1])?q:null}catch(e){return null}};
+/* screen to map: only a place on the map itself. Off the flat map's edge the projection still gives an answer (the pole, or a
+   longitude wrapped round), and a dot dragged there sent the line along the top of the map for tens of thousands of km: a point
+   is kept only when it lands back where the pointer is */
+const inv=p=>{try{const pr=G().projection(),q=pr.invert(p);if(!q||!isFinite(q[0])||!isFinite(q[1])||Math.abs(q[1])>90)return null;const b=pr(q);return b&&Math.hypot(b[0]-p[0],b[1]-p[1])<2?q:null}catch(e){return null}};
 /* the part of the globe on show: when zoomed in, the globe is a magnified view inside a circle of its normal size */
 function vis(g,pr0){if(!g||g._flat||!pr0||!pr0.translate)return null;const t=pr0.translate();let R=pr0.scale();try{const z=g.size();if(z&&z.r<R)R=z.r}catch(e){}return[t[0],t[1],R]}
 function scr(ll){const g=G();if(!g)return null;const pr0=g.projection(),ro=pr0.rotate?pr0.rotate():[g.rot[0],g.rot[1]];if(!g._flat&&d3.geoDistance(ll,[-ro[0],-ro[1]])>=Math.PI/2-1e-3)return null;const q=pr0(ll);if(!q||!isFinite(q[0]))return null;const d=vis(g,pr0);return d&&Math.hypot(q[0]-d[0],q[1]-d[1])>d[2]?null:q}
@@ -227,7 +230,7 @@ function move(e){if(!on)return;const g=G();if(!g)return;
 function build(ctrl){const g=G();if(!g)return null;const pts=ctrl.map(scr);
  if(pts.some(p=>!p))return densify(ctrl,500);
  let tot=0;for(let i=1;i<pts.length;i++)tot+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(tot<1)return null;const n=500,iv=g.projection().invert,ll=[];let acc=0,k=0;
- for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(k<=n&&k*tot/n<=acc+d+1e-9){const t=d?(k*tot/n-acc)/d:0,q=iv([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);if(q&&isFinite(q[0]))ll.push(q);k++}acc+=d}
+ for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],d=Math.hypot(b[0]-a[0],b[1]-a[1]);while(k<=n&&k*tot/n<=acc+d+1e-9){const t=d?(k*tot/n-acc)/d:0,q=inv([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);if(q)ll.push(q);k++}acc+=d}
  return ll.length>1?ll:null}
 /* a freehand path's editable points: about one every 22 px along what was drawn */
 function thin(ctrl){const out=[ctrl[0]];let last=scr(ctrl[0]);for(let i=1;i<ctrl.length-1;i++){const q=scr(ctrl[i]);if(!q||!last||Math.hypot(q[0]-last[0],q[1]-last[1])>=22){out.push(ctrl[i]);last=q}}out.push(ctrl[ctrl.length-1]);return out}
