@@ -50,10 +50,29 @@ function cutPrep(c){const P=c.map(q=>[q[0],q[1]]);if(P.length<2)return null;cons
  X.unshift(ext(X[0],X[1]));X.push(ext(X[X.length-1],X[X.length-2]));return{k,X}}
 function cutSide(C,lo,la){const x=lo*C.k,y=la,X=C.X;let bd=1e18,bs=0;for(let i=0;i<X.length-1;i++){const a=X[i],b=X[i+1],dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy||1e-12;let t=((x-a[0])*dx+(y-a[1])*dy)/L;t=t<0?0:t>1?1:t;
   const ex=a[0]+t*dx-x,ey=a[1]+t*dy-y,d=ex*ex+ey*ey;if(d<bd-1e-12){bd=d;bs=dx*(y-a[1])-dy*(x-a[0])}else if(Math.abs(d-bd)<=1e-12&&t>0&&t<1){bs=dx*(y-a[1])-dy*(x-a[0])}}return bs>0}
-function countRings(rings,cuts,mm){const m=mm||mask(rings);if(!m||!POP)return null;cuts=cuts||[];const CP=cuts.map(cutPrep).filter(Boolean);const CI=countryGrid();let tot=0,cx=0,cy=0;const parts={},cty={};
- for(let j=0;j<m.h;j++)for(let i=0;i<m.w;i++){if(!m.at(i,j))continue;const gi=(m.r0+j)*W+(m.c0+i),v=POP[gi];if(!v)continue;const lo=(m.c0+i+.5)*STEP-180,la=90-(m.r0+j+.5)*STEP;tot+=v;cx+=lo*v;cy+=la*v;
-  const ci=CI.length>1?CI[gi]:0;cty[ci]=(cty[ci]||0)+v;
-  if(CP.length){let k="";for(const C of CP)k+=cutSide(C,lo,la)?"1":"0";const P=parts[k]||(parts[k]={v:0,x:0,y:0});P.v+=v;P.x+=lo*v;P.y+=la*v}}
+function countRings(rings,cuts,mm){const m=mm||mask(rings);if(!m||!POP)return null;cuts=cuts||[];const CP=cuts.map(cutPrep).filter(Boolean);const CI=countryGrid();let tot=0,cx=0,cy=0;const parts={},cty={};const KEY=CP.length?new Array(m.w*m.h):null,PV=CP.length?new Float64Array(m.w*m.h):null,PX=CP.length?new Float64Array(m.w*m.h):null,PY=CP.length?new Float64Array(m.w*m.h):null;
+ for(let j=0;j<m.h;j++)for(let i=0;i<m.w;i++){if(!m.at(i,j))continue;const gi=(m.r0+j)*W+(m.c0+i),v=POP[gi];const lo=(m.c0+i+.5)*STEP-180,la=90-(m.r0+j+.5)*STEP;
+  /* every cell of the shape gets its side of each cut (empty desert too), so the pieces join up across it */
+  if(KEY){let k="";for(const C of CP)k+=cutSide(C,lo,la)?"1":"0";KEY[j*m.w+i]=k}
+  if(!v)continue;tot+=v;cx+=lo*v;cy+=la*v;
+  const ci=CI.length>1?CI[gi]:0;cty[ci]=(cty[ci]||0)+v;if(PV){const q=j*m.w+i;PV[q]=v;PX[q]=lo;PY[q]=la}
+  }
+ /* the pieces: cells on the same side of every cut AND joined to each other. A curvy cut that crosses the shape more than
+    once (or bends back) leaves two separate pieces on the same side: those count as separate parts. Islands of the
+    shape on the same side stay one part (they were never joined to begin with). */
+ if(CP.length){const N=m.w*m.h,base=new Int32Array(N).fill(-1),comp=new Int32Array(N).fill(-1),st=[];
+  const fill=(lab,ok,id,i0)=>{st.length=0;st.push(i0);lab[i0]=id;while(st.length){const q=st.pop(),x=q%m.w,y=(q-x)/m.w;
+   for(const n of [x>0?q-1:-1,x<m.w-1?q+1:-1,y>0?q-m.w:-1,y<m.h-1?q+m.w:-1])if(n>=0&&lab[n]<0&&ok(q,n)){lab[n]=id;st.push(n)}}};
+  const inM=q=>m.at(q%m.w,(q-q%m.w)/m.w);let nb=0,nc=0;const size=[],cBase=[],cKey=[];
+  for(let q=0;q<N;q++)if(base[q]<0&&inM(q))fill(base,(a,n)=>inM(n),nb++,q);
+  for(let q=0;q<N;q++)if(comp[q]<0&&KEY[q]!=null){const id=nc++;fill(comp,(a,n)=>KEY[n]===KEY[q],id,q);cBase[id]=base[q];cKey[id]=KEY[q];size[id]=0}
+  for(let q=0;q<N;q++)if(comp[q]>=0)size[comp[q]]++;
+  /* within each island, the pieces with the same side-pattern, biggest first, numbered 0,1,2…; slivers along a cut join piece 0 */
+  const ord={},grp={};for(let id=0;id<nc;id++){const g=cBase[id]+"|"+cKey[id];(grp[g]=grp[g]||[]).push(id)}
+  const bSize={};for(let id=0;id<nc;id++)bSize[cBase[id]]=(bSize[cBase[id]]||0)+size[id];
+  /* (a piece smaller than 1.5% of its island is a sliver left by a ragged coast along the cut: it joins piece 0) */
+  for(const g in grp){grp[g].sort((a,b)=>size[b]-size[a]);let n=0;grp[g].forEach(id=>{ord[id]=size[id]<Math.max(6,bSize[cBase[id]]*.015)?0:n++})}
+  for(let q=0;q<N;q++){const id=comp[q];if(id<0||!PV[q])continue;const k=cKey[id]+"#"+ord[id],P=parts[k]||(parts[k]={v:0,x:0,y:0});P.v+=PV[q];P.x+=PX[q]*PV[q];P.y+=PY[q]*PV[q]}}
  return{tot,c:tot?[cx/tot,cy/tot]:null,m,parts:Object.keys(parts).map(k=>({v:parts[k].v,c:[parts[k].x/parts[k].v,parts[k].y/parts[k].v]})).filter(p=>p.v>0).sort((a,b)=>b.v-a.v),
   countries:Object.keys(cty).filter(k=>+k>0).map(k=>({c:CODES[+k],v:cty[k]})).filter(o=>o.c).sort((a,b)=>b.v-a.v)}}
 const fmt=n=>n>=1e9?(n/1e9).toFixed(2)+" billion":n>=1e6?(n/1e6).toFixed(n>=1e8?0:1)+" million":n>=1e3?Math.round(n/1e3).toLocaleString()+" thousand":Math.round(n).toLocaleString();
