@@ -78,6 +78,10 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
  /* more kinds of places (the ocean floor, map lines, currents, tectonics, straits, capes...) from geoflock-search-more.js; a name already found here is kept as it is */
  try{const have=new Set();IDX.forEach(e=>[e.n].concat(e.alt||[]).forEach(k=>have.add(norm(k))));(window.gfSearchMore?gfSearchMore():[]).forEach(e=>{const ks=[e.n].concat(e.alt||[]).map(norm);if(ks.some(k=>have.has(k)))return;ks.forEach(k=>have.add(k));IDX.push(e)})}catch(e){console.error(e)}
  const GEN=/^(reservoir|lac|lago|laguna|lagoa|embalse|represa|ozero|vodokhranilishche|jezero|jezioro|see|meer|sjon|jarvi|tonle|danau|hu|ko|gol|nuur|buhayrat|bahr|rio|rivière|riviere|fleuve)\s+(de |du |des |la |le |d |del |di )?/;
+ /* a river, road or line is pinned at a point on it (halfway along its longest stretch), not at its centre, which can be far off it */
+ IDX.forEach(e=>{try{const t=e.g&&e.g.type;if(t!=="LineString"&&t!=="MultiLineString")return;const Ls=t==="LineString"?[e.g.coordinates]:e.g.coordinates;let best=null,bl=-1;
+  Ls.forEach(L=>{let l=0;for(let i=1;i<L.length;i++)l+=d3.geoDistance(L[i-1],L[i]);if(l>bl){bl=l;best=L}});if(!best||best.length<2)return;
+  let half=bl/2;for(let i=1;i<best.length;i++){const d=d3.geoDistance(best[i-1],best[i]);if(half<=d){e.ll=d3.geoInterpolate(best[i-1],best[i])(d?half/d:0);return}half-=d}e.ll=best[best.length-1]}catch(x){}});
  IDX.forEach(e=>{e.keys=[e.n].concat(e.alt).map(norm);e.keys.slice().forEach(k=>{const m=k.match(GEN);if(m){const rest=k.slice(m[0].length);if(rest){e.keys.push(rest);if(e.cat==="lakes")e.keys.push("lake "+rest);if(e.cat==="rivers")e.keys.push(rest+" river")}}});e.keys=e.keys.concat(e.keys.map(k=>k.replace(STRIP,"")))});return IDX}
 /* states and provinces: the name list is small and loaded once; each shape comes with its country's file */
 /* named regions: Natural Earth's geographic regions (public domain: the Sahel, Patagonia, Siberia, plains, plateaus, basins,

@@ -343,3 +343,12 @@ setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.
  const st=document.createElement("style");st.textContent="#projSvg.gf-pd-coast .proj-land,#projSvg.gf-pd-coast .proj-seamline{stroke:none !important}";document.head.appendChild(st);
 })();
 })();
+/* ---------- Satellite: lakes are never painted over the photo (the photo shows them); hovering one outlines it and names it ----------
+   The drawing reads the map's overlays: on Satellite they say "no lakes". Hovering still finds lakes (waterAt switches them on
+   for the hit test), and the Lakes switch is hidden there, since it would do nothing. */
+(function(){const sat=()=>{try{return allMapsColorMode==="satellite"}catch(e){return false}};
+ const patch=()=>{const g=typeof amGlobe!=="undefined"?amGlobe:null;if(!g||!g.cfg||typeof g.cfg.overlays!=="function"){setTimeout(patch,600);return}if(g.cfg._gfSatNoLakes)return;g.cfg._gfSatNoLakes=1;
+  const o=g.cfg.overlays;g.cfg.overlays=function(){const r=o.apply(this,arguments)||{};return sat()&&r.lakes&&!INHIT?Object.assign({},r,{lakes:false,minorLakes:false}):r}};patch();
+ /* while the pointer is being matched to a place, lakes count as on, so hovering a lake still finds it and names it */
+ let INHIT=0;const wrapHit=()=>{if(typeof GlobeView==="undefined")return;const W=GlobeView.prototype.waterAt;if(!W||W._gfSatOuter)return;const f=function(){INHIT++;try{return W.apply(this,arguments)}finally{INHIT--}};Object.assign(f,W);f._gfSatOuter=1;GlobeView.prototype.waterAt=f};
+ setInterval(()=>{wrapHit();/* the map's settings object can be replaced: patch the new one */try{if(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.cfg&&!amGlobe.cfg._gfSatNoLakes)patch()}catch(e){}const t=document.getElementById("allMapsLakesToggle");if(!t)return;const box=t.closest("label")||t.parentElement;if(box){const hide=sat();if(box._gfSatHid!==hide){box._gfSatHid=hide;box.style.display=hide?"none":""}}},400)})();
