@@ -289,10 +289,19 @@ const LAB={lake:"Lake",river:"River",pond:"Pond",dock:"Dock",basin:"Reservoir",r
 function d3poly(rings){/* d3 wants each piece wound the other way from the tile's; check by area */const pol=rings.map(r=>{const c=[];for(let i=0;i<r.length;i+=3)c.push([r[i],r[i+1]]);if(c.length&&(c[0][0]!==c[c.length-1][0]||c[0][1]!==c[c.length-1][1]))c.push(c[0].slice());return c});
  let P={type:"Polygon",coordinates:pol};try{if(d3.geoArea(P)>2*Math.PI)P={type:"Polygon",coordinates:pol.map(r=>r.slice().reverse())}}catch(e){}return P}
 function lakeAt(s,ll){for(const t of s.tiles){if(!t.d)continue;for(const K of t.d.lakes.concat(bigLakes(t.d))){if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])continue;if(inRings(K.rings,ll))return K}}return null}
+/* lakes the tiles leave unnamed (Crater Lake…) are named from a list of about 7,000 named lakes and their positions
+   (Wikidata, CC0): a named point inside the lake, or just off its shore, names it */
+let GAZ=null,GAZG=null;function gazLoad(){if(GAZ)return;GAZ=[];fetch("textures/GF_LAKENAMES.json").then(r=>r.ok?r.json():[]).then(d=>{GAZ=d;GAZG=new Map();d.forEach(p=>{const k=Math.floor(p[1])+","+Math.floor(p[2]);let a=GAZG.get(k);if(!a)GAZG.set(k,a=[]);a.push(p)})}).catch(()=>{})}
+function gazName(K){if(K._gz!==undefined)return K._gz;gazLoad();if(!GAZG)return null;K._gz=null;const b=K.bb,pad=.03;let best=null,bd=1e9;const cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;
+ for(let x=Math.floor(b[0]-pad);x<=Math.floor(b[2]+pad);x++)for(let y=Math.floor(b[1]-pad);y<=Math.floor(b[3]+pad);y++){const a=GAZG.get(x+","+y);if(!a)continue;for(const p of a){if(p[1]<b[0]-pad||p[1]>b[2]+pad||p[2]<b[1]-pad||p[2]>b[3]+pad)continue;
+  const inside=inRings(K.rings,[p[1],p[2]]),d=(inside?0:1)+Math.hypot(p[1]-cx,p[2]-cy)*1e-3;if(d<bd){bd=d;best=p}}}
+ if(best&&(bd<1||Math.max(b[2]-b[0],b[3]-b[1])<.6))K._gz=best[0];return K._gz}
+setTimeout(gazLoad,4000);
 function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out={};
  /* close up, a lake is outlined from the tiles' sharp shape, every piece of it; named from the tiles, or else from the map's own lake
     under the pointer, or else by its kind ("Lake", "Reservoir"...) */
- if(ov.lakes){const K=lakeAt(s,ll);if(K){const name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||LAB[K.cls]||"Lake";const co=[];
+ if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
+   const name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||gz||LAB[K.cls]||"Lake";const co=[];
    const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(same(Q))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))});
     if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))co.push(d3poly(Q.rings).coordinates)})});
    const ed=[];const shore=rings=>rings.forEach(r=>{const n=r.length/3;let cur=null;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){if(cur&&cur.length>1)ed.push(cur);cur=null;continue}if(!cur)cur=[[r[i],r[i+1]]];cur.push([r[j],r[j+1]])}if(cur&&cur.length>1)ed.push(cur)});
