@@ -15,11 +15,11 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const FOLD={"ø":"o","æ":"ae","œ":"oe","ß":"ss","ł":"l","đ":"d","ð":"d","þ":"th","ı":"i","ħ":"h","ŧ":"t","ŀ":"l","ĳ":"ij","ŉ":"n","ʻ":"","ʼ":"","‘":"","-":" ","–":" ","—":" "};
 const norm=s=>String(s||"").toLowerCase().replace(/[øæœßłđðþıħŧŀĳŉʻʼ‘\-–—]/g,c=>FOLD[c]).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[’'`.]/g,"").replace(/\s+/g," ").trim();
 const STRIP=/^(the |mount |mt |lake |loch |river |isla |isle of |gulf of |bay of |sea of |strait of |cape )/;
-const COL={continents:"#0f8a6a",orgs:"#5b3cc4",countries:"#2f6f9e",regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8",seafloor:"#1b4f8a",spots:"#b03060",lines:"#d43d1a",currents:"#0b8f8f",tectonics:"#c0392b",terms:"#5b3cc4"};
-const TYPE={countries:"country",regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall",seafloor:"ocean floor",spots:"place",lines:"map line",currents:"ocean current",tectonics:"plate tectonics",terms:"word in the dictionary"};
-const EMO={continents:"🌍",orgs:"🤝",countries:"🏳️",regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦",seafloor:"🌊",spots:"📍",lines:"🧭",currents:"🌀",tectonics:"🌐",terms:"📖"};
+const COL={railways:"#7a4a2a",roads:"#a0522d",continents:"#0f8a6a",orgs:"#5b3cc4",countries:"#2f6f9e",regions:"#c26a12",routes:"#b8860b",landmarks:"#b5651d",provinces:"#6a4fb0",seas:"#2f7fc4",ranges:"#8d5a2b",peaks:"#2b2b2b",volcanoes:"#d9480f",deserts:"#e2ad2c",forests:"#2f8a3e",rivers:"#1c64c8",lakes:"#4aa3e0",groups:"#c2259a",islands:"#e0569f",peninsulas:"#7d3cc8",cities:"#c0392b",waterfalls:"#1c64c8",seafloor:"#1b4f8a",spots:"#b03060",lines:"#d43d1a",currents:"#0b8f8f",tectonics:"#c0392b",terms:"#5b3cc4"};
+const TYPE={railways:"railway",roads:"road",countries:"country",regions:"region",routes:"historic route",landmarks:"landmark",provinces:"state or province",seas:"sea",ranges:"mountain range",peaks:"mountain",volcanoes:"volcano",deserts:"desert",forests:"forest",rivers:"river",lakes:"lake",groups:"island chain",islands:"island",peninsulas:"peninsula",cities:"city",waterfalls:"waterfall",seafloor:"ocean floor",spots:"place",lines:"map line",currents:"ocean current",tectonics:"plate tectonics",terms:"word in the dictionary"};
+const EMO={railways:"🚂",roads:"🛣️",continents:"🌍",orgs:"🤝",countries:"🏳️",regions:"🧭",routes:"🐫",landmarks:"🏛️",provinces:"🗺️",seas:"🌊",ranges:"⛰️",peaks:"🏔️",volcanoes:"🌋",deserts:"🏜️",forests:"🌳",rivers:"〰️",lakes:"💧",groups:"🏝️",islands:"🏝️",peninsulas:"🗺️",cities:"🏙️",waterfalls:"💦",seafloor:"🌊",spots:"📍",lines:"🧭",currents:"🌀",tectonics:"🌐",terms:"📖"};
 /* how each type is shown: zoom = fly to a point; flash = flash then soft highlight; icon = map icon; layer = flash then keep it drawn */
-const SHOW={continents:"flash",orgs:"flash",countries:"label",regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer",seafloor:"flash",spots:"city",lines:"flash",currents:"flash",tectonics:"flash",terms:"term"};
+const SHOW={railways:"flash",roads:"flash",continents:"flash",orgs:"flash",countries:"label",regions:"flash",routes:"flash",landmarks:"photo",provinces:"flash",cities:"city",peaks:"icon",volcanoes:"icon",waterfalls:"icon",islands:"flash",groups:"flash",peninsulas:"flash",seas:"flash",lakes:"flash",rivers:"flash",ranges:"layer",deserts:"layer",forests:"layer",seafloor:"flash",spots:"city",lines:"flash",currents:"flash",tectonics:"flash",terms:"term"};
 let IDX=null;
 /* which seas belong to which (roughly following the International Hydrographic Organization's limits). Only used by search:
    searching a sea also lights up its bays, gulfs and smaller seas. Everywhere else they stay separate. */
@@ -57,6 +57,10 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
   (REGS||[]).forEach(o=>{if(have.has(base(o.n))||(o.alt||[]).some(a=>have.has(base(a))))return;have.add(base(o.n));let g=o.g;try{IDX.push({n:o.n,alt:o.alt||[],cat:"regions",typ:o.t,g,ll:d3.geoCentroid(g),fame:2})}catch(e){}});
   UNIONS.forEach(([n,cc,alt])=>{if(have.has(base(n)))return;const g=unionOf(cc);if(!g)return;IDX.push({n,alt,cat:"regions",typ:"group of countries",g,ll:d3.geoCentroid(g),fame:2})});
   IDX.push({n:"Silk Road",alt:["Silk Roads","Silk Route"],cat:"routes",g:SILK,ll:[75,40],fame:1});
+  /* famous railways, roads and old trade routes, drawn through the places they pass (a name the map already has is kept as it is) */
+  {const have=new Set();IDX.forEach(e=>[e.n].concat(e.alt||[]).forEach(k=>have.add(norm(k))));
+   AREAS.forEach(([n,typ,alt,R])=>{if([n].concat(alt).some(k=>have.has(norm(k))))return;let g={type:"Polygon",coordinates:[R]};try{if(d3.geoArea(g)>2*Math.PI)g={type:"Polygon",coordinates:[R.slice().reverse()]}}catch(e){}let ll=R[0];try{ll=d3.geoCentroid(g)}catch(e){}IDX.push({n,alt,cat:"regions",typ,g,ll,fame:1})});
+   ROUTES.forEach(([n,cat,alt,L])=>{if([n].concat(alt).some(k=>have.has(norm(k))))return;const g={type:"MultiLineString",coordinates:L};let ll=L[0][Math.floor(L[0].length/2)];try{ll=d3.geoCentroid(g)}catch(e){}IDX.push({n,alt,cat,g,ll,fame:1})})}
   /* continents and the map's own sub-regions (North Africa, the Caribbean...): their countries flash */
   try{const C=typeof COUNTRIES!=="undefined"?COUNTRIES:[],by=(f)=>C.filter(f).map(c=>c.c);
    const AM_N=new Set(["North America","Central America","Caribbean","Northern America"]);
@@ -83,6 +87,60 @@ const UNIONS=[["Maghreb",["ma","dz","tn","ly","mr","eh"],["Maghrib","Northwest A
  ["Horn of Africa",["et","er","dj","so"],[]],["Central Asia",["kz","kg","tj","tm","uz"],[]],["Southeast Asia",["bn","kh","id","la","my","mm","ph","sg","th","tl","vn"],[]],["South Caucasus",["am","az","ge"],["Transcaucasia"]],
  ["Benelux",["be","nl","lu"],["Low Countries"]],["Baltic states",["ee","lv","lt"],["Baltics"]],["Nordic countries",["dk","fi","is","no","se"],["Nordics"]],["Indian subcontinent",["in","pk","bd","np","bt","lk"],["South Asia"]],
  ["Persian Gulf states",["bh","kw","om","qa","sa","ae"],["Gulf states","GCC"]],["Iberia",["es","pt"],[]],["Southern Cone",["ar","cl","uy"],[]],["Guianas",["gy","sr","gf"],["The Guianas"]],["Great Lakes region (Africa)",["rw","bi","ug","cd","ke","tz"],["African Great Lakes"]]];
+/* famous railways, roads and old trade routes: [name, kind, other names, lines of [lon, lat] through the main places on them] */
+const ROUTES=[
+ ["Trans-Siberian Railway","railways",["Trans-Siberian","Trans Siberian","Transsib","Trans-Siberian Railroad"],[[[37.62,55.75],[40.4,56.13],[44,56.33],[49.67,58.6],[56.25,58],[60.6,56.84],[65.53,57.15],[69.47,56.11],[73.37,54.99],[82.92,55.03],[92.87,56.01],[98,55.94],[104.28,52.29],[103.7,51.66],[107.6,51.83],[113.5,52.03],[119.75,53.73],[123.93,53.98],[128.47,50.92],[132.92,48.79],[135.07,48.48],[131.95,43.8],[131.89,43.12]]]],
+ ["Trans-Mongolian Railway","railways",["Trans-Mongolian","Trans Mongolian"],[[[107.6,51.83],[106.1,50.4],[106.92,47.92],[111.9,43.72],[111.98,43.65],[113.1,41.03],[116.4,39.9]]]],
+ ["Trans-Manchurian Railway","railways",["Trans-Manchurian","Chinese Eastern Railway"],[[[113.5,52.03],[117.33,49.64],[117.43,49.6],[119.76,49.21],[123.92,47.35],[126.63,45.75],[131.15,44.4],[131.95,43.8],[131.89,43.12]]]],
+ ["Baikal–Amur Mainline","railways",["BAM","Baikal-Amur Mainline","Baikal Amur Mainline"],[[[98,55.94],[101.6,56.15],[105.77,56.79],[109.31,55.64],[124.72,55.15],[137,50.55],[140.25,48.97]]]],
+ ["Qinghai–Tibet Railway","railways",["Qinghai-Tibet Railway","Qingzang Railway","Tibet railway"],[[[101.78,36.62],[94.9,36.4],[91.6,32.9],[92.05,31.48],[91.11,29.65]]]],
+ ["First Transcontinental Railroad","railways",["Transcontinental Railroad","Pacific Railroad","Overland Route"],[[[-95.94,41.26],[-100.77,41.12],[-104.82,41.14],[-105.59,41.31],[-111.97,41.22],[-112.55,41.62],[-119.81,39.53],[-121.49,38.58],[-122.27,37.8]]]],
+ ["Canadian Pacific Railway","railways",["CPR","Canadian Pacific"],[[[-73.57,45.5],[-75.7,45.42],[-81,46.49],[-89.25,48.38],[-94.49,49.77],[-97.14,49.9],[-104.6,50.45],[-114.07,51.05],[-115.57,51.18],[-116.29,51.45],[-118.2,51],[-120.33,50.67],[-123.1,49.28]]]],
+ ["Orient Express","railways",["Simplon Orient Express"],[[[2.35,48.86],[7.75,48.58],[11.58,48.14],[16.37,48.21],[19.04,47.5],[20.46,44.82],[23.32,42.7],[28.98,41.01]]]],
+ ["Indian Pacific","railways",["Trans-Australian Railway","Trans Australian Railway"],[[[151.21,-33.87],[141.47,-31.95],[138.6,-34.93],[137.77,-32.49],[130.41,-30.62],[121.47,-30.75],[115.86,-31.95]]]],
+ ["The Ghan","railways",["Ghan"],[[[138.6,-34.93],[137.77,-32.49],[133.88,-23.7],[132.26,-14.47],[130.84,-12.46]]]],
+ ["Hejaz Railway","railways",["Hijaz Railway"],[[[36.29,33.51],[36.1,32.62],[35.93,31.95],[35.73,30.19],[36.57,28.38],[37.95,26.79],[39.61,24.47]]]],
+ ["TAZARA Railway","railways",["Tazara","Tanzania–Zambia Railway","Uhuru Railway"],[[[39.28,-6.82],[33.46,-8.9],[28.68,-13.97]]]],
+ ["Uganda Railway","railways",["Lunatic Express","Mombasa–Nairobi railway"],[[[39.67,-4.04],[38.56,-3.4],[36.82,-1.29],[36.07,-0.3],[34.76,-0.09]]]],
+ ["Darjeeling Himalayan Railway","railways",["Toy Train"],[[[88.43,26.73],[88.28,26.88],[88.27,27.01],[88.26,27.04]]]],
+ ["Tōkaidō Shinkansen","railways",["Tokaido Shinkansen","Shinkansen","Bullet train"],[[[139.77,35.68],[138.38,34.97],[137.73,34.7],[136.88,35.17],[135.76,34.99],[135.5,34.73]]]],
+ ["Route 66","roads",["US Route 66","Mother Road"],[[[-87.63,41.88],[-90.2,38.63],[-93.29,37.21],[-95.99,36.15],[-97.52,35.47],[-101.83,35.22],[-106.65,35.08],[-111.65,35.2],[-117.02,34.9],[-118.24,34.05],[-118.49,34.01]]]],
+ ["Pan-American Highway","roads",["Pan American Highway","Panamericana"],[[[-148.4,70.25],[-147.72,64.84],[-135.06,60.72],[-120.24,55.76],[-114.07,51.05],[-104.99,39.74],[-96.8,32.78],[-99.5,27.5],[-100.31,25.69],[-99.13,19.43],[-90.51,14.63],[-89.19,13.69],[-86.25,12.13],[-84.09,9.93],[-79.52,8.98],[-77.69,8.16]],[[-76.73,8.09],[-75.56,6.25],[-76.53,3.45],[-78.47,-0.18],[-77.04,-12.05],[-70.3,-18.48],[-70.67,-33.45],[-68.83,-32.89],[-58.38,-34.6],[-62.27,-38.72],[-67.48,-45.86],[-69.22,-51.62],[-68.3,-54.8]]]],
+ ["Karakoram Highway","roads",["KKH","Friendship Highway (Karakoram)"],[[[72.69,33.82],[73.21,34.15],[74.1,35.42],[74.31,35.92],[74.66,36.32],[75.42,36.85],[75.23,37.77],[75.99,39.47]]]],
+ ["Grand Trunk Road","roads",["GT Road","Sadak-e-Azam","Uttarapath"],[[[88.36,22.57],[82.97,25.32],[78.01,27.18],[77.21,28.61],[74.87,31.63],[74.34,31.55],[73.05,33.6],[71.58,34.01],[69.17,34.53]]]],
+ ["Appian Way","routes",["Via Appia"],[[[12.5,41.89],[14.21,41.1],[14.78,41.13],[17.24,40.47],[17.94,40.63]]]],
+ ["Royal Road","routes",["Persian Royal Road"],[[[28.04,38.49],[32.85,39.93],[43.15,36.36],[44.01,36.19],[48.25,32.19]]]],
+ ["Inca road system","routes",["Qhapaq Ñan","Qhapaq Nan","Inca Trail network"],[[[-78.47,-0.18],[-79,-2.9],[-78.5,-7.16],[-71.97,-13.53],[-69.3,-15.8],[-68.15,-16.5],[-65.26,-19.03],[-70.67,-33.45]]]],
+ ["Amber Road","routes",["Amber Route"],[[[18.65,54.35],[17.04,51.11],[16.61,49.2],[16.86,48.11],[13.37,45.77]]]],
+ ["Incense Route","routes",["Incense Road","Frankincense Route"],[[[54.1,17.02],[47,15.4],[44.13,17.49],[39.83,21.42],[39.61,24.47],[37.95,26.79],[35.44,30.33],[34.47,31.5]]]],
+ ["Camino de Santiago","routes",["Way of St James","Camino Francés"],[[[-1.24,43.16],[-1.64,42.81],[-3.7,42.34],[-5.57,42.6],[-8.54,42.88]]]],
+ ["Trans-Saharan trade route","routes",["Trans-Saharan trade","Salt road"],[[[-3,16.77],[-3.98,22.68],[-4.26,31.28],[-5,34.03]]]],
+ ["Heihe–Tengchong Line","lines",["Hu Line","Hu Huanyong Line","Heihe-Tengchong Line","Aihui–Tengchong Line"],[[[127.5,50.25],[98.49,25.02]]]],
+ ["Qinling–Huaihe Line","lines",["Qinling-Huaihe Line","China's north–south line"],[[[104,33.5],[108,34],[111,33.5],[114,32.8],[117,32.8],[120,33.3]]]],
+ ["Wallace Line","lines",["Wallace's Line"],[[[115.7,-9.4],[115.8,-8.4],[116.6,-5],[118.5,-2],[119.5,1],[120.5,4],[122,6.5],[127,7.5]]]],
+ ["Brandt Line","lines",["North–South divide","Global North and South line"],[[[-180,30],[-120,32],[-100,30],[-80,25],[-30,20],[-15,35],[10,36],[35,35],[45,40],[60,40],[75,35],[90,30],[120,40],[130,40],[140,25],[150,10],[110,-5],[130,-15],[165,-20],[180,-50]]]],
+ ["Mason–Dixon line","lines",["Mason-Dixon line","Mason Dixon line"],[[[-80.52,39.72],[-75.79,39.72]]]],
+ ["Durand Line","lines",[],[[[74.6,37],[71.5,36.4],[71.1,35],[70,34],[69.9,33],[69.5,31.6],[68,31.7],[66.5,30],[66.3,29.8],[64,29.4],[62,29.4],[60.9,29.8]]]],
+ ["Korean Demilitarized Zone","lines",["DMZ","Korean DMZ"],[[[126.1,37.75],[126.7,37.95],[127.5,38.3],[128.4,38.6]]]],
+ ["Line of Control","lines",["LoC","Kashmir Line of Control"],[[[74,32.9],[74.3,33.6],[73.9,34.2],[74.3,34.6],[75.2,34.6],[76.5,34.9],[77,35.5]]]],
+ ["Iron Curtain","lines",[],[[[10.9,54],[10.8,53],[10.6,52],[10,51],[11.9,50.4],[12.5,50.3],[13.8,48.8],[15,48.9],[16.9,48.6],[16.5,47],[16.3,46.6],[19.6,46.2],[22.2,44.5],[22.6,44.2],[26.4,41.7],[28,41.9]]]],
+ ["Treaty of Tordesillas line","lines",["Tordesillas line","Line of Demarcation"],[[[-46.6,85],[-46.6,-60]]]],
+ ["100th meridian","lines",["100th meridian west","Dry line"],[[[-100,25],[-100,50]]]],
+ ["Goyder's Line","lines",["Goyders Line"],[[[133.5,-32.5],[135.5,-33],[137.5,-32],[138.5,-33],[139,-34.5],[140.5,-34],[141,-34]]]],
+ ["49th parallel","lines",["49th parallel north (border)","Medicine Line"],[[[-123.3,49],[-95.15,49]]]],
+ ["Oregon Trail","routes",[],[[[-94.42,39.09],[-98.97,40.64],[-103.35,41.7],[-104.56,42.2],[-108.9,42.37],[-112.44,43.03],[-116.95,43.8],[-121.18,45.6],[-122.61,45.36]]]]];
+/* famous areas that are not countries or natural regions: [name, kind, other names, outline] */
+const AREAS=[
+ ["Blue Banana","economic corridor",["European Backbone","Hot Banana","Manchester–Milan axis"],[[-3.2,53.6],[-1.2,53.9],[0.5,51.9],[4.2,52.6],[7.5,51.8],[8.9,50.1],[9.4,48.6],[9.6,47.6],[9.9,46.2],[9.6,45.2],[7.4,44.9],[7.2,45.6],[7.5,46.6],[7.3,47.6],[6.9,49],[6,50.5],[4,50.6],[2.5,51],[0.5,51.2],[-1,51.4],[-2.7,52.6],[-3.2,53.6]]],
+ ["Golden Triangle (Southeast Asia)","border region",["Golden Triangle"],[[100.0,20.6],[100.6,20.4],[101.0,21.5],[100.2,21.6],[99.5,20.9],[100.0,20.6]]],
+ ["Rust Belt","industrial region",["Manufacturing Belt"],[[-93,41.5],[-87.5,43.5],[-83,43],[-79,43.3],[-74.5,42.8],[-75,40],[-80.5,39.5],[-85,39.3],[-90.5,40],[-93,41.5]]],
+ ["Sun Belt","region",[],[[-122.5,37.5],[-117,37],[-104,37],[-94.5,36.5],[-80.5,37],[-75.5,36.5],[-81,25],[-97.5,25.8],[-106.5,31.8],[-117,32.5],[-122.5,37.5]]],
+ ["Corn Belt","farming region",[],[[-100,43],[-91,45],[-84,42],[-82,40],[-87,38],[-95,38.5],[-100,40],[-100,43]]],
+ ["Tornado Alley","region",[],[[-102,35.5],[-97,40.8],[-94.5,40.5],[-95.5,35],[-98,32.5],[-101.5,33],[-102,35.5]]],
+ ["BosWash","megalopolis",["Northeast megalopolis","Boston–Washington corridor"],[[-71.5,42.8],[-70.6,42.2],[-73.5,40.6],[-74.9,39.2],[-76.6,38.6],[-77.4,38.6],[-77.5,39.4],[-75.6,40.3],[-74,41.2],[-72,42.3],[-71.5,42.8]]],
+ ["Taiheiyō Belt","megalopolis",["Pacific Belt","Tokaido corridor","Taiheiyo Belt"],[[140.5,36.2],[140.2,35.2],[138,34.6],[135,34],[132,33.6],[130.3,33.4],[130.7,34],[133,34.7],[135.5,35],[137.2,35.4],[139.2,35.9],[140.5,36.2]]],
+ ["Fertile Crescent","historic region",[],[[35,31],[35.2,33.5],[36.3,36.5],[38.5,37.3],[42.5,37.3],[45.5,35.5],[47.8,31],[48.2,30],[46.5,30.5],[44.5,32.5],[42.5,34.5],[40,35.6],[38,35.5],[37,34],[36,32],[35,31]]],
+ ["Coral Triangle","marine region",[],[[117,7],[127,8],[135,0],[155,-5],[162,-11],[150,-11],[130,-9],[115,-9],[117,7]]]];
 /* the Silk Road's main routes, through the cities it is named by */
 const SILK={type:"MultiLineString",coordinates:[[[108.94,34.34],[103.83,36.06],[102.64,37.93],[100.45,38.93],[98.49,39.73],[94.66,40.14],[93.51,42.83],[89.19,42.95],[82.96,41.72],[80.26,41.17],[75.99,39.47],[72.8,40.53],[69.62,40.28],[66.96,39.65],[64.42,39.77],[61.84,37.66],[58.8,36.21],[51.43,35.59],[48.51,34.8],[44.58,33.09],[38.27,34.55],[36.16,36.2]],
  [[94.66,40.14],[88.97,39.22],[79.93,37.11],[77.24,38.41],[75.99,39.47]],[[36.16,36.2],[32.85,39.93],[28.98,41.01]]]};
@@ -206,18 +264,28 @@ function draw(){LIST.forEach(drawOne);if(onGlobe()){try{amGlobe.request()}catch(
 function fixWind(e){if(e._fw||!e.g)return;e._fw=1;try{const g=e.g,turn=P=>{try{return d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI?P.map(r=>r.slice().reverse()):P}catch(x){return P}};
  const before=JSON.stringify(g.coordinates).length&&d3.geoArea(g);if(g.type==="Polygon")e.g=Object.assign({},g,{coordinates:turn(g.coordinates)});else if(g.type==="MultiPolygon")e.g=Object.assign({},g,{coordinates:g.coordinates.map(turn)});
  /* the place's centre was worked out from the wrong shape: work it out again */if(e.g!==g&&d3.geoArea(e.g)<before)e.ll=d3.geoCentroid(e.g)}catch(x){}}
-function drawOne(e){fixWind(e);const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha(e);
- pin(e);if(mode==="label")return;
+/* islands and island chains are shown by their coasts: the outline is highlighted, the land is not coloured over.
+   A chain that is only a rough area round the islands (the West Indies, the Antilles) is first turned into the islands inside it */
+const isle=e=>e.cat==="islands"||e.cat==="groups"||(e.cat==="regions"&&/island/.test(e.typ||""));
+let LANDP=null;function landParts(){if(LANDP)return LANDP;LANDP=[];try{const T=PROJ_WORLD;T.objects.countries.geometries.forEach(g=>{const f=topojson.feature(T,g).geometry;if(!f)return;(f.type==="Polygon"?[f.coordinates]:f.type==="MultiPolygon"?f.coordinates:[]).forEach(P=>{try{LANDP.push({P,c:d3.geoCentroid({type:"Polygon",coordinates:P})})}catch(x){}})})}catch(x){}return LANDP}
+function islandize(e){if(e._isl||e.cat!=="regions"||!isle(e))return;e._isl=1;try{const own=landParts().filter(o=>d3.geoContains(e.g,o.c)).map(o=>o.P);if(own.length){e.g={type:"MultiPolygon",coordinates:own};e._shK=null}}catch(x){}}
+/* a searched country keeps a white outline round it until its chip is closed */
+const cShape=e=>{if(e._cg===undefined){e._cg=null;try{e._cg=membersOf([e.cc])}catch(x){}}return e._cg};
+function countryOutline(e){const G=cShape(e);if(onGlobe()||!G){if(e._g){e._g.remove();e._g=null}return}const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;
+ let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
+ const d=d3.geoPath(GLOBE_ROBINSON)(G)||"";if(g._d!==d){g._d=d;g.innerHTML='<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"/>'}}
+function drawOne(e){fixWind(e);islandize(e);const mode=SHOW[e.cat],col=COL[e.cat]||"#c2259a",a=alpha(e);
+ pin(e);if(e.cat==="countries"){countryOutline(e);return}if(mode==="label")return;
  if(onGlobe()){if(e._g){e._g.remove();e._g=null}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
  let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
- const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=(a<1?a*.8:keep);
+ const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:(a<1?a*.8:keep);
  if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
 /* zoomed in, an island or lake is drawn from the map's detailed coast (geoflock-detail.js) instead of its rough outline */
-function sharp(e){try{const kind=e.cat==="lakes"?"lake":e.cat==="islands"||e.cat==="groups"?"coast":null;if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return e.g;
+function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return e.g;
  const k=amGlobe._dstk||"";if(e._shK===k)return e._sh||e.g;e._shK=k;if(!e._bb){const b=d3.geoBounds(e.g);e._bb=[b[0][0],b[0][1],b[1][0],b[1][1]]}
  let sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;
  /* the detailed shapes are every island (or lake) found near it: keep only those inside its own outline, and use them only
@@ -225,9 +293,9 @@ function sharp(e){try{const kind=e.cat==="lakes"?"lake":e.cat==="islands"||e.cat
  if(sh&&sh.coordinates){const own=sh.coordinates.filter(P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return d3.geoContains(e.g,c)}catch(x){return false}});
   const A=d3.geoArea(e.g)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own}:null}
  e._sh=sh;return e._sh||e.g}catch(x){return e.g}}
-function globeDrawOne(ctx,p,e){fixWind(e);const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
- ctx.save();ctx.beginPath();path(sharp(e));if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=5;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=3;ctx.stroke()}
- else{ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill();{ctx.globalAlpha=1;ctx.lineWidth=4.5;ctx.strokeStyle="rgba(255,255,255,.75)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=2.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
+function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.beginPath();path(G);ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=1.7;ctx.stroke();ctx.restore()}return pin(e)}const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
+ ctx.save();ctx.beginPath();path(sharp(e));if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=2;ctx.stroke()}
+ else{if(!isle(e)){ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill()}{/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(!G._flat&&d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p||(window.gfGlobeShows&&!gfGlobeShows(G,p)))return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg)return null;const p=GLOBE_ROBINSON(ll);if(!p)return null;const m=svg.getScreenCTM();if(!m)return null;return[p[0]*m.a+m.e,p[1]*m.d+m.f]}
@@ -333,9 +401,11 @@ if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=functio
 const css=document.createElement("style");css.textContent=`
 .gfSearchLayer path{ vector-effect:non-scaling-stroke; }
 .gfSearchLayer .gfs-fill{ fill:var(--gfs) !important; fill-opacity:var(--gfa,.3) !important; stroke:none !important; }
-.gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3px !important; stroke-linejoin:round; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
-.gfSearchLayer .gfs-case{ fill:none !important; stroke:#fff !important; stroke-opacity:.9; stroke-width:6px !important; stroke-linecap:round; stroke-linejoin:round; }
-.gfSearchLayer .gfs-line{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:3.4px !important; stroke-linecap:round; stroke-linejoin:round; }
+.gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:1.8px !important; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
+.gfSearchLayer .gfs-wcase{ fill:none !important; stroke:rgba(20,30,45,.5) !important; stroke-width:3.4px !important; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.gfSearchLayer .gfs-white{ fill:none !important; stroke:#fff !important; stroke-width:1.7px !important; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.gfSearchLayer .gfs-case{ fill:none !important; stroke:#fff !important; stroke-opacity:.85; stroke-width:3.6px !important; stroke-linecap:round; stroke-linejoin:round; }
+.gfSearchLayer .gfs-line{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:2px !important; stroke-linecap:round; stroke-linejoin:round; }
 .gfs-pin{ position:fixed; z-index:40; pointer-events:none; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; animation:gfsIn .4s cubic-bezier(.2,1.4,.4,1); }
 .gfs-pin.gfs-city{ transform:translate(-50%,-50%); flex-direction:row; gap:6px; }
 @keyframes gfsIn{ from{ opacity:0; margin-top:-10px } to{ opacity:1; margin-top:0 } }
