@@ -34,9 +34,9 @@ function defPos(t,oh){const h=host();if(FS())return{x:10,y:Math.round(innerHeigh
  if(L.dock==="free"&&L.fx!=null&&h){const hr=h.getBoundingClientRect();if(hr.width)return{x:Math.round(hr.left+L.fx),y:Math.round(hr.top+(L.fy||0))}}
  const r=h&&h.getBoundingClientRect();if(r&&r.width&&r.bottom>60&&r.top<innerHeight-60)return{x:Math.round(r.left+12),y:Math.round(Math.min(r.bottom,innerHeight)-oh-6)};
  return{x:12,y:Math.round(innerHeight-oh-12)}}
-/* where the tray may sit: in full screen anywhere on the screen; otherwise inside the map (or the screen, if the map is smaller) */
-function bounds(w,th){const h=host();if(FS()||!h)return{l:4,r:innerWidth-w-4,t:4,b:innerHeight-th-4};const r=h.getBoundingClientRect();
- const l=r.left+4,rr=r.right-w-4,t=r.top+4,b=r.bottom-th-4;return{l:Math.min(l,Math.max(4,rr)),r:Math.max(l,rr),t:Math.min(t,Math.max(4,b)),b:Math.max(t,b)}}
+/* where the tray may sit: anywhere on the screen */
+/* anywhere on the screen, in full screen or not (it starts at the map's bottom left; the user can take it anywhere) */
+function bounds(w,th){return{l:4,r:Math.max(4,innerWidth-w-4),t:4,b:Math.max(4,innerHeight-th-4)}}
 let shown=true;
 function apply(){const t=tray();if(!t)return;const f=t.querySelector(".gfk-felt");if(!f)return;
  f.querySelectorAll(".gfk-slot").forEach(b=>{b.classList.toggle("gfkl-hide",L.hidden.includes(keyOf(b)))});
