@@ -222,7 +222,7 @@ const onGlobe=()=>{try{return typeof amGlobeOn==="function"&&amGlobeOn()&&typeof
    sixth is added. Each keeps its own highlight, pin and photo card; a list under the search box names them */
 let LIST=[],raf=0;const MAXN=5;const same=(a,b)=>a.n===b.n&&a.cat===b.cat;
 /* a result's area on screen: its outline rings (thinned to a few hundred points), or null for a point or a line */
-function areaRings(e){const g=e&&e.g;if(!g||!/Polygon/.test(g.type))return null;const rs=g.type==="Polygon"?g.coordinates:[].concat(...g.coordinates);
+function areaRings(e){const g=e&&(fine(e)||e.g);if(!g||!/Polygon/.test(g.type))return null;const rs=g.type==="Polygon"?g.coordinates:[].concat(...g.coordinates);
  const tot=rs.reduce((n,r)=>n+r.length,0),st=Math.max(1,Math.ceil(tot/500)),out=[];
  rs.forEach(r=>{const q=[];for(let i=0;i<r.length;i+=st){const v=screenOf(r[i]);if(v)q.push(v)}if(q.length>2)out.push(q)});return out.length?out:null}
 function inRings(x,y,R){let c=false;R.forEach(r=>{for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1]+1e-9)+a[0])c=!c}});return c}
@@ -279,7 +279,16 @@ function fixWind(e){if(e._fw||!e.g)return;e._fw=1;try{const g=e.g,turn=P=>{try{r
    A chain that is only a rough area round the islands (the West Indies, the Antilles) is first turned into the islands inside it */
 const isle=e=>e.cat==="islands"||e.cat==="groups"||(e.cat==="regions"&&/island/.test(e.typ||""));
 let LANDP=null;function landParts(){if(LANDP)return LANDP;LANDP=[];try{const T=PROJ_WORLD;T.objects.countries.geometries.forEach(g=>{const f=topojson.feature(T,g).geometry;if(!f)return;(f.type==="Polygon"?[f.coordinates]:f.type==="MultiPolygon"?f.coordinates:[]).forEach(P=>{try{LANDP.push({P,c:d3.geoCentroid({type:"Polygon",coordinates:P})})}catch(x){}})})}catch(x){}return LANDP}
-function islandize(e){if(e._isl||e.cat!=="regions"||!isle(e))return;e._isl=1;try{const own=landParts().filter(o=>d3.geoContains(e.g,o.c)).map(o=>o.P);if(own.length){e.g={type:"MultiPolygon",coordinates:own};e._shK=null}}catch(x){}}
+/* the detailed coasts (Natural Earth 1:10m, public domain; made by tools/build-islandcoasts.js), loaded the first time an
+   island is shown: every island and island chain is outlined from these instead of its rough shape */
+let COASTS=null,COASTP=null;
+function loadCoasts(){if(COASTP)return;COASTP=fetch("textures/ISLAND_COASTS.json?v=1").then(r=>r.json()).then(j=>{COASTS=j;LIST.forEach(e=>{if(isle(e)){e._fine=undefined;e._shK=null;e._bb=null;if(e._g)e._g._d=null}});draw();follow()}).catch(()=>{})}
+function fine(e){if(!isle(e))return null;if(e._fine!==undefined)return e._fine;if(!COASTS){loadCoasts();return null}e._fine=null;const ix=COASTS.e[e.n];if(!ix)return null;
+ const P=ix.map(i=>{const f=COASTS.p[i],r=[];let x=0,y=0;for(let k=0;k<f.length;k+=2){x+=f[k];y+=f[k+1];r.push([x/1e3,y/1e3])}const a=r[0],z=r[r.length-1];if(a[0]!==z[0]||a[1]!==z[1])r.push(a.slice());
+  /* d3 reads a ring wound the other way as the whole Earth outside the island: turn those round */try{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()}catch(x){}return[r]});
+ e._fine={type:"MultiPolygon",coordinates:P};return e._fine}
+const shapeOf=e=>fine(e)||e.g;
+function islandize(e){if(e._isl||e.cat!=="regions"||!isle(e)||fine(e))return;e._isl=1;try{const own=landParts().filter(o=>d3.geoContains(e.g,o.c)).map(o=>o.P);if(own.length){e.g={type:"MultiPolygon",coordinates:own};e._shK=null}}catch(x){}}
 /* a searched country keeps a white outline round it until its chip is closed */
 const cShape=e=>{if(e._cg===undefined){e._cg=null;try{e._cg=membersOf([e.cc])}catch(x){}}return e._cg};
 function countryOutline(e){const G=cShape(e);if(onGlobe()||!G){if(e._g){e._g.remove();e._g=null}return}const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;
@@ -290,22 +299,24 @@ function drawOne(e){fixWind(e);islandize(e);const mode=SHOW[e.cat],col=COL[e.cat
  if(onGlobe()){if(e._g){e._g.remove();e._g=null}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
  let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
- const d=d3.geoPath(GLOBE_ROBINSON)(e.g)||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:(a<1?a*.8:keep);
- if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
+ const d=d3.geoPath(GLOBE_ROBINSON)(shapeOf(e))||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:(a<1?a*.8:keep);
+ /* one island: a white outline, as a searched country has; a chain keeps its colour */
+ if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':e.cat==="islands"?'<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
 /* zoomed in, an island or lake is drawn from the map's detailed coast (geoflock-detail.js) instead of its rough outline */
-function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return e.g;
- const k=amGlobe._dstk||"";if(e._shK===k)return e._sh||e.g;e._shK=k;if(!e._bb){const b=d3.geoBounds(e.g);e._bb=[b[0][0],b[0][1],b[1][0],b[1][1]]}
+function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;const G0=shapeOf(e);if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return G0;
+ const k=amGlobe._dstk||"";if(e._shK===k)return e._sh||G0;e._shK=k;if(!e._bb){const b=d3.geoBounds(e.g);e._bb=[b[0][0],b[0][1],b[1][0],b[1][1]]}
  let sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;
  /* the detailed shapes are every island (or lake) found near it: keep only those inside its own outline, and use them only
     when they make up most of it (a big island crossing many map tiles is not in the detailed set, only its small neighbours) */
  if(sh&&sh.coordinates){const own=sh.coordinates.filter(P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return d3.geoContains(e.g,c)}catch(x){return false}});
-  const A=d3.geoArea(e.g)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own}:null}
- e._sh=sh;return e._sh||e.g}catch(x){return e.g}}
+  const A=d3.geoArea(G0)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own}:null}
+ e._sh=sh;return e._sh||G0}catch(x){return shapeOf(e)}}
 function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.beginPath();path(G);ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=1.7;ctx.stroke();ctx.restore()}return pin(e)}const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(sharp(e));if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=2;ctx.stroke()}
+ else if(e.cat==="islands"){/* one island: white, like a searched country */ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=1.7;ctx.stroke()}
  else{if(!isle(e)){ctx.globalAlpha=a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill()}{/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(!G._flat&&d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p||(window.gfGlobeShows&&!gfGlobeShows(G,p)))return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
@@ -365,7 +376,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    const isl=e.cat==="islands"&&!AR;const nod=/richat/i.test(e.n||"")||!!AR||isl;
    if(isl&&len>14){const g=9;x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}ln.classList.toggle("gfs-nodot",nod);
    if(AR&&len>12){const u=[Math.cos(ang*Math.PI/180),Math.sin(ang*Math.PI/180)],g=Math.min(len-8,exitPx(x1,y1,u,AR)+3);if(g>0){x1+=u[0]*g;y1+=u[1]*g;len-=g}}
-   if(nod){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
+   if(nod&&!AR){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
    ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
 /* the map adds its own layers after a search is drawn; keep the search highlight on top of them */
 setInterval(()=>{if(!LIST.length)return;const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;LIST.forEach(e=>{const g=e._g;if(g&&g.ownerSVGElement===svg&&g!==svg.lastElementChild)svg.appendChild(g)})},400);
