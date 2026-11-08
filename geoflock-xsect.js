@@ -292,7 +292,7 @@ function nearCountry(ll,far){for(const d of (far===false?[.04,.1]:[.05,.12,.25,.
 function waterName(ll){try{const k=LAKES&&lakeAt(ll);if(k&&k.n)return/lake|sea|reservoir/i.test(k.n)?k.n:"Lake "+k.n}catch(e){}
  let best=null;try{(LFD||[]).forEach(o=>{if(!o.sea||!inB(o.b,ll))return;try{if(d3.geoContains(o.g,ll)&&(!best||o.a<best.a))best=o}catch(e){}})}catch(e){}if(best)return best.n;
  const lon=ll[0],lat=ll[1];if(lat<-60)return"Southern Ocean";if(lat>66)return"Arctic Ocean";
- if(lon>-100&&lon<20&&!(lon<-70&&lat<8&&lon<-80))return"Atlantic Ocean";if(lon>=20&&lon<=147&&lat<=30)return"Indian Ocean";return"Pacific Ocean"}
+ if(lon>-100&&lon<20&&!(lon<-70&&lat<8&&lon<-80))return"Atlantic Ocean";/* the Indian Ocean ends at Indonesia, Timor and Australia: north of about 8°S east of 100°E (and the Arafura, east of 130°E) is the Pacific */if(lon>-5&&lon<10&&lat>51&&lat<61)return"North Sea";if(lon>=20&&lon<=147&&lat<=30&&!(lon>100&&lat>-8)&&!(lon>=130&&lat>-12)&&!(lon>=142&&lat>-30))return"Indian Ocean";return"Pacific Ocean"}
 function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cur=null;
  const Lk=(P[P.length-1].km||0)-(P[0].km||0),minA=Math.pow(Lk/7/R_KM,2);
  for(let i=0;i<P.length;i+=step){const p=P[i],h=lfAt(p.ll,p.e,minA),n=h&&h.n;if(cur&&cur.n===n){cur.b=p.km;cur.hi=Math.max(cur.hi,p.e);cur.lo=Math.min(cur.lo,p.e)}else{cur={n,k:h&&h.k,a:p.km,b:p.km,hi:p.e,lo:p.e};out.push(cur)}}
@@ -414,7 +414,24 @@ async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)retu
   const v=(X,Y)=>{const tx=((Math.floor(X/256)%n)+n)%n,ty=Math.max(0,Math.min(n-1,Math.floor(Y/256))),d=T0[z+"/"+tx+"/"+ty];if(!d)return null;const i=(((Y%256)+256)%256*256+(((X%256)+256)%256))*4;return d[i]*256+d[i+1]+d[i+2]/256-32768};
   const a=v(x0,y0),b=v(x0+1,y0),c=v(x0,y0+1),d=v(x0+1,y0+1);if([a,b,c,d].some(x=>x==null))return null;return(a*(1-fx)+b*fx)*(1-fy)+(c*(1-fx)+d*fx)*fy};
  const P=[];let km=0;for(let i=0;i<pts.length;i++){if(i)km+=d3.geoDistance(pts[i-1],pts[i])*R_KM;const e=at(pts[i]);P.push({km,ll:pts[i],e:e==null?elevAt(pts[i][0],pts[i][1]):Math.round(e)})}
- if(lines.length===1)assignC(P);L.P=P;lakeify(L);L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
+ /* the tiles have the odd bad pixel: a false hole thousands of metres deep in shallow water (off the Great Barrier Reef).
+    Only such holes are filled: a sample more than 1,000 m below the middle of its neighbours, where the coarse grid has land
+    or shallow sea (above -200 m). Peaks and islands are never touched, and real deep water is deep on the coarse grid too */
+ for(let i=0;i<P.length;i++){const w=[];for(let j=Math.max(0,i-3);j<=Math.min(P.length-1,i+3);j++)if(j!==i)w.push(P[j].e);w.sort((x,y)=>x-y);const m=w[w.length>>1];
+  if(P[i].e<m-1000&&elevAt(P[i].ll[0],P[i].ll[1])>-200)P[i].e=m}
+ /* the tiles read the shallow sea over reefs (the Great Barrier Reef lagoon) as exactly 0 m, which drew it as land with a
+    green edge: a point at or just above 0 that lies in no country, where the coarse grid has sea, is sea at the grid's depth */
+ const ocean=ll=>{try{if(typeof GFE==="undefined"||!GFE.ready)return false;const m=GFE.ocean||(typeof gfOceanMask==="function"?gfOceanMask():null);if(!m)return false;const W=GFE.W,H=GFE.H;
+   for(const d of[0,.06,.12])for(const[a,b]of[[0,0],[d,0],[-d,0],[0,d],[0,-d]]){if(!d&&(a||b))continue;const p=GLOBE_ROBINSON0([ll[0]+a,ll[1]+b]);if(!p)continue;const y=Math.floor((p[1]+6.688)/1014.376*H),x=Math.floor(p[0]/2e3*W);if(y>=0&&y<H&&x>=0&&x<W&&m[y*W+x])return d?2:1}return 0}catch(e){return 0}};
+ /* land or sea: OpenFreeMap's detailed coast decides (the coast drawn on the map close up); without it, the world grid's ocean */
+ let SEA=null;try{if(window.gfDetail&&gfDetail.seaAt)SEA=await gfDetail.seaAt(P.map(q=>q.ll))}catch(e){}
+ if(id!==refineId||lines.indexOf(L)<0)return;
+ const wet=[];P.forEach((q,i)=>{if(SEA){if(SEA[i]&&q.e>=0)q.e=Math.min(-1,Math.round(elevAt(q.ll[0],q.ll[1])));wet.push(SEA[i]);return}
+  const o=q.e<=0?ocean(q.ll):0;if(q.e===0&&o)q.e=Math.min(-1,Math.round(elevAt(q.ll[0],q.ll[1])));wet.push(q.e<0&&o===1)});
+ if(lines.length===1)assignC(P);/* below sea level in an ocean cell of the world grid: the sea, not land below sea level */P.forEach((q,i)=>{if(wet[i])q.c=null});
+ /* the strip of countries and waters under the chart follows the detailed land and sea */
+ if(lines.length===1){const segs=[];let cur=null;P.forEach(q=>{const c=q.c||null,w=c?null:waterName(q.ll),k=c||("~"+w);if(!cur||cur.k!==k){cur={k,c,w,a:q.km,b:q.km};segs.push(cur)}else cur.b=q.km});L.segs=segs;if(LFD)L.lf=lfSegs(P)}
+ L.P=P;lakeify(L);L.fine=Math.round(40075/(256*2**z)*Math.cos(pts[0][1]*Math.PI/180)*1000);if(on&&panel)renderPanel()}
 {const _c=compute;compute=function(){const r=_c.apply(this,arguments);try{lines.forEach(L=>{if(!L.river)refine(L)})}catch(e){}return r}}
 const STOPS=[[-11000,"#0b1d4d"],[-6000,"#123a7a"],[-3000,"#1f63a8"],[-200,"#4ea6d6"],[0,"#8fd3e8"],[1,"#4f9d52"],[300,"#8fbf5a"],[800,"#d8c86d"],[1600,"#c18f4f"],[3000,"#8d5a34"],[4500,"#a7a2a0"],[6000,"#ffffff"]];
 /* ---------- rivers: one height window for every river (scroll up for the high sources), the story of each river, and a

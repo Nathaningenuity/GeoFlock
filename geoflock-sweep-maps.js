@@ -89,7 +89,9 @@ setInterval(()=>{try{if(!DIRTY.cards||busy())return;DIRTY.cards=false;const tr=t
   /* where the card would be on its own: where it is now, less any lift given to it */
   if(!c._gfSw)c._gfB0=parseFloat(cs.bottom)||0;const b0=c._gfB0,lift=c._gfSw?(parseFloat(c.style.bottom)||b0)-b0:0,top=R.top+lift,bot=R.bottom+lift,hgt=R.height;
   const over=tr.left<R.right&&tr.right>R.left&&tr.top<bot&&tr.bottom>top;
-  if(over&&tr.top-hr.top>Math.min(hgt,160)+12){const b=Math.round(b0+bot-tr.top+8);keepMH(c);if(c.style.bottom!==b+"px"){c.style.setProperty("bottom",b+"px","important");if(hgt>100){c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}}c._gfSw=1}
+  /* the Cross-section panel keeps the height it has (or the one you drag it to): it is only lifted when it fits whole above the tray */
+  const whole=c.classList.contains("gf-xs");
+  if(over&&tr.top-hr.top>(whole?hgt:Math.min(hgt,160))+12){const b=Math.round(b0+bot-tr.top+8);keepMH(c);if(c.style.bottom!==b+"px"){c.style.setProperty("bottom",b+"px","important");if(hgt>100&&!whole){c.style.maxHeight=Math.max(120,Math.round(tr.top-hr.top-16))+"px";if(cs.overflowY==="visible")c.style.overflowY="auto"}}c._gfSw=1}
   else if(c._gfSw)undo(c)});
  document.querySelectorAll(SHRINK.join(",")).forEach(c=>{watch(c);if(!tr||!c.getClientRects().length){undo(c);return}
   keepMH(c);if(c._gfSw){c.style.maxHeight=c._gfMH0||""}const r=c.getBoundingClientRect();
