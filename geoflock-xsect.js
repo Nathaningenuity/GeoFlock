@@ -315,31 +315,83 @@ const DEPRESSIONS=[["Qattara Depression",27.1,29.6,260],["Faiyum Depression",30.
  ["Salton Trough",-115.8,33.2,120],["Chott Melrhir",6.3,34.2,120],["Sebkha Tah",-12.8,27.6,60],["Jordan Rift",35.5,32.2,150],["Kuttanad",76.4,9.4,40],["Netherlands polders",4.9,52.2,180],
  ["Lammefjord",11.5,55.8,30],["Lake Eyre basin",137.3,-28.4,200]];
 let LAKES=null,lakeP=null;
-function loadLakes(){if(lakeP)return lakeP;lakeP=fetch("textures/LAKES.json").then(r=>r.ok?r.json():[]).catch(()=>[]).then(d=>{
+/* LAKES.json: [name, level m, HydroLAKES mean depth m, type (1 lake, 2 reservoir, 3 regulated lake), area km², polygons, Hylak_id].
+   LAKEBED.json (tools/build-lakebeds.js): Hylak_id -> [GLOBathy max depth m, pour-point lon, lat, GRanD id]; for a reservoir the
+   pour point is its dam. */
+function loadLakes(){if(lakeP)return lakeP;const bedP=fetch("textures/LAKEBED.json").then(r=>r.ok?r.json():{}).catch(()=>({}));
+ lakeP=Promise.all([fetch("textures/LAKES.json").then(r=>r.ok?r.json():[]).catch(()=>[]),bedP]).then(([d,BED])=>{
  const dec=a=>{const r=[];let x=0,y=0;for(let i=0;i+1<a.length;i+=2){x+=a[i];y+=a[i+1];r.push([x/100,y/100])}if(r.length&&(r[0][0]!==r[r.length-1][0]||r[0][1]!==r[r.length-1][1]))r.push(r[0].slice());return r};
- LAKES=[];(d||[]).forEach(([n,lv,dep,t,ar,polys])=>{try{const g={type:"MultiPolygon",coordinates:polys.map(P=>P.map(dec))};
-  g.coordinates.forEach(P=>{if(d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI)P.forEach(r=>r.reverse())});LAKES.push({n,lv,dep,t,ar,g,b:d3.geoBounds(g)})}catch(e){}});
+ LAKES=[];(d||[]).forEach(([n,lv,dep,t,ar,polys,id])=>{try{const g={type:"MultiPolygon",coordinates:polys.map(P=>P.map(dec))};
+  g.coordinates.forEach(P=>{if(d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI)P.forEach(r=>r.reverse())});
+  const B=(id&&BED&&BED[id])||null,fx=LEVEL[nkey(n)];LAKES.push({n,lv:fx!=null?fx:lv,dep,t,ar,g,b:d3.geoBounds(g),id:id||0,gb:B?B[0]:0,pour:B&&B[1]!=null?[B[1],B[2]]:null,grand:B?B[3]:0})}catch(e){}});
  if(on&&lines.length){lines.forEach(L=>{if(!L.river&&L.P)lakeify(L)});renderPanel()}return LAKES});return lakeP}
-function lakeAt(ll){if(!LAKES)return null;let best=null;for(const o of LAKES){if(!inB(o.b,ll))continue;try{if(d3.geoContains(o.g,ll)&&(!best||o.ar<best.ar))best=o}catch(e){}}return best}
+/* inside a lake: a flat even-odd test ring by ring (each ring with its own box), much faster than the spherical test on long
+   shorelines like the Caspian's; a lake that spans the 180° line keeps the spherical test */
+function inLake(o,ll){if(o._wrap===undefined){const[[w],[e]]=o.b;o._wrap=e<w||e-w>180;if(!o._wrap)o._R=[].concat(...o.g.coordinates).map(r=>{let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;r.forEach(q=>{if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]});return{r,b:[x0,y0,x1,y1]}})}
+ if(o._wrap)return d3.geoContains(o.g,ll);const x=ll[0],y=ll[1];let c=false;for(const R of o._R){const b=R.b;if(x<b[0]||x>b[2]||y<b[1]||y>b[3])continue;const r=R.r;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],q=r[j];if((a[1]>y)!==(q[1]>y)&&x<(q[0]-a[0])*(y-a[1])/(q[1]-a[1])+a[0])c=!c}}return c}
+function lakeAt(ll){if(!LAKES)return null;let best=null;for(const o of LAKES){if(!inB(o.b,ll))continue;try{if(inLake(o,ll)&&(!best||o.ar<best.ar))best=o}catch(e){}}return best}
+/* the lake bed along a line. The height grid (NOAA ETOPO 2022 at 0.1°) has the real bed of many lakes (the Great Lakes, Baikal,
+   the Caspian...). Whether to trust it is decided once per LAKE, not per stretch of line: a line through the shallow north Caspian
+   must keep the grid's 5 m, not be filled in with an invented deep bowl. A lake whose grid never reaches the deep water it should
+   have gets an estimated bed for the whole lake (drawn dashed), fitted to the lake's known greatest and mean depth. The bed is a
+   function of the place only, so two lines crossing in a lake agree where they cross. */
 function lakeify(L){L.lk=null;if(!LAKES){loadLakes();return}const P=L.P;if(!P||P.length<2)return;const out=[];let cur=null;
- for(let i=0;i<P.length;i++){const o=lakeAt(P[i].ll);if(o){/* the detailed tiles mostly know only the water surface; the NOAA grid has the bed of many big lakes (the Great
-   Lakes, Baikal, the Caspian...): the deeper of the two is used, and never above the lake's own level */
+ for(let i=0;i<P.length;i++){const o=lakeAt(P[i].ll);if(o){/* the deeper of the tiles and the grid, and never above the lake's own level */
    P[i].e=Math.min(P[i].e,Math.round(elevAt(P[i].ll[0],P[i].ll[1])),o.lv);
    if(cur&&cur.o===o&&cur.j===i-1){cur.b=P[i].km;cur.j=i;cur.lo=Math.min(cur.lo,P[i].e)}else{cur={o,n:o.n,lv:o.lv,a:P[i].km,b:P[i].km,i,j:i,lo:P[i].e};out.push(cur)}}}
- /* where the height data only has the water surface, the lake bed is drawn as an approximate bowl: deepest where the
-    point is farthest from the shore, as deep as the lake's published maximum (or twice HydroLAKES' mean depth) */
- out.forEach(k=>{const o=k.o,mx=maxDepth(o);if(!(mx>5)||k.lv-k.lo>mx*.35)return;const inner=innerMax(o);if(!(inner>0))return;k.syn=1;k.mx=mx;
-  for(let i=k.i;i<=k.j;i++){const x=Math.min(1,shoreKm(o,P[i].ll)/inner),d=mx*(1-(1-x)*(1-x));const bed=Math.round(o.lv-d);if(bed<P[i].e){P[i].e=bed;P[i].syn=1}k.lo=Math.min(k.lo,P[i].e)}});
+ out.forEach(k=>{const o=k.o,B=bedInfo(o);if(!B||B.hasBed)return;k.syn=1;k.mx=B.mx;
+  for(let i=k.i;i<=k.j;i++){const bed=Math.round(o.lv-synDepth(o,B,P[i].ll));if(bed<P[i].e){P[i].e=bed;P[i].syn=1}k.lo=Math.min(k.lo,P[i].e)}});
  L.lk=out}
-/* published greatest depths (m) of the deep lakes; any other lake: twice its mean depth */
-const MAXD={Baikal:1642,Tanganyika:1470,Caspian:1025,"Caspian Sea":1025,Malawi:706,Nyasa:706,"Issyk-Kul":668,"Ysyk-Kol":668,"Great Slave":614,Matano:590,Crater:594,Toba:505,Superior:406,
- Titicaca:281,Michigan:281,Huron:229,Ontario:244,Ladoga:230,Kivu:485,Hovsgol:262,"Khuvsgul":262,Sarez:500,Tahoe:501,Chelan:453,Van:451,Ohrid:288,Garda:346,Como:425,Maggiore:372,Geneva:310,Leman:310,
- Victoria:84,Albert:58,Turkana:109,Edward:112,Tana:14,Chad:11,Erie:64,Onega:127,"Great Bear":446,Athabasca:243,Winnipeg:36,Nicaragua:26,Balkhash:26,"Hornindalsvatnet":514,Quesnel:506};
-function maxDepth(o){const k=MAXD[o.n];return k||(o.dep>0?o.dep*2:0)}
-function shoreKm(o,ll){let best=Infinity;const V=o._v||(o._v=(()=>{const a=[];o.g.coordinates.forEach(P=>P.forEach(r=>{const st=Math.max(1,Math.floor(r.length/1500));for(let i=0;i<r.length;i+=st)a.push(r[i])}));return a})());
- for(const v of V){const d=d3.geoDistance(ll,v);if(d<best)best=d}return best*R_KM}
-function innerMax(o){if(o._in!=null)return o._in;let m=0;const[[w,sth],[e,n]]=o.b,N=22;for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){const ll=[w+(e-w)*i/N,sth+(n-sth)*j/N];try{if(d3.geoContains(o.g,ll))m=Math.max(m,shoreKm(o,ll))}catch(e){}}
- o._in=m||1;return o._in}
+/* names as keys: "Lake Crater", "Crater Lake", "crater" and "Issyk Kul" / "Issyk-Kul" all meet */
+function nkey(n){return String(n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\b(lake|lac|lago|sea|reservoir|ozero|see)\b/g,"").replace(/[\s\-–'’.]/g,"")}
+/* greatest depths (m) of well-known lakes; "at": where the deepest point is, only where a source places it (otherwise the
+   estimate puts it farthest from the shore). Any other lake: GLOBathy's maximum depth (Khazaei et al. 2022), else twice its mean.
+   Great Slave: the deep sector of Christie Bay, East Arm, "about 30 km northwest of Lutsel K'e" (NWT research licence records,
+   Glacial History of Great Slave Lake, Christie Bay survey; Lutsel K'e is at 62.405 N, 110.737 W). Ladoga ("just west of Valaam
+   Island", Britannica) and Erie ("southeast of Long Point") are described but not located precisely enough, so left empty. */
+const MAXD0={Baikal:1642,Tanganyika:1470,Caspian:1025,Malawi:706,Nyasa:706,"Issyk-Kul":668,"Ysyk-Kol":668,"Great Slave":{d:614,at:[-111.15,62.6]},Matano:590,Crater:594,Toba:505,Superior:406,
+ Titicaca:281,Michigan:281,Huron:229,Ontario:244,Ladoga:230,Kivu:485,Hovsgol:262,Khuvsgul:262,Sarez:500,Tahoe:501,Chelan:453,Van:451,Ohrid:288,Garda:346,Como:425,Maggiore:372,Geneva:310,Leman:310,
+ Victoria:84,Albert:58,Turkana:109,Edward:112,Tana:14,Chad:11,Erie:64,Onega:127,"Great Bear":446,Athabasca:243,Winnipeg:36,Nicaragua:26,Balkhash:26,Hornindalsvatnet:514,Quesnel:506};
+/* published mean depths (m), where they differ from HydroLAKES' modelled mean (encyclopedia / ILEC World Lake Database values) */
+const MEAND0={"Great Slave":41,"Great Bear":71.7,Como:154,Tanganyika:570,Malawi:292,Victoria:40,Tahoe:300,Geneva:154.4,Leman:154.4,Crater:350,"Issyk-Kul":278,Caspian:211,Baikal:744.4,
+ Superior:147,Michigan:85,Huron:59,Erie:19,Ontario:86,Titicaca:107,Garda:133,Maggiore:177,Kivu:240,Hovsgol:138,Van:171};
+/* lake levels (m) that HydroLAKES has wrong or out of date: Ladoga stands about 5 m above sea level; the Dead Sea is about 438 m
+   below it and falling by roughly a metre a year */
+const LEVEL0={Ladoga:5,"Dead Sea":-438};
+const nk=O=>{const r={};for(const k in O)r[nkey(k)]=O[k];return r},MAXD=nk(MAXD0),MEAND=nk(MEAND0),LEVEL=nk(LEVEL0);
+function maxDepth(o){const k=MAXD[nkey(o.n)];return k?(k.d||k):o.gb>0?o.gb:(o.dep>0?o.dep*2:0)}
+/* distance to the nearest shore (km): the shore points are kept in a grid of cells, and only cells near enough are searched */
+function shoreKm(o,ll){const I=o._vi||(o._vi=(()=>{const a=[];o.g.coordinates.forEach(P=>P.forEach(r=>{const st=Math.max(1,Math.floor(r.length/1500));for(let i=0;i<r.length;i+=st)a.push(r[i])}));
+  const[[w,s],[e,n]]=o.b,cs=Math.max(.02,Math.max(e-w,n-s)/48),G=new Map(),key=(i,j)=>i+","+j;a.forEach(v=>{const k=key(Math.floor(v[0]/cs),Math.floor(v[1]/cs));let c=G.get(k);if(!c)G.set(k,c=[]);c.push(v)});
+  return{G,cs,key,n:a.length,all:a}})());
+ if(o._wrap){let best=Infinity;for(const v of I.all){const d=d3.geoDistance(ll,v);if(d<best)best=d}return best*R_KM}
+ const ci=Math.floor(ll[0]/I.cs),cj=Math.floor(ll[1]/I.cs),cosl=Math.max(.05,Math.cos(ll[1]*Math.PI/180));let best=Infinity;
+ for(let r=0;r<400;r++){/* ring r of cells round the point; stop once the ring is farther than the best found */
+  for(let i=ci-r;i<=ci+r;i++)for(let j=cj-r;j<=cj+r;j++){if(r&&i>ci-r&&i<ci+r&&j>cj-r&&j<cj+r)continue;const c=I.G.get(I.key(i,j));if(!c)continue;for(const v of c){const d=d3.geoDistance(ll,v);if(d<best)best=d}}
+  if(best<Infinity&&(r*I.cs*cosl*Math.PI/180)>best)break}
+ return best*R_KM}
+/* a 22×22 grid of points inside the lake, worked out once per lake: how far each is from the shore and what the grid says there */
+function samples(o){if(o._S)return o._S;const S=[];const[[w,sth],[e,n]]=o.b,N=22;for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){const ll=[w+(e-w)*i/N,sth+(n-sth)*j/N];try{if(d3.geoContains(o.g,ll))S.push({ll,s:shoreKm(o,ll),g:elevAt(ll[0],ll[1]),w:Math.cos(ll[1]*Math.PI/180)})}catch(x){}}
+ if(!S.length){/* a thin lake the grid misses: points along its outline's middle */const c=d3.geoCentroid(o.g);S.push({ll:c,s:shoreKm(o,c),g:elevAt(c[0],c[1]),w:1})}return o._S=S}
+function innerMax(o){if(o._in!=null)return o._in;let m=0;samples(o).forEach(p=>{if(p.s>m)m=p.s});return o._in=m||1}
+/* where the deepest water goes: a published deepest point, or a reservoir's dam (its pour point; GRanD-listed or HydroLAKES type 2) */
+function anchorOf(o){const k=MAXD[nkey(o.n)];if(k&&k.at)return{ll:k.at,dam:false};if(o.t===2&&o.pour)return{ll:o.pour,dam:true};return null}
+/* the depth profile is mx·(1−(1−x)^k), with x in 0..1: 0 on the shore, 1 at the deepest point */
+function rawX(o,B,ll,s){const inner=B.inner;if(!B.A)return Math.min(1,s/inner);
+ /* towards the anchor: as deep as the distance from the shore allows, measured against the anchor's own distance from the shore
+    (so a surveyed deepest point is the deepest place; for a dam on the shore, against a third of the lake's widest part, so the
+    deep water lies just upstream of it), fading with distance from the anchor across the lake */
+ const dA=d3.geoDistance(ll,B.A.ll)*R_KM,f=1-.8*Math.min(1,dA/B.Dm);return Math.min(1,s/B.S0)*f}
+function bedInfo(o){if(o._B!==undefined)return o._B;const mx=maxDepth(o);if(!(mx>5))return o._B=null;const S=samples(o),inner=innerMax(o);
+ /* the grid has this lake's bed if anywhere in it the grid reaches at least 35% of the lake's greatest depth */
+ const hasBed=S.some(p=>p.g<o.lv-.35*mx);const B={mx,hasBed,inner,k:2};if(hasBed)return o._B=B;
+ const A=anchorOf(o);if(A){B.A=A;let Dm=0;S.forEach(p=>{Dm=Math.max(Dm,d3.geoDistance(p.ll,A.ll)*R_KM)});B.Dm=Dm||1;const sA=shoreKm(o,A.ll);B.S0=A.dam?Math.max(sA,inner/3):Math.max(sA,.5)}
+ let xm=0;S.forEach(p=>{p.x=rawX(o,B,p.ll,p.s);if(p.x>xm)xm=p.x});B.xm=xm||1;S.forEach(p=>p.x=Math.min(1,p.x/B.xm));
+ /* fit the shape so the lake's mean depth comes out right: k by bisection, 0.05..20 */
+ const target=MEAND[nkey(o.n)]||o.dep||mx/2;let W=0;S.forEach(p=>W+=p.w);const mean=k=>{let t=0;S.forEach(p=>t+=p.w*(1-Math.pow(1-p.x,k)));return mx*t/W};
+ let lo=.05,hi=20;if(mean(lo)>=target)B.k=lo;else if(mean(hi)<=target)B.k=hi;else{for(let it=0;it<40;it++){const m=(lo+hi)/2;if(mean(m)<target)lo=m;else hi=m}B.k=(lo+hi)/2}
+ return o._B=B}
+function synDepth(o,B,ll){const x=Math.min(1,rawX(o,B,ll,shoreKm(o,ll))/B.xm);return B.mx*(1-Math.pow(1-x,B.k))}
 function compute(){yl={lo:null,hi:null};lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
  assignC(L.P);
  /* every sample, so small islands (Guadeloupe, Dominica...) on a long line are not skipped */
@@ -504,11 +556,11 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  const hsw=hist.length?'<div class="gf-xs-hist"><span>Your lines</span>'+hist.map((h,i)=>'<button type="button" data-hi="'+i+'" class="'+(lines.includes(h)?'on':'')+'" style="--c:'+h.c+'" title="'+esc(h.title)+'"><i></i>'+(i+1)+'</button>').join('')+(hist.length>1?'<button type="button" data-hstep="-1" title="Previous line">‹</button><button type="button" data-hstep="1" title="Next line">›</button>':'')+'<small>'+hist.length+' of '+MAXL+(hist.length>=MAXL?' · a new line replaces the oldest':'')+'</small></div>':'';
  const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+(lines.length===1&&lines[0].edit?(lines[0].edit.kind==="line"?'<div class="gf-xs-edbar"><span>Drag A or B on the map to move an end, or add a dot to bend the line.</span><button type="button" data-ed="add" title="Add a dot: the straight line becomes a path you can reshape">+ Add dot</button></div>':(E=>'<div class="gf-xs-edbar"><span>'+(E.tool==="add"?"Click the line to add a dot.":E.tool==="del"?"Click a dot to remove it.":E.tool==="cut"?"Click the line to cut it there; the shorter piece goes.":"Drag a dot to reshape your path.")+'</span>'+
   '<button type="button" data-ed="add" class="'+(E.tool==="add"?"on":"")+'">+ Add dot</button><button type="button" data-ed="del" class="'+(E.tool==="del"?"on":"")+'">− Remove dot</button><button type="button" data-ed="cut" class="'+(E.tool==="cut"?"on":"")+'">✂ Cut</button>'+
-  '<button type="button" data-ed="hide" class="'+(E.hide?"on":"")+'">'+(E.hide?"Show dots":"Hide dots")+'</button><button type="button" data-ed="smooth" class="'+(E.smooth?"on":"")+'" title="A smooth curve through the dots">〰 Smooth curve</button></div>')(lines[0].edit)):'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake depths and lake beds are approximate.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
+  '<button type="button" data-ed="hide" class="'+(E.hide?"on":"")+'">'+(E.hide?"Show dots":"Hide dots")+'</button><button type="button" data-ed="smooth" class="'+(E.smooth?"on":"")+'" title="A smooth curve through the dots">〰 Smooth curve</button></div>')(lines[0].edit)):'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake beds: surveyed where shown solid, estimated where dashed.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
  const drawUI=armed||!lines.length;
  {const em=!(lines.length&&lines[0].P),was=panel.classList.contains("gf-xs-empty");if(was&&!em&&panel.style.width){const hw=panel.parentNode.getBoundingClientRect().width,l=parseFloat(panel.style.left)||10;panel.style.width=Math.max(panel.getBoundingClientRect().width,Math.min(860,hw-68,hw-l-10))+"px"}panel.classList.toggle("gf-xs-empty",em);try{G().host.classList.toggle("gf-xs-armed",!!armed)}catch(e){}}panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
   (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button>'+(armed?'<button type="button" class="gf-xs-exit" title="Stop drawing (Esc)">✕ Exit</button>':'')+(!armed&&lines.length?'<button type="button" class="gf-xs-clear" title="Clear the chart and remove the line from the map">✕ Clear line</button>':'')+'<span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+hsw+body+
-  '<span class="gf-xs-rz w" title="Drag to make it wider or narrower"></span><span class="gf-xs-rz h" title="Drag to make the chart taller or shorter"></span><div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can travel along (reservoirs cut off between dams are left out). At a dam, ✅ boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level). Where the height data has no lake bed, the bed is an approximate bowl (dashed) as deep as the lake\'s published greatest depth, or twice its mean depth. Height is stretched far more than length.</div></div>';
+  '<span class="gf-xs-rz w" title="Drag to make it wider or narrower"></span><span class="gf-xs-rz h" title="Drag to make the chart taller or shorter"></span><div class="gf-xs-src">'+(rvNow?'River profiles follow each river\'s own course, with its water level from published figures for lakes, falls, rapids and dams, estimated in between. Blue bars along the bottom: stretches boats can travel along (reservoirs cut off between dams are left out). At a dam, ✅ boats get past (locks or a ship lift), ⛔ no way through. ':'')+'Heights: NOAA ETOPO 2022 and AWS Terrain Tiles (open data); peaks read a little low. Lakes: HydroLAKES (lakes of 50 km² or more, long-term average level). Where the height data has no bed for a lake, the bed is estimated (dashed): as deep as the lake\'s published greatest depth or GLOBathy\'s (Khazaei et al. 2022, Scientific Data, CC BY), shaped to its mean depth, deepest at a surveyed deepest point or a reservoir\'s dam where known. Height is stretched far more than length.</div></div>';
  panel.querySelectorAll("[data-sh]").forEach(b=>b.onclick=()=>{shape=b.dataset.sh;armed=true;try{if(armed)gfOneTool.claim("xsect")}catch(e){}renderPanel()});
  panel.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{const L=lines[0];if(!L||!L.edit)return;const E=L.edit,k=b.dataset.ed;
   /* a straight line given a dot becomes a path: its two ends are the first dots, and all the path tools open */
