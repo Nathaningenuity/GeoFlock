@@ -202,3 +202,18 @@ const st=document.createElement("style");st.textContent=`
 .flk-h .flk-all.on{ background:var(--accent,#2f8a7a); color:#fff; border-color:transparent; opacity:1; }
 `;document.head.appendChild(st);
 })();
+/* hover labels on the themed maps (economy, politics, people, culture, nature): the category ("basket") is dropped when the
+   country's own note already says it better. "Morocco — Pegged to another currency or basket: Moroccan dirham, pegged to a
+   euro/US dollar basket" becomes "Morocco — Moroccan dirham, pegged to a euro/US dollar basket"; "China — RCEP: RCEP; also…"
+   becomes "China — RCEP; also…". The category stays where the note alone would not say it (a short bare name or number). */
+(function(){if(typeof allMapsHoverValue!=="function")return;
+ const STOP=new Set(["the","a","an","of","or","and","to","in","on","own","other","another","uses","use","with","by","for","its","area","country","countries","currency","state"]);
+ const words=s=>String(s||"").toLowerCase().replace(/\([^)]*\)/g," ").split(/[^a-z0-9À-ɏ]+/).filter(w=>w.length>2&&!STOP.has(w));
+ const _hv=allMapsHoverValue;allMapsHoverValue=function(code){const r=_hv.apply(this,arguments);try{
+  if(!r||typeof r[0]!=="string"||typeof TH_MODES==="undefined"||!TH_MODES.has(allMapsColorMode))return r;
+  const T=TH_THEMES[allMapsSubMode[allMapsColorMode]];if(!T||T.num)return r;
+  const i=r[0].indexOf(": ");if(i<1)return r;const lab=r[0].slice(0,i),extra=r[0].slice(i+2);if(!extra)return r;
+  const lw=words(lab),ew=new Set(words(extra));const shared=lw.some(w=>ew.has(w)||[...ew].some(x=>x.length>4&&w.length>4&&(x.startsWith(w.slice(0,5))||w.startsWith(x.slice(0,5)))));
+  /* a note that only adds to the category ("also Turkic…") keeps it */if(/^(also|and|plus|mainly|mostly|with|but|incl)/i.test(extra))return r;
+  if(shared||extra.length>=28)return[extra,r[1]];
+ }catch(e){}return r}})();
