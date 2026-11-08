@@ -77,7 +77,7 @@ window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0,prefetch};
 })();
 (function(){
 if(typeof GlobeView==="undefined"||typeof d3==="undefined"||!d3.geoRobinson)return;
-const IDLE=120,SLICE=8,BAND=8,MINMAG=.4;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
+const IDLE=120,SLICE=8,BAND=8,MINMAG=1;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
 let TEX={},texUnused=0,O=null,job=null,timer=0,want=null,lastKey="";
 const free=cv=>{try{if(cv&&cv.close)cv.close();else if(cv){cv.width=0;cv.height=0}}catch(e){}};
 /* which picture the flat map shows: the night picture or (the same way) the satellite one */
