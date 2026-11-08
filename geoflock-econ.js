@@ -7,8 +7,19 @@ if(typeof ALLMAPS_SUBMODES==="undefined"||typeof TH_THEMES==="undefined")return;
 
 /* ---------- 1. Economy map: the GDP map's measures plus colour-category ones ---------- */
 const ECON=window.GF_ECON_THEMES||{};
+/* Currency names: the same currencies grouped by what the money is called (dollar, franc, dinar, rial and riyal…), in the
+   Currencies map's colours; worked out from each country's currency name */
+if(ECON.currency&&!ECON.curname){const C=ECON.currency,FAM=[["dollar","Dollar","#2f8a4e",/dollar/],["euro","Euro","#3f6fc4",/\beuro\b/],["franc","Franc","#e08a2e",/franc/],["pound","Pound","#b04a7a",/pound|sterling/],
+  ["dinar","Dinar","#9fd27d",/dinar/],["peso","Peso","#d4a514",/peso/],["rupee","Rupee / Rupiah","#c9583c",/rupee|rupiah|rufiyaa/],["krone","Krone / Krona / Koruna","#46a7b8",/krone|krona|kr\u00f3na|koruna|kroner/],
+  ["rial","Rial / Riyal / Riel / Real","#f0a3b4",/\bri[ay]?al\b|\briel\b|\breal\b/],["dirham","Dirham","#f2c97a",/dirham/],["shilling","Shilling","#7a8fa6",/shilling/],["kwacha","Kwacha","#a3824a",/kwacha/],
+  ["leu","Leu","#b8aee0",/\bleu\b|\blei\b/],["manat","Manat","#d9675c",/manat/],["ruble","Ruble","#8a5fc7",/rub[l]?e|rouble/],["won","Won","#2b9c8f",/\bwon\b/]];
+ const BY={eur:"euro",usd:"dollar",xof:"franc",xaf:"franc",xpf:"franc",xcd:"dollar",aud:"dollar",nzd:"dollar",gbp:"pound",chf:"franc",dkk:"krone"};
+ const data={},info={};Object.keys(C.data||{}).forEach(c=>{const inf=(C.info||{})[c]||"",name=inf.split(/ \(|\. /)[0].toLowerCase();let f=null;if(name)for(const F of FAM)if(F[3].test(name)){f=F[0];break}
+  if(!f&&!name)f=BY[C.data[c]]||null;data[c]=f||"other";if(inf)info[c]=inf});
+ ECON.curname={title:"Currency names",note:"What each country calls its money. Many names share a root: dollar from the thaler, a silver coin from Bohemia; dinar from the Roman denarius; rial, riyal and real from the Spanish real (\u201croyal\u201d); rupee from the Sanskrit for silver. Hover a country for its currency. As of 2026.",
+  cats:FAM.map(F=>[F[0],F[1],F[2]]).concat([["other","Other names","#e6e0d3"]]),data,info,fallback:"other"}}
 Object.assign(TH_THEMES,ECON);
-const ECON_SUBS=[["total","GDP"],["percapita","GDP per person"],["growth","Growth"],["export","Main export"],["currency","Currencies"],["blocs","Trade blocs"],
+const ECON_SUBS=[["total","GDP"],["percapita","GDP per person"],["growth","Growth"],["export","Main export"],["currency","Currencies"],["curname","Currency names"],["blocs","Trade blocs"],
  ["tourism","Tourism"],["trade","Trade"],["remit","Money sent home"],["debt","Government debt"],["gini","Inequality"],["poverty","Extreme poverty"],["co2pc","CO₂ per person"],["co2tot","CO₂ in total"],["renew","Renewable energy"]];
 ALLMAPS_SUBMODES.gdp=ECON_SUBS.filter(([id])=>id==="total"||id==="percapita"||TH_THEMES[id]).map(([id,label])=>({id,label}));
 /* the GDP measures keep their own colours; every other Economy measure is a colour-category theme */
@@ -18,7 +29,7 @@ try{TOUR_MAPNAME.gdp="Economy map"}catch(e){}
 /* number measures show just the number on hover ("2.6% a year on average (2025)"), not the band too */
 {const _hv=allMapsHoverValue;allMapsHoverValue=function(code){const r=_hv.apply(this,arguments);try{const T=TH_MODES.has(allMapsColorMode)&&TH_THEMES[allMapsSubMode[allMapsColorMode]];if(r&&T&&T.num){const i=T.info&&T.info[code];if(i)return[i,r[1]]}}catch(e){}return r}}
 /* main tabs per map; the rest go under "Other ▾" */
-const MAIN={gdp:["total","percapita","growth","export","currency","blocs"],people:["fert","age","life","urban"],politics:["gov","free","fed","mon","clubs"],nature:["biomes","eco","realms","footprint","forest"]};
+const MAIN={gdp:["total","percapita","growth","export","currency","curname","blocs"],people:["fert","age","life","urban"],politics:["gov","free","fed","mon","clubs"],nature:["biomes","eco","realms","footprint","forest"]};
 window.GF_MAIN_SUBS=MAIN;
 
 /* rename the GDP Map button */
