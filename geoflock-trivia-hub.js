@@ -181,9 +181,19 @@ const BONUS_DO={
  photo(box,finish){const P=photos();if(!P.length)return finish(0);const p=P[Math.floor(Math.random()*P.length)],D=PS_PHOTO_DATA[p.i];const opts=shuffle([p.c].concat(sameRegion(p.c,3)));
   mc(box,'<div class="tv-card-meta"><span>★ Bonus · Where is this?</span></div><div class="tv-q">Which country is this?</div><figure class="tvh-bphoto"><img src="'+gfSrc(D.d)+'" alt="A photo somewhere in the world"><figcaption>'+esc(D.by||"")+(D.lic?" · "+esc(D.lic):"")+'</figcaption></figure>',
    opts.map(c=>'<img class="tvh-bflag" src="'+flagUrl(c,"w40")+'" alt="">'+esc(cname(c))),i=>opts[i]===p.c,esc(p.label?p.label+", ":"")+esc(cname(p.c))+".",finish)},
- flagpie(box,finish){const codes=Object.keys(FLAGPIE_PIES).filter(c=>COUNTRY_BY_CODE[c]&&(FLAGPIE_PIES[c]||[]).filter(x=>x[1]>=.5).length>=2);const c=codes[Math.floor(Math.random()*codes.length)];const opts=shuffle([c].concat(sameRegion(c,3,codes)));
-  mc(box,'<div class="tv-card-meta"><span>★ Bonus · Flag pie</span></div><div class="tv-q">These are the colours of a flag, by share. Whose flag?</div><div class="tvh-bpie">'+fpPieSVG(c,170)+'</div>',
-   opts.map(x=>esc(cname(x))),i=>opts[i]===c,'<img class="tvh-bflag lg" src="'+flagUrl(c,"w160")+'" alt=""> '+esc(cname(c))+'.',finish)},
+ /* Flag pie: typed, not multiple choice (four names under the pie gave too much away): type a country, pick it from the list */
+ flagpie(box,finish){const codes=Object.keys(FLAGPIE_PIES).filter(c=>COUNTRY_BY_CODE[c]&&(FLAGPIE_PIES[c]||[]).filter(x=>x[1]>=.5).length>=2);const c=codes[Math.floor(Math.random()*codes.length)];
+  /* flags sharing this pie (Chad and Romania, Indonesia and Monaco...) all count */
+  const same=x=>{try{return typeof fpGroup==="function"?fpGroup(c).includes(x):x===c}catch(e){return x===c}};
+  let done=false,ok=false,pick=null;
+  const draw=()=>{box.innerHTML='<div class="tv-card tvh-bcard"><div class="tv-card-meta"><span>★ Bonus · Flag pie</span></div><div class="tv-q">These are the colours of a flag, by share. Whose flag?</div><div class="tvh-bpie">'+fpPieSVG(c,170)+'</div>'+
+   (done?'<div class="tvh-bfb '+(ok?"ok":"no")+'"><b>'+(ok?"Right! +1 bonus":(pick?"Not "+esc(cname(pick))+". ":"")+"It was "+esc(cname(c))+".")+'</b> <img class="tvh-bflag lg" src="'+flagUrl(c,"w160")+'" alt=""></div><div class="tv-actions"><button type="button" class="tv-go" id="tvhBNext">Continue →</button></div>':
+    '<div class="tvh-btype"><div class="game-input-wrap"><input type="text" id="tvhFpIn" class="type-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Name a country…"><div class="suggestions" id="tvhFpSug"></div></div><button type="button" class="tv-link" id="tvhBGive">Give up</button></div>')+'</div>';
+   if(!done){const answer=code=>{if(done||!code)return;pick=code;ok=same(code);done=true;draw()};
+    try{wireGameTypeahead("tvhFpIn","tvhFpSug",gameCountries(),answer)}catch(e){}
+    const i=box.querySelector("#tvhFpIn");if(i)i.focus({preventScroll:true});box.querySelector("#tvhBGive").onclick=()=>{done=true;ok=false;pick=null;draw()}}
+   const n=box.querySelector("#tvhBNext");if(n){n.focus({preventScroll:true});n.onclick=()=>finish(ok?1:0)}};draw();
+  keyHandler=k=>{if(k==="Enter"&&done){const n=box.querySelector("#tvhBNext");if(n){n.click();return true}}return false}},
  scramble(box,finish){const L=COUNTRIES.filter(x=>/^[A-Za-z ]{5,13}$/.test(x.n)&&x.n.split(" ").length<=2);const C=L[Math.floor(Math.random()*L.length)];let mix;do{mix=shuffle(C.n.toUpperCase().replace(/ /g,"").split("")).join("")}while(mix===C.n.toUpperCase().replace(/ /g,""));
   let done=false,ok=false;const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
   const draw=()=>{box.innerHTML='<div class="tv-card tvh-bcard"><div class="tv-card-meta"><span>★ Bonus · Scramble</span></div><div class="tv-q">Unscramble the country</div><div class="tvh-tiles">'+mix.split("").map(ch=>'<span>'+ch+'</span>').join("")+'</div>'+
