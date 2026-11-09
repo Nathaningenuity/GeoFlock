@@ -78,12 +78,14 @@ window.gfSweepMapsDbg=()=>({dirty:Object.assign({},DIRTY),busy:busy(),sig:cheapS
    The Thermometer card, the Cross-section panel, the "Click a country" tip and the coordinates sit along the map's bottom,
    where the tray floats too, and the History story card hangs down from the top left over it. A card the tray would cover is lifted above the tray (or,
    the History card, made shorter: its text scrolls); it goes back to its own place when the tray is elsewhere. */
-const LIFT=[".gfth:not(.gfth-float)",".gf-xs",".gf-learn",".gfk-coord"],SHRINK=[".hist-story"];
+const LIFT=[".gfth:not(.gfth-float)",".gf-xs:not(.gf-xs-free)",".gf-learn",".gfk-coord"],SHRINK=[".hist-story"];
 function trayRect(){const t=document.getElementById("gfKit");if(!t||!t.getClientRects().length||getComputedStyle(t).visibility==="hidden"||document.body.classList.contains("gf-fs")||innerWidth<=640)return null;return t.getBoundingClientRect()}
 /* the card's own inline max-height (the History card sets one) is put back as it was */
 function keepMH(c){if(!c._gfSw)c._gfMH0=c.style.maxHeight}
 function undo(c){if(c._gfSw){c.style.removeProperty("bottom");c.style.maxHeight=c._gfMH0||"";c._gfSw=0}}
 setInterval(()=>{try{if(!DIRTY.cards||busy())return;DIRTY.cards=false;const tr=trayRect();
+ /* a Cross-section panel moved off the map sits where it was put: no lift (a pinned bottom squeezed it, cutting off the chart) */
+ document.querySelectorAll(".gf-xs.gf-xs-free").forEach(c=>{if(c._gfSw)undo(c)});
  document.querySelectorAll(LIFT.join(",")).forEach(c=>{watch(c);const h=c.parentElement;if(!tr||!h||!c.getClientRects().length){undo(c);return}
   const hr=h.getBoundingClientRect(),cs=getComputedStyle(c),R=c.getBoundingClientRect();
   /* where the card would be on its own: where it is now, less any lift given to it */

@@ -336,7 +336,7 @@ const VOLC_PEAKS=new Set(["Mount Elbrus", "Chimborazo", "Muztag Feng", "Mount Sh
 function spotKind(e){const n=String(e.n||""),l=n.toLowerCase();if(SPOT_BY_NAME[l])return SPOT_BY_NAME[l];
  if(e.cat==="volcanoes"||VOLC_PEAKS.has(n)||(e.cat==="landmarks"&&/\bvolcan|kilimanjaro/i.test(n)))return"volcano";
  if(e.cat==="peaks")return"mountain";if(e.cat==="waterfalls")return"waterfall";if(e.cat!=="landmarks")return"";
- if(/statue of (liberty|unity)/i.test(n))return"statue";
+ if(/statue of liberty/i.test(n))return"statue";/* 🗽 is the Statue of Liberty itself: other statues keep the plain landmark mark */
  if(/mosque|masjid/i.test(n))return"mosque";
  if(/cathedral|basilica|church|abbey|chapel|sagrada|kirche/i.test(n)&&!/cistern|salt cathedral/i.test(n))return"church";
  if(/(^|\b)wat\b|angkor|hindu|meenakshi|pashupatinath|konark|sun temple|lotus temple|uluwatu|temple in the sea|siva/i.test(n))return"htemple";
@@ -378,12 +378,20 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
  const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
  const s0=screenOf(e.ll);if(!s0){hide();return}const wr=mapRect();
  if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo")||el.classList.contains("gfs-name"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
+ /* the emoji grows with the zoom: half size with the whole world in view, full size (a little over) close in */
+ {const q=screenOf([e.ll[0]+1,e.ll[1]]),ppd=q?Math.hypot(q[0]-s0[0],q[1]-s0[1]):3,k=Math.max(.5,Math.min(1.1,.5+.125*Math.log2(Math.max(1e-3,ppd)/3))).toFixed(2);
+  if(el._gsk!==k){el._gsk=k;el.style.setProperty("--gsk",k);if(e._spot)e._spot.style.setProperty("--gsk",k)}}
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
  if(isPh){let ln=e._leash;let far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;
   /* an area (a forest, a country, a lake...): no line while the card is still over it; once dragged off, the line starts
      at the area's edge (no dot on the area) */
-  const AR=far?areaRings(e):null;if(AR&&inRings(s0[0]+off[0],s0[1]+off[1],AR))far=false;if(!far){if(ln){ln.style.display="none"}el.classList.remove("gfs-moved")}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
+  const AR=far?areaRings(e):null;if(AR&&inRings(s0[0]+off[0],s0[1]+off[1],AR))far=false;if(!far){el.classList.remove("gfs-moved");
+   /* the label sits on its place: the same red dot the line starts from still marks the exact spot (not for areas, tiny islands
+      or the Richat Structure, which get no dot) */
+   const pt=e.ll&&!(e.cat==="islands")&&!/richat/i.test(e.n||"")&&!(e._arC!==undefined?e._arC:(e._arC=areaRings(e)));
+   if(pt){if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}ln.classList.remove("gfs-nodot");ln.style.cssText="left:"+s0[0]+"px;top:"+s0[1]+"px;width:0;background:none;box-shadow:none;z-index:41"}
+   else if(ln)ln.style.display="none"}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
   let x1=s0[0],y1=s0[1];
    /* the line reaches the card itself: the point of the card (photo and name) nearest the place, so it never stops short,
       and a card dragged below its place is joined at its top edge */
@@ -458,7 +466,7 @@ const css=document.createElement("style");css.textContent=`
 .gfs-pin{ position:fixed; z-index:40; pointer-events:none; transform:translate(-50%,-100%); display:flex; flex-direction:column; align-items:center; animation:gfsIn .4s cubic-bezier(.2,1.4,.4,1); }
 .gfs-pin.gfs-city{ transform:translate(-50%,-50%); flex-direction:row; gap:6px; }
 @keyframes gfsIn{ from{ opacity:0; margin-top:-10px } to{ opacity:1; margin-top:0 } }
-.gfs-ic{ width:34px; height:34px; display:block; color:var(--ipc); filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.gfs-ic{ width:calc(34px * var(--gsk,1)); height:calc(34px * var(--gsk,1)); display:block; color:var(--ipc); filter:drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
 .gfs-ic svg{ width:100%; height:100%; display:block; } .gfs-ic svg *{ fill:var(--ipc); }
 .gfs-lab{ margin-top:2px; background:rgba(16,28,48,.9); color:#fff; font:700 12.5px/1.2 system-ui,sans-serif; padding:3px 8px; border-radius:999px; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.3); }
 .gfs-lab small{ opacity:.75; font-weight:600; }
@@ -476,9 +484,9 @@ const css=document.createElement("style");css.textContent=`
 .gfs-photo .gfs-lab{ margin-top:6px; }
 .gfs-card{ cursor:grab; touch-action:none; }
 .gfs-spotpin{ position:fixed; z-index:39; transform:translate(-50%,-92%); pointer-events:none; }
-.gfs-spot{ display:block; width:34px; height:34px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+.gfs-spot{ display:block; width:calc(34px * var(--gsk,1)); height:calc(34px * var(--gsk,1)); filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 .gfs-spot svg{ width:100%; height:100%; display:block; } .gfs-spot.gfs-flip svg{ transform:scaleX(-1); }
-.gfs-pin.gfs-icon .gfs-spot{ width:38px; height:38px; } .gfs-card:active{ cursor:grabbing; }
+.gfs-pin.gfs-icon .gfs-spot{ width:calc(38px * var(--gsk,1)); height:calc(38px * var(--gsk,1)); } .gfs-card:active{ cursor:grabbing; }
 .gfs-leash{ position:fixed; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
 .gfs-leash.gfs-nodot::before{ display:none; }
 .gfs-leash::before{ content:""; position:absolute; left:-3.5px; top:-2.5px; width:7px; height:7px; border-radius:50%; background:#c0392b; border:1.5px solid #fff; }

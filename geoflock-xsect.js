@@ -180,13 +180,19 @@ function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventL
  if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
  /* dragged by its title bar it floats over the whole page, not only the map */
  const r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;if(panel.parentNode!==document.body){document.body.appendChild(panel);panel.classList.add("gf-xs-free");panel.style.left=r.left+"px";panel.style.top=r.top+"px"}
- const h={left:0,top:0,width:innerWidth,height:innerHeight};panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
- const mv=ev=>{panel.style.left=Math.max(-r.width+80,Math.min(h.width-80,ev.clientX-h.left-dx))+"px";panel.style.top=Math.max(0,Math.min(h.height-40,ev.clientY-h.top-dy))+"px"};
+ const h={left:0,top:0,width:innerWidth,height:innerHeight};panel.style.right="auto";panel.style.removeProperty("bottom");panel.style.removeProperty("max-height");panel.style.width=r.width+"px";
+ const mv=ev=>{panel.style.left=Math.max(-r.width+80,Math.min(h.width-80,ev.clientX-h.left-dx))+"px";panel.style.top=Math.max(0,Math.min(h.height-panel.offsetHeight-6,ev.clientY-h.top-dy))+"px"};
  const upx=()=>{removeEventListener("pointermove",mv,true);removeEventListener("pointerup",upx,true)};addEventListener("pointermove",mv,true);addEventListener("pointerup",upx,true)},true)}
+/* a panel moved off the map grows with its rows (a second line of buttons, the edit bar, the scale boxes) and is kept whole
+   inside the window: when it would run off the bottom it moves up instead of being cut off */
+function keepInView(){if(!panel||!panel.classList.contains("gf-xs-free"))return;const r=panel.getBoundingClientRect(),H=innerHeight;
+ if(r.bottom>H-6){panel.style.top=Math.max(0,Math.round(H-r.height-6))+"px"}else if(r.top<0)panel.style.top="0px"}
+try{new ResizeObserver(()=>keepInView()).observe(document.documentElement)}catch(e){}
+addEventListener("resize",()=>keepInView());setInterval(()=>{try{keepInView()}catch(e){}},400);
 function stop(){on=false;armed=false;drawing=null;lines=[];hover=null;badges=[];try{const g=G();if(g)g.host.classList.remove("gf-xs-pen")}catch(e){}if(panel){panel.remove();panel=null}if(ov){ov.remove();ov=null}cancelAnimationFrame(raf);chip()}
 function mount(){const g=G();if(!g)return;const h=g.host;if(getComputedStyle(h).position==="static")h.style.position="relative";
  if(!ov||ov.parentNode!==h){ov=document.createElement("canvas");ov.className="gf-xs-ov";h.appendChild(ov)}
- if(!panel||(panel.parentNode!==h&&panel.parentNode!==document.body)){panel=document.createElement("div");panel.className="gf-xs";h.appendChild(panel)}dragPanel();
+ if(!panel||(panel.parentNode!==h&&panel.parentNode!==document.body)){panel=document.createElement("div");panel.className="gf-xs";h.appendChild(panel);try{new ResizeObserver(()=>keepInView()).observe(panel)}catch(e){}}dragPanel();
  }
 /* ---------- drawing on the map ---------- */
 const inPanel=e=>e.target.closest&&e.target.closest(".gf-xs,.globe-btns,.gfk-tray,.gfk-panel,button,a,input,select");
