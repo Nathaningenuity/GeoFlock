@@ -295,7 +295,7 @@ function nearCountry(ll,far){for(const d of (far===false?[.04,.1]:[.05,.12,.25,.
 function waterName(ll){try{const k=LAKES&&lakeAt(ll);if(k&&k.n)return/lake|sea|reservoir/i.test(k.n)?k.n:"Lake "+k.n}catch(e){}
  let best=null;try{(LFD||[]).forEach(o=>{if(!o.sea||!inB(o.b,ll))return;try{if(d3.geoContains(o.g,ll)&&(!best||o.a<best.a))best=o}catch(e){}})}catch(e){}if(best)return best.n;
  const lon=ll[0],lat=ll[1];if(lat<-60)return"Southern Ocean";if(lat>66)return"Arctic Ocean";
- if(lon>-100&&lon<20&&!(lon<-70&&lat<8&&lon<-80))return"Atlantic Ocean";/* the Indian Ocean ends at Indonesia, Timor and Australia: north of about 8°S east of 100°E (and the Arafura, east of 130°E) is the Pacific */if(lon>-5&&lon<10&&lat>51&&lat<61)return"North Sea";if(lon>=20&&lon<=147&&lat<=30&&!(lon>100&&lat>-8)&&!(lon>=130&&lat>-12)&&!(lon>=142&&lat>-30))return"Indian Ocean";return"Pacific Ocean"}
+ if(lon>-5&&lon<10&&lat>51&&lat<61)return"North Sea";if(lon>-100&&lon<20&&!(lon<-70&&lat<8&&lon<-80))return"Atlantic Ocean";/* the Indian Ocean ends at Indonesia, Timor and Australia: north of about 8°S east of 100°E (and the Arafura, east of 130°E) is the Pacific */if(lon>=20&&lon<=147&&lat<=30&&!(lon>100&&lat>-8)&&!(lon>=130&&lat>-12)&&!(lon>=142&&lat>-30))return"Indian Ocean";return"Pacific Ocean"}
 function lfSegs(P){const step=Math.max(1,Math.floor(P.length/160)),out=[];let cur=null;
  const Lk=(P[P.length-1].km||0)-(P[0].km||0),minA=Math.pow(Lk/7/R_KM,2);
  for(let i=0;i<P.length;i+=step){const p=P[i],h=lfAt(p.ll,p.e,minA),n=h&&h.n;if(cur&&cur.n===n){cur.b=p.km;cur.hi=Math.max(cur.hi,p.e);cur.lo=Math.min(cur.lo,p.e)}else{cur={n,k:h&&h.k,a:p.km,b:p.km,hi:p.e,lo:p.e};out.push(cur)}}
@@ -395,8 +395,14 @@ function bedInfo(o){if(o._B!==undefined)return o._B;const mx=maxDepth(o);if(!(mx
  let lo=.05,hi=20;if(mean(lo)>=target)B.k=lo;else if(mean(hi)<=target)B.k=hi;else{for(let it=0;it<40;it++){const m=(lo+hi)/2;if(mean(m)<target)lo=m;else hi=m}B.k=(lo+hi)/2}
  return o._B=B}
 function synDepth(o,B,ll){const x=Math.min(1,rawX(o,B,ll,shoreKm(o,ll))/B.xm);return B.mx*(1-Math.pow(1-x,B.k))}
+/* the world grid's ocean (sea joined to the open ocean) at a point: 1 in its cell, 2 within a cell or so, 0 not */
+function oceanCell(ll){try{if(typeof GFE==="undefined"||!GFE.ready)return false;const m=GFE.ocean||(typeof gfOceanMask==="function"?gfOceanMask():null);if(!m)return false;const W=GFE.W,H=GFE.H;
+   for(const d of[0,.06,.12])for(const[a,b]of[[0,0],[d,0],[-d,0],[0,d],[0,-d]]){if(!d&&(a||b))continue;const p=GLOBE_ROBINSON0([ll[0]+a,ll[1]+b]);if(!p)continue;const y=Math.floor((p[1]+6.688)/1014.376*H),x=Math.floor(p[0]/2e3*W);if(y>=0&&y<H&&x>=0&&x<W&&m[y*W+x])return d?2:1}return 0}catch(e){return 0}}
 function compute(){yl={lo:null,hi:null};lines.forEach(L=>{L.P=profile(L.ll,{river:L.river,name:L.name});if(L.river&&REAL_KM[L.name]&&L.P.length){const T=L.P[L.P.length-1].km,f=T?REAL_KM[L.name]/T:1;L.P.forEach(p=>p.km*=f)}if(lines.length===1){const segs=[];let cur=null;
  assignC(L.P);
+ /* below sea level and beside the open ocean is the sea, not "land below sea level" (the outlines of island countries reach
+    over their shallow seas: the Bahamas banks); the detailed coast settles it once it is in */
+ L.P.forEach(q=>{if(q.e<0&&q.c&&oceanCell(q.ll)>0)q.c=null});
  /* every sample, so small islands (Guadeloupe, Dominica...) on a long line are not skipped */
  /* stretches in no country are split by the water they cross (a lake, a sea, an ocean), named in blue */
  for(let i=0;i<L.P.length;i++){/* a point in a small gap of the outlines (a border, a low coast) belongs to the country next to it, not the sea */const c=L.P[i].c!==undefined&&L.P[i]._cc?L.P[i].c:(countryAt(L.P[i].ll)||nearCountry(L.P[i].ll,L.P[i].e>0));L.P[i].c=c||null;const w=c?null:waterName(L.P[i].ll),k=c||("~"+w);if(!cur||cur.k!==k){cur={k,c,w,a:L.P[i].km,b:L.P[i].km};segs.push(cur)}else cur.b=L.P[i].km}if(cur)cur.b=L.P[L.P.length-1].km;L.segs=segs;if(!L.river){if(LFD)L.lf=lfSegs(L.P);else loadLF()}}if(!L.river)lakeify(L)})}
@@ -428,13 +434,12 @@ async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)retu
   if(lo<Math.min(L,R)-150&&elevAt(mid.ll[0],mid.ll[1])>lo+150){for(let j=i;j<i+w;j++){const t=(j-i+1)/(w+1);P[j].e=Math.round(L+(R-L)*t)}}}
  /* the tiles read the shallow sea over reefs (the Great Barrier Reef lagoon) as exactly 0 m, which drew it as land with a
     green edge: a point at or just above 0 that lies in no country, where the coarse grid has sea, is sea at the grid's depth */
- const ocean=ll=>{try{if(typeof GFE==="undefined"||!GFE.ready)return false;const m=GFE.ocean||(typeof gfOceanMask==="function"?gfOceanMask():null);if(!m)return false;const W=GFE.W,H=GFE.H;
-   for(const d of[0,.06,.12])for(const[a,b]of[[0,0],[d,0],[-d,0],[0,d],[0,-d]]){if(!d&&(a||b))continue;const p=GLOBE_ROBINSON0([ll[0]+a,ll[1]+b]);if(!p)continue;const y=Math.floor((p[1]+6.688)/1014.376*H),x=Math.floor(p[0]/2e3*W);if(y>=0&&y<H&&x>=0&&x<W&&m[y*W+x])return d?2:1}return 0}catch(e){return 0}};
+ const ocean=oceanCell;
  /* land or sea: OpenFreeMap's detailed coast decides (the coast drawn on the map close up); without it, the world grid's ocean */
  let SEA=null;try{if(window.gfDetail&&gfDetail.seaAt)SEA=await gfDetail.seaAt(P.map(q=>q.ll))}catch(e){}
  if(id!==refineId||lines.indexOf(L)<0)return;
- const wet=[];P.forEach((q,i)=>{if(SEA){if(SEA[i]&&q.e>=0)q.e=Math.min(-1,Math.round(elevAt(q.ll[0],q.ll[1])));wet.push(SEA[i]);return}
-  const o=q.e<=0?ocean(q.ll):0;if(q.e===0&&o)q.e=Math.min(-1,Math.round(elevAt(q.ll[0],q.ll[1])));wet.push(q.e<0&&o===1)});
+ const wet=[];P.forEach((q,i)=>{if(SEA&&SEA[i]!=null){if(SEA[i]&&q.e>=0)q.e=Math.min(-1,Math.round(elevAt(q.ll[0],q.ll[1])));wet.push(SEA[i]);return}
+  const o=q.e<=0?ocean(q.ll):0;if(q.e===0&&o)q.e=Math.min(-1,Math.round(elevAt(q.ll[0],q.ll[1])));/* below sea level beside the ocean: the sea */wet.push(q.e<0&&o>0)});
  if(lines.length===1)assignC(P);/* below sea level in an ocean cell of the world grid: the sea, not land below sea level */P.forEach((q,i)=>{if(wet[i])q.c=null});
  /* the strip of countries and waters under the chart follows the detailed land and sea */
  if(lines.length===1){const segs=[];let cur=null;P.forEach(q=>{const c=q.c||null,w=c?null:waterName(q.ll),k=c||("~"+w);if(!cur||cur.k!==k){cur={k,c,w,a:q.km,b:q.km};segs.push(cur)}else cur.b=q.km});L.segs=segs;if(LFD)L.lf=lfSegs(P)}
