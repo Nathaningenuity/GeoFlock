@@ -20,10 +20,13 @@ L.push(C(AN,"an-gorillas","Countries where wild gorillas live",3,"ao cm cf cg cd
 L.push(C(AN,"an-penguins","Countries where wild penguins breed",3,"ar cl au nz za na pe ec","On their own coasts and islands: not counting Antarctica or overseas territories like the Falklands."));
 L.push(C(AN,"an-amazon","Countries with part of the Amazon rainforest",2,"br pe co ve ec bo gy sr","French Guiana, part of France, has some too."));
 L.push(C(AN,"an-andes","Countries the Andes run through",2,"ve co ec pe bo cl ar"));
-L.push(C(AN,"an-himalaya","Countries the Himalayas run through",3,"in np bt cn pk","Everest stands on the border of Nepal and China."));
 L.push(C(AN,"an-mekong","Countries the Mekong flows through or along",3,"cn mm la th kh vn"));
-L.push(C(AN,"an-caspian","Countries on the Caspian Sea",2,"ru kz tm ir az"));
 L.push(C(AN,"an-black","Countries on the Black Sea",2,"tr bg ro ua ru ge"));
+L.push(C(AN,"an-red","Countries on the Red Sea",3,"eg sd er dj ye sa jo il","Counting the Gulf of Aqaba, Jordan’s and Israel’s short coasts."));
+L.push(C("Position","p-brazil","Borders Brazil",2,"uy ar py bo pe co ve gy sr fr","Every South American country but Chile and Ecuador, and France through French Guiana."));
+L.push(C("Position","p-germany","Borders Germany",2,"dk pl cz at ch fr lu be nl","Nine neighbours, more than any other European country except Russia."));
+L.push(C("Position","p-drc","Borders DR Congo",3,"cg cf ss ug rw bi tz zm ao","Its border with Tanzania runs down the middle of Lake Tanganyika."));
+L.push(C("Position","p-tanzania","Borders Tanzania",3,"ke ug rw bi cd zm mw mz","Its neighbours across Lakes Victoria, Tanganyika and Malawi count."));
 L.push(C(AN,"an-baltic","Countries on the Baltic Sea",2,"se fi ru ee lv lt pl de dk"));
 /* ---------- Records & Rankings ---------- */
 const RR="Records & Rankings";
@@ -34,7 +37,6 @@ L.push(C(RR,"rr-oilres","The 5 largest proven oil reserves",3,"ve sa ir ca iq","
 L.push(C(RR,"rr-oilprod","The 5 biggest oil producers",3,"us sa ru ca cn","Source: US EIA, 2023, crude oil and other liquids; million barrels a day.","≈21.9 million barrels a day|≈11.1|≈10.8|≈5.8|≈5.3"));
 L.push(C(RR,"rr-tourists","The 3 most visited countries",2,"fr es us","Source: UN Tourism, international arrivals in 2024.","≈100 million|≈94 million|≈72 million"));
 L.push(C(RR,"rr-paris","The top 5 of the Paris 2024 Olympic medal table",3,"us cn jp au fr","By gold medals. The US and China both won 40; the US was ahead on silver.","40 gold|40 gold|20 gold|18 gold|16 gold"));
-L.push(C(RR,"rr-islands","The 5 countries with the most islands",4,"se no fi ca us","Widely quoted national counts; the totals depend on how small an island may be.","≈267,570|≈239,060|≈178,950|≈52,460|≈18,620"));
 L.push(C(RR,"rr-langs","The 4 countries with the most languages",3,"pg id ng in","Source: Ethnologue, living languages, 2024.","≈840|≈700|≈520|≈420"));
 L.push(C(RR,"rr-gdp","The 3 largest economies",2,"us cn de","Source: IMF World Economic Outlook, 2025, nominal GDP in US dollars.","≈$30 trillion|≈$19 trillion|≈$4.7 trillion"));
 L.push(C(RR,"rr-rice","The 5 biggest rice growers",3,"cn in bd id vn","Source: FAOSTAT 2022, paddy rice.","≈208 million t|≈196 million t|≈57 million t|≈55 million t|≈43 million t"));
@@ -52,7 +54,6 @@ L.push(C(CC,"cc-wchosts","Countries that have hosted the men’s football World 
 L.push(C(CC,"cc-antarctic","Countries with a claim to part of Antarctica",3,"ar au cl fr nz no gb","The Antarctic Treaty of 1959 put all claims on hold."));
 /* ---------- Fun & Quirky ---------- */
 const FQ="Fun & Quirky";
-L.push(C(FQ,"fq-guinea","Countries with “Guinea” in their name",1,"gn gw gq pg"));
 L.push(C(FQ,"fq-person","Countries named after a person",4,"co bo ph mu sa mh sb sc","Not counting saints: Columbus, Bolívar, Philip II, Maurice of Nassau, the House of Saud, John Marshall, King Solomon and Jean Moreau de Séchelles."));
 L.push(C(FQ,"fq-norivers","Countries with no permanent rivers",4,"sa ye om ae qa kw bh ly mt mc va mv to tv ki nr mh","Seasonal riverbeds (wadis) and small streams don’t count."));
 L.push(C(FQ,"fq-cancer","Countries the Tropic of Cancer crosses",4,"mx bs mr ml dz ne ly eg sa ae om in bd mm cn tw","It also crosses Western Sahara."));
@@ -104,12 +105,6 @@ Nile||≈6,650 km|31,24|eg
 Congo|Zaire|≈4,700 km|19,0|cd
 Niger||≈4,180 km|-1,15|ml
 Zambezi|Zambesi|≈2,570 km|26,-16.5|zm`));
-L.push(I(IW,"iw-greatlakes","The Great Lakes of North America",1,"lakes",0,"Remember them with HOMES.",`
-Lake Superior|Superior||-87.5,47.7|us
-Lake Michigan|Michigan||-87,44|us
-Lake Huron|Huron||-82.4,44.8|ca
-Lake Erie|Erie||-81.2,42.2|us
-Lake Ontario|Ontario||-77.9,43.7|ca`));
 L.push(I(IW,"iw-afrlakes","The African Great Lakes",4,"lakes",0,"The big lakes of the Rift Valley region.",`
 Lake Victoria|Victoria||33,-1|ug
 Lake Tanganyika|Tanganyika||29.6,-6|tz
@@ -122,17 +117,6 @@ L.push(I(IW,"iw-eulakes","The 3 largest lakes in Europe",4,"lakes",1,"Not counti
 Lake Ladoga|Ladoga;Ladozhskoye|17,700 km²|31.5,61|ru
 Lake Onega|Onega;Onezhskoye|9,700 km²|35.5,61.7|ru
 Vänern|Vanern;Lake Vanern;Lake Vänern|5,650 km²|13.3,58.9|se`));
-L.push(I(IW,"iw-oceans","The five oceans",1,"oceans",0,"",`
-Pacific Ocean|Pacific||-150,0|
-Atlantic Ocean|Atlantic||-35,15|
-Indian Ocean|Indian||80,-15|
-Southern Ocean|Southern;Antarctic Ocean||60,-62|
-Arctic Ocean|Arctic||0,86|`));
-L.push(I(IW,"iw-italyseas","The four seas around Italy",3,"seas",0,"All four are arms of the Mediterranean.",`
-Adriatic Sea|Adriatic||15,43|it
-Ionian Sea|Ionian||18,38.5|it
-Tyrrhenian Sea|Tyrrhenian||12,40|it
-Ligurian Sea|Ligurian||9,43.8|it`));
 L.push(I(IW,"iw-choke","The world’s main oil shipping chokepoints",5,"chokepoints",0,"Source: US Energy Information Administration.",`
 Strait of Hormuz|Hormuz||56.4,26.6|ir
 Strait of Malacca|Malacca||101,2.5|my
@@ -165,16 +149,6 @@ Molokaʻi|Molokai||-157,21.13|us
 Lānaʻi|Lanai||-156.93,20.83|us
 Niʻihau|Niihau||-160.15,21.9|us
 Kahoʻolawe|Kahoolawe||-156.6,20.55|us`));
-L.push(I(IW,"iw-japan","Japan’s four main islands",1,"islands",0,"",`
-Honshu|Honshū||138.5,36.5|jp
-Hokkaido|Hokkaidō||142.8,43.3|jp
-Kyushu|Kyūshū||130.8,32.7|jp
-Shikoku|||133.5,33.7|jp`));
-L.push(I(IW,"iw-falls","Waterfalls on a border between two countries",3,"waterfalls",0,"",`
-Victoria Falls|Mosi-oa-Tunya;Victoria|Zambia and Zimbabwe|25.857,-17.925|zm
-Iguazu Falls|Iguaçu;Iguassu;Iguazu|Argentina and Brazil|-54.44,-25.69|ar
-Niagara Falls|Niagara|Canada and the US|-79.07,43.08|ca
-Ban Gioc–Detian Falls|Ban Gioc;Detian;Ban Gioc Falls;Detian Falls|China and Vietnam|106.72,22.85|vn`));
 /* ---------- Mountains & Wonders ---------- */
 const MW="Mountains & Wonders";
 L.push(I(MW,"mw-peaks","The 10 highest mountains",4,"mountains",1,"All ten are in the Himalayas or the Karakoram.",`
@@ -253,14 +227,6 @@ Jeju Island|Jeju;Jejudo||126.55,33.38|kr
 Komodo National Park|Komodo;Komodo Island||119.5,-8.55|id
 Puerto Princesa Underground River|Puerto Princesa;Underground River;Puerto Princesa Subterranean River||118.93,10.19|ph
 Table Mountain|||18.40,-33.96|za`));
-L.push(I(MW,"mw-continents","The seven continents",1,"continents",0,"Oceania counts too, for Australia.",`
-Africa|||20,5|
-Antarctica|||0,-82|
-Asia|||90,45|
-Australia|Oceania;Australasia;Sahul||134,-25|au
-Europe|||15,50|
-North America|||-100,45|
-South America|||-60,-15|`));
 /* ---------- Cities & Buildings ---------- */
 const CB="Cities & Buildings";
 L.push(I(CB,"cb-towers","The 7 tallest buildings",4,"buildings",1,"Source: Council on Tall Buildings and Urban Habitat, completed buildings, 2025.",`
@@ -294,21 +260,31 @@ Port Moresby|Moresby|Admiral Fairfax Moresby|147.18,-9.44|pg
 Castries||the Marquis de Castries|-60.99,14.01|lc
 Valletta|Valetta|Jean de Valette|14.51,35.9|mt
 Sucre||Antonio José de Sucre|-65.26,-19.04|bo`));
-L.push(I(CB,"cb-danube","Capitals on the Danube",2,"capitals",0,"",`
-Vienna|Wien||16.37,48.21|at
-Bratislava|||17.11,48.15|sk
-Budapest|||19.04,47.5|hu
-Belgrade|Beograd||20.46,44.82|rs`));
-L.push(I(CB,"cb-olympic2","Cities that have hosted the Summer Olympics more than once",3,"cities",0,"Los Angeles hosts for a third time in 2028.",`
-London||1908, 1948, 2012|-0.13,51.5|gb
-Paris||1900, 1924, 2024|2.35,48.86|fr
+L.push(I(CB,"cb-olympic2","European cities that have hosted the Summer Olympics",3,"cities",0,"Up to 2024. London and Paris have each hosted three times, Athens twice.",`
 Athens|Athina|1896, 2004|23.73,37.98|gr
+Paris||1900, 1924, 2024|2.35,48.86|fr
+London||1908, 1948, 2012|-0.13,51.5|gb
+Stockholm||1912|18.07,59.33|se
+Antwerp|Antwerpen;Anvers|1920|4.4,51.22|be
+Amsterdam||1928|4.9,52.37|nl
+Berlin||1936|13.4,52.52|de
+Helsinki|Helsingfors|1952|24.94,60.17|fi
+Rome|Roma|1960|12.5,41.9|it
+Munich|München;Muenchen|1972|11.58,48.14|de
+Moscow|Moskva|1980|37.62,55.75|ru
+Barcelona||1992|2.17,41.39|es`));
+L.push(I(CB,"cb-olyworld","Cities outside Europe that have hosted the Summer Olympics",3,"cities",0,"Up to 2024; Los Angeles hosts again in 2028 and Brisbane in 2032.",`
+St. Louis|Saint Louis;St Louis|1904|-90.2,38.63|us
 Los Angeles|LA|1932, 1984|-118.24,34.05|us
-Tokyo||1964, 2020|139.69,35.69|jp`));
-L.push(I(CB,"cb-olyasia","Asian cities that have hosted the Summer Olympics",2,"cities",0,"",`
+Melbourne||1956|144.96,-37.81|au
 Tokyo||1964, 2020|139.69,35.69|jp
+Mexico City|Ciudad de México;Mexico|1968|-99.13,19.43|mx
+Montreal|Montréal|1976|-73.57,45.5|ca
 Seoul||1988|126.98,37.57|kr
-Beijing|Peking|2008|116.4,39.9|cn`));
+Atlanta||1996|-84.39,33.75|us
+Sydney||2000|151.21,-33.87|au
+Beijing|Peking|2008|116.4,39.9|cn
+Rio de Janeiro|Rio|2016|-43.2,-22.91|br`));
 /* ---------- States & Provinces ---------- */
 const SP="States & Provinces";
 L.push(I(SP,"sp-uscanada","US states that border Canada",3,"states",0,"Counting the borders across the Great Lakes.",`
@@ -325,11 +301,6 @@ New York|||-75.5,43|us
 Vermont|||-72.7,44|us
 New Hampshire|||-71.6,43.7|us
 Maine|||-69.2,45.4|us`));
-L.push(I(SP,"sp-usmexico","US states that border Mexico",1,"states",0,"",`
-California|||-119.5,37.2|us
-Arizona|||-111.7,34.3|us
-New Mexico|||-106.1,34.4|us
-Texas|||-99.3,31.5|us`));
 L.push(I(SP,"sp-13","The 13 original US states",3,"states",0,"The colonies that declared independence in 1776.",`
 Delaware|||-75.5,39|us
 Pennsylvania|||-77.6,40.9|us
@@ -344,12 +315,6 @@ Virginia|||-78.8,37.5|us
 New York|||-75.5,43|us
 North Carolina|||-79.4,35.5|us
 Rhode Island|||-71.5,41.7|us`));
-L.push(I(SP,"sp-gulf","US states on the Gulf of Mexico",2,"states",0,"",`
-Texas|||-99.3,31.5|us
-Louisiana|||-92,31|us
-Mississippi|||-89.7,32.7|us
-Alabama|||-86.8,32.8|us
-Florida|||-81.7,28|us`));
 L.push(I(SP,"sp-uslarge","The 5 largest US states",2,"states",1,"By total area.",`
 Alaska||≈1,723,000 km²|-150,64|us
 Texas||≈696,000 km²|-99.3,31.5|us
