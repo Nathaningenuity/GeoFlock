@@ -18,8 +18,9 @@ const G=()=>{try{return typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host&&amG
 function viewKey(g){const{w,h}=g.size();return[w,h,g.zoom.toFixed(4),g.rot[0].toFixed(3),g.rot[1].toFixed(3),g._flat?1:0,g._gfDl||0,(g._gfOx||0).toFixed(1),(g.roll&&g.roll()||0).toFixed(2)].join("|")}
 /* km per screen pixel at the middle of the view */
 function kmPx(g){try{const{w,h}=g.size(),pr=g.projection(),a=pr.invert([w/2,h/2]);if(!a||!isFinite(a[0]))return 99;const p0=pr(a),p1=pr([a[0],a[1]+.01]);if(!p0||!p1)return 99;const d=Math.hypot(p1[0]-p0[0],p1[1]-p0[1]);return d>0?1.11195/d:99}catch(e){return 99}}
-/* the shading starts once a screen pixel is under about 4 km (the picture is about 10 km a pixel) and is full by about 1.5 km */
-const START=4,FULL=1.5;
+/* the shading starts as soon as the picture itself (about 10 km a pixel) begins to look soft, under about 9 km a screen pixel,
+   and is full by about 4 km */
+const START=9,FULL=4;
 let OV=null,job=0,timer=0,lastKey="",DBG={};
 async function build(g,key){const id=++job;const{w,h}=g.size(),pr=g.projection(),GW=Math.ceil(w/STEP),GH=Math.ceil(h/STEP),N=GW*GH;
  const LL=new Array(N);let cy=0,cn=0;const ctr=g._flat?null:[-g.rot[0],-g.rot[1]];
@@ -47,13 +48,26 @@ async function build(g,key){const id=++job;const{w,h}=g.size(),pr=g.projection()
   const sh=Math.cos(ZEN)*Math.cos(sl)+Math.sin(ZEN)*Math.sin(sl)*Math.cos(AZ-asp),dv=sh-flat,o=k*4;
   /* the coast: the first metres of land fade in, so the shading never draws its own coastline */const f=Math.min(1,e/6);
   if(dv<0){px[o]=px[o+1]=px[o+2]=20;px[o+3]=Math.min(150,-dv*330*f)}else{px[o]=px[o+1]=255;px[o+2]=240;px[o+3]=Math.min(90,dv*220*f)}}
- x.putImageData(D,0,0);return{key,c,z}}
+ x.putImageData(D,0,0);
+ /* three places on the map and where they were on screen: while the map moves, the last shading is moved and scaled with them
+    until the new one is ready (it used to vanish at the first touch) */
+ const anc=[],scr=[];[[.25,.3],[.75,.3],[.5,.75]].forEach(([fx,fy])=>{const p=[w*fx,h*fy];let ll=null;try{ll=pr.invert(p)}catch(e){}if(ll&&isFinite(ll[0])){anc.push(ll);scr.push(p)}});
+ return{key,c,z,w,h,anc,scr}}
+/* the affine map taking three screen points to three others */
+function affine(S,D){const[x1,y1]=S[0],[x2,y2]=S[1],[x3,y3]=S[2],det=x1*(y2-y3)+x2*(y3-y1)+x3*(y1-y2);if(Math.abs(det)<1e-6)return null;
+ const sol=k=>{const v1=D[0][k],v2=D[1][k],v3=D[2][k];return[(v1*(y2-y3)+v2*(y3-y1)+v3*(y1-y2))/det,(v1*(x3-x2)+v2*(x1-x3)+v3*(x2-x1))/det,(v1*(x2*y3-x3*y2)+v2*(x3*y1-x1*y3)+v3*(x1*y2-x2*y1))/det]};
+ const[a,c,e]=sol(0),[b,d,f]=sol(1);return[a,b,c,d,e,f]}
 function schedule(g){clearTimeout(timer);timer=setTimeout(async()=>{const g2=G();if(!g2)return;const key=viewKey(g2);if(OV&&OV.key===key)return;
   let r=null;try{r=await build(g2,key)}catch(e){}if(r&&viewKey(g2)===r.key){OV=r;try{g2.request?g2.request():g2.render()}catch(e){}}},320)}
-function shade(g,ctx,I){if(g!==G()||!isRelief(I))return;const kp=kmPx(g);if(kp>START){OV=null;return}
+function shade(g,ctx,I){if(g!==G()||!isRelief(I))return;const kp=kmPx(g);if(kp>START)return;/* zoomed out: not drawn, but kept for zooming back in */
  const key=viewKey(g);if(key!==lastKey){lastKey=key;schedule(g)}
- if(!OV||OV.key!==key)return;const{w,h}=g.size(),a=Math.max(0,Math.min(1,(START-kp)/(START-FULL)));if(a<=0)return;
- ctx.save();ctx.globalAlpha=a;ctx.imageSmoothingEnabled=true;ctx.drawImage(OV.c,0,0,w,h);ctx.restore()}
+ if(!OV)return;const{w,h}=g.size(),a=Math.max(0,Math.min(1,(START-kp)/(START-FULL)));if(a<=0)return;
+ ctx.save();ctx.globalAlpha=a;ctx.imageSmoothingEnabled=true;
+ if(OV.key===key){ctx.drawImage(OV.c,0,0,w,h);ctx.restore();return}
+ /* the view has changed: the last shading moved with the map (as long as it has not changed too much) */
+ let ok=false;try{if(OV.anc.length===3){const pr=g.projection(),D=OV.anc.map(ll=>pr(ll));if(D.every(p=>p&&isFinite(p[0]))){const M=affine(OV.scr,D);
+   if(M){const sc=Math.sqrt(Math.abs(M[0]*M[3]-M[1]*M[2]));if(sc>.4&&sc<2.5){ctx.transform(M[0],M[1],M[2],M[3],M[4],M[5]);ctx.drawImage(OV.c,0,0,OV.w,OV.h);ok=true}}}}}catch(e){}
+ ctx.restore()}
 /* hooked in front of the detail layer's drawing, so lakes, rivers, coast and borders come on top */
 let n=0;const t=setInterval(()=>{if(window.gfDetail&&gfDetail.draw&&!gfDetail.draw._gfRS){const d0=gfDetail.draw;gfDetail.draw=function(g,ctx,I){try{shade(g,ctx,I)}catch(e){}return d0.apply(this,arguments)};gfDetail.draw._gfRS=1;clearInterval(t)}else if(++n>120)clearInterval(t)},250);
 window.gfReliefSharp={state:()=>OV&&{key:OV.key,z:OV.z},dbg:()=>DBG,kmPx:()=>{const g=G();return g?kmPx(g):null}};
