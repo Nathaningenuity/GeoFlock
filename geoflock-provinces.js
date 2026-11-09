@@ -454,24 +454,41 @@ window.gfProvinces={start:start,LIST:LIST,load:load,projFor:projFor};
     stays on for every country (remembered in this browser). When on, the shape is drawn split into its divisions (names on
     hover), with their number and the test-yourself buttons along the bottom. */
  const SHOWK="gfPvShow";const shown=()=>{try{return localStorage.getItem(SHOWK)==="1"}catch(e){return false}};
- function slideSw(cc){const s=document.getElementById("zoomOutlineSlide");if(!s)return;if(!s._pvObs){s._pvObs=new MutationObserver(()=>{if(!s.querySelector(":scope > .pv-sw")&&s._pvCc)slideSw(s._pvCc)});s._pvObs.observe(s,{childList:true})}s._pvCc=cc;const r=ROW[cc],noun=r[2].split(" or ")[0],pl=cc==="us"?"states":plural(noun);
-  let sw=s.querySelector(":scope > .pv-sw");if(!sw){sw=document.createElement("button");sw.type="button";sw.className="pfm-sw pv-sw";["pointerdown","mousedown","touchstart"].forEach(ev=>sw.addEventListener(ev,e=>e.stopPropagation()));s.appendChild(sw)}
-  const paint=()=>{const on=shown();sw.classList.toggle("on",on);sw.setAttribute("aria-pressed",on);sw.innerHTML='<i></i>Show '+esc(pl);s.classList.toggle("pv-on",on);let ov=s.querySelector(":scope > .pv-ov");
-   if(!on){if(ov)ov.remove();return}if(ov&&ov.dataset.cc===cc)return;if(ov)ov.remove();ov=document.createElement("div");ov.className="pv-ov";ov.dataset.cc=cc;["pointerdown","mousedown","touchstart"].forEach(ev=>ov.addEventListener(ev,e=>e.stopPropagation()));
-   ov.innerHTML='<div class="pv-prof-map"><div class="pv-prof-load">Loading the '+esc(pl)+'…</div></div><div class="pv-ov-bar"><small class="pv-prof-n"></small><button type="button" class="chip pv-prof-go" data-m="find">Test yourself →</button>'+(CAPS[cc]?'<button type="button" class="chip pv-prof-go" data-m="cap">Capitals →</button>':'')+'</div>';s.appendChild(ov);
-   ov.querySelectorAll(".pv-prof-go").forEach(b=>b.onclick=e=>{e.stopPropagation();goDrill(cc,b.dataset.m)});
-   load(cc).then(d=>{if(!ov.isConnected)return;const box=ov.querySelector(".pv-prof-map"),W=Math.max(260,s.clientWidth||512),H=Math.max(160,s.clientHeight||300),F=d.items.map(x=>x.f),pr=projFor(cc,F,W*.9,H*.74),path=d3.geoPath(pr);
-    ov.querySelector(".pv-prof-n").textContent=d.items.length+" "+(d.items.length===1?noun:plural(noun))+"";if(r[4])ov.querySelector(".pv-prof-n").title=r[4];
-    box.innerHTML='<svg viewBox="'+(-W*.05)+' '+(-H*.07)+' '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Map of the '+esc(pl)+'">'+d.items.map((x,i)=>'<path class="pv-prof-r" data-i="'+i+'" d="'+(path(x.f)||"")+'"/>').join("")+'</svg><div class="pv-prof-tip" hidden></div>';
-    const tip=box.querySelector(".pv-prof-tip");box.querySelectorAll(".pv-prof-r").forEach(el=>{el.onmouseenter=()=>{tip.hidden=false;tip.textContent=d.items[+el.dataset.i].n};el.onmousemove=e=>{const b=box.getBoundingClientRect();tip.style.left=(e.clientX-b.left+12)+"px";tip.style.top=(e.clientY-b.top+10)+"px"};el.onmouseleave=()=>{tip.hidden=true}})})
-   .catch(()=>{const b=ov.querySelector(".pv-prof-map");if(b)b.innerHTML='<div class="pv-prof-load">Couldn’t load the '+esc(pl)+'.</div>'})};
+ /* the divisions are drawn into the country's own outline on the slide, with the projection the slide already uses for its
+    neighbours and cities (pfmCentre), so switching them on changes nothing but the lines inside: same shape, size, place */
+ function fitOf(svg,cc){const own=[...svg.children].filter(e=>!e.classList.contains("ol-ctx")&&/^(path|circle)$/.test(e.tagName));let ob=null;
+  own.forEach(e=>{let b;try{b=e.getBBox()}catch(er){return}if(!b.width&&!b.height)return;ob=ob?[Math.min(ob[0],b.x),Math.min(ob[1],b.y),Math.max(ob[2],b.x+b.width),Math.max(ob[3],b.y+b.height)]:[b.x,b.y,b.x+b.width,b.y+b.height]});if(!ob)return null;
+  const f=projFeatures().find(x=>String(x.properties.c).toLowerCase()===cc&&x.geometry);if(!f)return null;const core=pfmCore(f),R=Math.PI/180;let X=0,Y=0,Z=0;
+  pfmPolys(core).forEach(P=>{const c=d3.geoCentroid({type:"Polygon",coordinates:P}),cl=Math.cos(c[1]*R);X+=cl*Math.cos(c[0]*R);Y+=cl*Math.sin(c[0]*R);Z+=Math.sin(c[1]*R)});
+  const mid=[Math.atan2(Y,X)/R,Math.atan2(Z,Math.hypot(X,Y))/R],big={x:ob[0],y:ob[1],width:ob[2]-ob[0],height:ob[3]-ob[1]},bigD=own.filter(e=>e.tagName==="path").map(e=>e.getAttribute("d")||"").join("");
+  const fit=pfmCentre(f.properties.c,core,big,bigD,mid),pr=d3.geoAzimuthalEqualArea().rotate([-fit.c[0],-fit.c[1]]).clipAngle(100).precision(.2).scale(1e3).translate([0,0]),mb=d3.geoPath(pr).bounds(core);
+  const k=(big.width/(mb[1][0]-mb[0][0])+big.height/(mb[1][1]-mb[0][1]))/2*fit.f;return{pr,k,ox:big.x+big.width/2+fit.dx-k*(mb[0][0]+mb[1][0])/2,oy:big.y+big.height/2+fit.dy-k*(mb[0][1]+mb[1][1])/2}}
+ function slideSw(cc){const s=document.getElementById("zoomOutlineSlide");if(!s)return;
+  if(!s._pvObs){s._pvObs=new MutationObserver(()=>{if(!s._pvCc)return;if(!s.querySelector(":scope > .pv-sw")||(shown()&&!s.querySelector(".pv-x")))setTimeout(()=>slideSw(s._pvCc),30)});s._pvObs.observe(s,{childList:true})}s._pvCc=cc;
+  const r=ROW[cc],noun=r[2].split(" or ")[0],pl=cc==="us"?"states":plural(noun);const stop=el=>["pointerdown","mousedown","touchstart"].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation()));
+  let sw=s.querySelector(":scope > .pv-sw");if(!sw){sw=document.createElement("button");sw.type="button";sw.className="pfm-sw pv-sw";stop(sw);s.appendChild(sw)}
+  const paint=()=>{const on=shown();sw.classList.toggle("on",on);sw.setAttribute("aria-pressed",on);sw.innerHTML='<i></i>Show '+esc(pl);
+   s.querySelectorAll(":scope > .pv-ov, :scope > .pv-n, :scope > .pv-go, :scope > .pv-tip").forEach(e=>{if(!on||e.dataset.cc!==cc)e.remove()});const svg=s.querySelector(":scope > svg.zoom-outline");
+   if(!on){if(svg)svg.querySelectorAll(".pv-x").forEach(g=>g.remove());return}
+   if(!s.querySelector(":scope > .pv-go")){const go=document.createElement("button");go.type="button";go.className="pfm-go pv-go";go.dataset.cc=cc;go.textContent="Test yourself: "+pl+" →";stop(go);go.onclick=e=>{e.stopPropagation();goDrill(cc,"find")};s.appendChild(go)}
+   load(cc).then(d=>{if(!shown()||s._pvCc!==cc)return;let n=s.querySelector(":scope > .pv-n");if(!n){n=document.createElement("div");n.className="pv-n";n.dataset.cc=cc;s.appendChild(n)}n.textContent=d.items.length+" "+(d.items.length===1?noun:plural(noun));if(r[4])n.title=r[4];
+    const v=s.querySelector(":scope > svg.zoom-outline");if(!v)return;if(v.querySelector(".pv-x[data-cc='"+cc+"']"))return;v.querySelectorAll(".pv-x").forEach(g=>g.remove());
+    const F=fitOf(v,cc);if(!F){setTimeout(()=>{if(shown()&&!v.querySelector(".pv-x"))paint()},250);return}const P=d3.geoPath(F.pr),g=document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class","pv-x");g.dataset.cc=cc;g.setAttribute("transform","translate("+F.ox.toFixed(3)+" "+F.oy.toFixed(3)+") scale("+F.k.toFixed(6)+")");
+    g.innerHTML=d.items.map((x,i)=>'<path class="pv-r" data-i="'+i+'" vector-effect="non-scaling-stroke" d="'+(P(x.f)||"")+'"/>').join("");v.appendChild(g);
+    let tip=s.querySelector(":scope > .pv-tip");if(!tip){tip=document.createElement("div");tip.className="pv-tip";tip.dataset.cc=cc;tip.hidden=true;s.appendChild(tip)}
+    g.querySelectorAll(".pv-r").forEach(el=>{el.onmouseenter=()=>{tip.hidden=false;tip.textContent=d.items[+el.dataset.i].n};el.onmousemove=e=>{const b=s.getBoundingClientRect();tip.style.left=(e.clientX-b.left+12)+"px";tip.style.top=(e.clientY-b.top+10)+"px"};el.onmouseleave=()=>{tip.hidden=true}})}).catch(()=>{})};
   sw.onclick=e=>{e.stopPropagation();try{localStorage.setItem(SHOWK,shown()?"0":"1")}catch(err){}paint()};paint()}
  hook();setInterval(()=>{if(typeof openFlagZoom==="function"&&!openFlagZoom._pvProf)hook()},2000);
- const c2=document.createElement("style");c2.textContent=`.pv-sw{ position:absolute; left:10px; top:10px; z-index:4; background:rgba(255,255,255,.88); border-radius:99px; padding:5px 10px 5px 7px; box-shadow:0 1px 4px rgba(0,0,0,.15); }
+ const c2=document.createElement("style");c2.textContent=`.pv-x .pv-r{ fill:transparent; stroke:rgba(255,255,255,.95); stroke-width:.9px; stroke-linejoin:round; pointer-events:all; cursor:default; } .pv-x .pv-r:hover{ fill:rgba(255,200,90,.55); }
+.pv-n{ position:absolute; right:12px; top:12px; z-index:4; font:700 12px system-ui,sans-serif; color:#4a5a70; background:rgba(255,255,255,.85); padding:4px 9px; border-radius:99px; }
+.pv-go{ position:absolute; left:10px; bottom:10px; z-index:3; padding:6px 11px; font-size:11.5px; }
+.pv-tip{ position:absolute; z-index:6; pointer-events:none; background:#1f2a33; color:#fff; font-size:12px; padding:3px 8px; border-radius:6px; white-space:nowrap; }
+body.sky-night .pv-n, body.dark-theme .pv-n{ background:rgba(20,30,50,.85); color:#dfe6f2; }
+.pv-sw{ position:absolute; left:10px; top:10px; z-index:4; background:rgba(255,255,255,.88); border-radius:99px; padding:5px 10px 5px 7px; box-shadow:0 1px 4px rgba(0,0,0,.15); }
 .pv-ov{ position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; background:linear-gradient(#eef5fb,#e1edf7); border-radius:inherit; overflow:hidden; }
 .pv-ov .pv-prof-map{ position:absolute; inset:0; background:none; border-radius:0; } .pv-ov .pv-prof-map svg{ width:100%; height:100%; }
 .pv-ov-bar{ position:absolute; left:0; right:0; bottom:0; z-index:1; display:flex; align-items:center; gap:8px; padding:0 10px 10px; padding-right:150px; flex-wrap:wrap; } .pv-ov-bar small{ font-weight:700; opacity:.65; font-size:12px; } .pv-ov-bar .chip{ font-size:11.5px; padding:5px 10px; }
-#zoomOutlineSlide.pv-on > svg.zoom-outline{ visibility:hidden; }
 body.sky-night .pv-ov, body.dark-theme .pv-ov{ background:linear-gradient(#16223a,#101a2e); } body.sky-night .pv-sw, body.dark-theme .pv-sw{ background:rgba(20,30,50,.85); color:#e6ecf5; }
 .pv-prof{ margin:16px 0 4px; padding:14px; border-radius:16px; background:rgba(20,40,70,.04); border:1px solid rgba(20,40,70,.1); text-align:left; width:100%; max-width:none; box-sizing:border-box; align-self:stretch; grid-column:1 / -1; flex:1 1 100%; }
 .pv-prof-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:6px; } .pv-prof-h b{ font-size:16px; } .pv-prof-h small{ opacity:.6; font-weight:600; }
