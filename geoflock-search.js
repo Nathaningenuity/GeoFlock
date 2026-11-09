@@ -390,7 +390,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    /* the label sits on its place: the same red dot the line starts from still marks the exact spot (only for points: not lines,
       rivers, ranges, areas, tiny islands or the Richat Structure) */
    const pt=e.ll&&e.g&&/Point$/.test(e.g.type)&&!(e.cat==="islands")&&!/richat/i.test(e.n||"");/* only things that are a point (a landmark, a city, a peak): lines, rivers, ranges and areas have no one spot */
-   if(pt){if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}ln.classList.remove("gfs-nodot");ln.style.cssText="left:"+s0[0]+"px;top:"+s0[1]+"px;width:0;background:none;box-shadow:none;z-index:41"}
+   if(pt){if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}ln.classList.remove("gfs-nodot");ln.style.cssText="left:"+s0[0]+"px;top:"+s0[1]+"px;width:0;background:none;box-shadow:none;z-index:41"+(e.ucol?";--dc:"+e.ucol:"")}
    else if(ln)ln.style.display="none"}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
   let x1=s0[0],y1=s0[1];
    /* the line reaches the card itself: the point of the card (photo and name) nearest the place, so it never stops short,
@@ -408,7 +408,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    if(isl&&len>14){const g=9;x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}ln.classList.toggle("gfs-nodot",nod);
    if(AR&&len>12){const u=[Math.cos(ang*Math.PI/180),Math.sin(ang*Math.PI/180)],g=Math.min(len-8,exitPx(x1,y1,u,AR)+3);if(g>0){x1+=u[0]*g;y1+=u[1]*g;len-=g}}
    if(nod&&!AR){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
-   ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}}}
+   ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"+(e.ucol?";--dc:"+e.ucol:"")}}}
 /* the map adds its own layers after a search is drawn; keep the search highlight on top of them */
 setInterval(()=>{if(!LIST.length)return;const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;LIST.forEach(e=>{const g=e._g;if(g&&g.ownerSVGElement===svg&&g!==svg.lastElementChild)svg.appendChild(g)})},400);
 /* keep things in place as the map moves */
@@ -428,7 +428,7 @@ if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=func
 function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)return;let b=document.getElementById("gfsX");
  if(!LIST.length){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="gfsX";b.setAttribute("role","list");wrap.appendChild(b);
   ["pointerdown","mousedown","click"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation()));
-  b.addEventListener("input",ev=>{const c=ev.target.closest&&ev.target.closest("[data-gc]");if(!c)return;const e=LIST[+c.dataset.gc];if(!e)return;e.ucol=c.value;const sw=c.closest(".gfs-sw");if(sw)sw.style.setProperty("--c",c.value);if(e._g)e._g._d=null;try{draw()}catch(_){}});
+  b.addEventListener("input",ev=>{const c=ev.target.closest&&ev.target.closest("[data-gc]");if(!c)return;const e=LIST[+c.dataset.gc];if(!e)return;e.ucol=c.value;if(e._leash)e._leash.style.setProperty("--dc",c.value);const sw=c.closest(".gfs-sw");if(sw)sw.style.setProperty("--c",c.value);if(e._g)e._g._d=null;try{draw()}catch(_){}});
   b.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest(".gfs-sw"))return;const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
    if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
    if(x){const e=LIST[+x.dataset.gx];if(e)removeOne(e);draw();return}
@@ -439,7 +439,7 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
  b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+(hasImg(e)?'<b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
 /* each result's highlight colour, which the person can change: a swatch on its chip */
-function hiCol(e){if(e.ucol)return e.ucol;if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
+function hiCol(e){if(e.ucol)return e.ucol;/* a point has no highlight: the swatch is its dot */if(e.g&&/Point$/.test(e.g.type))return"#c0392b";if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
 function swatch(e,i){return'<label class="gfs-sw" title="Change the highlight colour" style="--c:'+hiCol(e)+'"><input type="color" data-gc="'+i+'" value="'+hiCol(e)+'" aria-label="Highlight colour of '+esc(e.n)+'"></label>'}
 function wire(){loadProv();loadRegs();loadHydroLakes();loadLakeNames();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
@@ -489,7 +489,7 @@ const css=document.createElement("style");css.textContent=`
 .gfs-pin.gfs-icon .gfs-spot{ width:calc(38px * var(--gsk,1)); height:calc(38px * var(--gsk,1)); } .gfs-card:active{ cursor:grabbing; }
 .gfs-leash{ position:fixed; z-index:39; height:2px; background:rgba(16,28,48,.75); transform-origin:0 50%; pointer-events:none; box-shadow:0 0 0 1px rgba(255,255,255,.6); }
 .gfs-leash.gfs-nodot::before{ display:none; }
-.gfs-leash::before{ content:""; position:absolute; left:-3.5px; top:-2.5px; width:7px; height:7px; border-radius:50%; background:#c0392b; border:1.5px solid #fff; }
+.gfs-leash::before{ content:""; position:absolute; left:-3.5px; top:-2.5px; width:7px; height:7px; border-radius:50%; background:var(--dc,#c0392b); border:1.5px solid #fff; }
 .gfs-photo.gfs-moved .gfs-tip{ visibility:hidden; }
 .gfs-tip{ width:0; height:0; border:7px solid transparent; border-top-color:rgba(16,28,48,.9); margin-top:-1px; }
 @media (max-width:600px){ .gfs-card{ width:72px; height:72px; } }
