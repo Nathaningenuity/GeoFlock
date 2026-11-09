@@ -387,9 +387,9 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
   /* an area (a forest, a country, a lake...): no line while the card is still over it; once dragged off, the line starts
      at the area's edge (no dot on the area) */
   const AR=far?areaRings(e):null;if(AR&&inRings(s0[0]+off[0],s0[1]+off[1],AR))far=false;if(!far){el.classList.remove("gfs-moved");
-   /* the label sits on its place: the same red dot the line starts from still marks the exact spot (not for areas, tiny islands
-      or the Richat Structure, which get no dot) */
-   const pt=e.ll&&!(e.cat==="islands")&&!/richat/i.test(e.n||"")&&!(e._arC!==undefined?e._arC:(e._arC=areaRings(e)));
+   /* the label sits on its place: the same red dot the line starts from still marks the exact spot (only for points: not lines,
+      rivers, ranges, areas, tiny islands or the Richat Structure) */
+   const pt=e.ll&&e.g&&/Point$/.test(e.g.type)&&!(e.cat==="islands")&&!/richat/i.test(e.n||"");/* only things that are a point (a landmark, a city, a peak): lines, rivers, ranges and areas have no one spot */
    if(pt){if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}ln.classList.remove("gfs-nodot");ln.style.cssText="left:"+s0[0]+"px;top:"+s0[1]+"px;width:0;background:none;box-shadow:none;z-index:41"}
    else if(ln)ln.style.display="none"}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
   let x1=s0[0],y1=s0[1];
