@@ -1275,3 +1275,13 @@ setInterval(()=>{try{const t=S.tray;if(!t||!t.isConnected)return;let b=t.querySe
 /* for the details card (geoflock-shapeinfo.js) */
 Object.assign(window.gfToolkit,{openPeople,geoPanel,rebuild,dest,geoList,geoBar,save,hist,capture,PEOPLE_MODES,GEO,keep,ringAt,polyFrom,ringOf,elevStats,fmtKm2,fmtPpl,fmtM,kmTxt,closedOf,fillRing,hav,KM,cities,geoSelect,selList});
 })();
+/* the Ruler on the globe: the distance is written on the line itself, in the middle (it was only in a message box, which
+   could be off screen), in metres or with decimals for short distances */
+(function(){if(typeof GlobeView==="undefined"||!GlobeView.prototype._drawMeasure||GlobeView.prototype._drawMeasure._gfLab)return;
+ const fmt=km=>{const mi=km*.621371;const k=km<1?Math.round(km*1000)+" m":km<10?km.toFixed(2)+" km":km<100?km.toFixed(1)+" km":Math.round(km).toLocaleString()+" km";
+  const m=mi<1?Math.round(mi*5280).toLocaleString()+" ft":mi<10?mi.toFixed(2)+" mi":mi<100?mi.toFixed(1)+" mi":Math.round(mi).toLocaleString()+" mi";return k+" · "+m};
+ const d0=GlobeView.prototype._drawMeasure;GlobeView.prototype._drawMeasure=function(ctx,p){const r=d0.apply(this,arguments);try{
+  if(!this._measure||!this._mpts||this._mpts.length!==2)return r;const[a,b]=this._mpts,km=d3.geoDistance(a,b)*6371.0088,xy=p(d3.geoInterpolate(a,b)(.5));if(!xy||!isFinite(xy[0]))return r;
+  const t=fmt(km);ctx.save();ctx.font="700 13px system-ui,sans-serif";const w=ctx.measureText(t).width+16,h=24,x=xy[0]-w/2,y=xy[1]-h-8;
+  ctx.fillStyle="rgba(255,255,255,.95)";ctx.strokeStyle="#d6336c";ctx.lineWidth=1.5;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,12);else ctx.rect(x,y,w,h);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#1f2a33";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(t,xy[0],y+h/2+.5);ctx.restore()}catch(e){}return r};GlobeView.prototype._drawMeasure._gfLab=1})();
