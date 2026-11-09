@@ -294,15 +294,15 @@ function islandize(e){if(e._isl||e.cat!=="regions"||!isle(e)||fine(e))return;e._
 const cShape=e=>{if(e._cg===undefined){e._cg=null;try{e._cg=membersOf([e.cc])}catch(x){}}return e._cg};
 function countryOutline(e){const G=cShape(e);if(onGlobe()||!G){if(e._g){e._g.remove();e._g=null}return}const svg=document.querySelector("#allMapsWrap svg");if(!svg)return;
  let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
- const d=d3.geoPath(GLOBE_ROBINSON)(G)||"";if(g._d!==d){g._d=d;g.innerHTML='<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"/>'}}
-function drawOne(e){fixWind(e);islandize(e);const mode=SHOW[e.cat],col=e.col||COL[e.cat]||"#c2259a",a=alpha(e);
+ const d=d3.geoPath(GLOBE_ROBINSON)(G)||"";if(g._d!==d){g._d=d;g.innerHTML='<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"/>'}const wp=g.querySelector(".gfs-white");if(wp){if(e.ucol)wp.style.setProperty("stroke",e.ucol,"important");else wp.style.removeProperty("stroke")}}
+function drawOne(e){fixWind(e);islandize(e);const mode=SHOW[e.cat],col=e.ucol||e.col||COL[e.cat]||"#c2259a",a=alpha(e);
  pin(e);if(e.cat==="countries"){countryOutline(e);return}if(mode==="label")return;
  if(onGlobe()){if(e._g){e._g.remove();e._g=null}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
  let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
  const d=d3.geoPath(GLOBE_ROBINSON)(shapeOf(e))||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:e.col?.62:(a<1?a*.8:keep);
  /* one island: a white outline, as a searched country has; a chain keeps its colour */
- if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':e.cat==="islands"?'<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
+ if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':e.cat==="islands"?'<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"'+(e.ucol?' style="stroke:'+e.ucol+' !important"':'')+'/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3))}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
@@ -315,9 +315,9 @@ function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;con
  if(sh&&sh.coordinates){const own=sh.coordinates.filter(P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return d3.geoContains(e.g,c)}catch(x){return false}});
   const A=d3.geoArea(G0)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own}:null}
  e._sh=sh;return e._sh||G0}catch(x){return shapeOf(e)}}
-function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.beginPath();path(G);ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=1.7;ctx.stroke();ctx.restore()}return pin(e)}const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=e.col||COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
+function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.beginPath();path(G);ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle=e.ucol||"#fff";ctx.lineWidth=1.7;ctx.stroke();ctx.restore()}return pin(e)}const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=e.ucol||e.col||COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
  ctx.save();ctx.beginPath();path(sharp(e));if(e.g.type==="MultiLineString"){ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=3.6;ctx.stroke();ctx.strokeStyle=col;ctx.globalAlpha=a<1?a:1;ctx.lineWidth=2;ctx.stroke()}
- else if(e.cat==="islands"){/* one island: white, like a searched country */ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=1.7;ctx.stroke()}
+ else if(e.cat==="islands"){/* one island: white, like a searched country */ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle=e.ucol||"#fff";ctx.lineWidth=1.7;ctx.stroke()}
  else{if(!isle(e)){ctx.globalAlpha=e.col?.62:a<1?a*.8:keep;ctx.fillStyle=col;ctx.fill()}{/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(!G._flat&&d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p||(window.gfGlobeShows&&!gfGlobeShows(G,p)))return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
@@ -420,15 +420,19 @@ if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=func
 function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)return;let b=document.getElementById("gfsX");
  if(!LIST.length){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="gfsX";b.setAttribute("role","list");wrap.appendChild(b);
   ["pointerdown","mousedown","click"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation()));
-  b.addEventListener("click",ev=>{const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
+  b.addEventListener("input",ev=>{const c=ev.target.closest&&ev.target.closest("[data-gc]");if(!c)return;const e=LIST[+c.dataset.gc];if(!e)return;e.ucol=c.value;const sw=c.closest(".gfs-sw");if(sw)sw.style.setProperty("--c",c.value);if(e._g)e._g._d=null;try{draw()}catch(_){}});
+  b.addEventListener("click",ev=>{if(ev.target.closest&&ev.target.closest(".gfs-sw"))return;const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
    if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
    if(x){const e=LIST[+x.dataset.gx];if(e)removeOne(e);draw();return}
    /* the tag button: hide or show this result's name on the map */
    const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}
    /* the image button: hide or show this result's picture (its name stays) */
    const ib=ev.target.closest("[data-gim]");if(ib){const e=LIST[+ib.dataset.gim];if(e){e.noimg=!e.noimg;labOf(e);xBtn();try{draw()}catch(_){}}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
- b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+(hasImg(e)?'<b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+(hasImg(e)?'<b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
+/* each result's highlight colour, which the person can change: a swatch on its chip */
+function hiCol(e){if(e.ucol)return e.ucol;if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
+function swatch(e,i){return'<label class="gfs-sw" title="Change the highlight colour" style="--c:'+hiCol(e)+'"><input type="color" data-gc="'+i+'" value="'+hiCol(e)+'" aria-label="Highlight colour of '+esc(e.n)+'"></label>'}
 function wire(){loadProv();loadRegs();loadHydroLakes();loadLakeNames();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
   /* the site's own country suggestions are kept, but scored the same way as places, and weak guesses are dropped */
@@ -489,6 +493,7 @@ const css=document.createElement("style");css.textContent=`
 #gfsX .gfs-row b.gfs-tagb.off{ background:rgba(232,112,26,.85); }
 .gfs-nolab .gfs-lab{ display:none !important; }
 .gfs-noimg .gfs-card{ display:none !important; }
+.gfs-sw{ position:relative; width:18px; height:18px; flex:none; border-radius:50%; background:var(--c); box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 1px 3px rgba(0,0,0,.35); cursor:pointer; margin:0 2px; } .gfs-sw input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 .gfs-nolab.gfs-noimg, .gfs-nolab.gfs-noimg + .gfs-spotpin{ display:none !important; }
 .gfs-tog{ flex:none; margin-left:4px; padding:1px 7px; border-radius:999px; border:1px solid currentColor; font:700 10.5px/1.5 system-ui,sans-serif; opacity:.8; cursor:pointer; }
 .gfs-tog:hover{ opacity:1; } .gfs-tog.off{ opacity:.45; text-decoration:line-through; }

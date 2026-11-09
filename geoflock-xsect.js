@@ -86,13 +86,13 @@ const css=document.createElement("style");css.textContent=`
 .gf-xs-chip.active{ background:#7a4b1f !important; color:#fff !important; }
 .gf-xs-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#5b3a17; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); flex:none; }
 .gf-xs-ico.on{ background:#8a5a2b; color:#fff; } .gf-xs-ico-top{ margin-right:8px; align-self:center; }
-.gf-xs-top{ cursor:default; } .gf-xs-top button,.gf-xs-top select{ cursor:pointer; }
+.gf-xs-top{ cursor:move; } .gf-xs-top button,.gf-xs-top select{ cursor:pointer; }
 .gf-xs-ov{ position:absolute; left:0; top:0; pointer-events:none; z-index:30; }
 .gf-xs-hist{ display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin:2px 0 6px; font-size:12px; } .gf-xs-hist>span{ font-weight:700; margin-right:2px; } .gf-xs-hist small{ opacity:.6; margin-left:4px; }
 .gf-xs-hist button{ border:1.5px solid rgba(0,0,0,.12); background:transparent; color:inherit; border-radius:999px; padding:2px 9px; font:700 12px system-ui; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
 .gf-xs-hist button i{ width:9px; height:9px; border-radius:50%; background:var(--c); } .gf-xs-hist button.on{ border-color:var(--c); background:color-mix(in srgb,var(--c) 14%,transparent); }
 :is(body.dark,body.dark-theme,body.sky-night) .gf-xs-hist button{ border-color:rgba(255,255,255,.18); }
-.gf-xs.gf-xs-free{ position:fixed!important; z-index:9000; }
+.gf-xs.gf-xs-free{ position:fixed!important; z-index:9000; bottom:auto!important; right:auto!important; }
 .gf-xs{ position:absolute; left:10px; right:58px; bottom:10px; z-index:41; background:#fff; border-radius:14px; box-shadow:0 6px 24px rgba(0,0,0,.25); padding:10px 12px 8px; font:13px/1.35 system-ui,sans-serif; color:#1d2433; }
 body.dark .gf-xs{ background:#1c2333; color:#e8ecf3; }
 .gf-xs-hctl{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 2px; }
@@ -177,7 +177,7 @@ function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventL
   if(!W){panel.style.top="auto";panel.style.bottom=(h.bottom-r.bottom)+"px"}
   const mv=ev=>{if(W)panel.style.width=Math.max(300,Math.min(innerWidth-20,r.width+ev.clientX-x0))+"px";else if(sv)panel.style.setProperty("--xs-h",Math.max(90,Math.min(innerHeight*.7,sh-(ev.clientY-y0)))+"px")};
   const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up);return}
- /* the panel is fixed in place (no dragging it about by its title bar: it was too easy to move or reshape by accident) */return;
+ if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
  /* dragged by its title bar it floats over the whole page, not only the map */
  const r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;if(panel.parentNode!==document.body){document.body.appendChild(panel);panel.classList.add("gf-xs-free");panel.style.left=r.left+"px";panel.style.top=r.top+"px"}
  const h={left:0,top:0,width:innerWidth,height:innerHeight};panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
@@ -663,7 +663,7 @@ window.gfCrossSection={start,stop,pick,line,loadLakes,lakeAt:ll=>lakeAt(ll),
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
 /* the cross-section panel stays a compact size: on a full-screen map it no longer stretches across the whole screen */
-(function(){const st=document.createElement("style");st.textContent=".gf-xs{ max-width:min(860px, calc(100% - 68px)); } /* fixed: no resize grips, and dragging over it selects no text */ .gf-xs .gf-xs-rz{ display:none !important; } .gf-xs{ -webkit-user-select:none; user-select:none; } .gf-xs input, .gf-xs select, .gf-xs textarea{ -webkit-user-select:text; user-select:text; }";document.head.appendChild(st)})();
+(function(){const st=document.createElement("style");st.textContent=".gf-xs{ max-width:min(860px, calc(100% - 68px)); } /* dragging over it selects no text */ .gf-xs{ -webkit-user-select:none; user-select:none; } .gf-xs input, .gf-xs select, .gf-xs textarea{ -webkit-user-select:text; user-select:text; }";document.head.appendChild(st)})();
 /* a shorter panel: the fold and close buttons sit in the top row's corner (they used to wrap onto a row of their own), and
    the small print is one folded line that opens when clicked */
 (function(){const st=document.createElement("style");st.textContent=`.gf-xs .gf-xs-top{ position:relative; padding-right:52px; margin-bottom:4px; }
