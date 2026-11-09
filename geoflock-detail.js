@@ -269,6 +269,8 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  if(ov.rivers&&!sat){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
   const RC=(!elev&&seaC)||rivCol;ctx.fillStyle=RC;if(seaC&&!elev)ctx.globalAlpha=1;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});ctx.globalAlpha=rivA;
+  /* a river stops at a lake's shore: inside each tile, its lakes are cut out of where rivers are drawn */
+  const lakeOut=d=>{if(!ov.lakes)return;const K=d.lakes.filter(k=>k.cls!=="river").concat(bigLakes(d));if(!K.length)return;const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);K.forEach(k=>k.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd")};
   /* major rivers bold from the start; every other river fades in at its own zoom, by how far it reaches (long ones first,
      short ones later), so they do not all appear at once; small rivers and streams later still and thinner */
   ctx.strokeStyle=RC;const B=new Map();
@@ -279,10 +281,10 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
    const k=(Math.round(a*20)/20)+"|"+(Math.round(w*10)/10);let L=B.get(k);if(!L)B.set(k,L=[]);L.push([R,d])}));
   /* one stroke per look; a tile drawn from its parent keeps its clip, so those are drawn tile by tile */
   [...B.entries()].sort((x,y)=>parseFloat(x[0])-parseFloat(y[0])).forEach(([k,L])=>{const[a,w]=k.split("|").map(Number);ctx.globalAlpha=a;ctx.lineWidth=w;
-   each(d=>{ctx.beginPath();let any=false;L.forEach(([R,dd])=>{if(dd!==d)return;any=true;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});if(any)ctx.stroke()})});
+   each(d=>{if(!L.some(([R,dd])=>dd===d))return;lakeOut(d);ctx.beginPath();L.forEach(([R,dd])=>{if(dd!==d)return;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke()})});
   /* the map's own big rivers that these tiles leave out (the first detail levels hold only some rivers): drawn from the map's own line, so none vanishes */
-  {const have=new Set();each(d=>d.rivers.forEach(R=>{if(R._t==="major"&&R.cn)have.add(R.cn)}));ctx.globalAlpha=rivA;ctx.lineWidth=Math.min(1.8,.55+.07*z);ctx.beginPath();
-   try{globeOverlays().rivers.forEach(Rv=>{if(have.has(Rv.n)||/^[A-Z]{2}[-\\/]/.test(Rv.n))return;Rv.coordinates.forEach(l=>{let pen=false;for(const q of l){const v=pj(q[0],q[1]);if(!v){pen=false;continue}if(pen)ctx.lineTo(v[0],v[1]);else{ctx.moveTo(v[0],v[1]);pen=true}}})})}catch(e){}ctx.stroke()}
+  {const have=new Set();each(d=>d.rivers.forEach(R=>{if(R._t==="major"&&R.cn)have.add(R.cn)}));ctx.globalAlpha=rivA;ctx.lineWidth=Math.min(1.8,.55+.07*z);ctx.save();try{if(ov.lakes){const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);globeOverlays().lakes.forEach(Lk=>{if(Lk.minor)return;try{d3.geoPath(g.projection(),ctx)(Lk)}catch(e){}});ctx.clip("evenodd")}}catch(e){}ctx.beginPath();
+   try{globeOverlays().rivers.forEach(Rv=>{if(have.has(Rv.n)||/^[A-Z]{2}[-\\/]/.test(Rv.n))return;Rv.coordinates.forEach(l=>{let pen=false;for(const q of l){const v=pj(q[0],q[1]);if(!v){pen=false;continue}if(pen)ctx.lineTo(v[0],v[1]);else{ctx.moveTo(v[0],v[1]);pen=true}}})})}catch(e){}ctx.stroke();ctx.restore()}
   ctx.globalAlpha=1}
  /* borders over the sea are left out: the tiles carry some claim lines out across the water (a dashed line through the Gulf
     of Venezuela) that read as land borders. A piece is kept where the middle of each of its steps is on land. */
