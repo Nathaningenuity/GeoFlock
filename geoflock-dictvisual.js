@@ -191,13 +191,34 @@ function picsHTML(q){
  const body=S.map(s=>{total+=s.n;if(left<=0)return"";const L=s.L.slice(0,left);left-=L.length;
   return(s.h?'<h4 class="gfdv-sec">'+esc(s.h)+' <i>'+s.n.toLocaleString()+(s.n===1?' picture':' pictures')+'</i></h4>':'')+'<div class="gfdv-grid">'+L.map(tile).join("")+'</div>'}).join("");
  if(!S.length)return'<p class="gflib-empty">No picture matches “'+esc(q)+'”.</p>';
- return body+(total>240?'<p class="gflib-empty">'+total.toLocaleString()+' pictures: type to narrow them down.</p>':'')}
-function view(x){const cap=x.parts.filter(s=>s!==x.t&&s.length<90).slice(0,3).join(" · ");return Object.assign({},x.P,{name:x.t,caption:x.P.caption&&x.kind!=="photo"?x.P.caption:cap,ll:x.P.ll||x.ll[0]||null})}
-function big(P,api){const el=document.createElement("div");el.className="gfdv-lb";el.innerHTML='<div class="gfdv-lbox"><button type="button" class="gfdv-lx" aria-label="Close">×</button><img alt="" src="'+esc(P.d)+'"><div><b>'+esc(P.name||"")+'</b><p>'+esc(P.caption||"")+'</p>'+credit(P)+(P.ll?'<button type="button" class="gfdv-go">🗺️ Fly there on the map</button>':'')+'</div></div>';
+ return senses(q)+body+(total>240?'<p class="gflib-empty">'+total.toLocaleString()+' pictures: type to narrow them down.</p>':'')}
+/* a word that names several things ("victoria": the falls, the lake, the harbour, cities) gets a row of choices above the
+   pictures; each fills the search with that name */
+function senses(q){const Q=nrm(q).trim();if(!Q||Q.split(" ").length>2||!IDX)return"";const w=Q;const C=new Map();
+ const esc2=t=>t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+ IDX.forEach(x=>{const t=String(x.t||"");if(!nrm(t).includes(" "+w+" "))return;
+  const re=new RegExp("((?:(?:Lake|Mount|Mt|Cape|Port|Gulf|Bay|River|Saint|St|Fort|Isla|Lago) )?(?:[A-Z][\\w’'.-]* )*)("+w.split(" ").map(t=>"["+t[0].toUpperCase()+t[0]+"]"+esc2(t.slice(1))).join(" ")+")((?: (?:of |de |la |del |the )?[A-Z][\\w’'.-]*)*)");
+  const m=re.exec(t.normalize("NFD").replace(/[\u0300-\u036f]/g,""));if(!m)return;let ph=(m[1]+m[2]+m[3]).trim().replace(/[,.]$/,"");
+  /* "Victoria Falls Bridge" counts as Victoria Falls; a bare word as itself */const k=nrm(ph).trim();if(!k||k===w)return;const a=C.get(k)||{ph,n:0};a.n++;C.set(k,a)});
+ /* fold longer names into a shorter one they start with, when it is common */
+ const L=[...C.entries()].sort((a,b)=>a[0].length-b[0].length);L.forEach(([k,v])=>{const par=L.find(([k2,v2])=>k2!==k&&v2.n>=2&&(k+" ").startsWith(k2+" "));if(par){par[1].n+=v.n;v.n=0}});
+ const out=L.filter(([,v])=>v.n>0).sort((a,b)=>b[1].n-a[1].n).slice(0,8).map(([,v])=>v);
+ const pl=PL&&PL.get(w);(pl?pl.cities:[]).forEach(c=>{const ph=c.n+", "+cname(c.c);if(c.c&&out.length<10&&!out.some(v=>v.ph===ph))out.push({ph:c.n+", "+cname(c.c),n:0,city:1})});
+ if(out.length<2)return"";
+ return'<div class="gfdv-senses"><span>Which '+esc(q.trim())+'?</span>'+out.map(v=>'<button type="button" class="gfdv-sense" data-pq="'+esc(v.ph)+'">'+esc(v.ph)+(v.n?' <i>'+v.n+'</i>':'')+'</button>').join("")+'</div>'}
+function view(x){const cap=x.parts.filter(s=>s!==x.t&&s.length<90).slice(0,3).join(" · ");return Object.assign({},x.P,{name:x.t,caption:x.P.caption&&x.kind!=="photo"?x.P.caption:cap,ll:x.P.ll||x.ll[0]||null,_cc:Object.keys(x.cc).sort((a,b)=>x.cc[a]-x.cc[b])[0]||null,_words:[x.t].concat(x.parts)})}
+/* where a picture is: its own point; else a place the map search knows by one of its names ("Emerald Bay, Lake Tahoe" →
+   Lake Tahoe); else its country */
+function where(P){if(P._wh!==undefined)return P._wh;let hit=null;
+ if(!P.ll&&window.gfSearch){const tries=[];(P._words||[P.name]).forEach(s=>{s=String(s||"");tries.push(s);s.split(/[,·(]|\s[-–—]\s/).forEach(t=>{t=t.replace(/\)$/,"").trim();if(t.length>2)tries.push(t)})});
+  for(const t of tries){let r=[];try{r=gfSearch.find(t)||[]}catch(e){}const n=nrm(t).trim();hit=r.find(e=>e&&e.cat!=="terms"&&nrm(e.n).trim()===n)||null;if(hit)break}}
+ return(P._wh=P.ll||hit||P._cc?{hit,cc:P._cc}:null)}
+function big(P,api){const el=document.createElement("div");el.className="gfdv-lb";el.innerHTML='<div class="gfdv-lbox"><button type="button" class="gfdv-lx" aria-label="Close">×</button><img alt="" src="'+esc(P.d)+'"><div><b>'+esc(P.name||"")+'</b><p>'+esc(P.caption||"")+'</p>'+credit(P)+(where(P)?'<button type="button" class="gfdv-go">🗺️ Find on map</button>':'')+'</div></div>';
  document.body.appendChild(el);const x=()=>el.remove();el.onclick=ev=>{if(ev.target===el)x()};el.querySelector(".gfdv-lx").onclick=x;
- const g=el.querySelector(".gfdv-go");if(g)g.onclick=()=>{x();try{api.close();api.goMap("satellite",()=>{/* the place as a search result (pin, photo, chip to close), when the search knows it; else a ping */let hit=null;try{if(window.gfSearch)hit=gfSearch.find(String(P.name||"")).find(e=>e&&e.ll&&Math.abs(e.ll[0]-P.ll[0])<1.5&&Math.abs(e.ll[1]-P.ll[1])<1.5)}catch(e){}if(hit){try{gfSearch.show(hit);return}catch(e){}}api.flyLL(P.ll,6);setTimeout(()=>api.ping(P.ll,P.name),950)})}catch(e){}}}
+ const g=el.querySelector(".gfdv-go");if(g)g.onclick=()=>{x();const W=where(P);try{api.close();api.goMap("satellite",()=>{if(W.hit&&!P.ll){try{gfSearch.show(W.hit);return}catch(e){}}if(!P.ll&&W.cc){try{const h=gfSearch.find(cname(W.cc)).find(e=>e&&e.cat==="countries");if(h){gfSearch.show(h);return}}catch(e){}return}/* the place as a search result (pin, photo, chip to close), when the search knows it; else a ping */let hit=null;try{if(window.gfSearch)hit=gfSearch.find(String(P.name||"")).find(e=>e&&e.ll&&Math.abs(e.ll[0]-P.ll[0])<1.5&&Math.abs(e.ll[1]-P.ll[1])<1.5)}catch(e){}if(hit){try{gfSearch.show(hit);return}catch(e){}}api.flyLL(P.ll,6);setTimeout(()=>api.ping(P.ll,P.name),950)})}catch(e){}}}
 function wire(c,api){c.querySelectorAll(".gfdv-mm canvas").forEach(drawMini);
  c.querySelectorAll(".gfdv-dtm").forEach(d=>{const sl=d.querySelector("input"),b=d.querySelector("b"),cap=d.querySelector(".gfdv-cap"),T=JSON.parse(cap.dataset.st);const up=()=>{const v=+sl.value;b.textContent=v;cap.textContent=T[v-1];d.querySelectorAll(".gfdv-st").forEach(r=>r.setAttribute("opacity",+r.dataset.s===v-1?.22:0))};sl.oninput=up;up()});
+ c.querySelectorAll(".gfdv-sense").forEach(b=>b.onclick=()=>{const qi=document.querySelector(".gflib:not([hidden]) .gflib-q");if(qi){qi.value=b.dataset.pq;qi.dispatchEvent(new Event("input"))}});
  c.querySelectorAll(".gfdv-tile").forEach(b=>b.onclick=()=>{const x=IDX&&IDX[+b.dataset.pi];if(!x)return;if(x.kind==="term")api.showTerm(x.t);else big(view(x),api)})}
 window.gfDictVis={visual,picsHTML,wire,DIAG};
 {const s=document.createElement("style");s.textContent=`
@@ -207,7 +228,7 @@ window.gfDictVis={visual,picsHTML,wire,DIAG};
 .gfdv-dg{margin:4px 0 10px;padding:8px;border-radius:10px;background:#fbf6ea;border:1px solid #e3d6bc}.gfdv-dg svg{display:block;width:100%;max-width:440px;height:auto}.gfdv-cap{font-size:12.5px;color:#5a4a36;margin:4px 0 0}
 .gfdv-sl{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:#5a4a36}.gfdv-sl input{flex:1;max-width:240px}
 .gfdv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.gfdv-tile{border:0;padding:0;border-radius:12px;overflow:hidden;background:#fff;cursor:pointer;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.gfdv-sec{margin:14px 0 8px;font:800 14px system-ui;color:#3d2a16}.gfdv-sec:first-child{margin-top:2px}.gfdv-sec i{font-style:normal;font-weight:600;opacity:.6;font-size:12px}body.sky-night .gfdv-sec{color:#e8ecf6}
+.gfdv-sec{margin:14px 0 8px;font:800 14px system-ui;color:#3d2a16}.gfdv-senses{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 10px}.gfdv-senses>span{font:800 13px system-ui;opacity:.7;margin-right:4px}.gfdv-sense{border:1px solid rgba(60,40,20,.2);background:#fff;border-radius:99px;padding:5px 11px;font:700 12.5px system-ui;cursor:pointer;color:#3d2a16}.gfdv-sense:hover{background:#fff4dd}.gfdv-sense i{font-style:normal;opacity:.5;margin-left:3px}.gfdv-sec:first-child{margin-top:2px}.gfdv-sec i{font-style:normal;font-weight:600;opacity:.6;font-size:12px}body.sky-night .gfdv-sec{color:#e8ecf6}
 .gfdv-tile img{display:block;width:100%;height:100px;object-fit:cover}.gfdv-tile span{display:block;padding:6px 8px;font-size:12.5px;font-weight:700;color:#3d2a16}
 .gfdv-lb{position:fixed;inset:0;z-index:3100;background:rgba(10,8,6,.7);display:flex;align-items:center;justify-content:center;padding:16px}
 .gfdv-lbox{position:relative;max-width:min(980px,100%);max-height:92vh;overflow:auto;background:#fffaf0;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}.gfdv-lbox img{max-width:100%;max-height:68vh;object-fit:contain;border-radius:10px;align-self:center}
