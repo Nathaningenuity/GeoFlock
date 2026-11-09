@@ -196,6 +196,8 @@ const XPH={"christmas island":"Christmas island red crabs - female with eggs chr
 function picsFor(e){if(e._pics)return e._pics;const L=[],seen=new Set(),add=(P,cap)=>{if(P&&P.d&&!seen.has(P.d)){seen.add(P.d);L.push({P,cap:cap||e.n})}};
  try{if(e.cat==="countries"&&typeof psCountryPhotos==="function")psCountryPhotos(e.cc).forEach(x=>add(x.P,x.cap));
   else{add(photoOf(phFor(e)));if(FN){const n=norm(e.n);if(n.length>=4)FN.forEach(([k,f])=>{if(L.length<6&&(k===n||k.startsWith(n+" ")||k.startsWith(n+",")))add(photoOf(f))})}}}catch(err){}
+ /* more from the whole picture library (every picture on the site that belongs to this place), to flip through */
+ try{if(L.length<8&&window.gfDictVis&&gfDictVis.picsForPlace&&e.cat!=="terms"&&!/^(lines|currents|tectonics|seafloor)$/.test(e.cat))gfDictVis.picsForPlace(e.n,10).forEach(x=>{if(L.length<8)add(x.P,x.cap)})}catch(err){}
  e._pics=L;return L}
 /* a photo from the site's library, by its Commons file name */
 function photoOf(f){if(!f)return null;try{if(typeof gfMergeExtra==="function")gfMergeExtra();const P=PS_PHOTO_DATA.find(x=>x&&x.f===f&&x.d);return P||null}catch(e){return null}}

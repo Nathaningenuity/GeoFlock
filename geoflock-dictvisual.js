@@ -220,7 +220,9 @@ function wire(c,api){c.querySelectorAll(".gfdv-mm canvas").forEach(drawMini);
  c.querySelectorAll(".gfdv-dtm").forEach(d=>{const sl=d.querySelector("input"),b=d.querySelector("b"),cap=d.querySelector(".gfdv-cap"),T=JSON.parse(cap.dataset.st);const up=()=>{const v=+sl.value;b.textContent=v;cap.textContent=T[v-1];d.querySelectorAll(".gfdv-st").forEach(r=>r.setAttribute("opacity",+r.dataset.s===v-1?.22:0))};sl.oninput=up;up()});
  c.querySelectorAll(".gfdv-sense").forEach(b=>b.onclick=()=>{const qi=document.querySelector(".gflib:not([hidden]) .gflib-q");if(qi){qi.value=b.dataset.pq;qi.dispatchEvent(new Event("input"))}});
  c.querySelectorAll(".gfdv-tile").forEach(b=>b.onclick=()=>{const x=IDX&&IDX[+b.dataset.pi];if(!x)return;if(x.kind==="term")api.showTerm(x.t);else big(view(x),api)})}
-window.gfDictVis={visual,picsHTML,wire,DIAG};
+/* the pictures of a place, for the map search's photo card (several to flip through): the first group a search for its name gives */
+function picsForPlace(q,max){try{buildIdx();const S=picSearch(q);if(!S.length)return[];return S[0].L.slice(0,max||8).map(x=>({P:x.P,cap:x.t}))}catch(e){return[]}}
+window.gfDictVis={visual,picsHTML,wire,DIAG,picsForPlace};
 {const s=document.createElement("style");s.textContent=`
 .gfdv-fig{margin:4px 0 10px}.gfdv-fig img{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:10px}.gfdv-fig figcaption{font-size:12.5px;color:#6a5a44;margin-top:4px}
 .gfdv-cr{display:block;font-size:10.5px;color:#9a8a72}
