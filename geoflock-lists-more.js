@@ -412,14 +412,26 @@ window.GF_LISTS_MORE={before,after:LIST_DATA.length};
 /* ---------- typed answers that aren't countries ---------- */
 const DROP=new Set("the lake lakes mount mt mountain mountains river rivers island islands isle isles of sea seas desert falls fall waterfall strait straits state states province city ocean peak massif national park".split(" "));
 const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[ʻ’'`]/g,"").replace(/&/g," and ").split(/[^a-z0-9]+/).filter(w=>w&&!DROP.has(w)).map(w=>w.length>4&&/s$/.test(w)&&!/ss$/.test(w)?w.slice(0,-1):w).join(" ");
-const lev=(a,b)=>{try{return levenshtein(a,b)}catch(e){return a===b?0:9}};
-function matchItem(Lx,txt){const t=norm(txt);if(!t)return null;let best=null;for(const it of Lx.items){const cands=[it.n].concat(it.al||[]).map(norm).filter(Boolean);
-  if(cands.includes(t))return it;if(t.length>=5&&cands.some(c=>c.length>=5&&lev(t,c)<=(t.length>=9?2:1)))best=best||it}return best}
+/* typing slips: a swapped pair of letters counts as one slip (optimal string alignment distance) */
+function osa(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=[];for(let i=0;i<=m;i++){d[i]=[i];for(let j=1;j<=n;j++)d[i][j]=i?0:j}
+ for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){const c=a[i-1]===b[j-1]?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[m][n]}
+/* how many slips a name of this length may have */
+const slips=n=>n<4?0:n<6?1:n<9?2:3;
+/* the item a typed answer means: exact (names and other names, words like "lake" left out), else the closest within a few
+   slips (spaces ignored), else a name it is the clear start of; two items equally close are not guessed between */
+function matchItem(Lx,txt){const t=norm(txt);if(!t)return null;const tz=t.replace(/ /g,"");let best=null,bd=99,tie=false;const pre=[];
+ for(const it of Lx.items){const cands=[it.n].concat(it.al||[]).map(norm).filter(Boolean);if(cands.includes(t))return it;let d=99;
+  cands.forEach(c=>{const cz=c.replace(/ /g,"");if(cz===tz)d=0;else{const k=osa(tz,cz);if(k<=slips(Math.min(tz.length,cz.length)))d=Math.min(d,k);
+   /* a whole word of a longer name, typed exactly ("Tanganyika" for "Lake Tanganyika" works already; "Superior" for "Lake Superior" too) */
+   c.split(" ").forEach(w=>{if(w.length>=5&&w!==c){const k2=osa(t,w);if(k2<=slips(w.length)&&k2<1)d=Math.min(d,.5)}})}
+   if(tz.length>=4&&cz.startsWith(tz)&&cz.length>tz.length)pre.push(it)});
+  if(d<bd){bd=d;best=it;tie=false}else if(d===bd&&d<99&&best!==it)tie=true}
+ if(best&&bd<99&&!tie)return best;const up=[...new Set(pre)];return up.length===1&&!best?up[0]:null}
 function guessItem(txt){const run=lsRun;if(!run||run.revealed)return;const Lx=LIST_BY_ID[run.id],raw=String(txt||"").trim();if(!raw)return;const it=matchItem(Lx,raw);
  if(it&&run.found.includes(it.id)){run.msg=it.n+" — already found.";run.msgKind=""}
- else if(it){run.found.push(it.id);run.msg=it.n+" ✓";run.msgKind="good";try{if(typeof gmEvent==="function")gmEvent("lsGuess")}catch(e){}
+ else if(it){run.found.push(it.id);run.msg=it.n+" ✓"+([it.n].concat(it.al||[]).some(n=>norm(n)===norm(raw))?"":" (you typed “"+raw+"”)");run.msgKind="good";try{if(typeof gmEvent==="function")gmEvent("lsGuess")}catch(e){}
   if(run.found.length===Lx.a.length){run.revealed=true;run.msg="All "+Lx.a.length+" found"+(run.strikes.length?" — "+run.strikes.length+" strike"+(run.strikes.length===1?"":"s")+".":" with no strikes!");lsFinish()}}
- else if(run.strikes.some(s=>norm(s)===norm(raw))){run.msg=raw+" — already tried.";run.msgKind=""}
+ else if(run.strikes.some(s=>osa(norm(s).replace(/ /g,""),norm(raw).replace(/ /g,""))<=1)){run.msg=raw+" — already tried.";run.msgKind=""}
  else{run.strikes.push(raw);run.msg=raw+" isn’t on this list — strike "+run.strikes.length+".";run.msgKind="bad"}
  try{saveStats()}catch(e){}renderLists();const i=document.getElementById("lsInput");if(i)i.focus()}
 const flag=c=>c&&COUNTRY_BY_CODE[c]?'<img src="'+flagUrl(c,"w40")+'" alt="" loading="lazy">':"";
