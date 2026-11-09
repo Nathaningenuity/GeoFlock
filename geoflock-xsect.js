@@ -86,7 +86,7 @@ const css=document.createElement("style");css.textContent=`
 .gf-xs-chip.active{ background:#7a4b1f !important; color:#fff !important; }
 .gf-xs-ico{ width:34px; height:34px; border-radius:50%; border:0; background:#fff; color:#5b3a17; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.18); flex:none; }
 .gf-xs-ico.on{ background:#8a5a2b; color:#fff; } .gf-xs-ico-top{ margin-right:8px; align-self:center; }
-.gf-xs-top{ cursor:move; } .gf-xs-top button,.gf-xs-top select{ cursor:pointer; }
+.gf-xs-top{ cursor:default; } .gf-xs-top button,.gf-xs-top select{ cursor:pointer; }
 .gf-xs-ov{ position:absolute; left:0; top:0; pointer-events:none; z-index:30; }
 .gf-xs-hist{ display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin:2px 0 6px; font-size:12px; } .gf-xs-hist>span{ font-weight:700; margin-right:2px; } .gf-xs-hist small{ opacity:.6; margin-left:4px; }
 .gf-xs-hist button{ border:1.5px solid rgba(0,0,0,.12); background:transparent; color:inherit; border-radius:999px; padding:2px 9px; font:700 12px system-ui; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
@@ -177,7 +177,7 @@ function dragPanel(){if(!panel||panel._drag)return;panel._drag=1;panel.addEventL
   if(!W){panel.style.top="auto";panel.style.bottom=(h.bottom-r.bottom)+"px"}
   const mv=ev=>{if(W)panel.style.width=Math.max(300,Math.min(innerWidth-20,r.width+ev.clientX-x0))+"px";else if(sv)panel.style.setProperty("--xs-h",Math.max(90,Math.min(innerHeight*.7,sh-(ev.clientY-y0)))+"px")};
   const up=()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",up)};addEventListener("pointermove",mv);addEventListener("pointerup",up);return}
- if(!e.target.closest(".gf-xs-top")||e.target.closest("button,select,input"))return;e.preventDefault();e.stopPropagation();
+ /* the panel is fixed in place (no dragging it about by its title bar: it was too easy to move or reshape by accident) */return;
  /* dragged by its title bar it floats over the whole page, not only the map */
  const r=panel.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;if(panel.parentNode!==document.body){document.body.appendChild(panel);panel.classList.add("gf-xs-free");panel.style.left=r.left+"px";panel.style.top=r.top+"px"}
  const h={left:0,top:0,width:innerWidth,height:innerHeight};panel.style.right="auto";panel.style.bottom="auto";panel.style.width=r.width+"px";
@@ -422,6 +422,10 @@ async function refine(L){const id=++refineId;if(L.river||!L.P||L.P.length<2)retu
     or shallow sea (above -200 m). Peaks and islands are never touched, and real deep water is deep on the coarse grid too */
  for(let i=0;i<P.length;i++){const w=[];for(let j=Math.max(0,i-3);j<=Math.min(P.length-1,i+3);j++)if(j!==i)w.push(P[j].e);w.sort((x,y)=>x-y);const m=w[w.length>>1];
   if(P[i].e<m-1000&&elevAt(P[i].ll[0],P[i].ll[1])>-200)P[i].e=m}
+ /* and narrow false pits: one to three samples sunk more than 150 m below the ground on both sides, where the coarse grid
+    sees nothing of the sort (a real canyon or fjord is wider than that, and deep on the grid too): bridged straight across */
+ for(let w=1;w<=3;w++)for(let i=1;i+w<P.length;i++){const L=P[i-1].e,R=P[i+w].e;let lo=Infinity,mid=null;for(let j=i;j<i+w;j++)if(P[j].e<lo){lo=P[j].e;mid=P[j]}
+  if(lo<Math.min(L,R)-150&&elevAt(mid.ll[0],mid.ll[1])>lo+150){for(let j=i;j<i+w;j++){const t=(j-i+1)/(w+1);P[j].e=Math.round(L+(R-L)*t)}}}
  /* the tiles read the shallow sea over reefs (the Great Barrier Reef lagoon) as exactly 0 m, which drew it as land with a
     green edge: a point at or just above 0 that lies in no country, where the coarse grid has sea, is sea at the grid's depth */
  const ocean=ll=>{try{if(typeof GFE==="undefined"||!GFE.ready)return false;const m=GFE.ocean||(typeof gfOceanMask==="function"?gfOceanMask():null);if(!m)return false;const W=GFE.W,H=GFE.H;
@@ -653,7 +657,7 @@ window.gfCrossSection={start,stop,pick,line,loadLakes,lakeAt:ll=>lakeAt(ll),
 setInterval(()=>{try{chip();if(on&&!G())stop();else if(on)mount()}catch(e){}},400);
 })();
 /* the cross-section panel stays a compact size: on a full-screen map it no longer stretches across the whole screen */
-(function(){const st=document.createElement("style");st.textContent=".gf-xs{ max-width:min(860px, calc(100% - 68px)); }";document.head.appendChild(st)})();
+(function(){const st=document.createElement("style");st.textContent=".gf-xs{ max-width:min(860px, calc(100% - 68px)); } /* fixed: no resize grips, and dragging over it selects no text */ .gf-xs .gf-xs-rz{ display:none !important; } .gf-xs{ -webkit-user-select:none; user-select:none; } .gf-xs input, .gf-xs select, .gf-xs textarea{ -webkit-user-select:text; user-select:text; }";document.head.appendChild(st)})();
 /* a shorter panel: the fold and close buttons sit in the top row's corner (they used to wrap onto a row of their own), and
    the small print is one folded line that opens when clicked */
 (function(){const st=document.createElement("style");st.textContent=`.gf-xs .gf-xs-top{ position:relative; padding-right:52px; margin-bottom:4px; }
