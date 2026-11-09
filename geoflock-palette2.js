@@ -6,7 +6,7 @@
 const KEY="gfLakeCol";let LAKE={};try{LAKE=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){}
 const style=()=>{try{return gfMS().style}catch(e){return null}};
 window.gfLakeColor=function(){const s=style();return(s&&LAKE[s])||null};
-const DEF_LAKE="#a8cbe5";
+const DEF_LAKE="#2f7ab8";/* the rivers' blue */
 function legendRefresh(){try{const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief"&&typeof allMapsLegendHTML==="function")lg.innerHTML=allMapsLegendHTML()}catch(e){}}
 /* the flat map's lakes are coloured by a stylesheet rule (marked important): a rule of our own, a step stronger, carries the chosen colour */
 function lakeCss(){let st=document.getElementById("gfLakeCss");const c=gfLakeColor();if(!c){if(st)st.textContent="";return}if(!st){st=document.createElement("style");st.id="gfLakeCss";document.head.appendChild(st)}

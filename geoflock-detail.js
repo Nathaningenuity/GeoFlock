@@ -252,7 +252,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
     ctx.lineWidth=W*2;ctx.lineJoin=ctx.lineCap="round";try{ctx.filter="blur("+Math.round(W/3)+"px)"}catch(e){}
     G.forEach((list,col)=>{ctx.strokeStyle=col;ctx.beginPath();list.forEach(([r,a,b])=>edgeSpan(ctx,pj,r,a,b));ctx.stroke()});ctx.restore()})}}catch(e){console.error(e)}}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
-  const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?(rel?((window.gfLakeColor&&gfLakeColor())||(window._gfLakesClean?"#a8cbe5":"rgba(166,201,228,0.78)")):elev?"#86b6df":"#b9d8ea"):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
+  /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?((window.gfLakeColor&&gfLakeColor())||(!elev&&seaC)||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
   each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster?bigLakes(d).filter(K=>!isCaspian(K)):[]);
@@ -283,7 +283,8 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
   [...B.entries()].sort((x,y)=>parseFloat(x[0])-parseFloat(y[0])).forEach(([k,L])=>{const[a,w]=k.split("|").map(Number);ctx.globalAlpha=a;ctx.lineWidth=w;
    each(d=>{if(!L.some(([R,dd])=>dd===d))return;lakeOut(d);ctx.beginPath();L.forEach(([R,dd])=>{if(dd!==d)return;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke()})});
   /* the map's own big rivers that these tiles leave out (the first detail levels hold only some rivers): drawn from the map's own line, so none vanishes */
-  {const have=new Set();each(d=>d.rivers.forEach(R=>{if(R._t==="major"&&R.cn)have.add(R.cn)}));ctx.globalAlpha=rivA;ctx.lineWidth=Math.min(1.8,.55+.07*z);ctx.save();try{if(ov.lakes){const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);globeOverlays().lakes.forEach(Lk=>{if(Lk.minor)return;try{d3.geoPath(g.projection(),ctx)(Lk)}catch(e){}});ctx.clip("evenodd")}}catch(e){}ctx.beginPath();
+  /* (only while the tiles are coarse: from level 9 on they hold every river, and a rough built-in line would show beside the sharp one) */
+  if(s.z<=8){const have=new Set();each(d=>d.rivers.forEach(R=>{if(R._t==="major"&&R.cn)have.add(R.cn)}));ctx.globalAlpha=rivA;ctx.lineWidth=Math.min(1.8,.55+.07*z);ctx.save();try{if(ov.lakes){const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);globeOverlays().lakes.forEach(Lk=>{if(Lk.minor)return;try{d3.geoPath(g.projection(),ctx)(Lk)}catch(e){}});ctx.clip("evenodd")}}catch(e){}ctx.beginPath();
    try{globeOverlays().rivers.forEach(Rv=>{if(have.has(Rv.n)||/^[A-Z]{2}[-\\/]/.test(Rv.n))return;Rv.coordinates.forEach(l=>{let pen=false;for(const q of l){const v=pj(q[0],q[1]);if(!v){pen=false;continue}if(pen)ctx.lineTo(v[0],v[1]);else{ctx.moveTo(v[0],v[1]);pen=true}}})})}catch(e){}ctx.stroke();ctx.restore()}
   ctx.globalAlpha=1}
  /* borders over the sea are left out: the tiles carry some claim lines out across the water (a dashed line through the Gulf
@@ -311,10 +312,15 @@ function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out=
     under the pointer, or else by its kind ("Lake", "Reservoir"...) */
  if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
    const name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||gz||LAB[K.cls]||"Lake";const co=[];
-   const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(same(Q))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))});
+   const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);
+   /* only the sharpest tiles that hold this lake: a coarser parent tile still on show (while its children load) would add its
+      rough outline on top of the sharp one */
+   let zt=-1;s.tiles.forEach(t=>{if(t.d&&t.z>zt&&(t.d.lakes.some(same)||(K._big&&bigLakes(t.d).some(Q=>Q===K||(K.n&&Q.n===K.n)))))zt=t.z});
+   const T2=s.tiles.filter(t=>t.d&&t.z===zt);
+   T2.forEach(t=>{t.d.lakes.forEach(Q=>{if(same(Q))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))});
     if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))co.push(d3poly(Q.rings).coordinates)})});
    const ed=[];const shore=rings=>rings.forEach(r=>{const n=r.length/3;let cur=null;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){if(cur&&cur.length>1)ed.push(cur);cur=null;continue}if(!cur)cur=[[r[i],r[i+1]]];cur.push([r[j],r[j+1]])}if(cur&&cur.length>1)ed.push(cur)});
-   s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(same(Q))shore(Q.rings)});if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))shore(Q.rings)})});
+   T2.forEach(t=>{t.d.lakes.forEach(Q=>{if(same(Q))shore(Q.rings)});if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))shore(Q.rings)})});
    out.water=name;out.lake={type:"MultiPolygon",coordinates:co,n:out.water,edge:{type:"MultiLineString",coordinates:ed}};return out}}
  if(ov.rivers&&allMapsColorMode!=="satellite"){const pj=projector(g),rc=g.canvas.getBoundingClientRect(),mx=cx-rc.left,my=cy-rc.top;let best=6,hit=null;const pad=.5;
   s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best&&R.name&&(t=>t==="major"||t!=="stream"&&g.zoom/(window.gfRiverLate?gfRiverLate(g):1)>18*Math.pow(4/reach(R),.7)*1.25&&(t==="medium"||g.zoom/(window.gfRiverLate?gfRiverLate(g):1)>60))(R._t||(R._t=tier(R)))){best=d;hit=R}}a=b}})})});
