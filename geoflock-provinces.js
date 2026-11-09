@@ -473,9 +473,12 @@ window.gfProvinces={start:start,LIST:LIST,load:load,projFor:projFor};
    if(!s.querySelector(":scope > .pv-go")){const go=document.createElement("button");go.type="button";go.className="pfm-go pv-go";go.dataset.cc=cc;go.textContent="Test yourself: "+pl+" →";stop(go);go.onclick=e=>{e.stopPropagation();goDrill(cc,"find")};s.appendChild(go)}
    load(cc).then(d=>{if(!shown()||s._pvCc!==cc)return;let n=s.querySelector(":scope > .pv-n");if(!n){n=document.createElement("div");n.className="pv-n";n.dataset.cc=cc;s.appendChild(n)}n.textContent=d.items.length+" "+(d.items.length===1?noun:plural(noun));if(r[4])n.title=r[4];
     const v=s.querySelector(":scope > svg.zoom-outline");if(!v)return;if(v.querySelector(".pv-x[data-cc='"+cc+"']"))return;v.querySelectorAll(".pv-x").forEach(g=>g.remove());
-    const F=fitOf(v,cc);if(!F){setTimeout(()=>{if(shown()&&!v.querySelector(".pv-x"))paint()},250);return}const P=d3.geoPath(F.pr),g=document.createElementNS("http://www.w3.org/2000/svg","g");
-    g.setAttribute("class","pv-x");g.dataset.cc=cc;g.setAttribute("transform","translate("+F.ox.toFixed(3)+" "+F.oy.toFixed(3)+") scale("+F.k.toFixed(6)+")");
-    g.innerHTML=d.items.map((x,i)=>'<path class="pv-r" data-i="'+i+'" vector-effect="non-scaling-stroke" d="'+(P(x.f)||"")+'"/>').join("");v.appendChild(g);
+    /* an outline with its faraway parts in boxes (geoflock-outline-insets.js): each division drawn with its part's projection */
+    const LO=window.gfOutline&&gfOutline.layout(cc),g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","pv-x");g.dataset.cc=cc;
+    if(LO){g.innerHTML=d.items.map((x,i)=>{let c=null;try{c=d3.geoCentroid(x.f)}catch(er){}const pt=c?gfOutline.partOf(LO,c):LO.parts[0];return'<path class="pv-r" data-i="'+i+'" vector-effect="non-scaling-stroke" d="'+(d3.geoPath(pt.proj)(x.f)||"")+'"/>'}).join("")}
+    else{const F=fitOf(v,cc);if(!F){setTimeout(()=>{if(shown()&&!v.querySelector(".pv-x"))paint()},250);return}const P=d3.geoPath(F.pr);
+     g.setAttribute("transform","translate("+F.ox.toFixed(3)+" "+F.oy.toFixed(3)+") scale("+F.k.toFixed(6)+")");
+     g.innerHTML=d.items.map((x,i)=>'<path class="pv-r" data-i="'+i+'" vector-effect="non-scaling-stroke" d="'+(P(x.f)||"")+'"/>').join("")}v.appendChild(g);
     let tip=s.querySelector(":scope > .pv-tip");if(!tip){tip=document.createElement("div");tip.className="pv-tip";tip.dataset.cc=cc;tip.hidden=true;s.appendChild(tip)}
     g.querySelectorAll(".pv-r").forEach(el=>{el.onmouseenter=()=>{tip.hidden=false;tip.textContent=d.items[+el.dataset.i].n};el.onmousemove=e=>{const b=s.getBoundingClientRect();tip.style.left=(e.clientX-b.left+12)+"px";tip.style.top=(e.clientY-b.top+10)+"px"};el.onmouseleave=()=>{tip.hidden=true}})}).catch(()=>{})};
   sw.onclick=e=>{e.stopPropagation();try{localStorage.setItem(SHOWK,shown()?"0":"1")}catch(err){}paint()};paint()}
