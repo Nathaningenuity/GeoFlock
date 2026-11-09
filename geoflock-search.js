@@ -293,6 +293,9 @@ function fine(e){if(!isle(e))return null;if(e._fine!==undefined)return e._fine;i
   /* d3 reads a ring wound the other way as the whole Earth outside the island: turn those round */try{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()}catch(x){}return[r]});
  e._fine={type:"MultiPolygon",coordinates:P};return e._fine}
 const shapeOf=e=>fine(e)||e.g;
+/* the shape to draw at this zoom, as a hovered country is: the simple outline zoomed out, the detailed coast once the map is close
+   enough for its detail to show (a degree over about 10 pixels) */
+function shapeAt(e){if(!fine(e))return e.g;let ppd=0;try{const a=screenOf(e.ll),b=screenOf([e.ll[0]+1,e.ll[1]]);if(a&&b)ppd=Math.hypot(b[0]-a[0],b[1]-a[1])}catch(x){}return ppd>=10?fine(e):e.g}
 function islandize(e){if(e._isl||e.cat!=="regions"||!isle(e)||fine(e))return;e._isl=1;try{const own=landParts().filter(o=>d3.geoContains(e.g,o.c)).map(o=>o.P);if(own.length){e.g={type:"MultiPolygon",coordinates:own};e._shK=null}}catch(x){}}
 /* a searched country keeps a white outline round it until its chip is closed */
 const cShape=e=>{if(e._cg===undefined){e._cg=null;try{e._cg=membersOf([e.cc])}catch(x){}}return e._cg};
@@ -304,14 +307,14 @@ function drawOne(e){fixWind(e);islandize(e);const mode=SHOW[e.cat],col=e.ucol||e
  if(onGlobe()){if(e._g){e._g.remove();e._g=null}return}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg||mode==="icon"||mode==="city"||(mode==="photo"&&!e.line)){return}
  let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
- const d=d3.geoPath(GLOBE_ROBINSON)(shapeOf(e))||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:(e.col?.62:(a<1?a*.8:keep))*uop(e);
+ const d=d3.geoPath(GLOBE_ROBINSON)(shapeAt(e))||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:(e.col?.62:(a<1?a*.8:keep))*uop(e);
  /* one island: a white outline, as a searched country has; a chain keeps its colour */
  if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':e.cat==="islands"?'<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"'+(e.ucol?' style="stroke:'+e.ucol+' !important"':'')+'/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",((a<1?Math.max(a,.6):1)*uop(e)).toFixed(3));g.style.opacity=(line||e.cat==="islands")&&e.uop!=null?String(e.uop):""}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
 /* zoomed in, an island or lake is drawn from the map's detailed coast (geoflock-detail.js) instead of its rough outline */
-function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;const G0=shapeOf(e);if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return G0;
+function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;const G0=shapeAt(e);if(!kind||!window.gfDetail||!gfDetail.sharp||typeof amGlobe==="undefined")return G0;
  const k=amGlobe._dstk||"";if(e._shK===k)return e._sh||G0;e._shK=k;if(!e._bb){const b=d3.geoBounds(e.g);e._bb=[b[0][0],b[0][1],b[1][0],b[1][1]]}
  let sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;
  /* the detailed shapes are every island (or lake) found near it: keep only those inside its own outline, and use them only
