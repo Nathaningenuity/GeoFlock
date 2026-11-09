@@ -432,4 +432,33 @@ body.sky-night .pv-search input, body.dark-theme .pv-search input{ background:rg
 body.sky-night .pv-map, body.dark-theme .pv-map{ background:linear-gradient(#16223a,#101a2e); }`;
 document.head.appendChild(css);
 window.gfProvinces={start:start,LIST:LIST,load:load,projFor:projFor};
+/* ---------- in the country profile (the flag card a country opens): its states or provinces ----------
+   A card under the profile: a small map of the divisions (names on hover), how many there are, and buttons that open the
+   drill straight away (Trivia → Drills): find them on the map, and their capitals where those are known. */
+(function(){
+ const ROW={};LIST.forEach(r=>ROW[r[0]]=r);
+ const plural=n=>/y$/.test(n)?n.replace(/y$/,"ies"):/(s|sh|ch)$/.test(n)?n+"es":n+"s";
+ function goDrill(cc,mode){try{closeFlagZoom()}catch(e){}try{switchAppMode("trivia")}catch(e){}
+  setTimeout(()=>{try{const t=triviaState();t.fcMode="drills";const S=st();S.mode=mode;renderTriviaView()}catch(e){}setTimeout(()=>{try{start(cc,mode)}catch(e){console.error(e)}},60)},60)}
+ function card(panel,cc){const r=ROW[cc];if(!r||panel.querySelector(".pv-prof"))return;
+  const noun=r[2].split(" or ")[0],div=document.createElement("div");div.className="pv-prof";
+  div.innerHTML='<div class="pv-prof-h"><b>'+esc(cc==="us"?"States":plural(noun).replace(/^./,c=>c.toUpperCase()))+'</b><small class="pv-prof-n"></small></div><div class="pv-prof-map"><div class="pv-prof-load">Loading the map…</div></div>'+
+   '<div class="pv-prof-acts"><button type="button" class="chip pv-prof-go" data-m="find">Test yourself: find them →</button>'+(CAPS[cc]?'<button type="button" class="chip pv-prof-go" data-m="cap">Their capitals →</button>':'')+'</div>'+(r[4]?'<p class="pv-prof-note">'+esc(r[4])+'</p>':'');
+  panel.appendChild(div);div.querySelectorAll(".pv-prof-go").forEach(b=>b.onclick=()=>goDrill(cc,b.dataset.m));
+  load(cc).then(d=>{if(!div.isConnected)return;const box=div.querySelector(".pv-prof-map"),W=Math.max(260,box.clientWidth||420),H=Math.round(W*.62),F=d.items.map(x=>x.f),pr=projFor(cc,F,W,H),path=d3.geoPath(pr);
+   div.querySelector(".pv-prof-n").textContent=d.items.length+" "+(d.items.length===1?noun:plural(noun));
+   box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Map of the '+esc(plural(noun))+'">'+d.items.map((x,i)=>'<path class="pv-prof-r" data-i="'+i+'" d="'+(path(x.f)||"")+'"/>').join("")+'</svg><div class="pv-prof-tip" hidden></div>';
+   const tip=box.querySelector(".pv-prof-tip");box.querySelectorAll(".pv-prof-r").forEach(el=>{el.onmouseenter=()=>{tip.hidden=false;tip.textContent=d.items[+el.dataset.i].n};el.onmousemove=e=>{const b=box.getBoundingClientRect();tip.style.left=(e.clientX-b.left+12)+"px";tip.style.top=(e.clientY-b.top+10)+"px"};el.onmouseleave=()=>{tip.hidden=true}})}).catch(()=>{const b=div.querySelector(".pv-prof-map");if(b)b.innerHTML='<div class="pv-prof-load">Couldn’t load the map.</div>'})}
+ function hook(){if(typeof openFlagZoom!=="function"){setTimeout(hook,800);return}if(openFlagZoom._pvProf)return;const _o=openFlagZoom;openFlagZoom=function(country){const r=_o.apply(this,arguments);try{const cc=country&&String(country.c||"").toLowerCase(),p=document.querySelector("#flagZoomOverlay .zoom-extras")||document.querySelector("#flagZoomOverlay .flag-zoom-panel");if(p&&ROW[cc])card(p,cc)}catch(e){console.error(e)}return r};openFlagZoom._pvProf=1}
+ hook();setInterval(()=>{if(typeof openFlagZoom==="function"&&!openFlagZoom._pvProf)hook()},2000);
+ const c2=document.createElement("style");c2.textContent=`.pv-prof{ margin:16px 0 4px; padding:14px; border-radius:16px; background:rgba(20,40,70,.04); border:1px solid rgba(20,40,70,.1); text-align:left; width:100%; max-width:none; box-sizing:border-box; align-self:stretch; grid-column:1 / -1; flex:1 1 100%; }
+.pv-prof-h{ display:flex; align-items:baseline; gap:8px; margin-bottom:6px; } .pv-prof-h b{ font-size:16px; } .pv-prof-h small{ opacity:.6; font-weight:600; }
+.pv-prof-map{ position:relative; border-radius:12px; overflow:hidden; background:linear-gradient(#e7f2fa,#d8e9f5); } .pv-prof-map svg{ display:block; width:100%; height:auto; }
+.pv-prof-r{ fill:#f3ead7; stroke:#8a7a5c; stroke-width:.6px; cursor:default; } .pv-prof-r:hover{ fill:#ffd98a; }
+.pv-prof-load{ padding:40px 0; text-align:center; opacity:.6; font-size:13px; }
+.pv-prof-tip{ position:absolute; pointer-events:none; background:#1f2a33; color:#fff; font-size:12px; padding:3px 8px; border-radius:6px; white-space:nowrap; }
+.pv-prof-acts{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; } .pv-prof-note{ font-size:12px; opacity:.6; margin:8px 0 0; }
+body.sky-night .pv-prof, body.dark-theme .pv-prof{ background:rgba(255,255,255,.05); } body.sky-night .pv-prof-map, body.dark-theme .pv-prof-map{ background:linear-gradient(#16223a,#101a2e); }
+body.sky-night .pv-prof-r, body.dark-theme .pv-prof-r{ fill:#3a4462; stroke:#8fa0c8; }`;document.head.appendChild(c2);
+})();
 })();
