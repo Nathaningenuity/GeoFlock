@@ -152,7 +152,13 @@ function projector(g){const P=g.projection();if(g._flat)return(lo,la)=>P([lo,la]
  return(lo,la)=>{const a=lo*Math.PI/180,b=la*Math.PI/180,cb=Math.cos(b);if(cb*Math.cos(a)*cx+cb*Math.sin(a)*cy+Math.sin(b)*cz<.02)return null;return P([lo,la])}}
 let JUMP=Infinity;/* interrupted projections: a jump across a gap is not drawn */
 function ringPath(ctx,pj,r,closeIt){let first=true,px=0,py=0;for(let i=0;i<r.length;i+=3){const q=pj(r[i],r[i+1]);if(!q)return false;if(first||Math.abs(q[0]-px)+Math.abs(q[1]-py)>JUMP){ctx.moveTo(q[0],q[1]);first=false}else ctx.lineTo(q[0],q[1]);px=q[0];py=q[1]}if(closeIt)ctx.closePath();return true}
-function edgePath(ctx,pj,r,closed){let pen=false;const n=r.length/3;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);if(!a||!b){pen=false;continue}if(!pen){ctx.moveTo(a[0],a[1]);pen=true}ctx.lineTo(b[0],b[1])}}
+/* a step running exactly along a map-tile edge (a meridian or parallel of the tile grid) is a seam between two tiles' water, not a
+   coast, even where the tile left it unmarked (it drew a straight line across the Gulf of Venezuela) */
+const GRIDN=Math.pow(2,14),gx=x=>(x+180)/360*GRIDN,gy=y=>{const l=y*Math.PI/180;return(1-Math.log(Math.tan(l)+1/Math.cos(l))/Math.PI)/2*GRIDN};
+/* both ends within ~300 m of the same grid line (the neighbouring tile's cut can sit a hair off it) and the step running along it */
+const seam=(r,i,j)=>{const a=gx(r[i]),b=gx(r[j]);if(Math.abs(a-b)<.3&&Math.abs(a-Math.round(a))<.2&&Math.round(a)===Math.round(b)&&Math.abs(r[i+1]-r[j+1])>.05)return true;
+ const c=gy(r[i+1]),d=gy(r[j+1]);return Math.abs(c-d)<.3&&Math.abs(c-Math.round(c))<.2&&Math.round(c)===Math.round(d)&&Math.abs(r[i]-r[j])>.05};
+function edgePath(ctx,pj,r,closed){let pen=false;const n=r.length/3;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if((r[i+2]&r[j+2])||seam(r,i,j)){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);if(!a||!b){pen=false;continue}if(!pen){ctx.moveTo(a[0],a[1]);pen=true}ctx.lineTo(b[0],b[1])}}
 function boxClip(ctx,pj,t){const n=Math.pow(2,t.z),L=[];const ll=(x,y)=>{const m=Math.PI*(1-2*y/n);return[x/n*360-180,Math.atan(Math.sinh(m))*180/Math.PI]};const S=8;
  for(let i=0;i<=S;i++)L.push(ll(t.x+i/S,t.y));for(let i=0;i<=S;i++)L.push(ll(t.x+1,t.y+i/S));for(let i=0;i<=S;i++)L.push(ll(t.x+1-i/S,t.y+1));for(let i=0;i<=S;i++)L.push(ll(t.x,t.y+1-i/S));
  ctx.beginPath();let ok=true;L.forEach((p,i)=>{const q=pj(p[0],p[1]);if(!q){ok=false;return}i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();if(ok)ctx.clip();return ok}
@@ -235,7 +241,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  /* Elevation: water joined to the sea is the colour of the shallow sea on its depth scale (a few tens of metres), not a colour
     read off the coast, which came out dark blue in bays beside pale shallows (the Gulf of Venezuela, Lagoa dos Patos) */
  const elev=I.texKey==="elevation";
- const seaC=elev?"#b3d3ea":I.drewRaster&&!sat?(seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s))))||window._gfSeaC||"rgb(38,116,185)"):null;/* no open sea in view (the Caspian): the last sea colour seen */if(seaC)window._gfSeaC=seaC;
+ const seaC=elev?"#b3d3ea":I.drewRaster&&!sat?(seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s))))||window._gfSeaC||"rgb(38,116,185)"):null;/* no open sea in view (the Caspian): the last sea colour seen *//* the Relief picture's sea colour, remembered for the rivers and sea lakes drawn without tiles; Elevation's fixed shallow-sea colour is not (it used to linger on the Relief map after a visit) */if(seaC&&!elev)window._gfSeaC=seaC;
  /* raster maps (Relief, Elevation...): the picture's own coast is coarse, and in places shows land where the sea is (the Gulf
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
  /* only on the plain Relief and Elevation pictures: on City Lights (a dark picture) and on maps coloured over the relief
@@ -255,10 +261,14 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?((window.gfLakeColor&&gfLakeColor())||(!elev&&seaC)||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
-  each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster?bigLakes(d).filter(K=>!isCaspian(K)):[]);
+  each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();/* (Elevation: pieces of sea that lie in a sea lake's rough outline are left to the depth picture: filled, they made straight-edged blocks off Maracaibo) */const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster&&!elev?bigLakes(d).filter(K=>!isCaspian(K)):[]);
    /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
    if(seaC)seaLinks(d);/* big lakes that the tiles store as sea (Lake Albert, the Great Lakes) stay lakes, unless they are a known sea lake (Maracaibo) */const SL=seaC?L0.filter(K=>K._sea||(K._big&&!isCaspian(K)&&window.gfSeaLake&&gfSeaLake(K.n||""))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
-   if(SL.length&&(seaC||!ne)){ctx.fillStyle=seaC||"#6fa3cd";ctx.beginPath();SL.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")}
+   if(SL.length&&(seaC||!ne)){/* Elevation: a named lake (Maracaibo, Lagoa dos Patos) in the lakes' blue like every other lake; only bays and
+     estuaries open to the sea keep the shallow-sea colour, so they join the sea beside them */
+   const isLk=K=>isSeaLake(K)||(window.gfSeaLake&&K.n&&gfSeaLake(K.n));
+   const fillSet=(L2,c)=>{if(!L2.length)return;ctx.fillStyle=c;ctx.beginPath();L2.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")};
+   if(elev){fillSet(SL.filter(isLk),lf);fillSet(SL.filter(K=>!isLk(K)),seaC)}else fillSet(SL,seaC||"#6fa3cd")}
    /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
    [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
     const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
@@ -313,11 +323,11 @@ function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out=
  if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
    const name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||gz||LAB[K.cls]||"Lake";const co=[];
    const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);
-   /* only the sharpest tiles that hold this lake: a coarser parent tile still on show (while its children load) would add its
-      rough outline on top of the sharp one */
+   /* filled from every tile on show (a part not yet loaded sharply is still covered), but outlined only from the sharpest tiles
+      that hold this lake: a coarser parent tile would add its rough outline on top of the sharp one */
    let zt=-1;s.tiles.forEach(t=>{if(t.d&&t.z>zt&&(t.d.lakes.some(same)||(K._big&&bigLakes(t.d).some(Q=>Q===K||(K.n&&Q.n===K.n)))))zt=t.z});
    const T2=s.tiles.filter(t=>t.d&&t.z===zt);
-   T2.forEach(t=>{t.d.lakes.forEach(Q=>{if(same(Q))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))});
+   s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.forEach(Q=>{if(same(Q))Q.polys.forEach(p=>co.push(d3poly(p).coordinates))});
     if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))co.push(d3poly(Q.rings).coordinates)})});
    const ed=[];const shore=rings=>rings.forEach(r=>{const n=r.length/3;let cur=null;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){if(cur&&cur.length>1)ed.push(cur);cur=null;continue}if(!cur)cur=[[r[i],r[i+1]]];cur.push([r[j],r[j+1]])}if(cur&&cur.length>1)ed.push(cur)});
    T2.forEach(t=>{t.d.lakes.forEach(Q=>{if(same(Q))shore(Q.rings)});if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))shore(Q.rings)})});
@@ -347,7 +357,7 @@ async function seaAt(lls){if(!lls||!lls.length)return null;const tk=(ll,z)=>{con
   d=bb.byteLength?build(new Uint8Array(bb),zz,x,y):EMPTY();try{d.ocean.forEach(isLakeSea)}catch(e){}CACHE.set(k,{st:"ok",d,t:performance.now()})}D[k]=d}catch(e){/* a tile that failed: its points are left unknown */}}));
  return lls.map(ll=>{const t=tk(ll,z),d=D[key(z,t[0],t[1])];if(!d)return null;return d.ocean.some(o=>!o._lk&&inRings(o.rings,ll))})}
 /* borders over the sea are left out (see draw1) */
-function landBorders(d){if(d._bl)return d._bl;const O=d.ocean.filter(o=>!isLakeSea(o));if(!O.length)return(d._bl=d.borders);const wet=(x,y)=>O.some(o=>inRings(o.rings,[x,y]));
+function landBorders(d){if(d._bl)return d._bl;/* every piece of sea, sea lakes included (the Gulf of Venezuela lies in Maracaibo's rough outline) */const O=d.ocean;if(!O.length)return(d._bl=d.borders);const wet=(x,y)=>O.some(o=>inRings(o.rings,[x,y]));
   d._bl=d.borders.map(B=>{const ls=[];B.ls.forEach(l=>{let cur=[];const flush=()=>{if(cur.length>=6)ls.push(Float64Array.from(cur));cur=[]};
    for(let i=0;i+3<l.length;i+=3){if(wet((l[i]+l[i+3])/2,(l[i+1]+l[i+4])/2)){flush();continue}if(!cur.length)cur.push(l[i],l[i+1],l[i+2]);cur.push(l[i+3],l[i+4],l[i+5])}flush()});return{disp:B.disp,ls}});return d._bl}
 /* the hovered country's outline when zoomed in: the detailed coast and borders, kept to a band around its rough outline (its
