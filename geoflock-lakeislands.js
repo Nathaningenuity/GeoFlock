@@ -101,13 +101,15 @@ function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g
    if(!lakeOn&&!(raster&&px*2>=BIG_ALONE_PX))continue;
    /* an island too small to see at this zoom is not hovered, unless the outlines (borders) layer draws its outline */
    {let ol=false;try{ol=typeof allMapsBordersOn!=="undefined"&&allMapsBordersOn!==false}catch(e){}if(!ol&&px*2<(sat()?10:6))continue}
-   const inside=d3.geoContains(I.g,ll);if(!inside&&!(I.r*R_KM<SMALL_KM&&(d3.geoDistance(I.c,ll)<=I.r*1.8||d<=TINY_PX)))continue;const s=inside?-1:d;if(s<bd){bd=s;best=I}}
-  else{if(!lakeOn||(d3.geoDistance(I.ll,ll)*R_KM>PT_KM&&d>TINY_PX)||sat())continue;/* on the satellite picture these islands are not drawn: nothing to hover */if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
+   /* hovered on its own outline, with a slight margin in proportion to the island (about 15% of its size), so a small island
+      stays small to hit when the map is zoomed out */
+   const inside=d3.geoContains(I.g,ll);if(!inside&&!(d3.geoDistance(I.c,ll)<=I.r*1.15))continue;const s=inside?-1:d;if(s<bd){bd=s;best=I}}
+  else{/* islands known only as a point have no outline on the map: not hovered (and no dot is drawn for them) */continue;if(!lakeOn||(d3.geoDistance(I.ll,ll)*R_KM>PT_KM&&d>TINY_PX)||sat())continue;/* on the satellite picture these islands are not drawn: nothing to hover */if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
  return best}
 /* small islands the lake is painted over show as a dot of land once the map is zoomed in far enough to see them
    (not on the satellite picture, which is left as it is) */
 const sat=()=>{try{return allMapsColorMode==="satellite"}catch(e){return false}};
-function dots(g){prep();if(!READY||sat())return;const ov=g.cfg.overlays?g.cfg.overlays():{};if(!ov.lakes)return;
+function dots(g){/* the little dots for point-only islands are no longer drawn */return;prep();if(!READY||sat())return;const ov=g.cfg.overlays?g.cfg.overlays():{};if(!ov.lakes)return;
  const p=g.projection(),ctr=[-g.rot[0],-g.rot[1]],list=[];
  for(const I of ISLES){if(!I.dot||!lakeShown(ov,I))continue;if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.02)continue;const k=pxDeg(p,I.ll);if(k<PT_MIN_PXDEG)continue;const c=p(I.ll);if(c)list.push([c,k])}
  if(!list.length)return;const ctx=g.ctx,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),dk=dark();
