@@ -184,6 +184,6 @@ function climStop(S){if(!S||S._gfCs)return;S._gfCs=1;if(S.mode==="satellite")SET
   was=night}catch(e){}},500)})();
 /* 15. gentler terrain shading by default on the picture relief styles (0.3 looked heavy); a value someone set stays */
 (function(){let n=0;const t=setInterval(()=>{if(typeof gfMS!=="function"){if(++n>40)clearInterval(t);return}clearInterval(t);
- try{const M=gfMS();if(!M.shadeV3){M.shadeV3=1;if(M.shadeB==null||Math.abs(M.shadeB-.3)<1e-6)M.shadeB=.16;}if(!M.shadeV4){M.shadeV4=1;/* never above 0.6 */if(M.shadeB>.6)M.shadeB=.6;if(M.shadeG>.6)M.shadeG=.6;try{gfMSsave()}catch(e){}try{gfMsRefresh()}catch(e){}try{gfGlobeDirty()}catch(e){}}}catch(e){}},300)})();
+ try{const M=gfMS();if(!M.shadeV3){M.shadeV3=1;if(M.shadeB==null||Math.abs(M.shadeB-.3)<1e-6)M.shadeB=.16;}if(!M.shadeV4){M.shadeV4=1;/* never above 0.6 */if(M.shadeB>.6)M.shadeB=.6;if(M.shadeG>.6)M.shadeG=.6;try{gfMSsave()}catch(e){}try{gfMsRefresh()}catch(e){}try{gfGlobeDirty()}catch(e){}}if(!M.shadeV5){M.shadeV5=1;/* terrain shading starts at exactly the middle of its slider (0.3 of 0.6) */M.shadeB=.3;M.shadeG=.3;try{gfMSsave()}catch(e){}try{gfMsRefresh()}catch(e){}try{gfGlobeDirty()}catch(e){}}}catch(e){}},300)})();
 window.gfPolishM={dedupe};
 })();
