@@ -29,7 +29,7 @@ const saveLit=()=>{try{localStorage.setItem(LITK,JSON.stringify(LIT))}catch(e){}
 const onMode=ms=>{try{return appMode==="allmaps"&&allMapsColorModeOn&&ms.includes(allMapsColorMode)&&!(typeof ps!=="undefined"&&ps)}catch(e){return false}};
 const lblEls=()=>["allMapsShowLabelsToggle","allMapsSeaLabelsToggle"].map(id=>document.getElementById(id));
 const setChk=(t,v)=>{if(t&&t.checked!==v){t.checked=v;t.dispatchEvent(new Event("change",{bubbles:true}))}};
-try{const G=globePrefs();if(!G.flatDef1){G.flatDef1=1;G.allmaps=false;saveStats()}}catch(e){}
+try{const G=globePrefs();if(!G.flatDef1){G.flatDef1=1;G.allmaps=false;saveStats()}}catch(e){}/* the globe is the default view (once; a later switch to the flat map is kept) */try{const G=globePrefs();if(!G.globeDef2){G.globeDef2=1;G.allmaps=true;saveStats()}}catch(e){}
 let wasL=null,otherL=null;
 function labels(){
  /* names: Satellite and City Lights */

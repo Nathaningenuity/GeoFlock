@@ -107,9 +107,10 @@ function keySync(){const k=document.getElementById("flKey");if(!k)return;
  const off=()=>{k.classList.remove("gfx-fit","gfx-w","gfx-r")};
  if(k.style.display==="none"||!k.classList.contains("open")||k.style.left||k.style.top||!onMaps()){off();return}
  off();const kr=k.getBoundingClientRect();if(!kr.width)return;
- const obs=[...document.querySelectorAll("#allMapsView .globe-btns, #allMapsView .map-zoom-controls, #allMapsView .gfk-coord, #allMapsView .gfk-tray, #gfDngPanel.gf-dng-float")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.bottom>0&&r.top<innerHeight);
+ /* (not the toolkit: lifting over its tray left the key floating in the middle of the screen; the key stays in its corner) */
+ const obs=[...document.querySelectorAll("#allMapsView .globe-btns, #allMapsView .map-zoom-controls, #allMapsView .gfk-coord, #gfDngPanel.gf-dng-float")].filter(vis).map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height&&r.bottom>0&&r.top<innerHeight);
  let bot=16,width=0,topLim=0,side=null;const low=o=>o.top>innerHeight*.6;
- obs.forEach(o=>{if(o.left<kr.right&&o.right>kr.left&&low(o)&&o.bottom>kr.top)bot=Math.max(bot,innerHeight-o.top+8)});
+ obs.forEach(o=>{if(o.left<kr.right&&o.right>kr.left&&low(o)&&o.bottom>kr.top)bot=Math.max(bot,innerHeight-o.top+8)});bot=Math.min(bot,90);/* at most just above a small readout in the corner */
  /* where the key would stand once lifted above those */
  const sh=bot-16,kk={left:kr.left,right:kr.right,top:kr.top-sh,bottom:kr.bottom-sh};
  obs.forEach(o=>{if(!(o.left<kk.right&&o.right>kk.left)||low(o))return;

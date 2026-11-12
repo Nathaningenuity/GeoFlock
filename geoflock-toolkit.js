@@ -668,7 +668,7 @@ function sync(){const h=host();const tour=typeof ps!=="undefined"&&!!ps;
  ["compass","ruler"].forEach(t=>{const sl=S.tray.querySelector(".gfk-"+t);if(sl)sl.classList.toggle("gfk-out",!!S.place[t])});
  const pen=S.tray.querySelector(".gfk-pens");if(pen)pen.classList.toggle("gfk-active",!!S.pen);const pin=S.tray.querySelector(".gfk-pins");if(pin)pin.classList.toggle("gfk-active",!!S.pinArm);const dg=S.tray.querySelector(".gfk-dragger");if(dg)dg.classList.toggle("gfk-active",!!S.dragging);
  if(cap&&cap.parentNode!==h)h.appendChild(cap);h.classList.toggle("gfk-pinning",!!S.pinArm);h.classList.toggle("gfk-dragmode",!!S.dragging);coordSwitch();placeObjects()}
-try{S.open=!K().closed&&innerWidth>640}catch(e){}
+/* folded until someone opens it (a first visit starts with it folded); their choice is remembered after that */try{S.open=K().closed===false&&innerWidth>640}catch(e){S.open=false}
 let lastKey="";setInterval(()=>{try{sync();const svg=svgEl();const key=(onGlobe()?"g":"f")+"|"+(typeof SPIN!=="undefined"?SPIN.A.dl+"|"+SPIN.A.f.s+"|"+SPIN.A.f.bx:"")+"|"+(svg&&svg.getAttribute("viewBox"))+"|"+(svg&&!svg.querySelector(":scope > g#gfKitLayer"));if(key!==lastKey){lastKey=key;render()}}catch(e){}},400);
 document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;let drafting=false;try{drafting=!!(S.stroke&&S.stroke.t==="geo"||GEO._cancel)}catch(err){}if(drafting){S.stroke=null;if(GEO._cancel)GEO._cancel();render();e.stopImmediatePropagation();return}/* Esc stops drawing; floating panels stay open (close them with their ×) */if(S.pen){penStop();return}if(S.pinArm){pinArm(false);return}if(S.dragging){dragOn(false);return}if(cap){capture(false)}});
 /* ================= the map's other panels move freely too ================= */
