@@ -184,7 +184,9 @@ try{const _ar=histAnimRun;histAnimRun=function(keys){const r=_ar.apply(this,argu
 /* ---------- playing ----------
    The year counts up one by one. Years per second (at 1×): fast in the early millennia, when maps change slowly, and
    slower towards today, when borders change nearly every year. */
-const rate=y=>y<-1000?55:y<0?40:y<1500?30:y<1800?16:y<1900?6:4.5;
+/* balanced so each part of the timeline takes about as long as the others (borders change far less often in the early
+   millennia): the Ancient world (3000-500 BC) about 25 s at 1x, like the Classical age (500 BC-AD 500) */
+const rate=y=>y<-1000?110:y<-500?70:y<0?45:y<1500?30:y<1800?16:y<1900?6:4.5;
 let playRAF=0,playF=0,playLast=0;
 function playTick(now){playRAF=0;if(!histPlaying||!useNew()||!histOn()){return}
  const dt=Math.min(120,Math.max(0,now-playLast));playLast=now;const sp=typeof histStorySpeed!=="undefined"?histStorySpeed:1;
