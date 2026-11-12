@@ -498,3 +498,9 @@ body.dark-theme .ihx-fb{background:rgba(0,0,0,.25)}body.dark-theme .ihx-side{bac
 body.dark-theme .ihx-side:not(.ihx-right){color:#fff}`;document.head.appendChild(s)}
 window.gfInteractHist={defs:DEFS,current:()=>cur};
 })();
+/* The "Empires & independence" tour (hempires) is linked from the home page but was missing from PS_TOUR_ORDER, so starting it
+   fell back to the first history tour (Ancient civilisations). Put it back, right after hancient, once the page has finished
+   rebuilding the order list. */
+(function(){function fix(){try{if(typeof PS_TOURS==="undefined"||typeof PS_TOUR_ORDER==="undefined"||!PS_TOURS.hempires)return;if(PS_TOUR_ORDER.includes("hempires"))return;const i=PS_TOUR_ORDER.indexOf("hancient");PS_TOUR_ORDER.splice(i>=0?i+1:PS_TOUR_ORDER.length,0,"hempires")}catch(e){}}
+ fix();document.addEventListener("DOMContentLoaded",fix);addEventListener("load",()=>{fix();setTimeout(fix,1500);setTimeout(fix,6000)});
+ try{if(typeof psStart==="function"){const _s=psStart;psStart=function(){fix();return _s.apply(this,arguments)}}}catch(e){}})();
