@@ -161,7 +161,11 @@ const seam=(r,i,j)=>{const a=gx(r[i]),b=gx(r[j]);if(Math.abs(a-b)<.3&&Math.abs(a
 function edgePath(ctx,pj,r,closed){let pen=false;const n=r.length/3;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if((r[i+2]&r[j+2])||seam(r,i,j)){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);if(!a||!b){pen=false;continue}if(!pen){ctx.moveTo(a[0],a[1]);pen=true}ctx.lineTo(b[0],b[1])}}
 function boxClip(ctx,pj,t){const n=Math.pow(2,t.z),L=[];const ll=(x,y)=>{const m=Math.PI*(1-2*y/n);return[x/n*360-180,Math.atan(Math.sinh(m))*180/Math.PI]};const S=8;
  for(let i=0;i<=S;i++)L.push(ll(t.x+i/S,t.y));for(let i=0;i<=S;i++)L.push(ll(t.x+1,t.y+i/S));for(let i=0;i<=S;i++)L.push(ll(t.x+1-i/S,t.y+1));for(let i=0;i<=S;i++)L.push(ll(t.x,t.y+1-i/S));
- ctx.beginPath();let ok=true;L.forEach((p,i)=>{const q=pj(p[0],p[1]);if(!q){ok=false;return}i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});ctx.closePath();if(ok)ctx.clip();return ok}
+ /* the box is grown by under a pixel all round: two tiles' fills then overlap at their shared edge, instead of each fading
+    out there (the soft edges of two clips let a thin pale line through a lake or the sea) */
+ const Q=[];let ok=true,cx=0,cy=0;L.forEach(p=>{const q=pj(p[0],p[1]);if(!q){ok=false;return}Q.push(q);cx+=q[0];cy+=q[1]});if(!ok)return false;cx/=Q.length;cy/=Q.length;
+ const sc=(()=>{try{const m=ctx.getTransform();return 1/Math.max(.1,Math.hypot(m.a,m.b))}catch(e){return 1}})()*.8;
+ ctx.beginPath();Q.forEach((q,i)=>{const dx=q[0]-cx,dy=q[1]-cy,d=Math.hypot(dx,dy)||1,x=q[0]+dx/d*sc,y=q[1]+dy/d*sc;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.clip();return true}
 /* the tiles count the Great Lakes (and the Caspian) as sea at small scales: a sea piece that lies inside one of the map's own
    big lakes is a lake, drawn with the lakes (on the pictures, where the sea is already painted, it would go missing) */
 function isLakeSea(o){if(o._lk!==undefined)return o._lk;o._lk=false;try{const L=globeOverlays().lakes.filter(x=>!x.minor),b=bboxOf(o.rings),pts=[];
@@ -374,17 +378,32 @@ function landBorders(d){if(d._bl)return d._bl;/* every piece of sea, sea lakes i
 /* the hovered country's outline when zoomed in: the detailed coast and borders, kept to a band around its rough outline (its
    rough shape can be several kilometres off), instead of the rough outline itself. Returns false when there is no detail. */
 let HM=null,HL=null;
-function hotSharp(g,ctx,fs,lw){const s=on(g);if(!s||s.z<COASTZ||!fs.length||!s.tiles.some(t=>t.d))return false;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return false;
+function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||!s.tiles.some(t=>t.d))return false;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return false;
  if(!HM){HM=document.createElement("canvas");HL=document.createElement("canvas")}[HM,HL].forEach(c=>{if(c.width!==W||c.height!==H){c.width=W;c.height=H}});
- const m=HM.getContext("2d"),l=HL.getContext("2d"),T=ctx.getTransform(),pj=projector(g);
- /* how many pixels 20 km makes here: the band kept around the rough outline */
+ const m=HM.getContext("2d"),l=HL.getContext("2d"),T=ctx.getTransform(),pj=projector(g),P=d3.geoPath(g.projection(),m);
+ /* how many pixels 20 km makes here: the band kept around the rough outline, but never much more than the country's own size
+    on screen (a small island would otherwise take in its neighbours' coasts) */
  let band=16;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.18);if(a&&b)band=Math.max(12,Math.min(260,Math.hypot(a[0]-b[0],a[1]-b[1])*2))}catch(e){}
- m.setTransform(1,0,0,1,0,0);m.clearRect(0,0,W,H);m.setTransform(T);const P=d3.geoPath(g.projection(),m);m.beginPath();fs.forEach(f=>P(f));m.fillStyle="#000";m.fill();m.lineWidth=band;m.lineJoin="round";m.strokeStyle="#000";m.stroke();
- l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="source-over";l.clearRect(0,0,W,H);l.setTransform(T);l.strokeStyle="#ffffff";l.lineWidth=lw;l.lineJoin=l.lineCap="round";
- s.tiles.forEach(t=>{if(!t.d)return;l.save();if(!boxClip(l,pj,t)){l.restore();return}l.beginPath();t.d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(l,pj,r,true))});landBorders(t.d).forEach(B=>B.ls.forEach(x=>ringPath(l,pj,x,false)));l.stroke();l.restore()});
- l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="destination-in";l.drawImage(HM,0,0);l.globalCompositeOperation="source-over";
- ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HL,0,0);ctx.restore();return true}
-window.gfDetail={hotSharp:(g,ctx,fs,lw)=>{try{return hotSharp(g,ctx,fs,lw)}catch(e){return false}},seaAt:lls=>seaAt(lls).catch(()=>null),sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:K._sea,casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
+ const bbs=f=>f._gfBB||(f._gfBB=(()=>{try{const b=d3.geoBounds(f);return[b[0][0],b[0][1],b[1][0],b[1][1]]}catch(e){return[-180,-90,180,90]}})());
+ try{const pb=d3.geoPath(g.projection()).bounds({type:"FeatureCollection",features:fs});const sz=Math.max(pb[1][0]-pb[0][0],pb[1][1]-pb[0][1]);if(isFinite(sz))band=Math.min(band,Math.max(10,sz*.6))}catch(e){}
+ /* the other countries near it: each piece of detailed coast goes to the nearest rough outline, so a neighbour's coast (the
+    Dutch half of Saint Martin, Anguilla across the strait) is not taken in */
+ let near=[];if(all&&all.length){const own=new Set(fs);let B=[180,90,-180,-90];fs.forEach(f=>{const b=bbs(f);if(b[2]<b[0])B=[-180,B[1],180,B[3]];B=[Math.min(B[0],b[0]),Math.min(B[1],b[1]),Math.max(B[2],b[2]),Math.max(B[3],b[3])]});
+  const pad=Math.max(.5,(B[3]-B[1])*.5);near=all.filter(f=>{if(own.has(f))return false;const b=bbs(f);return!(b[0]>B[2]+pad||b[2]<B[0]-pad||b[1]>B[3]+pad||b[3]<B[1]-pad)})}
+ const mask=(owner)=>{m.setTransform(1,0,0,1,0,0);m.globalCompositeOperation="source-over";m.clearRect(0,0,W,H);m.setTransform(T);m.lineJoin="round";m.fillStyle=m.strokeStyle="#000";
+  const ownP=()=>{m.beginPath();fs.forEach(f=>P(f))},othP=()=>{m.beginPath();near.forEach(f=>P(f))};
+  if(!owner||!near.length){ownP();m.fill();m.lineWidth=band;m.stroke();return}
+  for(let w=band;w>=2;w*=.7){m.globalCompositeOperation="destination-out";othP();m.lineWidth=w;m.stroke();m.globalCompositeOperation="source-over";ownP();m.lineWidth=w;m.stroke()}
+  m.globalCompositeOperation="destination-out";othP();m.fill();m.globalCompositeOperation="source-over";ownP();m.fill()};
+ const layer=(lines)=>{l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="source-over";l.clearRect(0,0,W,H);l.setTransform(T);l.lineJoin=l.lineCap="round";
+  /* lw: a width (white), or [[colour,width],...] drawn in turn (a dark case under a white line) */
+  const st=Array.isArray(lw)?lw:[["#ffffff",lw]];
+  s.tiles.forEach(t=>{if(!t.d)return;l.save();if(!boxClip(l,pj,t)){l.restore();return}l.beginPath();lines(t.d);st.forEach(([c,w])=>{l.strokeStyle=c;l.lineWidth=w;l.stroke()});l.restore()});
+  l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="destination-in";l.drawImage(HM,0,0);l.globalCompositeOperation="source-over";ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HL,0,0);ctx.restore()};
+ /* borders: kept to the band (a border belongs to both sides); coasts: kept to the nearest country */
+ mask(false);layer(d=>landBorders(d).forEach(B=>B.ls.forEach(x=>ringPath(l,pj,x,false))));
+ mask(true);layer(d=>d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(l,pj,r,true))}));return true}
+window.gfDetail={hotSharp:(g,ctx,fs,lw,all)=>{try{return hotSharp(g,ctx,fs,lw,all)}catch(e){return false}},seaAt:lls=>seaAt(lls).catch(()=>null),sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:K._sea,casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
 setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.host;if(!h)return;let c=h.querySelector(".gf-dt-cred");const v=!!(g&&on(g));if(v&&!c){c=document.createElement("div");c.className="gf-dt-cred";c.innerHTML='Detail © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';h.appendChild(c)}if(c)c.hidden=!v}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=".gf-dt-cred{position:absolute;right:62px;bottom:4px;z-index:6;font:500 9.5px system-ui,sans-serif;color:#33475b;background:rgba(255,255,255,.62);padding:1px 6px;border-radius:6px;pointer-events:auto}.gf-dt-cred a{color:inherit}.gf-dt-cred[hidden]{display:none}";document.head.appendChild(st)}
