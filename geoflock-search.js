@@ -410,6 +410,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
  /* the emoji grows with the zoom: half size with the whole world in view, full size (a little over) close in */
  {const q=screenOf([e.ll[0]+1,e.ll[1]]),ppd=q?Math.hypot(q[0]-s0[0],q[1]-s0[1]):3,k=Math.max(.5,Math.min(1.1,.5+.125*Math.log2(Math.max(1e-3,ppd)/3))).toFixed(2);
   if(el._gsk!==k){el._gsk=k;el.style.setProperty("--gsk",k);if(e._spot)e._spot.style.setProperty("--gsk",k)}}
+ if(el._usz!==(e.lsz||1)+"|"+(e.isz||1)){el._usz=(e.lsz||1)+"|"+(e.isz||1);sizeOf(e)}
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
  /* the line from a moved card back to its place */
  if(isPh){let ln=e._leash;let far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;
@@ -457,7 +458,7 @@ if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=func
 function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)return;let b=document.getElementById("gfsX");
  if(!LIST.length){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="gfsX";b.setAttribute("role","list");wrap.appendChild(b);
   ["pointerdown","mousedown","click"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation()));
-  b.addEventListener("input",ev=>{const o=ev.target.closest&&ev.target.closest("[data-go]");if(o){const e=LIST[+o.dataset.go];if(!e)return;e.uop=(+o.value)/100;const sw=o.closest(".gfs-sw");if(sw)sw.style.setProperty("--o",Math.max(.3,e.uop));const bb=o.parentNode.querySelector("b");if(bb)bb.textContent=o.value+"%";if(e._g)e._g._d=null;try{draw()}catch(_){}try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(_){}return}
+  b.addEventListener("input",ev=>{{const z=ev.target.closest&&ev.target.closest("[data-gls],[data-gis]");if(z){const e=LIST[+(z.dataset.gls??z.dataset.gis)];if(!e)return;const v=(+z.value)/100;if(z.dataset.gls!=null)e.lsz=v;else e.isz=v;const t=z.parentNode.querySelector("i");if(t)t.textContent=z.value+"%";sizeOf(e);try{follow()}catch(_){}return}}const o=ev.target.closest&&ev.target.closest("[data-go]");if(o){const e=LIST[+o.dataset.go];if(!e)return;e.uop=(+o.value)/100;const sw=o.closest(".gfs-sw");if(sw)sw.style.setProperty("--o",Math.max(.3,e.uop));const bb=o.parentNode.querySelector("b");if(bb)bb.textContent=o.value+"%";if(e._g)e._g._d=null;try{draw()}catch(_){}try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(_){}return}
    const c=ev.target.closest&&ev.target.closest("[data-gc]");if(!c)return;const e=LIST[+c.dataset.gc];if(!e)return;e.ucol=c.value;if(e._leash)e._leash.style.setProperty("--dc",c.value);const sw=c.closest(".gfs-sw");if(sw)sw.style.setProperty("--c",c.value);if(e._g)e._g._d=null;try{draw()}catch(_){}});
   b.addEventListener("click",ev=>{const swe=ev.target.closest&&ev.target.closest(".gfs-sw");if(swe){if(!ev.target.closest(".gfs-pop")){const pp=swe.querySelector(".gfs-pop");b.querySelectorAll(".gfs-pop").forEach(x=>{if(x!==pp)x.hidden=true});if(pp)pp.hidden=!pp.hidden}return}const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
    if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
@@ -466,8 +467,11 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
    const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}
    /* the image button: hide or show this result's picture (its name stays) */
    const ib=ev.target.closest("[data-gim]");if(ib){const e=LIST[+ib.dataset.gim];if(e){e.noimg=!e.noimg;labOf(e);xBtn();try{draw()}catch(_){}}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
- b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+(hasImg(e)?'<b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<span class="gfs-tw"><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+szPop("gls",i,e.lsz)+'</span>'+(hasImg(e)?'<span class="gfs-tw"><b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>'+szPop("gis",i,e.isz)+'</span>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
+/* under Label and Image, shown on hover: a slider for that one result's size, 50% to 200% */
+const szPop=(k,i,v)=>{const p=Math.round((v||1)*100);return'<span class="gfs-sz"><input type="range" data-'+k+'="'+i+'" min="50" max="200" step="10" value="'+p+'" aria-label="Size"><i>'+p+'%</i></span>'};
+function sizeOf(e){(e._els||[]).forEach(x=>{if(!x||!x.style)return;x.style.setProperty("--uls",e.lsz||1);x.style.setProperty("--uis",e.isz||1)})}
 /* each result's highlight colour, which the person can change: a swatch on its chip */
 function hiCol(e){if(e.ucol)return e.ucol;/* a point has no highlight: the swatch is its dot */if(e.g&&/Point$/.test(e.g.type))return"#c0392b";if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
 /* the swatch opens a little panel: the colour, and how see-through the highlight is */
@@ -532,6 +536,15 @@ const css=document.createElement("style");css.textContent=`
 #gfsX .gfs-row b.gfs-tagb.off{ background:rgba(232,112,26,.85); }
 .gfs-nolab .gfs-lab{ display:none !important; }
 .gfs-noimg .gfs-card{ display:none !important; }
+.gfs-noimg .gfs-swap{ display:none !important; }
+/* the picture grows with the zoom as the emoji does (half size zoomed out), times the size the person chose */
+.gfs-pin .gfs-card{ width:calc(96px * var(--gsk,1) * var(--uis,1)); height:calc(96px * var(--gsk,1) * var(--uis,1)); }
+.gfs-pin .gfs-lab{ font-size:calc(12.5px * var(--uls,1)); }
+.gfs-pin.gfs-name .gfs-lab{ font-size:calc(13.5px * var(--uls,1)); }
+#gfsX .gfs-tw{ position:relative; display:inline-flex; }
+#gfsX .gfs-sz{ display:none; position:absolute; top:100%; left:50%; transform:translateX(-50%); z-index:5; padding:8px 10px 6px; margin-top:0; background:rgba(16,28,48,.97); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,.3); align-items:center; gap:6px; }
+#gfsX .gfs-sz input{ width:110px; } #gfsX .gfs-sz i{ font-style:normal; font-size:11px; min-width:34px; }
+#gfsX .gfs-tw:hover .gfs-sz, #gfsX .gfs-tw:focus-within .gfs-sz{ display:flex; }
 .gfs-sw{ position:relative; width:18px; height:18px; flex:none; border-radius:50%; background:color-mix(in srgb, var(--c) calc(var(--o,1) * 100%), transparent); box-shadow:0 0 0 2px rgba(255,255,255,.85), 0 1px 3px rgba(0,0,0,.35); cursor:pointer; margin:0 2px; } .gfs-pop{ position:absolute; left:-8px; top:26px; z-index:60; display:flex; flex-direction:column; gap:8px; background:#fff; color:#1d2433; border-radius:12px; padding:10px 12px; box-shadow:0 6px 20px rgba(0,0,0,.28); font:700 12px system-ui,sans-serif; cursor:default; white-space:nowrap; }
 .gfs-pop[hidden]{ display:none; } .gfs-pop label{ display:flex; align-items:center; gap:8px; } .gfs-pop input[type=color]{ width:34px; height:24px; border:0; padding:0; background:none; cursor:pointer; } .gfs-pop input[type=range]{ width:110px; } .gfs-pop b{ min-width:34px; text-align:right; font-weight:800; }
 .gfs-nolab.gfs-noimg, .gfs-nolab.gfs-noimg + .gfs-spotpin{ display:none !important; }
