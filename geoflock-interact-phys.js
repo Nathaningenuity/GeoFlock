@@ -28,7 +28,9 @@ const km=(a,b)=>{try{return d3.geoDistance(a,b)*R_KM}catch(e){return 0}};
 /* ---------------- shared helpers ---------------- */
 /* a lon/lat point → [x,y] in the host's pixels, or null when it is on the far side of the globe */
 function proj(L,ll){const G=g();if(!G)return null;try{if(!G._flat){const d=d3.geoDistance([-G.rot[0],-G.rot[1]],ll);if(d>Math.PI/2-.03)return null}
- const s=G.projection()(ll);return s&&isFinite(s[0])?[s[0]+L.ox,s[1]+L.oy]:null}catch(e){return null}}
+ const s=G.projection()(ll);if(!s||!isFinite(s[0]))return null;const x=s[0]+L.ox,y=s[1]+L.oy,B=L.cb;
+ /* nothing is drawn under the tour card (the layer sits above the globe, and the card may sit over it) */
+ if(B&&x>B[0]&&x<B[2]&&y>B[1]&&y<B[3])return null;return[x,y]}catch(e){return null}}
 function unproj(L,x,y){const G=g();try{const p=G.projection();if(!p.invert)return null;const ll=p.invert([x-L.ox,y-L.oy]);if(!ll||!isFinite(ll[0]))return null;
  if(!G._flat&&d3.geoDistance([-G.rot[0],-G.rot[1]],ll)>Math.PI/2-.02)return null;return ll}catch(e){return null}}
 function pathOf(L,pts){let d="",pen=false,px=0,py=0;const G=g(),J=G&&G.size?G.size().w*.3:1e9;for(const ll of pts){const q=proj(L,ll);if(!q){pen=false;continue}
@@ -49,13 +51,18 @@ function draggable(L,el,mv,start){const down=e=>{if(e.button>0)return;e.preventD
   el.classList.add("gfx-dragging");if(start)start();const m=ev=>{ev.stopPropagation();const hr=L.host.getBoundingClientRect();try{mv(ev.clientX-hr.left,ev.clientY-hr.top)}catch(err){}L.dirty=1};
   const up=()=>{el.removeEventListener("pointermove",m);el.removeEventListener("pointerup",up);el.removeEventListener("pointercancel",up);el.classList.remove("gfx-dragging")};
   el.addEventListener("pointermove",m);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up)};
+ /* along a route, the arrow keys move it too */
+ if(L.D.dur)el.addEventListener("keydown",e=>{const k=e.key,f=k==="ArrowRight"||k==="ArrowUp"?1:k==="ArrowLeft"||k==="ArrowDown"?-1:0;if(!f)return;e.preventDefault();stopPlay(L);L.u=Math.max(0,Math.min(1,L.u+f*.01));L.dirty=1});
  el.addEventListener("pointerdown",down);["mousedown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"}))}
 const NS="http://www.w3.org/2000/svg";
 function svgEl(parent,tag,attrs,html){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);if(html!=null)e.innerHTML=html;parent.appendChild(e);return e}
 function place(el,q){if(!q){el.style.display="none";return false}el.style.display="";el.setAttribute("transform","translate("+q[0].toFixed(1)+","+q[1].toFixed(1)+")");return true}
 /* an HTML label on the map */
 function tag(L,cls){const d=document.createElement("div");d.className="gfx-tag "+(cls||"");L.el.appendChild(d);return d}
-function putTag(d,q,html,dy){if(!q||html==null){d.style.display="none";return}d.style.display="";if(d._h!==html){d.innerHTML=html;d._h=html}d.style.left=q[0]+"px";d.style.top=(q[1]+(dy||0))+"px"}
+function putTag(d,q,html,dy){if(!q||html==null){d.style.display="none";return}d.style.display="";if(d._h!==html){d.innerHTML=html;d._h=html}d.style.left=q[0]+"px";d.style.top=(q[1]+(dy||0))+"px";
+ /* a label that would spill onto the tour card waits out of sight */
+ let hide=false;try{const B=L&&L.cb;if(B){const r=d.getBoundingClientRect(),h=L.host.getBoundingClientRect(),x0=r.left-h.left,y0=r.top-h.top;hide=!(x0+r.width<B[0]||x0>B[2]||y0+r.height<B[1]||y0>B[3])}}catch(e){}
+ d.style.visibility=hide?"hidden":""}
 /* the card's "what is happening" line */
 function say(L,head,text){const c=L.card;if(!c)return;const k=head+"|"+text;if(L._said===k)return;L._said=k;const e=c.querySelector(".gfx-ep");if(!e)return;
  e.innerHTML=(head?"<b>"+head+"</b>":"")+"<span>"+text+"</span>";e.classList.remove("gfx-new");void e.offsetWidth;e.classList.add("gfx-new")}
@@ -96,23 +103,23 @@ const katPhase=(R,u)=>{let p=KPH[0];for(const x of KPH)if(u>=R.uk[x.from]-1e-6)p
 const STORM='<g class="gfx-spin"><circle r="11" fill="rgba(255,255,255,.35)"/>'+
  [0,120,240].map(a=>'<path transform="rotate('+a+')" d="M0 -6 C 14 -8 24 2 22 16 C 16 6 8 2 0 2 Z" fill="rgba(255,255,255,.92)" stroke="rgba(30,40,60,.35)" stroke-width=".8"/>').join("")+
  '<circle r="4.2" fill="#2b4a6f" stroke="#fff" stroke-width="1.4"/></g>';
-const HURR={tour:"hazards",title:"What a hurricane needs",dur:24,
+const HURR={tour:"hazards",title:"What a hurricane needs",dur:24,look:[-86,30,3.2],follow:1,
  tip:"Drag the hurricane along Katrina’s real 2005 track, or press ▶. Watch it grow over warm water and fade over land.",
  card:L=>playerHTML("How far along Katrina’s track","23 Aug"),
- init(L){const R=katR();L.wake=svgEl(L.svg,"g",{});L.track=svgEl(L.svg,"path",{class:"gfx-dash"});L.marks=KMARK.map(m=>({m,el:tag(L,"gfx-small")}));
+ init(L){const R=katR();L.track=svgEl(L.svg,"path",{class:"gfx-dash"});L.wake=svgEl(L.svg,"g",{});L.marks=KMARK.map(m=>({m,el:tag(L,"gfx-small")}));
   L.st=svgEl(L.svg,"g",{class:"gfx-grab",tabindex:"0","aria-label":"Hurricane Katrina: drag along its track"});svgEl(L.st,"circle",{r:30,class:"gfx-hit"});L.stI=svgEl(L.st,"g",{},STORM);
   L.bub=tag(L,"gfx-bub");L.hint=tag(L,"gfx-hint");L.ang=0;
   draggable(L,L.st,(x,y)=>{L.u=nearestU(L,R,x,y,L.u)},()=>stopPlay(L))},
  tick(L,dt){L.ang-=dt*(60+katWind(katR(),L.u)*2.2);if(L.playing){L.u=Math.min(1,L.u+dt/this.dur);if(L.u>=1){L.playing=false;playBtn(L)}L.dirty=1}
   /* the spin alone only turns the storm */if(L.stI&&L.sc)L.stI.setAttribute("transform","scale("+L.sc.toFixed(2)+") rotate("+(L.ang%360).toFixed(1)+")")},
- draw(L){const R=katR(),s=at(R,L.u),ph=katPhase(R,L.u);
+ draw(L){const R=katR(),s=at(R,L.u),ph=katPhase(R,L.u);L.fll=s.ll;
   L.track.setAttribute("d",pathOf(L,R.P));
   /* the wake, a piece per phase */
   let h="";KPH.forEach((p,j)=>{const a=R.uk[p.from],b=j+1<KPH.length?R.uk[KPH[j+1].from]:1;if(L.u<=a)return;const i0=at(R,a).i,i1=at(R,Math.min(L.u,b)).i;const pts=R.P.slice(i0,i1+1);pts.push(at(R,Math.min(L.u,b)).ll);
    const d=pathOf(L,pts);if(d)h+='<path class="gfx-wake-halo" d="'+d+'"/><path class="gfx-wake" stroke="'+p.c+'" d="'+d+'"/>'});L.wake.innerHTML=h;
   L.marks.forEach(o=>{const uu=R.uk[o.m.k];putTag(o.el,L.u>=uu-1e-6?proj(L,KAT[o.m.k]):null,esc(o.m.n),14)});
   const q=proj(L,s.ll);place(L.st,q);const sc=.55+katWind(R,L.u)/150*1.05;L.sc=sc;L.stI.setAttribute("transform","scale("+sc.toFixed(2)+") rotate("+(L.ang%360).toFixed(1)+")");
-  putTag(L.bub,q,esc(ph.h.split(": ")[1]||ph.h),-28-sc*20);putTag(L.hint,L.u<.003&&q?[q[0]+34,q[1]-8]:null,"Drag the storm ⟶");
+  const bt=ph.h.split(": ")[1]||ph.h;putTag(L.bub,q,esc(bt[0].toUpperCase()+bt.slice(1)),-28-sc*20);putTag(L.hint,L.u<.003&&q?[q[0]+34,q[1]-8]:null,"Drag the storm ⟶");
   say(L,ph.h,ph.t);syncRange(L,ph.h.split(":")[0])}};
 
 /* ======================================================================== 2. Los Angeles slides north
@@ -147,7 +154,7 @@ const LAX={tour:"plates",title:"Los Angeles is coming",dur:20,
   L.gapL.setAttribute("d",q&&qs&&L.u<.995?"M"+q[0]+" "+q[1]+"L"+qs[0]+" "+qs[1]:"");
   putTag(L.gapT,q&&qs&&L.u<.97?[(q[0]+qs[0])/2,(q[1]+qs[1])/2]:null,fmt(left)+" km to go along the fault");
   putTag(L.lab,q,L.u<.003?"Los Angeles · today":"Los Angeles · in "+(my<1?(my*1000).toFixed(0)+" thousand":my.toFixed(1)+" million")+" years",-34);
-  putTag(L.sfT,qs,"San Francisco (stays put)",-14);putTag(L.hint,L.u<.003&&q?[q[0]+30,q[1]-8]:null,"⟵ Drag Los Angeles north-west");
+  putTag(L.sfT,qs,"San Francisco stays put",14);putTag(L.hint,L.u<.003&&q?[q[0]+30,q[1]-8]:null,"⟵ Drag Los Angeles north-west");
   syncRange(L,L.u<.003?"Today":my.toFixed(1)+" million yrs");
   if(L.u<.003)say(L,"Today","Los Angeles sits on the Pacific plate, San Francisco on the North American one. The fault between them slips about 3.5 cm a year, about as fast as your fingernails grow.");
   else if(L.u<.999)say(L,"In "+my.toFixed(1)+" million years","Los Angeles has moved "+fmt(moved)+" km north-west. "+(my<1?"Even in a million years that is only 35 km: the plates are slow, but they never stop.":"Mountains rise and wear down along the way, but the fault keeps grinding."));
@@ -169,27 +176,26 @@ const ROF=[
  {ll:[-175.38,-20.54],n:"Hunga Tonga, Tonga",y:2022,p:"The Pacific plate sinks under the Tonga plate.",t:"An underwater blast whose plume rose about 57 km, the highest ever measured."}];
 const VOL='<path d="M-13 9 L-3 -9 L3 -9 L13 9 Z" fill="#7a3b22" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M-3 -9 Q0 -14 3 -9" fill="#ff7a2a"/>';
 const RING={tour:"volcanoes",title:"The Ring of Fire",
- tip:"Tap the six volcanoes in the order they erupted, oldest first.",
+ tip:"Tap the six volcanoes in the order they erupted, oldest first. Turn the globe to find them all.",
  card:()=>'<div class="gfx-slots">'+ROF.map((_,i)=>'<span class="gfx-slot" data-i="'+i+'">?</span>').join("")+'</div><div class="gfx-row gfx-btns"><button type="button" class="gfx-btn gfx-hintb">Show me the next</button><button type="button" class="gfx-btn gfx-again">Start again</button></div>',
- init(L){L.k=0;L.miss=0;L.found=[];L.join=svgEl(L.svg,"path",{class:"gfx-join"});
+ init(L){L.k=0;L.miss=0;L.found=[];
   L.v=ROF.map((r,i)=>{const e=svgEl(L.svg,"g",{class:"gfx-grab gfx-vol",tabindex:"0",role:"button","aria-label":"A volcano: tap it"});svgEl(e,"circle",{r:20,class:"gfx-hit"});svgEl(e,"circle",{r:16,class:"gfx-ring"});svgEl(e,"g",{},VOL);
    const t=tag(L,"gfx-bub gfx-voltag");const hit=ev=>{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();this.tap(L,i)};
    e.addEventListener("pointerdown",hit);["mousedown","touchstart","click","dblclick"].forEach(t=>e.addEventListener(t,ev=>ev.stopPropagation(),{passive:t!=="mousedown"}));
    e.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();this.tap(L,i)}});return{e,t}});
   L.fb=tag(L,"gfx-fb")},
  wire(L){const c=L.card;c.querySelector(".gfx-again").onclick=()=>{L.k=0;L.miss=0;L.found=[];L._said="";L.dirty=1;this.slots(L)};
-  c.querySelector(".gfx-hintb").onclick=()=>{if(L.k<ROF.length){L.miss=2;L.dirty=1;say(L,"The next one is pulsing","Tap it to carry on.")}};this.slots(L)},
+  c.querySelector(".gfx-hintb").onclick=()=>{if(L.k<ROF.length){L.miss=2;L.dirty=1;turnTo(L,ROF[L.k].ll);say(L,"The next one is pulsing","Tap it to carry on.")}};this.slots(L)},
  slots(L){const c=L.card;if(!c)return;c.querySelectorAll(".gfx-slot").forEach((s,i)=>{const r=L.found[i]!=null?ROF[L.found[i]]:null;s.textContent=r?r.y:"?";s.classList.toggle("gfx-on",!!r);s.title=r?r.n:""})},
  tap(L,i){try{if(L.k>=ROF.length||L.found.includes(i))return;const q=proj(L,ROF[i].ll);
   if(i===L.k){L.found.push(i);L.k++;L.miss=0;const r=ROF[i];say(L,r.y+" · "+r.n,r.t+" "+r.p);
    if(L.k===ROF.length)setTimeout(()=>{if(L.card)say(L,"All six, 1886 to 2022","Every one sits on the Ring of Fire, above a plate that is sinking into the mantle. Water squeezed out of the sinking plate melts the rock above it, and the melt rises as volcanoes.")},2600);
    this.flash(L,q,"✓ "+r.y,"gfx-ok")}
   else{L.miss++;const later=ROF[i].y>ROF[L.k].y;this.flash(L,q,later?"Not yet: that one came later":"Already found",later?"gfx-no":"");
-   const e=L.v[i].e;e.classList.remove("gfx-shake");void e.getBoundingClientRect();e.classList.add("gfx-shake");if(L.miss>=2)say(L,"Here’s a clue","The next one in order is pulsing.")}
+   const e=L.v[i].e;e.classList.remove("gfx-shake");void e.getBoundingClientRect();e.classList.add("gfx-shake");if(L.miss>=2){say(L,"Here’s a clue","The next one in order is pulsing.");turnTo(L,ROF[L.k].ll)}}
   this.slots(L);L.dirty=1}catch(e){console.error(e)}},
  flash(L,q,txt,cls){const f=L.fb;if(!q)return;f.className="gfx-fb "+(cls||"");f.textContent=txt;f.style.left=q[0]+"px";f.style.top=(q[1]-30)+"px";f.style.display="";clearTimeout(L._fbT);L._fbT=setTimeout(()=>{f.style.display="none"},1400)},
- draw(L){const done=L.found.map(i=>ROF[i].ll);
-  L.join.setAttribute("d",done.length>1?pathOf(L,(function(){const o=[];for(let j=1;j<done.length;j++){const ip=d3.geoInterpolate(done[j-1],done[j]);for(let t=0;t<=1.0001;t+=.04)o.push(ip(t))}return o})()):"");
+ draw(L){
   L.v.forEach((o,i)=>{const q=proj(L,ROF[i].ll);place(o.e,q);const got=L.found.includes(i);o.e.classList.toggle("gfx-got",got);o.e.classList.toggle("gfx-pulse",!got&&L.miss>=2&&i===L.k);
    putTag(o.t,got?q:null,ROF[i].y+" · "+esc(ROF[i].n.split(",")[0]),-24)});
   if(!L.found.length)say(L,"","Which erupted first? Each one you find shows its year and the plate that feeds it.")}};
@@ -206,7 +212,7 @@ let DR=null;const dustR=()=>DR||(DR=route(DUST,.25));
 /* the share of the dust still in the air (1 at the coast), by longitude */
 const dustLeft=lon=>lon>-15?1:lon>-35?1-(1-132/182)*(-15-lon)/20:lon>-55?132/182-(132/182-.16)*(-35-lon)/20:.16;
 const CLOUD='<g class="gfx-cloud">'+[[-14,2,12],[-4,-6,14],[9,-2,13],[3,7,11],[-9,8,9],[16,6,9]].map(c=>'<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'"/>').join("")+"</g>";
-const DUSTX={tour:"weather",title:"The Sahara feeds the Amazon",dur:22,
+const DUSTX={tour:"weather",title:"The Sahara feeds the Amazon",dur:22,follow:1,
  tip:"Drag the dust cloud from Chad across the Atlantic, or press ▶. Watch how much of it makes it.",
  card:()=>playerHTML("How far the dust has blown","Chad"),
  init(L){const R=dustR();L.trail=svgEl(L.svg,"path",{class:"gfx-dusttrail"});L.gates=DGATE.map(gt=>({gt,p:svgEl(L.svg,"path",{class:"gfx-gate"}),t:tag(L,"gfx-small gfx-gatet")}));
@@ -215,10 +221,10 @@ const DUSTX={tour:"weather",title:"The Sahara feeds the Amazon",dur:22,
   draggable(L,L.c,(x,y)=>{L.u=nearestU(L,R,x,y,L.u)},()=>stopPlay(L))},
  tick(L,dt){L.t+=dt;if(L.playing){L.u=Math.min(1,L.u+dt/this.dur);if(L.u>=1){L.playing=false;playBtn(L)}L.dirty=1}this.specks(L)},
  specks(L){const q=L.q,sc=L.sc||1,left=L.left||1;let h="";if(q&&L.u>.02){const n=Math.round(3+left*6);for(let k=0;k<n;k++){const ph=(L.t*.9+k/n)%1,x=q[0]+(k-n/2)*7*sc+Math.sin(k*7.3)*4,y=q[1]+10*sc+ph*34;h+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="1.8" opacity="'+(1-ph).toFixed(2)+'"/>'}}if(L.fall)L.fall.innerHTML=h},
- draw(L){const R=dustR(),s=at(R,L.u),lon=s.ll[0],left=dustLeft(lon);
+ draw(L){const R=dustR(),s=at(R,L.u),lon=s.ll[0],left=dustLeft(lon);L.fll=s.ll;
   L.trail.setAttribute("d",pathOf(L,R.P.slice(0,s.i+1).concat([s.ll])));
   L.gates.forEach(o=>{const a=[o.gt.lon,4],b=[o.gt.lon,22],on=lon<=o.gt.lon;o.p.setAttribute("d",pathOf(L,d3.range(0,11).map(k=>[o.gt.lon,a[1]+(b[1]-a[1])*k/10])));o.p.classList.toggle("gfx-on",on);
-   putTag(o.t,proj(L,[o.gt.lon,22.5]),(on?"<b>"+o.gt.n.split(" ")[0]+" Mt</b> ":"")+o.gt.lon*-1+"°W",-10)});
+   putTag(o.t,proj(L,[o.gt.lon,22.5]),"<b>"+o.gt.lon*-1+"°W</b>"+(on?" · "+o.gt.mt+" million t":""),-10)});
   const q=proj(L,s.ll);place(L.c,q);const sc=.6+left*.7;L.cI.setAttribute("transform","scale("+sc.toFixed(2)+")");L.cI.style.opacity=(.35+left*.6).toFixed(2);
   /* specks falling out of the cloud into the sea, more near Africa (moved every frame by specks) */
   L.q=q;L.sc=sc;L.left=left;
@@ -247,21 +253,21 @@ const BANG={tour:"hazards",title:"The loudest sound",dur:24,
  init(L){L.zone=svgEl(L.svg,"path",{class:"gfx-zone"});L.ring=svgEl(L.svg,"path",{class:"gfx-wave"});L.ring2=svgEl(L.svg,"path",{class:"gfx-wave gfx-wave2"});
   L.hp=HEARD.map(h=>({h,e:svgEl(L.svg,"circle",{r:9,class:"gfx-heard"}),t:tag(L,"gfx-small")}));
   L.ear=svgEl(L.svg,"g",{class:"gfx-grab",tabindex:"0","aria-label":"A listener: drag it anywhere"});svgEl(L.ear,"circle",{r:24,class:"gfx-hit"});svgEl(L.ear,"g",{},EAR);L.earT=tag(L,"gfx-bub gfx-eart");
-  L.earLL=[80.27,13.08];/* Chennai, to start */L.hint=tag(L,"gfx-hint");L.anti=tag(L,"gfx-small");
+  L.earLL=[79.86,6.93];/* Colombo, Sri Lanka, to start */L.hint=tag(L,"gfx-hint");L.anti=tag(L,"gfx-small");
   draggable(L,L.ear,(x,y)=>{const ll=unproj(L,x,y);if(ll){L.earLL=ll;L.moved=1}})},
  tick(L,dt){if(L.playing){L.u=Math.min(1,L.u+dt/this.dur);if(L.u>=1){L.playing=false;playBtn(L)}L.dirty=1}},
  draw(L){const hrs=L.u*KRK_H,r=hrs*SND_KMH,deg=r/111.195;
   const circ=a=>{if(a<=.05||a>=179.95)return"";try{const c=d3.geoCircle().center(KRK).radius(a).precision(2)();return pathOf(L,c.coordinates[0])}catch(e){return""}};
   L.zone.setAttribute("d",circ(HEARD_KM/111.195));
   const a=deg%360,a1=a<=180?a:360-a;L.ring.setAttribute("d",circ(a1));L.ring2.setAttribute("d","");
-  L.hp.forEach(o=>{const d=km(KRK,o.h.ll),t=d/SND_KMH,q=proj(L,o.h.ll),on=hrs>=t;place(o.e,q);o.e.classList.toggle("gfx-on",on);putTag(o.t,q,o.h.n+(on?" hears it · after about "+hm(t):""),16)});
+  L.hp.forEach(o=>{const d=km(KRK,o.h.ll),t=d/SND_KMH,q=proj(L,o.h.ll),on=hrs>=t;place(o.e,q);o.e.classList.toggle("gfx-on",on);putTag(o.t,on?q:null,"Heard after about "+hm(t),-40)});
   const ed=km(KRK,L.earLL),et=ed/SND_KMH,qe=proj(L,L.earLL),eon=hrs>=et;place(L.ear,qe);L.ear.classList.toggle("gfx-lit",eon);
-  putTag(L.earT,qe,fmt(ed)+" km away · the bang takes about "+hm(et)+(ed<=HEARD_KM?" · inside the range where people heard it":" · too far to hear, but barometers felt it"),-30);
+  putTag(L.earT,qe,fmt(ed)+" km away: the bang takes about "+hm(et)+"<small>"+(ed<=HEARD_KM?"close enough to be heard":"too far to hear, but barometers felt it")+"</small>",-22);
   putTag(L.hint,!L.moved&&qe?[qe[0]+26,qe[1]+12]:null,"Drag the ear anywhere");
   putTag(L.anti,hrs>=16.2?proj(L,[-74.58,6.1]):null,"The wave meets itself here",14);
   syncRange(L,hm(hrs));
   if(hrs<.01)say(L,"10:02 am, 27 August 1883","Krakatoa blows itself apart. The pressure wave leaves at about the speed of sound, around 1,200 km an hour.");
-  else if(hrs<4)say(L,"After "+hm(hrs),"The bang is "+fmt(r)+" km out. Inside the shaded circle, people heard it as distant gunfire.");
+  else if(hrs<4)say(L,"After "+hm(hrs),"The bang is "+fmt(r)+" km out. Inside the yellow dashed circle (4,800 km), people heard it as distant gunfire.");
   else if(hrs<16.2)say(L,"After "+hm(hrs),"Too faint to hear now, but the wave goes on, round the curve of the Earth.");
   else say(L,"After "+hm(hrs),"On the far side of the Earth the wave meets itself and heads back. Barometers around the world recorded it passing again and again for days.")}};
 
@@ -288,7 +294,7 @@ function bergSide(sc){const w=180,h=130,wl=40,k=Math.max(.35,sc),cx=w/2,P=(pts)=
  const above=P([[-26,0],[-14,-17],[-5,-13],[0,-35],[10,-19],[26,0]]),below=P([[-26,0],[-62,30],[-50,60],[-14,78],[30,70],[64,36],[26,0]]);
  return'<svg viewBox="0 0 '+w+' '+h+'" class="gfx-side" aria-hidden="true"><rect x="0" y="'+wl+'" width="'+w+'" height="'+(h-wl)+'" fill="#2f6fae"/><path d="'+below+'" fill="#bfe1f5" opacity=".9"/><path d="'+above+'" fill="#f7fcff" stroke="#2a6fa8" stroke-width="1.2"/>'+
   '<line x1="0" y1="'+wl+'" x2="'+w+'" y2="'+wl+'" stroke="#fff" stroke-width="1.5"/><text x="6" y="'+(wl-6)+'" class="gfx-svt">1/10 above</text><text x="6" y="'+(h-8)+'" class="gfx-svt gfx-svw">9/10 hidden below</text></svg>'}
-const BERGX={tour:"ice",title:"Icebergs and the Titanic",dur:24,
+const BERGX={tour:"ice",title:"Icebergs and the Titanic",dur:24,follow:1,
  tip:"Drag the iceberg from Greenland down Iceberg Alley, or press ▶. It melts as it goes.",
  card:()=>playerHTML("How far the iceberg has drifted","Greenland")+'<div class="gfx-sidebox"></div>',
  init(L){const R=iceR();L.trail=svgEl(L.svg,"path",{class:"gfx-icetrail"});L.ship=svgEl(L.svg,"g",{class:"gfx-noev"},SHIPI);L.shipT=tag(L,"gfx-small");
@@ -296,7 +302,7 @@ const BERGX={tour:"ice",title:"Icebergs and the Titanic",dur:24,
   L.bub=tag(L,"gfx-bub");L.hint=tag(L,"gfx-hint");L._sc=-1;
   draggable(L,L.b,(x,y)=>{L.u=nearestU(L,R,x,y,L.u)},()=>stopPlay(L))},
  tick(L,dt){if(L.playing){L.u=Math.min(1,L.u+dt/this.dur);if(L.u>=1){L.playing=false;playBtn(L)}L.dirty=1}},
- draw(L){const R=iceR(),s=at(R,L.u);let st=ISTOP[0];ISTOP.forEach(x=>{if(L.u>=R.uk[x.k]-.004)st=x});
+ draw(L){const R=iceR(),s=at(R,L.u);L.fll=s.ll;let st=ISTOP[0];ISTOP.forEach(x=>{if(L.u>=R.uk[x.k]-.004)st=x});
   L.trail.setAttribute("d",pathOf(L,R.P.slice(0,s.i+1).concat([s.ll])));
   const sc=1.15-.6*Math.pow(L.u,1.6),q=proj(L,s.ll);place(L.b,q);L.bI.setAttribute("transform","scale("+sc.toFixed(2)+")");
   const end=L.u>=R.uk[7]-.004,qs=proj(L,[-48.3,41.9]);place(L.ship,end?qs:null);putTag(L.shipT,end?qs:null,"Titanic",14);
@@ -320,9 +326,22 @@ function ensureCard(){if(!L||typeof ps==="undefined"||!ps||!ps.card)return;const
  try{if(c.querySelector(".gfx-play"))wirePlayer(L);if(D.wire)D.wire.call(D,L)}catch(e){console.error(e)}playBtn(L);L.dirty=1}
 function loop(){if(!L)return;raf=requestAnimationFrame(t=>{try{const G=g();const dt=Math.min(.1,(t-(lastT||t))/1000);lastT=t;if(L.D.tick)L.D.tick.call(L.D,L,dt);
   const hr=L.host.getBoundingClientRect(),cr=G.canvas?G.canvas.getBoundingClientRect():hr;L.ox=cr.left-hr.left;L.oy=cr.top-hr.top;
-  const key=(G.key?G.key():(G.rot||[]).join(",")+G.zoom)+"|"+hr.width+"x"+hr.height+"|"+cr.left+","+cr.top;
-  if(key!==L.key||L.dirty){L.key=key;L.dirty=0;L.svg.setAttribute("width",hr.width);L.svg.setAttribute("height",hr.height);L.D.draw.call(L.D,L)}}catch(e){console.error(e)}loop()})}
-setInterval(()=>{try{const D=activeDef();if(D){mount(D);ensureCard()}else if(L||document.querySelector(".gfx-ctl"))unmount()}catch(e){}},300);
+  let cb=null;try{const c=ps&&ps.card;if(c&&c.isConnected&&c.offsetWidth){const b=c.getBoundingClientRect();cb=[b.left-hr.left-6,b.top-hr.top-6,b.right-hr.left+6,b.bottom-hr.top+6]}}catch(e){}L.cb=cb;
+  const key=(G.key?G.key():(G.rot||[]).join(",")+G.zoom)+"|"+hr.width+"x"+hr.height+"|"+cr.left+","+cr.top+"|"+(cb?cb.map(Math.round).join(","):"");
+  if(key!==L.key||L.dirty){L.key=key;L.dirty=0;L.svg.setAttribute("width",hr.width);L.svg.setAttribute("height",hr.height);L.D.draw.call(L.D,L);follow(L)}}catch(e){console.error(e)}loop()})}
+/* turn the globe smoothly so a place shows beside the card, not under it */
+function turnTo(L,ll,zoom){const G=g();if(!G||!G.lookAt||G._flat)return;let side=0;try{const c=ps.card.getBoundingClientRect(),h=L.host.getBoundingClientRect();side=(c.left+c.right)/2>(h.left+h.right)/2?1:-1}catch(e){}
+ glide(L,[ll[0]+side*28,ll[1]*.7],zoom||G.zoom)}
+function glide(L,t,z1){const G=g();const r0=[-G.rot[0],-G.rot[1]],z0=G.zoom,T0=performance.now(),ip=d3.geoInterpolate(r0,[t[0],t[1]]),D=L.D;L.gliding=T0;
+ const step=()=>{if(!L||L.D!==D||!L.el.isConnected)return;const f=Math.min(1,(performance.now()-T0)/1100),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2,c=ip(e);try{G.lookAt(c[0],c[1],z0+(z1-z0)*e)}catch(err){L.gliding=0;return}L.dirty=1;if(f<1)requestAnimationFrame(step);else L.gliding=0};step()}
+/* a marker that travels under the card (or round the back of the globe) brings the globe round with it */
+function follow(L){if(!L.D.follow||!L.fll||L.gliding||!L.looked&&L.D.look)return;if(performance.now()-(L.lastFollow||0)<1500)return;if(proj(L,L.fll))return;
+ L.lastFollow=performance.now();turnTo(L,L.fll)}
+/* a stop whose action happens off to one side (under the card) turns the globe there once, after the tour's own move has
+   settled; if the reader has already turned the globe themselves, it is left alone */
+function look(){if(!L||!L.D.look||L.looked)return;const G=g();if(!G||!G.lookAt)return;const k=(G.rot||[]).map(v=>v.toFixed(2)).join(",")+"|"+(+G.zoom).toFixed(2);
+ if(k!==L.lastRot){L.lastRot=k;L.still=0;return}if(++L.still<3)return;L.looked=1;glide(L,L.D.look,L.D.look[2])}
+setInterval(()=>{try{const D=activeDef();if(D){mount(D);ensureCard();look()}else if(L||document.querySelector(".gfx-ctl"))unmount()}catch(e){}},300);
 addEventListener("resize",()=>{if(L)L.dirty=1});
 
 {const s=document.createElement("style");s.textContent=`
@@ -349,7 +368,6 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 @keyframes gfxPulse{50%{stroke-width:7;stroke:#ffd166}}
 .gfx-vol.gfx-shake>g{animation:gfxShake .45s}
 @keyframes gfxShake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.gfx-join{fill:none;stroke:#ff8a2a;stroke-width:3.5;stroke-linecap:round;opacity:.9}
 .gfx-voltag{font-size:13px;background:#7a3b22}
 .gfx-fb{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#13294b;font-weight:900;font-size:15px;padding:6px 12px;border-radius:10px;box-shadow:0 3px 12px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
 .gfx-fb.gfx-ok{background:#1f8a4c;color:#fff}.gfx-fb.gfx-no{background:#c2364f;color:#fff}
@@ -359,11 +377,11 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .gfx-gate{fill:none;stroke:rgba(255,255,255,.55);stroke-width:2;stroke-dasharray:3 4}.gfx-gate.gfx-on{stroke:#ffd166;stroke-width:3;stroke-dasharray:none}
 .gfx-gatet{transform:translate(-50%,-100%)}
 .gfx-amz{background:#1f7a3c}
-.gfx-zone{fill:rgba(255,209,102,.16);stroke:rgba(255,209,102,.8);stroke-width:1.5;stroke-dasharray:5 4}
+.gfx-zone{fill:none;stroke:#ffd166;stroke-width:2.5;stroke-dasharray:6 5}
 .gfx-wave{fill:none;stroke:#ff5a36;stroke-width:4;stroke-linejoin:round;filter:drop-shadow(0 0 4px rgba(255,90,54,.8))}
 .gfx-heard{fill:rgba(255,255,255,.4);stroke:#fff;stroke-width:2}.gfx-heard.gfx-on{fill:#ff5a36;stroke:#ffd166;stroke-width:3}
 .gfx-ear.gfx-lit circle:first-child,.gfx-grab.gfx-lit>g>circle{fill:#ff5a36}
-.gfx-eart{font-size:13px;max-width:none}
+.gfx-eart{font-size:13px;text-align:center}.gfx-eart small{display:block;font-weight:700;font-size:11.5px;color:#ffd166}
 .gfx-icetrail{fill:none;stroke:rgba(190,230,255,.95);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .gfx-ctl{margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:rgba(19,41,75,.06);border:1px solid rgba(19,41,75,.12)}
 .gfx-do{font-weight:800;font-size:14px;line-height:1.35;color:#9a4a16;margin-bottom:8px}
@@ -385,5 +403,5 @@ body.dark-theme .gfx-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,
 body.dark-theme .gfx-do,body.dark-theme .gfx-read{color:#ffb27a}
 body.dark-theme .gfx-slot{background:rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
 body.dark-theme .gfx-btn{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}`;document.head.appendChild(s)}
-window.gfInteractPhys={set:u=>{if(L){L.u=Math.max(0,Math.min(1,u));L.dirty=1}},get:()=>L?{title:L.D.title,u:L.u}:null,tap:i=>{if(L&&L.D.tap)L.D.tap(L,i)}};
+window.gfInteractPhys={v:4,set:u=>{if(L){L.u=Math.max(0,Math.min(1,u));L.dirty=1}},get:()=>L?{title:L.D.title,u:L.u}:null,tap:i=>{if(L&&L.D.tap)L.D.tap(L,i)}};
 })();
