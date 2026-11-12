@@ -87,20 +87,30 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
 /* 6. Mountain-range names sit on the range itself, along its length, and steep ones read upwards (bottom to top, like the
    Appalachians), never downwards. Position and slant come from each range's mapped shape. */
 (function(){if(typeof globeOverlays!=="function"||typeof LANDFORMS==="undefined")return;
- const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\b(mountains|mts|mountain|range|ranges|the)\b/g,"").replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
+ const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\b(mountains|mts|mountain|range|ranges|peninsula|the)\b/g,"").replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
  const geomOf=g=>{if(!g||g.t!=="poly")return null;const deep=Array.isArray(g.c[0]&&g.c[0][0]&&g.c[0][0][0]);return{type:"MultiPolygon",coordinates:deep?g.c:g.c.map(r=>[r])}};
- let SH=null;function shapes(){if(SH)return SH;SH={};LANDFORMS.items.forEach(o=>{if(o.cat!=="ranges")return;const g=geomOf(o.geom);if(g)SH[norm(o.name)]=g});return SH}
+ /* ranges, deserts and peninsulas each have a mapped shape (keyed by category so the Atacama desert and a range of the same
+    word stay apart) */
+ const SC={ranges:"mountains",deserts:"deserts",peninsulas:"peninsulas"};
+ let SH=null;function shapes(){if(SH)return SH;SH={};LANDFORMS.items.forEach(o=>{const c=SC[o.cat];if(!c)return;const g=geomOf(o.geom);if(g)(SH[c]=SH[c]||{})[norm(o.name)]=g});return SH}
  const R=d3.geoRobinson();
  function place(g){const pts=[];g.coordinates.forEach(P=>P[0].forEach(c=>{const q=R(c);if(q)pts.push([q,c])}));if(pts.length<3)return null;
   let mx=0,my=0;pts.forEach(([q])=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(([q])=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
   let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;/* -90..90, screen y down */
   /* an elongated range gets its slant; a round one stays level */const l1=(sxx+syy)/2+Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l2=(sxx+syy)/2-Math.sqrt(((sxx-syy)/2)**2+sxy*sxy);if(l1<2.2*Math.max(l2,1e-9))a=0;
-  if(a>50)a-=180;/* steep and falling to the right: turn it to read upwards */
-  /* the centre of the shape, moved onto the range if the centre falls outside it (a curved range) */
+  /* steep names read from top to bottom: a steep slant rising to the right is turned round to read downwards */
+  if(a<-50)a+=180;
+  /* the middle of the shape along its length: the points halfway along its long axis (a curved range such as the Andes has
+     its centre of mass off the range, out to one side) */
+  /* (the halfway point of its length, and the middle of its width there: an average of the outline's points would be pulled
+     towards wherever the outline is most detailed, as the fjords of Patagonia pull the Andes south) */
+  const th=.5*Math.atan2(2*sxy,sxx-syy),ux=Math.cos(th),uy=Math.sin(th);let t0=1e18,t1=-1e18;pts.forEach(([q])=>{const t=(q[0]-mx)*ux+(q[1]-my)*uy;if(t<t0)t0=t;if(t>t1)t1=t});
+  const tm=(t0+t1)/2,span=(t1-t0)||1;let w0=1e18,w1=-1e18;pts.forEach(([q])=>{const t=(q[0]-mx)*ux+(q[1]-my)*uy;if(Math.abs(t-tm)<span*.06){const w=-(q[0]-mx)*uy+(q[1]-my)*ux;if(w<w0)w0=w;if(w>w1)w1=w}});
+  if(w1>=w0){const wm=(w0+w1)/2,X=mx+tm*ux-wm*uy,Y=my+tm*uy+wm*ux;mx=X;my=Y}
   let ll=R.invert([mx,my]);if(ll&&!d3.geoContains(g,ll)){let best=null,bd=1e18;pts.forEach(([q,c])=>{const d=(q[0]-mx)**2+(q[1]-my)**2;if(d<bd){bd=d;best=c}});ll=best}
   return ll?{ll,ang:a}:null}
- const _go=globeOverlays;globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.landforms&&O.landforms.mountains&&!O._gfRng){O._gfRng=1;const S=shapes();
-  O.landforms.mountains.forEach(L=>{const g=S[norm(L.n)];if(!g)return;const p=place(g);if(p){L.ll=p.ll;L.ang=p.ang}})}}catch(e){console.error(e)}return O}})();
+ const _go=globeOverlays;globeOverlays=function(){const O=_go.apply(this,arguments);try{if(O&&O.landforms&&!O._gfRng){O._gfRng=1;const S=shapes();
+  Object.keys(S).forEach(cat=>(O.landforms[cat]||[]).forEach(L=>{const g=S[cat][norm(L.n)];if(!g)return;const p=place(g);if(p){L.ll=p.ll;L.ang=p.ang}}))}}catch(e){console.error(e)}return O}})();
 /* 7. The Caspian Sea's hover outline follows its real shore, Garabogaz Bay included (Natural Earth 1:10m coast, public domain) */
 (function(){if(typeof GlobeView==="undefined")return;let C=null;fetch("textures/CASPIAN.json").then(r=>r.json()).then(g=>{try{if(d3.geoArea(g)>2*Math.PI)g.coordinates[0].reverse()}catch(e){}C={type:"Feature",properties:{n:"Caspian Sea"},geometry:g}}).catch(()=>{});
  const isCasp=W=>{try{if(!W||W===C)return false;const c=d3.geoCentroid(W);return c[0]>46&&c[0]<55&&c[1]>36&&c[1]<48&&d3.geoArea(W)>.004}catch(e){return false}};
@@ -140,3 +150,18 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  const TITLES={resources:"Energy and resources",hazards:"Natural hazards",plates:"Plate tectonics",transport:"Transport and trade",seas:"Seas & oceans",climate:"The world’s climates",geo:"The world’s best surprises",time:"Time zones"};
  function apply(){try{for(const k in ADD){const T=typeof PS_TOURS!=="undefined"&&PS_TOURS[k];if(!T||!T.steps||!T.steps[0]||T.steps[0].title!==TITLES[k])continue;for(const i in ADD[k]){const S=T.steps[+i];if(S&&!S.on)S.on=ADD[k][i]}}}catch(e){}}
  apply();addEventListener("load",()=>setTimeout(apply,1500))})();
+/* 7. Sea names follow their sea: a long, narrow sea or gulf (the Gulf of California, the Red Sea, the Persian Gulf) has its
+   name slanted along its length, worked out from the sea's own outline; a round sea keeps a level name. Steep names read
+   from top to bottom, as the landform names do. */
+(function(){if(typeof GlobeView==="undefined"||typeof ALLMAPS_MARINE==="undefined"||typeof globeParsePath!=="function")return;
+ const ANG=new Map();
+ ALLMAPS_MARINE.forEach(r=>{try{const n=r[0],d=r[4];if(!n||!d||ANG.has(n))return;const pts=globeParsePath(d).flat();if(pts.length<6)return;
+  let mx=0,my=0;pts.forEach(q=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(q=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
+  const h=(sxx+syy)/2,r2=Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l1=h+r2,l2=h-r2;let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;
+  if(l1<3*Math.max(l2,1e-9)||Math.abs(a)<12)a=0;if(a<-50)a+=180;ANG.set(n,a)}catch(e){}});
+ const P=GlobeView.prototype,_s=P._seaLabels;if(!_s)return;
+ P._seaLabels=function(ctx,p,O,show,onRaster){if(this._flat||!O||!O.seas)return _s.apply(this,arguments);
+  const zr=.7/this.zoom,darkSea=!onRaster&&!document.body.classList.contains("light-theme"),ink=darkSea?"rgba(178,212,240,0.92)":"rgba(28,78,128,0.85)",halo=darkSea?"rgba(10,20,45,0.75)":"rgba(255,255,255,0.35)",k=this.ls(),sizes=[7.6*k,6*k,5.2*k,4.8*k];
+  O.seas.forEach(S=>{const tier=SEA_TIERS[Math.min(S.tier,3)];if(zr>tier.show||!show(S.ll,1.2))return;const xy=p(S.ll);if(!xy)return;const fs=sizes[Math.min(S.tier,3)],font="italic 500 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
+   const tw=ctx.measureText(S.n).width,a=(ANG.get(S.n)||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),hw=(tw*c+fs*s)/2,hh=(tw*s+fs*c)/2;
+   if(!this._fits([xy[0]-hw,xy[1]-hh,xy[0]+hw,xy[1]+hh]))return;this._text(ctx,S.n,xy[0],xy[1],ink,halo,font,a||undefined)})}})();

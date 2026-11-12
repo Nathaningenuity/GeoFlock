@@ -323,7 +323,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
    const fs=Math.max(5.6*ls,Math.min(12.5,5*ls+Math.pow(ext,.5)*.18));const font="italic 700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
    const glyph=ctx.measureText(txt).width;if(glyph>ext*1.35&&ext<120)return;/* not yet room for it */
    let sp=n>1?(ext*.4-glyph)/(n-1):0;sp=Math.max(fs*.04,Math.min(sp,fs*.55));const tw=glyph+sp*(n-1);
-   const a0=L.n in AFIX?AFIX[L.n]:(L.ang||0),ang=Math.abs(a0)>30?a0*Math.PI/180:0;const box=ang?[xy[0]-fs,xy[1]-tw/2,xy[0]+fs,xy[1]+tw/2]:[xy[0]-tw/2,xy[1]-fs/2,xy[0]+tw/2,xy[1]+fs/2];if(!fits(box))return;
+   let a0=L.n in AFIX?AFIX[L.n]:(L.ang||0);/* every steep name reads from top to bottom */a0=((a0+90)%180+180)%180-90;if(a0<-50)a0+=180;const ang=Math.abs(a0)>30?a0*Math.PI/180:0;const box=ang?[xy[0]-fs,xy[1]-tw/2,xy[0]+fs,xy[1]+tw/2]:[xy[0]-tw/2,xy[1]-fs/2,xy[0]+tw/2,xy[1]+fs/2];if(!fits(box))return;
    ctx.save();ctx.globalAlpha=fs>10?.85:1;try{ctx.letterSpacing=sp.toFixed(1)+"px"}catch(e){}this._text(ctx,txt,xy[0]+(ctx.letterSpacing?sp/2:0),xy[1],COL[cat]||"#5a4630","rgba(255,255,255,0.62)",font,ang);ctx.restore()})}catch(e){console.error(e)}
   /* peaks as before */
   return _lf.call(this,ctx,p,Object.assign({},O,{landforms:{peaks:(O.landforms||{}).peaks||[]}}),show,cats)}})();

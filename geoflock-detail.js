@@ -268,7 +268,10 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
       sharp sea lies inside the map's rough land, which is about where the picture has land, it is filled with the sea colour */
    const land=(g._base||[]).filter(f=>f&&f.geometry);if(land.length){const LP=d3.geoPath(g.projection(),ctx);
     each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.clip("evenodd");
-     ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}}}catch(e){console.error(e)}}
+     ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}
+   /* ...and the other way: land on the sharp coast that the picture shows as sea (fjord walls, headlands, small islands) is
+      painted in the picture's own land colour from just inland of it */
+   try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?((window.gfLakeColor&&gfLakeColor())||(!elev&&seaC)||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
@@ -397,6 +400,38 @@ let HM=null,HL=null;
 /* fill maps: each country's colour grown outward (by about how far its rough shape can be off), kept only to land of the sharp
    coast that no rough shape covers. Drawn over the gaps only. */
 let HF=null;
+/* the relief picture read once into memory (2048 × 1024, longitude/latitude), to look up its colour anywhere */
+let PIC=null;
+function picOf(key){try{const im=typeof globeImages==="function"?globeImages(key,()=>{}):null;if(!im||im.length!==2)return null;if(PIC&&PIC.a===im[0]&&PIC.b===im[1])return PIC;
+ const c=document.createElement("canvas");c.width=2048;c.height=1024;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im[0],0,0,1024,1024);x.drawImage(im[1],1024,0,1024,1024);
+ PIC={a:im[0],b:im[1],d:x.getImageData(0,0,2048,1024).data,n:0};return PIC}catch(e){return null}}
+const picAt=(P,lo,la)=>{const x=Math.max(0,Math.min(2047,Math.floor((((lo+180)%360+360)%360)/360*2048))),y=Math.max(0,Math.min(1023,Math.floor((90-la)/180*1024))),o=(y*2048+x)*4;return[P.d[o],P.d[o+1],P.d[o+2]]};
+const seaish=p=>p[2]>p[0]+25&&p[2]>=p[1];
+/* each stretch of coast: the median colour of the picture's land 8–16 km inland of it (whichever side is land there) */
+function landCol(P,r,a,b){const R=[],G=[],B=[];const n=r.length/3,step=Math.max(1,Math.floor((b-a)/5));
+ for(let k=a;k<b;k+=step){const i=k*3,j=((k+1)%n)*3;const dx=r[j]-r[i],dy=r[j+1]-r[i+1],L=Math.hypot(dx,dy)||1,cl=Math.cos(r[i+1]*Math.PI/180)||1;
+  for(const km of[8,12,16])for(const sg of[1,-1]){const dd=km/111.2,lo=r[i]-dy/L*dd*sg/cl,la=r[i+1]+dx/L*dd*sg;const p=picAt(P,lo,la);if(!seaish(p)){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}
+ if(R.length<3)return null;const md=v=>Math.round(v.sort((x,y)=>x-y)[v.length>>1]);return"rgb("+md(R)+","+md(G)+","+md(B)+")"}
+let HLD=null;
+function landOut(g,ctx,s,pj,I,land,each){const P=picOf(I.texKey);if(!P||!land.length)return;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!HLD)HLD=document.createElement("canvas");if(HLD.width!==W||HLD.height!==H){HLD.width=W;HLD.height=H}
+ const f=HLD.getContext("2d"),T=ctx.getTransform();f.setTransform(1,0,0,1,0,0);f.globalCompositeOperation="source-over";f.clearRect(0,0,W,H);f.setTransform(T);
+ const Wb=Math.max(4,Math.min(60,bandPx(pj,s)));let any=false;
+ s.tiles.forEach(t=>{const d=t.d;if(!d||!d.ocean.length)return;f.save();if(!boxClip(f,pj,t)){f.restore();return}
+  /* the tile's land: its square less its sea */const landPath=()=>{f.beginPath();boxPath(f,pj,t);d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(f,pj,r,true)))};
+  const cols=new Map(),all=[];d.ocean.forEach(o=>{if(isLakeSea(o))return;if(!o._lc||o._lc.P!==P)o._lc={P,m:new Map()};o.rings.forEach((r,ri)=>{const n=r.length/3;for(let c0=0;c0<n;c0+=CH){const id=ri+":"+c0;let c=o._lc.m.get(id);
+   if(c===undefined){c=landCol(P,r,c0,Math.min(n,c0+CH+1));o._lc.m.set(id,c)}if(!c)continue;all.push(c);let A=cols.get(c);if(!A)cols.set(c,A=[]);A.push([r,c0,Math.min(n,c0+CH+1)])}})});
+  if(!all.length){f.restore();return}any=true;
+  /* one colour for the tile's land (the commonest), then each stretch of coast in its own colour, softly */
+  const cnt=new Map();all.forEach(c=>cnt.set(c,(cnt.get(c)||0)+1));const top=[...cnt.entries()].sort((x,y)=>y[1]-x[1])[0][0];
+  landPath();f.save();f.clip("evenodd");f.fillStyle=top;f.fill("evenodd");f.lineWidth=Wb*2;f.lineJoin=f.lineCap="round";try{f.filter="blur("+Math.round(Wb/3)+"px)"}catch(e){}
+  cols.forEach((L,c)=>{f.strokeStyle=c;f.beginPath();L.forEach(([r,a,b])=>edgeSpan(f,pj,r,a,b));f.stroke()});f.restore();f.restore()});
+ if(!any)return;
+ /* kept only where the map's rough land is not (the picture shows land there already) */
+ f.globalCompositeOperation="destination-out";f.fillStyle="#000";const LP=d3.geoPath(g.projection(),f);f.beginPath();land.forEach(F=>LP(F));f.fill();f.globalCompositeOperation="source-over";
+ /* as soft as the picture round it: blurred by about half a pixel of the picture at this zoom, so a filled headland is no
+    sharper than the land beside it */
+ let pp=2;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+180/4096);if(a&&b)pp=Math.hypot(a[0]-b[0],a[1]-b[1])*T.a}catch(e){}
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);try{ctx.filter="blur("+Math.max(0,Math.min(14,pp*.5)).toFixed(1)+"px)"}catch(e){}ctx.drawImage(HLD,0,0);ctx.restore()}
 function fillOut(g,ctx,s,pj){const fill=g.cfg&&g.cfg.fill,list=g._base;if(!fill||!list||!list.length)return;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return;
  if(!HF)HF=document.createElement("canvas");if(HF.width!==W||HF.height!==H){HF.width=W;HF.height=H}const f=HF.getContext("2d"),T=ctx.getTransform(),P=d3.geoPath(g.projection(),f);
  let band=16;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.18);if(a&&b)band=Math.max(8,Math.min(6000,Math.hypot(a[0]-b[0],a[1]-b[1])*2))}catch(e){}
