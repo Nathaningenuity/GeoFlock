@@ -6,7 +6,7 @@
    The globe's WebGL shader multiplies it in for the part in view (index.html, GlobeGL.draw → gfHRPatch). */
 (function(){
 "use strict";
-const BASE="textures/nehr/",V="?v=1",PPD_BASE=4096/180,MAXC=8;
+const BASE="textures/nehr/",V="?v=1",PPD_BASE=4096/180,MAXC=7;
 let IDX=null,HAVE=null;fetch(BASE+"index.json"+V).then(r=>r.json()).then(j=>{IDX=j;HAVE=new Set(j.have.map(a=>a[0]+"_"+a[1]));req()}).catch(()=>{});
 const IMG=new Map();
 function img(k){if(IMG.has(k)){const v=IMG.get(k);IMG.delete(k);IMG.set(k,v);return v}
@@ -28,11 +28,11 @@ async function build(gv,o){if(!IDX)return;busy=true;try{const T=IDX.tile,D=T/IDX
  const cv=document.createElement("canvas");cv.width=cols*T;cv.height=rows*T;const x=cv.getContext("2d");x.fillStyle="rgb(128,128,128)";x.fillRect(0,0,cv.width,cv.height);
  ks.forEach(([i,j],n)=>{if(ims[n])x.drawImage(ims[n],i*T,j*T)});
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=G.createTexture();G.activeTexture(G.TEXTURE4);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
- G.texImage2D(G.TEXTURE_2D,0,G.RGB,G.RGB,G.UNSIGNED_BYTE,cv);[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_S,G.CLAMP_TO_EDGE);G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_T,G.CLAMP_TO_EDGE);
+ G.texImage2D(G.TEXTURE_2D,0,G.RGBA,G.RGBA,G.UNSIGNED_BYTE,cv);[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_S,G.CLAMP_TO_EDGE);G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_T,G.CLAMP_TO_EDGE);
  G.activeTexture(G.TEXTURE0);if(P&&P.tex&&P.gl===G)try{G.deleteTexture(P.tex)}catch(e){}
  P={key,gl:G,tex:t,bb:[c0*D-180,90-r0*D,cols*D,rows*D],box:[c0*D-180,c1*D-180+D,90-r1*D-D,90-r0*D]};busy=false;req()}catch(e){console.error(e);busy=false}}
 /* how strongly to add the detail: from when the relief picture starts to be magnified, full a little after */
-function strength(o){const ppd=o.s*Math.PI/180;return Math.max(0,Math.min(1,(ppd/PPD_BASE-.6)/.5))}
+function strength(o){const ppd=o.s*Math.PI/180;return Math.max(0,Math.min(1,(ppd/PPD_BASE-.75)/.5))}
 function inside(gv){if(!P)return false;const v=viewBox(gv);if(!v)return false;const l=((v.l0-P.box[0])%360+360)%360,r=l+(v.l1-v.l0);return l>=0&&r<=P.box[1]-P.box[0]+1e-6&&v.b0>=P.box[2]-1e-6&&v.b1<=P.box[3]+1e-6}
 window.gfHRPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!isRelief(o.key)||!IDX)return null;const a=strength(o);if(a<=0)return null;
  if(P&&P.gl!==G.gl)P=null;
