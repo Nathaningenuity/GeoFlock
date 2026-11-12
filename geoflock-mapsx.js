@@ -155,13 +155,21 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
    from top to bottom, as the landform names do. */
 (function(){if(typeof GlobeView==="undefined"||typeof ALLMAPS_MARINE==="undefined"||typeof globeParsePath!=="function")return;
  const ANG=new Map();
+ /* how big each sea's outline is on the map (its longest side, in map units out of 2000 across): a long sea such as the Gulf
+    of California shows its name from about the zoom where it is a few dozen pixels long, whatever its tier */
+ const EXT=new Map();
  ALLMAPS_MARINE.forEach(r=>{try{const n=r[0],d=r[4];if(!n||!d||ANG.has(n))return;const pts=globeParsePath(d).flat();if(pts.length<6)return;
+  {let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(q=>{x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])});EXT.set(n,Math.hypot(x1-x0,y1-y0))}
   let mx=0,my=0;pts.forEach(q=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(q=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
   const h=(sxx+syy)/2,r2=Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l1=h+r2,l2=h-r2;let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;
   if(l1<3*Math.max(l2,1e-9)||Math.abs(a)<12)a=0;if(a<-50)a+=180;ANG.set(n,a)}catch(e){}});
  const P=GlobeView.prototype,_s=P._seaLabels;if(!_s)return;
  P._seaLabels=function(ctx,p,O,show,onRaster){if(this._flat||!O||!O.seas)return _s.apply(this,arguments);
   const zr=.7/this.zoom,darkSea=!onRaster&&!document.body.classList.contains("light-theme"),ink=darkSea?"rgba(178,212,240,0.92)":"rgba(28,78,128,0.85)",halo=darkSea?"rgba(10,20,45,0.75)":"rgba(255,255,255,0.35)",k=this.ls(),sizes=[7.6*k,6*k,5.2*k,4.8*k];
-  O.seas.forEach(S=>{const tier=SEA_TIERS[Math.min(S.tier,3)];if(zr>tier.show||!show(S.ll,1.2))return;const xy=p(S.ll);if(!xy)return;const fs=sizes[Math.min(S.tier,3)],font="italic 500 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
+  /* bigger seas first, so a gulf is not crowded out by a smaller bay; a sea shows once its outline is about 70 px across on screen */
+  const kpx=this.size().r*this.zoom/318.31;
+  O.seas.slice().sort((a,b)=>(EXT.get(b.n)||0)-(EXT.get(a.n)||0)).forEach(S=>{const tier=SEA_TIERS[Math.min(S.tier,3)],ext=(EXT.get(S.n)||0)*kpx;if(zr>tier.show&&ext<70)return;if(!show(S.ll,1.2))return;const xy=p(S.ll);if(!xy)return;
+   /* the letters grow with the sea on screen, from its tier's size up to about twice that */
+   const fs=Math.min(sizes[Math.min(S.tier,3)]*2.1,Math.max(sizes[Math.min(S.tier,3)],sizes[1]*.9,ext/20*k)),font="italic 500 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
    const tw=ctx.measureText(S.n).width,a=(ANG.get(S.n)||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),hw=(tw*c+fs*s)/2,hh=(tw*s+fs*c)/2;
    if(!this._fits([xy[0]-hw,xy[1]-hh,xy[0]+hw,xy[1]+hh]))return;this._text(ctx,S.n,xy[0],xy[1],ink,halo,font,a||undefined)})}})();
