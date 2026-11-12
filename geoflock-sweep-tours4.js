@@ -414,3 +414,9 @@ setInterval(wrapSync,2000);
 let n=0;const t=setInterval(()=>{if((typeof psGo==="function"&&psGo._gfM||n>30)&&wrapGo()||++n>80)clearInterval(t)},500);
 window.gfSweepT4=P;
 })();
+/* "America's lucky geography": the Mississippi, Missouri and Ohio drawn in blue, as the card says, from the map's own rivers
+   (the Rivers switch can be off, as on the satellite picture) */
+(function(){let n=0;const t=setInterval(()=>{try{if(++n>60){clearInterval(t);return}if(typeof PS_TOURS==="undefined"||!PS_TOURS.bprisoners||typeof globeOverlays!=="function")return;
+ const st=PS_TOURS.bprisoners.steps.find(s=>/lucky geography/.test(s.title));if(!st){clearInterval(t);return}const R=(globeOverlays()||{}).rivers;if(!R||!R.length)return;clearInterval(t);
+ const want=/^(Mississippi|Missouri|Ohio)( River)?$/i,lines=[];R.forEach(r=>{if(!want.test(r.n||""))return;(r.coordinates||[]).forEach(c=>{if(c&&c.length>1)lines.push({coords:c,kind:"river"})})});
+ if(lines.length)st.lines=(st.lines||[]).filter(l=>l.kind!=="river").concat(lines)}catch(e){}},500)})();
