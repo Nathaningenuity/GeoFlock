@@ -11,6 +11,8 @@ function tile(k){if(TILES.has(k))return TILES.get(k);
  const pr=new Promise(res=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);
    const d=g.getImageData(0,0,256,256).data,h=new Float32Array(65536);for(let i=0;i<65536;i++)h[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768;res(h)}catch(e){res(null)}};im.onerror=()=>res(null);
   im.src="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"+k+".png"});TILES.set(k,pr);while(TILES.size>160)TILES.delete(TILES.keys().next().value);return pr}
+const hex=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
+const LANDS=typeof ELEV_LAND_STOPS!=="undefined"?ELEV_LAND_STOPS:[[0,"#5f9f72"],[7e3,"#ffffff"]],SEAS=typeof ELEV_SEA_STOPS!=="undefined"?ELEV_SEA_STOPS:[[-11e3,"#183660"],[0,"#bedaee"]];
 let PIC=null;
 function picOf(key){try{const im=globeImages(key,()=>{});if(!im||!im.length)return null;const a=im[0];if(PIC&&PIC.a===a)return PIC;const c=document.createElement("canvas");c.width=2048;c.height=1024;const x=c.getContext("2d",{willReadFrequently:true});
  if(im.length===2){x.drawImage(im[0],0,0,1024,1024);x.drawImage(im[1],1024,0,1024,1024)}else x.drawImage(a,0,0,2048,1024);PIC={a,d:x.getImageData(0,0,2048,1024).data};return PIC}catch(e){return null}}
@@ -33,21 +35,17 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
    const x=Math.min(255,Math.max(0,px-tx*256-.5)),y=Math.min(255,Math.max(0,py-ty*256-.5)),x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(255,x0+1),y1=Math.min(255,y0+1),fx=x-x0,fy=y-y0;
    H[j*nx+i]=(T[y0*256+x0]*(1-fx)+T[y0*256+x1]*fx)*(1-fy)+(T[y1*256+x0]*(1-fx)+T[y1*256+x1]*fx)*fy;ok++}}
  if(ok<nx*ny*.5){busy=false;return}
- /* the picture's colour for each height: heights smoothed to the picture's own size (about 10 km), binned; the median colour of
-    each bin (its shading averages out); bins with too few pixels are filled from their neighbours */
- const r=Math.max(1,Math.round((360/4096)/dlon/2)),Hb=blur(H,nx,ny,r);
- const bin=h=>h>=0?Math.min(159,Math.floor(h/50)):160+Math.min(119,Math.floor(-h/100)),NB=280,S=new Float64Array(NB*3),C=new Float64Array(NB);
- for(let j=0;j<ny;j+=2)for(let i=0;i<nx;i+=2){const k=j*nx+i,h=Hb[k];if(!isFinite(h))continue;const o=picAt(PI,v.lon0+(i+.5)*dlon,v.lat1-(j+.5)*dlat),bb=bin(h);S[bb*3]+=PI.d[o];S[bb*3+1]+=PI.d[o+1];S[bb*3+2]+=PI.d[o+2];C[bb]++}
- const R=new Float32Array(NB*3);const fillRamp=(a,bE)=>{const idx=[];for(let k=a;k<bE;k++)if(C[k]>=4)idx.push(k);if(!idx.length)return false;for(let k=a;k<bE;k++){let lo=null,hi=null;for(const q of idx){if(q<=k)lo=q;if(q>=k&&hi==null)hi=q}
-   const pick=q=>[S[q*3]/C[q],S[q*3+1]/C[q],S[q*3+2]/C[q]];let c;if(lo!=null&&hi!=null&&hi!==lo){const t=(k-lo)/(hi-lo),A=pick(lo),B=pick(hi);c=A.map((x,m)=>x+(B[m]-x)*t)}else c=pick(lo!=null?lo:hi);R[k*3]=c[0];R[k*3+1]=c[1];R[k*3+2]=c[2]}return true};
- const hasL=fillRamp(0,160),hasS=fillRamp(160,NB);
+ /* the Elevation map's own colours for each height (its legend's stops, the same as the zoomed-out picture: tools/build-elev.py);
+    sea where the height is below 0 and the picture shows sea (land below sea level, as round the Caspian, stays land) */
+ const stops=(S,h)=>{let i=1;while(i<S.length-1&&S[i][0]<h)i++;const a=S[i-1],b=S[i],t=Math.max(0,Math.min(1,(h-a[0])/(b[0]-a[0]))),A=hex(a[1]),B=hex(b[1]);return[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t]};
+ const seaAt=(i,j)=>{const o=picAt(PI,v.lon0+(i+.5)*dlon,v.lat1-(j+.5)*dlat);return PI.d[o+2]>PI.d[o]+25};
  /* shading: light from the north-west, about as strong as the picture's */
  const mx=dlon*111320*Math.cos(midLat*Math.PI/180),my=dlat*110540,L=[-.5,.5,.707];
  const out=new Uint8ClampedArray(nx*ny*4);
- for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=h>=0;if(land?!hasL:!hasS)continue;
+ for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=h>=0||!seaAt(i,j);
   const hx=(H[j*nx+Math.min(nx-1,i+1)]-H[j*nx+Math.max(0,i-1)])/(2*mx),hy=(H[Math.max(0,j-1)*nx+i]-H[Math.min(ny-1,j+1)*nx+i])/(2*my);
   const ex=land?1.6:.6,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.6)*(dot-L[2])));
-  const bb=bin(h);out[k*4]=R[bb*3]*sh;out[k*4+1]=R[bb*3+1]*sh;out[k*4+2]=R[bb*3+2]*sh;out[k*4+3]=255}
+  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=255}
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=P&&P.gl===G?P.tex:G.createTexture();G.activeTexture(G.TEXTURE6);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
  G.texImage2D(G.TEXTURE_2D,0,G.RGBA,nx,ny,0,G.RGBA,G.UNSIGNED_BYTE,new Uint8Array(out.buffer));[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));
  G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_S,G.CLAMP_TO_EDGE);G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_T,G.CLAMP_TO_EDGE);G.activeTexture(G.TEXTURE0);
@@ -57,6 +55,10 @@ function blur(H,nx,ny,r){const T=new Float32Array(nx*ny),O=new Float32Array(nx*n
  for(let i=0;i<nx;i++){let s=0,c=0;for(let j=-r;j<ny+r;j++){const a=j+r,b=j-r-1;if(a>=0&&a<ny&&isFinite(T[a*nx+i])){s+=T[a*nx+i];c++}if(b>=0&&b<ny&&isFinite(T[b*nx+i])){s-=T[b*nx+i];c--}if(j>=0&&j<ny)O[j*nx+i]=c?s/c:NaN}}return O}
 const sig=(gv,key)=>[key,gv.rot[0].toFixed(3),gv.rot[1].toFixed(3),gv.zoom.toFixed(3)].join("|");
 /* from when the picture starts to be magnified (it has about 11 pixels a degree), full a little after */
+/* the height under the pointer, from the same tiles (zoom 10, about 150 m a pixel); null until that tile has loaded */
+const HV=new Map();
+window.gfElevHeight=function(ll){const z=10,n=2**z,la=Math.max(-85,Math.min(85,ll[1]))*Math.PI/180,px=(((ll[0]+180)/360)%1+1)%1*n*256,py=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n*256,tx=Math.floor(px/256),ty=Math.floor(py/256),k=z+"/"+tx+"/"+ty;
+ if(!HV.has(k)){HV.set(k,null);tile(k).then(h=>{HV.set(k,h);while(HV.size>40)HV.delete(HV.keys().next().value)})}const T=HV.get(k);if(!T)return null;return T[Math.min(255,Math.floor(py-ty*256))*256+Math.min(255,Math.floor(px-tx*256))]};
 window.gfElevPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180,a=Math.max(0,Math.min(1,(ppd/11.4-.9)/.6));if(a<=0)return null;
  if(P&&P.gl!==G.gl)P=null;const k=sig(gv,o.key);
  if((!P||P.key!==k)&&!busy){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving){timer=setTimeout(go,250);return}if(!busy)build(gv,o.key)},250)}
