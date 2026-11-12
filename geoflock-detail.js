@@ -410,37 +410,34 @@ function fillOut(g,ctx,s,pj){const fill=g.cfg&&g.cfg.fill,list=g._base;if(!fill|
  f.restore();ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HF,0,0);ctx.restore()}
 function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||!s.tiles.some(t=>t.d))return false;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return false;
  if(!HM){HM=document.createElement("canvas");HL=document.createElement("canvas")}[HM,HL].forEach(c=>{if(c.width!==W||c.height!==H){c.width=W;c.height=H}});
- const m=HM.getContext("2d"),l=HL.getContext("2d"),T=ctx.getTransform(),pj=projector(g),P=d3.geoPath(g.projection(),m);
- /* how many pixels 20 km makes here: the band kept around the rough outline, but never much more than the country's own size
-    on screen (a small island would otherwise take in its neighbours' coasts) */
- let band=16;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.18);if(a&&b)band=Math.max(12,Math.min(260,Math.hypot(a[0]-b[0],a[1]-b[1])*2))}catch(e){}
- const bbs=f=>f._gfBB||(f._gfBB=(()=>{try{const b=d3.geoBounds(f);return[b[0][0],b[0][1],b[1][0],b[1][1]]}catch(e){return[-180,-90,180,90]}})());
- try{const pb=d3.geoPath(g.projection()).bounds({type:"FeatureCollection",features:fs});const sz=Math.max(pb[1][0]-pb[0][0],pb[1][1]-pb[0][1]);if(isFinite(sz))band=Math.min(band,Math.max(10,sz*.6))}catch(e){}
- /* the other countries near it: each piece of detailed coast goes to the nearest rough outline, so a neighbour's coast (the
-    Dutch half of Saint Martin, Anguilla across the strait) is not taken in */
- let near=[];if(all&&all.length){const own=new Set(fs);let B=[180,90,-180,-90];fs.forEach(f=>{const b=bbs(f);if(b[2]<b[0])B=[-180,B[1],180,B[3]];B=[Math.min(B[0],b[0]),Math.min(B[1],b[1]),Math.max(B[2],b[2]),Math.max(B[3],b[3])]});
-  const pad=Math.max(.5,(B[3]-B[1])*.5);near=all.filter(f=>{if(own.has(f))return false;const b=bbs(f);return!(b[0]>B[2]+pad||b[2]<B[0]-pad||b[1]>B[3]+pad||b[3]<B[1]-pad)})}
- const mask=(owner)=>{m.setTransform(1,0,0,1,0,0);m.globalCompositeOperation="source-over";m.clearRect(0,0,W,H);m.setTransform(T);m.lineJoin="round";m.fillStyle=m.strokeStyle="#000";
-  const ownP=()=>{m.beginPath();fs.forEach(f=>P(f))},othP=()=>{m.beginPath();near.forEach(f=>P(f))};
-  if(!owner||!near.length){ownP();m.fill();m.lineWidth=band;m.stroke();return}
-  for(let w=band;w>=2;w*=.7){m.globalCompositeOperation="destination-out";othP();m.lineWidth=w;m.stroke();m.globalCompositeOperation="source-over";ownP();m.lineWidth=w;m.stroke()}
-  m.globalCompositeOperation="destination-out";othP();m.fill();m.globalCompositeOperation="source-over";ownP();m.fill()};
- const layer=(lines)=>{l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="source-over";l.clearRect(0,0,W,H);l.setTransform(T);l.lineJoin=l.lineCap="round";
-  /* lw: a width (white), or [[colour,width],...] drawn in turn (a dark case under a white line) */
-  const st=Array.isArray(lw)?lw:[["#ffffff",lw]];
-  s.tiles.forEach(t=>{if(!t.d)return;l.save();if(!boxClip(l,pj,t)){l.restore();return}l.beginPath();lines(t.d);st.forEach(([c,w])=>{l.strokeStyle=c;l.lineWidth=w;l.stroke()});l.restore()});
-  l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="destination-in";l.drawImage(HM,0,0);l.globalCompositeOperation="source-over";ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HL,0,0);ctx.restore()};
- /* borders: kept to the band (a border belongs to both sides); coasts: kept to the nearest country */
- mask(false);layer(d=>landBorders(d).forEach(B=>B.ls.forEach(x=>ringPath(l,pj,x,false))));
- mask(true);layer(d=>d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(l,pj,r,true))}));
- /* small islands (Lakshadweep off India): the tiles leave them out until zoomed in close, so any part of the country under
-    about 18 pixels across keeps its rough outline */
- try{const CP=d3.geoPath(g.projection(),ctx),st=Array.isArray(lw)?lw:[["#ffffff",lw]];ctx.save();ctx.lineJoin=ctx.lineCap="round";
-  /* the finer outlines the map hovers with zoomed out (Natural Earth 10 m, more of the small islands), when they are loaded */
-  let src=fs;try{if(typeof HI10!=="undefined"&&HI10&&HI10.byN){const cs=new Set(fs.map(f=>f.properties&&f.properties.c).filter(Boolean));if(cs.size){const H=[...HI10.byN.values()].filter(f=>cs.has(f.properties.c));if(H.length)src=H}}}catch(e){}
+ const T=ctx.getTransform(),pj=projector(g);
+ /* the country's own shape: Natural Earth 10 m (the finer outlines, within about a kilometre) when loaded, else the map's */
+ let src=fs;try{if(typeof HI10!=="undefined"&&HI10&&HI10.byN){const cs=new Set(fs.map(f=>f.properties&&f.properties.c).filter(Boolean));if(cs.size){const Hh=[...HI10.byN.values()].filter(f=>cs.has(f.properties.c));if(Hh.length)src=Hh}}}catch(e){}
+ /* the shape drawn as a mask in screen pixels, read back once for this view */
+ const key=[W,H,T.a,T.e,T.f,g.rot[0],g.rot[1],g.zoom,g.roll?g.roll():0,src.length,src[0]&&src[0].properties&&src[0].properties.c].join("|");
+ if(!HM._k||HM._k!==key){const m=HM.getContext("2d",{willReadFrequently:true}),P=d3.geoPath(g.projection(),m);m.setTransform(1,0,0,1,0,0);m.clearRect(0,0,W,H);m.setTransform(T);m.beginPath();src.forEach(f=>P(f));m.fillStyle="#000";m.fill();
+  HM._d=m.getImageData(0,0,W,H).data;HM._k=key}
+ const MD=HM._d,inX=(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=W||y>=H)return false;return MD[(y*W+x)*4+3]>127};
+ /* how far to each side to look: about 1.5 km (the shape's own accuracy), at least 2 and at most 40 pixels */
+ let dpx=3;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.0135);if(a&&b)dpx=Math.max(2,Math.min(40,Math.hypot(a[0]-b[0],a[1]-b[1])*T.a))}catch(e){}
+ /* a piece of sharp coast or border is part of the outline when the country is on exactly one side of it (a neighbour's own
+    border, as Kaliningrad's with Lithuania for Poland, has it on neither side and is left out); a piece running over the shape
+    with outside on one side counts too (a small island narrower than the look-ahead) */
+ const own=(ax,ay,bx,by)=>{const X0=T.a*ax+T.c*ay+T.e,Y0=T.b*ax+T.d*ay+T.f,X1=T.a*bx+T.c*by+T.e,Y1=T.b*bx+T.d*by+T.f,dx=X1-X0,dy=Y1-Y0,L=Math.hypot(dx,dy)||1,nx=-dy/L*dpx,ny=dx/L*dpx,mx=(X0+X1)/2,my=(Y0+Y1)/2;
+  const p=inX(mx+nx,my+ny),q=inX(mx-nx,my-ny);return p!==q||(inX(mx,my)&&!(p&&q))};
+ const l=HL.getContext("2d");l.setTransform(1,0,0,1,0,0);l.clearRect(0,0,W,H);l.setTransform(T);l.lineJoin=l.lineCap="round";
+ const st=Array.isArray(lw)?lw:[["#ffffff",lw]];
+ const segs=(r,closed,skip)=>{const n=r.length/3;let pen=false;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if(skip&&skip(r,i,j)){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);
+   if(!a||!b||!own(a[0],a[1],b[0],b[1])){pen=false;continue}if(!pen){l.moveTo(a[0],a[1]);pen=true}l.lineTo(b[0],b[1])}};
+ s.tiles.forEach(t=>{if(!t.d)return;l.save();if(!boxClip(l,pj,t)){l.restore();return}l.beginPath();
+  t.d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>segs(r,true,(r,i,j)=>(r[i+2]&r[j+2])||seam(r,i,j)))});
+  landBorders(t.d).forEach(B=>B.ls.forEach(x=>segs(x,false,null)));st.forEach(([c,w])=>{l.strokeStyle=c;l.lineWidth=w;l.stroke()});l.restore()});
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HL,0,0);ctx.restore();
+ /* small islands the tiles leave out until zoomed in close: any part under about 18 pixels across keeps its own outline */
+ try{const CP=d3.geoPath(g.projection(),ctx);ctx.save();ctx.lineJoin=ctx.lineCap="round";
   src.forEach(f=>{const G=f.geometry||f;const polys=G.type==="MultiPolygon"?G.coordinates:G.type==="Polygon"?[G.coordinates]:[];
-   polys.forEach(P=>{const pg={type:"Polygon",coordinates:P};let b;try{b=CP.bounds(pg)}catch(e){return}if(!isFinite(b[0][0]))return;
-    if(Math.max(b[1][0]-b[0][0],b[1][1]-b[0][1])>18)return;ctx.beginPath();CP(pg);st.forEach(([c,w])=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()})})});ctx.restore()}catch(e){}
+   polys.forEach(P=>{const pg={type:"Polygon",coordinates:P};let bb;try{bb=CP.bounds(pg)}catch(e){return}if(!isFinite(bb[0][0]))return;
+    if(Math.max(bb[1][0]-bb[0][0],bb[1][1]-bb[0][1])>18)return;ctx.beginPath();CP(pg);st.forEach(([c,w])=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()})})});ctx.restore()}catch(e){}
  return true}
 window.gfDetail={hotSharp:(g,ctx,fs,lw,all)=>{try{return hotSharp(g,ctx,fs,lw,all)}catch(e){return false}},seaAt:lls=>seaAt(lls).catch(()=>null),sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:K._sea,casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
