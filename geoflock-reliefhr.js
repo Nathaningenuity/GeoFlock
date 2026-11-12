@@ -6,7 +6,7 @@
    The globe's WebGL shader multiplies it in for the part in view (index.html, GlobeGL.draw → gfHRPatch). */
 (function(){
 "use strict";
-const BASE="textures/nehr/",V="?v=1",PPD_BASE=4096/180,MAXC=7;
+const BASE="textures/nehr/",V="?v=2",PPD_BASE=4096/180,MAXC=7;
 let IDX=null,HAVE=null;fetch(BASE+"index.json"+V).then(r=>r.json()).then(j=>{IDX=j;HAVE=new Set(j.have.map(a=>a[0]+"_"+a[1]));req()}).catch(()=>{});
 const IMG=new Map();
 function img(k){if(IMG.has(k)){const v=IMG.get(k);IMG.delete(k);IMG.set(k,v);return v}

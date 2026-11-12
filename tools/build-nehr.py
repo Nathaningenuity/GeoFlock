@@ -11,7 +11,6 @@ for r in range(H//T):
   for c in range(W//T):
     a=A[r*T:(r+1)*T,c*T:(c+1)*T].astype(np.float32);l=L[r*T:(r+1)*T,c*T:(c+1)*T].astype(np.float32)
     d=(a+eps)/(l+eps)
-    if np.abs(d-1).max()<0.04: continue
     e=np.clip(np.round(d*128),0,255).astype(np.uint8)
     Image.fromarray(e).save(f'{out}/{c}_{r}.webp',quality=82,method=6)
     have.append([c,r])

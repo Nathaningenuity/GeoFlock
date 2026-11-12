@@ -411,7 +411,7 @@ function picOf(key){try{const im=typeof globeImages==="function"?globeImages(key
  PIC={a:im[0],b:im[1],d:x.getImageData(0,0,2048,1024).data,n:0};return PIC}catch(e){return null}}
 const picAt=(P,lo,la)=>{const x=Math.max(0,Math.min(2047,Math.floor((((lo+180)%360+360)%360)/360*2048))),y=Math.max(0,Math.min(1023,Math.floor((90-la)/180*1024))),o=(y*2048+x)*4;return[P.d[o],P.d[o+1],P.d[o+2]]};
 /* the picture's sea: clearly blue and not bright (pale bluish ice caps, as on Baffin Island, are land) */
-const seaish=p=>p[2]>p[0]+25&&p[2]>=p[1]&&p[0]<160&&p[1]<190;
+const seaish=p=>p[2]>p[0]+25&&p[0]<190;/* (pale shallows such as the Bahama Banks are sea; ice is bright in red too) */
 /* each stretch of coast: the median colour of the picture's land 8–16 km inland of it (whichever side is land there) */
 function landCol(P,r,a,b){const R=[],G=[],B=[];const n=r.length/3,step=Math.max(1,Math.floor((b-a)/5));
  for(let k=a;k<b;k+=step){const i=k*3,j=((k+1)%n)*3;const dx=r[j]-r[i],dy=r[j+1]-r[i+1],L=Math.hypot(dx,dy)||1,cl=Math.cos(r[i+1]*Math.PI/180)||1;
