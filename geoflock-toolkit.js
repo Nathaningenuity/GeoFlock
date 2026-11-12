@@ -1082,7 +1082,7 @@ function nearPanel(){const box=document.querySelector("#gfkGeo .gfk-near");if(!b
  const sw=box.querySelector("[data-nx]");if(sw)sw.onclick=()=>{const t=NR.a;NR.a=NR.b;NR.b=t;nearPanel();nearRun()};
  const nc=box.querySelector("[data-nc]");if(nc)nc.onclick=()=>{NR.a=NR.b=null;NR.res=null;NR.ink=[];nearPanel();render()}}
 /* the two places picked, outlined while the tool is open */
-function nearHL(){if(GEO.mode!=="near"||!document.getElementById("gfkGeo"))return[];return["a","b"].map(k=>NR[k]&&nearShape(NR[k].alts[NR[k].i])).filter(g=>g&&g.type!=="Point")}
+function nearHL(){try{if(GEO.mode!=="near"||!document.getElementById("gfkGeo"))return[]}catch(e){return[]}/* the map can draw before the set exists */return["a","b"].map(k=>NR[k]&&nearShape(NR[k].alts[NR[k].i])).filter(g=>g&&g.type!=="Point")}
 /* undo and redo keep whole copies of the shapes, like a slide's undo */
 const HIST={u:[],r:[]};
 function hist(){try{HIST.u.push(JSON.stringify(K().ink));if(HIST.u.length>80)HIST.u.shift();HIST.r=[]}catch(e){}}
