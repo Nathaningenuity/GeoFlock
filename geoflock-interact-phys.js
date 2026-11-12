@@ -16,7 +16,10 @@
    - ice | Icebergs and the Titanic: drag an iceberg from Ilulissat round Baffin Bay and down Iceberg Alley; it melts
      as it goes, the card shows how much of it hides under water, and it ends where the Titanic sank.
    Same pattern as geoflock-odyssey.js: poll `ps`, check the stop's title, draw in amGlobe.host with amGlobe.projection(),
-   redraw when the view changes. Globe mode only (the flat map is left alone). */
+   redraw when the view changes. Globe mode only (the flat map is left alone). Nothing is drawn under the tour card; when
+   the thing you are moving slides under the card or round the back of the globe, the globe turns to bring it back
+   (amGlobe.lookAt), and the Katrina stop turns once to the Gulf of Mexico when it opens. The Ring of Fire's "Show me the
+   next" button turns the globe to the next volcano and makes it pulse. */
 (function(){
 "use strict";
 const R_KM=6371;
@@ -76,7 +79,7 @@ const stopPlay=L=>{if(L.playing){L.playing=false;playBtn(L)}};
 
 /* ======================================================================== 1. Hurricane Katrina
    Track: the National Hurricane Center's best track for Katrina (HURDAT2; Knabb, Rhome & Brown, "Tropical Cyclone
-   Report: Hurricane Katrina", NHC 2005, updated 2023), positions rounded to 0.1°. Winds at the marked moments, from the
+   Report: Hurricane Katrina", NHC 2005), positions rounded (checked against HURDAT2 2023 release: within a few tenths of a degree). Winds at the marked moments, from the
    same report: formed as a tropical depression near the Bahamas on 23 Aug (30 knots); landfall in south Florida on
    25 Aug as a Category 1 (70 kt, about 130 km/h); peak on 28 Aug over the central Gulf, Category 5 (150 kt, about
    280 km/h, 902 hPa); landfall in south-east Louisiana on 29 Aug as a Category 3 (110 kt, about 205 km/h), then the
@@ -84,7 +87,7 @@ const stopPlay=L=>{if(L.playing){L.playing=false;playBtn(L)}};
    the warm Loop Current (Scharroo, Smith & Lillibridge 2005, Eos 86). The storm's size on the map only follows those
    winds roughly between the marked moments; no number is shown except at them. */
 const KAT=[[-75.1,23.1,30],[-75.7,23.4],[-76.2,23.8],[-76.5,24.5],[-76.9,25.4],[-77.7,26.0],[-78.4,26.1],[-79.0,26.2],[-79.6,26.2],
- [-80.1,25.9,70],[-80.3,25.9],[-81.3,25.4,60],[-82.2,25.1],[-83.3,24.6],[-84.4,24.4],[-85.9,24.8],[-86.7,25.2],[-87.7,25.7],[-88.6,26.3,150],
+ [-80.1,25.9,70],[-80.3,25.9],[-81.3,25.4,65],[-82.2,25.1],[-83.3,24.6],[-84.4,24.4],[-85.9,24.8],[-86.7,25.2],[-87.7,25.7],[-88.6,26.3,150],
  [-89.2,27.2],[-89.6,28.2],[-89.6,29.3,110],[-89.6,30.2,105],[-89.6,31.1],[-89.1,32.6],[-88.6,34.1],[-88.0,35.6,30],[-87.0,37.0]];
 /* what the storm is doing, by where it is along the track (from-point index in KAT) */
 const KPH=[
@@ -103,7 +106,7 @@ const katPhase=(R,u)=>{let p=KPH[0];for(const x of KPH)if(u>=R.uk[x.from]-1e-6)p
 const STORM='<g class="gfx-spin"><circle r="11" fill="rgba(255,255,255,.35)"/>'+
  [0,120,240].map(a=>'<path transform="rotate('+a+')" d="M0 -6 C 14 -8 24 2 22 16 C 16 6 8 2 0 2 Z" fill="rgba(255,255,255,.92)" stroke="rgba(30,40,60,.35)" stroke-width=".8"/>').join("")+
  '<circle r="4.2" fill="#2b4a6f" stroke="#fff" stroke-width="1.4"/></g>';
-const HURR={tour:"hazards",title:"What a hurricane needs",dur:24,look:[-86,30,3.2],follow:1,
+const HURR={tour:"hazards",title:"What a hurricane needs",dur:24,look:[-90,30,3.2],follow:1,
  tip:"Drag the hurricane along Katrina’s real 2005 track, or press ▶. Watch it grow over warm water and fade over land.",
  card:L=>playerHTML("How far along Katrina’s track","23 Aug"),
  init(L){const R=katR();L.track=svgEl(L.svg,"path",{class:"gfx-dash"});L.wake=svgEl(L.svg,"g",{});L.marks=KMARK.map(m=>({m,el:tag(L,"gfx-small")}));
@@ -192,9 +195,10 @@ const RING={tour:"volcanoes",title:"The Ring of Fire",
    if(L.k===ROF.length)setTimeout(()=>{if(L.card)say(L,"All six, 1886 to 2022","Every one sits on the Ring of Fire, above a plate that is sinking into the mantle. Water squeezed out of the sinking plate melts the rock above it, and the melt rises as volcanoes.")},2600);
    this.flash(L,q,"✓ "+r.y,"gfx-ok")}
   else{L.miss++;const later=ROF[i].y>ROF[L.k].y;this.flash(L,q,later?"Not yet: that one came later":"Already found",later?"gfx-no":"");
+   if(later&&L.miss<2)say(L,"Not yet",ROF[i].n.split(",")[0]+" is more recent. Find an older eruption first.");
    const e=L.v[i].e;e.classList.remove("gfx-shake");void e.getBoundingClientRect();e.classList.add("gfx-shake");if(L.miss>=2){say(L,"Here’s a clue","The next one in order is pulsing.");turnTo(L,ROF[L.k].ll)}}
   this.slots(L);L.dirty=1}catch(e){console.error(e)}},
- flash(L,q,txt,cls){const f=L.fb;if(!q)return;f.className="gfx-fb "+(cls||"");f.textContent=txt;f.style.left=q[0]+"px";f.style.top=(q[1]-30)+"px";f.style.display="";clearTimeout(L._fbT);L._fbT=setTimeout(()=>{f.style.display="none"},1400)},
+ flash(L,q,txt,cls){const f=L.fb;if(!q)return;f.className="gfx-fb "+(cls||"");f.textContent=txt;f.style.left=q[0]+"px";f.style.top=(q[1]-30)+"px";f.style.display="";clearTimeout(L._fbT);L._fbT=setTimeout(()=>{f.style.display="none"},2200)},
  draw(L){
   L.v.forEach((o,i)=>{const q=proj(L,ROF[i].ll);place(o.e,q);const got=L.found.includes(i);o.e.classList.toggle("gfx-got",got);o.e.classList.toggle("gfx-pulse",!got&&L.miss>=2&&i===L.k);
    putTag(o.t,got?q:null,ROF[i].y+" · "+esc(ROF[i].n.split(",")[0]),-24)});
@@ -225,10 +229,10 @@ const DUSTX={tour:"weather",title:"The Sahara feeds the Amazon",dur:22,follow:1,
   L.trail.setAttribute("d",pathOf(L,R.P.slice(0,s.i+1).concat([s.ll])));
   L.gates.forEach(o=>{const a=[o.gt.lon,4],b=[o.gt.lon,22],on=lon<=o.gt.lon;o.p.setAttribute("d",pathOf(L,d3.range(0,11).map(k=>[o.gt.lon,a[1]+(b[1]-a[1])*k/10])));o.p.classList.toggle("gfx-on",on);
    putTag(o.t,proj(L,[o.gt.lon,22.5]),"<b>"+o.gt.lon*-1+"°W</b>"+(on?" · "+o.gt.mt+" million t":""),-10)});
-  const q=proj(L,s.ll);place(L.c,q);const sc=.6+left*.7;L.cI.setAttribute("transform","scale("+sc.toFixed(2)+")");L.cI.style.opacity=(.35+left*.6).toFixed(2);
+  const q=proj(L,s.ll);place(L.c,q);const sc=.8+left*.55;L.cI.setAttribute("transform","scale("+sc.toFixed(2)+")");L.cI.style.opacity=(.62+left*.38).toFixed(2);
   /* specks falling out of the cloud into the sea, more near Africa (moved every frame by specks) */
   L.q=q;L.sc=sc;L.left=left;
-  const reached=lon<=-55;putTag(L.amz,reached?proj(L,[-61,-5]):null,"27.7 million tonnes fall on the Amazon",18);
+  const reached=lon<=-55;putTag(L.amz,reached?proj(L,[-52,-9]):null,"27.7 million tonnes a year fall on the Amazon",14);
   putTag(L.bub,q&&!reached?q:null,lon>-15?"Over the Sahara":lon>-35?"Over the Atlantic":"Nearly there",-40);putTag(L.hint,L.u<.003&&q?[q[0]-150,q[1]-8]:null,"⟵ Drag the dust west");
   syncRange(L,lon>-15?"Africa":lon>-55?"Atlantic":"Amazon");
   if(L.u<.003)say(L,"The Bodélé Depression, Chad","Winds funnelled between two mountain ranges lift fine, dried-out lake mud high into the air. The trade winds carry it west.");
@@ -279,12 +283,12 @@ const BANG={tour:"hazards",title:"The loudest sound",dur:24,
    Patrol (US Coast Guard) was set up in 1914. The iceberg shrinking on the map shows that it melts; its size is not
    a measurement. */
 const ICE=[[-51,69.2],[-58,72.5],[-66,70.5],[-63,64],[-58,57],[-53,51],[-50.5,46.5],[-49.95,41.73]];
-const ISTOP=[{k:0,h:"Ilulissat Icefjord, Greenland",t:"A glacier pushes ice into the sea and it breaks off, or calves, as icebergs, some as tall as a tower block."},
- {k:1,h:"North along Greenland’s coast",t:"The iceberg first drifts north, up the west coast of Greenland, with the current."},
- {k:2,h:"Round Baffin Bay",t:"Then it turns west and south, round the top of Baffin Bay. Many icebergs run aground or melt on the way."},
- {k:4,h:"The Labrador Current",t:"A cold current carries it south down the coast of Labrador. Cold water melts it only slowly."},
- {k:6,h:"Iceberg Alley, Newfoundland",t:"In spring, icebergs pass close to the shore here. People come to watch them."},
- {k:7,h:"11:40 pm, 14 April 1912",t:"In the shipping lanes, the Titanic hits an iceberg about here. It sinks 2 hours 40 minutes later, and more than 1,500 people die. Since 1914 the International Ice Patrol has tracked icebergs here every spring."}];
+const ISTOP=[{k:0,b:"Calved at Ilulissat",h:"Ilulissat Icefjord, Greenland",t:"A glacier pushes ice into the sea and it breaks off, or calves, as icebergs, some as tall as a tower block."},
+ {k:1,b:"Drifting north",h:"North along Greenland’s coast",t:"The iceberg first drifts north, up the west coast of Greenland, with the current."},
+ {k:2,b:"Round Baffin Bay",h:"Round Baffin Bay",t:"Then it turns west and south, round the top of Baffin Bay. Many icebergs run aground or melt on the way."},
+ {k:4,b:"Labrador Current",h:"The Labrador Current",t:"A cold current carries it south down the coast of Labrador. Cold water melts it only slowly."},
+ {k:6,b:"Iceberg Alley",h:"Iceberg Alley, Newfoundland",t:"In spring, icebergs pass close to the shore here. People come to watch them."},
+ {k:7,b:"The Titanic sinks here",h:"11:40 pm, 14 April 1912",t:"In the shipping lanes, the Titanic hits an iceberg about here. It sinks 2 hours 40 minutes later, and more than 1,500 people die. Since 1914 the International Ice Patrol has tracked icebergs here every spring."}];
 let IR=null;const iceR=()=>{if(IR)return IR;const R=route(ICE,.2);R.uk=ICE.map(p=>uOf(R,p));return IR=R};
 const BERG='<path d="M-16 6 L-11 -5 L-5 -3 L-1 -15 L6 -6 L11 -8 L17 6 Z" fill="#f4fbff" stroke="#2a6fa8" stroke-width="1.6" stroke-linejoin="round"/><path d="M-1 -15 L2 -2 L6 -6" fill="none" stroke="#b9dcf2" stroke-width="1.4"/><path d="M-20 6 H21" stroke="#2a6fa8" stroke-width="1.6" stroke-dasharray="3 2"/>';
 const SHIPI='<path d="M-14 0 L14 0 L10 6 L-11 6 Z" fill="#20262e"/><rect x="-8" y="-5" width="15" height="5" fill="#f2f2f2"/><rect x="-6" y="-11" width="3" height="6" fill="#e8a33a"/><rect x="0" y="-11" width="3" height="6" fill="#e8a33a"/>';
@@ -297,17 +301,17 @@ function bergSide(sc){const w=180,h=130,wl=40,k=Math.max(.35,sc),cx=w/2,P=(pts)=
 const BERGX={tour:"ice",title:"Icebergs and the Titanic",dur:24,follow:1,
  tip:"Drag the iceberg from Greenland down Iceberg Alley, or press ▶. It melts as it goes.",
  card:()=>playerHTML("How far the iceberg has drifted","Greenland")+'<div class="gfx-sidebox"></div>',
- init(L){const R=iceR();L.trail=svgEl(L.svg,"path",{class:"gfx-icetrail"});L.ship=svgEl(L.svg,"g",{class:"gfx-noev"},SHIPI);L.shipT=tag(L,"gfx-small");
+ init(L){const R=iceR();L.trailH=svgEl(L.svg,"path",{class:"gfx-icehalo"});L.trail=svgEl(L.svg,"path",{class:"gfx-icetrail"});L.ship=svgEl(L.svg,"g",{class:"gfx-noev"},SHIPI);L.shipT=tag(L,"gfx-small");
   L.b=svgEl(L.svg,"g",{class:"gfx-grab",tabindex:"0","aria-label":"Iceberg: drag it along the current"});svgEl(L.b,"circle",{r:28,class:"gfx-hit"});L.bI=svgEl(L.b,"g",{},BERG);
   L.bub=tag(L,"gfx-bub");L.hint=tag(L,"gfx-hint");L._sc=-1;
   draggable(L,L.b,(x,y)=>{L.u=nearestU(L,R,x,y,L.u)},()=>stopPlay(L))},
  tick(L,dt){if(L.playing){L.u=Math.min(1,L.u+dt/this.dur);if(L.u>=1){L.playing=false;playBtn(L)}L.dirty=1}},
  draw(L){const R=iceR(),s=at(R,L.u);L.fll=s.ll;let st=ISTOP[0];ISTOP.forEach(x=>{if(L.u>=R.uk[x.k]-.004)st=x});
-  L.trail.setAttribute("d",pathOf(L,R.P.slice(0,s.i+1).concat([s.ll])));
-  const sc=1.15-.6*Math.pow(L.u,1.6),q=proj(L,s.ll);place(L.b,q);L.bI.setAttribute("transform","scale("+sc.toFixed(2)+")");
+  {const d=pathOf(L,R.P.slice(0,s.i+1).concat([s.ll]));L.trail.setAttribute("d",d);L.trailH.setAttribute("d",d)}
+  const sc=1.35-.6*Math.pow(L.u,1.6),q=proj(L,s.ll);place(L.b,q);L.bI.setAttribute("transform","scale("+sc.toFixed(2)+")");
   const end=L.u>=R.uk[7]-.004,qs=proj(L,[-48.3,41.9]);place(L.ship,end?qs:null);putTag(L.shipT,end?qs:null,"Titanic",14);
-  putTag(L.bub,q,esc(st.h.split(",")[0]),-30*sc-14);putTag(L.hint,L.u<.003&&q?[q[0]+28,q[1]-8]:null,"Drag the iceberg ⟶");
-  const box=L.card&&L.card.querySelector(".gfx-sidebox"),r=Math.round(sc*20)/20;if(box&&r!==L._sc){L._sc=r;box.innerHTML=bergSide(r/1.15)}
+  putTag(L.bub,q,esc(st.b),-30*sc-14);putTag(L.hint,L.u<.003&&q?[q[0]+28,q[1]-8]:null,"Drag the iceberg ⟶");
+  const box=L.card&&L.card.querySelector(".gfx-sidebox"),r=Math.round(sc*20)/20;if(box&&r!==L._sc){L._sc=r;box.innerHTML=bergSide(r/1.35)}
   syncRange(L,L.u<.3?"Greenland":L.u<.6?"Baffin Bay":L.u<.88?"Labrador":"Newfoundland");say(L,st.h,st.t)}};
 
 /* ---------------- the engine: one stop at a time ---------------- */
@@ -382,7 +386,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .gfx-heard{fill:rgba(255,255,255,.4);stroke:#fff;stroke-width:2}.gfx-heard.gfx-on{fill:#ff5a36;stroke:#ffd166;stroke-width:3}
 .gfx-ear.gfx-lit circle:first-child,.gfx-grab.gfx-lit>g>circle{fill:#ff5a36}
 .gfx-eart{font-size:13px;text-align:center}.gfx-eart small{display:block;font-weight:700;font-size:11.5px;color:#ffd166}
-.gfx-icetrail{fill:none;stroke:rgba(190,230,255,.95);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.gfx-icehalo{fill:none;stroke:#174d80;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;opacity:.8}.gfx-icetrail{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .gfx-ctl{margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:rgba(19,41,75,.06);border:1px solid rgba(19,41,75,.12)}
 .gfx-do{font-weight:800;font-size:14px;line-height:1.35;color:#9a4a16;margin-bottom:8px}
 .gfx-row{display:flex;align-items:center;gap:10px}
@@ -392,7 +396,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .gfx-ep{margin-top:8px;font-size:14px;line-height:1.4;min-height:2.8em}.gfx-ep b{display:block;font-size:15px}
 .gfx-ep.gfx-new{animation:gfxIn .45s ease}@keyframes gfxIn{from{opacity:.2;transform:translateY(4px)}}
 .gfx-slots{display:flex;gap:6px;flex-wrap:wrap}
-.gfx-slot{flex:1 1 0;min-width:44px;text-align:center;font-weight:900;font-size:15px;padding:6px 0;border-radius:8px;background:rgba(19,41,75,.08);color:rgba(19,41,75,.45)}
+.gfx-slot{flex:1 1 0;min-width:0;text-align:center;font-weight:900;font-size:15px;padding:6px 0;border-radius:8px;background:rgba(19,41,75,.08);color:rgba(19,41,75,.45)}
 .gfx-slot.gfx-on{background:#d9682b;color:#fff}
 .gfx-btns{margin-top:8px;gap:8px}
 .gfx-btn{flex:1 1 auto;border:1px solid rgba(19,41,75,.2);background:#fff;color:#13294b;font-weight:700;font-size:13px;padding:6px 10px;border-radius:999px;cursor:pointer}
