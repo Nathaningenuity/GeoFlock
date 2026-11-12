@@ -321,7 +321,17 @@ const CAPS={
  sb:{"Rennell and Bellona":"Tigoa","Makira-Ulawa":"Kirakira","Temotu":"Lata","Malaita":"Auki","Guadalcanal":"Honiara","Central":"Tulagi","Western":"Gizo","Isabel":"Buala","Choiseul":"Taro"},
  vu:{"Shefa":"Port Vila","Tafea":"Isangel","Malampa":"Lakatoro","Sanma":"Luganville","Penama":"Saratamata","Torba":"Sola"}};
 const DATA={};
-function load(cc){if(DATA[cc])return Promise.resolve(DATA[cc]);return fetch("provinces/"+cc+".json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{d.items.forEach(x=>{/* d3 wants clockwise outer rings: flip any ring that would cover more than half the globe */const fix=r=>{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()};if(x.g.type==="Polygon")x.g.coordinates.forEach(fix);else x.g.coordinates.forEach(p=>p.forEach(fix));x.f={type:"Feature",properties:{},geometry:x.g}});DATA[cc]=d;return d})}
+/* parts the admin-1 files leave out but that are as much a part of the country as its other divisions (overseas regions,
+   autonomous island regions): [name, longitude, latitude, radius in degrees]. Each is cut from the country's own outline by
+   where it lies. Disputed places are not added. */
+const EXTRA={fr:[["Guadeloupe",-61.55,16.2,.9,"gp"],["Martinique",-61.02,14.65,.5,"mq"],["French Guiana",-53.1,3.9,3.5,"gf"],["Réunion",55.53,-21.13,.6,"re"],["Mayotte",45.15,-12.82,.4,"yt"]],
+ pt:[["Azores",-28,38.6,4],["Madeira",-16.9,32.75,1.2]],no:[["Svalbard",18,78.6,8,"sj"],["Jan Mayen",-8.4,71,1]],nl:[["Bonaire",-68.26,12.17,.4,"bq"],["Sint Eustatius",-62.98,17.49,.15],["Saba",-63.23,17.63,.15]]};
+function extra(cc,d){const E=EXTRA[cc];if(!E)return;let F=[];try{F=projFeatures()}catch(e){}const byC=c=>F.find(x=>String(x.properties.c).toLowerCase()===c&&x.geometry);
+ const pof=f=>f?(f.geometry.type==="MultiPolygon"?f.geometry.coordinates:[f.geometry.coordinates]):[];
+ /* from the place's own feature when the map has one (Guadeloupe, Réunion...), else from the country's outline by location */
+ E.forEach(([n,lo,la,r,code])=>{if(d.items.some(x=>x.n===n))return;const parts=pof(code&&byC(code)).concat(pof(byC(cc)));const mine=parts.filter(P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return Math.abs(c[0]-lo)<=r&&Math.abs(c[1]-la)<=r}catch(e){return false}});
+  if(mine.length)d.items.push({n,g:{type:"MultiPolygon",coordinates:JSON.parse(JSON.stringify(mine))}})})}
+function load(cc){if(DATA[cc])return Promise.resolve(DATA[cc]);return fetch("provinces/"+cc+".json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{try{extra(cc,d)}catch(e){}d.items.forEach(x=>{/* d3 wants clockwise outer rings: flip any ring that would cover more than half the globe */const fix=r=>{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()};if(x.g.type==="Polygon")x.g.coordinates.forEach(fix);else x.g.coordinates.forEach(p=>p.forEach(fix));x.f={type:"Feature",properties:{},geometry:x.g}});DATA[cc]=d;return d})}
 function projFor(cc,F,W,H){const fc={type:"FeatureCollection",features:F};
  if(cc==="us")return d3.geoAlbersUsa().fitExtent([[8,8],[W-8,H-8]],fc);
  const b=d3.geoBounds(fc);let lo0=b[0][0],lo1=b[1][0];if(lo1<lo0)lo1+=360;const cl=(lo0+lo1)/2,la0=b[0][1],la1=b[1][1];
@@ -487,7 +497,7 @@ window.gfProvinces={start:start,LIST:LIST,load:load,projFor:projFor};
       const outer=document.createElementNS(NS,"g");outer.setAttribute("class","pv-x");outer.dataset.cc=cc;outer.setAttribute("clip-path","url(#"+id+")");g.removeAttribute("class");outer.appendChild(g);g=outer}}
     v.appendChild(g);
     let tip=s.querySelector(":scope > .pv-tip");if(!tip){tip=document.createElement("div");tip.className="pv-tip";tip.dataset.cc=cc;tip.hidden=true;s.appendChild(tip)}
-    g.querySelectorAll(".pv-r").forEach(el=>{el.onmouseenter=()=>{tip.hidden=false;tip.textContent=d.items[+el.dataset.i].n};el.onmousemove=e=>{const b=s.getBoundingClientRect();tip.style.left=(e.clientX-b.left+12)+"px";tip.style.top=(e.clientY-b.top+10)+"px"};el.onmouseleave=()=>{tip.hidden=true}})}).catch(()=>{})};
+    g.querySelectorAll(".pv-r").forEach(el=>{el.onmouseenter=()=>{tip.hidden=false;tip.textContent=d.items[+el.dataset.i].n};el.onmousemove=e=>{/* above the pointer and inside the card, never cut off at its edge */const b=s.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;let x=e.clientX-b.left-tw/2,y=e.clientY-b.top-th-12;x=Math.max(6,Math.min(b.width-tw-6,x));if(y<6)y=e.clientY-b.top+16;tip.style.left=x+"px";tip.style.top=y+"px"};el.onmouseleave=()=>{tip.hidden=true}})}).catch(()=>{})};
   sw.onclick=e=>{e.stopPropagation();try{localStorage.setItem(SHOWK,shown()?"0":"1")}catch(err){}paint()};paint()}
  hook();setInterval(()=>{if(typeof openFlagZoom==="function"&&!openFlagZoom._pvProf)hook()},2000);
  const c2=document.createElement("style");c2.textContent=`.pv-x .pv-r{ fill:transparent; stroke:rgba(255,255,255,.95); stroke-width:.9px; stroke-linejoin:round; pointer-events:all; cursor:default; } .pv-x .pv-r:hover{ fill:rgba(255,200,90,.55); }
