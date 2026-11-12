@@ -1010,8 +1010,11 @@ const cr3=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],d
 function footOn(a,b,X){const n=cr3(V3(a),V3(b)),nn=Math.hypot(...n);if(nn<1e-12)return a;const u=n.map(v=>v/nn),x=V3(X),k=dt3(x,u),f=LL3([x[0]-k*u[0],x[1]-k*u[1],x[2]-k*u[2]]);
  const ab=d3.geoDistance(a,b);if(Math.abs(d3.geoDistance(a,f)+d3.geoDistance(f,b)-ab)<1e-7)return f;return d3.geoDistance(X,a)<d3.geoDistance(X,b)?a:b}
 function footOnLine(s,X){let best=null,bd=1e9,bj=0;const P=s.p;for(let j=0;j+1<P.length;j++){const f=footOn(P[j],P[j+1],X),d=d3.geoDistance(X,f);if(d<bd){bd=d;best=f;bj=j}}return best?{f:best,d:bd,j:bj}:null}
-function markPoint(ll,lab){keep({t:"geoDot",c:GEO.col,p:[ll.slice(),ll.slice()],g:{m:"point",A:ll.slice()},lab,at:ll.slice(),lo:[0,-15],lfs:12})}
-function pickLineAt(x,y){const h=geoHit(x,y);if(!h)return null;const s=K().ink[h.i];if(!s||!s.p||s.p.length<2||s.t==="geoDot"||s.t==="geoText")return null;return s}
+/* the name goes beside the dot, below the line through it, clear of a line's own distance label (which sits on its middle) */
+function markPoint(ll,lab){keep({t:"geoDot",c:GEO.col,p:[ll.slice(),ll.slice()],g:{m:"point",A:ll.slice()},lab,at:ll.slice(),lo:lab==="Midpoint"?[9,15]:[0,-15],lfs:12})}
+function pickLineAt(x,y){/* the nearest open line under the pointer comes first, so a line running beside a circle is the one picked */
+ {const ink=K().ink;let best=null,bd=9;inkSegs(x,y,9).forEach(([i,a,b])=>{const s=ink[i];if(!s||s.f||(s.g&&(s.g.m==="compass"||s.g.m==="ring"||s.g.cl)))return;const d=segD([x,y],a,b);if(d<bd){bd=d;best=s}});if(best)return best}
+ const h=geoHit(x,y);if(!h)return null;const s=K().ink[h.i];if(!s||!s.p||s.p.length<2||s.t==="geoDot"||s.t==="geoText")return null;return s}
 function modeClick(e){const x=e.clientX,y=e.clientY,sn=snapAt(x,y),P=sn?sn.ll:toLL(x,y);if(!P)return;
  if(GEO.mode==="mid"){
   if(!GEO._m1&&(!sn||sn.k==="on")){const s=pickLineAt(x,y);if(s){const m=midOf(s);if(m){markPoint(m,"Midpoint");geoSelect(K().ink.length-1);toast("The midpoint of this line: "+kmTxt(d3.geoDistance(s.p[0],m)*KM)+" from each end");return}}}
