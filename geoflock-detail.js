@@ -329,11 +329,19 @@ function gazName(K){if(K._gz!==undefined)return K._gz;gazLoad();if(!GAZG)return 
   const inside=inRings(K.rings,[p[1],p[2]]),d=(inside?0:1)+Math.hypot(p[1]-cx,p[2]-cy)*1e-3;if(d<bd){bd=d;best=p}}}
  if(best&&(bd<1||Math.max(b[2]-b[0],b[3]-b[1])<.6))K._gz=best[0];return K._gz}
 setTimeout(gazLoad,4000);
+function riverThrough(s,K){if(K._rt!==undefined)return K._rt;K._rt=null;const cnt=new Map();
+ s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(!R.name||R.cls==="stream"||R.cls==="ditch"||R.cls==="drain")return;const b=R.bb;if(b[0]>K.bb[2]||b[2]<K.bb[0]||b[1]>K.bb[3]||b[3]<K.bb[1])return;
+  let n=0;R.ls.forEach(l=>{for(let i=0;i<l.length;i+=3){const x=l[i],y=l[i+1];if(x<K.bb[0]||x>K.bb[2]||y<K.bb[1]||y>K.bb[3])continue;if(inRings(K.rings,[x,y]))n++}});if(n)cnt.set(R.name,(cnt.get(R.name)||0)+n)})});
+ let best=null,bn=0;cnt.forEach((n,k)=>{if(n>bn){bn=n;best=k}});if(best)K._rt=/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr|canal|creek/i.test(best)?best:best+" River";return K._rt}
 function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out={};
  /* close up, a lake is outlined from the tiles' sharp shape, every piece of it; named from the tiles, or else from the map's own lake
     under the pointer, or else by its kind ("Lake", "Reservoir"...) */
  if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
-   const name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||gz||LAB[K.cls]||"Lake";const co=[];
+   let name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||gz||null;
+   /* an unnamed lake that a named river runs through is a widening of that river (Lac Saint-Pierre on the St. Lawrence, the
+      lakes strung along the Ottawa): called by the river's name, not just "Lake" */
+   if(!name){const rn=riverThrough(s,K);if(rn)name=rn}
+   name=name||LAB[K.cls]||"Lake";const co=[];
    const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);
    /* filled from every tile on show (a part not yet loaded sharply is still covered), but outlined only from the sharpest tiles
       that hold this lake: a coarser parent tile would add its rough outline on top of the sharp one */
