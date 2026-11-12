@@ -227,7 +227,9 @@ function score(q,keys,fkeys){let best=9;const sq=squash(q),max=q.length>=8?2:q.l
  for(const k of keys){if(k===q)return 0;if(k.startsWith(q))best=Math.min(best,1);else if(k.split(/[ -]/).some(w=>w.startsWith(q)))best=Math.min(best,2);else if(q.length>=4&&k.includes(q))best=Math.min(best,3);
   if(best>3&&max){const sk=squash(k);if(sk===sq||sk.startsWith(sq))best=Math.min(best,4);else{const d=Math.min(lev(sq,sk,max),lev(sq,sk.slice(0,sq.length),max));if(d<=max)best=Math.min(best,4+d)}}}
  return best}
-function find(q,all){q=norm(q);if(q.length<2)return[];const out=[],fq=fold(q);build().forEach(e=>{let best=score(q,e.keys,e.fkeys||(e.fkeys=foldKeys(e.keys)));
+/* a kind word typed in front of a name ("mount denali", "lake titicaca", "the alps") also finds the name without it */
+const KINDW=/^(the|mount|mt\.?|mountains?|lake|river|rio|cape|isle of|island of|islands? of|gulf of|bay of|sea of|strait of|desert of|city of)\s+/;
+function find(q,all){q=norm(q);if(q.length<2)return[];const out=[],fq=fold(q),q2=q.replace(KINDW,"").trim();build().forEach(e=>{let best=score(q,e.keys,e.fkeys||(e.fkeys=foldKeys(e.keys)));if(q2&&q2!==q&&q2.length>=2){const b2=score(q2,e.keys,e.fkeys)+.2;if(b2<best)best=b2}
  /* a place whose own name is what was typed beats one that only has it as another name (Tahiti the island before the Society Islands) */
  if(best===0&&norm(e.n)!==q)best=.5;if(best===.3&&e.fkeys[0]!==fq)best=.6;if(best<9)out.push([best,e.fame||3,e])});
  out.sort((a,b)=>a[0]-b[0]||a[1]-b[1]||a[2].n.length-b[2].n.length);return all?out.slice(0,8):out.slice(0,7).map(x=>x[2])}
@@ -335,8 +337,11 @@ function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;con
  let sh=e._bb[2]>=e._bb[0]?gfDetail.sharp(amGlobe,kind,e._bb,e.ll):null;
  /* the detailed shapes are every island (or lake) found near it: keep only those inside its own outline, and use them only
     when they make up most of it (a big island crossing many map tiles is not in the detailed set, only its small neighbours) */
- if(sh&&sh.coordinates){const own=sh.coordinates.filter(P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return d3.geoContains(e.g,c)}catch(x){return false}});
-  const A=d3.geoArea(G0)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own}:null}
+ if(sh&&sh.coordinates){const inOwn=P=>{try{const c=d3.geoCentroid({type:"Polygon",coordinates:P});return d3.geoContains(e.g,c)}catch(x){return false}};
+  /* a lake: every piece of the lakes that have a piece inside its outline, and their shore for the outline */
+  let own,edge=null;if(sh._ids){const keep=new Set();sh.coordinates.forEach((P,i)=>{if(inOwn(P))keep.add(sh._ids[i])});const ix=sh.coordinates.map((_,i)=>i).filter(i=>keep.has(sh._ids[i]));own=ix.map(i=>sh.coordinates[i]);edge={type:"MultiLineString",coordinates:[].concat(...ix.map(i=>sh._edges[i]))}}
+  else own=sh.coordinates.filter(inOwn);
+  const A=d3.geoArea(G0)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own,_edge:edge}:null}
  e._sh=sh;return e._sh||G0}catch(x){return shapeOf(e)}}
 function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.globalAlpha=uop(e);
   /* close up, the detailed coast and borders, as a hovered country (the other countries keep their own coasts) */
@@ -347,7 +352,7 @@ function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){c
   if(window.gfDetail&&gfDetail.hotSharp&&typeof amGlobe!=="undefined"&&gfDetail.ownsCoast&&gfDetail.ownsCoast(amGlobe)){const G=shapeAt(e);ctx.restore();ctx.save();ctx.globalAlpha=uop(e);
    if(gfDetail.hotSharp(amGlobe,ctx,[{type:"Feature",properties:{},geometry:G}],[["rgba(20,30,45,.5)",3.4],[e.ucol||"#fff",1.7]])){ctx.restore();return pin(e)}ctx.beginPath();path(G)}
   ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle=e.ucol||"#fff";ctx.lineWidth=1.7;ctx.stroke()}
- else{if(!isle(e)){ctx.globalAlpha=fillOf(e,e.col?.62:a<1?a*.8:keep,a);ctx.fillStyle=col;ctx.fill()}{/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
+ else{if(!isle(e)){ctx.globalAlpha=fillOf(e,e.col?.62:a<1?a*.8:keep,a);ctx.fillStyle=col;ctx.fill()}{/* a sharp lake is outlined along its shore only */{const S=sharp(e);if(S&&S._edge){ctx.beginPath();path(S._edge)}}/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(!G._flat&&d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p||(window.gfGlobeShows&&!gfGlobeShows(G,p)))return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg)return null;const p=GLOBE_ROBINSON(ll);if(!p)return null;const m=svg.getScreenCTM();if(!m)return null;return[p[0]*m.a+m.e,p[1]*m.d+m.f]}
@@ -537,6 +542,8 @@ const css=document.createElement("style");css.textContent=`
 .gfs-nolab .gfs-lab{ display:none !important; }
 .gfs-noimg .gfs-card{ display:none !important; }
 .gfs-noimg .gfs-swap{ display:none !important; }
+/* on the picture's own corner, whatever the width of the name under it */
+.gfs-pin .gfs-swap{ right:auto !important; left:calc(50% + 48px * var(--gsk,1) * var(--uis,1) - 16px) !important; top:-8px !important; }
 /* the picture grows with the zoom as the emoji does (half size zoomed out), times the size the person chose */
 .gfs-pin .gfs-card{ width:calc(96px * var(--gsk,1) * var(--uis,1)); height:calc(96px * var(--gsk,1) * var(--uis,1)); }
 .gfs-pin .gfs-lab{ font-size:calc(12.5px * var(--uls,1)); }

@@ -383,8 +383,16 @@ GlobeView.prototype.waterAt=function(ll,cx,cy){const out=_wa.apply(this,argument
 function sharpFor(g,kind,bb,ll){const s=on(g);if(!s)return null;const w=bb[2]-bb[0],h=bb[3]-bb[1],pad=Math.max(w,h)*.25+.02,B=[bb[0]-pad,bb[1]-pad,bb[2]+pad,bb[3]+pad];
  const inB=b=>b[0]>=B[0]&&b[2]<=B[2]&&b[1]>=B[1]&&b[3]<=B[3];const polys=[],seen=new Set();
  s.tiles.forEach(t=>{const d=t.d;if(!d||seen.has(d))return;seen.add(d);
-  if(kind==="lake")d.lakes.forEach(K=>{if(K.cls==="river"||!inB(K.bb))return;K.polys.forEach(p=>polys.push(d3poly(p).coordinates))});
+  if(kind==="lake")return;
   else d.ocean.forEach(o=>o.rings.forEach(r=>{let edge=false;for(let i=2;i<r.length;i+=3)if(r[i]){edge=true;break}if(edge)return;const b=bboxOf([r]);if(!inB(b)||b[2]-b[0]<1e-4)return;polys.push(d3poly([r]).coordinates)}))});
+ /* lakes: only from the sharpest tiles that hold lakes here (a coarser parent tile would add its own rough copy, cut straight
+    at its edges); each piece keeps its lake's id and its shore (tile-edge steps left out), so a lake split across tiles is
+    filled whole and outlined only along its real shore */
+ if(kind==="lake"){let zt=-1;s.tiles.forEach(t=>{if(t.d&&t.z>zt&&t.d.lakes.some(K=>K.cls!=="river"&&inB(K.bb)))zt=t.z});const ids=[],edges=[];
+  s.tiles.forEach(t=>{const d=t.d;if(!d||t.z!==zt)return;d.lakes.forEach(K=>{if(K.cls==="river"||!inB(K.bb))return;
+   const sh=[];K.rings.forEach(r=>{const n=r.length/3;let cur=null;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if((r[i+2]&r[j+2])||seam(r,i,j)){if(cur&&cur.length>1)sh.push(cur);cur=null;continue}if(!cur)cur=[[r[i],r[i+1]]];cur.push([r[j],r[j+1]])}if(cur&&cur.length>1)sh.push(cur)});
+   K.polys.forEach((p,pi)=>{polys.push(d3poly(p).coordinates);ids.push(K.id!=null?K.id:"t"+t.z+"/"+t.x+"/"+t.y+":"+d.lakes.indexOf(K));edges.push(pi?[]:sh)})})});
+  if(!polys.length)return null;return{type:"MultiPolygon",coordinates:polys,_ids:ids,_edges:edges}}
  if(!polys.length)return null;return{type:"MultiPolygon",coordinates:polys}}
 /* is each point in the sea? From OpenFreeMap's coast (the water layer's ocean), fetched for the tiles the points fall in,
    whatever the map is showing; for the cross-section. Resolves to an array of true/false, or null when the tiles cannot be had */
