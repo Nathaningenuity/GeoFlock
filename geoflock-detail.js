@@ -441,7 +441,7 @@ function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))
  const X=lo=>(((lo-lon0)%360+540)%360-180+(lon0-lon0))/cs,XX=lo=>{let d=lo-lon0;d=((d%360)+540)%360-180;return d/csx},Y=la=>(lat1-la)/cs;
  const lin=(ctx,r,close)=>{for(let i=0;i<r.length;i+=3){const x=XX(r[i]),y=Y(r[i+1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}if(close)ctx.closePath()};
  s.tiles.filter(t=>t.d).sort((a,b)=>a.z-b.z).forEach(t=>{const N=2**t.z,ll=(x,y)=>{const mm=Math.PI*(1-2*y/N);return[x/N*360-180,Math.atan(Math.sinh(mm))*180/Math.PI]};const a=ll(t.x,t.y),b=ll(t.x+1,t.y+1);
-  m.save();m.beginPath();m.rect(XX(a[0]),Y(a[1]),(b[0]-a[0])/csx,(a[1]-b[1])/cs);m.clip();m.fillStyle="#fff";m.fillRect(0,0,nx,ny);m.beginPath();t.d.ocean.forEach(o=>o.rings.forEach(r=>lin(m,r,true)));m.fillStyle="#000";m.fill("evenodd");m.restore()});
+  m.save();m.beginPath();m.rect(XX(a[0]),Y(a[1]),(b[0]-a[0])/csx,(a[1]-b[1])/cs);m.clip();m.fillStyle="#fff";m.fillRect(0,0,nx,ny);m.beginPath();t.d.ocean.forEach(o=>o.rings.forEach(r=>lin(m,r,true)));m.fillStyle="#000";m.fill("evenodd");/* rivers and lakes are left as the picture has them (wide rivers such as the Amazon are blue in it; copying land over them made blocks) */m.beginPath();t.d.lakes.forEach(K=>K.rings.forEach(r=>lin(m,r,true)));m.lineWidth=3;m.strokeStyle=m.fillStyle="#808080";m.fill("evenodd");m.stroke();m.restore()});
  const M=m.getImageData(0,0,nx,ny).data,N=nx*ny,state=new Int8Array(N);
  /* 1 land in both, 2 land the picture shows as sea (a gap), 3 sea in both, 4 sea the picture shows as land (a blur of land
     out over the water, round small islands and ice) */
@@ -450,7 +450,7 @@ function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))
  const src=new Int32Array(N).fill(-1),q=new Int32Array(N);let any=false;
  for(const[from,to]of[[1,2],[3,4]]){let qh=0,qt=0;for(let k=0;k<N;k++)if(state[k]===from){src[k]=k;q[qt++]=k}
   while(qh<qt){const k=q[qh++],i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;
-   for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=ny)continue;const kk=b*nx+a;if(state[kk]!==to||src[kk]>=0)continue;if(Math.abs(a-si)>120||Math.abs(b-sj)>120)continue;src[kk]=sk;q[qt++]=kk;any=true}}}
+   for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=ny)continue;const kk=b*nx+a;if(state[kk]!==to||src[kk]>=0)continue;if(Math.abs(a-si)>40||Math.abs(b-sj)>40)continue;src[kk]=sk;q[qt++]=kk;any=true}}}
  if(!any)return{none:true};
  const out=new Uint8ClampedArray(N*4);for(let k=0;k<N;k++){if((state[k]!==2&&state[k]!==4)||src[k]<0)continue;const i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;out[k*4]=128+(si-i);out[k*4+1]=128-(sj-j);out[k*4+3]=255}
  return{nx,ny,data:out,bb:[lon0,lat1,nx*csx,ny*cs],k:[csx,cs]}}
