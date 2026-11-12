@@ -39,5 +39,12 @@ L=np.array([-.5,.5,.707]);land=~sea;ex=np.where(land,6.0,.8)
 nl=np.sqrt((gx*ex)**2+(gy*ex)**2+1);dot=(-gx*ex*L[0]-gy*ex*L[1]+L[2])/nl
 sh=np.clip(1+np.where(land,1.25,.6)*(dot-L[2]),.5,1.35)
 img=np.clip(col*sh[...,None],0,255).astype(np.uint8)
+# the Terrain Tiles give the rock under the ice sheets of Antarctica and Greenland, not the ice surface (Greenland's middle
+# came out below sea level): there the old picture, which shows the ice, is kept
+LON=(np.arange(W)+.5)/W*360-180;LA=90-(np.arange(H)+.5)*180/H
+LG,LT=np.meshgrid(LON,LA)
+ice=(LT<-60)|(LT>84)|((LG>-75)&(LG<-10)&(LT>59)&~((LG>-25)&(LG<-13)&(LT>63)&(LT<67.5)))
+ice&=~sea
+img[ice]=P[ice].astype(np.uint8)
 Image.fromarray(img).save(out,quality=90)
 print('ok')

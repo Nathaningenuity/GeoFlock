@@ -11,6 +11,8 @@ function tile(k){if(TILES.has(k))return TILES.get(k);
  const pr=new Promise(res=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);
    const d=g.getImageData(0,0,256,256).data,h=new Float32Array(65536);for(let i=0;i<65536;i++)h[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768;res(h)}catch(e){res(null)}};im.onerror=()=>res(null);
   im.src="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"+k+".png"});TILES.set(k,pr);while(TILES.size>160)TILES.delete(TILES.keys().next().value);return pr}
+/* where the heights are the rock under an ice sheet (Antarctica, Greenland), not the ice: the picture is left as it is */
+const iceZone=(lo,la)=>la<-60||la>84||(lo>-75&&lo<-10&&la>59&&!(lo>-25&&lo<-13&&la>63&&la<67.5));
 const hex=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
 const LANDS=typeof ELEV_LAND_STOPS!=="undefined"?ELEV_LAND_STOPS:[[0,"#5f9f72"],[7e3,"#ffffff"]],SEAS=typeof ELEV_SEA_STOPS!=="undefined"?ELEV_SEA_STOPS:[[-11e3,"#183660"],[0,"#bedaee"]];
 let PIC=null;
@@ -42,9 +44,9 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
  /* shading: light from the north-west, about as strong as the picture's */
  const mx=dlon*111320*Math.cos(midLat*Math.PI/180),my=dlat*110540,L=[-.5,.5,.707];
  const out=new Uint8ClampedArray(nx*ny*4);
- for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=h>=0||!seaAt(i,j);
+ for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=h>=0||!seaAt(i,j);{const lo=v.lon0+(i+.5)*dlon,la=v.lat1-(j+.5)*dlat;if(land&&iceZone(lo,la))continue}
   const hx=(H[j*nx+Math.min(nx-1,i+1)]-H[j*nx+Math.max(0,i-1)])/(2*mx),hy=(H[Math.max(0,j-1)*nx+i]-H[Math.min(ny-1,j+1)*nx+i])/(2*my);
-  const ex=land?1.6:.6,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.6)*(dot-L[2])));
+  const ex=land?1.6:1.1,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.8)*(dot-L[2])));
   const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=255}
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=P&&P.gl===G?P.tex:G.createTexture();G.activeTexture(G.TEXTURE6);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
  G.texImage2D(G.TEXTURE_2D,0,G.RGBA,nx,ny,0,G.RGBA,G.UNSIGNED_BYTE,new Uint8Array(out.buffer));[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));
@@ -57,7 +59,7 @@ const sig=(gv,key)=>[key,gv.rot[0].toFixed(3),gv.rot[1].toFixed(3),gv.zoom.toFix
 /* from when the picture starts to be magnified (it has about 11 pixels a degree), full a little after */
 /* the height under the pointer, from the same tiles (zoom 10, about 150 m a pixel); null until that tile has loaded */
 const HV=new Map();
-window.gfElevHeight=function(ll){const z=10,n=2**z,la=Math.max(-85,Math.min(85,ll[1]))*Math.PI/180,px=(((ll[0]+180)/360)%1+1)%1*n*256,py=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n*256,tx=Math.floor(px/256),ty=Math.floor(py/256),k=z+"/"+tx+"/"+ty;
+window.gfElevHeight=function(ll){if(iceZone(ll[0],ll[1]))return null;const z=10,n=2**z,la=Math.max(-85,Math.min(85,ll[1]))*Math.PI/180,px=(((ll[0]+180)/360)%1+1)%1*n*256,py=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n*256,tx=Math.floor(px/256),ty=Math.floor(py/256),k=z+"/"+tx+"/"+ty;
  if(!HV.has(k)){HV.set(k,null);tile(k).then(h=>{HV.set(k,h);while(HV.size>40)HV.delete(HV.keys().next().value)})}const T=HV.get(k);if(!T)return null;return T[Math.min(255,Math.floor(py-ty*256))*256+Math.min(255,Math.floor(px-tx*256))]};
 window.gfElevPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180,a=Math.max(0,Math.min(1,(ppd/11.4-.9)/.6));if(a<=0)return null;
  if(P&&P.gl!==G.gl)P=null;const k=sig(gv,o.key);

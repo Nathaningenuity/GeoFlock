@@ -71,6 +71,11 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
    M.forEach(({n,alt,P})=>{if(IDX.some(e=>e.cat==="deserts"&&norm(e.n)===norm(n)))return;drop(n,alt);const g={type:"MultiPolygon",coordinates:P};let ll=null;try{ll=d3.geoCentroid(g)}catch(e){}if(!ll)return;
     [n].concat(alt).forEach(k=>have.add(norm(k)));IDX.push({n,alt,cat:"saltflats",g,ll,fame:2,icon:"🧂"})});
    SALT_PTS.forEach(([n,alt,lo,la])=>{drop(n,alt);[n].concat(alt).forEach(k=>have.add(norm(k)));IDX.push({n,alt,cat:"spots",typ:"salt flat",g:{type:"Point",coordinates:[lo,la]},ll:[lo,la],fame:2,icon:"🧂"})})}
+  /* islands from Wikidata (CC0) with their outlines from Natural Earth (public domain): islands known only as a point get
+     their real outline, and some four thousand more islands are added (textures/ISLANDS_MORE.json) */
+  if(MORE){const poly=r=>{let P=[r];try{if(d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI)P=[r.slice().reverse()]}catch(e){}return P};
+   IDX.forEach(e=>{if(e.cat==="islands"&&e.g&&e.g.type==="Point"&&MORE.fix[e.n]){e.g={type:"MultiPolygon",coordinates:[poly(MORE.fix[e.n])]}}});
+   MORE.add.forEach(([n,r,lo,la,sl])=>{if(have.has(norm(n)))return;have.add(norm(n));IDX.push({n,alt:[],cat:"islands",g:{type:"MultiPolygon",coordinates:[poly(r)]},ll:[lo,la],fame:sl>=30?2:3})})}
   (LKN||[]).forEach(([n,lo,la])=>{if(have.has(norm(n)))return;have.add(norm(n));IDX.push({n,alt:[],cat:"spots",typ:"lake",g:{type:"Point",coordinates:[lo,la]},ll:[lo,la],fame:3,icon:"💧"})});
   ROUTES.forEach(([n,cat,alt,L])=>{if([n].concat(alt).some(k=>have.has(norm(k))))return;const g={type:"MultiLineString",coordinates:L};let ll=L[0][Math.floor(L[0].length/2)];try{ll=d3.geoCentroid(g)}catch(e){}IDX.push({n,alt,cat,g,ll,fame:1})})}
   /* continents and the map's own sub-regions (North Africa, the Caribbean...): their countries flash */
@@ -102,6 +107,7 @@ function build(){if(IDX)return IDX;IDX=[];const seen=new Set();
 /* the lakes the cross-section knows (HydroLAKES, 50 km² and up, with their shapes): found by name and outlined */
 let HYL=null;function loadHydroLakes(){if(HYL)return;HYL=[];fetch("textures/LAKES.json").then(r=>r.ok?r.json():[]).then(d=>{const dec=a=>{const r=[];let x=0,y=0;for(let i=0;i+1<a.length;i+=2){x+=a[i];y+=a[i+1];r.push([x/100,y/100])}if(r.length&&(r[0][0]!==r[r.length-1][0]||r[0][1]!==r[r.length-1][1]))r.push(r[0].slice());return r};
  const out=[];(d||[]).forEach(([n,lv,dep,t,ar,polys])=>{try{if(!n)return;const g={type:"MultiPolygon",coordinates:polys.map(P=>P.map(dec))};g.coordinates.forEach(P=>{if(d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI)P.forEach(r=>r.reverse())});out.push({n,g,ar})}catch(e){}});HYL=out;IDX=null}).catch(()=>{})}
+let MORE=null,moreP=0;function loadMoreIslands(){if(moreP)return;moreP=1;fetch("textures/ISLANDS_MORE.json?v=1").then(r=>r.ok?r.json():null).then(d=>{if(d){MORE=d;IDX=null}}).catch(()=>{})}
 let LKN=null;function loadLakeNames(){if(LKN)return;LKN=[];fetch("textures/GF_LAKENAMES.json").then(r=>r.ok?r.json():[]).then(d=>{LKN=d;IDX=null}).catch(()=>{})}
 let REGS=null;function loadRegs(){if(REGS)return;REGS=[];fetch("textures/GF_REGIONS.json").then(r=>r.ok?r.json():[]).then(d=>{/* the file's rings run the GeoJSON way round; d3 wants them the other way */d.forEach(o=>{try{(o.g.type==="Polygon"?[o.g.coordinates]:o.g.coordinates).forEach(P=>{if(d3.geoArea({type:"Polygon",coordinates:P})>2*Math.PI)P.forEach(r=>r.reverse())})}catch(e){}});REGS=d;IDX=null}).catch(()=>{})}
 const UNIONS=[["Maghreb",["ma","dz","tn","ly","mr","eh"],["Maghrib","Northwest Africa"]],["Levant",["sy","lb","il","ps","jo"],[]],["Middle East",["bh","cy","eg","ir","iq","il","jo","kw","lb","om","ps","qa","sa","sy","tr","ae","ye"],["Near East"]],
@@ -205,7 +211,10 @@ const XPH={"christmas island":"Christmas island red crabs - female with eggs chr
    place's photo and any other library photos named after it. Swapped with the ⇄ button on the card */
 /* the picture shown first for a place, by its file name on Wikimedia Commons */
 const PREF_PIC={"Amazon rainforest":"Aerial view of the Amazon Rainforest.jpg"};
-function picsFor(e){if(e._pics)return e._pics;const L=[],seen=new Set(),add=(P,cap)=>{if(P&&P.d&&!seen.has(P.d)){seen.add(P.d);L.push({P,cap:cap||e.n})}};
+/* places with no picture of their own, where the library's nearest picture would mislead (Point Nemo is open ocean, not
+   Easter Island) */
+const NO_PIC=new Set(["Point Nemo"]);
+function picsFor(e){if(e._pics)return e._pics;if(NO_PIC.has(e.n))return(e._pics=[]);const L=[],seen=new Set(),add=(P,cap)=>{if(P&&P.d&&!seen.has(P.d)){seen.add(P.d);L.push({P,cap:cap||e.n})}};
  try{if(e.cat==="countries"&&typeof psCountryPhotos==="function")psCountryPhotos(e.cc).forEach(x=>add(x.P,x.cap));
   else{add(photoOf(phFor(e)));if(FN){const n=norm(e.n);if(n.length>=4)FN.forEach(([k,f])=>{if(L.length<6&&(k===n||k.startsWith(n+" ")||k.startsWith(n+",")))add(photoOf(f))})}}}catch(err){}
  /* more from the whole picture library (every picture on the site that belongs to this place), to flip through */
@@ -309,6 +318,10 @@ function loadCoasts(){if(COASTP)return;COASTP=fetch("textures/ISLAND_COASTS.json
 function fine(e){if(!isle(e))return null;if(e._fine!==undefined)return e._fine;if(!COASTS){loadCoasts();return null}e._fine=null;const ix=COASTS.e[e.n];if(!ix)return null;
  const P=ix.map(i=>{const f=COASTS.p[i],r=[];let x=0,y=0;for(let k=0;k<f.length;k+=2){x+=f[k];y+=f[k+1];r.push([x/1e3,y/1e3])}const a=r[0],z=r[r.length-1];if(a[0]!==z[0]||a[1]!==z[1])r.push(a.slice());
   /* d3 reads a ring wound the other way as the whole Earth outside the island: turn those round */try{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()}catch(x){}return[r]});
+ /* an island chain whose detailed coast covers only some of its islands (the Pitcairn Islands: Pitcairn itself, but not
+    Henderson, Ducie or Oeno) keeps its other islands from the simple outline, so zooming in never drops them */
+ try{const G=e.g&&(e.g.type==="Polygon"?[e.g.coordinates]:e.g.type==="MultiPolygon"?e.g.coordinates:[]);if(G&&G.length){const F={type:"MultiPolygon",coordinates:P},cs=P.map(Q=>{try{return d3.geoCentroid({type:"Polygon",coordinates:Q})}catch(x){return null}}).filter(Boolean);
+  G.forEach(Q=>{let c;try{c=d3.geoCentroid({type:"Polygon",coordinates:Q})}catch(x){return}if(!c||!isFinite(c[0]))return;if(d3.geoContains(F,c))return;if(cs.some(k=>d3.geoDistance(k,c)<.0016))return;P.push(Q)})}}catch(x){}
  e._fine={type:"MultiPolygon",coordinates:P};return e._fine}
 const shapeOf=e=>fine(e)||e.g;
 /* the shape to draw at this zoom, as a hovered country is: the simple outline zoomed out, the detailed coast once the map is close
@@ -517,7 +530,7 @@ function drawRegs(ctx,p,e){const R=regsOf(e);if(!R)return;const path=d3.geoPath(
 function hiCol(e){if(e.ucol)return e.ucol;/* a point has no highlight: the swatch is its dot */if(e.g&&/Point$/.test(e.g.type))return"#c0392b";if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
 /* the swatch opens a little panel: the colour, and how see-through the highlight is */
 function swatch(e,i){const op=Math.round((e.uop!=null?e.uop:hasFill(e)?(e.col||SHOW[e.cat]==="layer"?.62:.36):1)*100);return'<span class="gfs-sw" role="button" tabindex="0" title="Colour and transparency" style="--c:'+hiCol(e)+';--o:'+Math.max(.3,op/100)+'"><span class="gfs-pop" hidden><label>Colour <input type="color" data-gc="'+i+'" value="'+hiCol(e)+'" aria-label="Highlight colour of '+esc(e.n)+'"></label><label>'+(hasFill(e)?"Fill":"Strength")+' <input type="range" data-go="'+i+'" min="0" max="100" step="5" value="'+op+'" aria-label="Opacity of '+esc(e.n)+'"><b>'+op+'%</b></label></span></span>'}
-function wire(){loadProv();loadRegs();loadHydroLakes();loadLakeNames();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
+function wire(){loadMoreIslands();loadProv();loadRegs();loadHydroLakes();loadLakeNames();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
   /* the site's own country suggestions are kept, but scored the same way as places, and weak guesses are dropped */
   const nq=norm(q),ctry=[...box.querySelectorAll(".global-search-result[data-code]")].map(el=>{const c=(COUNTRY_BY_CODE||{})[el.dataset.code];const keys=c?[c.n].concat((typeof COUNTRY_ALIASES!=="undefined"&&COUNTRY_ALIASES[c.c])||[]).map(norm):[];return{el,s:score(nq,keys),f:1}});
@@ -607,7 +620,12 @@ const css=document.createElement("style");css.textContent=`
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
 .gfs-res .gfs-emo{ width:28px; text-align:center; font-size:18px; }`;
 document.head.appendChild(css);
-window.gfSearch={find,show,clear,build,list:()=>LIST.slice(),remove:removeOne,
+/* the smallest searchable shapes under a place, smallest first (an island, its island chain, its country): used by the
+   Geometry set's Shortest-distance tool */
+function at(ll){const out=[];build().forEach(e=>{const g=e.g;if(!g||!/Polygon/.test(g.type))return;if(!e._abb){try{e._abb=d3.geoBounds(g)}catch(x){e._abb=[[0,0],[0,0]]}}const b=e._abb;
+ if(b[0][0]<=b[1][0]&&(ll[0]<b[0][0]-.05||ll[0]>b[1][0]+.05))return;if(ll[1]<b[0][1]-.05||ll[1]>b[1][1]+.05)return;try{const G=shapeOf(e)||g;if(d3.geoContains(G,ll)||d3.geoContains(g,ll)){if(e._ar==null)e._ar=d3.geoArea(g);out.push(e)}}catch(x){}});
+ return out.sort((a,b)=>a._ar-b._ar)}
+window.gfSearch={find,show,clear,build,at,shapeOf:e=>{try{return shapeOf(e)}catch(x){return e.g}},list:()=>LIST.slice(),remove:removeOne,
  /* a country, with its regions on or off (the country profile's "Show on map") */
  showCountry:(cc,regs)=>{cc=String(cc).toLowerCase();const c=typeof COUNTRY_BY_CODE!=="undefined"&&(COUNTRY_BY_CODE[cc]||COUNTRY_BY_CODE[cc.toUpperCase()]);if(!c)return false;try{addCountry(c)}catch(_){}const e=LIST.find(x=>x.cat==="countries"&&String(x.cc).toLowerCase()===cc);if(!e)return false;e.regs=!!regs;xBtn();draw();return true}};
 })();
