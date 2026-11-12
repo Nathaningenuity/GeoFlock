@@ -210,7 +210,7 @@ const st=document.createElement("style");st.textContent=`
 #allMapsView .all-maps-label-controls .lf-control, #allMapsView .all-maps-label-controls .gf-fold{ gap:0 !important; }
 #allMapsView #amCloudsSw{ display:none !important; }
 /* switch menus above the floating map key; switch names stay readable over the globe's dark space background */
-body.gf-menu-open .flk{ opacity:0 !important; pointer-events:none !important; transition:opacity .15s; }
+body.gf-menu-open .flk.gf-under-menu{ opacity:0 !important; pointer-events:none !important; transition:opacity .15s; }
 
 #allMapsView.globe-on .all-maps-label-controls .switch-label{ text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 10px rgba(255,255,255,.9); }
 .globe-btns [data-g="gfclouds"]{ display:inline-flex; align-items:center; justify-content:center; color:#e0a526 !important; border:1.5px dashed #e0a526 !important; }
@@ -242,7 +242,7 @@ function cloudBtn(){const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g.host
  b.style.display=sat||lit?"":"none";if(!g._gfCloudCfg){g._gfCloudCfg=1;g.cfg.clouds=()=>typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="satellite"&&cloudsOn()?1:0}if(sat&&cloudsOn()&&!g._gfCloudLoad){g._gfCloudLoad=1;try{const pr=cloudsLoad();if(pr&&pr.then)pr.then(()=>{try{g.request()}catch(e){}})}catch(e){}}b.classList.toggle("on",!!(typeof cloudsOn==="function"&&cloudsOn()))}
 function PIC_RESET(){setTimeout(()=>{try{amGlobe.request()}catch(e){}},120)}
 function sync2(){try{cloudBtn()}catch(e){}}
-setInterval(()=>{try{document.body.classList.toggle("gf-menu-open",[...document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop")].some(p=>!p.hidden&&p.offsetParent));document.querySelectorAll("#allMapsView .all-maps-label-controls .gf-ly-fold, #allMapsView .all-maps-label-controls .gf-fold, #gfEimCtl").forEach(hoverMenu);sync2()}catch(e){}},250);
+setInterval(()=>{try{/* the legend is hidden only where an open menu actually covers it */try{const pops=[...document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop")].filter(p=>!p.hidden&&p.offsetParent).map(p=>p.getBoundingClientRect());document.querySelectorAll(".flk").forEach(k=>{const r=k.getBoundingClientRect();k.classList.toggle("gf-under-menu",pops.some(q=>q.left<r.right&&q.right>r.left&&q.top<r.bottom&&q.bottom>r.top))})}catch(e){}document.body.classList.toggle("gf-menu-open",[...document.querySelectorAll("#allMapsView .all-maps-label-controls .lf-pop, #allMapsView .all-maps-label-controls .gf-fold-pop")].some(p=>!p.hidden&&p.offsetParent));document.querySelectorAll("#allMapsView .all-maps-label-controls .gf-ly-fold, #allMapsView .all-maps-label-controls .gf-fold, #gfEimCtl").forEach(hoverMenu);sync2()}catch(e){}},250);
 })();
 /* the Satellite map always opens with its clouds on (switching them off lasts until the map is left) */
 (function(){let last=null;setInterval(()=>{try{const m=typeof appMode!=="undefined"&&appMode==="allmaps"&&typeof allMapsColorMode!=="undefined"?allMapsColorMode:null;

@@ -193,11 +193,14 @@ let FN=null;function phFor(e){if(e.phf!==undefined)return e.phf;e.phf=null;if(e.
 const XPH={"christmas island":"Christmas island red crabs - female with eggs chris bray-2.jpg","christmas island (australia)":"Christmas island red crabs - female with eggs chris bray-2.jpg"};
 /* every picture for a place, the most iconic first: a country's own photos (its best-known sight leads), or the
    place's photo and any other library photos named after it. Swapped with the ⇄ button on the card */
+/* the picture shown first for a place, by its file name on Wikimedia Commons */
+const PREF_PIC={"Amazon rainforest":"Aerial view of the Amazon Rainforest.jpg"};
 function picsFor(e){if(e._pics)return e._pics;const L=[],seen=new Set(),add=(P,cap)=>{if(P&&P.d&&!seen.has(P.d)){seen.add(P.d);L.push({P,cap:cap||e.n})}};
  try{if(e.cat==="countries"&&typeof psCountryPhotos==="function")psCountryPhotos(e.cc).forEach(x=>add(x.P,x.cap));
   else{add(photoOf(phFor(e)));if(FN){const n=norm(e.n);if(n.length>=4)FN.forEach(([k,f])=>{if(L.length<6&&(k===n||k.startsWith(n+" ")||k.startsWith(n+",")))add(photoOf(f))})}}}catch(err){}
  /* more from the whole picture library (every picture on the site that belongs to this place), to flip through */
  try{if(L.length<8&&window.gfDictVis&&gfDictVis.picsForPlace&&e.cat!=="terms"&&!/^(lines|currents|tectonics|seafloor)$/.test(e.cat))gfDictVis.picsForPlace(e.n,10).forEach(x=>{if(L.length<8)add(x.P,x.cap)})}catch(err){}
+ /* a chosen first picture for some places (the one that shows the place best) */{const want=PREF_PIC[e.n];if(want){const i=L.findIndex(x=>x.P.f===want);if(i>0)L.unshift(L.splice(i,1)[0])}}
  e._pics=L;return L}
 /* a photo from the site's library, by its Commons file name */
 function photoOf(f){if(!f)return null;try{if(typeof gfMergeExtra==="function")gfMergeExtra();const P=PS_PHOTO_DATA.find(x=>x&&x.f===f&&x.d);return P||null}catch(e){return null}}
