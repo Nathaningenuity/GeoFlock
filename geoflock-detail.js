@@ -272,6 +272,10 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
    /* ...and the other way: land on the sharp coast that the picture shows as sea (fjord walls, headlands, small islands) is
       painted in the picture's own land colour from just inland of it */
    if(!(g.gl&&!g._flat))try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
+ /* Elevation: the named lakes the tiles store as sea (Lake Maracaibo, Lagoa dos Patos) in the lakes' blue, kept to the tiles'
+    water, so they look as every other lake does (zoomed out they are the map's own lakes, in the same blue) */
+ if(ov.lakes&&elev&&window.gfSeaLake)try{const LK=(globeOverlays().lakes||[]).filter(L=>L&&L.n&&!/^Caspian/.test(L.n)&&gfSeaLake(L.n));if(LK.length){const LP=d3.geoPath(g.projection(),ctx);
+   each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");ctx.beginPath();LK.forEach(L=>LP(L));ctx.fillStyle=(window.gfLakeColor&&gfLakeColor())||"#2f7ab8";ctx.fill()})}}catch(e){}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?((window.gfLakeColor&&gfLakeColor())||(!elev&&seaC)||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
