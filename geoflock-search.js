@@ -343,7 +343,7 @@ function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;con
   else own=sh.coordinates.filter(inOwn);
   const A=d3.geoArea(G0)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own,_edge:edge}:null}
  e._sh=sh;return e._sh||G0}catch(x){return shapeOf(e)}}
-function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.globalAlpha=uop(e);
+function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){if(e.regs)try{drawRegs(ctx,p,e)}catch(x){console.error(x)}const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.globalAlpha=uop(e);
   /* close up, the detailed coast and borders, as a hovered country (the other countries keep their own coasts) */
   try{if(window.gfDetail&&gfDetail.hotSharp&&gfDetail.ownsCoast&&gfDetail.ownsCoast(amGlobe)){const all=(amGlobe._base||[]).concat(amGlobe._big||[]),own=all.filter(f=>f.properties&&f.properties.c===e.cc);
    if(own.length&&gfDetail.hotSharp(amGlobe,ctx,own,[["rgba(20,30,45,.5)",3.4],[e.ucol||"#fff",1.7]],all)){ctx.restore();return pin(e)}}}catch(x){}ctx.beginPath();path(G);ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle=e.ucol||"#fff";ctx.lineWidth=1.7;ctx.stroke();ctx.restore()}return pin(e)}const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=e.ucol||e.col||COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
@@ -471,12 +471,36 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
    /* the tag button: hide or show this result's name on the map */
    const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}
    /* the image button: hide or show this result's picture (its name stays) */
+   const rb=ev.target.closest("[data-greg]");if(rb){const e=LIST[+rb.dataset.greg];if(e){e.regs=!e.regs;xBtn();try{draw()}catch(_){}}return}
    const ib=ev.target.closest("[data-gim]");if(ib){const e=LIST[+ib.dataset.gim];if(e){e.noimg=!e.noimg;labOf(e);xBtn();try{draw()}catch(_){}}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
- b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<span class="gfs-tw"><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+szPop("gls",i,e.lsz)+'</span>'+(hasImg(e)?'<span class="gfs-tw"><b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>'+szPop("gis",i,e.isz)+'</span>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<span class="gfs-tw"><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+szPop("gls",i,e.lsz)+'</span>'+(hasImg(e)?'<span class="gfs-tw"><b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>'+szPop("gis",i,e.isz)+'</span>':'')+(hasRegs(e)?'<b data-greg="'+i+'" class="gfs-tog'+(e.regs?'':' off')+'" role="button" title="'+(e.regs?'Hide its regions':'Show all its regions (states, provinces…)')+'">Regions</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
 /* under Label and Image, shown on hover: a slider for that one result's size, 50% to 200% */
 const szPop=(k,i,v)=>{const p=Math.round((v||1)*100);return'<span class="gfs-sz"><input type="range" data-'+k+'="'+i+'" min="50" max="200" step="10" value="'+p+'" aria-label="Size"><i>'+p+'%</i></span>'};
 function sizeOf(e){(e._els||[]).forEach(x=>{if(!x||!x.style)return;x.style.setProperty("--uls",e.lsz||1);x.style.setProperty("--uis",e.isz||1)})}
+/* ---- a country's regions on the map (states, provinces, regions…: geoflock-provinces.js, Natural Earth admin-1) ----
+   each region in one of five soft colours, no two neighbours alike, with white lines between them and its name where it fits */
+const hasRegs=e=>!!(e&&e.cat==="countries"&&e.cc&&window.gfProvinces&&gfProvinces.LIST.some(r=>r[0]===String(e.cc).toLowerCase()));
+const RCOL=["#f2b33d","#8fc46a","#3a6fb0","#e8506a","#f39a86"];
+function regsOf(e){const cc=String(e.cc).toLowerCase();if(e._rg&&e._rg.cc===cc)return e._rg.d;if(e._rgP)return null;
+ e._rgP=gfProvinces.load(cc).then(d=>{const items=d.items.filter(x=>x.f&&x.f.geometry);
+  /* neighbours: regions that share border points (on a 0.02° grid) */
+  const owner=new Map(),adj=items.map(()=>new Set());
+  items.forEach((x,i)=>{const g=x.f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;P.forEach(pl=>pl.forEach(r=>r.forEach(c=>{const k=Math.round(c[0]*50)+","+Math.round(c[1]*50);const o=owner.get(k);if(o==null)owner.set(k,i);else if(o!==i){adj[i].add(o);adj[o].add(i)}})))});
+  /* greedy colouring, the most connected first */
+  const col=new Array(items.length).fill(-1);items.map((_,i)=>i).sort((a,b)=>adj[b].size-adj[a].size).forEach(i=>{const used=new Set([...adj[i]].map(j=>col[j]));let c=0;while(used.has(c)&&c<RCOL.length-1)c++;col[i]=c});
+  /* where each name goes: the middle of its largest piece */
+  const lab=items.map(x=>{const g=x.f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;let best=P[0],ba=-1;P.forEach(pl=>{const a=d3.geoArea({type:"Polygon",coordinates:pl});if(a>ba){ba=a;best=pl}});const c=d3.geoCentroid({type:"Polygon",coordinates:best});return{c,big:{type:"Polygon",coordinates:best}}});
+  e._rg={cc,d:{items,col,lab}};e._rgP=null;draw()}).catch(()=>{e._rgP=null});return null}
+function drawRegs(ctx,p,e){const R=regsOf(e);if(!R)return;const path=d3.geoPath(p,ctx);ctx.save();
+ R.items.forEach((x,i)=>{ctx.beginPath();path(x.f);ctx.globalAlpha=.78;ctx.fillStyle=RCOL[R.col[i]];ctx.fill();ctx.globalAlpha=1;ctx.lineJoin="round";ctx.lineWidth=1.1;ctx.strokeStyle="rgba(255,255,255,.95)";ctx.stroke()});
+ /* names: as large as the region allows (7 to 13 px), left out where they would not fit or would overlap */
+ const placed=[];ctx.textAlign="center";ctx.textBaseline="middle";
+ R.items.map((x,i)=>{const b=d3.geoPath(p).bounds(R.lab[i].big);return{i,w:b[1][0]-b[0][0],h:b[1][1]-b[0][1]}}).sort((a,b)=>b.w*b.h-a.w*a.h).forEach(({i,w,h})=>{if(!isFinite(w))return;const q=p(R.lab[i].c);if(!q)return;
+  const n=R.items[i].n||"";let fs=Math.max(7,Math.min(13,Math.sqrt(w*h)/6));ctx.font="700 "+fs.toFixed(1)+"px Inter, system-ui, sans-serif";let tw=ctx.measureText(n).width;if(tw>w*1.1||fs*1.2>h){return}
+  const box=[q[0]-tw/2-2,q[1]-fs/2-1,q[0]+tw/2+2,q[1]+fs/2+1];if(placed.some(o=>box[0]<o[2]&&box[2]>o[0]&&box[1]<o[3]&&box[3]>o[1]))return;placed.push(box);
+  ctx.lineWidth=3;ctx.strokeStyle="rgba(20,30,45,.55)";ctx.strokeText(n,q[0],q[1]);ctx.fillStyle="#fff";ctx.fillText(n,q[0],q[1])});
+ ctx.restore()}
 /* each result's highlight colour, which the person can change: a swatch on its chip */
 function hiCol(e){if(e.ucol)return e.ucol;/* a point has no highlight: the swatch is its dot */if(e.g&&/Point$/.test(e.g.type))return"#c0392b";if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
 /* the swatch opens a little panel: the colour, and how see-through the highlight is */
@@ -565,7 +589,9 @@ const css=document.createElement("style");css.textContent=`
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
 .gfs-res .gfs-emo{ width:28px; text-align:center; font-size:18px; }`;
 document.head.appendChild(css);
-window.gfSearch={find,show,clear,build,list:()=>LIST.slice(),remove:removeOne};
+window.gfSearch={find,show,clear,build,list:()=>LIST.slice(),remove:removeOne,
+ /* a country, with its regions on or off (the country profile's "Show on map") */
+ showCountry:(cc,regs)=>{cc=String(cc).toLowerCase();const c=typeof COUNTRY_BY_CODE!=="undefined"&&(COUNTRY_BY_CODE[cc]||COUNTRY_BY_CODE[cc.toUpperCase()]);if(!c)return false;try{addCountry(c)}catch(_){}const e=LIST.find(x=>x.cat==="countries"&&String(x.cc).toLowerCase()===cc);if(!e)return false;e.regs=!!regs;xBtn();draw();return true}};
 })();
 /* What the Maps search can find: shown under the empty search box when it gets the focus; each example fills it in */
 (function(){
@@ -588,3 +614,8 @@ function wire(){const i=document.getElementById("globalSearchInput");if(!i||i._g
  i.addEventListener("keydown",e=>{if(e.key==="Escape")h.hidden=true})}
 wire();document.addEventListener("DOMContentLoaded",wire);setInterval(wire,1500);
 })();
+/* the country profile's "Show on map": the country is put on the map as a search result, with all its regions coloured in
+   when "Show regions" (states, provinces…) is switched on in the profile */
+(function(){let n=0;const t=setInterval(()=>{if(++n>60||typeof pfmGoToMap!=="function"||pfmGoToMap._gfReg){if(n>60||(typeof pfmGoToMap==="function"&&pfmGoToMap._gfReg))clearInterval(t);return}
+ const _g=pfmGoToMap;pfmGoToMap=function(code){const r=_g.apply(this,arguments);let regs=false;try{regs=localStorage.getItem("gfPvShow")==="1"}catch(e){}
+  setTimeout(()=>{try{window.gfSearch&&gfSearch.showCountry(code,regs)}catch(e){console.error(e)}},700);return r};pfmGoToMap._gfReg=1;clearInterval(t)},500)})();
