@@ -36,6 +36,6 @@ function strength(o){const ppd=o.s*Math.PI/180;return Math.max(0,Math.min(1,(ppd
 function inside(gv){if(!P)return false;const v=viewBox(gv);if(!v)return false;const l=((v.l0-P.box[0])%360+360)%360,r=l+(v.l1-v.l0);return l>=0&&r<=P.box[1]-P.box[0]+1e-6&&v.b0>=P.box[2]-1e-6&&v.b1<=P.box[3]+1e-6}
 window.gfHRPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!isRelief(o.key)||!IDX)return null;const a=strength(o);if(a<=0)return null;
  if(P&&P.gl!==G.gl)P=null;
- if(!busy&&!inside(gv)){clearTimeout(timer);timer=setTimeout(()=>build(gv,o),P?120:30)}
+ if(!busy&&!inside(gv)){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving&&P){timer=setTimeout(go,250);return}build(gv,o)},P?150:30)}
  if(!P)return null;return{tex:P.tex,bb:P.bb,a}};
 })();

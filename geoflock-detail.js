@@ -271,7 +271,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
      ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}
    /* ...and the other way: land on the sharp coast that the picture shows as sea (fjord walls, headlands, small islands) is
       painted in the picture's own land colour from just inland of it */
-   try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
+   if(!(g.gl&&!g._flat))try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?((window.gfLakeColor&&gfLakeColor())||(!elev&&seaC)||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
@@ -406,12 +406,52 @@ function picOf(key){try{const im=typeof globeImages==="function"?globeImages(key
  const c=document.createElement("canvas");c.width=2048;c.height=1024;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im[0],0,0,1024,1024);x.drawImage(im[1],1024,0,1024,1024);
  PIC={a:im[0],b:im[1],d:x.getImageData(0,0,2048,1024).data,n:0};return PIC}catch(e){return null}}
 const picAt=(P,lo,la)=>{const x=Math.max(0,Math.min(2047,Math.floor((((lo+180)%360+360)%360)/360*2048))),y=Math.max(0,Math.min(1023,Math.floor((90-la)/180*1024))),o=(y*2048+x)*4;return[P.d[o],P.d[o+1],P.d[o+2]]};
-const seaish=p=>p[2]>p[0]+25&&p[2]>=p[1];
+/* the picture's sea: clearly blue and not bright (pale bluish ice caps, as on Baffin Island, are land) */
+const seaish=p=>p[2]>p[0]+25&&p[2]>=p[1]&&p[0]<160&&p[1]<190;
 /* each stretch of coast: the median colour of the picture's land 8–16 km inland of it (whichever side is land there) */
 function landCol(P,r,a,b){const R=[],G=[],B=[];const n=r.length/3,step=Math.max(1,Math.floor((b-a)/5));
  for(let k=a;k<b;k+=step){const i=k*3,j=((k+1)%n)*3;const dx=r[j]-r[i],dy=r[j+1]-r[i+1],L=Math.hypot(dx,dy)||1,cl=Math.cos(r[i+1]*Math.PI/180)||1;
   for(const km of[8,12,16])for(const sg of[1,-1]){const dd=km/111.2,lo=r[i]-dy/L*dd*sg/cl,la=r[i+1]+dx/L*dd*sg;const p=picAt(P,lo,la);if(!seaish(p)){R.push(p[0]);G.push(p[1]);B.push(p[2])}}}
  if(R.length<3)return null;const md=v=>Math.round(v.sort((x,y)=>x-y)[v.length>>1]);return"rgb("+md(R)+","+md(G)+","+md(B)+")"}
+/* The globe's own picture, extended to the sharp coast: for each bit of land the tiles show where the picture has sea, the
+   offset to the nearest land of the picture, on a grid of about two screen pixels. The globe's shader draws those bits from
+   there (colour, shading and the high-resolution detail together), so they are exactly as sharp as the land beside them. */
+let FP=null,FPbusy=false,FPt=0;
+function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))return null;const P=picOf(key);if(!P)return null;
+ const pr=g.projection(),{w,h}=g.size(),c=[-g.rot[0],-g.rot[1]];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9,n=0;
+ for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){const q=pr.invert([w*i/10,h*j/10]);if(!q||!isFinite(q[0])||d3.geoDistance(q,c)>Math.PI/2)continue;const dl=((q[0]-c[0]+540)%360)-180;x0=Math.min(x0,dl);x1=Math.max(x1,dl);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]);n++}
+ if(n<6||y1>85||y0<-85)return null;const pad=.08*Math.max(x1-x0,y1-y0);x0-=pad;x1+=pad;y0-=pad;y1+=pad;
+ /* two screen pixels a cell, at most 900 cells a side */
+ /* about a screen pixel a cell, longitude and latitude each (a degree of longitude is short far north), at most 1400 a side */
+ const csx=Math.max((x1-x0)/w,(x1-x0)/1400,.001),csy=Math.max((y1-y0)/h,(y1-y0)/1400,.001),cs=csy;const nx=Math.ceil((x1-x0)/csx),ny=Math.ceil((y1-y0)/csy),lon0=c[0]+x0,lat1=y1;
+ /* the tiles' land on the grid (finer tiles drawn last, over their parents) */
+ const cv=document.createElement("canvas");cv.width=nx;cv.height=ny;const m=cv.getContext("2d",{willReadFrequently:true});m.fillStyle="#808080";m.fillRect(0,0,nx,ny);/* grey: no tile there */
+ const X=lo=>(((lo-lon0)%360+540)%360-180+(lon0-lon0))/cs,XX=lo=>{let d=lo-lon0;d=((d%360)+540)%360-180;return d/csx},Y=la=>(lat1-la)/cs;
+ const lin=(ctx,r,close)=>{for(let i=0;i<r.length;i+=3){const x=XX(r[i]),y=Y(r[i+1]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}if(close)ctx.closePath()};
+ s.tiles.filter(t=>t.d).sort((a,b)=>a.z-b.z).forEach(t=>{const N=2**t.z,ll=(x,y)=>{const mm=Math.PI*(1-2*y/N);return[x/N*360-180,Math.atan(Math.sinh(mm))*180/Math.PI]};const a=ll(t.x,t.y),b=ll(t.x+1,t.y+1);
+  m.save();m.beginPath();m.rect(XX(a[0]),Y(a[1]),(b[0]-a[0])/csx,(a[1]-b[1])/cs);m.clip();m.fillStyle="#fff";m.fillRect(0,0,nx,ny);m.beginPath();t.d.ocean.forEach(o=>o.rings.forEach(r=>lin(m,r,true)));m.fillStyle="#000";m.fill("evenodd");m.restore()});
+ const M=m.getImageData(0,0,nx,ny).data,N=nx*ny,state=new Int8Array(N);
+ /* 1 land in both, 2 land the picture shows as sea (a gap), 3 sea in both, 4 sea the picture shows as land (a blur of land
+    out over the water, round small islands and ice) */
+ for(let j=0;j<ny;j++){const la=lat1-(j+.5)*cs;for(let i=0;i<nx;i++){const k=j*nx+i,v=M[k*4];if(v>96&&v<160)continue;const ps=seaish(picAt(P,lon0+(i+.5)*csx,la));state[k]=v>=160?(ps?2:1):(ps?3:4)}}
+ /* each gap takes the nearest picture land, each blur the nearest picture sea: a breadth-first spread (at most 120 cells) */
+ const src=new Int32Array(N).fill(-1),q=new Int32Array(N);let any=false;
+ for(const[from,to]of[[1,2],[3,4]]){let qh=0,qt=0;for(let k=0;k<N;k++)if(state[k]===from){src[k]=k;q[qt++]=k}
+  while(qh<qt){const k=q[qh++],i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;
+   for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=ny)continue;const kk=b*nx+a;if(state[kk]!==to||src[kk]>=0)continue;if(Math.abs(a-si)>120||Math.abs(b-sj)>120)continue;src[kk]=sk;q[qt++]=kk;any=true}}}
+ if(!any)return{none:true};
+ const out=new Uint8ClampedArray(N*4);for(let k=0;k<N;k++){if((state[k]!==2&&state[k]!==4)||src[k]<0)continue;const i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;out[k*4]=128+(si-i);out[k*4+1]=128-(sj-j);out[k*4+3]=255}
+ return{nx,ny,data:out,bb:[lon0,lat1,nx*csx,ny*cs],k:[csx,cs]}}
+window.gfFillPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!/^(relief|gfRelShade|reliefAdj)/i.test(String(o.key||"")))return null;
+ const s=on(gv);if(!s||s.z<COASTZ)return null;const key=[o.key,gv.rot[0].toFixed(3),gv.rot[1].toFixed(3),gv.zoom.toFixed(3),s.tiles.filter(t=>t.d).length].join("|");
+ if(FP&&FP.gl!==G.gl)FP=null;
+ if((!FP||FP.key!==key)&&!FPbusy){clearTimeout(FPt);FPt=setTimeout(function go(){if(FPbusy)return;if(gv._moving){FPt=setTimeout(go,250);return}FPbusy=true;try{const F=fillGrid(gv,o.key),gl=G.gl;
+   if(F&&!F.none){const t=FP&&FP.tex&&FP.gl===gl?FP.tex:gl.createTexture();gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,F.nx,F.ny,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(F.data.buffer));[gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER].forEach(p=>gl.texParameteri(gl.TEXTURE_2D,p,gl.NEAREST));
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.activeTexture(gl.TEXTURE0);
+    FP={key,gl,tex:t,bb:F.bb,k:F.k}}else FP=FP?Object.assign(FP,{key}):null;
+   if(F&&F.none&&FP)FP.k=0}catch(e){console.error(e)}FPbusy=false;try{gv.request?gv.request():gv.render()}catch(e){}},gv._moving?400:120)}
+ return FP&&FP.k?{tex:FP.tex,bb:FP.bb,k:FP.k}:null};
 let HLD=null;
 function landOut(g,ctx,s,pj,I,land,each){const P=picOf(I.texKey);if(!P||!land.length)return;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!HLD)HLD=document.createElement("canvas");if(HLD.width!==W||HLD.height!==H){HLD.width=W;HLD.height=H}
  const f=HLD.getContext("2d"),T=ctx.getTransform();f.setTransform(1,0,0,1,0,0);f.globalCompositeOperation="source-over";f.clearRect(0,0,W,H);f.setTransform(T);
@@ -443,7 +483,9 @@ function fillOut(g,ctx,s,pj){const fill=g.cfg&&g.cfg.fill,list=g._base;if(!fill|
  f.globalCompositeOperation="destination-out";f.fillStyle="#000";list.forEach(F=>{f.beginPath();P(F);f.fill()});
  s.tiles.forEach(t=>{if(!t.d)return;f.save();if(boxClip(f,pj,t)){f.beginPath();t.d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(f,pj,r,true)));f.fill("evenodd")}f.restore()});
  f.restore();ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HF,0,0);ctx.restore()}
-function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||!s.tiles.some(t=>t.d))return false;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return false;
+function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||!s.tiles.some(t=>t.d))return false;
+ /* while the map moves, the rough outline (cheap); the sharp one is worked out once it is still */
+ if(g._moving){clearTimeout(hotSharp._t);hotSharp._t=setTimeout(()=>{try{g.request?g.request():g.render()}catch(e){}},180);return false}const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return false;
  if(!HM){HM=document.createElement("canvas");HL=document.createElement("canvas")}[HM,HL].forEach(c=>{if(c.width!==W||c.height!==H){c.width=W;c.height=H}});
  const T=ctx.getTransform(),pj=projector(g);
  /* the country's own shape: Natural Earth 10 m (the finer outlines, within about a kilometre) when loaded, else the map's */
@@ -454,12 +496,17 @@ function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||
   HM._d=m.getImageData(0,0,W,H).data;HM._k=key}
  const MD=HM._d,inX=(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=W||y>=H)return false;return MD[(y*W+x)*4+3]>127};
  /* how far to each side to look: about 1.5 km (the shape's own accuracy), at least 2 and at most 40 pixels */
- let dpx=3;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.0135);if(a&&b)dpx=Math.max(2,Math.min(40,Math.hypot(a[0]-b[0],a[1]-b[1])*T.a))}catch(e){}
+ /* how far to each side to look: about 6 km (the 10 m shapes can sit a kilometre or two off the tiles' lines, as along the
+    straight Chad–Libya border), at least 3 and at most 60 pixels */
+ let dpx=4;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.054);if(a&&b)dpx=Math.max(12,Math.min(60,Math.hypot(a[0]-b[0],a[1]-b[1])*T.a))}catch(e){}/* (Natural Earth's line can run 10–15 km from the tiles', as along the Chad–Libya border) */
  /* a piece of sharp coast or border is part of the outline when the country is on exactly one side of it (a neighbour's own
     border, as Kaliningrad's with Lithuania for Poland, has it on neither side and is left out); a piece running over the shape
     with outside on one side counts too (a small island narrower than the look-ahead) */
  const own=(ax,ay,bx,by)=>{const X0=T.a*ax+T.c*ay+T.e,Y0=T.b*ax+T.d*ay+T.f,X1=T.a*bx+T.c*by+T.e,Y1=T.b*bx+T.d*by+T.f,dx=X1-X0,dy=Y1-Y0,L=Math.hypot(dx,dy)||1,nx=-dy/L*dpx,ny=dx/L*dpx,mx=(X0+X1)/2,my=(Y0+Y1)/2;
-  const p=inX(mx+nx,my+ny),q=inX(mx-nx,my-ny);return p!==q||(inX(mx,my)&&!(p&&q))};
+  /* looked at from several points along a long piece, kept if any of them sees the country on one side only */
+  /* only the part on screen is looked at (a long straight border, as Chad's with Libya, can have both ends far off it) */
+  let ta=0,tb=1;for(const[pp,qq]of[[-dx,X0],[dx,W-1-X0],[-dy,Y0],[dy,H-1-Y0]]){if(pp===0){if(qq<0)return false;continue}const r=qq/pp;if(pp<0){if(r>tb)return false;if(r>ta)ta=r}else{if(r<ta)return false;if(r<tb)tb=r}}
+  const Lv=L*(tb-ta),k=Math.max(1,Math.min(12,Math.round(Lv/(dpx*3))));for(let i=0;i<k;i++){const f=ta+(tb-ta)*(i+.5)/k,px=X0+dx*f,py=Y0+dy*f,p=inX(px+nx,py+ny),q=inX(px-nx,py-ny);if(p!==q||(inX(px,py)&&!(p&&q)))return true}return false};
  const l=HL.getContext("2d");l.setTransform(1,0,0,1,0,0);l.clearRect(0,0,W,H);l.setTransform(T);l.lineJoin=l.lineCap="round";
  const st=Array.isArray(lw)?lw:[["#ffffff",lw]];
  const segs=(r,closed,skip)=>{const n=r.length/3;let pen=false;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if(skip&&skip(r,i,j)){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);
