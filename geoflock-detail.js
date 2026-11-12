@@ -253,7 +253,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
  /* only on the plain Relief and Elevation pictures: on City Lights (a dark picture) and on maps coloured over the relief
     (Climate...) the sampled colour came out as a bright blue band along every coast */
- const plain=/^relief/i.test(String(I.texKey||""))&&(typeof allMapsColorMode==="undefined"||allMapsColorMode==="relief");/* (not Elevation either: its depth-shaded sea showed the band as pale squares) */
+ const plain=/^(relief|gfRelShade|reliefAdj)/i.test(String(I.texKey||""))/* (with terrain shading or your own shades the picture has its own key) */&&(typeof allMapsColorMode==="undefined"||allMapsColorMode==="relief");/* (not Elevation either: its depth-shaded sea showed the band as pale squares) */
  if(I.drewRaster&&!sat&&plain){try{const W=Math.max(5,Math.min(55,bandPx(pj,s)*1.3));if(seaC){const sig=colSig(I);let px=null;
    each(d=>{if(!d.ocean.length)return;/* each stretch of coast in the colour of the sea just off it (the picture's sea is lighter over
      shallows and darker over deeps: one colour for the whole view left pale bands round darker seas, as in the Gulf of Bothnia) */
@@ -263,7 +263,12 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
       col=col||seaC;let a=G.get(col);if(!a)G.set(col,a=[]);a.push([r,c0,Math.min(n,c0+CH+1)])}})});
     ctx.save();ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");
     ctx.lineWidth=W*2;ctx.lineJoin=ctx.lineCap="round";try{ctx.filter="blur("+Math.round(W/3)+"px)"}catch(e){}
-    G.forEach((list,col)=>{ctx.strokeStyle=col;ctx.beginPath();list.forEach(([r,a,b])=>edgeSpan(ctx,pj,r,a,b));ctx.stroke()});ctx.restore()})}}catch(e){console.error(e)}}
+    G.forEach((list,col)=>{ctx.strokeStyle=col;ctx.beginPath();list.forEach(([r,a,b])=>edgeSpan(ctx,pj,r,a,b));ctx.stroke()});ctx.restore()});
+   /* sea the picture shows as land (lagoons behind barrier islands, as Laguna Madre; narrow gulfs and estuaries): wherever the
+      sharp sea lies inside the map's rough land, which is about where the picture has land, it is filled with the sea colour */
+   const land=(g._base||[]).filter(f=>f&&f.geometry);if(land.length){const LP=d3.geoPath(g.projection(),ctx);
+    each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.clip("evenodd");
+     ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}}}catch(e){console.error(e)}}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":I.drewRaster?((window.gfLakeColor&&gfLakeColor())||(!elev&&seaC)||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
@@ -419,7 +424,16 @@ function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||
   l.setTransform(1,0,0,1,0,0);l.globalCompositeOperation="destination-in";l.drawImage(HM,0,0);l.globalCompositeOperation="source-over";ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HL,0,0);ctx.restore()};
  /* borders: kept to the band (a border belongs to both sides); coasts: kept to the nearest country */
  mask(false);layer(d=>landBorders(d).forEach(B=>B.ls.forEach(x=>ringPath(l,pj,x,false))));
- mask(true);layer(d=>d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(l,pj,r,true))}));return true}
+ mask(true);layer(d=>d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(l,pj,r,true))}));
+ /* small islands (Lakshadweep off India): the tiles leave them out until zoomed in close, so any part of the country under
+    about 18 pixels across keeps its rough outline */
+ try{const CP=d3.geoPath(g.projection(),ctx),st=Array.isArray(lw)?lw:[["#ffffff",lw]];ctx.save();ctx.lineJoin=ctx.lineCap="round";
+  /* the finer outlines the map hovers with zoomed out (Natural Earth 10 m, more of the small islands), when they are loaded */
+  let src=fs;try{if(typeof HI10!=="undefined"&&HI10&&HI10.byN){const cs=new Set(fs.map(f=>f.properties&&f.properties.c).filter(Boolean));if(cs.size){const H=[...HI10.byN.values()].filter(f=>cs.has(f.properties.c));if(H.length)src=H}}}catch(e){}
+  src.forEach(f=>{const G=f.geometry||f;const polys=G.type==="MultiPolygon"?G.coordinates:G.type==="Polygon"?[G.coordinates]:[];
+   polys.forEach(P=>{const pg={type:"Polygon",coordinates:P};let b;try{b=CP.bounds(pg)}catch(e){return}if(!isFinite(b[0][0]))return;
+    if(Math.max(b[1][0]-b[0][0],b[1][1]-b[0][1])>18)return;ctx.beginPath();CP(pg);st.forEach(([c,w])=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()})})});ctx.restore()}catch(e){}
+ return true}
 window.gfDetail={hotSharp:(g,ctx,fs,lw,all)=>{try{return hotSharp(g,ctx,fs,lw,all)}catch(e){return false}},seaAt:lls=>seaAt(lls).catch(()=>null),sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:K._sea,casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)},draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
 setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.host;if(!h)return;let c=h.querySelector(".gf-dt-cred");const v=!!(g&&on(g));if(v&&!c){c=document.createElement("div");c.className="gf-dt-cred";c.innerHTML='Detail © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';h.appendChild(c)}if(c)c.hidden=!v}catch(e){}},700);
