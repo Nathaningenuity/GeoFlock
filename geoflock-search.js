@@ -343,7 +343,7 @@ function sharp(e){try{const kind=e.cat==="lakes"?"lake":isle(e)?"coast":null;con
   else own=sh.coordinates.filter(inOwn);
   const A=d3.geoArea(G0)||1,a=own.reduce((t,P)=>{try{return t+d3.geoArea({type:"Polygon",coordinates:P})}catch(x){return t}},0);sh=own.length&&a/A>.6?{type:"MultiPolygon",coordinates:own,_edge:edge}:null}
  e._sh=sh;return e._sh||G0}catch(x){return shapeOf(e)}}
-function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){if(e.regs)try{drawRegs(ctx,p,e)}catch(x){console.error(x)}const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.globalAlpha=uop(e);
+function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){const G=cShape(e);if(G){const path=d3.geoPath(p,ctx);ctx.save();ctx.globalAlpha=uop(e);
   /* close up, the detailed coast and borders, as a hovered country (the other countries keep their own coasts) */
   try{if(window.gfDetail&&gfDetail.hotSharp&&gfDetail.ownsCoast&&gfDetail.ownsCoast(amGlobe)){const all=(amGlobe._base||[]).concat(amGlobe._big||[]),own=all.filter(f=>f.properties&&f.properties.c===e.cc);
    if(own.length&&gfDetail.hotSharp(amGlobe,ctx,own,[["rgba(20,30,45,.5)",3.4],[e.ucol||"#fff",1.7]],all)){ctx.restore();return pin(e)}}}catch(x){}ctx.beginPath();path(G);ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle=e.ucol||"#fff";ctx.lineWidth=1.7;ctx.stroke();ctx.restore()}return pin(e)}const mode=SHOW[e.cat];if(mode==="icon"||mode==="city"||mode==="label")return pin(e);if(mode==="photo"&&!e.line)return pin(e);const col=e.ucol||e.col||COL[e.cat],a=alpha(e),keep=mode==="layer"?.62:.28,path=d3.geoPath(p,ctx);
@@ -390,7 +390,8 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
  const PL=picsFor(e),pi=Math.min(e._pi||0,Math.max(0,PL.length-1)),P=PL.length?PL[pi].P:null;
  if(!el&&P){/* the photo card, like the tours' photo pins: photo and name; click for the big photo */
   el=e._pin=document.createElement("div");el.className="gfs-pin gfs-photo";
-  el.innerHTML='<button type="button" class="gfs-card" aria-label="Photo of '+esc(e.n)+'"><img src="'+esc(typeof gfSrc==="function"?gfSrc(P.d):P.d)+'" alt=""></button><span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span><span class="gfs-tip"></span>'+(PL.length>1?'<button type="button" class="gfs-swap" title="Another picture ('+PL.length+')" aria-label="Show another picture">⇄</button>':'');
+  el.innerHTML='<button type="button" class="gfs-card" aria-label="Photo of '+esc(e.n)+'"><img src="'+esc(typeof gfSrc==="function"?gfSrc(P.d):P.d)+'" alt=""></button><span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span><span class="gfs-tip"></span>'+(PL.length>1?'<button type="button" class="gfs-swap" title="Another picture ('+PL.length+')" aria-label="Show another picture">⇄</button>':'')+'<button type="button" class="gfs-pclose" title="Hide the picture" aria-label="Hide the picture">×</button>';
+  {const cb=el.querySelector(".gfs-pclose");if(cb){["pointerdown","mousedown","wheel","dblclick"].forEach(t=>cb.addEventListener(t,ev=>ev.stopPropagation()));cb.addEventListener("click",ev=>{ev.stopPropagation();ev.preventDefault();e.noimg=true;labOf(e);xBtn();try{draw()}catch(_){}})}}
   {const sw=el.querySelector(".gfs-swap");if(sw){["pointerdown","mousedown","wheel","dblclick"].forEach(t=>sw.addEventListener(t,ev=>ev.stopPropagation()));sw.addEventListener("click",ev=>{ev.stopPropagation();ev.preventDefault();e._pi=((e._pi||0)+1)%PL.length;const Q=PL[e._pi].P,im=el.querySelector(".gfs-card img");if(im)im.src=typeof gfSrc==="function"?gfSrc(Q.d):Q.d;el.querySelector(".gfs-card").setAttribute("aria-label",PL[e._pi].cap)})}}
   /* drag the card anywhere (a line keeps it tied to the place); a click without dragging opens the big photo */
   const card=el.querySelector(".gfs-card");card.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._off||e._base||[0,0],x0=ev.clientX,y0=ev.clientY;let moved=false;try{card.setPointerCapture(ev.pointerId)}catch(err){}
@@ -424,7 +425,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
   const AR=far?areaRings(e):null;if(AR&&inRings(s0[0]+off[0],s0[1]+off[1],AR))far=false;if(!far){el.classList.remove("gfs-moved");
    /* the label sits on its place: the same red dot the line starts from still marks the exact spot (only for points: not lines,
       rivers, ranges, areas, tiny islands or the Richat Structure) */
-   const pt=e.ll&&e.g&&/Point$/.test(e.g.type)&&!(e.cat==="islands")&&!/richat/i.test(e.n||"");/* only things that are a point (a landmark, a city, a peak): lines, rivers, ranges and areas have no one spot */
+   const pt=e.ll&&e.g&&/Point$/.test(e.g.type)&&!(e.cat==="islands")&&e.cat!=="countries"/* (a country is an area: no dot) */&&!/richat/i.test(e.n||"");/* only things that are a point (a landmark, a city, a peak): lines, rivers, ranges and areas have no one spot */
    if(pt){if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}ln.classList.remove("gfs-nodot");ln.style.cssText="left:"+s0[0]+"px;top:"+s0[1]+"px;width:0;background:none;box-shadow:none;z-index:41"+(e.ucol?";--dc:"+e.ucol:"")+(e.uop!=null?";opacity:"+e.uop:"")}
    else if(ln)ln.style.display="none"}else{if(!ln){ln=e._leash=document.createElement("div");ln.className="gfs-leash";document.body.appendChild(ln);e._els.push(ln)}el.classList.add("gfs-moved");
   let x1=s0[0],y1=s0[1];
@@ -440,7 +441,7 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    /* the Richat Structure: the line points at it from outside its rings (about 20 km out), with no dot covering it */
    /* tiny islands too: the line points at them, no dot on them */
    const isl=e.cat==="islands"&&!AR;const nod=/richat/i.test(e.n||"")||!!AR||isl;
-   if(isl&&len>14){const g=9;x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}ln.classList.toggle("gfs-nodot",nod);
+   if(isl&&len>14){const g=9;x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}ln.classList.toggle("gfs-nodot",nod||e.cat==="countries");
    if(AR&&len>12){const u=[Math.cos(ang*Math.PI/180),Math.sin(ang*Math.PI/180)],g=Math.min(len-8,exitPx(x1,y1,u,AR)+3);if(g>0){x1+=u[0]*g;y1+=u[1]*g;len-=g}}
    if(nod&&!AR){const n=screenOf([e.ll[0],e.ll[1]+.2]),g=Math.max(10,(n?Math.hypot(n[0]-s0[0],n[1]-s0[1]):0)+6);if(len>g+4){x1+=Math.cos(ang*Math.PI/180)*g;y1+=Math.sin(ang*Math.PI/180)*g;len-=g}}
    ln.style.cssText="left:"+x1+"px;top:"+y1+"px;width:"+len+"px;transform:rotate("+ang+"deg)"+(e.ucol?";--dc:"+e.ucol:"")}}}
@@ -463,7 +464,7 @@ if(typeof switchAppMode==="function"){const _sm=switchAppMode;switchAppMode=func
 function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)return;let b=document.getElementById("gfsX");
  if(!LIST.length){if(b)b.remove();return}if(!b){b=document.createElement("div");b.id="gfsX";b.setAttribute("role","list");wrap.appendChild(b);
   ["pointerdown","mousedown","click"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation()));
-  b.addEventListener("input",ev=>{{const z=ev.target.closest&&ev.target.closest("[data-gls],[data-gis]");if(z){const e=LIST[+(z.dataset.gls??z.dataset.gis)];if(!e)return;const v=(+z.value)/100;if(z.dataset.gls!=null)e.lsz=v;else e.isz=v;const t=z.parentNode.querySelector("i");if(t)t.textContent=z.value+"%";sizeOf(e);try{follow()}catch(_){}return}}const o=ev.target.closest&&ev.target.closest("[data-go]");if(o){const e=LIST[+o.dataset.go];if(!e)return;e.uop=(+o.value)/100;const sw=o.closest(".gfs-sw");if(sw)sw.style.setProperty("--o",Math.max(.3,e.uop));const bb=o.parentNode.querySelector("b");if(bb)bb.textContent=o.value+"%";if(e._g)e._g._d=null;try{draw()}catch(_){}try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(_){}return}
+  b.addEventListener("input",ev=>{{const ra=ev.target.closest&&ev.target.closest("[data-gra]");if(ra){const e=LIST[+ra.dataset.gra];if(e){e.ralpha=(+ra.value)/100;try{draw()}catch(_){}}return}}{const z=ev.target.closest&&ev.target.closest("[data-gls],[data-gis]");if(z){const e=LIST[+(z.dataset.gls??z.dataset.gis)];if(!e)return;const v=(+z.value)/100;if(z.dataset.gls!=null)e.lsz=v;else e.isz=v;const t=z.parentNode.querySelector("i");if(t)t.textContent=z.value+"%";sizeOf(e);try{follow()}catch(_){}return}}const o=ev.target.closest&&ev.target.closest("[data-go]");if(o){const e=LIST[+o.dataset.go];if(!e)return;e.uop=(+o.value)/100;const sw=o.closest(".gfs-sw");if(sw)sw.style.setProperty("--o",Math.max(.3,e.uop));const bb=o.parentNode.querySelector("b");if(bb)bb.textContent=o.value+"%";if(e._g)e._g._d=null;try{draw()}catch(_){}try{amGlobe&&(amGlobe.request?amGlobe.request():amGlobe.render())}catch(_){}return}
    const c=ev.target.closest&&ev.target.closest("[data-gc]");if(!c)return;const e=LIST[+c.dataset.gc];if(!e)return;e.ucol=c.value;if(e._leash)e._leash.style.setProperty("--dc",c.value);const sw=c.closest(".gfs-sw");if(sw)sw.style.setProperty("--c",c.value);if(e._g)e._g._d=null;try{draw()}catch(_){}});
   b.addEventListener("click",ev=>{const swe=ev.target.closest&&ev.target.closest(".gfs-sw");if(swe){if(!ev.target.closest(".gfs-pop")){const pp=swe.querySelector(".gfs-pop");b.querySelectorAll(".gfs-pop").forEach(x=>{if(x!==pp)x.hidden=true});if(pp)pp.hidden=!pp.hidden}return}const x=ev.target.closest("[data-gx]"),row=ev.target.closest("[data-gi]"),all=ev.target.closest("[data-gall]");
    if(all){const i=document.getElementById("globalSearchInput");if(i)i.value="";clear();return}
@@ -471,9 +472,10 @@ function xBtn(){const wrap=document.getElementById("globalSearchWrap");if(!wrap)
    /* the tag button: hide or show this result's name on the map */
    const lb=ev.target.closest("[data-gl]");if(lb){const e=LIST[+lb.dataset.gl];if(e){e.nolab=!e.nolab;labOf(e);xBtn()}return}
    /* the image button: hide or show this result's picture (its name stays) */
+   const rs=ev.target.closest("[data-grs]");if(rs){const e=LIST[+rs.dataset.grs];if(e){e.rsch=rs.dataset.k;e.regs=true;xBtn();try{draw()}catch(_){}}return}
    const rb=ev.target.closest("[data-greg]");if(rb){const e=LIST[+rb.dataset.greg];if(e){e.regs=!e.regs;xBtn();try{draw()}catch(_){}}return}
    const ib=ev.target.closest("[data-gim]");if(ib){const e=LIST[+ib.dataset.gim];if(e){e.noimg=!e.noimg;labOf(e);xBtn();try{draw()}catch(_){}}return}if(row){const e=LIST[+row.dataset.gi];if(e){e._t0=performance.now();fly(e);draw()}}})}
- b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<span class="gfs-tw"><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+szPop("gls",i,e.lsz)+'</span>'+(hasImg(e)?'<span class="gfs-tw"><b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>'+szPop("gis",i,e.isz)+'</span>':'')+(hasRegs(e)?'<b data-greg="'+i+'" class="gfs-tog'+(e.regs?'':' off')+'" role="button" title="'+(e.regs?'Hide its regions':'Show all its regions (states, provinces…)')+'">Regions</b>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
+ b.innerHTML=LIST.map((e,i)=>'<div class="gfs-row" role="listitem" data-gi="'+i+'" title="Go to '+esc(e.n)+'"><span>'+emoOf(e)+' '+esc(e.n)+'</span>'+swatch(e,i)+'<span class="gfs-tw"><b data-gl="'+i+'" class="gfs-tog'+(e.nolab?' off':'')+'" role="button" title="'+(e.nolab?'Turn its label on':'Turn its label off')+'" aria-label="'+(e.nolab?'Turn on':'Turn off')+' the label of '+esc(e.n)+'">Label</b>'+szPop("gls",i,e.lsz)+'</span>'+(hasImg(e)?'<span class="gfs-tw"><b data-gim="'+i+'" class="gfs-tog'+(e.noimg?' off':'')+'" role="button" title="'+(e.noimg?'Turn its picture on':'Turn its picture off')+'" aria-label="'+(e.noimg?'Turn on':'Turn off')+' the picture of '+esc(e.n)+'">Image</b>'+szPop("gis",i,e.isz)+'</span>':'')+(hasRegs(e)?'<span class="gfs-tw"><b data-greg="'+i+'" class="gfs-tog'+(e.regs?'':' off')+'" role="button" title="'+(e.regs?'Hide its regions':'Show all its regions (states, provinces…)')+'">Regions</b><span class="gfs-sz gfs-rmenu">'+Object.keys(RSCH).map(k=>'<button type="button" data-grs="'+i+'" data-k="'+k+'" class="'+((e.rsch||"Classic")===k?"on":"")+'" title="'+k+'">'+RSCH[k].map(c=>'<i style="background:'+c+'"></i>').join("")+'</button>').join("")+'<label>Fill <input type="range" data-gra="'+i+'" min="10" max="100" step="5" value="'+Math.round((e.ralpha!=null?e.ralpha:.78)*100)+'"></label></span></span>':'')+'<b data-gx="'+i+'" title="Remove" aria-label="Remove '+esc(e.n)+'">×</b></div>').join("")+
   (LIST.length>1?'<button type="button" class="gfs-all" data-gall>Clear all</button>':'')+(LIST.length>=MAXN?'<small class="gfs-max">Up to '+MAXN+': the next one replaces the oldest</small>':'')}
 /* under Label and Image, shown on hover: a slider for that one result's size, 50% to 200% */
 const szPop=(k,i,v)=>{const p=Math.round((v||1)*100);return'<span class="gfs-sz"><input type="range" data-'+k+'="'+i+'" min="50" max="200" step="10" value="'+p+'" aria-label="Size"><i>'+p+'%</i></span>'};
@@ -481,19 +483,29 @@ function sizeOf(e){(e._els||[]).forEach(x=>{if(!x||!x.style)return;x.style.setPr
 /* ---- a country's regions on the map (states, provinces, regions…: geoflock-provinces.js, Natural Earth admin-1) ----
    each region in one of five soft colours, no two neighbours alike, with white lines between them and its name where it fits */
 const hasRegs=e=>!!(e&&e.cat==="countries"&&e.cc&&window.gfProvinces&&gfProvinces.LIST.some(r=>r[0]===String(e.cc).toLowerCase()));
-const RCOL=["#f2b33d","#8fc46a","#3a6fb0","#e8506a","#f39a86"];
+/* colour schemes (none uses a sea-like blue) and how see-through, chosen on the chip's Regions menu */
+const RSCH={Classic:["#f2b33d","#8fc46a","#e8506a","#b07cd8","#f39a86"],Pastel:["#f6d68a","#b9dc9a","#f2a8b4","#d3bdea","#f7c6a3"],Earth:["#d9a441","#9cb36b","#c9714f","#a68a64","#e6cf9c"],Vivid:["#ffb000","#43a047","#e91e63","#8e24aa","#ff7043"]};
+const rcol=e=>RSCH[e.rsch]||RSCH.Classic;
+/* hovering a country whose regions are on names the region under the pointer */
+function regAt(ll){for(const e of LIST){if(e.cat!=="countries"||!e.regs||!e._rg)continue;const R=e._rg.d;for(let i=0;i<R.items.length;i++){try{if(d3.geoContains(R.items[i].f,ll))return{e,R,i}}catch(x){}}}return null}
+(function(){let n=0;const t=setInterval(()=>{if(++n>80)clearInterval(t);if(typeof amGlobe==="undefined"||!amGlobe||!amGlobe.cfg||amGlobe.cfg._gfReg)return;const cfg=amGlobe.cfg,h0=cfg.hover;cfg._gfReg=1;clearInterval(t);
+ cfg.hover=function(code,ll,f,water){const r=h0?h0.apply(this,arguments):null;let hit=null;try{if(ll&&active())hit=regAt(ll)}catch(x){}
+  LIST.forEach(e=>{if(e._rg){const want=hit&&hit.e===e?hit.i:null;if(e._rg.d.hot!==want){e._rg.d.hot=want;try{amGlobe.request()}catch(x){}}}});
+  if(hit){const nm=hit.R.items[hit.i].n||"";return nm+" — "+(hit.e.n||"")}return r}},500)})();
+window.gfPreLabels=function(ctx,p,g){if(typeof amGlobe==="undefined"||g!==amGlobe||!LIST.length||!active())return;LIST.forEach(e=>{if(e.cat==="countries"&&e.regs)try{drawRegs(ctx,p,e)}catch(x){console.error(x)}})};
 function regsOf(e){const cc=String(e.cc).toLowerCase();if(e._rg&&e._rg.cc===cc)return e._rg.d;if(e._rgP)return null;
  e._rgP=gfProvinces.load(cc).then(d=>{const items=d.items.filter(x=>x.f&&x.f.geometry);
   /* neighbours: regions that share border points (on a 0.02° grid) */
   const owner=new Map(),adj=items.map(()=>new Set());
   items.forEach((x,i)=>{const g=x.f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;P.forEach(pl=>pl.forEach(r=>r.forEach(c=>{const k=Math.round(c[0]*50)+","+Math.round(c[1]*50);const o=owner.get(k);if(o==null)owner.set(k,i);else if(o!==i){adj[i].add(o);adj[o].add(i)}})))});
   /* greedy colouring, the most connected first */
-  const col=new Array(items.length).fill(-1);items.map((_,i)=>i).sort((a,b)=>adj[b].size-adj[a].size).forEach(i=>{const used=new Set([...adj[i]].map(j=>col[j]));let c=0;while(used.has(c)&&c<RCOL.length-1)c++;col[i]=c});
+  const col=new Array(items.length).fill(-1);items.map((_,i)=>i).sort((a,b)=>adj[b].size-adj[a].size).forEach(i=>{const used=new Set([...adj[i]].map(j=>col[j]));let c=0;while(used.has(c)&&c<4)c++;col[i]=c});
   /* where each name goes: the middle of its largest piece */
   const lab=items.map(x=>{const g=x.f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;let best=P[0],ba=-1;P.forEach(pl=>{const a=d3.geoArea({type:"Polygon",coordinates:pl});if(a>ba){ba=a;best=pl}});const c=d3.geoCentroid({type:"Polygon",coordinates:best});return{c,big:{type:"Polygon",coordinates:best}}});
   e._rg={cc,d:{items,col,lab}};e._rgP=null;draw()}).catch(()=>{e._rgP=null});return null}
 function drawRegs(ctx,p,e){const R=regsOf(e);if(!R)return;const path=d3.geoPath(p,ctx);ctx.save();
- R.items.forEach((x,i)=>{ctx.beginPath();path(x.f);ctx.globalAlpha=.78;ctx.fillStyle=RCOL[R.col[i]];ctx.fill();ctx.globalAlpha=1;ctx.lineJoin="round";ctx.lineWidth=1.1;ctx.strokeStyle="rgba(255,255,255,.95)";ctx.stroke()});
+ R.items.forEach((x,i)=>{ctx.beginPath();path(x.f);ctx.globalAlpha=e.ralpha!=null?e.ralpha:.78;ctx.fillStyle=rcol(e)[R.col[i]];ctx.fill();if(R.hot===i){ctx.globalAlpha=.35;ctx.fillStyle="#fff";ctx.fill()}ctx.globalAlpha=1;ctx.lineJoin="round";ctx.lineWidth=1.1;ctx.strokeStyle="rgba(255,255,255,.95)";ctx.stroke()});
+ if(R.hot!=null&&R.items[R.hot]){ctx.beginPath();path(R.items[R.hot].f);ctx.lineWidth=2.6;ctx.strokeStyle="#fff";ctx.stroke()}
  /* names: as large as the region allows (7 to 13 px), left out where they would not fit or would overlap */
  const placed=[];ctx.textAlign="center";ctx.textBaseline="middle";
  R.items.map((x,i)=>{const b=d3.geoPath(p).bounds(R.lab[i].big);return{i,w:b[1][0]-b[0][0],h:b[1][1]-b[0][1]}}).sort((a,b)=>b.w*b.h-a.w*a.h).forEach(({i,w,h})=>{if(!isFinite(w))return;const q=p(R.lab[i].c);if(!q)return;
@@ -566,8 +578,14 @@ const css=document.createElement("style");css.textContent=`
 .gfs-nolab .gfs-lab{ display:none !important; }
 .gfs-noimg .gfs-card{ display:none !important; }
 .gfs-noimg .gfs-swap{ display:none !important; }
+#gfsX .gfs-rmenu{ flex-direction:column; align-items:stretch; gap:5px; } #gfsX .gfs-rmenu button{ display:flex; gap:2px; padding:3px; border-radius:6px; border:2px solid transparent; background:rgba(255,255,255,.08); cursor:pointer; }
+#gfsX .gfs-rmenu button.on{ border-color:#fff; } #gfsX .gfs-rmenu button i{ width:16px; height:12px; border-radius:2px; display:block; }
+#gfsX .gfs-rmenu label{ display:flex; align-items:center; gap:6px; font-size:11px; color:#fff; } #gfsX .gfs-rmenu input{ width:90px; }
 /* on the picture's own corner, whatever the width of the name under it */
-.gfs-pin .gfs-swap{ right:auto !important; left:calc(50% + 48px * var(--gsk,1) * var(--uis,1) - 16px) !important; top:-8px !important; }
+/* on the picture's corners: swap top left, close top right */
+.gfs-pin .gfs-swap{ right:auto !important; left:calc(50% - 48px * var(--gsk,1) * var(--uis,1) - 10px) !important; top:-8px !important; }
+.gfs-pclose{ pointer-events:auto; position:absolute; top:-8px; left:calc(50% + 48px * var(--gsk,1) * var(--uis,1) - 16px); width:24px; height:24px; border-radius:50%; border:2px solid #fff; background:#1f2a33; color:#fff; font:700 15px/1 system-ui; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; padding:0; z-index:2; }
+.gfs-pclose:hover{ background:#c0392b; } .gfs-noimg .gfs-pclose{ display:none !important; }
 /* the picture grows with the zoom as the emoji does (half size zoomed out), times the size the person chose */
 .gfs-pin .gfs-card{ width:calc(96px * var(--gsk,1) * var(--uis,1)); height:calc(96px * var(--gsk,1) * var(--uis,1)); }
 .gfs-pin .gfs-lab{ font-size:calc(12.5px * var(--uls,1)); }
