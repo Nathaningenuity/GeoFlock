@@ -159,13 +159,14 @@ const GRIDN=Math.pow(2,14),gx=x=>(x+180)/360*GRIDN,gy=y=>{const l=y*Math.PI/180;
 const seam=(r,i,j)=>{const a=gx(r[i]),b=gx(r[j]);if(Math.abs(a-b)<.3&&Math.abs(a-Math.round(a))<.2&&Math.round(a)===Math.round(b)&&Math.abs(r[i+1]-r[j+1])>.05)return true;
  const c=gy(r[i+1]),d=gy(r[j+1]);return Math.abs(c-d)<.3&&Math.abs(c-Math.round(c))<.2&&Math.round(c)===Math.round(d)&&Math.abs(r[i]-r[j])>.05};
 function edgePath(ctx,pj,r,closed){let pen=false;const n=r.length/3;for(let k=0;k<(closed?n:n-1);k++){const i=k*3,j=((k+1)%n)*3;if((r[i+2]&r[j+2])||seam(r,i,j)){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);if(!a||!b){pen=false;continue}if(!pen){ctx.moveTo(a[0],a[1]);pen=true}ctx.lineTo(b[0],b[1])}}
-function boxClip(ctx,pj,t){const n=Math.pow(2,t.z),L=[];const ll=(x,y)=>{const m=Math.PI*(1-2*y/n);return[x/n*360-180,Math.atan(Math.sinh(m))*180/Math.PI]};const S=8;
+function boxClip(ctx,pj,t){ctx.beginPath();if(!boxPath(ctx,pj,t))return false;ctx.clip();return true}
+function boxPath(ctx,pj,t){const n=Math.pow(2,t.z),L=[];const ll=(x,y)=>{const m=Math.PI*(1-2*y/n);return[x/n*360-180,Math.atan(Math.sinh(m))*180/Math.PI]};const S=8;
  for(let i=0;i<=S;i++)L.push(ll(t.x+i/S,t.y));for(let i=0;i<=S;i++)L.push(ll(t.x+1,t.y+i/S));for(let i=0;i<=S;i++)L.push(ll(t.x+1-i/S,t.y+1));for(let i=0;i<=S;i++)L.push(ll(t.x,t.y+1-i/S));
  /* the box is grown by under a pixel all round: two tiles' fills then overlap at their shared edge, instead of each fading
     out there (the soft edges of two clips let a thin pale line through a lake or the sea) */
  const Q=[];let ok=true,cx=0,cy=0;L.forEach(p=>{const q=pj(p[0],p[1]);if(!q){ok=false;return}Q.push(q);cx+=q[0];cy+=q[1]});if(!ok)return false;cx/=Q.length;cy/=Q.length;
  const sc=(()=>{try{const m=ctx.getTransform();return 1/Math.max(.1,Math.hypot(m.a,m.b))}catch(e){return 1}})()*.8;
- ctx.beginPath();Q.forEach((q,i)=>{const dx=q[0]-cx,dy=q[1]-cy,d=Math.hypot(dx,dy)||1,x=q[0]+dx/d*sc,y=q[1]+dy/d*sc;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.clip();return true}
+ Q.forEach((q,i)=>{const dx=q[0]-cx,dy=q[1]-cy,d=Math.hypot(dx,dy)||1,x=q[0]+dx/d*sc,y=q[1]+dy/d*sc;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();return true}
 /* the tiles count the Great Lakes (and the Caspian) as sea at small scales: a sea piece that lies inside one of the map's own
    big lakes is a lake, drawn with the lakes (on the pictures, where the sea is already painted, it would go missing) */
 function isLakeSea(o){if(o._lk!==undefined)return o._lk;o._lk=false;try{const L=globeOverlays().lakes.filter(x=>!x.minor),b=bboxOf(o.rings),pts=[];
@@ -242,6 +243,8 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
   ctx.globalCompositeOperation="destination-over";ctx.fillStyle=I.ocean||"#5797cf";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});ctx.restore()}
+ /* ...and the other way: land on the sharp coast that lies outside a country's rough shape takes that country's colour */
+ if(coast&&!I.drewRaster)try{fillOut(g,ctx,s,pj)}catch(e){console.error(e)}
  /* Elevation: water joined to the sea is the colour of the shallow sea on its depth scale (a few tens of metres), not a colour
     read off the coast, which came out dark blue in bays beside pale shallows (the Gulf of Venezuela, Lagoa dos Patos) */
  const elev=I.texKey==="elevation";
@@ -378,6 +381,20 @@ function landBorders(d){if(d._bl)return d._bl;/* every piece of sea, sea lakes i
 /* the hovered country's outline when zoomed in: the detailed coast and borders, kept to a band around its rough outline (its
    rough shape can be several kilometres off), instead of the rough outline itself. Returns false when there is no detail. */
 let HM=null,HL=null;
+/* fill maps: each country's colour grown outward (by about how far its rough shape can be off), kept only to land of the sharp
+   coast that no rough shape covers. Drawn over the gaps only. */
+let HF=null;
+function fillOut(g,ctx,s,pj){const fill=g.cfg&&g.cfg.fill,list=g._base;if(!fill||!list||!list.length)return;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return;
+ if(!HF)HF=document.createElement("canvas");if(HF.width!==W||HF.height!==H){HF.width=W;HF.height=H}const f=HF.getContext("2d"),T=ctx.getTransform(),P=d3.geoPath(g.projection(),f);
+ let band=16;try{const c=g.projection().invert([g.size().w/2,g.size().h/2]),a=pj(c[0],c[1]),b=pj(c[0],c[1]+.18);if(a&&b)band=Math.max(8,Math.min(6000,Math.hypot(a[0]-b[0],a[1]-b[1])*2))}catch(e){}
+ f.setTransform(1,0,0,1,0,0);f.globalCompositeOperation="source-over";f.clearRect(0,0,W,H);f.setTransform(T);f.save();
+ /* only where the sharp tiles are */f.beginPath();let any=false;s.tiles.forEach(t=>{if(t.d&&boxPath(f,pj,t))any=true});if(!any){f.restore();return}f.clip();
+ const cols=list.map(F=>{let c=null;try{c=fill(F.properties.c,F)}catch(e){}return c});
+ f.lineJoin="round";f.lineWidth=band;list.forEach((F,i)=>{if(!cols[i])return;f.beginPath();P(F);f.strokeStyle=cols[i];f.stroke()});
+ /* not over the countries themselves (they are drawn already), nor over the sea */
+ f.globalCompositeOperation="destination-out";f.fillStyle="#000";list.forEach(F=>{f.beginPath();P(F);f.fill()});
+ s.tiles.forEach(t=>{if(!t.d)return;f.save();if(boxClip(f,pj,t)){f.beginPath();t.d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(f,pj,r,true)));f.fill("evenodd")}f.restore()});
+ f.restore();ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(HF,0,0);ctx.restore()}
 function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||!s.tiles.some(t=>t.d))return false;const cv=ctx.canvas,W=cv.width,H=cv.height;if(!W||!H)return false;
  if(!HM){HM=document.createElement("canvas");HL=document.createElement("canvas")}[HM,HL].forEach(c=>{if(c.width!==W||c.height!==H){c.width=W;c.height=H}});
  const m=HM.getContext("2d"),l=HL.getContext("2d"),T=ctx.getTransform(),pj=projector(g),P=d3.geoPath(g.projection(),m);
