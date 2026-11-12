@@ -694,7 +694,7 @@ setInterval(()=>{try{
  if(ms&&appMode!=="allmaps")ms.remove();
  /* the map key (bottom right) */
  const k=document.getElementById("flKey");if(k){freeDrag(k,".flk-h,.flk-pill","keyBR");if(FPOS.keyBR&&!k.style.right)restore(k,"keyBR")}}catch(e){}},300);
-window.gfToolkit={cursorFor,S,K,render,toLL,toScreen,putAway,dropTool,openPalette,seaPanel,penPicker,pinMenu,lift,select:(i,add)=>geoSelect(i,add)};
+window.gfToolkit={cursorFor,S,K,render,toLL,toScreen,putAway,dropTool,openPalette,seaPanel,penPicker,pinMenu,lift,select:(i,add)=>geoSelect(i,add),geo:{snapAt,rimSnap,nearPair,midOf,footOnLine,GEO,NR}};
 
 /* ================= look ================= */
 const css=document.createElement("style");css.textContent=`
