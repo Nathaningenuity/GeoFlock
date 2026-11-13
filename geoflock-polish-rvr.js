@@ -30,11 +30,31 @@ const pinText=p=>Array.isArray(p)?strip(p[1]):strip(p&&p.text);
    a getter on the field that applies this file's edits to whatever the field holds; other files' writes still go
    through (to the value underneath). Each edit has an id, so applying the fixes again does not stack them. */
 const XFS=new WeakMap();
-const XF=(S,k,id,fn)=>{try{let R=XFS.get(S);if(!R){R={};XFS.set(S,R)}
+let PEND=false;
+const PPW=new WeakMap();/* (it waits at most about 20 s) */
+const pplPending=S=>{try{const t=ps&&ps.tour,n=strip(S.title);if(!(window.GF_PORTRAITS||[]).some(p=>p.tour===t&&p.stop===n)||Object.prototype.hasOwnProperty.call(S,"_gfPpl"))return false;
+ const w=(PPW.get(S)||0)+1;PPW.set(S,w);return w<70}catch(e){return false}};
+const XF=(S,k,id,fn)=>{try{if(k==="phPins"&&!(XFS.get(S)||{})[k]&&pplPending(S)){PEND=true;return}let R=XFS.get(S);if(!R){R={};XFS.set(S,R)}
  if(!R[k]){const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;const B={v:S[k],fns:{}};R[k]=B;
   Object.defineProperty(S,k,{configurable:!!(window.__rvrTest||/[?&]rvrtest\b/.test(location.search)),enumerable:true,
-   get:()=>{let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}return v},set:x=>{B.v=x}})}
- R[k].fns[id]=fn}catch(e){}};
+   get:()=>{const pk=k==="phPins"?pplReady(S):0;if(B.out&&B.at===B.v&&B.atN===B.n&&B.pk===pk)return sync(S,k,B.out);let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
+    if(pk)v=pplAdd(S,v);B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{B.v=x}})}
+ R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1}catch(e){}};
+/* The getter hands back the same array until the value underneath or the edits change. geoflock-portraits.js adds the
+   people's round portraits by wrapping phPins itself, and does so again whenever S.phPins is not its own list
+   (S._gfPpl): so the filtered list is also stored there, which tells it the stop is done (otherwise it tried to redefine
+   the locked field on every redraw and logged an error each time). Its portraits are kept: they are in the value
+   underneath. */
+/* and, as geoflock-portraits.js would on a later redraw, the stop's portraits whose pictures have loaded since are
+   added here (a locked field can no longer be re-wrapped by it) */
+const TOUR_OF=new WeakMap(),PPOK=new Map();
+const pplList=S=>{try{const t=TOUR_OF.get(S),n=strip(S.title);return(window.GF_PORTRAITS||[]).filter(p=>p.tour===t&&p.stop===n)}catch(e){return[]}};
+const pplOk=f=>{const m=PPOK.get(f);if(m===true)return true;const now=Date.now();if(m&&now-m<2000)return false;
+ let ok=false;try{ok=PS_PHOTO_DATA.some(x=>x&&x.f===f&&x.d)}catch(e){}PPOK.set(f,ok||now);return ok};
+function pplReady(S){const L=pplList(S);return L.filter(p=>pplOk(p.f)).length}
+function pplAdd(S,v){const names=new Set(v.map(q=>strip(q&&q.label).toLowerCase()));
+ pplList(S).forEach(p=>{if(!names.has(p.name.toLowerCase())&&pplOk(p.f))v=v.concat([{at:p.at,label:p.name,col:"#3d3466",icon:"photo",person:1}])});return v}
+function sync(S,k,v){if(k==="phPins"&&Object.prototype.hasOwnProperty.call(S,"_gfPpl"))try{S._gfPpl=v}catch(e){}return v}
 const DROP=(S,re)=>XF(S,"pins","drop"+re,P=>P.filter(p=>!re.test(pinText(p))));
 const DROPPH=(S,re)=>XF(S,"phPins","drop"+re,P=>P.filter(p=>!re.test(strip(p&&p.label))));
 /* rename a text pin */
@@ -97,12 +117,42 @@ FIX.hwars={
   "The United Nations":S=>{DROP(S,/^San Francisco/);VIEW(S,[-25,40,1],"left")},
   "Stalingrad":S=>{VIEW(S,[30,52,2],"left");RE(S,"body","about 3 million German and allied troops","more than 3.5 million German and allied troops")}
 };
+FIX.hcoldwar={
+  /* the Havana photo sat over Europe (its point under the card), Apollo 11's hung off the globe's bottom edge, the
+     Wagah border's sat on the zoom buttons and Panmunjom and Bikini were round the back: all have stops of their own.
+     Opened on Europe and the Soviet Union beside the card */
+  "Two superpowers":S=>{DROPPH(S,/^(Havana|Apollo|Wagah|Panmunjom|Bikini|Ho Chi Minh|Black Star)/);VIEW(S,[45,45,1],"left")},
+  /* Stettin's label lay under Copenhagen's and the cities of the stop's game were crowded together: closer in */
+  "The Iron Curtain":S=>VIEW(S,[17,49,2.4],"left"),
+  /* the card was on the right (the map key over its close button) and the Checkpoint Charlie photo (the card's picture
+     on the two stops before) covered the ruler's "258 km"; the Berlin Wall photo stays */
+  "Berlin divided":S=>{DROPPH(S,/^Checkpoint Charlie/);VIEW(S,[11,51.5,6],"left")},
+  /* the card was on the right, with the map key over its close button, and Pakistan's label on the globe's edge */
+  "Partition of India":S=>VIEW(S,[80,25,1.8],"left"),
+  /* Taipei was on the globe's edge */
+  "China’s revolution":S=>VIEW(S,[112,31,1.6],"left"),
+  /* the Port Said photo hung at the globe's right edge: the view moved east a little */
+  "Suez, 1956":S=>VIEW(S,[34.5,30.5,4.35],"left"),
+  /* the card was on the right, with the map key over its title */
+  "The Year of Africa":S=>VIEW(S,[15,5,1.05],"left"),
+  /* the card was on the right, over Baikonur and Gagarin; the Apollo 11 photo hung off the globe's edge and Buzz Aldrin's
+     sat in the middle of the Atlantic. Baikonur and Cape Canaveral are 143° of longitude apart: the stop opens on
+     Baikonur's side, and each answer of the "who was first?" game in part 2 turns the globe to the launch site */
+  "The space race":S=>{DROPPH(S,/^(Apollo 11|Buzz Aldrin)/);AREA(S,/^Cape Canaveral/);VIEW(S,[25,40,1],"left")},
+  /* the card was on the right, with the map key over its close button */
+  "Afghanistan, 1979":S=>VIEW(S,[68,34,3],"left"),
+  /* the card was on the right, with Gdańsk and Hungary's border on the globe's far edge */
+  "The Wall falls":S=>VIEW(S,[18,51,2.2],"left")
+};
 const applied=new WeakSet();
-function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
- try{f(S)}catch(e){console.error("rvr fix",tour,S.title,e)}})}
+/* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
+   is in (see XF): if this file locked the field first, the portrait could not be added */
+let waiting=false;
+function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;TOUR_OF.set(S,tour);
+ PEND=false;try{f(S)}catch(e){console.error("rvr fix",tour,S.title,e)}if(PEND)waiting=true;else applied.add(S)})}
 function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)applyTo(t,T.steps)})}catch(e){}}
 let lastKey="";
-every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f)f(S)}catch(e){}}catch(e){}},300);
+every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey&&!waiting)return;lastKey=k;waiting=false;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f){TOUR_OF.set(S,t);f(S)}}catch(e){}}catch(e){}},300);
 /* applied only once one of these tours is open (by then the load-time photo passes have run): see above */
 
 /* The card shift, kept (as geoflock-polish-rvb.js and -rvf.js do for theirs): psFlyGlobe (index.html) turns a stop's place
@@ -205,12 +255,14 @@ function GUESS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,tip:cfg.t
   else{r.value=L.v;say(L,"","Drag to your guess, then check it.")}}}}
 
 /* ---------------- which side? one item at a time, tap a box ----------------
-   cfg: {tours, title, tip, bins:[names], items:[[text, bin index, why]], after(nRight, N) → text} */
-function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,tip:cfg.tip,
+   cfg: {tours, title, tip, bins:[names], items:[[text, bin index, why]], after(nRight, N) → text, and optionally
+   turn:[[lon,lat,zoom] per box] and where:[text per box]: each answer turns the globe to its box's place} */
+function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cfg.turn,tip:cfg.tip,
  card(L){return'<div class="rvr-q"><span class="rvr-n"></span><b class="rvr-item"></b></div><div class="rvr-bins">'+cfg.bins.map((b,i)=>'<button type="button" class="rvr-btn rvr-bin" data-b="'+i+'">'+esc(b)+'</button>').join("")+
   '<button type="button" class="rvr-btn rvr-next" hidden>Next →</button><button type="button" class="rvr-btn rvr-again" hidden>Start again</button></div><div class="rvr-dots">'+cfg.items.map(()=>"<i></i>").join("")+'</div>'},
  wire(L){const c=L.card;L.k=0;L.ans=[];L.wait=false;
-  c.querySelectorAll(".rvr-bin").forEach(b=>b.onclick=()=>{if(L.wait||L.k>=cfg.items.length)return;L.ans[L.k]=+b.dataset.b;L.wait=true;this.render(L)});
+  c.querySelectorAll(".rvr-bin").forEach(b=>b.onclick=()=>{if(L.wait||L.k>=cfg.items.length)return;L.ans[L.k]=+b.dataset.b;L.wait=true;
+   /* each answer turns the globe to its right box's place */if(cfg.turn){const t=cfg.turn[cfg.items[L.k][1]];c.dataset.turns="1";turnGlobe(t[0],t[1],t[2])}this.render(L)});
   c.querySelector(".rvr-next").onclick=()=>{L.k++;L.wait=false;this.render(L)};
   c.querySelector(".rvr-again").onclick=()=>{L.k=0;L.ans=[];L.wait=false;this.render(L)};this.render(L)},
  render(L){const c=L.card;if(!c)return;const N=cfg.items.length,done=L.k>=N,it=cfg.items[Math.min(L.k,N-1)];
@@ -220,7 +272,7 @@ function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,tip:cfg.ti
   c.querySelectorAll(".rvr-dots i").forEach((d,i)=>{d.className=i===L.k&&!done?"rvr-now":(L.ans[i]==null||(i===L.k&&!L.wait)?"":(L.ans[i]===cfg.items[i][1]?"rvr-y":"rvr-x"))});
   const right=L.ans.filter((a,i)=>a===cfg.items[i][1]).length;
   if(done)say(L,right+" of "+N+" right",cfg.after(right,N));
-  else if(L.wait)say(L,L.ans[L.k]===it[1]?"Right: "+esc(cfg.bins[it[1]]):"No: it was "+esc(cfg.bins[it[1]]),esc(it[2]));
+  else if(L.wait)say(L,L.ans[L.k]===it[1]?"Right: "+esc(cfg.bins[it[1]]):"No: it was "+esc(cfg.bins[it[1]]),esc(it[2])+(cfg.where?" "+esc(cfg.where[it[1]]):""));
   else say(L,"",esc(cfg.ask||"Tap your answer."))}}}
 
 /* ======================================================================== part 2: stops you can play with
@@ -327,8 +379,11 @@ const TURN_FLU=TURNER({tours:["hwars"],mark:true,title:"Why “Spanish” flu?",
    Wikipedia, "Timeline of the Space Race": Sputnik 1, 4 October 1957 (USSR); Laika on Sputnik 2, 3 November 1957
    (USSR); Gagarin on Vostok 1, 12 April 1961 (USSR); Tereshkova on Vostok 6, 16 June 1963 (USSR); the first spacewalk,
    Voskhod 2, 18 March 1965 (USSR); Mariner 4, the first successful Mars flyby, 14 July 1965 (USA); Apollo 8, the first
-   people to orbit the Moon, December 1968 (USA); Apollo 11, the first people on the Moon, 20 July 1969 (USA). */
+   people to orbit the Moon, December 1968 (USA); Apollo 11, the first people on the Moon, 20 July 1969 (USA). The
+   Soviet flights all left from Baikonur, the American ones from Cape Canaveral and the Kennedy Space Center beside it
+   (NASA; Wikipedia, "Baikonur Cosmodrome"); each answer turns the globe there. */
 const BINS_SPACE=BINS({tours:["hcoldwar"],title:"The space race",tip:"Who got there first: the Soviet Union or the United States? Eight firsts.",ask:"Tap the side you think got there first.",
+ turn:[[63.3,45.96,1.5],[-80.6,28.5,1.5]],where:["It flew from Baikonur, in today’s Kazakhstan.","It flew from Florida, at Cape Canaveral."],
  bins:["Soviet Union","United States"],
  items:[["The first satellite in orbit",0,"Sputnik 1, 4 October 1957: a beeping metal ball that shocked America."],
   ["The first people to walk on the Moon",1,"Apollo 11, July 1969: Neil Armstrong and Buzz Aldrin."],
