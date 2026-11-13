@@ -33,7 +33,9 @@ const FIX={
  flags:{
   /* Ghana, Guinea, Mali and Senegal, and the ends of the arrows from Ethiopia, were under the card: turn west so the
      whole band from Dakar to Ethiopia shows beside it */
-  "Pan-African colours":S=>{LOCK(S,"globe",[-4,8,1.3])},
+  "Pan-African colours":S=>{LOCK(S,"globe",[9,7,1.3])},
+  /* Japan, whose rising sun the stop is about (the map shows dawn reaching it), was off the right edge */
+  "Suns on flags":S=>{LOCK(S,"globe",[84,20,1])},
   /* Libya's flag was half under the card */
   "Pan-Arab colours":S=>{LOCK(S,"globe",[22,24,1.45])},
   /* Australia's flag hung half under the card: turn west so it shows beside the card, with New Zealand, Fiji and Tuvalu */
@@ -50,7 +52,7 @@ const FIX={
   /* the US end of the line from Washington to Liberia was under the card, and the "United States" label ran over the map
      switches above the globe. The US flag has had 27 official versions since 1777 (Smithsonian National Museum of American
      History), so its design changed 26 times, not 27 */
-  "Stars and stripes":S=>{LOCK(S,"globe",[-60,24,1]);RE(S,"more","its design has changed 27 times","it has had 27 versions")},
+  "Stars and stripes":S=>{LOCK(S,"globe",[-50,24,1]);RE(S,"more","its design has changed 27 times","it has had 27 versions")},
   /* "The equator" label ran under the map key: move it west along the line. The card switched sides from visit to visit,
      sometimes pushing Nauru's flag under the map key: keep it on the left */
   "Flags that are sea charts":S=>{LOCK(S,"card","left");MOVEPIN(S,/^The equator$/,[157,0])},
@@ -58,9 +60,9 @@ const FIX={
   "Weapons on flags":S=>{LOCK(S,"card","left");LOCK(S,"globe",[14,4,1])}
  },
  cities:{
-  /* the Varanasi photo sat under the map key: card on the right (where the tour mostly put it) and the view turned so
-     Athens, the Levant and Varanasi all show between the key and the card */
-  "The oldest cities":S=>{LOCK(S,"card","right");LOCK(S,"globe",[44,31,1.3])},
+  /* the Varanasi photo sat under the map key (or, when the card jumped to the right, beside the globe): card on the left
+     and the view a little further out, so Athens, the Levant and Varanasi all show beside it */
+  "The oldest cities":S=>{LOCK(S,"card","left");LOCK(S,"globe",[45,31,1.15])},
   /* New York, the first of the two, was under the card: turn west and out a little so New York and London both show */
   "Money cities":S=>{LOCK(S,"globe",[-50,42,.95]);
    /* Tokyo is no longer in the top ten of the Global Financial Centres Index (Z/Yen, GFCI 37 and 38, 2025): New York,
@@ -89,8 +91,8 @@ const FIX={
   /* the card sat on the right, over Spain and Portugal where the arrows start; the Chicago pin label ran under the
      culture-map chips and the Chiclayo one under the map key */
   "Catholicism moved west":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-50,6,.95])},
-  /* New England, where one arrow ends, and its label were under the card */
-  "The Reformation went south":S=>{LOCK(S,"globe",[-32,33,1])},
+  /* New England, where one arrow ends, and its label were under the card (which also jumped sides between visits) */
+  "The Reformation went south":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-28,34,1])},
   /* the Lalibela photo (Ethiopia) hung off the bottom of the screen */
   "Older than Russia’s church":S=>{LOCK(S,"globe",[31,28,1.4])},
   /* Bali, the stop's subject, was off the right edge of the globe, under the map key (card kept on the left, where the
@@ -99,13 +101,15 @@ const FIX={
   /* the card sat on the right, over Korea and Japan, and the Xi'an label ran under the culture-map chips on the left */
   "Buddhism left home":S=>{LOCK(S,"card","left");LOCK(S,"globe",[106,24,1.2])},
   /* the Sikhs' three homes, Punjab, Britain and Canada, lie 155° of longitude apart: on the stop's own view the Brampton,
-     Canada and United States labels ran over the map switches and Amritsar's under the bottom edge. Looking down over the
-     North Pole, Punjab, London and Toronto all show beside the card */
-  "Sikhism’s Punjab":S=>{LOCK(S,"card","left");LOCK(S,"globe",[30,78,.7])},
+     Canada and United States labels ran over the map switches and Amritsar's under the bottom edge. Looking down from
+     over Iceland (the globe turns it beside the card), Punjab, London and Toronto all show */
+  "Sikhism’s Punjab":S=>{LOCK(S,"card","left");LOCK(S,"globe",[17,62,1])},
   /* Ethiopia was under the card and the Bangkok photo under the map key */
-  "It isn’t 2026 everywhere":S=>{LOCK(S,"globe",[66,20,1.02])},
+  "It isn’t 2026 everywhere":S=>{LOCK(S,"globe",[86,20,1.02])},
+  /* the card jumped to the right, under the floating religion key, over the Atlantic route the stop draws */
+  "Which way is Mecca?":S=>{LOCK(S,"card","left")},
   /* Varanasi and Bodh Gaya, two of the five holy cities, were off the right edge */
-  "Holy cities":S=>{LOCK(S,"globe",[52,28,1])},
+  "Holy cities":S=>{LOCK(S,"card","left");LOCK(S,"globe",[48,28,1])},
   /* the Netherlands and Czechia labels ran over the map switches above the globe */
   "The least religious places":S=>{LOCK(S,"card","left");LOCK(S,"globe",[70,26,1])}
  }
@@ -136,6 +140,20 @@ every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){last
    4 s after it runs; a locked field would make it throw, so the locks wait until it has finished (or a tour starts) */
 const later=()=>{try{applyAll();applyPT()}catch(e){}};
 if(document.readyState==="complete")setTimeout(later,3000);else addEventListener("load",()=>setTimeout(later,3000));setTimeout(later,9000);every(applyPT,2000);
+
+/* The globe turns a stop's place out from under the tour card (psFlyGlobe shifts the centre by the card's width), but
+   geoflock-tourload.js's "aim" turns it back to the stop's plain centre when that shift is more than 20°, so the framing
+   depended on timing. As in geoflock-polish-rvb.js: on these three tours aim is told the stop is already aimed, and for
+   four seconds after a stop opens, if the globe has come to rest away from where psFlyGlobe would put it with the card
+   where it is now, it flies there once more (twice at most). A drag or zoom by the reader in that time cancels it. */
+const MYT=new Set(["flags","cities","langrel"]);let goAt=0,goKey="",refl=0,touched=0;
+function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);const over=psCardOver();
+ if(over){const R=ps.g.size().r*z,a=Math.asin(Math.min(.6,Math.abs(over)/2/R))*180/Math.PI;lon-=Math.sign(over)*a/Math.max(.35,Math.cos(lat*Math.PI/180))}return[lon,lat,z]}
+["pointerdown","wheel"].forEach(t=>addEventListener(t,e=>{try{if(e.target&&e.target.closest&&e.target.closest(".globe-host canvas, .globe-stage"))touched=1}catch(err){}},true));
+every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g)return;
+ const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=performance.now();refl=0;touched=0}ps._gfAimed=psSteps()[ps.i];
+ const t=performance.now()-goAt;if(touched||refl>=2||t<900||t>4500||ps.g._flying)return;
+ const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||(T[2]>=1&&Math.abs(ps.g.zoom-T[2])>.15)){refl++;psFlyGlobe()}}catch(e){}},250);
 
 /* ======================================================================== part 2: guess first
    geoflock-tourplay.js veils the stop's headline and asks for an estimate first. */
