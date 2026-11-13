@@ -44,7 +44,24 @@ const FIX={
  /* the east coast, Sydney and Tasmania were on or past the globe's edge */
  "space|Australia’s red centre":{globe:[119.5,-27,1.6],exact:1,card:"left"},
  /* most of the Mid-Atlantic Ridge was under the card */
- "space|The sea floor":{globe:[-50,22,1.2],exact:1,card:"left"}
+ "space|The sea floor":{globe:[-50,22,1.2],exact:1,card:"left"},
+ /* ---------------- Geopolitics */
+ /* Bolivia's tag hung off the bottom of the page and Russia's sat on the map toolbar: Bolivia is round the globe from
+    the other three (the text still tells its story), and Russia's pin moves from the Arctic coast into the country */
+ "geopol|Geopolitics":{globe:[5,30,1],exact:1,card:"left",pinDrop:/^Bolivia: landlocked/,phDrop:/^(Panama Canal|Lithium ponds, Atacama)$/,pinMove:{"Russia: vast, but much of its coast frozen":[62,58]}},
+ /* St Petersburg, Baltiysk and Sevastopol were under the card; the stop's quiz then turns the globe to each port */
+ /* the stop's quiz names each port as the globe turns to it (Murmansk's tag sat on the map toolbar) */
+ "geopol|Russia and warm water":{globe:[28,57,1.2],exact:1,card:"left",pinDrop:/./},
+ /* Belgium's pin was under the card and its tag on the map toolbar: it is a continent away from the other three */
+ "geopol|Buffer states":{pinDrop:/^Belgium: once a buffer/},
+ /* Ethiopia's dam and Egypt were under the card; the tags' leader lines crossed the map */
+ "geopol|Upstream holds the tap":{globe:[42,22,1.1],exact:1,card:"left"},
+ /* the Myanmar pipelines' tag was under the card and the Singapore photo */
+ "geopol|The Malacca dilemma":{globe:[95,8,1.42],exact:1,card:"left"},
+ /* Guam was round the globe's edge */
+ "geopol|The first island chain":{globe:[116,22,1.7],exact:1,card:"left"},
+ /* the Gulf of Finland's tag sat on the map toolbar */
+ "geopol|Cables on the seabed":{globe:[32,38,1.6],exact:1,card:"left"}
 };
 /* framing is pinned: several sweep files set a stop's globe or card side from their own psGo wrappers, some of them
    running after this one, so a plain assignment would be undone. The pinned field ignores later writes. A field another
@@ -60,7 +77,9 @@ function applyFix(S,tour,soft){try{if(!S)return;const X=FIX[tour+"|"+S.title];if
  if(X.pinAdd){const P=Array.isArray(S.pins)?S.pins:[];const add=X.pinAdd.filter(a=>!P.some(q=>q&&clean(q[1])===a[1]));if(add.length)SET(S,"pins",P.concat(add))}
  if(X.lineDrop&&Array.isArray(S.lines)&&S.lines.length)SET(S,"lines",[]);
  if(X.iconDrop&&Array.isArray(S.iconPins)&&S.iconPins.length)SET(S,"iconPins",[]);
+ if(X.pinMove&&Array.isArray(S.pins)){let ch=0;const P=S.pins.map(q=>{const to=q&&X.pinMove[clean(q[1])];if(to&&!(Array.isArray(q[0])&&q[0][0]===to[0]&&q[0][1]===to[1])){ch=1;const r=q.slice();r[0]=to.slice();return r}return q});if(ch)SET(S,"pins",P)}
  if(X.pinDrop&&Array.isArray(S.pins)){const P=S.pins.filter(q=>!(q&&X.pinDrop.test(clean(q[1]))));if(P.length!==S.pins.length)SET(S,"pins",P)}
+ if(X.phDrop&&Array.isArray(S.phPins)){const P=S.phPins.filter(q=>!(q&&X.phDrop.test(clean(q.label))));if(P.length!==S.phPins.length)SET(S,"phPins",P)}
  if(X.phMove&&Array.isArray(S.phPins))S.phPins.forEach(q=>{const to=q&&X.phMove[clean(q.label)];if(to)try{q.at=to.slice()}catch(e){}});
  (X.rep||[]).forEach(([a,b])=>["stat","body","more"].forEach(k=>{if(typeof S[k]==="string"&&S[k].includes(a))SET(S,k,S[k].split(a).join(b))}))}catch(e){}}
 function curFix(){try{if(typeof ps==="undefined"||!ps||!ps.tour)return null;const S=psSteps()[ps.i];return S?FIX[ps.tour+"|"+S.title]||null:null}catch(e){return null}}
@@ -272,8 +291,127 @@ const DUST={tour:"space",title:"Dust that feeds the Amazon",
   else if(L.day>0)say(L,"Across the Atlantic","The trade winds carry the dust thousands of kilometres west, a journey of about a week or more. Some of it falls into the sea on the way.");
   else say(L,"The Bodélé Depression, Chad","An old lakebed full of fine dust: the biggest single source of dust on Earth. Press ▶.")}};
 
+/* ============================================================ G. Russia and warm water: what is wrong with each port?
+   The stop's own five ports and its own reasons: St Petersburg and Vladivostok ice up in winter (Vladivostok is kept
+   open by icebreakers); Baltiysk is ice-free but its way out runs through the Danish straits; Sevastopol's way out runs
+   through the Turkish straits (the Bosphorus), which Turkey can close to the warships of countries at war (Montreux
+   Convention, 1936, as the Chokepoints stop says); Murmansk stays ice-free thanks to the last of the Gulf Stream and
+   opens onto the Barents Sea. */
+const PORTK={i:"❄ Freezes in winter",x:"🚧 Way out controlled by others",o:"✅ Open all year"};
+const PORTS=[{n:"St Petersburg",k:"i",ll:[30.3,59.9],why:"The eastern Baltic freezes most winters, and ships need icebreakers to reach Russia’s second city."},
+ {n:"Sevastopol",k:"x",ll:[33.5,44.6],why:"The Black Sea never freezes here, but its only way out is the Bosphorus, and Turkey can close it to warships in wartime, as it did in 2022."},
+ {n:"Vladivostok",k:"i",ll:[131.9,43.1],why:"Its bay ices over in winter, so icebreakers keep the port open. And the Sea of Japan’s exits pass Japan and Korea."},
+ {n:"Baltiysk",k:"x",ll:[19.9,54.65],why:"Russia’s Baltic fleet base in Kaliningrad is ice-free, but to reach the ocean ships must pass the narrow Danish straits, between NATO members."},
+ {n:"Murmansk",k:"o",ll:[33.08,68.97],why:"North of the Arctic Circle, yet ice-free: the last of the warm Gulf Stream water reaches it, and it opens straight onto the Barents Sea. That is why Russia’s Northern Fleet is based nearby."}];
+const WARM={tour:"geopol",title:"Russia and warm water",
+ tip:"The globe turns to each of Russia’s big ports. What is the catch: ice, or someone else’s strait?",
+ card:()=>'<div class="rvi-row rvi-btns">'+Object.keys(PORTK).map(k=>'<button type="button" class="rvi-btn rvi-k" data-k="'+k+'">'+PORTK[k]+"</button>").join("")+'</div><div class="rvi-score"></div>',
+ init(L){L.cur=0;L.ans={};L.t=0;L.ring=svgEl(L.svg,"circle",{r:"14",class:"rvi-qring"});L.tags=PORTS.map(()=>tag(L,"rvi-small"));L.bub=tag(L,"rvi-bub");setTimeout(()=>{if(L&&L.el.isConnected)turnTo(L,PORTS[0].ll,2)},1700)},
+ wire(L){L.card.querySelectorAll(".rvi-k").forEach(b=>b.onclick=()=>{const i=L.cur;if(L.ans[i])return;L.ans[i]={k:b.dataset.k,ok:b.dataset.k===PORTS[i].k};L._said="";L.dirty=1;
+   clearTimeout(L.nx);L.nx=setTimeout(()=>{if(!L||!L.el.isConnected)return;const n=PORTS.findIndex((x,j)=>!L.ans[j]);if(n>=0){L.cur=n;L._said="";L.dirty=1;turnTo(L,PORTS[n].ll,2)}},4200)})},
+ off(L){clearTimeout(L.nx)},
+ tick(L,dt){L.t+=dt;if(!L.ans[L.cur])try{L.ring.setAttribute("r",(14+4*Math.sin(L.t*5)).toFixed(1))}catch(e){}},
+ draw(L){let right=0,done=0;PORTS.forEach((o,i)=>{const a=L.ans[i];if(a){done++;if(a.ok)right++}putTag(L,L.tags[i],a&&i!==L.cur?proj(L,o.ll,1):null,a?PORTK[o.k].split(" ")[0]+" "+esc(o.n):null,12)});
+  const o=PORTS[L.cur],a=L.ans[L.cur],q=proj(L,o.ll);if(q){L.ring.style.display="";L.ring.setAttribute("cx",q[0].toFixed(1));L.ring.setAttribute("cy",q[1].toFixed(1));L.ring.style.stroke=a?(a.ok?"#1f8a4c":"#c2364f"):"#ffd166"}else L.ring.style.display="none";
+  putTag(L,L.bub,q?proj(L,o.ll,1):null,esc(o.n)+(a?"":"?"),-22);
+  if(L.card){L.card.querySelectorAll(".rvi-k").forEach(b=>{b.disabled=!!a;b.classList.toggle("rvi-right",!!a&&b.dataset.k===o.k);b.classList.toggle("rvi-wrong",!!a&&!a.ok&&b.dataset.k===a.k)});
+   setHTML(L.card.querySelector(".rvi-score"),'<div class="rvi-dots">'+PORTS.map((x,i)=>'<i class="'+(L.ans[i]?L.ans[i].ok?"rvi-ok":"rvi-no":"")+(i===L.cur?" rvi-at":"")+'"></i>').join("")+"</div><span><b>"+right+"</b> right of "+done+"</span>")}
+  if(done===PORTS.length)say(L,"Five ports, one without a catch","Only Murmansk is both free of ice and open to the ocean, and it lies far in the Arctic, a long way from anywhere. The rest freeze, or open onto seas whose exits other countries control. That is the old Russian search for a “warm-water port”.");
+  else if(a)say(L,(a.ok?"Right: ":"Not quite: ")+PORTK[o.k].replace(/^\S+ /,"").toLowerCase(),o.why);
+  else say(L,o.n,"Ice, someone else’s strait, or neither? Tap your answer.")}};
+
+/* ============================================================ H. The Malacca dilemma: race two tankers
+   Both tankers sail the stop's own drawn routes, at the same speed, from the Indian Ocean west of Sumatra to the Taiwan
+   Strait: one through the Strait of Malacca, one round through Indonesia's Lombok Strait (the red line). The extra
+   distance is measured along the drawn lines, so it is approximate. */
+const MAL={tour:"geopol",title:"The Malacca dilemma",
+ tip:"Press ▶: two tankers leave together, one through Malacca, one the long way round by Lombok. How much further is it?",
+ card:()=>'<div class="rvi-row"><button type="button" class="rvi-play" aria-label="Play">▶</button><div class="rvi-read rvi-race"></div><button type="button" class="rvi-btn rvi-reset" style="flex:0 0 auto" aria-label="Start again">↺</button></div><div class="rvi-bars rvi-rbar"></div>',
+ init(L){const S=psSteps()[ps.i],ls=(S.lines||[]).filter(x=>x&&x.coords);const A=(ls[0]||{}).coords,B=(ls[1]||{}).coords;L.ok=!!(A&&B&&A.length>2&&B.length>2);if(!L.ok)return;
+  L.A=A.slice();L.B=[A[0]].concat(B,[A[A.length-1]]);const len=P=>{const c=[0];for(let i=1;i<P.length;i++)c.push(c[i-1]+d3.geoDistance(P[i-1],P[i])*6371);return c};
+  L.cA=len(L.A);L.cB=len(L.B);L.kmA=L.cA[L.cA.length-1];L.kmB=L.cB[L.cB.length-1];L.d=0;L.play=false;
+  L.sA=tag(L,"rvi-ship");L.sA.textContent="🛳";L.sB=tag(L,"rvi-ship rvi-ship-b");L.sB.textContent="🛳";L.tg=tag(L,"rvi-bub")},
+ at(P,c,d){d=Math.min(d,c[c.length-1]);for(let i=1;i<P.length;i++)if(c[i]>=d){const t=(d-c[i-1])/Math.max(1e-9,c[i]-c[i-1]);return d3.geoInterpolate(P[i-1],P[i])(t)}return P[P.length-1]},
+ wire(L){if(!L.ok)return;const c=L.card,b=c.querySelector(".rvi-play");b.onclick=()=>{if(L.d>=L.kmB)L.d=0;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play")};
+  c.querySelector(".rvi-reset").onclick=()=>{L.play=false;b.textContent="▶";L.d=0;L._said="";L.dirty=1}},
+ tick(L,dt){if(L.ok&&L.play){L.d=Math.min(L.kmB,L.d+dt*Math.max(250,L.kmB/14));L.dirty=1;if(L.d>=L.kmB){L.play=false;try{L.card.querySelector(".rvi-play").textContent="▶"}catch(e){}}}},
+ draw(L){if(!L.ok)return;const a=this.at(L.A,L.cA,L.d),b=this.at(L.B,L.cB,L.d),inA=L.d>=L.kmA;
+  putTag(L,L.sA,L.d>0?proj(L,a,1):null,"🛳",0);putTag(L,L.sB,L.d>0?proj(L,b,1):null,"🛳",0);
+  putTag(L,L.tg,inA&&L.d<L.kmB?proj(L,L.A[L.A.length-1],1):null,"Malacca tanker: arrived",-26);
+  const ex=L.kmB-L.kmA,w=v=>(v/L.kmB*100).toFixed(1);
+  if(L.card){setHTML(L.card.querySelector(".rvi-race"),L.d>0?fmt(L.d)+" km sailed":"Same start, same speed");
+   setHTML(L.card.querySelector(".rvi-rbar"),'<div class="rvi-lane"><span>By Malacca</span><div class="rvi-track"><i style="width:'+w(Math.min(L.d,L.kmA))+'%;background:#2a78d0"></i></div><b>'+(inA?"✓ ":"")+fmt(L.kmA)+' km</b></div><div class="rvi-lane"><span>By Lombok</span><div class="rvi-track"><i style="width:'+w(L.d)+'%;background:#c2364f"></i></div><b>'+(L.d>=L.kmB?"✓ ":"")+fmt(L.kmB)+" km</b></div>")}
+  if(L.d>=L.kmB)say(L,"About "+fmt(Math.round(ex/100)*100)+" km further","That is roughly "+Math.round(ex/L.kmA*100)+"% more sailing on these sketched routes: a few extra days for every tanker, and more fuel and freight costs. Not a disaster, but it is why China worries, builds pipelines across Myanmar, and why whoever controls the narrow strait has leverage.");
+  else if(inA)say(L,"The Malacca tanker is there","The other one is still sailing round Indonesia. Keep watching.");
+  else if(L.d>0)say(L,"Off they go","The blue route squeezes past Singapore; the red one swings south through the Lombok Strait.");
+  else say(L,"Two routes to China","Both tankers sail at the same speed. Press ▶.")}};
+
+/* ============================================================ I. Soldiers take over: run the clock of coups
+   The stop's nine countries, with the dates soldiers seized power (Wikipedia: "2020 Malian coup d'état" 18 Aug 2020,
+   "2021 Myanmar coup d'état" 1 Feb 2021, "2021 Malian coup d'état" 24 May 2021, "2021 Guinean coup d'état" 5 Sep 2021,
+   "2021 Sudanese coup d'état" 25 Oct 2021, "January 2022 Burkina Faso coup d'état" 24 Jan 2022, "September 2022 Burkina
+   Faso coup d'état" 30 Sep 2022, "2023 Nigerien coup d'état" 26 Jul 2023, "2023 Gabonese coup d'état" 30 Aug 2023,
+   "2025 Malagasy coup d'état" 14 Oct 2025, "2025 Guinea-Bissau coup d'état" 26 Nov 2025). Months count from Jan 2020. */
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const COUPS=[{c:"ml",n:"Mali",y:2020,m:7,d:18},{c:"mm",n:"Myanmar",y:2021,m:1,d:1},{c:"ml",n:"Mali (again)",y:2021,m:4,d:24},{c:"gn",n:"Guinea",y:2021,m:8,d:5},
+ {c:"sd",n:"Sudan",y:2021,m:9,d:25},{c:"bf",n:"Burkina Faso",y:2022,m:0,d:24},{c:"bf",n:"Burkina Faso (again)",y:2022,m:8,d:30},{c:"ne",n:"Niger",y:2023,m:6,d:26},
+ {c:"ga",n:"Gabon",y:2023,m:7,d:30},{c:"mg",n:"Madagascar",y:2025,m:9,d:14},{c:"gw",n:"Guinea-Bissau",y:2025,m:10,d:26}].map(o=>Object.assign(o,{t:(o.y-2020)*12+o.m+o.d/31}));
+const COUP={tour:"govmap",title:"Soldiers take over",
+ tip:"Press ▶ and run the clock from 2020. Watch where the coups happen, one after another.",
+ card:()=>'<div class="rvi-row"><button type="button" class="rvi-play" aria-label="Play">▶</button><input type="range" class="rvi-range" min="0" max="72" step="0.1" value="0" aria-label="Months since January 2020"><span class="rvi-read rvi-when" style="flex:0 0 auto;min-width:74px;text-align:right"></span></div><div class="rvi-score"></div>',
+ init(L){L.T=0;L.play=false;L.sh={};COUPS.forEach(o=>{if(!L.sh[o.c])L.sh[o.c]={p:svgEl(L.geo,"path",{class:"rvi-coup"}),f:feat(o.c),t:tag(L,"rvi-small rvi-tiny")}});L.bub=tag(L,"rvi-bub")},
+ wire(L){const c=L.card,b=c.querySelector(".rvi-play"),r=c.querySelector(".rvi-range");
+  b.onclick=()=>{if(L.T>=72)L.T=0;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play")};
+  r.addEventListener("input",()=>{L.play=false;b.textContent="▶";L.T=+r.value;L.dirty=1})},
+ tick(L,dt){if(L.play){L.T=Math.min(72,L.T+dt*4);L.dirty=1;if(L.T>=72){L.play=false;try{L.card.querySelector(".rvi-play").textContent="▶"}catch(e){}}}},
+ draw(L){const done=COUPS.filter(o=>o.t<=L.T),last=done[done.length-1];
+  Object.keys(L.sh).forEach(k=>{const s=L.sh[k],hit=done.filter(o=>o.c===k);s.p.setAttribute("d",hit.length&&s.f?geoD(s.f):"");s.p.classList.toggle("rvi-coup-new",!!last&&last.c===k&&L.T-last.t<3);
+   let ctr=null;try{ctr=s.f?d3.geoCentroid(s.f):null}catch(e){}
+   putTag(L,s.t,hit.length&&ctr&&!(last&&last.c===k)?proj(L,ctr,1):null,hit.map(o=>o.y).join(", ")+(hit.length>1?" ×2":""),6)});
+  let lc=null;try{lc=last&&L.sh[last.c].f?d3.geoCentroid(L.sh[last.c].f):null}catch(e){}
+  putTag(L,L.bub,lc?proj(L,lc,1):null,last?esc(last.n)+": "+last.d+" "+MON[last.m]+" "+last.y:"",-10);
+  if(L.card){const r=L.card.querySelector(".rvi-range");if(r&&document.activeElement!==r)r.value=L.T.toFixed(1);const yy=2020+Math.floor(Math.min(71.99,L.T)/12),mm=Math.floor(Math.min(71.99,L.T)%12);
+   setHTML(L.card.querySelector(".rvi-when"),"📅 "+MON[mm]+" "+yy);const nc=new Set(done.map(o=>o.c)).size;
+   setHTML(L.card.querySelector(".rvi-score"),'<span><b>'+done.length+"</b> coups in <b>"+nc+"</b> countries</span>")}
+  if(L.T>=71)say(L,"Eleven coups, nine countries, six years","Eight of the nine are in Africa, and five sit in a band across the Sahel and West Africa, where jihadist attacks and anger at governments ran high. Neighbours copy each other: once one coup succeeds and the soldiers stay, the next looks less risky.");
+  else if(last&&last.c==="ne")say(L,"Niger: the Sahel’s third junta","Mali, Burkina Faso and Niger, side by side, are now all run by soldiers. In January 2025 the three left ECOWAS, the West African club that had threatened to restore Niger’s president by force.");
+  else if(last&&last.c==="mm")say(L,"Myanmar: the one outside Africa","The army arrested the elected leader Aung San Suu Kyi on the day the new parliament was due to meet.");
+  else if(last)say(L,esc(last.n),"Soldiers seize power: watch the map fill up.");
+  else say(L,"January 2020","For years coups had been getting rarer. Press ▶.")}};
+
+/* ============================================================ J. No army: army or not?
+   Countries without armed forces (Wikipedia, "List of countries without armed forces"): Costa Rica (abolished 1948),
+   Iceland, Panama (abolished 1990), Liechtenstein (since 1868) and Mauritius (a police Special Mobile Force, no army).
+   With an army, though small or neutral: Switzerland (Swiss Armed Forces, a militia), Luxembourg (Luxembourg Army) and
+   Malta (Armed Forces of Malta). */
+const ARMY=[{n:"Switzerland",k:"y",ll:[8.2,46.8],why:"Neutral, but armed: most Swiss men serve in its militia army, and keep their kit at home."},
+ {n:"Costa Rica",k:"n",ll:[-84,9.9],why:"It abolished its army in 1948 and put the money into schools and health. A civil police force keeps order."},
+ {n:"Luxembourg",k:"y",ll:[6.13,49.8],why:"One of the smallest countries in Europe, but it has a small army of its own, and is a founding member of NATO."},
+ {n:"Iceland",k:"n",ll:[-19,64.9],why:"Iceland has never had an army. It has a coast guard, and NATO and a 1951 defence deal with the US cover the rest."},
+ {n:"Malta",k:"y",ll:[14.4,35.9],why:"A small island, but with its own armed forces, which also guard its coast and airspace."},
+ {n:"Panama",k:"n",ll:[-80.1,8.5],why:"After the US invasion of 1989, Panama abolished its army in 1990. A police force and border service remain."},
+ {n:"Liechtenstein",k:"n",ll:[9.55,47.15],why:"It disbanded its army in 1868, after sending 80 soldiers to a war and getting 81 back, as the story goes."},
+ {n:"Mauritius",k:"n",ll:[57.55,-20.25],why:"No army: a police unit, the Special Mobile Force, handles defence."}];
+const ARMYK={y:"🪖 Has an army",n:"🕊 No army"};
+const NOARMY={tour:"govmap",title:"No army",
+ tip:"The globe turns to a country. Does it keep an army?",
+ card:()=>'<div class="rvi-row rvi-btns">'+Object.keys(ARMYK).map(k=>'<button type="button" class="rvi-btn rvi-k" data-k="'+k+'">'+ARMYK[k]+"</button>").join("")+'</div><div class="rvi-score"></div>',
+ init(L){L.cur=0;L.ans={};L.t=0;L.ring=svgEl(L.svg,"circle",{r:"14",class:"rvi-qring"});L.tags=ARMY.map(()=>tag(L,"rvi-small"));L.bub=tag(L,"rvi-bub");setTimeout(()=>{if(L&&L.el.isConnected)turnTo(L,ARMY[0].ll,2.4)},1700)},
+ wire(L){L.card.querySelectorAll(".rvi-k").forEach(b=>b.onclick=()=>{const i=L.cur;if(L.ans[i])return;L.ans[i]={k:b.dataset.k,ok:b.dataset.k===ARMY[i].k};L._said="";L.dirty=1;
+   clearTimeout(L.nx);L.nx=setTimeout(()=>{if(!L||!L.el.isConnected)return;const n=ARMY.findIndex((x,j)=>!L.ans[j]);if(n>=0){L.cur=n;L._said="";L.dirty=1;turnTo(L,ARMY[n].ll,2.4)}},3800)})},
+ off(L){clearTimeout(L.nx)},
+ tick(L,dt){L.t+=dt;if(!L.ans[L.cur])try{L.ring.setAttribute("r",(14+4*Math.sin(L.t*5)).toFixed(1))}catch(e){}},
+ draw(L){let right=0,done=0;ARMY.forEach((o,i)=>{const a=L.ans[i];if(a){done++;if(a.ok)right++}putTag(L,L.tags[i],a&&i!==L.cur?proj(L,o.ll,1):null,a?ARMYK[o.k].split(" ")[0]+" "+esc(o.n):null,12)});
+  const o=ARMY[L.cur],a=L.ans[L.cur],q=proj(L,o.ll);if(q){L.ring.style.display="";L.ring.setAttribute("cx",q[0].toFixed(1));L.ring.setAttribute("cy",q[1].toFixed(1));L.ring.style.stroke=a?(a.ok?"#1f8a4c":"#c2364f"):"#ffd166"}else L.ring.style.display="none";
+  putTag(L,L.bub,q?proj(L,o.ll,1):null,esc(o.n)+(a?"":"?"),-22);
+  if(L.card){L.card.querySelectorAll(".rvi-k").forEach(b=>{b.disabled=!!a;b.classList.toggle("rvi-right",!!a&&b.dataset.k===o.k);b.classList.toggle("rvi-wrong",!!a&&!a.ok&&b.dataset.k===a.k)});
+   setHTML(L.card.querySelector(".rvi-score"),'<div class="rvi-dots">'+ARMY.map((x,i)=>'<i class="'+(L.ans[i]?L.ans[i].ok?"rvi-ok":"rvi-no":"")+(i===L.cur?" rvi-at":"")+'"></i>').join("")+"</div><span><b>"+right+"</b> right of "+done+"</span>")}
+  if(done===ARMY.length)say(L,right+" of "+ARMY.length+" right","Being small or neutral does not decide it: Switzerland and Luxembourg keep armies, while Costa Rica and Panama, much bigger, have none. Those without one usually rely on a bigger friend.");
+  else if(a)say(L,(a.ok?"Right: ":"No: ")+ARMYK[o.k].replace(/^\S+ /,"").toLowerCase(),o.why);
+  else say(L,o.n+"?","Army or no army? Tap your answer.")}};
+
 /* ============================================================ the engine: one stop at a time */
-const DEFS=[TRAIN,FLARE,BORDER,WALL,ARAL,DUST];
+const DEFS=[TRAIN,FLARE,BORDER,WALL,ARAL,DUST,WARM,MAL,COUP,NOARMY];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||ps.mode!=="globe")return null;const S=psSteps()[ps.i];if(!S)return null;return DEFS.find(d=>d.tour===ps.tour&&d.title===S.title)||null}catch(e){return null}}
 function mount(D){const G=g();if(!G||!G.host)return;if(L&&L.D===D&&L.host===G.host&&L.el.isConnected)return;unmount();
@@ -281,14 +419,15 @@ function mount(D){const G=g();if(!G||!G.host)return;if(L&&L.D===D&&L.host===G.ho
  const svg=el.querySelector("svg");const cg=svg.querySelector(".rvi-clipg");L={D,host:G.host,el,svg:cg,geo:svgEl(cg,"g",{}),root:svg,clipP:svg.querySelector(".rvi-clipp"),dirty:1,ox:0,oy:0,key:""};
  try{D.init.call(D,L)}catch(e){console.error(e)}lastT=0;loop();
  if(D.look){const L0=L;setTimeout(()=>{if(L===L0&&L.el.isConnected)turnTo(L,D.look[0],D.look[1])},1600)}}
-function unmount(){cancelAnimationFrame(raf);raf=0;if(L){try{if(L.D.off)L.D.off(L)}catch(e){}try{L.el.remove()}catch(e){}L=null}document.querySelectorAll(".rvi-ctl").forEach(c=>c.remove())}
+function unmount(){cancelAnimationFrame(raf);raf=0;try{if(scrolled&&scrolled.isConnected)scrolled.scrollTop=0}catch(e){}scrolled=null;if(L){try{if(L.D.off)L.D.off(L)}catch(e){}try{L.el.remove()}catch(e){}L=null}document.querySelectorAll(".rvi-ctl").forEach(c=>c.remove())}
 function ensureCard(){if(!L||typeof ps==="undefined"||!ps||!ps.card)return;const ex=ps.card.querySelector(".rvi-ctl");if(ex&&L.card===ex)return;if(ex)ex.remove();
  const at0=ps.card.querySelector(".ps-stat");if(!at0)return;const D=L.D,c=document.createElement("div");c.className="rvi-ctl";
  c.innerHTML='<div class="rvi-do">'+esc(D.tip)+"</div>"+(D.card?D.card(L):"")+'<div class="rvi-ep"></div>';at0.after(c);L.card=c;L._said="";showCtl(c);
  try{if(D.wire)D.wire.call(D,L)}catch(e){console.error(e)}L.dirty=1}
 /* the card scrolls: bring the new controls into view (the headline stays just above them) */
 function showCtl(c){setTimeout(()=>{try{let sc=c.parentElement;while(sc&&sc!==document.body){const o=getComputedStyle(sc).overflowY;if(/auto|scroll/.test(o)&&sc.scrollHeight>sc.clientHeight+4)break;sc=sc.parentElement}
- if(!sc||sc===document.body)return;const r=c.getBoundingClientRect(),b=sc.getBoundingClientRect();if(r.bottom>b.bottom)sc.scrollTop+=Math.min(r.top-b.top-70,r.bottom-b.bottom+8)}catch(e){}},900)}
+ if(!sc||sc===document.body)return;const r=c.getBoundingClientRect(),b=sc.getBoundingClientRect();if(r.bottom>b.bottom){scrolled=sc;sc.scrollTop+=Math.min(r.top-b.top-70,r.bottom-b.bottom+8)}}catch(e){}},900)}
+let scrolled=null;
 function loop(){if(!L)return;raf=requestAnimationFrame(t=>{try{const G=g();const dt=Math.min(.1,(t-(lastT||t))/1000);lastT=t;
   const hr=L.host.getBoundingClientRect(),cr=G.canvas?G.canvas.getBoundingClientRect():hr;L.ox=cr.left-hr.left;L.oy=cr.top-hr.top;
   let cb=null;try{const c=ps&&ps.card;if(c&&c.isConnected&&c.offsetWidth){const b=c.getBoundingClientRect();cb=[b.left-hr.left-6,b.top-hr.top-6,b.right-hr.left+6,b.bottom-hr.top+6]}}catch(e){}L.cb=cb;
@@ -337,6 +476,8 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvi-catch{position:absolute;inset:0;pointer-events:auto;cursor:crosshair;display:none}
 .rvi-wall-line{fill:none;stroke:#fff;stroke-width:5;stroke-dasharray:9 6;stroke-linecap:round;filter:drop-shadow(0 0 2px #000)}
 .rvi-wall-line.rvi-wall-true{stroke:#c0392b;stroke-dasharray:none;filter:none}
+.rvi-ship{transform:translate(-50%,-50%);font-size:22px;filter:drop-shadow(0 0 3px #2a78d0) drop-shadow(0 2px 2px rgba(0,0,0,.5))}.rvi-ship-b{filter:drop-shadow(0 0 3px #c2364f) drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.rvi-coup{fill:rgba(194,54,79,.55);stroke:#fff;stroke-width:1.5;transition:fill .4s}.rvi-coup.rvi-coup-new{fill:rgba(255,80,40,.85);filter:drop-shadow(0 0 6px #ff5a1e)}
 .rvi-dust{fill:#e0b25a;stroke:rgba(120,80,20,.6);stroke-width:.6}
 .rvi-bars{margin-top:8px;display:flex;flex-direction:column;gap:5px}
 .rvi-lane{display:flex;align-items:center;gap:8px;font-size:12px}.rvi-lane span{flex:0 0 112px;font-weight:700}.rvi-lane b{flex:0 0 92px;text-align:right}
