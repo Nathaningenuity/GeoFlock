@@ -94,6 +94,32 @@ const FIX={
   "Separatism, by ballot or by bomb":S=>{AREA(S,/^Quebec/);VIEW(S,[-1,42,3.6],"left")},
   /* Hargeisa's label lay under the map key */
   "Failed states":S=>VIEW(S,[46,7,3.6],"left")
+  },
+ hg4c:{
+  /* the card was switched to the right at run time, and the six photos (Hargeisa, Suez, Strasbourg, Brussels, Addis
+     Ababa and New York) piled up on the left under the big map key, New York round the back. Each has its own stop;
+     the four in Europe, the Middle East and Ethiopia are framed beside the card (Hargeisa, next to Addis Ababa, hung
+     off the globe's edge) */
+  "Empires, power and unions":S=>{DROPPH(S,/^(New York|Hargeisa)/);VIEW(S,[30,30,1.2],"left")},
+  /* the Ethiopia label ran under the big map key (the card shift turns the globe a long way at this zoom, so the view
+     is aimed east of the middle of Africa) */
+  "Colonialism and imperialism":S=>{VIEW(S,[30,5,1.1],"left");RENAME(S,/^Ethiopia/,"Ethiopia: independent")},
+  /* plain "Tanzania" and "Zambia" labels repeated the map's own on long leaders, and Dar es Salaam sat by the map key */
+  "China’s railway to the copper belt":S=>{DROP(S,/^(Tanzania|Zambia)$/);VIEW(S,[38,-10,3],"left")},
+  /* the eastern "Rimland" label sat at the globe's edge under the big map key */
+  /* framed further east, the western "Rimland" label (hung from Iraq) fell under the card; it hangs from Iran instead */
+  "The heartland":S=>{VIEW(S,[95,45,1.25],"left");const P=S.pins||[];if(P.some(p=>Array.isArray(p)&&Array.isArray(p[0][0])&&p[0][0][0]===45))LOCK(S,"pins",P.map(p=>Array.isArray(p)&&Array.isArray(p[0][0])&&p[0][0][0]===45?[[[56,31]]].concat(p.slice(1)):p))},
+  /* Vietnam sat at the globe's edge under the big map key: 83° of longitude from Eastern Europe, it cannot share the
+     view beside the card. Its pin goes (the text names it; the map labels it) */
+  "Shatterbelts":S=>{DROP(S,/^Vietnam/);VIEW(S,[62,34,1.15],"left")},
+  /* the Strait of Malacca photo sat at the globe's edge under the big map key; 70° of longitude from Suez, it cannot
+     share the view beside the card, so the stop frames the three choke points of its text (Suez, Bab-el-Mandeb,
+     Hormuz) and Malacca stays in "Tell me more" */
+  "Choke points":S=>{DROPPH(S,/^Strait of Malacca/);VIEW(S,[62,18,1.3],"left")},
+  /* the African Union and ASEAN, 85° of longitude apart: the globe turned to the Indian Ocean between them, with
+     ASEAN and Jakarta under the card (switched to the right at run time) and Addis Ababa at the globe's edge. The stop
+     opens on Africa; buttons (part 2) turn the globe to Southeast Asia */
+  "Regional unions":S=>{AREA(S,/^Jakarta/);VIEW(S,[22,5,1.3],"left")}
  }
 };
 const applied=new WeakSet();
@@ -134,7 +160,11 @@ every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="gl
    - hg4b | "Unitary and federal states": unitary or federal? Each answer turns the globe to the country.
    - hg4b | "Balkanisation": put Yugoslavia's seven successors in order of independence.
    - hg4b | "Autonomous regions", "Separatism, by ballot or by bomb": buttons turn the globe between places half a world
-            apart (Greenland and Hong Kong; Spain and Quebec). */
+            apart (Greenland and Hong Kong; Spain and Quebec).
+   - hg4c | "The end of empires": drag (or play) through 1945–2011 and watch UN membership grow from 51 to 193.
+   - hg4c | "Bigger than states": EU with the euro, EU with its own money, or outside? Sort nine countries.
+   - hg4c | "Military alliances": put nine NATO members in the order they joined.
+   - hg4c | "Regional unions": buttons turn the globe between the African Union and ASEAN. */
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=n=>Math.round(n).toLocaleString("en-GB");
@@ -158,7 +188,7 @@ function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","w
 /* ---------------- a sorting game: tap the items in order ----------------
    cfg: {tours, title, tip, items:[[name, value, shown text, note]], desc (biggest first), log (log-scale bars),
    bars (default true), first/last (the ends' words), unit, after(nRight, N) → closing text} */
-function SORT(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,tip:cfg.tip,
+function SORT(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,below:!!cfg.below,tip:cfg.tip,
  card(L){return'<div class="rvl-sortq"><span>'+esc(cfg.first)+'</span><i>→</i><span>'+esc(cfg.last)+'</span></div><ol class="rvl-rank"></ol><div class="rvl-pool"></div>'+
   '<div class="rvl-btns"><button type="button" class="rvl-btn rvl-undo">Undo</button><button type="button" class="rvl-btn rvl-show">Show me</button><button type="button" class="rvl-btn rvl-again" hidden>Start again</button></div>'},
  wire(L){const c=L.card;L.order=[];L.shown=false;
@@ -309,7 +339,67 @@ const TURN_AUTO=TURNER({tours:["hg4b"],title:"Autonomous regions",tip:"Two kinds
 const TURN_SEP=TURNER({tours:["hg4b"],title:"Separatism, by ballot or by bomb",tip:"Turn the globe between Spain’s two separatist regions and Quebec.",
  places:[["Catalonia and the Basque Country",-1,42,3.6,"Catalonia’s 2017 vote was ruled illegal by Spain’s courts. In the Basque Country, ETA killed over 800 people before it dissolved in 2018."],
   ["Quebec",-71.2,47,2.4,"In 1995 Quebec voted to stay in Canada by about 50.6% to 49.4%: a gap of only about 54,000 votes out of 4.7 million."]]});
-const DEFS=[NATIONS,SWAP,BTYPES,UNIFED,YUGO,TURN_AUTO,TURN_SEP];
+
+/* ======================================================================== 7. A world of new states (hg4c)
+   United Nations, "Growth in United Nations membership, 1945–present" (un.org/en/about-us/growth-in-un-membership):
+   members at the end of each year in which the total changed. 51 founders in 1945; 16 admitted together in 1955;
+   17 in 1960, 16 of them in Africa; 20 in 1991–92 as the Soviet Union and Yugoslavia broke up; South Sudan, the 193rd,
+   in 2011. */
+const UNM=[[1945,51],[1946,55],[1947,57],[1948,58],[1949,59],[1950,60],[1955,76],[1956,80],[1957,82],[1960,99],[1961,104],[1962,110],[1963,113],[1964,115],[1965,117],[1966,122],[1967,123],[1968,126],[1970,127],[1971,132],[1973,135],[1974,138],[1975,144],[1976,147],[1977,149],[1978,151],[1979,152],[1980,154],[1981,157],[1983,158],[1984,159],[1991,166],[1992,179],[1993,184],[1994,185],[1999,188],[2000,189],[2002,191],[2006,192],[2011,193]];
+const unAt=y=>{let n=UNM[0][1];for(const r of UNM){if(r[0]<=y)n=r[1];else break}return n};
+const UNNOTE=[[1945,"51 founding members, many of them still colonial powers."],[1955,"16 states let in together in one deal, after years of Cold War vetoes."],
+ [1957,"Ghana and Malaya join: the end of empires is under way."],[1960,"The Year of Africa: 17 new members in one year, 16 of them African."],[1961,"Decolonisation rolls on through Africa, the Caribbean and the Pacific."],
+ [1976,"The last big wave: Portugal’s colonies, Angola and Mozambique among them, are now in."],[1984,"Growth slows: few colonies are left."],
+ [1991,"The Soviet Union and Yugoslavia break up: 20 new members in two years."],[1993,"Membership is nearly complete."],[2011,"South Sudan becomes the 193rd and newest member."]];
+const UNGROW={tours:["hg4c"],title:"The end of empires",globe:false,
+ tip:"Drag through the years and watch the world fill with new states.",
+ card(L){const X=y=>16+(y-1945)/(2011-1945)*276,Y=n=>86-n/200*78;let d="M"+X(1945)+" 86";for(let y=1945;y<=2011;y++)d+="L"+X(y).toFixed(1)+" "+Y(unAt(y)).toFixed(1);d+="L"+X(2011)+" 86Z";
+  return'<svg class="rvl-ch" viewBox="0 0 300 100" role="img" aria-label="UN member states, 1945 to 2011"><rect class="rvl-band" x="'+X(1956).toFixed(1)+'" y="8" width="'+(X(1976)-X(1956)).toFixed(1)+'" height="78"/><text class="rvl-tx" x="'+X(1966).toFixed(1)+'" y="16" text-anchor="middle">Africa’s wave</text><path class="rvl-area" d="'+d+'"/><path class="rvl-ax" d="M16 8V86H292"/><path class="rvl-dashed" d="M16 '+Y(51).toFixed(1)+'H292"/>'+
+  '<line class="rvl-now" x1="0" x2="0" y1="8" y2="86"/><circle class="rvl-dot" r="4"/><text class="rvl-tx" x="16" y="97">1945</text><text class="rvl-tx" x="292" y="97" text-anchor="end">2011</text><text class="rvl-tx" x="20" y="'+(Y(51)-3).toFixed(1)+'">51 founders</text></svg>'+
+  '<div class="rvl-row"><input type="range" class="rvl-rng rvl-yr" min="1945" max="2011" step="1" value="1945" aria-label="Year"><b class="rvl-val rvl-yv"></b></div>'+
+  '<div class="rvl-btns"><button type="button" class="rvl-btn rvl-play">▶ Play</button></div>'},
+ wire(L){const c=L.card,r=c.querySelector(".rvl-yr");L.y=1945;r.oninput=()=>{L.y=+r.value;stop();this.render(L)};
+  const stop=()=>{clearInterval(L.iv);L.iv=0;c.querySelector(".rvl-play").textContent="▶ Play"};
+  c.querySelector(".rvl-play").onclick=()=>{if(L.iv){stop();return}if(L.y>=2011)L.y=1945;c.querySelector(".rvl-play").textContent="❚❚ Pause";
+   L.iv=setInterval(()=>{if(!c.isConnected){stop();return}L.y=Math.min(2011,L.y+1);r.value=L.y;this.render(L);if(L.y>=2011)stop()},140)};
+  L.off=()=>clearInterval(L.iv);this.render(L)},
+ off(L){clearInterval(L.iv)},
+ render(L){const c=L.card;if(!c)return;const y=L.y,n=unAt(y),X=16+(y-1945)/(2011-1945)*276,Yv=86-n/200*78;
+  c.querySelector(".rvl-yv").textContent=y+": "+n;const ln=c.querySelector(".rvl-now");ln.setAttribute("x1",X.toFixed(1));ln.setAttribute("x2",X.toFixed(1));
+  const dt=c.querySelector(".rvl-dot");dt.setAttribute("cx",X.toFixed(1));dt.setAttribute("cy",Yv.toFixed(1));
+  let note=UNNOTE[0][1];for(const q of UNNOTE)if(q[0]<=y)note=q[1];
+  say(L,n+" UN members in "+y+(n>51?" ("+(n-51)+" more than in 1945)":""),note)}};
+
+/* ======================================================================== 8. In the club? (hg4c)
+   EU membership and the euro as of 2026 (European Union, "EU countries" and "Countries using the euro",
+   european-union.europa.eu): Germany and Ireland have used the euro since 1999 (notes and coins 2002); Croatia since
+   1 January 2023; Poland (złoty), Sweden (krona) and Denmark (krone, by an opt-out agreed in 1992) are EU members with
+   their own currencies; Norway voted no to joining in 1972 and 1994; Switzerland is outside, tied by bilateral deals;
+   the UK left on 31 January 2020. */
+const EUQ=CLASSIFY({tours:["hg4c"],title:"Bigger than states",below:true,
+ tip:"In the club? Sort nine European countries.",ask:"In the EU and using the euro, in the EU with its own money, or outside?",
+ kinds:[["e","EU + euro","in the EU, using the euro"],["o","EU, own money","in the EU with its own currency"],["n","Not in the EU","outside the EU"]],
+ items:[["Germany","e","A founder of the EU’s forerunner in 1957, and of the euro."],["Norway","n","Norwegians voted no to joining twice, in 1972 and 1994, but it is in the single market through the European Economic Area."],
+  ["Poland","o","An EU member since 2004 that still pays in złoty."],["Croatia","e","The newest EU member, since 2013, and it switched to the euro in 2023."],
+  ["United Kingdom","n","It left in 2020 after the 2016 Brexit vote."],["Sweden","o","An EU member that has kept its krona."],
+  ["Switzerland","n","Surrounded by EU members, but outside, tied by dozens of separate deals."],["Ireland","e","Euro since 1999, and an EU member since 1973."],
+  ["Denmark","o","It negotiated the right to keep the krone in 1992."]],
+ end:()=>"Pooling sovereignty comes in layers: the single market, then a shared currency. Some states take all of it, some part, and some stay out."});
+
+/* ======================================================================== 9. NATO grows east (hg4c)
+   Dates of accession (NATO, "NATO member countries", nato.int): founders, among them the US, 1949; Turkey (and
+   Greece) 1952; West Germany 1955; Spain 1982; Poland (with Czechia and Hungary) 1999; Estonia (with six others) 2004;
+   North Macedonia 2020; Finland 4 April 2023; Sweden 7 March 2024. */
+const NATOQ=SORT({tours:["hg4c"],title:"Military alliances",below:true,
+ tip:"NATO began with 12 members. Put these in the order they joined.",first:"Earliest",last:"Latest",desc:false,bars:false,
+ items:[["Poland",1999,"1999"],["Sweden",2024.2,"2024"],["United States",1949,"1949 (founder)"],["Spain",1982,"1982"],["Finland",2023.3,"2023"],["Turkey",1952,"1952"],["Estonia",2004,"2004"],["West Germany",1955,"1955"],["North Macedonia",2020,"2020"]],
+ after:(n,N)=>"From 12 founders to 32 members: after the Cold War, NATO grew east into the old Soviet bloc, and Russia’s attacks on Ukraine pushed Finland and Sweden to give up decades of neutrality."});
+
+/* the African Union and ASEAN cannot share a view beside the card; the texts are the stop's own */
+const TURN_UNION=TURNER({tours:["hg4c"],title:"Regional unions",tip:"Two regional clubs, an ocean apart. Turn the globe from one to the other.",
+ places:[["The African Union",22,5,1.3,"55 members, with its headquarters in Addis Ababa. It promotes trade and sends peacekeepers, as it has in Somalia."],
+  ["ASEAN",112,8,1.6,"Southeast Asia’s club, from Myanmar to the Philippines, with its secretariat in Jakarta. It works by consensus."]]});
+const DEFS=[NATIONS,SWAP,BTYPES,UNIFED,YUGO,TURN_AUTO,TURN_SEP,UNGROW,EUQ,NATOQ,TURN_UNION];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -398,6 +488,9 @@ every(()=>{try{const on=typeof ps!=="undefined"&&ps&&MYT.has(ps.tour);const b=do
 .rvl-kd{background:#2a2f3a}.rvl-kp{background:#2a78d0;border-radius:2px!important}.rvl-kn{background:#d9682b}
 :is(body.dark-theme,body.sky-night) .rvl-key2{color:#aab6c8}
 .rvl-btn.rvl-cur{background:#13294b;color:#fff;border-color:#13294b}:is(body.dark-theme,body.sky-night) .rvl-btn.rvl-cur{background:#9fc3ff;color:#13294b}
+.rvl-band{fill:rgba(217,104,43,.1)}.rvl-area{fill:rgba(42,120,208,.22);stroke:#2a78d0;stroke-width:1.5;stroke-linejoin:round}.rvl-dashed{fill:none;stroke:#8a98a8;stroke-dasharray:3 3}
+line.rvl-now{stroke:#d9682b;stroke-width:1.5}.rvl-dot{fill:#d9682b;stroke:#fff;stroke-width:1.5}
+:is(body.dark-theme,body.sky-night) .rvl-area{fill:rgba(159,195,255,.22);stroke:#9fc3ff}:is(body.dark-theme,body.sky-night) .rvl-band{fill:rgba(255,178,122,.12)}
 `;document.head.appendChild(s)}
 
 window.gfPolishRvl={v:1,FIX,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
