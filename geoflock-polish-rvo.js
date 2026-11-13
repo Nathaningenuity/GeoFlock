@@ -80,6 +80,12 @@ const FIX={
      Atlantic, with Lagos and Jakarta round the back and Los Angeles under the card. Lagos and Jakarta have their own
      stops later; the four in North America are framed beside the card */
   "Inside the city":S=>{DROPPH(S,/^(Lagos|Jakarta)/);VIEW(S,[-92,30,1.2])}
+ },
+ hg6c:{
+  /* the six photos span the world (Shanghai, London, Tysons, the Texas suburbs, Portland, Seaside): the globe turned to
+     the Atlantic between them, with Shanghai round the back and the American four at the globe's edge (the card, on the
+     right, covered the rest). Shanghai and London have their own stops later; the American four are framed */
+  "Building better cities":S=>{DROPPH(S,/^(Shanghai|London)/);VIEW(S,[-93,36,1.15])}
  }
 };
 const applied=new WeakSet();
@@ -93,6 +99,9 @@ let lastKey="";
 every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f)f(S)}catch(e){}}catch(e){}},300);
 /* (not at page load: other files fill in these stops' photos after load by assigning S.phPins, which a locked field
    would ignore, so the stops lost all their photos; the fixes go in when one of these tours opens) */
+/* Only the card side is locked at load, so a tour's first stop already opens with its card on the left */
+const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S)LOCK(S,"card","left")})})}catch(e){}};
+cardsLeft();setTimeout(cardsLeft,1500);setTimeout(cardsLeft,6000);
 
 /* The card shift, kept (as geoflock-polish-rvb.js, -rvf.js and -rvl.js do for theirs): psFlyGlobe (index.html) turns a stop's place
    out from under the card, but geoflock-tourload.js's "aim" turns the globe back to the stop's plain centre whenever it
@@ -319,7 +328,62 @@ const INOUT=CLASSIFY({tours:["hg6b"],title:"Rich in the middle",below:true,
   ["Strict planning keeps towers out of the old centre","par","Paris held its old centre to a low, even height; the towers went up outside it."],
   ["Newcomers start near the centre and move outward as they get richer","chi","Burgess’s city grows by newcomers arriving in the middle and moving out."]],
  end:()=>"Same pieces, opposite places: in Chicago’s model wealth rises outward; in Paris it falls outward."});
-const DEFS=[RAIL,SPRAWL,JAX,WORLDC,CPT,MODELS,INOUT];
+
+/* ======================================================================== hg6c: Building better cities */
+/* ---- Howard's three magnets: the words on his own diagram (Garden Cities of To-morrow, 1902; transcribed on Wikimedia
+   Commons, "Howard-three-magnets.png"): Town "Closing out of nature. Social opportunity. Isolation of crowds. Places of
+   amusement."; Country "Lack of society. Beauty of nature. Hands out of work. Land lying idle."; Town-Country "Beauty of
+   nature. Social opportunity. Fields and parks of easy access. Low rents, high wages." */
+const MAGNETS=CLASSIFY({tours:["hg6c"],title:"The garden city",below:true,
+ tip:"Howard’s three magnets: which one did he write each phrase on?",ask:"Town, country, or town-country?",
+ kinds:[["t","Town","the town"],["c","Country","the country"],["tc","Town-country","the town-country (garden city)"]],
+ items:[["“Lack of society”","c","Fresh air, but lonely: Howard’s country magnet."],
+  ["“Closing out of nature”","t","The crowded town shuts out green space and sky."],
+  ["“Isolation of crowds”","t","You can be lonely among thousands in the town."],
+  ["“Low rents, high wages”","tc","The garden city’s promise: town wages with country rents."],
+  ["“Hands out of work”","c","Farm work was shrinking, so the country could not offer jobs."],
+  ["“Places of amusement”","t","The town’s pull: theatres, music halls, shops."],
+  ["“Fields and parks of easy access”","tc","Every garden city home was meant to be a short walk from open land."],
+  ["“Land lying idle”","c","Howard’s country: plenty of land, little use made of it."],
+  ["“Beauty of nature”",["c","tc"],"Howard wrote it on both: the country has it, and the garden city keeps it."]],
+ end:()=>"Each magnet pulls and pushes. Howard’s answer was a third magnet with the best of both, and Letchworth was its test."});
+
+/* ---- Superblock: before and after. Barcelona's first superblock (superilla), in Poblenou in 2016: nine blocks with
+   through traffic kept to the edge roads and the inner streets limited to 10 km/h for residents and deliveries (WHO,
+   "Barcelona: using urban design to improve urban health"; Naider, "The first superblock in Barcelona"). Eixample
+   blocks are about 113 m across, as the stop says. */
+const SUPER={tours:["hg6c"],title:"Superblocks",globe:false,tip:"Make a superblock: take the cars off the inside streets.",
+ card(L){const B=[],S=[],T=[],C=[];const x0=10,y0=10,b=40,s=12,P=k=>x0+s+k*(b+s);
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)B.push('<rect class="rvo-blk" x="'+P(i)+'" y="'+P(j)+'" width="'+b+'" height="'+b+'" rx="7"/>');
+  /* inner streets: the two between the columns and the two between the rows, inside the outer ring */
+  for(let k=1;k<3;k++){const q=P(k)-s;S.push('<rect class="rvo-in" x="'+q+'" y="'+(y0+s)+'" width="'+s+'" height="'+(3*b+2*s)+'"/>','<rect class="rvo-in" x="'+(x0+s)+'" y="'+q+'" width="'+(3*b+2*s)+'" height="'+s+'"/>');
+   for(let m=0;m<3;m++){T.push('<circle class="rvo-tree" cx="'+(q+s/2)+'" cy="'+(P(m)+b/2)+'" r="4"/>','<circle class="rvo-tree" cx="'+(P(m)+b/2)+'" cy="'+(q+s/2)+'" r="4"/>');
+    C.push('<rect class="rvo-car rvo-cin" x="'+(q+3)+'" y="'+(P(m)+8+m*6)+'" width="6" height="10" rx="2"/>','<rect class="rvo-car rvo-cin" x="'+(P(m)+6+m*7)+'" y="'+(q+3)+'" width="10" height="6" rx="2"/>')}}
+  const W=3*b+4*s;[[x0+30,y0+3,10,6],[x0+100,y0+3,10,6],[x0+3,y0+60,6,10],[x0+W-9,y0+90,6,10],[x0+70,y0+W-9,10,6],[x0+140,y0+W-9,10,6],[x0+W-9,y0+25,6,10]].forEach(r=>C.push('<rect class="rvo-car" x="'+r[0]+'" y="'+r[1]+'" width="'+r[2]+'" height="'+r[3]+'" rx="2"/>'));
+  return'<div class="rvo-sb"><svg class="rvo-ch" viewBox="0 0 300 200" role="img" aria-label="Nine city blocks, before and after a superblock">'+
+   '<rect class="rvo-road" x="'+x0+'" y="'+y0+'" width="'+W+'" height="'+W+'" rx="4"/>'+S.join("")+B.join("")+'<g class="rvo-trees">'+T.join("")+'</g>'+C.join("")+
+   '<text class="rvo-tx" x="'+(x0+W/2)+'" y="'+(y0+W+14)+'" text-anchor="middle">nine blocks, each about 113 m across</text>'+
+   '<g class="rvo-sbk"><rect class="rvo-car" x="200" y="40" width="10" height="6" rx="2"/><text class="rvo-tx" x="216" y="46">car</text><rect class="rvo-blk" x="200" y="60" width="10" height="10" rx="2"/><text class="rvo-tx" x="216" y="69">block of flats</text>'+
+   '<circle class="rvo-tree" cx="205" cy="88" r="4"/><text class="rvo-tx" x="216" y="91">trees and play</text></g></svg></div>'+
+   '<div class="rvo-btns rvo-tog"><button type="button" class="rvo-btn" data-m="0">Before</button><button type="button" class="rvo-btn" data-m="1">Superblock</button></div>'},
+ wire(L){const c=L.card;L.m=0;c.querySelectorAll(".rvo-tog button").forEach(b=>b.onclick=()=>{L.m=+b.dataset.m;this.render(L)});this.render(L)},
+ render(L){const c=L.card;if(!c)return;c.querySelector(".rvo-sb").classList.toggle("rvo-on",!!L.m);c.querySelectorAll(".rvo-tog button").forEach(b=>b.classList.toggle("rvo-cur",+b.dataset.m===L.m));
+  if(!L.m)say(L,"Before: every street is a road","Cars cut through on all twelve inner street stretches as well as round the edge.");
+  else say(L,"After: the inside goes to people","Through traffic stays on the edge roads. Inside, only residents and deliveries drive, at 10 km/h; the crossings become squares."+" The first, in Poblenou in 2016, gained four new squares.")}};
+
+/* ---- Brownfield or greenfield? The stop's own Olympic Park and Levittown (stop 1, on Long Island farmland), with
+   general cases. */
+const BROWN=CLASSIFY({tours:["hg6c"],title:"Brownfields",below:true,
+ tip:"Brownfield or greenfield? Sort six building sites.",ask:"Is it a brownfield or a greenfield site?",
+ kinds:[["b","Brownfield","a brownfield site"],["g","Greenfield","a greenfield site"]],
+ items:[["London’s 2012 Olympic Park, on old rail yards and dumps","b","Used, polluted land, cleaned up and reused: the stop’s own example."],
+  ["Flats on the site of an old gasworks","b","Old industrial land, often polluted, so it must be cleaned first."],
+  ["A new estate of houses on a farmer’s fields","g","Land never built on before: cheaper to build, but the countryside is lost."],
+  ["Levittown, built on Long Island farmland after 1947","g","Postwar suburbs spread over fields: greenfield growth, as in sprawl."],
+  ["A shopping centre on a closed steelworks","b","Reusing an old industrial site spares a field somewhere else."],
+  ["Offices on woodland cleared beside a motorway junction","g","Never built on before, so it is greenfield, even though it is next to a road."]],
+ end:()=>"Brownfields cost more to clean but spare the countryside; that is why smart growth puts them first."});
+const DEFS=[RAIL,SPRAWL,JAX,WORLDC,CPT,MODELS,INOUT,MAGNETS,SUPER,BROWN];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
@@ -426,6 +490,11 @@ line.rvo-now{stroke:#d9682b;stroke-width:1.5}.rvo-dot{fill:#d9682b;stroke:#fff;s
 :is(body.dark-theme,body.sky-night) .rvo-lane,:is(body.dark-theme,body.sky-night) .rvo-num{color:#fff}
 :is(body.dark-theme,body.sky-night) .rvo-lane small,:is(body.dark-theme,body.sky-night) .rvo-src{color:#aab6c8}
 :is(body.dark-theme,body.sky-night) .rvo-stl,:is(body.dark-theme,body.sky-night) .rvo-b1{background:#6fa8ff}
+.rvo-road{fill:#9aa3ad}.rvo-blk{fill:#e8c9a0;stroke:#b08a5a;stroke-width:1}.rvo-in{fill:#9aa3ad;transition:fill .6s}.rvo-car{fill:#c2364f;transition:opacity .5s}
+.rvo-trees{opacity:0;transition:opacity .6s}.rvo-tree{fill:#2f9e5b}
+.rvo-sb.rvo-on .rvo-in{fill:#bfe3b4}.rvo-sb.rvo-on .rvo-trees{opacity:1}.rvo-sb.rvo-on .rvo-cin{opacity:0}
+.rvo-sbk .rvo-car,.rvo-sbk .rvo-tree{opacity:1}
+:is(body.dark-theme,body.sky-night) .rvo-road,:is(body.dark-theme,body.sky-night) .rvo-in{fill:#5b6573}:is(body.dark-theme,body.sky-night) .rvo-sb.rvo-on .rvo-in{fill:#3f7a4f}
 `;document.head.appendChild(s)}
 
 window.gfPolishRvo={v:1,FIX,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
