@@ -112,7 +112,37 @@ FIX.music={
   "India: sitar and film songs":S=>{VIEW(S,[87,22,2.5]);DROP(S,/^India$/);
     RE(S,"body","Ravi Shankar played it to the world, and George Harrison of the Beatles learned it from him and used it on ‘Norwegian Wood’ in 1965.","Ravi Shankar played it to the world. George Harrison of the Beatles played one on ‘Norwegian Wood’ in 1965, and in 1966 became Shankar’s student.")}
 };
-FIX.literature={};FIX.philosophy={};FIX.sports={};
+FIX.literature={
+  /* Cartagena's photo lay under the card and Kyoto's round the back of the globe (both have stops of their own) */
+  "Literature around the world":S=>{DROPPH(S,/^(Cartagena|Kyoto)/);VIEW(S,[40,30,1])},
+  /* "Scylla and Charybdis" and "Ithaca: home" ran under the map key and the Troy photos crowded the zoom buttons:
+     turned east a little and north up (the stop's own voyage game is left as it is) */
+  "Homer’s Troy and Ithaca":S=>VIEW(S,[22.5,36.5,3.2]),
+  /* the Kurukshetra photo covered the ruler's distance: closer in */
+  "The Mahabharata and the Ramayana":S=>VIEW(S,[80,18,2.2]),
+  /* "Saudi Arabia" repeated the Najd label beside it */
+  "Weeping at the campsite":S=>DROP(S,/^Saudi Arabia$/),
+  /* the Abbasid empire's label ran off the globe's right edge */
+  "One Thousand and One Nights":S=>VIEW(S,[39,34,1.45]),
+  /* the plain "Iceland" label repeated the map's own */
+  "Sagas by the fireside":S=>DROP(S,/^Iceland$/),
+  /* the Stratford photo was labelled just "Shakespeare", beside his portrait in London. And Hamlet, Macbeth and King
+     Lear were not all "first played" at the Globe: King Lear's first recorded performance was before James I at
+     Whitehall on 26 December 1606 (Wikipedia, "King Lear", Date and text); Wikipedia's "Globe Theatre" names Julius
+     Caesar (1599) as the likely first production there */
+  "Shakespeare’s London":S=>{PHLABEL(S,/^Stratford/,"Stratford-upon-Avon");
+    RE(S,"body","where Hamlet, Macbeth and King Lear were first played.","where Julius Caesar was played that first autumn, and Hamlet, Macbeth and King Lear soon after.")},
+  /* the plain "Japan" label sat on the dashed route */
+  "Bashō’s narrow road":S=>DROP(S,/^Japan$/),
+  /* the "Russia" label's line ran off to the globe's edge */
+  "The great Russian novels":S=>DROP(S,/^Russia$/),
+  /* Wikipedia, "Things Fall Apart": "translated into over fifty languages" (and the Achebe obituaries: more than 20
+     million copies, more than 50 languages) */
+  "Things Fall Apart":S=>RE(S,"stat","translated into some 60 languages","translated into more than 50 languages"),
+  /* Tagore's and Mahfouz's photos were under the map key (once Europe was framed) and Han Kang's off the globe's top edge, by the search box: the buttons in
+     part 2 turn the globe to each winner instead */
+  "The Nobel map":S=>{DROPPH(S,/^(Tagore|Han Kang|Mahfouz)/);VIEW(S,[24,50,1.4])}
+};FIX.philosophy={};FIX.sports={};
 
 const applied=new WeakSet();
 /* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
@@ -282,7 +312,47 @@ const SORT_MUS=SORT({tours:["music"],title:"Now explore",tip:"Put eight of the t
   ["Bossa nova",1958,"late 1950s"],["Reggae",1965,"1960s"],["Fela Kuti’s Afrobeat",1972,"1970s"],["Gangnam Style",2012,"2012"]],
  after:(r,N)=>"From bone flutes in an Ice Age cave to a video watched a billion times: more than 35,000 years, and every one of these sounds still played today."});
 
-const DEFS=[BINS_INST,SORT_MUS];
+/* ======================================================================== 3. Nobel winners round the globe (literature)
+   The stop's own winners, from the Nobel Prize site (nobelprize.org, "All Nobel Prizes in Literature"): Tagore 1913
+   (Calcutta), Mahfouz 1988 (Cairo), Walcott 1992 (born in Castries, Saint Lucia), Han Kang 2024 (Seoul), and Anne
+   Carson 2026, born in Toronto, "for her bold and inventive oeuvre that, in playful dialogue with the classical
+   tradition, has created new forms for contemporary literature" (nobelprize.org, "Nobel Prize in Literature 2026",
+   announced 8 October 2026). Tagore's and Han Kang's photos fell under the map key and off the globe's top edge. */
+const TURN_NOBEL=TURNER({tours:["literature"],mark:true,title:"The Nobel map",tip:"Winners come from all over the globe. Turn it from Stockholm to each one.",
+ places:[["Stockholm",18.07,59.33,1.4,"The prizes are handed out here every 10 December, the day Alfred Nobel died.",1],
+  ["Kolkata: Tagore, 1913",88.36,22.57,2,"Rabindranath Tagore, poet of Bengal, was the first winner from outside Europe. He wrote the national anthems of both India and Bangladesh."],
+  ["Cairo: Mahfouz, 1988",31.24,30.04,2.5,"Naguib Mahfouz set his novels in the streets of old Cairo; he was the first winner writing in Arabic.",1],
+  ["Saint Lucia: Walcott, 1992",-60.99,14.01,3,"Derek Walcott, born in Castries, retold Homer in the Caribbean in his long poem Omeros. With the economist Arthur Lewis, Saint Lucia has two Nobel winners for about 180,000 people."],
+  ["Seoul: Han Kang, 2024",126.98,37.57,2.5,"Han Kang was the first winner from South Korea."],
+  ["Toronto: Anne Carson, 2026",-79.38,43.65,2.5,"The newest winner, a poet born in Toronto who translates ancient Greek: the prize praised her “playful dialogue with the classical tradition”."]]});
+
+/* ======================================================================== 4. Which season? (literature, Bashō)
+   Season words (kigo), from Wikipedia, "Kigo": the frog "is a kigo for spring" (in Bashō's old-pond haiku), "the moon
+   (tsuki) is an autumn kigo", cherry blossoms "a common spring kigo"; rainy season and fireworks are among its summer
+   examples. Red maple leaves (momiji) and snow are the stop's own autumn and winter words. */
+const BINS_KIGO=BINS({tours:["literature"],title:"Bashō’s narrow road",tip:"Every haiku names its season. Which season does each word stand for?",ask:"Spring, summer, autumn or winter?",
+ bins:["Spring","Summer","Autumn","Winter"],
+ items:[["A frog",0,"Frogs sing in spring: Bashō’s old-pond haiku, with its jumping frog, is a spring poem."],
+  ["The moon",2,"Just “the moon”, with no season given, always means the bright, clear moon of autumn."],
+  ["The rainy season",1,"Tsuyu, the plum rains, falls in early summer, in June and July."],
+  ["Snow",3,"A winter word, of course."],
+  ["Cherry blossom",0,"Japan’s best-known spring word: people picnic under the blossom."],
+  ["Fireworks",1,"Japan’s big firework displays are held on summer nights."],
+  ["Red maple leaves",2,"Momiji: the maples turn red in autumn."]],
+ after:(r,N)=>"Poets keep almanacs (saijiki) with thousands of season words, so a single word sets the whole scene of a three-line poem."});
+
+/* ======================================================================== 5. Put the stories in order (literature, Now explore)
+   The tour's own dates: Gilgamesh poems from about 2100 BC, Homer perhaps around 700 BC, Imru' al-Qais in the 500s AD,
+   Genji around 1008, the Divine Comedy about 1308–1321, Don Quixote 1605, Crime and Punishment 1866, Things Fall Apart
+   1958. */
+const SORT_LIT=SORT({tours:["literature"],title:"Now explore",tip:"Put eight of the tour’s stories in the order they were written.",
+ first:"Oldest",last:"Newest",bars:false,
+ items:[["The Epic of Gilgamesh",-2100,"from about 2100 BC"],["Homer’s Odyssey",-700,"perhaps about 700 BC"],["Imru’ al-Qais’s ode",550,"500s AD"],
+  ["The Tale of Genji",1008,"about 1008"],["Dante’s Divine Comedy",1315,"about 1308–1321"],["Don Quixote",1605,"1605"],
+  ["Crime and Punishment",1866,"1866"],["Things Fall Apart",1958,"1958"]],
+ after:(r,N)=>"About 4,000 years from Gilgamesh’s clay tablets to Achebe’s novel, and all eight are still read today."});
+
+const DEFS=[BINS_INST,SORT_MUS,TURN_NOBEL,BINS_KIGO,SORT_LIT];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
