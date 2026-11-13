@@ -37,6 +37,8 @@ const MOVE=(S,re,ll)=>{const P=S.pins||[];if(!P.some(p=>Array.isArray(p)&&re.tes
 const AREA=(S,re)=>{const P=S.pins||[];if(!P.some(p=>Array.isArray(p)&&re.test(strip(p[1]))&&p[2]!=="area"))return;LOCK(S,"pins",P.map(p=>Array.isArray(p)&&re.test(strip(p[1]))&&p[2]!=="area"?[[p[0]],p[1],"area"]:p))};
 /* rename a photo pin's label (the short label under the photo square) */
 const PHLABEL=(S,re,txt)=>{const P=S.phPins||[];if(!P.some(p=>p&&re.test(strip(p.label))))return;LOCK(S,"phPins",P.map(p=>p&&re.test(strip(p.label))?Object.assign({},p,{label:txt}):p))};
+/* add an "area" label (left out of the stop's framing, shown whenever it is on the visible side of the globe) */
+const ADDAREA=(S,ll,txt)=>{const P=S.pins||[];if(P.some(p=>pinText(p)===txt))return;LOCK(S,"pins",P.concat([[[ll],txt,"area"]]))};
 /* a country named twice, by its flag tag and again by a plain label: the plain label goes (as geoflock-sweep-tours3.js
    does for its own tours) */
 const FLAGDUP=S=>{try{const F=S.flagTags;if(!Array.isArray(F)||!F.length)return;const N=new Set(F.map(f=>strip(f&&f.name).toLowerCase()));
@@ -70,6 +72,28 @@ const FIX={
   "Geometric boundaries":S=>VIEW(S,[28,28,2.6],"left"),
   /* the "Saudi Arabia" label lay under the map key */
   "A frontier, not a line":S=>VIEW(S,[47,21,3.2],"left")
+  },
+ hg4b:{
+  /* the seven photos span the world (Tokyo, Brussels, Edinburgh, Quebec, Hong Kong, Mostar, Mogadishu): the globe turned
+     to their middle, which was Antarctica. Each has its own stop later; the three European ones are framed */
+  "Forces that bind and divide":S=>{DROPPH(S,/^(Japan|Quebec|Hong Kong|Mogadishu)/);VIEW(S,[10,48,1.6],"left")},
+  /* a plain "Nigeria" label repeated the map's own and hung on a long leader across the country */
+  "From 3 regions to 36 states":S=>DROP(S,/^Nigeria$/),
+  /* Vladivostok, the ruler's far end, sat at the globe's edge */
+  "Size and distance from the capital":S=>VIEW(S,[96,50,1.05],"left"),
+  /* France, the United States and India are spread round the world: the globe turned to their middle, over the Arctic,
+     with the US label under the card. The stop opens on France; its game (part 2) turns the globe to each country */
+  "Unitary and federal states":S=>{AREA(S,/^(USA|India)/);VIEW(S,[4,46,1.5],"left")},
+  /* Greenland and Hong Kong are half a world apart: the Hong Kong photo hung from under the card and Greenland's label
+     sat on the toolbar. The stop opens on Greenland, with the drag-Denmark ghost; buttons (part 2) turn the globe to
+     Hong Kong, which gets a plain label in place of its photo. (Framed on Greenland itself, the card shift swung it up under the map key; aimed east of it, it lands
+     in the middle) */
+  "Autonomous regions":S=>{DROPPH(S,/^Hong Kong/);ADDAREA(S,[114.17,22.3],"Hong Kong");VIEW(S,[0,62,1.3],"left")},
+  /* Quebec and Spain, 75° of longitude apart, cannot both show beside the card: Quebec sat at the globe's edge. The
+     stop opens on Spain's two regions; buttons (part 2) turn the globe to Quebec */
+  "Separatism, by ballot or by bomb":S=>{AREA(S,/^Quebec/);VIEW(S,[-1,42,3.6],"left")},
+  /* Hargeisa's label lay under the map key */
+  "Failed states":S=>VIEW(S,[46,7,3.6],"left")
  }
 };
 const applied=new WeakSet();
@@ -106,7 +130,11 @@ every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="gl
    the tour ends. Next and Back are never blocked; every step is wrapped in try/catch. CSS classes start with "rvl-".
    - hg4a | "State, nation, nation-state": nation-state, multinational state, multistate nation or stateless nation?
    - hg4a | "Swapped by religion": six families in 1923: sent to Greece, sent to Turkey, or allowed to stay?
-   - hg4a | "The border that melted": name the type of eight real boundaries (some are two types at once). */
+   - hg4a | "The border that melted": name the type of eight real boundaries (some are two types at once).
+   - hg4b | "Unitary and federal states": unitary or federal? Each answer turns the globe to the country.
+   - hg4b | "Balkanisation": put Yugoslavia's seven successors in order of independence.
+   - hg4b | "Autonomous regions", "Separatism, by ballot or by bomb": buttons turn the globe between places half a world
+            apart (Greenland and Hong Kong; Spain and Quebec). */
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=n=>Math.round(n).toLocaleString("en-GB");
@@ -158,14 +186,15 @@ function SORT(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,tip:cfg.ti
 
 /* ---------------- a one-at-a-time sorting quiz: which kind is it? ----------------
    cfg: {tours, title, tip, kinds:[[key, button text, name in the answer]], items:[[text, key or [keys that count], why]],
-   ask (the question under each item), below (after the stop's text: a review), end(right, N) → closing text}. An item may fit more than one kind: any of them
+   turns (an item's 4th entry, [lon, lat, zoom], is where the globe turns once it is answered), ask (the
+   question under each item), below (after the stop's text: a review), end(right, N) → closing text}. An item may fit more than one kind: any of them
    counts, and all of them light up. */
 function CLASSIFY(cfg){const OK=it=>Array.isArray(it[1])?it[1]:[it[1]];const nm=k=>{const x=cfg.kinds.find(q=>q[0]===k);return x?(x[2]||x[1]):k};
- return{tours:cfg.tours,title:cfg.title,globe:false,below:!!cfg.below,tip:cfg.tip,
+ return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cfg.turns,below:!!cfg.below,tip:cfg.tip,
  card(L){return'<div class="rvl-q"><span class="rvl-n"></span><b class="rvl-item"></b></div><div class="rvl-bins">'+cfg.kinds.map(k=>'<button type="button" class="rvl-btn rvl-bin" data-k="'+k[0]+'">'+esc(k[1])+'</button>').join("")+'</div>'+
   '<div class="rvl-dots">'+cfg.items.map(()=>"<i></i>").join("")+'</div><div class="rvl-btns"><button type="button" class="rvl-btn rvl-next" hidden>Next ▶</button><button type="button" class="rvl-btn rvl-again" hidden>Play again</button></div>'},
  wire(L){const c=L.card;L.k=0;L.res=[];L.ans=null;const N=cfg.items.length;
-  c.querySelectorAll(".rvl-bin").forEach(b=>b.onclick=()=>{if(L.ans||L.k>=N)return;L.ans=b.dataset.k;L.res[L.k]=OK(cfg.items[L.k]).includes(L.ans);this.render(L)});
+  c.querySelectorAll(".rvl-bin").forEach(b=>b.onclick=()=>{if(L.ans||L.k>=N)return;L.ans=b.dataset.k;L.res[L.k]=OK(cfg.items[L.k]).includes(L.ans);const at=cfg.items[L.k][3];if(cfg.turns&&at)turnGlobe(at[0],at[1],at[2]);this.render(L)});
   c.querySelector(".rvl-next").onclick=()=>{L.k++;L.ans=null;this.render(L)};
   c.querySelector(".rvl-again").onclick=()=>{L.k=0;L.res=[];L.ans=null;this.render(L)};this.render(L)},
  render(L){const c=L.card;if(!c)return;const N=cfg.items.length,end=L.k>=N,it=cfg.items[Math.min(L.k,N-1)],ok=OK(it);
@@ -243,7 +272,44 @@ function TURNER(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:tr
  wire(L){const c=L.card;L.at=0;c.querySelectorAll(".rvl-turn button").forEach(b=>b.onclick=()=>{const f=cfg.places[+b.dataset.i];L.at=+b.dataset.i;turnGlobe(f[1],f[2],f[3]);this.render(L)});this.render(L)},
  render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvl-turn button").forEach(b=>{const k=+b.dataset.i;b.classList.toggle("rvl-cur",k===L.at);b.textContent=(k===L.at?"● ":"Turn to ")+cfg.places[k][0]});
   const f=cfg.places[L.at];say(L,f[0],f[4])}}}
-const DEFS=[NATIONS,SWAP,BTYPES];
+
+/* ======================================================================== 4. Unitary or federal? (hg4b)
+   The stop's own eight countries: unitary France, China and Japan; federal United States, Germany, India, Brazil and
+   Nigeria. Each answer turns the globe to the country, where the map (Federal or unitary) colours it. */
+const UNIFED=CLASSIFY({tours:["hg4b"],title:"Unitary and federal states",turns:true,below:true,
+ tip:"Unitary or federal? Each answer turns the globe to the country.",ask:"Is power held at the centre, or shared with states?",
+ kinds:[["u","Unitary","unitary"],["f","Federal","federal"]],
+ items:[["France","u","Paris runs the country; its regions and départements have only the powers the centre lends them.",[2.5,46.5,2]],
+  ["United States","f","The 50 states have their own constitutions, laws and courts.",[-98,39,1.6]],
+  ["China","u","Huge, but run from Beijing: its provinces answer to the centre.",[104,35,1.5]],
+  ["India","f","28 states with their own elected governments: a federation for a big, diverse country.",[79,22,1.8]],
+  ["Germany","f","16 Länder run schools, police and much more.",[10.4,51,2.6]],
+  ["Japan","u","Its 47 prefectures carry out what Tokyo decides.",[138,36.5,2]],
+  ["Brazil","f","26 states and a federal district, each with its own governor.",[-52,-10,1.5]],
+  ["Nigeria","f","36 states, carved out to keep any one region from breaking away (two stops on).",[8,9.5,2.2]]],
+ end:()=>"Big or very mixed countries tend to be federal; smaller, more uniform ones unitary. But China, huge and varied, is run from the centre."});
+
+/* ======================================================================== 5. Seven countries from one (hg4b)
+   Dates of independence (Wikipedia, "Breakup of Yugoslavia", and each country's article): Slovenia and Croatia
+   declared independence on 25 June 1991, (North) Macedonia on 8 September 1991 (its referendum, now Independence
+   Day), Bosnia and Herzegovina on 3 March 1992, Montenegro on 3 June 2006 and Serbia on 5 June 2006, after Montenegro
+   left their union, and Kosovo on 17 February 2008 (recognised by about half the UN's members). */
+const YUGO=SORT({tours:["hg4b"],title:"Balkanisation",
+ tip:"Yugoslavia became seven countries. Put them in order of independence, first to last.",first:"First to go",last:"Last",desc:false,bars:false,
+ items:[["Kosovo",2008.13,"17 Feb 2008"],["Slovenia",1991.48,"25 Jun 1991"],["Montenegro",2006.42,"3 Jun 2006"],["Bosnia and Herzegovina",1992.17,"3 Mar 1992"],["Serbia",2006.43,"5 Jun 2006"],["North Macedonia",1991.69,"8 Sep 1991"],["Croatia",1991.48,"25 Jun 1991"]],
+ after:(n,N)=>"Slovenia and Croatia left on the same day in 1991, and war followed in Croatia and then Bosnia. The last pieces split off peacefully: Montenegro by referendum in 2006, leaving Serbia on its own, and then Kosovo, whose independence Serbia still rejects."});
+
+/* ======================================================================== 6. Half a world apart (hg4b)
+   Greenland and Hong Kong, and Quebec and Spain, cannot share one view beside the card. The texts are the stops' own;
+   the Quebec margin is from the official 1995 result (Directeur général des élections du Québec: No 2,362,648,
+   Yes 2,308,360, a gap of 54,288 votes). */
+const TURN_AUTO=TURNER({tours:["hg4b"],title:"Autonomous regions",tip:"Two kinds of self-rule, half a world apart. Turn the globe from one to the other.",
+ places:[["Greenland",0,62,1.3,"Wide self-government within the Kingdom of Denmark. Drag the purple Denmark, at its true size, across it."],
+  ["Hong Kong",114.17,22.3,3,"Back in China since 1997 under “one country, two systems”; since the 2020 National Security Law its separate freedoms have been sharply narrowed."]]});
+const TURN_SEP=TURNER({tours:["hg4b"],title:"Separatism, by ballot or by bomb",tip:"Turn the globe between Spain’s two separatist regions and Quebec.",
+ places:[["Catalonia and the Basque Country",-1,42,3.6,"Catalonia’s 2017 vote was ruled illegal by Spain’s courts. In the Basque Country, ETA killed over 800 people before it dissolved in 2018."],
+  ["Quebec",-71.2,47,2.4,"In 1995 Quebec voted to stay in Canada by about 50.6% to 49.4%: a gap of only about 54,000 votes out of 4.7 million."]]});
+const DEFS=[NATIONS,SWAP,BTYPES,UNIFED,YUGO,TURN_AUTO,TURN_SEP];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
