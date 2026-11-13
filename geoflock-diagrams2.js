@@ -749,7 +749,7 @@ make("aquifer",{title:"Water underground",
  h:236,state:()=>({p:0,D:0,yr:0,t:0,rate:0,dry:0}),
  frame:()=>{let h='<defs><linearGradient id="dgAqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8ea"/><stop offset="1" stop-color="#f3ead6"/></linearGradient><pattern id="dgAqSand" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#e2c995"/><circle cx="1.5" cy="1.5" r=".7" fill="#c9a970"/><circle cx="4.5" cy="4.2" r=".7" fill="#c9a970"/></pattern><clipPath id="dgAqClip"><rect x="6" y="6" width="290" height="150" rx="8"/></clipPath></defs>';
   h+='<g clip-path="url(#dgAqClip)"><rect x="6" y="6" width="290" height="150" fill="url(#dgAqSky)"/><g class="aq-a"></g><g class="aq-fx"></g></g><g class="aq-b"></g>';
-  h+=para("aq-p",8,158,288,22,6.2)+slider("p",14,198,150,"Pumping");
+  h+=para("aq-p",8,157,288,28,6)+slider("p",14,198,150,"Pumping");
   h+=T(14,219,"Water in",'font-size="6" font-weight="800" fill="'+SUB+'"')+T(14,231,"Water out",'font-size="6" font-weight="800" fill="'+SUB+'"')+'<g class="aq-bud"></g>'+btn("reset",214,214,76,"Start again");
   h+='<g transform="translate(176,182)"><text class="aq-yr" x="0" y="8" font-size="7" font-weight="900" fill="'+INK+'"></text><text class="aq-st" x="0" y="19" font-size="6" font-weight="700" fill="'+SUB+'"></text><text class="aq-st2" x="0" y="28" font-size="6" font-weight="700" fill="'+SUB+'"></text></g>';return h},
  draw:(svg,s)=>{const D=s.D;let h="",b="";

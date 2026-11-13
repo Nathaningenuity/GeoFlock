@@ -92,4 +92,33 @@ DG.depth=Object.assign({},D0,{
  init:svg=>set(svg),_set:(svg,d)=>{S.d=clamp(d,0,room(S.x));set(svg)},
  drag:(svg,n,x,y)=>{const top=D0._top||14,k=(D0._H||156)/11e3;S.x=clamp(x,40,288);S.d=clamp((y-top)/k,0,room(S.x));set(svg)}});
 })()}catch(e){console.error(e)}
+/* ------------------------------------------------------------------ guess first, then see the chart
+   Four charts whose point is a surprise get a one-tap guess before they are shown. The answers are the charts' own
+   figures (sources on each chart). "Just show me" skips. */
+try{(function(){
+const Q={
+ deadly:["Which animal kills the most people each year?",["Sharks","Crocodiles","Snakes","Mosquitoes"],3,"Mosquitoes, by far: malaria alone killed about 597,000 people in 2023 (WHO). Sharks kill about 6."],
+ deserts:["Which is the biggest desert on Earth?",["Sahara","Gobi","Antarctica","Arabian"],2,"Antarctica: a desert is a place with very little rain or snow, not a hot place. It is about 14 million km², half as big again as the Sahara."],
+ cleopatra:["Did Cleopatra live closer in time to the building of the Great Pyramid, or to the Moon landing?",["The Great Pyramid","The Moon landing"],1,"The Moon landing: about 2,040 years after her birth. The Great Pyramid was already about 2,490 years old when she was born."],
+ amazon:["The Amazon pours the most water into the sea. How many times as much as the Congo, the next biggest?",["About twice","About 5 times","About 20 times"],1,"About 5 times: roughly 209,000 cubic metres a second against 41,000."]};
+const ACC="#e8701a",INK="#1d3047";
+Object.keys(Q).forEach(k=>{const D=DG[k];if(!D||D._gq)return;const [qq,opts,ans,why]=Q[k];const svg0=D.svg,act0=D.act;
+ const wrap=(t,w,max)=>{const out=[];let line="";t.split(" ").forEach(x=>{if((line+" "+x).trim().length>max){out.push(line);line=x}else line=(line+" "+x).trim()});if(line)out.push(line);return out};
+ D._gq=1;
+ D.svg=a=>{let s=svg0(a);const m=/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/.exec(s);if(!m)return s;const W=+m[1],H=+m[2];
+  let o='<g class="gq-ov"><rect x="0" y="0" width="'+W+'" height="'+H+'" rx="6" fill="#f3f6fa" opacity=".98"/>';
+  const L=wrap(qq,W,58),y0=Math.max(16,H/2-28-L.length*6);L.forEach((l,i)=>{o+=dgT(W/2,y0+i*12,esc(l),'text-anchor="middle" font-size="9.5" font-weight="800" fill="'+INK+'"')});
+  const bw=opts.length>3?66:opts.length>2?84:110,gap=6,tw=opts.length*bw+(opts.length-1)*gap,bx=(W-tw)/2,by=y0+L.length*12+6;
+  opts.forEach((t,i)=>{const x=bx+i*(bw+gap);o+='<g data-act="gq:'+i+'" class="gq-b gq-b'+i+'" style="cursor:pointer"><rect x="'+x+'" y="'+by+'" width="'+bw+'" height="18" rx="9" fill="#fff" stroke="'+ACC+'" stroke-width="1.4"/>'+dgT(x+bw/2,by+12.2,esc(t),'text-anchor="middle" font-size="7.6" font-weight="800" fill="'+INK+'"')+'</g>'});
+  o+='<g class="gq-why"></g><g data-act="gq:skip" style="cursor:pointer">'+dgT(W/2,by+34,"just show me the chart",'text-anchor="middle" font-size="6.8" font-weight="700" fill="#5b6b80" text-decoration="underline"')+'</g></g>';
+  return s.replace(/<\/svg>\s*$/,o+"</svg>")};
+ D.act=(svg,a)=>{if(!/^gq:/.test(a))return act0?act0.call(D,svg,a):false;const ov=svg.querySelector(".gq-ov");if(!ov||ov._done)return true;
+  const hide=()=>{ov._done=1;ov.style.transition="opacity .5s";ov.style.opacity="0";setTimeout(()=>{ov.style.display="none"},520)};
+  if(a==="gq:skip"){hide();return true}
+  const i=+a.slice(3),right=i===ans;ov.querySelectorAll(".gq-b").forEach((b,j)=>{const r=b.querySelector("rect"),t=b.querySelector("text");if(j===ans){r.style.fill="#2f9a5a";r.style.stroke="#2f9a5a";t.style.fill="#fff"}else if(j===i){r.style.fill="#c94b2c";r.style.stroke="#c94b2c";t.style.fill="#fff"}});
+  const W=+(svg.getAttribute("viewBox")||"0 0 300").split(" ")[2]||300,b0=ov.querySelector(".gq-b rect"),by=b0?+b0.getAttribute("y")+30:100;
+  const L=wrap((right?"Right! ":"Not quite. ")+why,W,70);let h="";L.forEach((l,j)=>{h+=dgT(W/2,by+j*10,esc(l),'text-anchor="middle" font-size="7.4" font-weight="'+(j?600:800)+'" fill="'+(right?"#2f7a3a":"#b23c0a")+'"')});
+  const wy=ov.querySelector(".gq-why");if(wy)wy.innerHTML=h;const sk=ov.querySelector('[data-act="gq:skip"]');if(sk)sk.style.display="none";
+  ov._done=1;setTimeout(()=>{ov._done=0;hide()},2600+L.length*700);return true}});
+})()}catch(e){console.error(e)}
 })();
