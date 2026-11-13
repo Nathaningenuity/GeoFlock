@@ -45,7 +45,7 @@ const FIX={
  "europe|Where Europe ends":{globe:[46,52,1.3],card:"left"},          /* the map key covered the Bosphorus and Black Sea tags */
  "europe|The biggest countries":{globe:[24,50,1.6],card:"left"},      /* the "Texas · drag me" tag was under the card */
  "europe|Europe’s highest mountain":{globe:[33,46,1.7]},             /* Elbrus, the point of the stop, was off the edge */
- "europe|Europe’s great rivers":{globe:[34,53,1.45]},                /* the Volga's mouth was under the map key */
+ "europe|Europe’s great rivers":{globe:[18,50,1.35]},                /* the Volga's mouth was under the map key, the Rhine under the card */
  "europe|Choirs and good government":{globe:[24,41,3.6]},            /* Calabria was under the map key */
  "europe|Cyprus is in Asia":{globe:[27,38,2.4]},                     /* Cyprus itself was under the map key */
  "europe|Greenland icy, Iceland green":{globe:[-28,67,2.2],card:"left"}, /* Erik the Red's farm was under the map key */
@@ -207,7 +207,7 @@ const JAVA={tour:"islands",title:"Why Java, not Borneo",
 /* ============================================================ D. The olive line
    Which side of the stop's own line (its rough northern limit of olive growing) each city lies on; all eight are far
    from the line, so the answer does not depend on how roughly it is drawn. */
-const OCITY=[{n:"Paris",ll:[2.35,48.86],s:"n"},{n:"Rome",ll:[12.5,41.9],s:"s"},{n:"Madrid",ll:[-3.7,40.42],s:"s"},{n:"Munich",ll:[11.58,48.14],s:"n"},
+const OCITY=[{n:"Amsterdam",ll:[4.9,52.37],s:"n"},{n:"Rome",ll:[12.5,41.9],s:"s"},{n:"Madrid",ll:[-3.7,40.42],s:"s"},{n:"Berlin",ll:[13.4,52.52],s:"n"},
  {n:"Athens",ll:[23.73,37.98],s:"s"},{n:"London",ll:[-.13,51.51],s:"n"},{n:"Marseille",ll:[5.37,43.3],s:"s"},{n:"Vienna",ll:[16.37,48.21],s:"n"}];
 const OLIVE={tour:"europe",title:"The olive line",
  tip:"A city glows. Olive-oil country or butter country? Tap your answer.",
