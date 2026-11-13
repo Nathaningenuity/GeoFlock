@@ -67,8 +67,9 @@ const FIX={
      card, Yunnan's on the zoom buttons and Sri Lanka's under the map key. The opening card covers the left of the globe
      and index.html sets each photo square out from its place, away from the globe's middle, so only photos near the
      middle stay clear of the card, the zoom buttons and the key: Naples and Ethiopia are framed there. The other five
-     each have their own stop later */
-  "Food of the world":S=>{DROPPH(S,/^(Andes|Banda|Yunnan|Sri Lanka|Côte)/);VIEW(S,[58,24,1])},
+     each have their own stop later. (The frame suits the globe turned out from under the card or not: on a
+     tour's very first launch the opening is sometimes not turned) */
+  "Food of the world":S=>{DROPPH(S,/^(Andes|Banda|Yunnan|Sri Lanka|Côte)/);VIEW(S,[28,24,1])},
   /* the three hearths are 140° and more apart: maize's was round the back and rice's label on the zoom buttons. The
      stop opens on the Fertile Crescent; buttons (part 2) turn the globe to each hearth and name it, so the rice and maize
      pins (and a second "Yangtze: rice" pin that repeated the first) go */
@@ -107,8 +108,9 @@ const FIX={
   /* Sicily's photo was under the card, 75° west of China (its story is in the stop's text) */
   "The first noodles":S=>{DROPPH(S,/^Sicily/)},
   /* the card was on the right, over Naples, and California at the globe's edge behind the map key; it is 140° from
-     Naples, so it keeps only its label (shown whenever it is in sight), and its bowl icon goes */
-  "Dishes that travelled":S=>{AREA(S,/^California/);DROPICON2(S,[-122.4,37.8]);VIEW(S,[-20,46,1.1])},
+     Naples, so it keeps only its label (shown whenever it is in sight), and its bowl icon goes(The frame's middle is well east of
+     Glasgow and Naples: at this latitude the card's turn-out shifts the globe about 40° west) */
+  "Dishes that travelled":S=>{AREA(S,/^California/);DROPICON2(S,[-122.4,37.8]);VIEW(S,[30,46,1.1])},
   /* six foods from Iceland to Japan, 160° apart: Korea and Japan were under the card (on the right) and the labels of
      Sweden and Germany on top of each other. The stop opens on kimchi's Korea; a game (part 2) turns the globe to each
      of the others */
