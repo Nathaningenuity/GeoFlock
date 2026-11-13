@@ -123,6 +123,29 @@ FIX.hempires={
   "Africa’s wave of independence":S=>VIEW(S,[15,5,1.04],"left"),
   "The last colonies":S=>VIEW(S,[113.8,22.3,5.04],"left")
 };
+FIX.hmedieval={
+  /* the Vinland photo was under the card, Angkor round the back of the globe and Great Zimbabwe on the globe's bottom
+     edge: all three have their own stops (or tours); the Mongolia photo sat on the search box */
+  "Medieval empires":S=>DROPPH(S,/^(Vinland|Angkor|Great Zimbabwe|Mongolia)/),
+  /* the Hagia Sophia photo and Justinian's portrait hung over the zoom buttons */
+  "Justinian’s Byzantium":S=>VIEW(S,[18,39,2],"left"),
+  /* the Baghdad photo sat on the zoom buttons */
+  "The Arab conquests and Baghdad":S=>VIEW(S,[31,32,1],"left"),
+  /* the card went to the right, with the map key over its close button */
+  /* (and Nara, at the far end of the stop, was off the globe's edge; the Kyoto photo then hung over the zoom buttons:
+     Nara keeps its label) */
+  "Tang China":S=>{DROPPH(S,/^Kyoto/);VIEW(S,[104,36,1.25],"left")},
+  "Charlemagne":S=>VIEW(S,[8,47,2.5],"left"),
+  "The Crusades":S=>VIEW(S,[24,40,1.45],"left"),
+  /* the Lalibela photo hung off the globe's bottom edge */
+  "Churches carved down into rock":S=>VIEW(S,[38,18,2.4],"left"),
+  /* Mecca, the end of Mansa Musa's pilgrimage, was off the globe's edge */
+  "Mansa Musa’s Mali":S=>VIEW(S,[18,21,1.35],"left"),
+  /* the Tian Shan, where the plague began, was at the globe's edge */
+  /* the plague slider in part 2 labels each place as the plague reaches it, so the three dated labels go */
+  "The Black Death":S=>{DROP(S,/^(Messina|Cairo|Bergen)/);VIEW(S,[40,45,1.3],"left")},
+  "The fall of Constantinople":S=>VIEW(S,[29,41,4.6],"left")
+};
 const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvm fix",tour,S.title,e)}})}
@@ -222,7 +245,10 @@ function TURNER(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:tr
                 the globe to each.
    - hempires | "Spain and Portugal": from the line of 1494 to Potosí, Acapulco and Manila; buttons turn the globe.
    - hempires | "An empire by land": from Moscow across Siberia to Okhotsk, Alaska and Fort Ross; buttons turn the globe.
-   - hempires | "Africa’s wave of independence": put eight countries in the order they won independence. */
+   - hempires | "Africa’s wave of independence": put eight countries in the order they won independence.
+   - hmedieval | "The Black Death": a year slider (or Play) from 1346 to 1350; each place lights up the year the
+                 plague reached it.
+   - hmedieval | "Now explore": put eight moments from the tour in order. */
 
 /* ======================================================================== 1. Alexander's march (hancient)
    Places and dates: Encyclopaedia Britannica, "Alexander the Great" (Granicus May 334 BC, Issus November 333, the
@@ -320,8 +346,51 @@ const SORT_AFR=SORT({tours:["hempires"],title:"Africa’s wave of independence",
   ["Zimbabwe",1980.3,"1980 · Britain"],["Namibia",1990.22,"1990 · South Africa"]],
  after:(r,N)=>"Libya was first, in 1951: it came out of Italian rule after World War II through the UN. Algeria won its freedom from France only after an eight-year war. Portugal held on longest, until 1975, and the last were ruled by white minorities: Zimbabwe until 1980 and Namibia, run by South Africa, until 1990."});
 
+/* ======================================================================== 7. The plague's march (hmedieval)
+   Arrival dates: O. J. Benedictow, "The Black Death 1346-1353: the complete history" (2004), and Encyclopaedia
+   Britannica, "Black Death": Kaffa 1346, Constantinople 1347, Messina October 1347, Marseille November 1347, Florence
+   spring 1348, Paris 1348, London autumn 1348, Bergen 1349; Cairo 1348 is the stop's own. Only the years are shown; the
+   months only order the dots. */
+const BD_P=[["Kaffa",1346.7,35.38,45.03,"1346","The plague reaches the Black Sea port of Kaffa, from the Mongol lands to the east."],
+ ["Constantinople",1347.5,28.98,41.01,"1347","It travels on by ship to the Byzantine capital."],
+ ["Messina",1347.8,15.55,38.19,"1347","Genoese ships bring it to Sicily."],
+ ["Marseille",1347.9,5.37,43.3,"1347","And to the south of France."],
+ ["Florence",1348.25,11.25,43.77,"1348","Boccaccio set his Decameron among Florentines fleeing this plague."],
+ ["Cairo",1348.3,31.24,30.04,"1348","The biggest city of the Islamic world is struck too."],
+ ["Paris",1348.5,2.35,48.86,"1348","Overland, it moves along the roads and rivers."],
+ ["London",1348.85,-0.12,51.5,"1348","By ship across the Channel."],
+ ["Bergen",1349.6,5.32,60.39,"1349","A ship from England carries it to Norway."]];
+const BD={tours:["hmedieval"],title:"The Black Death",globe:true,
+ tip:"Follow the plague: drag the slider, or press Play.",
+ card(L){return'<div class="rvm-row"><button type="button" class="rvm-btn rvm-play" style="flex:0 0 auto">▶ Play</button><input type="range" class="rvm-rng" min="13460" max="13500" value="13460" aria-label="Year"></div>'},
+ init(L){L.t=1346;L.playing=0},
+ wire(L){const c=L.card,r=c.querySelector(".rvm-rng"),pb=c.querySelector(".rvm-play");
+  r.oninput=()=>{L.playing=0;L.t=+r.value/10;this.render(L)};
+  pb.onclick=()=>{if(L.playing){L.playing=0;this.render(L);return}if(L.t>=1349.99)L.t=1346;L.playing=1;L.last=performance.now();L.anim=1;this.render(L)};
+  this.render(L)},
+ off(L){L.playing=0},
+ render(L){const c=L.card;if(!c)return;const r=c.querySelector(".rvm-rng");if(document.activeElement!==r)r.value=Math.round(L.t*10);
+  c.querySelector(".rvm-play").textContent=L.playing?"❚❚ Pause":(L.t>=1349.99?"↻ Again":"▶ Play");
+  const hit=BD_P.filter(p=>p[1]<=L.t),last=hit[hit.length-1];
+  if(!last)say(L,Math.floor(L.t)+"","The plague is still in Central Asia.");
+  else say(L,esc(last[0])+", "+last[4]+' <span class="rvm-km">'+hit.length+" of "+BD_P.length+" places</span>",esc(last[5])+(hit.length===BD_P.length?" Within four years it had swept across Europe, North Africa and the Middle East, killing perhaps a third to half of Europe’s people.":""));L.dirty=1},
+ draw(L){if(L.playing){const now=performance.now(),dt=Math.min(.1,(now-L.last)/1000);L.last=now;L.t=Math.min(1350,L.t+dt*.5);if(L.t>=1350)L.playing=0;this.render(L)}
+  L.anim=L.playing?1:0;L.svg.innerHTML="";if(!L.tags)L.tags=BD_P.map(()=>tag(L,"rvm-ctag rvm-small"));
+  BD_P.forEach((p,i)=>{const q=proj(L,[p[2],p[3]]);const on=p[1]<=L.t;if(q&&on){const age=Math.min(1,(L.t-p[1])*2);svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:(6+18*(1-age)).toFixed(1),class:"rvm-bdr",opacity:(1-age).toFixed(2)});svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:6,class:"rvm-bd"})}
+   putTag(L,L.tags[i],on?q:null,esc(p[0]),9)})}};
+
+/* ======================================================================== 8. Put the Middle Ages in order (hmedieval)
+   The years are the tour's own stops: Hagia Sophia finished in 537, Baghdad founded in 762, Charlemagne crowned in 800,
+   the Althing in 930, Jerusalem taken in 1099, Baghdad sacked in 1258, Mansa Musa in Cairo in 1324, Constantinople
+   taken in 1453. */
+const SORT_MED=SORT({tours:["hmedieval"],title:"Now explore",
+ tip:"Before you go: put these eight moments from the tour in order, earliest first.",first:"Earliest",last:"Latest",desc:false,bars:false,
+ items:[["Mongols sack Baghdad",1258,"1258"],["Hagia Sophia finished",537,"537"],["Constantinople falls",1453,"1453"],["Charlemagne crowned",800,"800"],
+  ["Mansa Musa in Cairo",1324,"1324"],["Baghdad founded",762,"762"],["Crusaders take Jerusalem",1099,"1099"],["Iceland’s Althing first meets",930,"930"]],
+ after:(r,N)=>"Baghdad was founded in 762 and sacked by the Mongols almost 500 years later, in 1258. Drag the timeline to watch it happen."});
+
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[MARCH,TURN_SILK,TURN_SAIL,TURN_SUN,TURN_RUS,SORT_AFR];
+const DEFS=[MARCH,TURN_SILK,TURN_SAIL,TURN_SUN,TURN_RUS,SORT_AFR,BD,SORT_MED];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -407,6 +476,8 @@ every(()=>{try{const on=typeof ps!=="undefined"&&ps&&MYT.has(ps.tour);const b=do
 .rvm-mpast{fill:none;stroke:#c2364f;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .rvm-mdot{fill:#fff;stroke:#c2364f;stroke-width:2}.rvm-mme{fill:#d9682b;stroke:#fff;stroke-width:3}
 .rvm-ep b .rvm-km{display:inline;font-size:12.5px;font-weight:800;color:#9a4a16;margin-left:6px;white-space:nowrap}:is(body.dark-theme,body.sky-night) .rvm-ep b .rvm-km{color:#ffb27a}
+.rvm-bd{fill:#2a2f3a;stroke:#fff;stroke-width:2}.rvm-bdr{fill:none;stroke:#c2364f;stroke-width:3}
+.rvm-small{font-size:11.5px!important;padding:2px 7px!important}
 `;document.head.appendChild(s)}
 
 window.gfPolishRvm={v:1,FIX,XFS,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
