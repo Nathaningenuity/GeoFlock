@@ -62,6 +62,24 @@ const FIX={
   "World-systems theory":S=>{DROP(S,/^Core: USA/);VIEW(S,[-8,8,1])},
   /* Zambia's copper label sat low, by the globe's edge */
   "Dependency and commodity dependence":S=>VIEW(S,[16,-4,1.6])
+ },
+ hg7b:{
+  /* Detroit's photo sat under the card's edge, Silicon Valley's round the back of the globe and Bengaluru's under the
+     map key; all three have their own stops (Deindustrialisation, Agglomeration, The knowledge economy), so their
+     photos go */
+  "Industry and the global economy":S=>{DROPPH(S,/^(Detroit|Silicon Valley|Bengaluru)/);VIEW(S,[40,35,1])},
+  /* index.html turned the globe to the middle of Liège, Pittsburgh and Yawata, so Liège and the Ruhr were under the
+     card, Pittsburgh behind it and Yawata on the far edge. Pittsburgh and Yawata become area labels; the stop opens
+     on Europe and buttons (part 3) turn the globe to each step of the spread */
+  "Industry spreads":S=>{AREA(S,/^(Pittsburgh|Yawata)/);VIEW(S,[30,50,1.5])},
+  /* the Reyðarfjörður smelter's label ran under the map key */
+  "Ore from the other side of the world":S=>VIEW(S,[-11,64.9,4.5]),
+  /* Youngstown had 170,002 people in 1930, 115,427 in 1980 and 60,068 in 2020 (US Census Bureau, decennial censuses,
+     in Wikipedia, "Youngstown, Ohio"): about half lost since 1977, not two-thirds; two-thirds is since 1930 */
+  "Deindustrialisation":S=>RE(S,"body","the city has since lost about two-thirds of its people.","the city has lost about half its people since then, and almost two-thirds since 1930."),
+  /* Highland Park's label lay over the map toggles and Toyota City on the globe's far edge. The stop opens on Ford's
+     Detroit; Toyota City becomes an area label and the sorting game (part 3) turns the globe between the two */
+  "From Fordism to post-Fordism":S=>{AREA(S,/^Toyota City/);VIEW(S,[-83.1,42.4,2.6])}
  }
 };
 /* stops that keep the card where their own script put it */
@@ -91,7 +109,7 @@ every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="gl
  const S=psSteps()[ps.i];if(S&&S.gfSun)return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=performance.now();refl=0;touched=0}ps._gfAimed=S;
  if(document.querySelector(".rvp-ctl[data-turned]"))return;
- const t=performance.now()-goAt;if(touched||refl>=2||t<900||t>4500||ps.g._flying)return;
+ const t=performance.now()-goAt;if(touched||refl>=2||t<900||t>6500||ps.g._flying)return;
  const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||Math.abs(ps.g.zoom-T[2])>.15){refl++;psFlyGlobe()}}catch(e){}},250);
 
 /* ======================================================================== part 2: guess first
@@ -101,7 +119,9 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
  const GS={
   /* India's GDP per person in 2024: $2,592 at market exchange rates, $10,719 at PPP (World Bank, World Development
      Indicators) */
-  "hg7a|Per person and PPP":G("India’s income per person in 2024 was about $2,600 at market exchange rates. How much is it at purchasing power parity?",1000,25000,10700,"dollars",{step:100,show:"about $10,700, roughly four times as much"})
+  "hg7a|Per person and PPP":G("India’s income per person in 2024 was about $2,600 at market exchange rates. How much is it at purchasing power parity?",1000,25000,10700,"dollars",{step:100,show:"about $10,700, roughly four times as much"}),
+  /* Youngstown: 170,002 people in 1930, 60,068 in 2020 (US Census Bureau, in Wikipedia, "Youngstown, Ohio") */
+  "hg7b|Deindustrialisation":G("Steel made Youngstown, Ohio, a city of 170,000 people in 1930. How many lived there in 2020?",0,200000,60068,"people",{step:1000,show:"60,068: little more than a third"})
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
@@ -112,7 +132,9 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    clipped to the globe's visible disc), and removes everything as soon as the stop changes or the tour ends.
    - hg7a | "Sectors of the economy": primary, secondary or tertiary? Sort eight jobs.
    - hg7a | "The Human Development Index": put six countries in HDI order, from Norway to South Sudan.
-   - hg7a | "World-systems theory": core, semi-periphery or periphery? Sort nine countries; the globe turns to each. */
+   - hg7a | "World-systems theory": core, semi-periphery or periphery? Sort nine countries; the globe turns to each.
+   - hg7b | "Industry spreads": Manchester, Seraing, the Ruhr, Pittsburgh, Yawata; buttons turn the globe to each.
+   - hg7b | "From Fordism to post-Fordism": Ford's way or Toyota's? Sort eight features; the globe turns to each factory. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -226,9 +248,36 @@ const WORLDSYS=binDef("hg7a","World-systems theory",{tip:"Core, semi-periphery o
   ["Central African Republic: diamonds, timber and gold","p","Periphery: one of the least developed countries on Earth.",[20.9,6.6,2.6,"Central African Republic"]],
   ["China: the world’s factory, now building its own tech giants","s","Semi-periphery, and climbing: Wallerstein said countries can move between the zones.",[104,35,1.8,"China"]]],
  done:"Wallerstein’s point: these zones are linked. The core gains most from trade with the periphery. Countries can move between zones: South Korea, poor in the 1950s, now makes the core’s high-tech goods."});
+/* ======================================================================== hg7b: Industry and the global economy */
+/* How industry spread, as the stop tells it, with each place's first big works: John Cockerill's ironworks at
+   Seraing, beside Liège, 1817 (Wikipedia, "John Cockerill (company)"); the Edgar Thomson Steel Works at Braddock,
+   Carnegie's mill, opened 1875, "the plant that made Pittsburgh the Steel City" (Wikipedia, "Edgar Thomson Steel
+   Works", citing the Pittsburgh Post-Gazette, 2000); Yawata's first blast furnace, 5 February 1901, and 80% of Japan's
+   pig iron by 1912 (Wikipedia, "Yahata Steel Works"). */
+const SPREAD=turnDef("hg7b","Industry spreads",{tip:"Follow industry from Britain round the world. Visit each place in turn.",
+ intro:"Tap a place to turn the globe to it.",
+ places:[["1. Manchester, from the 1760s",-2.24,53.48,3.2,"Coal, iron, steam and cotton mills: the world’s first industrial region, where the tour began."],
+  ["2. Seraing, Belgium, 1817",5.5,50.6,3.6,"John Cockerill, son of an English textile-machine maker, opened an ironworks at Seraing, on the Meuse beside Liège."],
+  ["3. The Ruhr, Germany",7.0,51.45,3.6,"Coal mines and steelworks spread along the Ruhr valley in the 1800s, making it Germany’s heavy-industry heartland."],
+  ["4. Pittsburgh, 1875",-79.86,40.39,3,"Carnegie’s Edgar Thomson Steel Works opened beside the Monongahela River and made Pittsburgh the “Steel City”."],
+  ["5. Yawata, Japan, 1901",130.8,33.88,3,"Meiji Japan’s state steelworks, in Kyushu, lit its first blast furnace in 1901, built by German engineers. By 1912 it made 80% of Japan’s pig iron."]]});
+/* Fordism or post-Fordism, as the stop defines them: Ford's moving assembly line at Highland Park, the first in the
+   world, 7 October 1913 (Wikipedia, "Highland Park Ford Plant", which also lists the blast furnaces, sawmills, railway and glass plant Ford
+   built or bought after 1913), and Toyota's just-in-time system. */
+const FORD=binDef("hg7b","From Fordism to post-Fordism",{tip:"Ford’s way or Toyota’s? Sort eight features; the globe turns to each factory.",
+ keys:[["f","🚗 Fordism"],["p","🔄 Post-Fordism"]],ask:"Is this mass production, or the flexible kind that followed it?",
+ items:[["One model, every car the same, made in huge numbers","f","Fordism: Highland Park turned out the Model T, the same car over and over, in huge numbers.",[-83.1,42.41,3,"Highland Park"]],
+  ["Parts arrive just in time, a few hours before they are needed","p","Post-Fordism: Toyota’s just-in-time system cuts stock and waste.",[137.15,35.08,3,"Toyota City"]],
+  ["Warehouses full of parts, kept just in case","f","Fordism: huge stockpiles kept the line moving, but tied up money.",[-83.1,42.41,3,"Highland Park"]],
+  ["Each worker repeats one simple task as the line moves past","f","Fordism: the moving assembly line, first used at Highland Park in 1913.",[-83.1,42.41,3,"Highland Park"]],
+  ["Many models and colours, made in small batches to order","p","Post-Fordism: flexible machines switch quickly from one product to another.",[137.15,35.08,3,"Toyota City"]],
+  ["Teams of workers who can do many jobs, and can stop the line to fix a fault","p","Post-Fordism: Toyota trusted workers to spot and fix problems.",[137.15,35.08,3,"Toyota City"]],
+  ["Parts made by suppliers in many different countries","p","Post-Fordism: production is spread across a global network of firms.",[137.15,35.08,3,"Toyota City"]],
+  ["One giant company owns almost everything, from blast furnaces to sawmills","f","Fordism: after 1913 Ford bought or built blast furnaces, sawmills, a railway and even a glass plant to control every step.",[-83.1,42.41,3,"Highland Park"]]],
+ done:"Fordism made cars cheap enough for workers to buy; post-Fordism made production flexible and global. Most factories today mix the two."});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[SECTORS,HDIRANK,WORLDSYS];
+const DEFS=[SECTORS,HDIRANK,WORLDSYS,SPREAD,FORD];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
