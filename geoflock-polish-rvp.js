@@ -41,6 +41,8 @@ const VIEW=(S,gl)=>LOCK(S,"globe",gl);
 
 const FIX={
  hg7a:{
+  /* Ireland was labelled twice, by the map and by a pin with its plain name */
+  "GDP, GNI and per person":S=>DROP(S,/^Ireland$/),
   /* the photos of Lagos, the Niger Delta's gas flare and Niger lay on top of each other, Lagos's point under the card's
      edge, and Dhaka's garment factory hung over the zoom buttons. The Niger Delta's oil and Dhaka's garment workers
      have their own stops (Dependency, Women at work); their photos go, and the globe turns so Lagos clears the card */
@@ -105,6 +107,22 @@ const FIX={
   /* the card stood on the right over Monrovia, and the Marshall Islands were round the back of the globe (an area
      label now, so the globe is not turned to the middle of them) */
   "The world’s biggest fleet sails under Liberia":S=>{AREA(S,/^Marshall Islands/);VIEW(S,[-36,16,1])}
+ },
+ hg7d:{
+  /* the photos of California and the Galápagos were round the back of the globe, St John's under the card, Dhaka's
+     by the zoom buttons and Kolwezi's below the graphics notice; each has its own stop later in the tour. The opening
+     keeps Africa's two, the cobalt mines and the gorillas, beside the card */
+  "Sustainable development":S=>{DROPPH(S,/^(California|Galápagos|St John|Dhaka)/);VIEW(S,[54,1,1])},
+  /* Country Overshoot Days 2026 (Global Footprint Network, overshootday.org, "Country Overshoot Days 2026"): Qatar's is
+     4 February; Earth Overshoot Day 2026 is 30 July (Wikipedia, "Earth Overshoot Day"). The stop gave 2025's dates */
+  "The ecological footprint":S=>{RE(S,"body","put its 2025 “overshoot day” on 6 February.","put its 2026 “overshoot day” on 4 February.");
+   RE(S,"more","For the world as a whole, overshoot day fell in late July:","For the world as a whole, overshoot day fell on 30 July in 2026:")},
+  /* the UN headquarters photo was round the back of the globe, and China's label by the zoom buttons */
+  "From 8 goals to 17":S=>{DROPPH(S,/^UN headquarters/);VIEW(S,[98,24,1.5])},
+  /* the highlighted country was labelled twice, by the map and by a pin with its plain name */
+  "Minerals for a green future":S=>DROP(S,/^DR Congo$/),
+  "Rich in oil, poor in people":S=>DROP(S,/^Equatorial Guinea$/),
+  "$1,500 to see a gorilla":S=>DROP(S,/^Rwanda$/)
  }
 };
 /* stops that keep the card where their own script put it */
@@ -146,7 +164,10 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
      Indicators) */
   "hg7a|Per person and PPP":G("India’s income per person in 2024 was about $2,600 at market exchange rates. How much is it at purchasing power parity?",1000,25000,10700,"dollars",{step:100,show:"about $10,700, roughly four times as much"}),
   /* Youngstown: 170,002 people in 1930, 60,068 in 2020 (US Census Bureau, in Wikipedia, "Youngstown, Ohio") */
-  "hg7b|Deindustrialisation":G("Steel made Youngstown, Ohio, a city of 170,000 people in 1930. How many lived there in 2020?",0,200000,60068,"people",{step:1000,show:"60,068: little more than a third"})
+  "hg7b|Deindustrialisation":G("Steel made Youngstown, Ohio, a city of 170,000 people in 1930. How many lived there in 2020?",0,200000,60068,"people",{step:1000,show:"60,068: little more than a third"}),
+  /* "in 1980 there were just 250 mountain gorillas, as of 2025, there are 1,063" (UNESCO, quoted in Wikipedia,
+     "Mountain gorilla"; the 1,063 is the 2018 census total, announced in 2019) */
+  "hg7d|$1,500 to see a gorilla":G("In 1980 only about 250 mountain gorillas were left. How many are there now?",0,3000,1063,"gorillas",{step:10,show:"1,063, more than four times as many"})
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
@@ -163,7 +184,10 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg7c | "Comparative advantage": Ricardo's England and Portugal; move workers between cloth and wine and beat what
             the two make without trade.
    - hg7c | "Neoliberal policies": buttons turn the globe between Washington and Ghana.
-   - hg7c | "OPEC and oil": in OPEC today, or not? Sort eight oil countries; the globe turns to each. */
+   - hg7c | "OPEC and oil": in OPEC today, or not? Sort eight oil countries; the globe turns to each.
+   - hg7d | "The ecological footprint": if everyone lived like each country, when would a year's nature run out? Put
+            seven countries' overshoot days in order.
+   - hg7d | "A town that trades its waste": where does each of Kalundborg's wastes go? Sort seven by-products. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -352,9 +376,33 @@ const OPEC=binDef("hg7c","OPEC and oil",{tip:"In OPEC today, or not? Sort eight 
   ["Gabon, on Africa’s Atlantic coast","y","A member: it left in 1994 but rejoined in 2016.",[11.6,-0.8,3,"Gabon"]],
   ["The United Arab Emirates","n","Not any more: the UAE left OPEC and OPEC+ in May 2026, after 59 years.",[54,24,3,"UAE"]]],
  done:"OPEC has 11 members today. Big producers such as the United States, Russia, Canada and Norway are outside it, which limits how far it can steer the price."});
+/* ======================================================================== hg7d: Sustainable development */
+/* Country Overshoot Days 2026, Global Footprint Network (overshootday.org, table 1): Qatar 4 February, United States
+   14 March, United Kingdom 22 May, China 27 May, Brazil 14 August, Indonesia 18 October. India is in table 2,
+   countries that do not overshoot: if everyone lived like India, humanity would use 75% of what Earth regrows. */
+const OVERSHOOT=rankDef("hg7d","The ecological footprint",{seed:3,first:"earliest",head:"Guess the order",
+ tip:"If everyone lived like the people of each country, when would a year’s nature run out? Tap from earliest to latest.",
+ items:[["Qatar","4 February"],["United States","14 March"],["United Kingdom","22 May"],["China","27 May"],["Brazil","14 August"],["Indonesia","18 October"],["India","never: 3/4 of an Earth"]],
+ intro:"Each date is when humanity would use up all the nature Earth regrows in a year, if everyone lived like that country’s people.",
+ after:"The richer and more energy-hungry the country, the earlier its date. Living like Americans, humanity would need about five Earths; living like Indians, three-quarters of one."});
+/* Kalundborg's exchanges (Wikipedia, "Kalundborg Eco-industrial Park", timeline): Novo Nordisk's biological sludge to
+   farms (1976); the power station's fly ash to cement makers (1979); its waste heat to the town's district heating
+   (1981); its steam to Novo Nordisk and the refinery (1982); warm cooling water to a trout and turbot farm (1989);
+   sulphur recovered at the refinery sold to a sulphuric acid maker (1990); gypsum from cleaning its smoke to Gyproc's
+   plasterboard plant (1993). */
+const KALUND=binDef("hg7d","A town that trades its waste",{tip:"One firm’s waste is another’s raw material. Where does each one go?",
+ keys:[["f","🏭 Another factory"],["h","🏠 Homes"],["a","🐟 Farms"]],ask:"Who in Kalundborg uses this waste?",
+ items:[["Steam from the power station","f","A factory: the insulin and enzyme maker Novo Nordisk and the oil refinery bought it from 1982 and shut their own boilers.",],
+  ["Waste heat from the power station","h","Homes: since 1981 it has warmed the town through district-heating pipes.",],
+  ["Sludge left over from making insulin and enzymes","a","Farms: since 1976 it has gone onto nearby fields as fertiliser.",],
+  ["Gypsum from cleaning the power station’s smoke","f","A factory: Gyproc makes plasterboard from it instead of importing natural gypsum.",],
+  ["Warm, salty cooling water","a","A fish farm: since 1989 it has raised trout and turbot.",],
+  ["Fly ash from burning coal","f","A factory: cement makers have used it since 1979.",],
+  ["Sulphur taken out of the refinery’s gas","f","A factory: it is sold to a sulphuric acid maker in Fredericia.",]],
+ done:"Over thirty exchanges like these grew up deal by deal, each because it saved someone money: a working circular economy."});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[SECTORS,HDIRANK,WORLDSYS,SPREAD,FORD,RICARDO,LENDERS,OPEC];
+const DEFS=[SECTORS,HDIRANK,WORLDSYS,SPREAD,FORD,RICARDO,LENDERS,OPEC,OVERSHOOT,KALUND];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
