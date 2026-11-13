@@ -94,6 +94,35 @@ const FIX={
   "Sailors of two oceans":S=>{DROPPH(S,/^(Madagascar|Easter Island)/);DROP(S,/^(Madagascar|Hawaii)/);DROPPH(S,/^New Zealand/);ADDPIN(S,[[[174.8,-41]],"New Zealand","area"]);AREA(S,/^(Easter Island|New Zealand)/);ADDPIN(S,[[[-109.35,-27.12]],"Easter Island","area"]);DROPIC(S,/^canoe$/,[46.9,-19]);VIEW(S,[128,8,1.3],"left")}
  }
 };
+FIX.hempires={
+  /* the Mecca photo sat on the zoom buttons and Córdoba's at the card's edge: both belong to the next stop */
+  "Empires and independence":S=>DROPPH(S,/^(Mecca|Córdoba)/),
+  /* Spain, one end of "from Spain to Pakistan", was under the card and the Baghdad photo on the zoom buttons */
+  "The Arab conquests":S=>VIEW(S,[31,32,1],"left"),
+  "Too big to hold: the Mongols":S=>VIEW(S,[85,42,1],"left"),
+  /* Algeria, the empire's western end, was under the card */
+  "The Ottoman Empire":S=>VIEW(S,[22,37,1.35],"left"),
+  /* the card went to the right after the stop's question, with the map key over its close button */
+  "China’s treasure fleets":S=>VIEW(S,[80,12,1],"left"),
+  /* Acapulco and Manila, "from Mexico to the Philippines", were round the back of the globe or under the card (on the
+     right). They are half a world apart: the stop opens on the line of 1494, and buttons in part 2 turn the globe to
+     the galleon ports; their pins become "area" labels so they no longer pull the view's middle */
+  "Spain and Portugal":S=>{AREA(S,/^(Acapulco|Manila)/);VIEW(S,[-40,5,1],"left")},
+  /* Moscow (its photo) was under the card and Fort Ross's photo sat on the map toggles: Russia's land empire spans
+     half the globe. The stop opens on Siberia, buttons turn the globe from Moscow to California, and the far places
+     become plain labels */
+  "An empire by land":S=>{DROPPH(S,/^(Russia: St Basil|Fort Ross)/);ADDPIN(S,[[[37.62,55.75]],"Moscow","area"]);ADDPIN(S,[[[-123.24,38.51]],"Fort Ross, 1812","area"]);AREA(S,/^Sitka/);VIEW(S,[90,50,1.2],"left")},
+  "Sugar, slaves and empire":S=>VIEW(S,[-30,5,1],"left"),
+  "The first colonies to break free":S=>VIEW(S,[-76,39,3],"left"),
+  /* the card was on the right, where Bolívar's portrait and the Brazil photo crowded the zoom buttons */
+  "Spain’s empire splits up":S=>VIEW(S,[-62,-12,1.1],"left"),
+  "The British Empire":S=>VIEW(S,[30,20,1],"left"),
+  /* the Lalibela church photo (built about 1200, not part of the story) hung over the zoom buttons; Adwa keeps its pin */
+  "Borders drawn in Europe":S=>{DROPPH(S,/^Ethiopia/);VIEW(S,[18,3,1.04],"left")},
+  "India’s independence":S=>VIEW(S,[78,23,1.8],"left"),
+  "Africa’s wave of independence":S=>VIEW(S,[15,5,1.04],"left"),
+  "The last colonies":S=>VIEW(S,[113.8,22.3,5.04],"left")
+};
 const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvm fix",tour,S.title,e)}})}
@@ -178,7 +207,7 @@ function turnGlobe(lon,lat,z){try{const G=ps&&ps.g;if(!G||ps.mode!=="globe")retu
 function TURNER(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:true,tip:cfg.tip,
  card(L){return'<div class="rvm-btns rvm-turn">'+cfg.places.map((f,i)=>'<button type="button" class="rvm-btn" data-i="'+i+'"></button>').join("")+'</div>'},
  wire(L){const c=L.card;L.at=0;c.querySelectorAll(".rvm-turn button").forEach(b=>b.onclick=()=>{const f=cfg.places[+b.dataset.i];L.at=+b.dataset.i;c.dataset.turns="1";turnGlobe(f[1],f[2],f[3]);this.render(L)});this.render(L)},
- render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvm-turn button").forEach(b=>{const k=+b.dataset.i;b.classList.toggle("rvm-cur",k===L.at);b.textContent=(k===L.at?"● ":"Turn to ")+cfg.places[k][0]});
+ render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvm-turn button").forEach(b=>{const k=+b.dataset.i;b.classList.toggle("rvm-cur",k===L.at);b.textContent=k===L.at?"● "+cfg.places[k][0]:"Turn to "+cfg.places[k][0].replace(/^The /,"the ")});
   const f=cfg.places[L.at];say(L,f[0],f[4])}}}
 
 /* ======================================================================== part 2: stops you can play with
@@ -190,7 +219,10 @@ function TURNER(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:tr
                 counts the kilometres.
    - hancient | "Rome and Han China": the two capitals are 8,200 km apart; buttons turn the globe along the road.
    - hancient | "Sailors of two oceans": from Taiwan to Madagascar and Easter Island, 14,300 km apart; buttons turn
-                the globe to each. */
+                the globe to each.
+   - hempires | "Spain and Portugal": from the line of 1494 to Potosí, Acapulco and Manila; buttons turn the globe.
+   - hempires | "An empire by land": from Moscow across Siberia to Okhotsk, Alaska and Fort Ross; buttons turn the globe.
+   - hempires | "Africa’s wave of independence": put eight countries in the order they won independence. */
 
 /* ======================================================================== 1. Alexander's march (hancient)
    Places and dates: Encyclopaedia Britannica, "Alexander the Great" (Granicus May 334 BC, Issus November 333, the
@@ -258,8 +290,38 @@ const TURN_SAIL=TURNER({tours:["hancient"],title:"Sailors of two oceans",tip:"Ma
   ["New Zealand",174.8,-41,1.4,"Polynesians, the sailors’ descendants, reached New Zealand, Hawaii and Easter Island between about 1000 and 1300 AD."],
   ["Easter Island",-109.35,-27.12,1.4,"The far east. Polynesians grew the sweet potato, from South America, long before Columbus, so they probably reached the Americas too."]]});
 
+/* ======================================================================== 4. Mexico to Manila (hempires)
+   The texts are the stop's own facts (the 1494 Treaty of Tordesillas line; the Manila galleons, 1565-1815; Potosí's
+   silver). Acapulco and Manila are 14,300 km apart across the Pacific (great circle). */
+const TURN_SUN=TURNER({tours:["hempires"],title:"Spain and Portugal",tip:"Spain’s empire ran from Mexico to the Philippines, half a world apart. Turn the globe to follow it.",
+ places:[["The line of 1494",-40,5,1,"Spain and Portugal split the newly reached lands with a line down the Atlantic: Spain west of it, Portugal east."],
+  ["Potosí",-65.75,-19.58,1.4,"Silver from mines like Potosí, in Bolivia, paid for Chinese silk and porcelain."],
+  ["Acapulco",-99.9,16.8,1.4,"From 1565 to 1815, Spanish galleons sailed from here to Manila: the first regular trade route across the Pacific."],
+  ["Manila",120.97,14.6,1.4,"The galleons’ other end, 14,300 km away. The Philippines are named after Spain’s King Philip II."]]});
+
+/* ======================================================================== 5. Across Siberia (hempires)
+   The stop's own facts: east over the Urals from the 1580s, the Pacific at Okhotsk in 1639, Russian America (Sitka),
+   Fort Ross in California in 1812, Alaska sold in 1867. */
+const TURN_RUS=TURNER({tours:["hempires"],title:"An empire by land",tip:"Russia’s empire stretched half way round the world. Turn the globe from Moscow to California.",
+ places:[["Siberia",90,50,1.2,"From the 1580s Russian fur traders pushed east over the Urals, from one river to the next."],
+  ["Moscow",37.62,55.75,1.5,"The start. Every new land was joined to the homeland, so Siberia is still Russia."],
+  ["Okhotsk",143.3,59.4,1.5,"Russians reached the Pacific here in 1639."],
+  ["Alaska",-145,60,1.3,"Russian America, run from Sitka. Too far away to defend, it was sold to the United States in 1867 for $7.2 million."],
+  ["Fort Ross",-123.24,38.51,1.6,"Russia’s furthest outpost, built in California in 1812."]]});
+
+/* ======================================================================== 6. Who was free first? (hempires)
+   Independence dates: Encyclopaedia Britannica's country articles (Libya 24 December 1951, Ghana 6 March 1957, Nigeria
+   1 October 1960, Algeria 5 July 1962, Kenya 12 December 1963, Angola 11 November 1975, Zimbabwe 18 April 1980,
+   Namibia 21 March 1990). */
+const SORT_AFR=SORT({tours:["hempires"],title:"Africa’s wave of independence",
+ tip:"Put these countries in the order they won independence, earliest first.",first:"Earliest",last:"Latest",desc:false,bars:false,
+ items:[["Ghana",1957.18,"1957 · Britain"],["Nigeria",1960.75,"1960 · Britain"],["Algeria",1962.51,"1962 · France"],
+  ["Kenya",1963.95,"1963 · Britain"],["Libya",1951.98,"1951 · after Italy"],["Angola",1975.86,"1975 · Portugal"],
+  ["Zimbabwe",1980.3,"1980 · Britain"],["Namibia",1990.22,"1990 · South Africa"]],
+ after:(r,N)=>"Libya was first, in 1951: it came out of Italian rule after World War II through the UN. Algeria won its freedom from France only after an eight-year war. Portugal held on longest, until 1975, and the last were ruled by white minorities: Zimbabwe until 1980 and Namibia, run by South Africa, until 1990."});
+
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[MARCH,TURN_SILK,TURN_SAIL];
+const DEFS=[MARCH,TURN_SILK,TURN_SAIL,TURN_SUN,TURN_RUS,SORT_AFR];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
