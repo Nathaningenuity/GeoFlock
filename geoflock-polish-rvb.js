@@ -47,60 +47,105 @@ const FIX={
      Atlantic side both the Amazon and the Congo show beside the card */
   "The rain belt":S=>{LOCK(S,"globe",[-22,2,1.05])},
   /* the whole continent from Tunis to Cape Town has to fit beside the card (it was cut off top and bottom) */
-  "Africa, folded at the Equator":S=>{LOCK(S,"globe",[0,2,1])},
+  "Africa, folded at the Equator":S=>{LOCK(S,"globe",[24,-12,1])},
   /* the cold Humboldt Current and its label sat under the card: turn the globe west a little */
-  "The driest place, and the Andes’ trick":S=>{LOCK(S,"globe",[-77,-31,1.75])},
+  "The driest place, and the Andes’ trick":S=>{LOCK(S,"globe",[-71,-33,1.75])},
   /* London was off the edge of the globe (only North America showed). London and Calgary are 114° of longitude apart
      but only about 65° apart on the globe, over the top: looking down from above northern Canada, Calgary, London and
      the Gulf Stream all show beside the card, and the 51.5°N line curves between them */
-  "London is mild for its latitude":S=>{LOCK(S,"globe",[-100,78,1]);LOCK(S,"card","left")},
+  "London is mild for its latitude":S=>{LOCK(S,"globe",[-55,62,1.15]);LOCK(S,"card","left")},
   /* the card jumped to the right and the Rwenzori label hung far from its peak; centre on the Equator between the
      Andes and Africa, card on the left like the rest of the tour */
-  "Ice far from the poles":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-5,2,1.02])},
+  "Ice far from the poles":S=>{LOCK(S,"card","left");LOCK(S,"globe",[32,2,1.02])},
   /* Mega-Chad and the Cave of Swimmers (Egypt) were at the right edge, under the map key */
-  "When the Sahara was green":S=>{LOCK(S,"globe",[20,21,1.75])},
+  "When the Sahara was green":S=>{LOCK(S,"globe",[18,21,1.5])},
   /* (and the rings sat half under the card) the two rings looked the same and had no names: say which is which */
-  "The fastest-warming place":S=>{LOCK(S,"globe",[-12,78,1.3]);const P=(S.pins||[]).filter(p=>!/^Sea ice/.test(p[1]));
+  "The fastest-warming place":S=>{LOCK(S,"globe",[-4,80,1.17]);const P=(S.pins||[]).filter(p=>!/^Sea ice/.test(p[1]));
    P.push([[118,79.6],"Sea ice in late summer, 1979","point"],[[-60,76.6],"Sea ice in late summer now","point"]);LOCK(S,"pins",P)},
   /* the "Alaska & British Columbia" label hung off the top edge of the globe, over the map buttons, from every view that
      also shows Norway; its ring stays, and the new buttons fly to each coast and name it */
-  "Fjords: carved on windy west coasts":S=>{LOCK(S,"globe",[-20,45,1]);LOCK(S,"pins",(S.pins||[]).filter(p=>!/^Alaska/.test(p[1])))},
+  "Fjords: carved on windy west coasts":S=>{LOCK(S,"globe",[25,45,1]);LOCK(S,"pins",(S.pins||[]).filter(p=>!/^Alaska/.test(p[1])))},
   /* Oymyakon sat on the very rim of the globe */
-  "The coldest places people live":S=>{LOCK(S,"globe",[132,60,2.3])}
+  "The coldest places people live":S=>{LOCK(S,"globe",[132,62,2.3])}
  },
  rivers:{
   /* (the framings below were checked against where the card and the map key really sit, with the card shift applied)
      the Amazon's western half, its basin label and Manaus sat under the map key: a little further out, and west */
   "The Amazon":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-72,-9,1.6])},
   /* the stop is about the west, but the Pebas wetland, the Andes and the old western exit were under the map key */
-  "The Amazon once flowed west":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-63,-14,1.76])},
+  "The Amazon once flowed west":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-63,-8,1.76])},
   /* Khartoum and Ethiopia's highlands sat under the map key */
-  "The Nile’s slow fall and summer flood":S=>{LOCK(S,"card","left");LOCK(S,"globe",[40,23,3.3]);fixNile(S)},
+  "The Nile’s slow fall and summer flood":S=>{LOCK(S,"card","left");LOCK(S,"globe",[41,20,2.5]);fixNile(S)},
   /* the lower Congo, Kinshasa and "over 220 m deep here" sat under the map key */
   "The deepest river":S=>{LOCK(S,"card","right");LOCK(S,"globe",[14,-2,3])},
   /* Old River Control and the basin label sat under the map key */
-  "The Mississippi system":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-88,38,1.9])},
+  "The Mississippi system":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-84,40,1.6])},
   /* the dry delta by the Gulf of California sat under the map key */
   "A river that stops short":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-115,36,5.18])},
   /* the old mouth (south of Shandong) and Kaifeng's label sat under the map key */
-  "China’s Sorrow":S=>{LOCK(S,"card","left");LOCK(S,"globe",[110,32.5,3.6])},
+  "China’s Sorrow":S=>{LOCK(S,"card","left");LOCK(S,"globe",[121,36,1.9])},
   /* Belgrade's label sat under the map key */
-  "Ten countries, one river":S=>{LOCK(S,"card","left");LOCK(S,"globe",[18,46,3.5])},
+  "Ten countries, one river":S=>{LOCK(S,"card","left");LOCK(S,"globe",[26,48,3.15])},
   /* the Niger's source and the ruler sat at the card's edge */
   "Running from the sea":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-2,6,3])},
+  /* the Lena, the third of the three rivers, ran off the right-hand rim */
+  "Rivers that flood themselves":S=>{LOCK(S,"card","left");LOCK(S,"globe",[106,63,2])},
   /* the lake was a sliver at the stop's zoom: closer in, so it can be seen swelling and shrinking */
   "The river that reverses":S=>{LOCK(S,"card","left");LOCK(S,"globe",[104.4,12.3,6])},
   /* this stop's slider (the Nile's year, before and after the High Dam) was keyed to the stop's old title, "The flood
      that made Egypt", so the card said "Slide through the year" with no slider */
  },
  lakes:{
+  /* (framings checked against where the card and map key really sit, with the card shift applied) the Caspian sat on
+     the globe's right-hand rim, half under the map key */
+  "The biggest lake is called a sea":S=>{LOCK(S,"card","left");LOCK(S,"globe",[54,42,3])},
+  /* Lake Ontario, Niagara and the St Lawrence (the water drop's way to the sea) were off the right edge; and about 34
+     million people live in the Great Lakes basin (Great Lakes Commission; US EPA: over 30 million), not 40 million */
+  "The Great Lakes":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-78,45.5,4]);fixMore(S,"About 40 million people in the US and Canada live around them.","More than 30 million people in the US and Canada live around them.")},
+  /* Lake Victoria's label and the Nile's outflow sat by the map key */
+  "Africa’s great shallow lake":S=>{LOCK(S,"card","left");LOCK(S,"globe",[35,4,4.13])},
+  /* Lake Malawi and the south of the rift were under the map key */
+  "Lakes in a crack":S=>{LOCK(S,"card","left");LOCK(S,"globe",[37,-4,2.6])},
+  /* the Columbia, where the floods poured out, sat at the card's edge */
+  "The lake that emptied in days":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-114,47,4])},
+  /* Lake Kariba (the second lake of the stop) was off the right-hand rim */
+  "Lakes made by people":S=>{LOCK(S,"card","left");LOCK(S,"globe",[18,2,1.05])},
+  /* Lake Chad (the second lake of the stop) sat at the card's edge */
+  "Lakes that disappeared":S=>{LOCK(S,"card","left");LOCK(S,"globe",[50,42,1.4])},
+  /* the narrow strait and the salty east half were at the bottom, by the map key */
+  "Half fresh, half salty":S=>{LOCK(S,"card","left");LOCK(S,"globe",[77.5,46.3,6])},
+  /* Finland and the Baltic Shield were near the top rim; looking down from further north both shields show */
+  "Lakes scraped by ice":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-56,76,1.1])},
+  /* Lake Vostok and its label sat by the card */
+  "A lake under the ice":S=>{LOCK(S,"card","left");LOCK(S,"globe",[154,-80,2.2])},
   /* Baikal's nerpa is the only seal SPECIES that lives only in fresh water; the tour's later stop mentions Saimaa's own
      seal (a subspecies of the ringed seal), so "the only seal" contradicted it */
   "The deepest and oldest lake":S=>{if(S.more)LOCK(S,"more",S.more.replace("the only seal that lives only in fresh water","the only kind of seal that lives only in fresh water"))},
-  /* about 34 million people live in the Great Lakes basin (Great Lakes Commission; US EPA says over 30 million) */
-  "The Great Lakes":S=>{if(S.more)LOCK(S,"more",S.more.replace("About 40 million people in the US and Canada live around them.","More than 30 million people in the US and Canada live around them."))}
  },
  seas:{
+  /* (framings checked against where the card and map key really sit, with the card shift applied) */
+  /* the Philippine Sea's label sat under the map key */
+  "The deep ocean":S=>{LOCK(S,"card","right");LOCK(S,"globe",[132,14,2.2])},
+  /* the Drake Passage label sat at the bottom edge */
+  "The Southern Ocean":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-84,-69,1.3])},
+  /* the Strait of Magellan's label sat under the map key */
+  "Magellan and the wildest sea":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-78,-56,2.4])},
+  /* "…and sinks about 3.5 km to the deep floor" sat under the map key */
+  "The biggest waterfall is underwater":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-31,63,3])},
+  /* Morocco and Tarifa's labels crowded the bottom right */
+  "14 km from Africa":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-3.6,38,5.84])},
+  "When the Mediterranean dried up":S=>{LOCK(S,"card","left");LOCK(S,"globe",[13,35,2])},
+  /* Miami sat under the map key */
+  "The Bermuda Triangle":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-78.5,31.5,1.44])},
+  /* the White Sea was on the top rim and the Red Sea's photo under the key */
+  "Seas named after colours":S=>{LOCK(S,"card","right");LOCK(S,"globe",[56,62,1])},
+  /* the stop is about the Black Sea, but the view was centred on the Caspian: the Bosphorus sat under the map key */
+  "A sea that’s dead below":S=>{LOCK(S,"card","right");LOCK(S,"globe",[29,43.5,3.8])},
+  "A patch of plastic":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-138,34,1.4])},
+  /* the Northwest Passage was round the back; looking straight down on the pole both routes show */
+  "The melting Arctic":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-80,80,1])},
+  /* Shanghai sat on the right-hand rim */
+  "If all the ice melted":S=>{LOCK(S,"card","left");LOCK(S,"globe",[118,22,1.9])},
   /* the Cape Horn route from New York to San Francisco is given as 22,500 km (Wikipedia) to about 24,300 km (port-distance
      tables), against about 9,500 km through the canal: the saving is 13,000 to 15,000 km, so say "over 12,000 km" */
   "The busiest gateways":S=>{if(S.more)LOCK(S,"more",S.more.replace("The Panama Canal saves ships about 13,000 km around South America.","The Panama Canal saves a ship from New York to San Francisco over 12,000 km of sailing round South America."))}
@@ -108,6 +153,7 @@ const FIX={
 };
 /* rivers | "The Nile’s slow fall and summer flood": its slider (the Nile's year, before and after the High Dam) was keyed to
    the stop's old title, "The flood that made Egypt", so the card said "Slide through the year" with no slider */
+function fixMore(S,a,b){try{if(typeof S.more==="string"&&S.more.includes(a))LOCK(S,"more",S.more.replace(a,b))}catch(e){}}
 function fixNile(S){try{const k="rivers|"+S.title;if(typeof PS_DIAG!=="undefined"&&!PS_DIAG[k]&&PS_DIAG["rivers|The flood that made Egypt"])PS_DIAG[k]=PS_DIAG["rivers|The flood that made Egypt"]}catch(e){}}
 function applyFixes(tour){try{const T=PS_TOURS[tour],F=FIX[tour];if(!T||!F)return;T.steps.forEach(S=>{const f=F[strip(S.title)];if(!f||S._rvbFix)return;
   try{f(S);Object.defineProperty(S,"_rvbFix",{value:1,configurable:true,enumerable:false})}catch(e){console.error("rvb fix",tour,S.title,e)}})}catch(e){}}
@@ -275,7 +321,7 @@ function visitDef(V){return{tour:V.tour,title:V.title,tip:V.tip,
   else{L.wind.setAttribute("d","");L.wsh.setAttribute("d","");L.head.setAttribute("d","");putTag(L,L.wT,null)}
   const done=Object.keys(L.seen).length===V.P.length;say(L,p.n,p.t+(done?" <i>"+V.end+"</i>":""))}}}
 /* turn the globe smoothly so a place shows beside the card, not under it (as in geoflock-interact-world3.js) */
-function turnTo(L,ll,zoom){const G=g();if(!G||!G.lookAt||G._flat)return;let side=0;try{const c=ps.card.getBoundingClientRect(),h=L.host.getBoundingClientRect();side=(c.left+c.right)/2>(h.left+h.right)/2?1:-1}catch(e){}
+function turnTo(L,ll,zoom){const G=g();if(!G||!G.lookAt||G._flat)return;touched=1;/* the stop has been moved on purpose: no re-fly */let side=0;try{const c=ps.card.getBoundingClientRect(),h=L.host.getBoundingClientRect();side=(c.left+c.right)/2>(h.left+h.right)/2?1:-1}catch(e){}
  const z=zoom||G.zoom||1,t=[ll[0]+side*28/z,ll[1]*(1-.3/Math.max(1,z))],r0=[-G.rot[0],-G.rot[1]],z0=G.zoom,T0=performance.now(),ip=d3.geoInterpolate(r0,t),D=L.D;
  const step=()=>{if(!L||L.D!==D||!L.el.isConnected)return;const f=Math.min(1,(performance.now()-T0)/1100),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2,c=ip(e);try{G.lookAt(c[0],c[1],z0+(z-z0)*e)}catch(err){return}L.dirty=1;if(f<1)requestAnimationFrame(step)};step()}
 
@@ -288,17 +334,13 @@ function turnTo(L,ll,zoom){const G=g();if(!G||!G.lookAt||G._flat)return;let side
    own outline (Natural Earth, via the app's lakes layer) is scaled about its middle to the area for that month. */
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],MONL=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const TSR=[[104.93,11.57],[104.88,11.66],[104.84,11.78],[104.8,11.9],[104.72,12.02],[104.68,12.14],[104.66,12.26],[104.58,12.36],[104.49,12.45]];
-const TONLE={tour:"rivers",title:"The river that reverses",loop:1,
+const TONLE={tour:"rivers",title:"The river that reverses",loop:1,zoomIn:[[104.3,12.35],10],
  tip:"Press ▶ or drag through the year. Watch which way the Tonlé Sap River runs, and how big the lake gets.",
  card:()=>playerHTML("Month","Jan")+'<div class="rvb-bar2"><div class="rvb-bartitle">Lake size (sketch)</div><div class="rvb-track"><i></i></div><div class="rvb-note rvb-area"></div></div>',
  init(L){L.u=0;const G0=lakeGeom("Tonlé Sap");L.base=null;try{if(G0){const P=G0.type==="Polygon"?[G0.coordinates]:G0.coordinates;
    const big=P.map(c=>({type:"Polygon",coordinates:c})).sort((a,b)=>d3.geoArea(b)-d3.geoArea(a))[0];L.base=big;L.c=d3.geoCentroid(big);L.a0=d3.geoArea(big)*R_KM*R_KM}}catch(e){}
   L.lake=svgEl(L.clip,"path",{class:"rvb-lake"});L.rsh=svgEl(L.clip,"path",{class:"rvb-rsh"});L.riv=svgEl(L.clip,"path",{class:"rvb-flow"});
-  L.dirT=tag(L,"rvb-bub");L.lakeT=tag(L,"rvb-small");L.R=route(TSR,.02);
-  /* the tour can only zoom to 6, where the lake is a sliver: once the stop has settled, move in closer (unless the
-     reader has already moved the globe) */
-  L.zt=setTimeout(()=>{try{const G=g();if(L.el.isConnected&&G&&Math.abs(G.zoom-6)<.3)turnTo(L,[104.3,12.35],10)}catch(e){}},4600)},
- off(L){clearTimeout(L.zt)},
+  L.dirT=tag(L,"rvb-bub");L.lakeT=tag(L,"rvb-small");L.R=route(TSR,.02)},
  tick(L,dt){advance(L,dt,14,1);if(L.el.isConnected)L.dirty=1},
  month(L){return(L.u*12)%12},
  inflow(t){return t>=5.5&&t<9.2},
@@ -362,7 +404,7 @@ const NIGER={tour:"rivers",title:"Running from the sea",
    slower in the shallow western end, the Petit Lac, which is why the second leg takes so much longer). */
 const GVR=[[6.88,46.385],[6.8,46.43],[6.71,46.47],[6.63,46.49],[6.53,46.47],[6.43,46.44],[6.33,46.41],[6.26,46.36],[6.21,46.29],[6.16,46.215]];
 const GVT=[{n:"Vevey",ll:[6.843,46.462]},{n:"Évian",ll:[6.59,46.401]},{n:"Lausanne",ll:[6.633,46.512],t:15,h:13},{n:"Thonon",ll:[6.479,46.372]},{n:"Morges",ll:[6.498,46.511]},{n:"Rolle",ll:[6.338,46.46]},{n:"Nyon",ll:[6.239,46.383]},{n:"Geneva",ll:[6.148,46.204],t:70,h:8}];
-const TSUNAMI={tour:"lakes",title:"A tsunami on Lake Geneva",zoomIn:[[6.52,46.4],30],
+const TSUNAMI={tour:"lakes",title:"A tsunami on Lake Geneva",zoomIn:[[6.52,46.4],18],
  tip:"Press ▶ to let the mountainside fall, then follow the wave down the lake. Which towns does it reach, and when?",
  card:()=>playerHTML("Minutes after the collapse","0 min")+'<div class="rvb-towns"></div>',
  init(L){L.u=0;L.R=route(GVR,.005);L.uL=L.R.K[L.R.P.findIndex(p=>Math.abs(p[0]-6.63)<1e-9&&Math.abs(p[1]-46.49)<1e-9)]/L.R.total||.35;
@@ -378,7 +420,8 @@ const TSUNAMI={tour:"lakes",title:"A tsunami on Lake Geneva",zoomIn:[[6.52,46.4]
   L.rings.forEach((r,k)=>{const rad=Math.max(.001,.035-.009*k);r.setAttribute("d",L.u>0&&L.u<1?pathOf(L,d3.range(0,361,15).map(a=>[f[0]+rad*1.45*Math.cos(a*DEG),f[1]+rad*Math.sin(a*DEG)]),true):"");r.style.opacity=String(.9-.25*k)});
   place(L.boom,proj(L,GVR[0]));
   L.towns.forEach(t=>{const hit=uf>=t.u-.004;t.dot.classList.toggle("rvb-hitn",hit);const q=proj(L,t.ll);if(q){t.dot.setAttribute("cx",q[0]);t.dot.setAttribute("cy",q[1]);t.dot.style.display=""}else t.dot.style.display="none";
-   putTag(L,t.tg,proj(L,t.ll,1),hit?(t.t?"🌊 "+t.n+" · "+t.t+" min":"🌊 "+t.n):t.n,t.ll[1]<46.43?6:-28);t.tg.classList.toggle("rvb-red",hit)});
+   /* names only for Lausanne and Geneva until the wave gets there, so the small towns do not pile up */
+   putTag(L,t.tg,proj(L,t.ll,1),hit?(t.t?"🌊 "+t.n+" · "+t.t+" min":"🌊 "+t.n):t.t?t.n:null,t.ll[1]<46.43?6:-28);t.tg.classList.toggle("rvb-red",hit)});
   putTag(L,L.fT,L.u>0&&L.u<1?proj(L,f,1):null,Math.round(T)+" min",-18);
   syncRange(L,Math.round(T)+" min");
   if(L.card){setHTML(L.card.querySelector(".rvb-towns"),'<div class="rvb-tl">'+L.towns.map(t=>{const hit=uf>=t.u-.004;return'<span class="'+(hit?"rvb-tw-hit":"")+'">'+(hit?"🌊 ":"")+esc(t.n)+(t.t&&hit?" <b>"+t.t+" min, ~"+t.h+" m</b>":"")+"</span>"}).join("")+"</div>")}
@@ -395,7 +438,7 @@ const TSUNAMI={tour:"lakes",title:"A tsunami on Lake Geneva",zoomIn:[[6.52,46.4]
    the sea and the lake (Thorson, 1971, Copeia), and bull sharks' kidneys and rectal gland adjust to keep their salt in
    fresh water (Pillans et al., 2005, J. Exp. Biol.). */
 const SJR=[[-83.69,10.93],[-83.78,10.85],[-83.88,10.76],[-83.96,10.72],[-84.08,10.76],[-84.2,10.82],[-84.3,10.92],[-84.38,10.99],[-84.44,11.02],[-84.55,11.06],[-84.66,11.09],[-84.78,11.12],[-84.95,11.25],[-85.1,11.38]];
-const SHARK={tour:"lakes",title:"Sharks in fresh water",
+const SHARK={tour:"lakes",title:"Sharks in fresh water",zoomIn:[[-84.55,11.15],14],
  tip:"Drag the bull shark from the Caribbean up the San Juan River into Lake Nicaragua.",
  card:()=>'<div class="rvb-salt"><div class="rvb-bartitle">Salt in the water around the shark</div><div class="rvb-track rvb-strack"><i></i></div><div class="rvb-note rvb-sread"></div></div><div class="rvb-two"><div><b class="rvb-n1">0</b><span>km up the river</span></div><div><b class="rvb-n2">Sea</b><span>where it is</span></div></div>',
  init(L){L.u=0;L.R=route(SJR,.01);L.uLake=L.R.K[L.R.P.findIndex(p=>Math.abs(p[0]+84.78)<1e-9)]/L.R.total||.85;L.uCas=L.R.K[L.R.P.findIndex(p=>Math.abs(p[0]+84.44)<1e-9)]/L.R.total||.6;
@@ -443,9 +486,8 @@ const GATE={tour:"seas",title:"The busiest gateways",
   L.ship=svgEl(L.clip,"g",{class:"rvb-noev"},'<circle r="9" fill="#13294b" stroke="#fff" stroke-width="2"/><text y="4" text-anchor="middle" font-size="11">⛴</text>');L.gX=svgEl(L.clip,"g",{class:"rvb-noev"});
   L.aT=tag(L,"rvb-small");L.bT=tag(L,"rvb-small");L.sT=tag(L,"rvb-bub");L.R={};for(const k in GATES)L.R[k]=[route(GATES[k].open,.4),route(GATES[k].shut,.4)]},
  wire(L){const c=L.card;c.querySelectorAll(".rvb-gk").forEach(b=>b.onclick=()=>{L.k=b.dataset.k;L.u=1;L.mode=0;L._said="";this.turn(L);L.dirty=1});
-  c.querySelectorAll(".rvb-go").forEach(b=>b.onclick=()=>{L.mode=+b.dataset.s;L.u=0;L.playing=true;L._said="";L.dirty=1})},
- turn(L){const G=g();if(!G||!G.lookAt||G._flat)return;const t=GATES[L.k].look,r0=[-G.rot[0],-G.rot[1]],z0=G.zoom,T0=performance.now(),ip=d3.geoInterpolate(r0,[t[0],t[1]]);
-  const step=()=>{if(!L.el.isConnected)return;const f=Math.min(1,(performance.now()-T0)/1100),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2,c=ip(e);try{G.lookAt(c[0],c[1],z0+(t[2]-z0)*e)}catch(err){return}L.dirty=1;if(f<1)requestAnimationFrame(step)};step()},
+  c.querySelectorAll(".rvb-go").forEach(b=>b.onclick=()=>{L.mode=+b.dataset.s;L.u=0;L.playing=true;L._said="";if(!L.turned||L.turned!==L.k+L.mode){L.turned=L.k+L.mode;this.turn(L)}L.dirty=1})},
+ turn(L){const t=GATES[L.k].look;turnTo(L,[t[0],t[1]],t[2])},
  tick(L,dt){if(L.playing){L.u+=dt/(L.mode?7:4.5);if(L.u>=1){L.u=1;L.playing=false;L.res[L.k+L.mode]=1}L.dirty=1}},
  draw(L){const Gt=GATES[L.k],R=L.R[L.k][L.mode],R0=L.R[L.k][0],p=at(R,L.u);
   L.rt0.setAttribute("d",L.mode?pathOf(L,R0.P):"");const d=pathOf(L,R.P.slice(0,p.i+1).concat([p.ll]));L.rt.setAttribute("d",d);L.sh.setAttribute("d",d);L.rt.classList.toggle("rvb-long",!!L.mode);
@@ -471,8 +513,11 @@ function mount(D){const G=g();if(!G||!G.host)return;if(L&&L.D===D&&L.host===G.ho
  try{D.init.call(D,L)}catch(e){console.error(e)}document.body.classList.add("rvb-on");lastT=0;loop();
  /* a stop whose subject is tiny at the tour's top zoom (6) moves in closer once it has settled, unless the reader has
     already moved the globe */
- if(D.zoomIn){const L0=L;L.zt2=setTimeout(()=>{try{const G2=g();if(L===L0&&L.el.isConnected&&G2&&Math.abs(G2.zoom-6)<.4)turnTo(L,D.zoomIn[0],D.zoomIn[1])}catch(e){}},4600)}}
-function unmount(){cancelAnimationFrame(raf);raf=0;if(L){clearTimeout(L.zt2);try{if(L.D.off)L.D.off(L)}catch(e){}try{L.el.remove()}catch(e){}L=null}
+ if(D.zoomIn){const L0=L,t0=performance.now();let still=0,last="";L.zt2=setInterval(()=>{try{const G2=g();if(L!==L0||!L.el.isConnected||!G2){clearInterval(L0.zt2);return}
+  const k=G2.rot.map(v=>v.toFixed(2)).join()+"|"+(+G2.zoom).toFixed(2);still=k===last&&!G2._flying?still+1:0;last=k;
+  if(performance.now()-t0>14000){clearInterval(L.zt2);return}
+  if(performance.now()-t0>3200&&(still>=2||performance.now()-t0>5000)&&!G2._flying){clearInterval(L.zt2);let zt=6;try{zt=psGlobeTarget(psSteps()[ps.i])[2]}catch(e){}if(Math.abs(G2.zoom-zt)<.4)turnTo(L,D.zoomIn[0],D.zoomIn[1])}}catch(e){}},400)}}
+function unmount(){cancelAnimationFrame(raf);raf=0;if(L){clearInterval(L.zt2);try{if(L.D.off)L.D.off(L)}catch(e){}try{L.el.remove()}catch(e){}L=null}
  document.querySelectorAll(".rvb-ctl").forEach(c=>c.remove());document.body.classList.remove("rvb-on","rvb-folding")}
 function ensureCard(){if(!L||typeof ps==="undefined"||!ps||!ps.card)return;const ex=ps.card.querySelector(".rvb-ctl");if(ex&&L.card===ex)return;if(ex)ex.remove();
  const at0=ps.card.querySelector(".ps-stat");if(!at0)return;const D=L.D,c=document.createElement("div");c.className="rvb-ctl";
