@@ -144,8 +144,9 @@ const FIX={
 const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;
  /* every stop's card on the left: on the right (as some stops were switched at run time, after a tour question) it lay
-    under the map key, which covered its title, and the stop's place went under the card */
- if(S.card!=="left")LOCK(S,"card","left");const f=F[strip(S.title)];if(!f)return;applied.add(S);
+    under the map key, which covered its title, and the stop's place went under the card
+    (locked even where it already says "left", or a later file flips it, as happened on "Swapped by religion") */
+ LOCK(S,"card","left");const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvl fix",tour,S.title,e)}})}
 function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)applyTo(t,T.steps)})}catch(e){}}
 let lastKey="";
