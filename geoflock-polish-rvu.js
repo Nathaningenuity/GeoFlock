@@ -142,7 +142,33 @@ FIX.literature={
   /* Tagore's and Mahfouz's photos were under the map key (once Europe was framed) and Han Kang's off the globe's top edge, by the search box: the buttons in
      part 2 turn the globe to each winner instead */
   "The Nobel map":S=>{DROPPH(S,/^(Tagore|Han Kang|Mahfouz)/);VIEW(S,[24,50,1.4])}
-};FIX.philosophy={};FIX.sports={};
+};FIX.philosophy={
+  /* the opening turned to the middle of all its portraits, half a world apart, and came to rest over the North Pole, with
+     Rawls's photo under the card and the Buddha and Confucius on the globe's edge: framed on the Old World, Harvard's
+     photo dropped (the last stop is his), and Córdoba's, Amsterdam's and Paris's, under the card once the stop is framed
+     on the three thinkers of about 500 BC (each has a stop of its own). Confucius's photo then sat on the zoom buttons:
+     it becomes a plain label */
+  "The big questions":S=>{DROPPH(S,/^(Harvard|Córdoba|Amsterdam|Paris|Qufu)/);ADDAREA(S,[116.99,35.6],"Qufu: Confucius");VIEW(S,[70,30,1])},
+  /* Babylon was off the globe's right edge */
+  "Miletus: from myth to nature":S=>VIEW(S,[33,37,2.3]),
+  /* Nagarjuna's photo hung off the globe's bottom edge */
+  "The Ganges: is there a self?":S=>VIEW(S,[82,19.5,3.5]),
+  /* Zeno's photo (Kition, Cyprus) hung off the globe's right edge */
+  "The Stoics: citizens of the world":S=>VIEW(S,[25,39,2.1]),
+  /* Samarkand, Bukhara and Ujjain, three of the four places the books came from, were off the globe's edge */
+  "Baghdad: the House of Wisdom":S=>VIEW(S,[60,30,1.45]),
+  /* Rousseau's Geneva was off the globe's edge */
+  "Edinburgh: what can experience teach us?":S=>VIEW(S,[10,51,3.6]),
+  /* Nietzsche's Sils Maria was on the globe's edge */
+  "Copenhagen: how should I live?":S=>VIEW(S,[12,51,3.5]),
+  /* Wittgenstein's Vienna, the place in the stop's title, was off the globe's right edge */
+  "Vienna: the limits of language":S=>VIEW(S,[12.5,51,3.5]),
+  /* Camus's Algiers hung off the globe's bottom edge, under the notice bar */
+  "Paris: condemned to be free":S=>VIEW(S,[5,42.5,3.2]),
+  /* Harvard and Du Bois's Atlanta were under the card, Ambedkar's photo on the zoom buttons and Singer's Melbourne
+     round the back of the globe: the stop opens on Harvard, and buttons in part 2 turn the globe to the others */
+  "Now explore":S=>{DROPPH(S,/^(Melbourne|Mumbai|Atlanta)/);VIEW(S,[-71,40,2])}
+};FIX.sports={};
 
 const applied=new WeakSet();
 /* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
@@ -281,7 +307,7 @@ function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:!!cfg.mark,turns
   else if(L.wait)say(L,L.ans[L.k]===it[1]?"Right: "+esc(cfg.bins[it[1]]):"No: it was "+esc(cfg.bins[it[1]]),esc(it[2])+(cfg.where?" "+esc(cfg.where[it[1]]):""));
   else say(L,"",esc(cfg.ask||"Tap your answer."));L.dirty=1},
  draw(L){if(!L.svg)return;L.svg.innerHTML="";if(!L.tg)L.tg=tag(L,"rvu-ctag");const it=cfg.items[L.k],t=L.wait&&it?tOf(cfg,it):null,q=t?proj(L,[t[0],t[1]]):null;
-  if(q){svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:11,class:"rvu-tring"});svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:5,class:"rvu-tdot"})}putTag(L,L.tg,q&&cfg.markTag?q:null,q&&cfg.markTag?esc(cfg.markTag(it)):"",14)}}}
+  if(q){svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:11,class:"rvu-tring"});svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:5,class:"rvu-tdot"})}putTag(L,L.tg,q&&cfg.markTag&&cfg.markTag(it)?q:null,q&&cfg.markTag?esc(cfg.markTag(it)||""):"",14)}}}
 
 /* ======================================================================== 1. What makes the sound? (music, Gamelan)
    The four families of the Hornbostel–Sachs system (Wikipedia, "Hornbostel–Sachs"): idiophones "produce their sounds by
@@ -352,7 +378,42 @@ const SORT_LIT=SORT({tours:["literature"],title:"Now explore",tip:"Put eight of 
   ["Crime and Punishment",1866,"1866"],["Things Fall Apart",1958,"1958"]],
  after:(r,N)=>"About 4,000 years from Gilgamesh’s clay tablets to Achebe’s novel, and all eight are still read today."});
 
-const DEFS=[BINS_INST,SORT_MUS,TURN_NOBEL,BINS_KIGO,SORT_LIT];
+/* ======================================================================== 6. Who came first? (philosophy, The big questions)
+   Birth years from Wikipedia's articles on each: Confucius 551 BC, Socrates c. 470 BC, Ibn Sina c. 980, Ibn Rushd 1126,
+   Machiavelli 1469, Descartes 1596, Kant 1724, Simone de Beauvoir 1908. */
+const SORT_PHIL=SORT({tours:["philosophy"],title:"The big questions",tip:"Before you set off: put eight of the tour’s thinkers in the order they were born.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Confucius",-551,"551 BC"],["Socrates",-470,"about 470 BC"],["Ibn Sina",980,"about 980"],["Ibn Rushd",1126,"1126"],
+  ["Machiavelli",1469,"1469"],["Descartes",1596,"1596"],["Kant",1724,"1724"],["Simone de Beauvoir",1908,"1908"]],
+ after:(r,N)=>"Nearly 2,500 years from Confucius to Beauvoir. The tour visits them in this order, each in the place that helped shape the idea."});
+
+/* ======================================================================== 7. One, a few or many? (philosophy, Fragmentation)
+   Aristotle's Politics (Book III) sorts governments by how many rule, each with a good and a corrupt form: kingship and
+   tyranny (one), aristocracy and oligarchy (a few), polity and "democracy" (many) (Wikipedia, "Politics (Aristotle)").
+   The examples: the tyrant Dionysius I of Syracuse (ruled 405–367 BC), oligarchic Corinth (the stop's own "rule by the
+   rich"), Athens's Assembly, the Persian Great King and Philip II of Macedon (king 359–336 BC), whose son Aristotle
+   taught (Wikipedia, "Dionysius I of Syracuse", "Philip II of Macedon"). Each answer turns the globe there (and names the place where the stop has no label of its own). */
+const BINS_ARIS=BINS({tours:["philosophy"],title:"Fragmentation: Greece’s many constitutions",turnItems:true,mark:true,markTag:it=>it[5]?it[4]:"",
+ tip:"Sort governments as Aristotle did: who holds the power?",ask:"One ruler, a few, or many?",
+ bins:["One","A few","Many"],
+ items:[["Athens: the Assembly of all citizens",2,"Many: every male citizen could speak and vote. Aristotle called rule by the many for their own good ‘democracy’, its corrupt form.",[23.73,37.98,4.5],"Athens"],
+  ["Syracuse under Dionysius",0,"One: a tyrant, Aristotle’s corrupt form of rule by one, serving himself; the good form is a king.",[15.29,37.07,4.5],"Syracuse"],
+  ["Corinth: the rich families",1,"A few: an oligarchy, rule by the rich for the rich; its good form, rule by the best, is aristocracy.",[22.93,37.91,4.5],"Corinth"],
+  ["Persia: the Great King",0,"One: a king over a vast empire, the opposite of Greece’s small states.",[52.89,29.94,2.5],"Persepolis",1],
+  ["Macedon: King Philip II",0,"One: the king who conquered the city-states in 338 BC. Aristotle taught his son Alexander.",[22.52,40.76,4.5],"Pella",1]],
+ after:(r,N)=>"Aristotle’s six forms: kingship or tyranny, aristocracy or oligarchy, polity or democracy. The best, he thought, was a mix that gave both the few and the many a share."});
+
+/* ======================================================================== 8. Fairness round the globe (philosophy, Now explore)
+   The stop's own thinkers: John Rawls at Harvard (A Theory of Justice, 1971), W. E. B. Du Bois, who taught at Atlanta
+   University, B. R. Ambedkar, who studied and worked in Bombay (Mumbai) and chaired the committee that drafted India's
+   constitution, and Peter Singer, born in Melbourne (Wikipedia, "B. R. Ambedkar", "W. E. B. Du Bois", "Peter Singer"). */
+const TURN_FAIR=TURNER({tours:["philosophy"],mark:true,title:"Now explore",tip:"Four thinkers who asked what is fair. Turn the globe to each.",
+ places:[["Harvard: Rawls",-71.12,42.37,2,"Choose the rules of a society from behind a ‘veil of ignorance’, not knowing who you will be in it.",1],
+  ["Atlanta: Du Bois",-84.39,33.75,2.5,"W. E. B. Du Bois, a sociologist and historian who taught in Atlanta, asked why Black Americans were left out of the country’s promise of equality."],
+  ["Mumbai: Ambedkar",72.88,19.08,2,"B. R. Ambedkar, born into a caste treated as ‘untouchable’, fought caste discrimination and chaired the committee that drafted India’s constitution."],
+  ["Melbourne: Singer",144.96,-37.81,2,"Peter Singer asks why a child drowning in front of you should matter more than one dying far away."]]});
+
+const DEFS=[BINS_INST,SORT_MUS,TURN_NOBEL,BINS_KIGO,SORT_LIT,SORT_PHIL,BINS_ARIS,TURN_FAIR];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
