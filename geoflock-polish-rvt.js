@@ -133,7 +133,37 @@ const FIX={
      underground river is at about 10.2° N, 118.9° E (Wikipedia, "Puerto Princesa Subterranean River National Park") */
   "Rivers underground":S=>VIEW(S,[119.5,10.4,6])
  },
- weather:{}
+ weather:{
+  /* eight photos round the world: the monsoon pair and Mawson's Hut round the back, the Oklahoma tornado under the card,
+     Atacama and Cape Horn below the screen. Each has its own stop; the opening keeps Hurricane Florence and Catatumbo */
+  "Weather and winds":S=>DROPPH(S,/^(A tornado|Monsoon|Mawson|Cape Horn|Atacama)/),
+  /* the southern Westerlies label sat in the far Pacific, at the bottom of the screen by the toolkit; it goes (the
+     ship game, part 2, names the westerlies of both hemispheres) */
+  "Belts of wind":S=>{const P=S.pins||[];const Q=P.filter(p=>!(Array.isArray(p)&&strip(p[1])==="Westerlies"&&Array.isArray(p[0])&&p[0][1]<0));if(Q.length!==P.length)LOCK(S,"pins",Q)},
+  /* the Bodélé, where the dust starts, sat on the globe's right edge under the zoom buttons, its photo (the card's own)
+     beside them */
+  "The Sahara feeds the Amazon":S=>{DROPPH(S,/^Dust blowing/);VIEW(S,[-20,8,1])},
+  /* London, the far end of the ruler, sat on the globe's right edge */
+  "The jet stream":S=>VIEW(S,[-29,46,1.1]),
+  /* an India label sat under the card */
+  "The monsoon":S=>DROP(S,/^India$/),
+  "The wettest place":S=>DROP(S,/^India$/),
+  /* the Barrow Island label hung at the bottom of the screen and the typhoon nursery's ran into the map key */
+  "Where the big storms are born":S=>VIEW(S,[142,12,1.2]),
+  /* the Gulf's label sat on the globe's right edge */
+  "Where air masses collide":S=>VIEW(S,[-86,40,2]),
+  /* index.html turned the globe to the middle of its four labels, 120° apart, over the far South Pacific: the
+     Roaring Forties label was under the map key. The belts are bands round the world, so their labels move nearer Cape
+     Horn: the Furious Fifties to 90° W and the Roaring Forties to 40° W */
+  "The Roaring Forties":S=>{MOVE(S,/^Roaring Forties$/,[-40,-44]);MOVE(S,/^Furious Fifties$/,[-90,-53]);VIEW(S,[-40,-52,1.1])},
+  /* the ice sheet's label hung under the map key, below the screen: its pin moves nearer the coast, still on the high
+     ice behind Cape Denison */
+  "The windiest place":S=>{MOVE(S,/^High ice sheet/,[140,-70.5]);VIEW(S,[155,-68,3.5])},
+  /* the Cape York label ran into the map key */
+  "A cloud 1,000 km long":S=>VIEW(S,[146,-16,4]),
+  /* the Venezuela label sat off the globe's right edge */
+  "The lightning capital":S=>DROP(S,/^Venezuela$/)
+ }
 };
 
 const applied=new WeakSet();
@@ -385,7 +415,7 @@ const BELTS={tours:["weather"],title:"Belts of wind",globe:true,tip:"Drag the sl
  card(L){return'<div class="rvt-row"><span class="rvt-val rvt-lat"></span><input type="range" class="rvt-rng" min="-70" max="70" step="1" value="45" aria-label="Latitude"></div><div class="rvt-src">The arrow shows which way the wind blows.</div>'},
  band(lat){const a=Math.abs(lat),N=lat>=0;
   if(a<5)return["The doldrums",null,"Calm, sticky air rising over the equator: sailing ships could sit here for weeks without wind."];
-  if(a<25)return[N?"North-east trade winds":"South-east trade winds",N?[-1,-.55]:[-1,.55],"Steady winds blowing back towards the equator, bent west by the spinning Earth. Columbus rode them to the Caribbean in 1492."];
+  if(a<25)return[N?"North-east trade winds":"South-east trade winds",N?[-1,-.55]:[-1,.55],N?"Steady winds blowing back towards the equator, bent west by the spinning Earth. Columbus rode them to the Caribbean in 1492.":"Steady winds blowing back towards the equator from the south-east: the mirror image of the north-east trades."];
   if(a<35)return["The horse latitudes",null,"Sinking, dry air and light winds, about 30° from the equator: many deserts lie under this belt."];
   if(a<60)return["The westerlies",N?[1,.45]:[1,-.45],N?"Winds from the south-west carry storms towards Europe: Columbus sailed home on them.":"Winds from the north-west, with almost no land to stop them: the Roaring Forties."];
   return["Polar easterlies",N?[-1,-.4]:[-1,.4],"Cold air flowing out from the poles, from the east."]},
