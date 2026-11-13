@@ -77,6 +77,49 @@ const FIX={
   "Top of the class":S=>{DROP(S,/^Costa Rica/);VIEW(S,[5,45,1]);FILT(S,"G",A=>Array.isArray(A)?A.map(x=>x&&/: the (top|bottom) three$/.test(x.t)?Object.assign({},x,{t:/top/.test(x.t)?"The top three":"The bottom three"}):x):A)},
   /* the layer buttons it pointed to lie under the card, on the globe's left: they are now repeated in the card (part 3) */
   "Now explore":S=>RE(S,"stat","Switch layers with the buttons on the left,","Switch layers with the buttons below,")
+ },
+ humans:{
+  /* the eight photos span the world: the hobbit, the tarsier and the snow monkeys were round the back of the globe and
+     the early modern human (in France) under the card; framed beside the card, Harbin's sat on the search box. The
+     hobbit and the Denisovans have their own stops and the snow monkeys are the next stop's card photo */
+  "Our family’s map":S=>{DROPPH(S,/^(‘Hobbit’|Tarsier|Snow monkeys|Early modern human|Harbin)/);VIEW(S,[60,25,1])},
+  /* the golden lion tamarin's photo hung off the globe under the card, and the proboscis monkey was round the back of
+     the globe (South America's monkeys have their own stop, Monkeys on rafts) */
+  "Where primates live":S=>DROPPH(S,/^(Golden lion tamarin|Proboscis monkey)/),
+  /* the card opened on the right, over the koala, the platypus and the wombat */
+  "Australia sails away":S=>VIEW(S,[143,-28,1.6]),
+  /* the card opened on the right, and the raft's line ran under the map key on the left; the stop now opens zoomed
+     out, with South America's monkeys clear of the card and Africa's coast on the right */
+  "Monkeys on rafts":S=>VIEW(S,[-32,-5,1]),
+  /* the card opened on the right, over the gibbon; the line from Africa ran under the map key. Zoomed out a little, the
+     gibbon in Thailand clears the key too */
+  "Africa joins Asia":S=>VIEW(S,[72,18,1.1]),
+  /* Gigantopithecus's two photos sat at the globe's top edge, by the map's switches */
+  "The apes of Asia":S=>VIEW(S,[106,13,2.2]),
+  /* Dmanisi, the stop's headline, and the hand axes were under the card; the walkers' lines to China and Java ran off
+     the right edge. The stop opens on the whole route and buttons (part 3) turn the globe to each site */
+  "The first to leave Africa":S=>{DROPPH(S,/^Hand axes/);VIEW(S,[72,20,1.05])},
+  /* the card opened on the right, over the sea-level chart's own place */
+  "Sundaland":S=>VIEW(S,[112,0,2]),
+  /* the Luzon stegodon's photo sat under the map's switches and the Flores giant rat's at the bottom of the screen */
+  "The hobbits":S=>VIEW(S,[117,4,2]),
+  /* the Tibetan and Taiwanese jaws were beyond the globe's right edge and Homo naledi below the screen: the stop opens
+     on the Neanderthals' lands and buttons (part 3) visit the five kinds alive 100,000 years ago */
+  "Many kinds of human":S=>AREA(S,/^(Tibet|Off Taiwan|Rising Star)/),
+  /* the Tibetan jaw, where the Denisovans' line starts, was beyond the globe's right edge */
+  "Denny, child of two kinds":S=>VIEW(S,[92,46,1.8]),
+  /* none of the stop's places showed: Omo Kibish and Herto lay on the globe's right edge, Florisbad and Blombos below
+     the screen, and Jebel Irhoud, the headline, had no pin at all. Buttons (part 3) visit the four oldest sites */
+  "Our own species":S=>{AREA(S,/^(Omo Kibish|Florisbad)/);DROPPH(S,/^(Herto|Blombos|Florisbad)/);VIEW(S,[30,6,1.1])},
+  /* the card opened on the right; Lake Mungo, White Sands and Clovis were round the back of the globe and the Sulawesi
+     painting under the card. Those photos go and the far pins become area labels; buttons (part 3) follow the journey */
+  "Out of Africa again":S=>{DROPPH(S,/^(Lake Mungo|White Sands|Clovis|Sulawesi)/);AREA(S,/^(Bering|Americas)/);VIEW(S,[40,30,1])},
+  /* the labels of the Solomon Islands and Vanuatu, the countries with the most Denisovan DNA, were cut off at the
+     globe's right edge or ran under the map key. index.html turns the globe to the middle of the stop's point pins and
+     photos, here Tibet and Ladakh, whenever that shows more of them, which left Papua New Guinea round the back. So the
+     globe faces Australasia, and the Changpa nomads' photo, the Tibet label (which then hung over the map's switches at
+     the top) and the general "1–2% Neanderthal DNA" label, placed in Germany, go; the text still tells Tibet's story */
+  "We still carry them":S=>{DROP(S,/^(About 1–2% Neanderthal|Tibet)/);DROPPH(S,/^Changpa/);VIEW(S,[144,-17,1])}
  }
 };
 /* stops that keep the card where their own script put it */
@@ -129,7 +172,11 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
               grandchildren (South Korea's 0.75, replacement 2.1, Niger's about 6).
    - people | "Town and country": buttons turn the globe between Papua New Guinea and Liechtenstein.
    - people | "Top of the class": buttons turn the globe to Iceland, South Sudan and Costa Rica.
-   - people | "Now explore": the map's layer buttons, hidden under the card, repeated inside it. */
+   - people | "Now explore": the map's layer buttons, hidden under the card, repeated inside it.
+   - humans | "The first to leave Africa": buttons turn the globe to Dmanisi, Lantian and Java.
+   - humans | "Many kinds of human": buttons visit the five kinds of human alive 100,000 years ago.
+   - humans | "Our own species": buttons visit the four oldest Homo sapiens sites, from Jebel Irhoud to Herto.
+   - humans | "Now explore": put eight moments of the tour in order, from the monkeys' raft to Europe. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -258,9 +305,45 @@ const LAYERS={tour:"people",title:"Now explore",globe:false,tip:"Pick a layer an
      hide until the stop changes */
   const a=B.find(b=>b.classList.contains("active"));let own="";try{own=String(psSteps()[ps.i].sub||"").split("/")[0]}catch(e){}
   document.body.classList.toggle("rvs-offlayer",!!(a&&own&&a.dataset.sub!==own));say(L,"",a?"Showing: "+a.textContent.trim()+". Hover a country for its number.":"Tap a layer.")}};
+/* ======================================================================== humans */
+/* Dmanisi 1.85 to 1.77 million years, five skulls (Wikipedia, "Dmanisi hominins"); Lantian's Gongwangling skull about
+   1.63 million years (Zhu et al., Journal of Human Evolution 2015); Sangiran, Java, about 1.5 to 1.6 million years, and
+   Dubois's Trinil find of 1891 (Wikipedia, "Java Man"); Java's last Homo erectus, Ngandong, 117,000 to 108,000 years
+   ago (Rizal et al., Nature 2020) */
+const LEAVE=turnDef("humans","The first to leave Africa",{tip:"Homo erectus walked a third of the way round the world. Visit its sites.",
+ intro:"Tap a site to turn the globe to it.",
+ places:[["Dmanisi, Georgia: 1.8 million years",44.34,41.34,3.2,"Five skulls and simple stone tools: the oldest humans known outside Africa."],
+  ["Lantian, China: 1.6 million years",109.5,34.1,3.2,"A skull from Gongwangling, near Xi’an: by now Homo erectus had crossed Asia."],
+  ["Java: about 1.6 million years",110.9,-7.4,3.2,"Eugène Dubois found ‘Java Man’ at Trinil in 1891. Homo erectus lived on Java until roughly 110,000 years ago."]]});
+/* The five kinds alive about 100,000 years ago, as the stop counts them. Qafzeh's burials, 90,000 to 100,000 years old
+   (Wikipedia, "Qafzeh"); ten Neanderthals found at Shanidar (Wikipedia, "Shanidar Cave"); Callao Cave's Homo luzonensis
+   at least 50,000 years old (Détroit et al., Nature 2019) */
+const FIVE=turnDef("humans","Many kinds of human",{tip:"Five kinds of human, 100,000 years ago. Visit each one’s home.",
+ intro:"Tap a kind of human to turn the globe to where it lived.",
+ places:[["Homo sapiens: us",35.3,32.7,3,"Our species lived across Africa, and just into Asia: burials at Qafzeh, in Israel, are about 100,000 years old."],
+  ["Neanderthals",44.22,36.83,3,"From Spain to Siberia. At Shanidar Cave, in Iraq, the bones of ten Neanderthals have been found."],
+  ["Denisovans",84.68,51.4,3,"Known mostly from DNA: a finger bone from Denisova Cave, in Siberia, and jaws from Tibet and the seabed off Taiwan."],
+  ["Homo floresiensis",120.45,-8.53,3.2,"The ‘hobbits’ of Flores, about 1.1 m tall."],
+  ["Homo luzonensis",121.82,17.7,3.2,"Teeth and bones from Callao Cave, on Luzon, at least 50,000 years old: another small island human."]]});
+/* Jebel Irhoud about 315,000 years (Hublin et al., Nature 2017); Florisbad about 259,000 years, found in 1932 (Grün et
+   al., Nature 1996; Wikipedia, "Florisbad Skull"); Omo I, found in 1967, at least 233,000 years (Vidal et al., Nature
+   2022); Herto, 160,000 years, found in 1997 (White et al., Nature 2003) */
+const OURS=turnDef("humans","Our own species",{tip:"Our species’ oldest fossils are spread across Africa. Visit them, oldest first.",
+ intro:"Tap a site to turn the globe to it.",
+ places:[["Jebel Irhoud, Morocco: about 300,000 years",-8.87,31.85,3,"The oldest known Homo sapiens: faces like ours, but long, low braincases."],
+  ["Florisbad, South Africa: about 260,000 years",26.1,-28.77,3,"A partial skull, found at a spring in 1932."],
+  ["Omo Kibish, Ethiopia: about 230,000 years",35.9,5.4,3,"Found in 1967; in 2022 the volcanic ash above it showed it is at least 230,000 years old."],
+  ["Herto, Ethiopia: about 160,000 years",40.53,10.33,3,"The skulls of two adults and a child, found in 1997."]]});
+/* The tour's own dates, oldest first (each stop gives its source) */
+const TIMELINE=rankDef("humans","Now explore",{seed:5,first:"oldest",head:"Put the tour in order",
+ tip:"Which came first? Tap the eight moments from the oldest to the newest.",
+ items:[["Monkeys raft to South America","35–40 million years ago"],["Arabia joins Africa to Asia","about 20 million"],["Our line splits from the chimps’","6–7 million"],
+  ["The first stone tools, Lomekwi","3.3 million"],["Lucy walks upright","3.2 million"],["Humans reach Dmanisi","1.8 million"],["The oldest Homo sapiens, Jebel Irhoud","300,000"],["People reach Europe","about 45,000"]],
+ intro:"Some of these are tens of millions of years apart, some only 100,000.",
+ after:"If the 40 million years since the monkeys’ raft were one day, our species would have appeared about 11 minutes before midnight."});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[KOREA,TOWN,TOPCLASS,LAYERS];
+const DEFS=[KOREA,TOWN,TOPCLASS,LAYERS,LEAVE,FIVE,OURS,TIMELINE];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
