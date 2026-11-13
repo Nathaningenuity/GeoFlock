@@ -146,6 +146,31 @@ FIX.hmedieval={
   "The Black Death":S=>{DROP(S,/^(Messina|Cairo|Bergen)/);VIEW(S,[40,45,1.3],"left")},
   "The fall of Constantinople":S=>VIEW(S,[29,41,4.6],"left")
 };
+FIX.hrevolutions={
+  /* the photos of Meiji Japan and Ellis Island, a world apart from Manchester and Sarajevo, turned the globe to the
+     Arctic, with the card on the right; they have their own stops */
+  "Revolutions and industry":S=>{DROPPH(S,/^(Meiji Japan|Ellis Island)/);VIEW(S,[10,38,1],"left")},
+  /* the card was on the right, with the map key over its close button */
+  "American independence":S=>VIEW(S,[-73.8,39.8,6],"left"),
+  "Haiti":S=>VIEW(S,[-72.6,19,5],"left"),
+  /* Simón Bolívar's portrait was pinned on Rio de Janeiro, where he never went (left over from a "Rio: Brazil's
+     emperor" pin); Caracas, his home, keeps its pin. Card on the left, as for the others */
+  "Latin America breaks free":S=>{DROPPH(S,/^Simón Bolívar/);VIEW(S,[-68,-10,1.1],"left")},
+  /* the Wuyi Mountains and Shanghai, where the tea came from, were off the globe's right edge */
+  "The great tea theft":S=>VIEW(S,[104,27,1.9],"left"),
+  /* Alexandria and the Suez Canal were off the globe's edge and New Orleans under the card: the stop's three places
+     are 120° apart. It opens on the Atlantic, Manchester in view, and buttons in part 2 turn the globe to each */
+  "War in America, cotton in Egypt":S=>{AREA(S,/^(New Orleans|Alexandria|The Suez Canal)/);VIEW(S,[-30,40,1.1],"left")},
+  /* the card was on the right, with the map key over its close button; on the left, the Tokyo photo then sat on the
+     zoom buttons until the view moved east */
+  "Meiji Japan":S=>VIEW(S,[138,35,4.6],"left"),
+  "The Scramble for Africa":S=>VIEW(S,[15,3,1.05],"left"),
+  /* New York was under the card and Mauritius and Singapore round the back of the globe: the stop opens on the
+     Atlantic crossing, and buttons in part 2 turn the globe to the other routes. The Naples photo then sat on the zoom
+     buttons; the shared photo pass then gave the far labels photos of their own, which
+     pulled the view south, so those go too (and New York, whose photo came and went with that pass, gets a label) */
+  "The great migrations":S=>{DROPPH(S,/^(Naples|Buenos Aires|Mauritius|Singapore)/);AREA(S,/^(Mauritius|Singapore|Buenos Aires)/);ADDPIN(S,[[-74.04,40.7],"New York","point"]);VIEW(S,[-36,33,1],"left")}
+};
 const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvm fix",tour,S.title,e)}})}
@@ -248,7 +273,10 @@ function TURNER(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:tr
    - hempires | "Africa’s wave of independence": put eight countries in the order they won independence.
    - hmedieval | "The Black Death": a year slider (or Play) from 1346 to 1350; each place lights up the year the
                  plague reached it.
-   - hmedieval | "Now explore": put eight moments from the tour in order. */
+   - hmedieval | "Now explore": put eight moments from the tour in order.
+   - hrevolutions | "Latin America breaks free": put seven countries in the order they broke free.
+   - hrevolutions | "War in America, cotton in Egypt" and "The great migrations": the places are oceans apart;
+                    buttons turn the globe to each. */
 
 /* ======================================================================== 1. Alexander's march (hancient)
    Places and dates: Encyclopaedia Britannica, "Alexander the Great" (Granicus May 334 BC, Issus November 333, the
@@ -389,8 +417,37 @@ const SORT_MED=SORT({tours:["hmedieval"],title:"Now explore",
   ["Mansa Musa in Cairo",1324,"1324"],["Baghdad founded",762,"762"],["Crusaders take Jerusalem",1099,"1099"],["Iceland’s Althing first meets",930,"930"]],
  after:(r,N)=>"Baghdad was founded in 762 and sacked by the Mongols almost 500 years later, in 1258. Drag the timeline to watch it happen."});
 
+/* ======================================================================== 9. Who broke free first? (hrevolutions)
+   Independence dates: Encyclopaedia Britannica's country articles (Paraguay May 1811, Argentina 9 July 1816, Chile
+   12 February 1818, Mexico 1821, Brazil 7 September 1822, Bolivia 6 August 1825; Cuba, lost by Spain in 1898,
+   independent in 1902). */
+const SORT_LAT=SORT({tours:["hrevolutions"],title:"Latin America breaks free",
+ tip:"Put these countries in the order they broke free, earliest first.",first:"Earliest",last:"Latest",desc:false,bars:false,
+ items:[["Mexico",1821.7,"1821"],["Cuba",1902.4,"1902"],["Paraguay",1811.4,"1811"],["Brazil",1822.7,"1822, from Portugal"],["Chile",1818.1,"1818"],["Bolivia",1825.6,"1825"],["Argentina",1816.5,"1816"]],
+ after:(r,N)=>"Most of Spain’s mainland empire broke away in 15 years, from 1810 to 1825; Bolivia, named after Bolívar, was among the last. Brazil split from Portugal almost without a fight. Cuba stayed Spanish until 1898."});
+
+/* ======================================================================== 10. Cotton across the Atlantic (hrevolutions)
+   The stop's own facts: the Union blockade of 1861, Lancashire's cotton famine, Egypt's cotton boom, the Suez shares
+   sold in 1875 and the occupation of 1882. "Most" of the cotton: about three-quarters of Britain's raw cotton came from
+   the American South in 1860 (S. Beckert, "Empire of Cotton", 2014). */
+const TURN_COT=TURNER({tours:["hrevolutions"],title:"War in America, cotton in Egypt",tip:"The cotton went from America, then Egypt, to Manchester. Turn the globe to follow it.",
+ places:[["The Atlantic",-30,40,1.1,"Before 1861 most of Lancashire’s cotton crossed the Atlantic from the American South."],
+  ["New Orleans",-90.07,29.95,1.6,"In 1861 the Union blockaded the South’s ports, and the cotton stopped."],
+  ["Manchester",-2.24,53.48,2,"The mills ran short of cotton, putting hundreds of thousands out of work. Many workers backed the North anyway."],
+  ["Alexandria",29.92,31.2,1.6,"Egypt’s ruler pushed Nile Delta farmers to grow cotton. When prices crashed, Egypt fell into debt and, in 1882, under British rule."]]});
+
+/* ======================================================================== 11. Leaving home (hrevolutions)
+   The stop's own facts (Irish famine and emigration; Italians, Germans, Poles, Scandinavians and Jews to the Americas;
+   Ellis Island from 1892; Indian contract labourers to Mauritius; Chinese workers to Southeast Asia). */
+const TURN_MIG=TURNER({tours:["hrevolutions"],title:"The great migrations",tip:"Turn the globe to follow the migrants.",
+ places:[["The Atlantic",-36,33,1,"Cheap steamships carried Europeans across the ocean: more than 50 million left for the Americas and Australia between 1815 and 1930."],
+  ["New York",-74.04,40.7,1.8,"About 12 million people entered the US through Ellis Island after it opened in 1892."],
+  ["Buenos Aires",-58.38,-34.6,1.6,"Argentina took millions of migrants, many of them Italians."],
+  ["Mauritius",57.5,-20.16,1.5,"Over a million Indians went abroad as contract labourers, to Mauritius, the Caribbean, Fiji and South Africa."],
+  ["Singapore",103.85,1.29,1.6,"Chinese workers went to Southeast Asia, as well as to California."]]});
+
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[MARCH,TURN_SILK,TURN_SAIL,TURN_SUN,TURN_RUS,SORT_AFR,BD,SORT_MED];
+const DEFS=[MARCH,TURN_SILK,TURN_SAIL,TURN_SUN,TURN_RUS,SORT_AFR,BD,SORT_MED,SORT_LAT,TURN_COT,TURN_MIG];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
