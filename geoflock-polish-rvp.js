@@ -80,6 +80,31 @@ const FIX={
   /* Highland Park's label lay over the map toggles and Toyota City on the globe's far edge. The stop opens on Ford's
      Detroit; Toyota City becomes an area label and the sorting game (part 3) turns the globe between the two */
   "From Fordism to post-Fordism":S=>{AREA(S,/^Toyota City/);VIEW(S,[-83.1,42.4,2.6])}
+ },
+ hg7c:{
+  /* the photos ran from Tijuana and Port Hedland, round the back of the globe, to Shanghai and Shenzhen on its far
+     edge and Dhaka's by the zoom buttons; each has its own stop later in the tour. The opening keeps Geneva and Vienna,
+     the homes of the WTO and OPEC */
+  "Trade and the world economy":S=>{DROPPH(S,/^(Shanghai|Port Hedland|Shenzhen|Tijuana|Dhaka)/);VIEW(S,[48,28,1])},
+  /* Port Hedland, where the ore sets out, lay below the bottom of the screen */
+  "Complementarity":S=>VIEW(S,[138,-2,1.2]),
+  /* Washington's label lay over the map toggles and its point under the card, 77° from Ghana: the stop opens on
+     Ghana and buttons (part 3) turn the globe between the lenders and the borrower */
+  "Neoliberal policies":S=>{AREA(S,/^Washington/);VIEW(S,[12,18,1.2])},
+  /* Baltimore, where the vans' seats came out, was under the card: the globe now faces it, with Europe on the far side
+     of the dashed line */
+  "The chicken tax":S=>VIEW(S,[-36,40,1]),
+  /* The United Arab Emirates, an OPEC member from 1967 (as Abu Dhabi), left OPEC and OPEC+ on 1 May 2026 (Wikipedia,
+     "OPEC", citing NBC News and DW, 28 April 2026; OPEC now has 11 members), so it is no longer highlighted. Saudi
+     Arabia is OPEC's largest producer, not the world's (the United States produces more crude oil); its label ran
+     under the map key */
+  "OPEC and oil":S=>{FILT(S,"hi",H=>Array.isArray(H)?H.filter(c=>c!=="ae"):H);RELABEL(S,/^Saudi Arabia/,"Saudi Arabia: OPEC’s largest producer");
+   RE(S,"more","for others such as Russia, Norway and Canada.","for others such as Russia, Norway and Canada. The United Arab Emirates, a member since 1967, left OPEC in May 2026.");VIEW(S,[58,24,1.1])},
+  /* Mauritius lay at the bottom of the screen, by the graphics notice */
+  "Free-trade and export processing zones":S=>VIEW(S,[62,0,1.5]),
+  /* the card stood on the right over Monrovia, and the Marshall Islands were round the back of the globe (an area
+     label now, so the globe is not turned to the middle of them) */
+  "The world’s biggest fleet sails under Liberia":S=>{AREA(S,/^Marshall Islands/);VIEW(S,[-36,16,1])}
  }
 };
 /* stops that keep the card where their own script put it */
@@ -134,7 +159,11 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg7a | "The Human Development Index": put six countries in HDI order, from Norway to South Sudan.
    - hg7a | "World-systems theory": core, semi-periphery or periphery? Sort nine countries; the globe turns to each.
    - hg7b | "Industry spreads": Manchester, Seraing, the Ruhr, Pittsburgh, Yawata; buttons turn the globe to each.
-   - hg7b | "From Fordism to post-Fordism": Ford's way or Toyota's? Sort eight features; the globe turns to each factory. */
+   - hg7b | "From Fordism to post-Fordism": Ford's way or Toyota's? Sort eight features; the globe turns to each factory.
+   - hg7c | "Comparative advantage": Ricardo's England and Portugal; move workers between cloth and wine and beat what
+            the two make without trade.
+   - hg7c | "Neoliberal policies": buttons turn the globe between Washington and Ghana.
+   - hg7c | "OPEC and oil": in OPEC today, or not? Sort eight oil countries; the globe turns to each. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -275,9 +304,57 @@ const FORD=binDef("hg7b","From Fordism to post-Fordism",{tip:"Ford’s way or To
   ["Parts made by suppliers in many different countries","p","Post-Fordism: production is spread across a global network of firms.",[137.15,35.08,3,"Toyota City"]],
   ["One giant company owns almost everything, from blast furnaces to sawmills","f","Fordism: after 1913 Ford bought or built blast furnaces, sawmills, a railway and even a glass plant to control every step.",[-83.1,42.41,3,"Highland Park"]]],
  done:"Fordism made cars cheap enough for workers to buy; post-Fordism made production flexible and global. Most factories today mix the two."});
+/* ======================================================================== hg7c: Trade and the world economy */
+/* Ricardo's own example (On the Principles of Political Economy and Taxation, 1817, chapter 7; Wikipedia,
+   "Comparative advantage"): a unit of cloth takes 100 men's labour for a year in England and 90 in Portugal; a unit
+   of wine 120 in England and 80 in Portugal. Without trade England's 220 and Portugal's 170 make one of each. Here the
+   reader moves each country's labour between the two goods; specialising (England all cloth, Portugal all wine) gives
+   2.2 cloth and 2.125 wine, more of both than the 2 and 2 made without trade, though Portugal is better at both. */
+const RICARDO={tour:"hg7c",title:"Comparative advantage",globe:false,
+ tip:"Ricardo’s puzzle: move the workers, and make more cloth AND more wine than 2 and 2.",
+ card:()=>'<div class="rvp-rc"><label>🇬🇧 England’s 220 workers: <b class="rvp-e"></b></label><input type="range" class="rvp-er" min="0" max="220" step="10" value="100" aria-label="English workers making cloth">'+
+  '<label>🇵🇹 Portugal’s 170 workers: <b class="rvp-p"></b></label><input type="range" class="rvp-pr" min="0" max="170" step="10" value="90" aria-label="Portuguese workers making cloth"></div>'+
+  '<svg class="rvp-rbars" viewBox="0 0 260 74" role="img" aria-label="Total cloth and wine"></svg><div class="rvp-row"><button type="button" class="rvp-btn rvp-sp">Specialise ▶</button><button type="button" class="rvp-btn rvp-rs">↺ No trade</button></div>',
+ init(L){L.e=100;L.p=90},
+ wire(L){const c=L.card,er=c.querySelector(".rvp-er"),pr=c.querySelector(".rvp-pr");
+  er.oninput=()=>{L.e=+er.value;this.render(L)};pr.oninput=()=>{L.p=+pr.value;this.render(L)};
+  c.querySelector(".rvp-sp").onclick=()=>{L.e=220;L.p=0;er.value=220;pr.value=0;this.render(L)};
+  c.querySelector(".rvp-rs").onclick=()=>{L.e=100;L.p=90;er.value=100;pr.value=90;this.render(L)};this.render(L)},
+ render(L){const c=L.card;if(!c)return;const eC=L.e/100,eW=(220-L.e)/120,pC=L.p/90,pW=(170-L.p)/80,C=eC+pC,W=eW+pW;
+  c.querySelector(".rvp-e").textContent=L.e+" on cloth, "+(220-L.e)+" on wine";c.querySelector(".rvp-p").textContent=L.p+" on cloth, "+(170-L.p)+" on wine";
+  const f=v=>v.toFixed(2).replace(/\.?0+$/,""),bar=(y,lab,v,col)=>'<text x="0" y="'+(y+13)+'" class="rvp-rt">'+lab+'</text><rect x="56" y="'+y+'" width="'+Math.max(0,v/2.4*170).toFixed(1)+'" height="18" rx="4" fill="'+col+'"/><text x="'+(60+Math.max(0,v/2.4*170)).toFixed(1)+'" y="'+(y+13)+'" class="rvp-rt rvp-rv">'+f(v)+'</text>';
+  const line='<line x1="'+(56+2/2.4*170).toFixed(1)+'" y1="2" x2="'+(56+2/2.4*170).toFixed(1)+'" y2="64" class="rvp-r2"/><text x="'+(56+2/2.4*170).toFixed(1)+'" y="73" class="rvp-rt rvp-r2t" text-anchor="middle">2 without trade</text>';
+  setHTML(c.querySelector(".rvp-rbars"),bar(6,"🧵 Cloth",C,"#5a7fc4")+bar(32,"🍷 Wine",W,"#a3324d")+line);
+  const both=C>2.001&&W>2.001;
+  if(L.e===100&&L.p===90)say(L,"No trade: 2 cloth, 2 wine","Each country makes one unit of each for itself. Portugal is better at both (90 and 80 against 100 and 120). Can trade still help?");
+  else if(both)say(L,"More of both!","England makes only cloth, Portugal mostly wine, and they swap. Each does what it gives up least to make: its comparative advantage.");
+  else if(C>2.001)say(L,"More cloth, but no more wine","Try moving Portugal’s workers to wine: it is twice as good at wine as England, but only a little better at cloth.");
+  else if(W>2.001)say(L,"More wine, but no more cloth","Try moving England’s workers to cloth, the thing it is least bad at.");
+  else say(L,"No more of either","Keep moving the sliders: which country should make which?")}};
+/* Washington and Ghana as the stop tells it; the IMF was set up at the Bretton Woods conference in 1944 and has its
+   headquarters in Washington (Wikipedia, "International Monetary Fund") */
+const LENDERS=turnDef("hg7c","Neoliberal policies",{tip:"The lenders and a borrower are an ocean apart. Visit each.",
+ intro:"Tap a place to turn the globe to it.",
+ places:[["Washington: the lenders",-77.04,38.9,3,"The IMF and the World Bank, set up at the Bretton Woods conference in 1944, both have their headquarters here."],
+  ["Accra, Ghana: a borrower",-0.2,5.6,3,"From 1983 Ghana took their loans on condition of structural adjustment: cutting spending, selling state firms and opening its markets."]]});
+/* OPEC's members (Wikipedia, "OPEC", as of May 2026): Algeria, Equatorial Guinea, Gabon, Iran, Iraq, Kuwait, Libya,
+   Nigeria, the Republic of the Congo, Saudi Arabia and Venezuela. Iraq and Venezuela were founders (Baghdad, 1960);
+   Gabon left in 1994 and rejoined in 2016; Qatar left on 1 January 2019; the UAE on 1 May 2026; Russia is in the wider
+   OPEC+ group only. */
+const OPEC=binDef("hg7c","OPEC and oil",{tip:"In OPEC today, or not? Sort eight oil countries; the globe turns to each.",
+ keys:[["y","🛢 OPEC member"],["n","Not a member"]],ask:"Is this country a member of OPEC today?",
+ items:[["Venezuela, with the world’s largest proven oil reserves","y","A member: one of the five founders, at Baghdad in 1960.",[-66.6,7,2.4,"Venezuela"]],
+  ["Nigeria, with its oil fields in the Niger Delta","y","A member since 1971.",[8,9.5,2.6,"Nigeria"]],
+  ["Russia, a giant oil and gas exporter","n","Not a member: it joins OPEC’s output deals in the looser OPEC+ group.",[60,58,1.6,"Russia"]],
+  ["Iraq","y","A member: a founder, and OPEC was set up in its capital, Baghdad.",[43.7,33.2,2.6,"Iraq"]],
+  ["Norway, with oil and gas under the North Sea","n","Not a member: Norway sells its oil freely and saves the money in a huge fund.",[9,61,2.4,"Norway"]],
+  ["Qatar","n","Not any more: Qatar left on 1 January 2019, during its quarrel with Saudi Arabia and the UAE.",[51.2,25.3,3.5,"Qatar"]],
+  ["Gabon, on Africa’s Atlantic coast","y","A member: it left in 1994 but rejoined in 2016.",[11.6,-0.8,3,"Gabon"]],
+  ["The United Arab Emirates","n","Not any more: the UAE left OPEC and OPEC+ in May 2026, after 59 years.",[54,24,3,"UAE"]]],
+ done:"OPEC has 11 members today. Big producers such as the United States, Russia, Canada and Norway are outside it, which limits how far it can steer the price."});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[SECTORS,HDIRANK,WORLDSYS,SPREAD,FORD];
+const DEFS=[SECTORS,HDIRANK,WORLDSYS,SPREAD,FORD,RICARDO,LENDERS,OPEC];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -358,6 +435,9 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 :is(body.dark-theme,body.sky-night) .rvp-dots i.rvp-ok{background:#4cc27f}:is(body.dark-theme,body.sky-night) .rvp-dots i.rvp-no{background:#ff7088}
 :is(body.dark-theme,body.sky-night) .rvp-dots i.rvp-at{box-shadow:0 0 0 2px #ffb27a}
 :is(body.dark-theme,body.sky-night) .rvp-tag{background:#13294b;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,0,0,.4)}
+.rvp-rc{display:grid;gap:4px}.rvp-rc label{font-size:12.5px;font-weight:700;color:#13294b}.rvp-rc label b{font-weight:600;color:#5b6b7c}.rvp-rc input{width:100%;accent-color:#d9682b}
+.rvp-rbars{display:block;width:100%;height:auto;margin-top:6px}.rvp-rt{font:700 11px system-ui,sans-serif;fill:#13294b}.rvp-rv{fill:#9a4a16}.rvp-r2{stroke:#13294b;stroke-width:1.5;stroke-dasharray:3 3;opacity:.6}.rvp-r2t{font-weight:600;font-size:9.5px;opacity:.7}
+:is(body.dark-theme,body.sky-night) .rvp-rc label{color:#fff}:is(body.dark-theme,body.sky-night) .rvp-rc label b{color:#aab6c8}:is(body.dark-theme,body.sky-night) .rvp-rt{fill:#e8eef7}:is(body.dark-theme,body.sky-night) .rvp-rv{fill:#ffb27a}:is(body.dark-theme,body.sky-night) .rvp-r2{stroke:#e8eef7}
 `;document.head.appendChild(s)}
 /* ======================================================================== part 4: the map's banner
    As geoflock-polish-rvn.js does: a long banner ("Human Development Index · Very high") ran under the map key in the
