@@ -73,9 +73,13 @@ mk("sldaylen",{title:"Day length at every latitude, all year",cat:"earth",h:214,
 /* ---------------------------------------------------------------- the greenhouse effect */
 (function(){
 /* one-layer model: an atmosphere that absorbs a share e of the heat the ground gives off, and gives it back up and down.
-   Surface temperature Ts = Te × (2 / (2 − e))^¼, with Te = 255 K (Earth seen from space). e = 0.77 gives about 14 °C. */
+   Surface temperature Ts = Te × (2 / (2 − e))^¼, with Te = 255 K (Earth seen from space). e = 0.756 gives 14 °C. */
 const Te=255,tsOf=e=>Te*Math.pow(2/(2-e),.25)-273.15;
-const MARKS=[[0,"none"],[.765,"1850"],[.783,"today"],[.81,"2× CO₂"]];
+/* The marks were placed so that "today" read 16 °C on the thermometer and only 1.0 °C above 1850, while the text said 15 °C
+   and 1.3 °C. They are now solved from the formula: 1850 at 14.0 °C (e = 0.756), today 1.3 °C warmer at 15.3 °C (0.7785;
+   WMO State of the Global Climate 2024: the 2015–2024 decade was about 1.24 °C above 1850–1900), and doubled CO₂ 3 °C
+   above 1850 at 17.0 °C (0.807; IPCC AR6 best estimate of equilibrium climate sensitivity, 3 °C). */
+const MARKS=[[0,"none"],[.756,"1850"],[.7785,"today"],[.807,"2× CO₂"]];
 /* the slider is stretched near today's value */
 const eOf=f=>f<=.5?f/.5*.7:.7+(f-.5)/.5*.15,fOf=e=>e<=.7?e/.7*.5:.5+(e-.7)/.15*.5;
 const halo='stroke="#0d1838" stroke-width="2" paint-order="stroke"';
@@ -95,7 +99,7 @@ mk("slgreenhouse",{title:"The greenhouse effect: a blanket of gases",cat:"climat
   h+='<text class="gh-t" x="35" y="150" text-anchor="middle" font-size="9" font-weight="900" fill="#d2452b"></text></g>';
   h+='<text class="gh-big" x="8" y="170" font-size="8" font-weight="900" fill="'+INK+'"></text>'+slider("e",14,192,276,"How much heat the air traps")+'<g class="gh-mk"></g>'+hint(8,213,"Drag: more greenhouse gas traps more heat, and the ground warms");
   return h},
- state:()=>({e:.783}),
+ state:()=>({e:.7785}),
  draw:(svg,s)=>{const e=s.e,ts=tsOf(e),G=5.67e-8*Math.pow(ts+273.15,4),back=e*G,out=239;/* W/m² */
   const W=v=>Math.max(.8,v/30);let a="";
   /* sunlight in, some reflected */
@@ -108,7 +112,7 @@ mk("slgreenhouse",{title:"The greenhouse effect: a blanket of gases",cat:"climat
   setHTML(svg,".gh-mol",m);const L=q(svg,".gh-layer");if(L)L.setAttribute("opacity",f2(.15+e*.45));
   const th=q(svg,".gh-th");if(th){const y=126-(ts+25)/70*92;th.setAttribute("y",f1(y));th.setAttribute("height",f1(132-y))}
   txt(svg,".gh-t",Math.round(ts)+" °C");
-  txt(svg,".gh-big",e<.05?"No greenhouse gases: Earth would be a frozen −18 °C":e<.775?"Before 1850: about 14 °C on average":e<.795?"Today: about 15 °C, 1.3 °C warmer than in 1850":"More CO₂: the ground keeps warming until heat out = sunlight in");
+  txt(svg,".gh-big",e<.05?"No greenhouse gases: Earth would be a frozen −18 °C":e<.767?"Before 1850: about 14 °C on average":e<.79?"Today: about 15 °C, 1.3 °C warmer than in 1850":"More CO₂: "+(tsOf(e)-14).toFixed(1)+" °C warmer than 1850, until heat out = sunlight in");
   let mk2="";MARKS.forEach(([v,t],i)=>{const x=14+fOf(v)*276;mk2+='<path d="M'+f1(x)+',196v3" stroke="#9fb2c4"/>'+T(f1(x),203,t,'text-anchor="'+(v<.1?"start":"middle")+'" font-size="5.2" fill="'+SUB+'"')});setHTML(svg,".gh-mk",mk2);
   setSlider(svg,"e",14,192,276,fOf(e),Math.round(e*100)+"% of the ground’s heat")},
  drag:(svg,s,n,x)=>{s.e=eOf(clamp((x-14)/276,0,1))}});
@@ -117,15 +121,16 @@ mk("slgreenhouse",{title:"The greenhouse effect: a blanket of gases",cat:"climat
 /* ---------------------------------------------------------------- ice pushes the crust down: isostasy */
 (function(){
 const RI=917,RM=3300;/* density of ice and of the mantle, kg/m³ */
-mk("slisostasy",{title:"Ice pushes the land down, and it springs back",cat:"plates",h:212,
+mk("slisostasy",{title:"Ice pushes the land down, and it springs back",cat:"plates",h:216,
  src:"Floating balance (isostasy): the crust sinks by ice thickness × 917/3300, about 28%. Rebound: Hudson Bay and the Gulf of Bothnia still rise up to about 1 cm a year (NASA GRACE; Lantmäteriet). Relaxation time about 4,000 years (Peltier). Not to scale.",
  defs:()=>rockDefs("dgIs")+'<linearGradient id="dgIsIce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9dcf2"/></linearGradient>',
  frame:()=>'<rect x="6" y="6" width="288" height="150" rx="8" fill="url(#dgIsSky)"/><g class="is-g"></g><rect x="6" y="6" width="288" height="150" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+
-  '<text class="is-big" x="8" y="168" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="is-sub" x="8" y="178" font-size="6.6" font-weight="700" fill="'+SUB+'"></text>'+slider("h",14,198,200,"Ice sheet thickness")+btn("melt",226,190,68,"Melt the ice")+hint(8,211,"Pile on ice, then melt it: the land rises for thousands of years"),
+  '<text class="is-big" x="8" y="168" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="is-sub" x="8" y="178" font-size="6.6" font-weight="700" fill="'+SUB+'"></text>'+slider("h",14,198,200,"Ice sheet thickness")+btn("melt",226,190,68,"Melt the ice")+hint(8,214,"Pile on ice, then melt it: the land rises for thousands of years"),
  state:()=>({H:2.5,sink:2.5*RI/RM,melt:0,yrs:0}),
  draw:(svg,s)=>{const sea=58,cy=74,k=24;/* px per km of depression (exaggerated) */const d=s.sink;let h="";
   const prof=x=>Math.exp(-Math.pow((x-150)/70,2));
-  h+='<rect x="6" y="'+sea+'" width="288" height="'+(156-sea)+'" fill="url(#'+uid(svg,"dgIsMant")+')"/>';
+  /* the mantle lies under the crust: it was drawn from y=58, so a band of red mantle showed above the land at both ends */
+  h+='<rect x="6" y="'+(cy+20)+'" width="288" height="'+(136-cy)+'" fill="url(#'+uid(svg,"dgIsMant")+')"/>';
   /* the crust bends down under the ice */
   const top=[],bot=[];for(let x=6;x<=294;x+=3){const dd=d*k*prof(x);top.push([x,cy+dd]);bot.push([x,cy+34+dd])}
   h+='<path d="'+ln(top)+'L'+ln(bot.slice().reverse()).slice(1)+'Z" fill="url(#'+uid(svg,"dgIsCrust")+')" stroke="#5a4030" stroke-width=".5"/>';
@@ -134,7 +139,7 @@ mk("slisostasy",{title:"Ice pushes the land down, and it springs back",cat:"plat
   if(s.melt){const wet=top.filter(p=>p[1]>cy+1.2);if(wet.length>2)h+='<path d="M'+f1(wet[0][0])+','+f1(cy+1.2)+ln(wet).replace("M","L")+'L'+f1(wet[wet.length-1][0])+','+f1(cy+1.2)+'Z" fill="#3d8fd1" opacity=".8"/>'}
   /* the ice */
   const ice=s.melt?Math.max(0,s.H*(1-s.yrs/600)):s.H;if(ice>.01){const ip=[];for(let x=40;x<=260;x+=3){const u=(x-150)/110,th=ice*22*Math.sqrt(Math.max(0,1-u*u));ip.push([x,cy+d*k*prof(x)-th])}
-   h+='<path d="'+ln(ip)+'L'+ln(top.filter(p=>p[0]>=40&&p[0]<=260).reverse()).slice(1)+'Z" fill="url(#'+uid(svg,"dgIsIce")+')" stroke="#8fc0e0" stroke-width=".6"/>'+T(150,f1(cy-ice*22+12),fmt(ice*1000)+" m of ice",'text-anchor="middle" font-size="6.8" font-weight="900" fill="#1d4f86"')}
+   h+='<path d="'+ln(ip)+'L'+ln(top.filter(p=>p[0]>=40&&p[0]<=260).reverse()).slice(1)+'Z" fill="url(#'+uid(svg,"dgIsIce")+')" stroke="#8fc0e0" stroke-width=".6"/>'+T(150,f1(cy+d*k-ice*22+12),fmt(ice*1000)+" m of ice",'text-anchor="middle" font-size="6.8" font-weight="900" fill="#1d4f86"')}
   /* raised beaches: old shorelines left high as the land rises */
   if(s.melt&&s.yrs>800){for(let i=0;i<3;i++){const x=70+i*8,y=cy+d*k*prof(x)-2-i*1.5;h+='<path d="M'+(x-4)+','+f1(y)+'h8" stroke="#e3cf98" stroke-width="1.6"/>'}h+=T(54,f1(cy-12),"old beaches, now high and dry",'font-size="5.8" font-weight="800" fill="'+INK+'"')}
   h+=T(12,cy+24,"crust",'font-size="6.4" font-weight="800" fill="#fff"')+T(12,148,"mantle: flows slowly, like very thick syrup",'font-size="6.2" font-weight="800" fill="#fff0de"');
@@ -188,7 +193,7 @@ mk("slseabreeze",{title:"Sea breeze by day, land breeze by night",cat:"climate",
    s from −1 (strong La Niña) to +1 (strong El Niño) adds the anomaly. lon in 0–360. */
 function sst(lon,lat,s){const x=(lon+360)%360,teq=x<=180?29.5:x<=250?29.5-(x-180)/70*4.5:25-(x-250)/30*3.5;
  let T=28.6-.0085*lat*lat-(28.6-teq)*Math.exp(-Math.pow(lat/6,2));if(lat<2&&lat>-24)T-=3*Math.exp(-Math.pow((x-284+lat*.25)/5,2));
- if(s>0)T+=-.9*s*Math.exp(-Math.pow((x-140)/25,2))*Math.exp(-Math.pow(lat/14,2))+2.6*s*Math.exp(-Math.pow((x-238)/34,2))*Math.exp(-Math.pow(lat/10,2))+1.2*s*Math.exp(-Math.pow((x-280)/8,2))*Math.exp(-Math.pow((lat+6)/10,2));
+ if(s>0)T+=-.9*s*Math.exp(-Math.pow((x-140)/25,2))*Math.exp(-Math.pow(lat/14,2))+2.6*s*Math.exp(-Math.pow((x-225)/40,2))*Math.exp(-Math.pow(lat/10,2))+2.4*s*Math.exp(-Math.pow((x-280)/8,2))*Math.exp(-Math.pow((lat+6)/10,2));
  else T+=1.7*s*Math.exp(-Math.pow((x-208)/36,2))*Math.exp(-Math.pow(lat/9,2))-.5*s*Math.exp(-Math.pow((x-135)/20,2))*Math.exp(-Math.pow(lat/14,2));return T}
 const RMP=ramp([[0,"#1d3f8a"],[.3,"#3f86c4"],[.5,"#7fd0d8"],[.65,"#f2e27a"],[.8,"#f5a03a"],[1,"#c8301e"]]);
 const MX0=6,MX1=294,MY0=6,MY1=70;let PJ=null;
@@ -197,14 +202,18 @@ const lonX=lon=>proj()([lon,0])[0];
 function sstImg(s){const w=144,h=32,P=proj();const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d"),im=x.createImageData(w,h);
  for(let j=0;j<h;j++)for(let i=0;i<w;i++){const ll=P.invert([MX0+(i+.5)/w*(MX1-MX0),MY0+(j+.5)/h*(MY1-MY0)]);const v=RMP((sst(ll[0],ll[1],s)-19)/12),k=(j*w+i)*4;im.data[k]=v[0];im.data[k+1]=v[1];im.data[k+2]=v[2];im.data[k+3]=255}
  x.putImageData(im,0,0);return c.toDataURL()}
-mk("slnino",{title:"El Niño and La Niña: the Pacific sloshes",cat:"climate",h:226,
+/* The strongest El Niño reached only +1.6 °C in the Niño 3.4 box, though the source line (and NOAA's Oceanic Niño Index:
+   +2.4 in 1997–98, +2.6 in 2015–16) says the strongest are about +2.4 °C. The warm anomaly is now centred a little further
+   west so the far end of the slider reaches +2.4 °C there, and warms the coast of Peru more (1997–98 brought about +4 °C
+   there: NOAA). Strength names follow NOAA's ONI thresholds (0.5, 1.5 and 2.0 °C). */
+mk("slnino",{title:"El Niño and La Niña: the Pacific sloshes",cat:"climate",h:236,
  src:"Pattern after NOAA Climate Prediction Center and NOAA PMEL (TAO array): warm pool about 29–30 °C, cold tongue off Peru about 20–24 °C; the thermocline about 150 m deep in the west and 50 m in the east. Strongest El Niños: 1997–98 and 2015–16, about +2.4 to +2.6 °C in the Niño 3.4 region.",
  frame:()=>{const P=proj();const land=landPath("nino",P,f=>{try{const b=d3.geoBounds(f);return b[1][1]>-40&&b[0][1]<40}catch(e){return false}});
   let h='<clipPath id="dgNiClip"><rect x="'+MX0+'" y="'+MY0+'" width="'+(MX1-MX0)+'" height="'+(MY1-MY0)+'" rx="6"/></clipPath><g clip-path="url(#dgNiClip)"><image class="ni-img" x="'+MX0+'" y="'+MY0+'" width="'+(MX1-MX0)+'" height="'+(MY1-MY0)+'" preserveAspectRatio="none"/><path d="'+land+'" fill="#cbbf98" stroke="#8e8462" stroke-width=".4"/>';
   const g=(d3.geoPath(P)(d3.geoGraticule().step([30,10])())||"").replace(/(\.\d)\d+/g,"$1");h+='<path d="'+g+'" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width=".4"/><path d="M'+MX0+','+f1(P([0,0])[1])+'H'+MX1+'" stroke="#fff" stroke-opacity=".6" stroke-width=".6" stroke-dasharray="3 2"/></g>';
   [["Australia",134,-24],["Indonesia",117,-1],["Peru",-74,-11],["Hawaii",-157,21]].forEach(([n,lo,la])=>{const p=P([lo,la]);h+=T(f1(p[0]),f1(p[1]),n,'text-anchor="middle" font-size="5.8" font-weight="800" fill="#4a4030"')});
   const n1=P([-170,5]),n2=P([-120,-5]);h+='<rect x="'+f1(n1[0])+'" y="'+f1(n1[1])+'" width="'+f1(n2[0]-n1[0])+'" height="'+f1(n2[1]-n1[1])+'" fill="none" stroke="#fff" stroke-width=".8" stroke-dasharray="2 1.5"/>'+T(f1(n1[0]+1),f1(n1[1]-2),"Niño 3.4",'font-size="5.4" font-weight="800" fill="#fff"');
-  h+='<g class="ni-x"></g><text class="ni-big" x="8" y="174" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("ni-tx",8,177,286,20,6.3)+slider("s",14,204,276,"La Niña  ←  neutral  →  El Niño")+hint(8,222,"Drag: watch the warm water, the winds and the rain move across the Pacific");
+  h+='<g class="ni-x"></g><text class="ni-big" x="8" y="174" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("ni-tx",8,177,286,26,6.3)+slider("s",14,214,276,"La Niña  ←  neutral  →  El Niño")+hint(8,232,"Drag: watch the warm water, the winds and the rain move across the Pacific");
   return h},
  state:()=>({s:0}),
  draw:(svg,s0)=>{const s=s0.s;if(s0._img!==Math.round(s*20)){s0._img=Math.round(s*20);const im=q(svg,".ni-img");if(im)im.setAttribute("href",sstImg(s0._img/20))}
@@ -228,9 +237,9 @@ mk("slnino",{title:"El Niño and La Niña: the Pacific sloshes",cat:"climate",h:
   h+=T(xe-2,SS-14,"Peru",'text-anchor="end" font-size="5.8" font-weight="800" fill="'+INK+'"')+T(xw+2,SS-14,"Indonesia",'font-size="5.8" font-weight="800" fill="'+INK+'"');
   setHTML(svg,".ni-x",h);
   const a=sst(-145,0,s)-sst(-145,0,0);
-  txt(svg,".ni-big",(a>=0?"+":"−")+Math.abs(a).toFixed(1)+" °C in the Niño 3.4 box · "+(s>.6?"strong El Niño, like 1997–98":s>.2?"El Niño":s<-.6?"strong La Niña, like 2010–11":s<-.2?"La Niña":"neutral"));
+  txt(svg,".ni-big",(a>=0?"+":"−")+Math.abs(a).toFixed(1)+" °C in the Niño 3.4 box · "+(a>=2?"very strong El Niño, like 1997–98":a>=1.5?"strong El Niño":a>=.5?"El Niño":a<=-1.5?"strong La Niña, like 2010–11":a<=-.5?"La Niña":"neutral"));
   setPara(svg,"ni-tx",s>.2?"Trade winds weaken, warm water slides east and the rain follows it: floods in Peru and Ecuador, drought in Indonesia and Australia, fewer fish off Peru.":s<-.2?"Stronger trade winds pile warm water in the west: heavy rain in Indonesia and Australia, a colder sea and drought from Peru to the southern USA.":"Trade winds push warm surface water west; off Peru cold water wells up, full of nutrients and fish.");
-  setSlider(svg,"s",14,204,276,(s+1)/2,s>.2?"El Niño":s<-.2?"La Niña":"neutral")},
+  setSlider(svg,"s",14,214,276,(s+1)/2,s>.2?"El Niño":s<-.2?"La Niña":"neutral")},
  drag:(svg,st,n,x)=>{st.s=clamp((x-14)/276,0,1)*2-1}});
 })();
 
@@ -273,9 +282,15 @@ mk("sluhi",{title:"The urban heat island",cat:"people",h:216,
 /* ---------------------------------------------------------------- the carbon cycle */
 (function(){
 /* Global Carbon Budget 2024 (Friedlingstein et al.): 2014–2023 averages, billion tonnes of carbon (GtC) a year:
-   fossil 9.7, land use 1.1; of that the air keeps about 46%, the ocean takes 26%, plants and soils 28%. 1 ppm CO₂ = 2.12 GtC. */
-const AF=.46,OF=.26,LF=.28,PPM=2.12;
-mk("slcarbon",{title:"The carbon cycle: where our CO₂ goes",cat:"climate",h:218,
+   fossil 9.7, land use 1.1; of that the air keeps about 46%, the ocean takes 26%, plants and soils 28%. 1 ppm CO₂ = 2.12 GtC.
+   The sea and the plants do not take a fixed share of what we add: they take up carbon because the air holds more CO₂ than
+   before industry (about 280 ppm), so their uptake grows with that excess (the "sink rate" of Raupach et al. 2014,
+   Biogeosciences 11, 3453). The model was a fixed 46% airborne fraction, so with no fossil fuel at all CO₂ still rose; in
+   fact it would start to fall (ZECMIP, MacDougall et al. 2020, Biogeosciences 17, 2987). Uptake is now
+   K × (ppm − 280), with K set so that at 425 ppm and today's 10.8 GtC the air keeps 46%; the sea gets 26/54 of it. */
+const AF=.46,OF=.26,LF=.28,PPM=2.12,P0=280,K=(1-AF)*10.8/(425-P0);
+const sinkOf=ppm=>K*Math.max(0,ppm-P0);
+mk("slcarbon",{title:"The carbon cycle: where our CO₂ goes",cat:"climate",h:234,
  src:"Stocks and flows: IPCC AR6 WG1 Figure 5.12 and the Global Carbon Budget 2024 (Friedlingstein et al.), rounded, in billion tonnes of carbon (GtC). Air today about 425 ppm CO₂ (NOAA, 2024).",
  defs:()=>'<linearGradient id="dgCcSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fcdf0"/><stop offset="1" stop-color="#e6f3fb"/></linearGradient><linearGradient id="dgCcSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d8fd1"/><stop offset="1" stop-color="#173f6e"/></linearGradient>'+
   pattern("dgCcSoil",speckle("soil","#6b4a32",["#4f3422","#86603f","#3d2a1c"],420,1.3),20,20),
@@ -285,26 +300,29 @@ mk("slcarbon",{title:"The carbon cycle: where our CO₂ goes",cat:"climate",h:21
   h+='<path d="M14,128 h60 v6 h-60Z" fill="#1b1b1b" opacity=".85"/><path d="M84,136 q20,-6 40,0 v6 q-20,4 -40,0Z" fill="#2a2a2a"/>'+T(18,124,"coal, oil, gas",'font-size="5.8" font-weight="800" fill="#fff"');
   h+='<rect x="130" y="62" width="14" height="22" fill="#8a8a8a"/><rect x="134" y="50" width="4" height="14" fill="#6a6a6a"/><g class="cc-smoke"></g>';
   h+='<g class="cc-a"></g><g class="cc-st"></g>';
-  h+='<text class="cc-big" x="8" y="164" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="cc-sub" x="8" y="174" font-size="6.4" font-weight="700" fill="'+SUB+'"></text>'+slider("e",14,196,200,"Fossil fuels burnt each year")+btn("play",226,188,68,"▶ 10 years")+hint(8,214,"Drag the burning: about half the extra carbon stays in the air");
+  h+='<text class="cc-big" x="8" y="164" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="cc-sub" x="8" y="174" font-size="6.4" font-weight="700" fill="'+SUB+'"></text>'+slider("e",14,196,200,"Fossil fuels burnt each year")+btn("play",226,188,68,"▶ 10 years")+hint(8,214,"Drag the burning: about half the extra carbon stays in the air")+btn("goal",8,219,92,"Goal: stop the rise")+'<text class="cc-gm" x="106" y="229" font-size="6.4" font-weight="800" fill="#b04a14">How much less would we have to burn?</text>';
   return h},
  state:()=>({e:9.7,yr:2025,ppm:425,play:0}),
  draw:(svg,s)=>{const E=s.e+1.1,W=v=>Math.max(.8,Math.sqrt(v)*.75);let a="";const lab=(x,y,t,anc)=>T(x,y,t,'font-size="5.8" font-weight="800" fill="'+INK+'" stroke="#fff" stroke-width="1.8" stroke-opacity=".8" paint-order="stroke"'+(anc?' text-anchor="'+anc+'"':""));
   /* natural flows, roughly in balance */
-  a+=arrow(34,30,34,60,"#3f8a3a",W(113),5)+arrow(50,60,50,30,"#8a6a3a",W(111),5)+lab(58,36,"plants take in 113")+lab(58,46,"breathing and rot 111");
+  a+=arrow(34,30,34,60,"#3f8a3a",W(113),5)+arrow(50,60,50,30,"#8a6a3a",W(111),5)+lab(58,36,"plants take in 113")+lab(58,46,"breathe, rot 111");
   a+=arrow(240,40,240,88,"#2f6ea8",W(80),5)+arrow(256,88,256,40,"#5a8ab8",W(78),5)+lab(248,34,"sea: 80 in, 78 out","middle");
   /* our extra flows */
-  a+=arrow(137,50,146,25,"#3a3a3a",W(E)*1.4,6)+lab(150,42,"we add "+(Math.round(E*10)/10));
-  if(E>.2){a+=arrow(184,28,214,96,"#d2452b",W(E*OF)*1.4,5)+T(176,104,"+"+(Math.round(E*OF*10)/10)+" into the sea",'font-size="5.8" font-weight="800" fill="#fff"')+arrow(118,28,100,70,"#d2452b",W(E*LF)*1.4,5)+lab(104,78,"+"+(Math.round(E*LF*10)/10)+" into plants, soil")}
+  const SK=sinkOf(s.ppm),so=SK*OF/(OF+LF),sl=SK*LF/(OF+LF),net=E-SK,r1=v=>Math.round(v*10)/10;
+  a+=arrow(137,50,146,25,"#3a3a3a",W(E)*1.4,6)+lab(147,60,"we add "+r1(E));
+  if(SK>.2){a+=arrow(184,28,214,96,"#d2452b",W(so)*1.4,5)+T(176,104,"+"+r1(so)+" into the sea",'font-size="5.8" font-weight="800" fill="#fff"')+arrow(122,26,106,70,"#d2452b",W(sl)*1.4,5)+lab(104,78,"+"+r1(sl)+" into plants, soil")}
   setHTML(svg,".cc-a",a);
   let sm="";for(let i=0;i<Math.round(s.e/2);i++)sm+='<circle cx="'+f1(136+i*3+rnd(i)*4)+'" cy="'+f1(46-i*4)+'" r="'+f1(2.5+i*.7)+'" fill="#7a7a7a" opacity="'+f2(.55-i*.06)+'"/>';setHTML(svg,".cc-smoke",sm);
   const box=(x,y,t,v)=>'<g transform="translate('+x+','+y+')"><rect width="58" height="17" rx="5" fill="#fff" opacity=".9"/>'+T(4,7,t,'font-size="5.2" fill="'+SUB+'"')+T(4,14.5,v,'font-size="6.6" font-weight="900" fill="'+INK+'"')+'</g>';
-  setHTML(svg,".cc-st",box(118,6,"air",fmt(s.ppm*PPM)+" GtC")+box(10,96,"plants",fmt(450)+" GtC")+box(76,96,"soils",fmt(1700)+" GtC")+box(232,112,"deep ocean","37,000 GtC")+box(232,90,"surface ocean","900 GtC")+box(84,140,"fossil fuels left","~1,000+ GtC").replace('fill="#fff" opacity=".9"','fill="#fff" opacity=".75"'));
-  txt(svg,".cc-big",s.yr+": "+Math.round(s.ppm)+" ppm CO₂ · rising "+(E*AF/PPM).toFixed(1)+" ppm a year");
-  txt(svg,".cc-sub","Of "+(Math.round(E*10)/10)+" GtC we add each year, the air keeps "+(Math.round(E*AF*10)/10)+" (46%), the sea takes 26%, plants and soils 28%");
+  setHTML(svg,".cc-st",box(118,6,"air",fmt(s.ppm*PPM)+" GtC")+box(10,96,"plants",fmt(450)+" GtC")+box(76,96,"soils",fmt(1700)+" GtC")+box(232,112,"deep ocean","37,000 GtC")+box(232,90,"surface ocean","900 GtC")+box(110,131,"fossil fuels left","~1,000+ GtC").replace('fill="#fff" opacity=".9"','fill="#fff" opacity=".75"'));
+  const rate=net/PPM;
+  txt(svg,".cc-big",s.yr+": "+Math.round(s.ppm)+" ppm CO₂ · "+(Math.abs(rate)<.05?"holding steady":(rate>0?"rising ":"falling ")+Math.abs(rate).toFixed(1)+" ppm a year"));
+  txt(svg,".cc-sub",net>=0?"Of "+r1(E)+" GtC we add each year, the air keeps "+r1(net)+" ("+Math.round(net/E*100)+"%); the sea and plants take the rest":"We add "+r1(E)+" GtC; the sea and plants take "+r1(SK)+", more than we add, so the air loses "+r1(-net));
+  const gm=q(svg,".cc-gm");if(gm){if(s.goal2){const ok=Math.abs(rate)<.05,cut=Math.round((1-s.e/9.7)*100);gm.textContent=ok?"Done! "+r1(s.e)+" GtC, "+cut+"% less than now, stops the rise (for a while)":"CO₂ is "+(rate>0?"still rising: burn less":"falling: you can burn a bit more");gm.setAttribute("fill",ok?"#2f7a3a":"#b04a14")}btnOn(svg,"goal",!!s.goal2)}
   setSlider(svg,"e",14,196,200,s.e/20,(Math.round(s.e*10)/10)+" GtC a year");btnOn(svg,"play",!!s.play)},
  drag:(svg,s,n,x)=>{s.e=clamp((x-14)/200,0,1)*20},
- act:(svg,s,a)=>{if(a==="play"){if(!s.play){s.play=1;s.goal=s.yr+10}return true}},
- tick:(svg,s,dt)=>{if(!s.play)return;const d=Math.min(dt*3,s.goal-s.yr);s.yr+=d;s.ppm+=d*(s.e+1.1)*AF/PPM;if(s.yr>=s.goal-1e-6){s.yr=Math.round(s.yr);s.play=0}s.yr=Math.round(s.yr*100)/100;DG.slcarbon._d(svg,s)}});
+ act:(svg,s,a)=>{if(a==="play"){if(!s.play){s.play=1;s.goal=s.yr+10}return true}if(a==="goal"){s.goal2=!s.goal2;s.yr=2025;s.ppm=425;s.play=0;return true}},
+ tick:(svg,s,dt)=>{if(!s.play)return;const d=Math.min(dt*3,s.goal-s.yr);s.yr+=d;s.ppm+=d*(s.e+1.1-sinkOf(s.ppm))/PPM;if(s.yr>=s.goal-1e-6){s.yr=Math.round(s.yr);s.play=0}s.yr=Math.round(s.yr*100)/100;DG.slcarbon._d(svg,s)}});
 {const D=DG.slcarbon,d=D._d;D._d=(svg,s)=>{const y=s.yr;s.yr=Math.floor(y);d(svg,s);s.yr=y}}
 })();
 
@@ -519,9 +537,12 @@ mk("slcontours",{title:"Contour lines: reading hills on a flat map",cat:"maps",h
   for(let k=1;k<=N2;k++){const g=Math.abs(hs[k]-hs[k-1])/(L*1000/N2);steep=Math.max(steep,g)}
   const X0=26,X1=290,Y0=126,Y1=178,yv=v=>Y1-(v/500)*(Y1-Y0);hs.forEach((v,k)=>pts.push([X0+k/N2*(X1-X0),yv(v)]));
   let x='<rect x="'+X0+'" y="'+Y0+'" width="'+(X1-X0)+'" height="'+(Y1-Y0)+'" fill="#eef3f8"/>';[0,100,200,300,400,500].forEach(v=>{x+='<path d="M'+X0+','+f1(yv(v))+'H'+X1+'" stroke="#d6dee8" stroke-width=".5"/>'+T(X0-3,f1(yv(v)+2),v,'text-anchor="end" font-size="5.2" fill="'+SUB+'"')});
-  x+='<path d="'+ln(pts)+'L'+X1+','+Y1+'L'+X0+','+Y1+'Z" fill="#c9b48a"/><path d="'+ln(pts)+'" fill="none" stroke="#6a4a2a" stroke-width="1.2"/>'+T(X0,Y1+8,"A",'font-size="6.6" font-weight="900" fill="'+ACC+'"')+T(X1,Y1+8,"B",'text-anchor="end" font-size="6.6" font-weight="900" fill="'+ACC+'"')+T((X0+X1)/2,Y1+8,"cross-section A–B · "+L.toFixed(1)+" km · heights ×"+Math.max(1,Math.round(((Y1-Y0)/500)/((X1-X0)/(L*1000))*10)/10),'text-anchor="middle" font-size="5.6" fill="'+SUB+'"');
+  x+='<path d="'+ln(pts)+'L'+X1+','+Y1+'L'+X0+','+Y1+'Z" fill="#c9b48a"/><path d="'+ln(pts)+'" fill="none" stroke="#6a4a2a" stroke-width="1.2"/>'+T(X0,Y1+8,"A",'font-size="6.6" font-weight="900" fill="'+ACC+'"')+T(X1,Y1+8,"B",'text-anchor="end" font-size="6.6" font-weight="900" fill="'+ACC+'"')+T((X0+X1)/2,Y1+8,"cross-section A–B · "+L.toFixed(1)+" km · heights ×"+Math.max(1,Math.round(((Y1-Y0)/500)/((X1-X0)/(Math.max(L,.01)*1000))*10)/10),'text-anchor="middle" font-size="5.6" fill="'+SUB+'"');
   setHTML(svg,".co-x",x);
-  setHTML(svg,".co-p",T(216,86,"Steepest on A–B:",'font-size="5.8" fill="'+SUB+'"')+T(216,97,"1 in "+Math.max(1,Math.round(1/Math.max(steep,.001))),'font-size="8.6" font-weight="900" fill="'+INK+'"')+T(216,107,"("+Math.round(steep*100)+"% gradient)",'font-size="5.8" fill="'+SUB+'"'));
+  /* with A on B there is no slope to measure (it showed "1 in NaN"); "1 in N" is now rounded to match the % shown
+     (43% had read "1 in 2", which is 50%) */
+  const r1=1/Math.max(steep,.001),one=r1<10?(Math.round(r1*10)/10).toFixed(1).replace(/\.0$/,""):String(Math.round(r1));
+  setHTML(svg,".co-p",T(216,86,"Steepest on A–B:",'font-size="5.8" fill="'+SUB+'"')+(L<.05?T(216,97,"—",'font-size="8.6" font-weight="900" fill="'+INK+'"')+T(216,107,"pull A and B apart",'font-size="5.8" fill="'+SUB+'"'):T(216,97,"1 in "+one,'font-size="8.6" font-weight="900" fill="'+INK+'"')+T(216,107,"("+Math.round(steep*100)+"% gradient)",'font-size="5.8" fill="'+SUB+'"')));
   ["i10","i20","i50"].forEach(k=>btnOn(svg,k,s.iv===+k.slice(1)))},
  drag:(svg,s,n,x,y)=>{const p=[clamp(x,MX0+2,MX0+MW-2),clamp(y,MY0+2,MY0+MH-2)];if(n==="A")s.A=p;else if(n==="B")s.B=p;else return false},
  act:(svg,s,a)=>{const m=/^i(\d+)$/.exec(a);if(m){s.iv=+m[1];return true}}});
@@ -537,7 +558,7 @@ mk("sllongshore",{title:"Longshore drift: how a beach moves sideways",cat:"water
   '<path d="M6,'+CY+' H236 C246,'+CY+' 252,'+(CY+6)+' 254,146 H6Z" fill="url(#dgLsSand)"/><path d="M6,'+(CY+16)+' H226 C240,'+(CY+16)+' 244,'+(CY+30)+' 244,146 H6Z" fill="url(#dgLsGrass)"/>'+
   '<path d="M254,146 C262,128 276,124 294,122 V146Z" fill="#6aa0c8"/>'+T(276,140,"estuary",'text-anchor="middle" font-size="5.8" font-weight="800" fill="#fff"')+
   '<g class="ls-s"></g><g class="ls-g"></g><g class="ls-p"></g></g><rect x="6" y="6" width="288" height="140" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+
-  '<text class="ls-big" x="8" y="158" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("ls-tx",8,161,286,22,6.3)+slider("a",14,196,140,"Wave angle")+btn("gro",162,188,62,"Add groynes")+btn("play",230,188,64,"▶ Play")+hint(8,213,"Change the angle of the waves and watch the pebble and the spit"),
+  '<text class="lsd-big" x="8" y="158" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("ls-tx",8,161,286,22,6.3)+slider("a",14,196,140,"Wave angle")+btn("gro",162,188,62,"Add groynes")+btn("play",230,188,64,"▶ Play")+hint(8,213,"Change the angle of the waves and watch the pebble and the spit"),
  state:()=>({a:35,gro:0,play:1,t:0,spit:10,ph:0,sand:0}),
  draw:(svg,s)=>{const th=s.a*R,rate=Math.sin(2*th);/* drift: + is to the right */let w="";
   /* wave crests: lines at the wave angle, moving towards the shore */
@@ -555,7 +576,7 @@ mk("sllongshore",{title:"Longshore drift: how a beach moves sideways",cat:"water
   const cyc=(s.ph*.8)%1,step=26*rate,x0=(s.t*rate*10)%180;let px=40+((x0+360)%180),py;if(cyc<.5){const u=cyc/.5;px+=step*u;py=CY+10-u*14}else{const u=(cyc-.5)/.5;px+=step;py=CY-4+u*14}
   let tr="";for(let k=0;k<3;k++){const bx=px-step*(k+1);tr+='<path d="M'+f1(bx)+','+(CY+10)+' l'+f1(step)+',-14 l0,14" fill="none" stroke="#7a5a2a" stroke-width=".7" stroke-dasharray="2 1.5" opacity="'+f2(.7-k*.2)+'"/>'}
   setHTML(svg,".ls-s",(s.gro?"":tr+'<circle cx="'+f1(px)+'" cy="'+f1(py)+'" r="2.6" fill="#8a7a6a" stroke="#fff" stroke-width=".7"/>')+'<g transform="translate(118,'+(CY+30)+')">'+arrow(Math.sign(rate)*-24,0,Math.sign(rate)*24,0,ACC,1.6+Math.abs(rate)*2,5)+T(0,-4,"net drift",'text-anchor="middle" font-size="6" font-weight="800" fill="'+INK+'"')+'</g>');
-  txt(svg,".ls-big",Math.abs(s.a)<4?"Waves head-on: sand just moves up and down the beach":"Drift to the "+(rate>0?"right":"left")+" at "+Math.round(Math.abs(rate)*100)+"% of the most it can be");
+  txt(svg,".lsd-big",Math.abs(s.a)<4?"Waves head-on: sand just moves up and down the beach":"Drift to the "+(rate>0?"right":"left")+" at "+Math.round(Math.abs(rate)*100)+"% of the most it can be");
   setPara(svg,"ls-tx",s.gro?"Groynes catch the sand on the side the drift comes from; the beach beyond them is starved of sand and wears away.":"Where the coast turns, the drift carries on into open water and builds a spit across the estuary; its end curls round in the waves.");
   setSlider(svg,"a",14,196,140,(s.a+60)/120,Math.round(Math.abs(s.a))+"° "+(s.a>0?"from the left":s.a<0?"from the right":""));btnOn(svg,"gro",!!s.gro,s.gro?"Groynes in":"Add groynes");btnOn(svg,"play",!!s.play,s.play?"❚❚ Pause":"▶ Play")},
  drag:(svg,s,n,x)=>{s.a=clamp((x-14)/140,0,1)*120-60},
