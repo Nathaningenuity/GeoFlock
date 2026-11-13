@@ -113,7 +113,26 @@ const FIX={
      toggles, California and Taupō round the back. Buttons (part 2) turn the globe to each place; the stop opens on Kenya */
   "Living with volcanoes":S=>{DROPPH(S,/^(Geothermal power|The Blue Lagoon|Mount Bromo)/);DROP(S,/^(Iceland|Indonesia|Philippines)$/);VIEW(S,[45,5,1])}
  },
- caves:{},
+ caves:{
+  /* nine photos round the world: Waitomo, the cenote and Harrison's Cave round the back, Postojna, Lascaux and Jeita
+     under the card, Tsingy below the screen (and, as index.html builds the squares by position, Lascaux's square hung on
+     Madagascar). Each that has a stop has its own; the opening keeps Phong Nha and Ha Long, beside the card */
+  "The world underground":S=>DROPPH(S,/^(Waitomo|Postojna|Lascaux|A cenote|Harrison|Jeita|Tsingy)/),
+  /* the New Zealand label hung below the screen */
+  "Glow-worm grottoes":S=>DROP(S,/^New Zealand$/),
+  /* the United States label sat on the globe's edge by the zoom buttons */
+  "Carlsbad Caverns":S=>DROP(S,/^United States$/),
+  /* the Mexico label hung on the globe's edge below the screen */
+  "Cave of the Crystals":S=>DROP(S,/^Mexico$/),
+  /* the Mexico label sat under the card and Tulum's under the map key */
+  "Cenotes of Yucatán":S=>{DROP(S,/^Mexico$/);VIEW(S,[-87.4,20.7,6])},
+  /* the Malta photo sat under the map key and the Cyprus photo (a place the stop does not mention) off the globe's
+     edge; Malta's Blue Grotto stays in the text, beside Capri's label */
+  "Caves the sea carved":S=>{DROPPH(S,/^(Blue Grotto, Malta|Sea caves of Cyprus)/);VIEW(S,[12,47,2])},
+  /* framed on Luzon, 400 km north of the river: Puerto Princesa's photo sat at the bottom of the screen. The
+     underground river is at about 10.2° N, 118.9° E (Wikipedia, "Puerto Princesa Subterranean River National Park") */
+  "Rivers underground":S=>VIEW(S,[119.5,10.4,6])
+ },
  weather:{}
 };
 
