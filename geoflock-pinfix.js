@@ -19,7 +19,11 @@
    lock with a getter are replaced with Object.defineProperty. Load it after the other tour patches. */
 (function(){
 "use strict";
-const lock=(o,k,v)=>Object.defineProperty(o,k,{configurable:true,enumerable:true,get(){return v},set(){}});
+/* a field another file has made non-configurable (geoflock-polish-rv*.js lock framing and pin fields) cannot be
+   redefined; write through its setter instead (some pass the value on, others ignore it), so no error is thrown,
+   as geoflock-review-phys.js's nc() does */
+const lock=(o,k,v)=>{const d=Object.getOwnPropertyDescriptor(o,k);if(d&&d.configurable===false){try{o[k]=v}catch(e){}return}
+ Object.defineProperty(o,k,{configurable:true,enumerable:true,get(){return v},set(){}})};
 const strip=s=>String(s==null?"":s).replace(/​/g,"").trim();
 const libIdx=f=>{try{if(typeof gfMergeExtra==="function")gfMergeExtra()}catch(e){}try{return PS_PHOTO_DATA.findIndex(x=>x&&x.f===f&&x.d)}catch(e){return -1}};
 const OR="#d9682b";
