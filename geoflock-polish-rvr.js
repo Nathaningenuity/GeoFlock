@@ -144,6 +144,34 @@ FIX.hcoldwar={
   /* the card was on the right, with Gdańsk and Hungary's border on the globe's far edge */
   "The Wall falls":S=>VIEW(S,[18,51,2.2],"left")
 };
+FIX.hsince91={
+  /* the 9/11 Memorial photo's point was under the card, Greenland's sat on the year pill and Shenzhen's was round the
+     back of the globe: all three have stops of their own */
+  "A new world":S=>{DROPPH(S,/^(9\/11|Greenland|Shenzhen)/);VIEW(S,[35,35,1],"left")},
+  /* the card was on the right, with the map key over its title */
+  "One country becomes fifteen":S=>VIEW(S,[60,50,1.5],"left"),
+  /* the Semipalatinsk test site and the dashed route to it were on the globe's edge */
+  "Giving up the bomb":S=>VIEW(S,[56,50,1.7],"left"),
+  /* the former Yugoslavia sat against the globe's right edge */
+  "Yugoslavia breaks apart":S=>VIEW(S,[21,44,5.73],"left"),
+  /* closer in, so the capitals that light up on the EU slider in part 2 do not pile on top of each other */
+  "Europe grows together":S=>VIEW(S,[12,48,2.1],"left"),
+  /* the card was on the right, over Kabul, and the 9/11 Memorial photo hung off the globe's top edge: New York and Kabul
+     are 10,800 km apart, so the stop opens on New York and buttons in part 2 turn the globe to Afghanistan */
+  "September 11":S=>{DROP(S,/^(Kabul|Afghanistan)$/);VIEW(S,[-74,40.7,1.2],"left")},
+  /* the Suez Canal's label sat on the year pill at the globe's top edge */
+  "Pirates of the Gulf of Aden":S=>VIEW(S,[45,17,2.2],"left"),
+  /* Damascus and the Zaatari camp photo were crowded on the globe's right edge */
+  "The Arab Spring":S=>VIEW(S,[25,30,1.6],"left"),
+  /* the card was on the right, with the map key over its close button, and Abyei on the globe's edge */
+  "The newest country":S=>VIEW(S,[31,10,3.5],"left"),
+  /* the card was on the right, with the map key over its close button */
+  "Brexit":S=>VIEW(S,[0,54.5,6],"left"),
+  /* the Prague and Kraków photos hung off their points, which lay under the card */
+  "COVID-19":S=>{DROPPH(S,/^(Charles Bridge|Kraków)/);VIEW(S,[100,30,1],"left")},
+  /* Caracas, where many of the walkers came from, was off the globe's edge */
+  "The Darién Gap":S=>VIEW(S,[-74.5,8.5,3],"left")
+};
 const applied=new WeakSet();
 /* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
    is in (see XF): if this file locked the field first, the portrait could not be added */
@@ -286,12 +314,14 @@ function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cf
    - hwars | "War in the Pacific": Pearl Harbor and Singapore are 10,800 km apart; buttons turn the globe from one
              battle to the next, in order, and ring it.
    - hwars | "Now explore": put eight moments of the two wars in order.
-   - hcoldwar | "Partition of India": guess how many people had to move, then see.
-   - hcoldwar | "The space race": eight firsts: the Soviet Union or the United States?
+   - hcoldwar | "Partition of India": guess how long the border's lawyer had to draw it, then see.
+   - hcoldwar | "The space race": eight firsts: the Soviet Union or the United States? Each answer turns the globe to
+                its launch site.
    - hcoldwar | "Now explore": put eight moments of the Cold War in order.
    - hsince91 | "Europe grows together": a year slider (or Play) from 1993 to 2020; each capital lights up as its
                 country joins the EU (and London greys out in 2020).
-   - hsince91 | "Brexit": guess the Leave vote, then see.
+   - hsince91 | "September 11": buttons turn the globe from New York to Afghanistan, 10,800 km away.
+   - hsince91 | "Brexit": guess the turnout, then see.
    - hsince91 | "Now explore": put eight moments since 1991 in order. */
 const RE_KM=6371.0088;
 
@@ -395,12 +425,13 @@ const BINS_SPACE=BINS({tours:["hcoldwar"],title:"The space race",tip:"Who got th
   ["The first spacewalk",0,"Alexei Leonov floated outside his capsule for about 12 minutes in March 1965."]],
  after:(r,N)=>"The Soviet Union won most of the early firsts; the United States won the race to the Moon, the prize that mattered most to both."});
 
-/* ======================================================================== 6. How many moved? (hcoldwar)
-   The stop's own figures: about 15 million people moved at Partition in 1947, and between 200,000 and 2 million were
-   killed. */
-const GUESS_PART=GUESS({tours:["hcoldwar"],title:"Partition of India",tip:"Guess first: how many people had to leave their homes when British India was split?",
- min:0.5,max:30,step:0.5,start:3,fmt:v=>(v<1?Math.round(v*1000)+" thousand":(+v).toLocaleString("en-GB")+" million"),answer:15,close:3,
- after:"Hindus and Sikhs fled to India and Muslims to Pakistan, in one of the largest migrations in history. Somewhere between 200,000 and 2 million people were killed on the way."});
+/* ======================================================================== 6. How long to split a subcontinent? (hcoldwar)
+   (the stop's own headline gives the 15 million who moved, so the guess is about the border instead) Wikipedia,
+   "Radcliffe Line": Cyril Radcliffe arrived in India on 8 July 1947 and was "given just five weeks to decide on a
+   border"; the line was "not published until 17 August 1947, two days after the grant of independence". */
+const GUESS_PART=GUESS({tours:["hcoldwar"],title:"Partition of India",tip:"Guess first: how long did the British lawyer get to draw the new border?",
+ min:1,max:52,step:1,start:26,fmt:v=>(+v)+((+v)===1?" week":" weeks"),answer:5,close:2,
+ after:"Cyril Radcliffe had never been to India. He drew the line in about five weeks, mostly from maps and census tables, and it was published two days after independence, so millions did not know which country they were in."})
 
 /* ======================================================================== 7. Put the Cold War in order (hcoldwar)
    The tour's own dates: the Berlin airlift 1948, Korea invaded June 1950, Suez 1956, Sputnik 1957, the Berlin Wall
@@ -446,11 +477,21 @@ const EUG={tours:["hsince91"],title:"Europe grows together",globe:true,
     svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:out?5:6,class:out?"rvr-euo":"rvr-eud"})}
    putTag(L,L.tags[i],(fresh||(out&&L.t-p[4]<1.5))?q:null,esc(p[0]),9)})}};
 
-/* ======================================================================== 9. How close was Brexit? (hsince91)
-   The stop's own result: 51.9% Leave to 48.1% Remain, 23 June 2016 (Electoral Commission). */
-const GUESS_BREXIT=GUESS({tours:["hsince91"],title:"Brexit",tip:"Guess first: what share of voters chose Leave in 2016?",
- min:30,max:70,step:0.5,start:65,fmt:v=>(+v).toFixed(1)+"%",answer:51.9,close:3,
- after:"Leave won by under four percentage points: about 17.4 million votes to 16.1 million. England and Wales voted Leave; Scotland and Northern Ireland voted Remain."});
+/* ======================================================================== 8b. From New York to Kabul (hsince91)
+   The stop's own facts: the first plane struck at 8:46 a.m.; within a month a US-led coalition invaded Afghanistan,
+   where al-Qaeda was based; Western troops stayed almost 20 years and left in August 2021. 10,800 km is the
+   great-circle distance from New York to Kabul. */
+const TURN_911=TURNER({tours:["hsince91"],title:"September 11",mark:true,tip:"New York and Kabul are 10,800 km apart. Turn the globe from one to the other.",
+ places:[["New York",-74.01,40.71,1.2,"The first plane struck the World Trade Center at 8:46 a.m., and much of the world watched the day unfold live.",1],
+  ["Afghanistan",67.7,33.9,1.4,"Al-Qaeda was based here. Within a month a US-led coalition invaded and overthrew the Taliban; Western troops stayed almost 20 years."]]});
+
+/* ======================================================================== 9. How many voted? (hsince91)
+   (the stop's headline gives the 51.9% result, so the guess is the turnout) Wikipedia, "2016 United Kingdom European
+   Union membership referendum", from the Electoral Commission: 72.21% of 46,500,001 registered voters; Leave
+   17,410,742, Remain 16,141,241. */
+const GUESS_BREXIT=GUESS({tours:["hsince91"],title:"Brexit",tip:"Guess first: what share of the UK’s voters turned out to vote?",
+ min:30,max:100,step:1,start:50,fmt:v=>(+v).toFixed(+v%1?1:0)+"%",answer:72.2,close:5,
+ after:"About 33.6 million people voted, nearly three in every four on the register. Leave won by about 1.3 million votes: 17.4 million to 16.1 million."});
 
 /* ======================================================================== 10. Put the years since 1991 in order (hsince91)
    The tour's own dates: the Soviet flag lowered 25 December 1991, Srebrenica July 1995, 11 September 2001, Lehman
@@ -463,7 +504,7 @@ const SORT_91=SORT({tours:["hsince91"],title:"Now explore",
  after:(r,N)=>"Three decades, from the end of one superpower to the biggest war in Europe since 1945. Drag the History map’s timeline: most borders have barely moved since 1995."});
 
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[TURN_PAC,SORT_WW,JULY,TURN_FLU,BINS_SPACE,GUESS_PART,SORT_CW,EUG,GUESS_BREXIT,SORT_91];
+const DEFS=[TURN_PAC,SORT_WW,JULY,TURN_FLU,BINS_SPACE,GUESS_PART,SORT_CW,EUG,TURN_911,GUESS_BREXIT,SORT_91];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
