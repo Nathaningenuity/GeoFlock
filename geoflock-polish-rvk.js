@@ -71,6 +71,16 @@ const FIX={
   "Global culture, local culture":S=>{VIEW(S,[8,42,1.6],"left");FILT(S,"pins",P=>(Array.isArray(P)?P:[]).filter(p=>!/^France: 40%/.test(strip(pinText(p)))).concat([[[2.35,46.6],"France: 40% of radio songs in French","point"]]))}
  },
  hg3b:{
+  /* India, half the comparison, sat at the globe's edge by the zoom buttons */
+  "Two ways of judging":S=>VIEW(S,[62,16,1.5],"left"),
+  /* the Varanasi photo was off the globe's edge, beside the zoom buttons */
+  "Sacred spaces":S=>VIEW(S,[66,26,1.35],"left"),
+  /* Istanbul, the second example, sat at the globe's edge */
+  "Layers of history":S=>VIEW(S,[17,40,1.8],"left"),
+  /* the card stood on the right, over Notre-Dame, and New York sat at the globe's left edge by the map's buttons */
+  "Sense of place":S=>VIEW(S,[-38,44,1.1],"left"),
+  /* the Singapore Chinatown photo hung off the bottom of the globe */
+  "Ethnic neighbourhoods":S=>VIEW(S,[108,9,1.9],"left")
  }
 };
 const applied=new WeakSet();
@@ -129,7 +139,9 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg3a | "Cultural hearths": the six hearths circle the globe; buttons turn it to each.
    - hg3a | "Expansion diffusion": drag the years from 610 to 750 and watch Muslim rule spread from Arabia.
    - hg3a | "Global culture, local culture": relocation, contagious, hierarchical or stimulus? Sort eight examples.
-   - hg3b | "Folk and popular culture": folk or popular? Sort eight things. */
+   - hg3b | "Folk and popular culture": folk or popular? Sort eight things.
+   - hg3b | "A copy of Hallstatt": the original and its two Chinese copies are nearly 9,000 km apart; buttons turn the globe.
+   - hg3b | "Two ways of judging": ethnocentric or relativist? Sort six reactions (the stop was flagged as abstract). */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -190,7 +202,9 @@ function turnDef(tour,title,o){return{tour,title,globe:true,turn:true,tip:o.tip,
  tick(L,dt){L.t+=dt;if(L.at>=0)L.ring.setAttribute("r",(9+4*Math.abs(Math.sin(L.t*3))).toFixed(1))},
  draw(L){const f=L.at>=0?o.places[L.at]:null,q=f?proj(L,[f[1],f[2]]):null,qq=f?proj(L,[f[1],f[2]],1):null;
   if(q){L.ring.style.display="";L.ring.setAttribute("cx",q[0].toFixed(1));L.ring.setAttribute("cy",q[1].toFixed(1))}else L.ring.style.display="none";
-  if(qq){L.tag.style.display="";if(L.tag._h!==f[0]){L.tag.textContent=f[0];L.tag._h=f[0]}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+16)+"px"}else L.tag.style.display="none"},
+  /* no tag where the stop already labels the place */
+  if(f&&L._tf!==f){L._tf=f;L._dup=false;try{const S=psSteps()[ps.i],P=[].concat(S.pins||[],S.phPins||[]);L._dup=P.some(p=>{let ll=Array.isArray(p)?p[0]:p&&p.at;if(Array.isArray(ll&&ll[0]))ll=ll[0];return ll&&Math.abs(ll[0]-f[1])<.6&&Math.abs(ll[1]-f[2])<.6})}catch(e){}}
+  if(qq&&!L._dup){L.tag.style.display="";if(L.tag._h!==f[0]){L.tag.textContent=f[0];L.tag._h=f[0]}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+16)+"px"}else L.tag.style.display="none"},
  wire(L){const c=L.card;c.querySelectorAll(".rvk-turn button").forEach(b=>b.onclick=()=>{const f=o.places[+b.dataset.i];L.at=+b.dataset.i;c.dataset.turned="1";turnGlobe(f[1],f[2],f[3]);this.render(L)});this.render(L)},
  render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvk-turn button").forEach(b=>{const k=+b.dataset.i;b.classList.toggle("rvk-cur",k===L.at);b.textContent=(k===L.at?"● ":"")+o.places[k][0]});
   if(L.at<0)say(L,"",o.intro);else{const f=o.places[L.at];say(L,f[0],f[4])}}}}
@@ -323,8 +337,28 @@ const FOLK=binDef("hg3b","Folk and popular culture",{tip:"Folk or popular? Sort 
  done:"Folk culture spreads slowly, mostly by relocation, and gives places their own look; popular culture spreads fast, by contagious and hierarchical diffusion, and makes places look alike."});
 
 
+/* Two ways of judging: the stop's own definitions (ethnocentrism judges another culture by your own; cultural
+   relativism tries to understand it within its own culture first), applied to everyday reactions; the examples are
+   the stop's (eating with the right hand, the Ethiopian coffee ceremony) and common course ones. */
+const JUDGE=binDef("hg3b","Two ways of judging",{tip:"Ethnocentric or relativist? Sort six reactions.",
+ keys:[["e","Ethnocentric"],["r","Cultural relativism"]],ask:"Is this judging by your own culture, or trying to understand theirs?",
+ items:[["“Eating with your hands? How rude!”","e","Ethnocentric: it treats your own table manners as the only right ones. In India or Ethiopia, eating with the right hand is good manners."],
+  ["“The coffee ceremony takes an hour, so it must matter to them. I’ll stay.”","r","Relativism: it reads the custom within its own culture, where taking time over coffee shows respect."],
+  ["“Our way of dressing is just normal; theirs is strange.”","e","Ethnocentric: “normal” here means “like us”."],
+  ["“Why does bowing matter so much in Japan? Let me find out before I go.”","r","Relativism: asking what a custom means to the people who keep it."],
+  ["Calling a festival “primitive” because it is unfamiliar","e","Ethnocentric: unfamiliar is not the same as worse."],
+  ["Learning to greet people in the local language before a trip","r","Relativism in practice: meeting a culture on its own terms."]],
+ done:"Relativism does not mean every practice is fine; it means understanding a practice first, in its own setting, before judging it."});
+/* the original and its two Chinese copies, which no single view shows beside the card (the stop's own places: Boluo,
+   Guangdong, opened 2012; Thames Town, Songjiang, Shanghai) */
+const HALL=turnDef("hg3b","A copy of Hallstatt",{tip:"The original is in the Alps; the copies are nearly 9,000 km away. Visit each.",
+ intro:"Tap a place to turn the globe to it.",
+ places:[["Hallstatt, Austria",13.65,47.56,5,"The original: a salt-mining village on a lake in the Alps, about 7,000 years of history, and a UNESCO World Heritage site."],
+  ["Boluo, Guangdong",114.29,23.17,5,"The copy, opened in 2012: the church tower, the lake and the square, rebuilt for a housing estate in southern China."],
+  ["Thames Town, Shanghai",121.2,31.03,5,"Mock-Tudor houses, cobbled streets and red phone boxes in a new suburb of Shanghai: an English market town that never grew there."]]});
+
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[PUSHPULL,WHO,NATAL,TFR,PRO,HEARTHS,ISLAM,DIFF,FOLK];
+const DEFS=[PUSHPULL,WHO,NATAL,TFR,PRO,HEARTHS,ISLAM,DIFF,FOLK,JUDGE,HALL];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
