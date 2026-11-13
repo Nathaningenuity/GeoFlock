@@ -30,11 +30,31 @@ const pinText=p=>Array.isArray(p)?strip(p[1]):strip(p&&p.text);
    a getter on the field that applies this file's edits to whatever the field holds; other files' writes still go
    through (to the value underneath). Each edit has an id, so applying the fixes again does not stack them. */
 const XFS=new WeakMap();
-const XF=(S,k,id,fn)=>{try{let R=XFS.get(S);if(!R){R={};XFS.set(S,R)}
+let PEND=false;
+const PPW=new WeakMap();/* (it waits at most about 20 s) */
+const pplPending=S=>{try{const t=ps&&ps.tour,n=strip(S.title);if(!(window.GF_PORTRAITS||[]).some(p=>p.tour===t&&p.stop===n)||Object.prototype.hasOwnProperty.call(S,"_gfPpl"))return false;
+ const w=(PPW.get(S)||0)+1;PPW.set(S,w);return w<70}catch(e){return false}};
+const XF=(S,k,id,fn)=>{try{if(k==="phPins"&&!(XFS.get(S)||{})[k]&&pplPending(S)){PEND=true;return}let R=XFS.get(S);if(!R){R={};XFS.set(S,R)}
  if(!R[k]){const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;const B={v:S[k],fns:{}};R[k]=B;
   Object.defineProperty(S,k,{configurable:!!(window.__rvmTest||/[?&]rvmtest\b/.test(location.search)),enumerable:true,
-   get:()=>{let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}return v},set:x=>{B.v=x}})}
- R[k].fns[id]=fn}catch(e){}};
+   get:()=>{const pk=k==="phPins"?pplReady(S):0;if(B.out&&B.at===B.v&&B.atN===B.n&&B.pk===pk)return sync(S,k,B.out);let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
+    if(pk)v=pplAdd(S,v);B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{B.v=x}})}
+ R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1}catch(e){}};
+/* The getter hands back the same array until the value underneath or the edits change. geoflock-portraits.js adds the
+   people's round portraits by wrapping phPins itself, and does so again whenever S.phPins is not its own list
+   (S._gfPpl): so the filtered list is also stored there, which tells it the stop is done (otherwise it tried to redefine
+   the locked field on every redraw and logged an error each time). Its portraits are kept: they are in the value
+   underneath. */
+/* and, as geoflock-portraits.js would on a later redraw, the stop's portraits whose pictures have loaded since are
+   added here (a locked field can no longer be re-wrapped by it) */
+const TOUR_OF=new WeakMap(),PPOK=new Map();
+const pplList=S=>{try{const t=TOUR_OF.get(S),n=strip(S.title);return(window.GF_PORTRAITS||[]).filter(p=>p.tour===t&&p.stop===n)}catch(e){return[]}};
+const pplOk=f=>{const m=PPOK.get(f);if(m===true)return true;const now=Date.now();if(m&&now-m<2000)return false;
+ let ok=false;try{ok=PS_PHOTO_DATA.some(x=>x&&x.f===f&&x.d)}catch(e){}PPOK.set(f,ok||now);return ok};
+function pplReady(S){const L=pplList(S);return L.filter(p=>pplOk(p.f)).length}
+function pplAdd(S,v){const names=new Set(v.map(q=>strip(q&&q.label).toLowerCase()));
+ pplList(S).forEach(p=>{if(!names.has(p.name.toLowerCase())&&pplOk(p.f))v=v.concat([{at:p.at,label:p.name,col:"#3d3466",icon:"photo",person:1}])});return v}
+function sync(S,k,v){if(k==="phPins"&&Object.prototype.hasOwnProperty.call(S,"_gfPpl"))try{S._gfPpl=v}catch(e){}return v}
 const DROP=(S,re)=>XF(S,"pins","drop"+re,P=>P.filter(p=>!re.test(pinText(p))));
 const DROPPH=(S,re)=>XF(S,"phPins","drop"+re,P=>P.filter(p=>!re.test(strip(p&&p.label))));
 /* rename a text pin */
@@ -172,11 +192,14 @@ FIX.hrevolutions={
   "The great migrations":S=>{DROPPH(S,/^(Naples|Buenos Aires|Mauritius|Singapore)/);AREA(S,/^(Mauritius|Singapore|Buenos Aires)/);ADDPIN(S,[[-74.04,40.7],"New York","point"]);VIEW(S,[-36,33,1],"left")}
 };
 const applied=new WeakSet();
-function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
- try{f(S)}catch(e){console.error("rvm fix",tour,S.title,e)}})}
+/* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
+   is in (see XF): if this file locked the field first, the portrait could not be added */
+let waiting=false;
+function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;TOUR_OF.set(S,tour);
+ PEND=false;try{f(S)}catch(e){console.error("rvm fix",tour,S.title,e)}if(PEND)waiting=true;else applied.add(S)})}
 function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)applyTo(t,T.steps)})}catch(e){}}
 let lastKey="";
-every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f)f(S)}catch(e){}}catch(e){}},300);
+every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey&&!waiting)return;lastKey=k;waiting=false;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f){TOUR_OF.set(S,t);f(S)}}catch(e){}}catch(e){}},300);
 /* applied only once one of these tours is open (by then the load-time photo passes have run): see above */
 
 /* The card shift, kept (as geoflock-polish-rvb.js and -rvf.js do for theirs): psFlyGlobe (index.html) turns a stop's place
