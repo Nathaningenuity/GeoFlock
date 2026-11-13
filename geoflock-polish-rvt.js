@@ -88,7 +88,31 @@ const FIX={
      seven continents. Buttons (part 2) turn the globe to each; the stop opens on Asia, Europe and Africa */
   "The top of each continent":S=>{DROPPH(S,/^(Denali|Mount Kosciuszko)/);VIEW(S,[62,22,1])}
  },
- volcanoes:{},
+ volcanoes:{
+  /* eight photos round the world: Kīlauea, Arenal and Reykjanes round the back, Etna and Nyiragongo under the card and
+     Yasur on the globe's edge. Each has its own stop (Yasur and Arenal are in no stop, and are left out); the opening
+     keeps Fuji and Anak Krakatau, beside the card */
+  "Volcanoes":S=>DROPPH(S,/^(Kīlauea|Etna|Nyiragongo|Arenal|Reykjanes|Mount Yasur)/),
+  /* the Mayon and Bromo photos sat under the card and Mount St Helens's on the search box: the Pacific is wider than the
+     half of the globe beside the card, and the stop's game turns the globe round it. Mayon and St Helens have stops of
+     their own (Bromo is on the card's photo). The Indonesia and Philippines labels sat under the card too */
+  "The Ring of Fire":S=>{DROPPH(S,/^(Mayon|Mount Bromo|Mount St Helens)/);DROP(S,/^(Indonesia|Philippines)$/)},
+  /* Hawaii sat in the bottom right corner, the Kīlauea photo under the map key (Kīlauea keeps its label) */
+  "Mauna Loa: a giant shield":S=>{DROPPH(S,/^Kīlauea/);VIEW(S,[-155.8,20.4,5.5])},
+  /* two photos of Fuji, one on the zoom buttons, and Mayon's photo at the bottom of the screen */
+  "Steep cones: stratovolcanoes":S=>{DROPPH(S,/^Mount Fuji 3,776/);VIEW(S,[132,24,2])},
+  /* the field-of-cones label ran into the map key */
+  "A volcano born in a cornfield":S=>VIEW(S,[-101.2,19.6,6]),
+  /* the caldera's label ran into the map key */
+  "Yellowstone’s supervolcano":S=>VIEW(S,[-108,44,4.2]),
+  /* Tonga was at the bottom of the screen, its photo (the card's own) below it, and Alaska's label above the globe */
+  "The biggest bang in a century":S=>{DROPPH(S,/^Hunga Tonga/);VIEW(S,[-165,18,1])},
+  /* the India label hung under the map key; the lava plateau sat on the globe's right edge */
+  "Floods of lava: the Deccan Traps":S=>{DROP(S,/^India$/);VIEW(S,[82,19,2.6])},
+  /* Java's label and Bromo's photo sat on the globe's right edge, the Iceland photos and label on the card and the map
+     toggles, California and Taupō round the back. Buttons (part 2) turn the globe to each place; the stop opens on Kenya */
+  "Living with volcanoes":S=>{DROPPH(S,/^(Geothermal power|The Blue Lagoon|Mount Bromo)/);DROP(S,/^(Iceland|Indonesia|Philippines)$/);VIEW(S,[45,5,1])}
+ },
  caves:{},
  weather:{}
 };
@@ -286,6 +310,17 @@ const SHIELD=CLASSIFY({tours:["volcanoes"],title:"Steep cones: stratovolcanoes",
   ["Mount St Helens","st","A steep cone in the Cascade Range, until its north side slid away in 1980.",[-122.18,46.2,2.4]]],
  end:()=>"Runny basalt lava spreads into wide shields, over hot spots and rifts; sticky, gassy magma, where plates dive under each other, piles up steep cones that can explode."});
 
+/* ---- Living with volcanoes: turn the globe to each place the stop names (Java, Iceland and Olkaria from the stop's
+   own text; Wikipedia, "The Geysers": "the world's largest geothermal field"; "Wairakei Power Station", near Taupō:
+   commissioned in 1958). */
+const LIVING=TURNER({tours:["volcanoes"],title:"Living with volcanoes",tip:"Five places that live with volcanoes, round the world. Turn the globe to each.",
+ intro:"Volcanoes give as well as take: soil, heat and power. Pick a place.",
+ places:[["Java",110,-7.5,2,"About 45 active volcanoes, and over 150 million people, many farming the rich soil their ash makes."],
+  ["Iceland",-21.4,64.04,2.2,"About nine homes in ten are heated with hot water piped from the ground."],
+  ["Kenya",36.3,-0.88,2.2,"Power stations along the Rift at Olkaria make about 40% of the country’s electricity."],
+  ["California",-122.76,38.79,2.2,"The Geysers, north of San Francisco, is the world’s largest geothermal field."],
+  ["New Zealand",176.1,-38.63,2.2,"Wairakei, near Lake Taupō, has made electricity from volcanic steam since 1958."]]});
+
 /* ---- Review on the last stop: why is each volcano there? The reasons are the tour's own (Hawaii and Yellowstone over
    hot spots; Iceland on a mid-ocean ridge and a hot spot at once; the ocean plate diving under Mexico feeding
    Paricutín's field; the Pacific's ocean plates diving under Japan and the Cascades, the Ring of Fire; East Africa
@@ -355,7 +390,7 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
 
-const DEFS=[SUMMITS,YOUNGOLD,RTOP,SHIELD,WHYV,HOWCAVE,BELTS];
+const DEFS=[SUMMITS,YOUNGOLD,RTOP,SHIELD,LIVING,WHYV,HOWCAVE,BELTS];
 
 
 let L=null,raf=0;
