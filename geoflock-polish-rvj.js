@@ -104,7 +104,29 @@ const FIX={
   /* the 1790 label lay across the moving-middle game's own "1790" tag and its "Drag me west" handle */
   "America’s moving middle":S=>DROP(S,/^1790/)
  },
- hg2b:{}
+ hg2b:{
+  /* the two Niger photos hung from under the card on long leaders; with East Asia's four photos half a world away,
+     they cannot share the view beside the card. Niger has the tour's next stops */
+  "Models of population":S=>DROPPH(S,/^(Niger|Agadez)/),
+  /* the card was switched to the right at run time: the People map's indicator menu then covered the Germany label
+     and the map key the stop's own title. Card on the left, Niger and Germany framed together */
+  "Natural increase and doubling":S=>{VIEW(S,[14.7,32,1.2],"left");RENAME(S,/^Germany/,"Germany: grows only by migration")},
+  /* Niger and South Korea are half a world apart: the globe turned to their middle, over Siberia, and Korea's label
+     sat under the map key. The stop opens on Niger; the buttons in part 3 turn the globe to Korea */
+  "Fertility and replacement":S=>{AREA(S,/^South Korea/);VIEW(S,[8,17,1.4],"left")},
+  /* the same for Chad and Japan */
+  "Infant mortality":S=>{AREA(S,/^Japan/);VIEW(S,[18.7,15.5,1.4],"left")},
+  /* Somalia sat at the globe's edge, by the zoom buttons */
+  "Stages 1 and 2: deaths fall first":S=>VIEW(S,[34.8,0,1],"left"),
+  /* Bangladesh, the stop's fastest fall, was off the globe's edge */
+  "Stage 3: births fall":S=>{RENAME(S,/^Bangladesh/,"Bangladesh: 6 → 2");VIEW(S,[66.9,4,1],"left")},
+  /* Niger, the United States and Japan: the globe turned to their middle, the North Pole; Japan hung from under the
+     card and Niger's label sat under the map key. The stop opens on Niger; the buttons in part 3 turn to the others */
+  "Population pyramids":S=>{AREA(S,/^(USA|Japan)/);VIEW(S,[8,17,1.4],"left")},
+  /* as for fertility: Niger and Japan, half a world apart */
+  "The dependency ratio":S=>{AREA(S,/^Japan/);VIEW(S,[8,17,1.4],"left")},
+  "The epidemiological transition":S=>{AREA(S,/^Japan/);VIEW(S,[8,9.5,1.4],"left")}
+ }
 };
 
 const applied=new WeakSet();
@@ -112,7 +134,7 @@ function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEac
  try{f(S)}catch(e){console.error("rvj fix",tour,S.title,e)}})}
 function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)applyTo(t,T.steps)})}catch(e){}}
 let lastKey="";
-every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps())}catch(e){}},300);
+every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f)f(S)}catch(e){}}catch(e){}},300);
 try{applyAll()}catch(e){}setTimeout(applyAll,1500);setTimeout(applyAll,6000);
 
 /* The card shift, kept (as geoflock-polish-rvb.js and -rvf.js do for theirs): psFlyGlobe (index.html) turns a stop's place
@@ -168,7 +190,10 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg1b | "Perceptual regions": formal, functional or perceptual? Sort nine regions.
    - hg2a | "Agricultural density": turn the globe from Bangladesh to Iowa, on the far side of the Earth.
    - hg2a | "Crowded but rich, sparse but stretched": sort six countries by people per km².
-   - hg2b | "Natural increase and doubling": set the birth and death rates and watch 100 people grow (or shrink). */
+   - hg2b | "Natural increase and doubling": set the birth and death rates and watch 100 people grow (or shrink).
+   - hg2b | "Fertility and replacement", "Infant mortality", "Population pyramids", "The dependency ratio" and "The
+            epidemiological transition": the two (or three) ends of the scale are half a world apart, so no single view
+            shows them beside the card; buttons turn the globe from one to the other. */
 
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -347,20 +372,36 @@ function turnGlobe(lon,lat,z){try{const G=ps&&ps.g;if(!G||ps.mode!=="globe")retu
  const id=G._flyId=(G._flyId||0)+1;G._flying=true;
  const step=t=>{if(G._flyId!==id||G._dead||ps.g!==G)return;const k=ms?Math.min(1,(t-t0)/ms):1,e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,c=ip(e),lift=Math.sin(Math.PI*e)*.35;
   G.zoom=Math.max(1,(z0+(z-z0)*e)*(1-lift));G.rot=[-c[0],-c[1]];G.render();if(k<1)requestAnimationFrame(step);else{G._flying=false;G._flyId++}};requestAnimationFrame(step)}catch(e){}}
-const FARMS=[["bd","Bangladesh",90,24,2,"Over a third of workers farm, most on small plots worked by hand: many farmers per km² of farmland, a high agricultural density."],
- ["us","Iowa, USA",-93.5,42,2.2,"Under 2% of Americans farm. Big machines work huge fields, so a few farmers cover a lot of land: a low agricultural density."]];
-const TURN={tours:["hg2a"],title:"Agricultural density",globe:false,turns:true,
+/* a row of buttons, one per place; the stop opens on the first. places: [name, lon, lat, zoom, text] */
+function TURNER(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:true,tip:cfg.tip,
+ card(L){return'<div class="rvj-btns rvj-turn">'+cfg.places.map((f,i)=>'<button type="button" class="rvj-btn" data-i="'+i+'"></button>').join("")+'</div>'},
+ wire(L){const c=L.card;L.at=0;c.querySelectorAll(".rvj-turn button").forEach(b=>b.onclick=()=>{const f=cfg.places[+b.dataset.i];L.at=+b.dataset.i;turnGlobe(f[1],f[2],f[3]);this.render(L)});this.render(L)},
+ render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvj-turn button").forEach(b=>{const k=+b.dataset.i;b.classList.toggle("rvj-cur",k===L.at);b.textContent=(k===L.at?"● ":"Turn to ")+cfg.places[k][0]});
+  const f=cfg.places[L.at];say(L,f[0],f[4])}}}
+const TURN=TURNER({tours:["hg2a"],title:"Agricultural density",
  tip:"Bangladesh and Iowa are on opposite sides of the Earth. Turn the globe from one to the other.",
- card(L){return'<div class="rvj-btns rvj-turn">'+FARMS.map((f,i)=>'<button type="button" class="rvj-btn" data-i="'+i+'">'+(i?"Turn to ":"Back to ")+esc(f[1])+'</button>').join("")+'</div>'},
- wire(L){const c=L.card;L.at=0;c.querySelectorAll(".rvj-turn button").forEach(b=>b.onclick=()=>{const f=FARMS[+b.dataset.i];L.at=+b.dataset.i;turnGlobe(f[2],f[3],f[4]);this.render(L)});this.render(L)},
- render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvj-turn button").forEach(b=>{b.classList.toggle("rvj-cur",+b.dataset.i===L.at);b.textContent=(+b.dataset.i===L.at?"Here: ":"Turn to ")+FARMS[+b.dataset.i][1]});
-  const f=FARMS[L.at];say(L,f[1],f[5]+(L.at?" Turn back to compare.":""))}};
+ places:[["Bangladesh",90,24,2,"Over a third of workers farm, most on small plots worked by hand: many farmers per km² of farmland, a high agricultural density."],
+  ["Iowa, USA",-93.5,42,2.2,"Under 2% of Americans farm. Big machines work huge fields, so a few farmers cover a lot of land: a low agricultural density."]]});
+/* Models of population: the tour keeps comparing Niger (or its neighbours) with East Asia, half a world apart. The
+   texts are the stops' own figures. */
+const TURN_TFR=TURNER({tours:["hg2b"],title:"Fertility and replacement",tip:"Turn the globe between the two ends of the scale.",
+ places:[["Niger",8,17,1.4,"About six children per woman, nearly three times the replacement level of 2.1."],
+  ["South Korea",127.5,36.5,1.8,"About 0.7 children per woman, a third of the replacement level of 2.1: each generation is about a third the size of the one before."]]});
+const TURN_IMR=TURNER({tours:["hg2b"],title:"Infant mortality",tip:"Turn the globe between the two ends of the scale.",
+ places:[["Chad",18.7,15.5,1.4,"More than 50 of every 1,000 babies die before their first birthday."],["Japan",138,36.5,1.8,"Fewer than 3 in 1,000 babies die before their first birthday."]]});
+const TURN_PYR=TURNER({tours:["hg2b"],title:"Population pyramids",tip:"Turn the globe to each of the three pyramids.",
+ places:[["Niger",8,17,1.4,"Median age about 15: a wide base of children, an expanding pyramid."],["United States",-98,39,1.5,"Median age about 38: fairly straight sides, slow growth."],
+  ["Japan",138,36.5,1.8,"Median age about 49: a narrow base and a heavy top, a shrinking pyramid."]]});
+const TURN_DEP=TURNER({tours:["hg2b"],title:"The dependency ratio",tip:"Both have many dependants, for opposite reasons. Turn the globe to compare.",
+ places:[["Niger",8,17,1.4,"Many dependants because so many people are children: schools and jobs are the challenge."],["Japan",138,36.5,1.8,"Many dependants because so many people are old: pensions and care are the challenge."]]});
+const TURN_EPI=TURNER({tours:["hg2b"],title:"The epidemiological transition",tip:"Turn the globe between the two ends of the scale.",
+ places:[["Nigeria",8,9.5,1.4,"Life expectancy about 54 years: infections and childbirth still take many lives."],["Japan",138,36.5,1.8,"Life expectancy about 84 years: most people live long enough to die of heart disease and cancer."]]});
 
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[SCALE,REGIONS,DENS,DOUBLE,SNOW,TURN];
+const DEFS=[SCALE,REGIONS,DENS,DOUBLE,SNOW,TURN,TURN_TFR,TURN_IMR,TURN_PYR,TURN_DEP,TURN_EPI];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
- const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if(D.globe&&ps.mode!=="globe")return null;return D}catch(e){return null}}
+ const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
 function mount(D){const G=g();const host=D.globe?(G&&G.host):null;if(D.globe&&!host)return;if(L&&L.D===D&&L.host===host&&(!host||L.el.isConnected))return;unmount();
  L={D,host,dirty:1,ox:0,oy:0,key:""};
  if(host){const el=document.createElement("div");el.className="rvj-layer rvj-layer";el.innerHTML='<svg class="rvj-sv"><defs><clipPath id="rvjDisc"><path class="rvj-discc" clip-rule="evenodd"/></clipPath></defs><g clip-path="url(#rvjDisc)"></g></svg>';host.appendChild(el);L.el=el;L.svg=el.querySelector("g");L.svgRoot=el.querySelector("svg");L.discC=el.querySelector(".rvj-discc")}
@@ -382,6 +423,18 @@ function loop(){if(!L||!L.host)return;raf=requestAnimationFrame(()=>{try{const G
    if(cb)cd+="M"+f(cb[0])+" "+f(cb[1])+"H"+f(cb[2])+"V"+f(cb[3])+"H"+f(cb[0])+"Z";L.discC.setAttribute("d",cd);L.D.draw.call(L.D,L)}}catch(e){console.error(e)}loop()})}
 every(()=>{try{const D=activeDef();if(D){mount(D);ensureCard()}else if(L||document.querySelector(".rvj-ctl"))unmount()}catch(e){}},300);
 addEventListener("resize",()=>{if(L)L.dirty=1});
+
+/* ======================================================================== part 4: the People map's banner
+   On People map stops the banner at the top of the globe ("Children per woman · Under 1.5, 1.5 to 2.1") is centred,
+   and a long one ran under the map key in the top right corner. On these tours it is slid left until it clears the
+   key (never under the card), and put back when the tour ends. */
+let bannerMoved=null;
+every(()=>{try{const on=typeof ps!=="undefined"&&ps&&MYT.has(ps.tour);const b=document.querySelector(".ps-mapbanner");
+ if(bannerMoved&&(bannerMoved!==b||!on)){bannerMoved.style.translate="";bannerMoved=null}
+ if(!on||!b||!b.offsetWidth)return;const k=document.querySelector(".ps-mapkey.at-right");b.style.translate="";bannerMoved=null;if(!k||!k.offsetWidth)return;
+ const B=b.getBoundingClientRect(),K=k.getBoundingClientRect();if(!(B.right>K.left-8&&B.bottom>K.top&&B.top<K.bottom))return;
+ let dx=K.left-8-B.right;try{const c=ps.card&&ps.card.getBoundingClientRect();if(c&&c.right<B.left)dx=Math.max(dx,c.right+8-B.left)}catch(e){}
+ b.style.translate=Math.round(dx)+"px 0";bannerMoved=b}catch(e){}},400);
 
 {const s=document.createElement("style");s.textContent=`
 .rvj-layer{position:absolute;inset:0;pointer-events:none;z-index:24;overflow:hidden}
