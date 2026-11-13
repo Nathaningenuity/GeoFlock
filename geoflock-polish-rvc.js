@@ -37,10 +37,10 @@ const FIX={
  /* Islands */
  "islands|The biggest islands":{globe:[128,-8,1.05]},                /* "drag Greenland onto Australia": the true-size Greenland sits on Australia, which was round the back */
  "islands|No snakes in Ireland":{globe:[-2,54.5,3.4]},               /* Doggerland was under the map key */
- "islands|Island countries":{globe:[-178,-1,1.9]},                   /* the Gilbert Islands ring was under the card */
+ "islands|Island countries":{globe:[-171,-1,1.6],phDrop:/^Kiribati: Tarawa$/}, /* the Gilbert Islands ring was under the card; a second Tarawa photo stood in open sea */
  /* Tristan da Cunha's surnames: the founding men "shared seven surnames: Glass, Green, Hagan, Lavarello, Repetto, Rogers,
     and Swain" (Wikipedia, "Tristan da Cunha", Demographics); "eight" counted a name that died out. */
- "islands|The loneliest island town":{rep:[["Its people share just eight surnames.","Most islanders still carry one of the seven surnames of its founding men: Glass, Green, Hagan, Lavarello, Repetto, Rogers and Swain."]]},
+ "islands|The loneliest island town":{rep:[["Its people share just eight surnames.","Its founding men shared just seven surnames: Glass, Green, Hagan, Lavarello, Repetto, Rogers and Swain."]]},
  /* Europe */
  "europe|Where Europe ends":{globe:[46,52,1.3],card:"left"},          /* the map key covered the Bosphorus and Black Sea tags */
  "europe|The biggest countries":{globe:[24,50,1.6],card:"left"},      /* the "Texas · drag me" tag was under the card */
@@ -63,8 +63,14 @@ const FIX={
  "asia|Megacities":{globe:[106,14,1.3]},
  "asia|Islands of fire":{globe:[126,16,1.3]}                         /* Indonesia's photo was off the bottom */
 };
-function applyFix(S,tour){try{if(!S)return;const X=FIX[tour+"|"+S.title];if(!X)return;
- if(X.globe)SET(S,"globe",X.globe.slice());if(X.card)SET(S,"card",X.card);
+/* framing is pinned: several sweep files set a stop's globe or card side from their own psGo wrappers, some of them
+   running after this one, so a plain assignment would be undone. The pinned field ignores later writes. */
+function pin(S,k,v){try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.get&&d.get._rvc){d.get._rvc.v=v;return}
+ const box={v},get=()=>Array.isArray(box.v)?box.v.slice():box.v;get._rvc=box;Object.defineProperty(S,k,{configurable:false,enumerable:true,get,set(){}})}catch(e){SET(S,k,v)}}
+function applyFix(S,tour,soft){try{if(!S)return;const X=FIX[tour+"|"+S.title];if(!X)return;
+ const put=soft?(S,k,v)=>{const d=Object.getOwnPropertyDescriptor(S,k);if(!(d&&d.get&&d.get._rvc))SET(S,k,v)}:pin;
+ if(X.globe)put(S,"globe",X.globe);if(X.card)put(S,"card",X.card);
+ if(X.phDrop&&Array.isArray(S.phPins)){const L=S.phPins.filter(q=>!(q&&X.phDrop.test(String(q.label||"").replace(/\u200b/g,""))));if(L.length!==S.phPins.length)SET(S,"phPins",L)}
  (X.rep||[]).forEach(([a,b])=>["stat","body","more"].forEach(k=>{if(typeof S[k]==="string"&&S[k].includes(a))SET(S,k,S[k].split(a).join(b))}))}catch(e){}}
 /* the Borders tour opens on the history map at 2026, but when the tour starts from scratch the map underneath can still
    be the year 1000 (the newer history map loads after the tour's first psSetSub). Set the stop's year again once the
@@ -75,8 +81,8 @@ function yearCheck(i){try{if(typeof ps==="undefined"||!ps||ps.i!==i)return;const
 function wrapGo(){if(typeof psGo!=="function")return false;if(psGo._rvc)return true;const _g=psGo;
  psGo=function(i){try{const L=psSteps(),S=L[Math.max(0,Math.min(L.length-1,i))];applyFix(S,ps&&ps.tour)}catch(e){}const r=_g.apply(this,arguments);
   try{const at=ps&&ps.i;[900,2500].forEach(t=>setTimeout(()=>yearCheck(at),t))}catch(e){}return r};psGo._rvc=1;return true}
-/* fixes on the data too, for the first stop shown and for the flat map's lists */
-function applyAll(){try{for(const t of["borders","islands","europe","asia"]){const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>applyFix(S,t))}}catch(e){}}
+/* fixes on the data too, for the first stop shown (plain values here: other files still set up these stops at load) */
+function applyAll(){try{for(const t of["borders","islands","europe","asia"]){const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>applyFix(S,t,1))}}catch(e){}}
 {let n=0;const t=setInterval(()=>{const ok=wrapGo();if(ok)applyAll();if(ok&&n>20||++n>90)clearInterval(t)},500)}
 /* when a tour starts on its first stop, psGo is not always called: check the year there too */
 setInterval(()=>{try{if(typeof ps!=="undefined"&&ps&&ps.tour==="borders"&&ps.i===0&&!ps._rvcY){ps._rvcY=1;[1200,3000,6000].forEach(t=>setTimeout(()=>yearCheck(0),t))}}catch(e){}},700);
