@@ -120,6 +120,25 @@ const FIX={
      ASEAN and Jakarta under the card (switched to the right at run time) and Addis Ababa at the globe's edge. The stop
      opens on Africa; buttons (part 2) turn the globe to Southeast Asia */
   "Regional unions":S=>{AREA(S,/^Jakarta/);VIEW(S,[22,5,1.3],"left")}
+  },
+ hg4d:{
+  /* the six photos span the world (Tijuana, the Korean DMZ, Dover, Chile, Lesotho, Bolivia): Korea and Chile were round
+     the back, Tijuana under the card and Lesotho and Bolivia off the bottom of the screen. Tijuana and Bolivia are
+     framed (Chile's photo, at its southern tip, still fell off the bottom); the others have their own stops */
+  "Lines on land, sea and ballot":S=>{DROPPH(S,/^(The Korean DMZ|Dover|Lesotho|Chile)/);VIEW(S,[-78,10,1],"left")},
+  /* the "South China Sea" label lay across the ruler's far end */
+  "Exclusive economic zones":S=>MOVE(S,/^South China Sea/,[115.5,15.5]),
+  /* Chile, Rwanda and Poland are spread over half the world: Rwanda sat at the globe's edge and Poland under the map
+     key. The stop opens on Chile and its true-size ghost; buttons (part 2) turn the globe to the other two */
+  "Compact and elongated states":S=>{AREA(S,/^Compact/);VIEW(S,[-45,-15,1.1],"left")},
+  /* Indonesia, 90° of longitude from southern Africa, sat at the globe's edge under the big map key, and plain
+     "Namibia" and "South Africa" labels repeated the map's own on long leaders. The stop opens on southern Africa;
+     buttons (part 2) turn the globe to Indonesia */
+  "Fragmented, prorupted and perforated":S=>{DROP(S,/^(Namibia|South Africa)$/);AREA(S,/^Fragmented/);VIEW(S,[29,-20,2.2],"left")},
+  /* the Texas label ran under the big map key, and a plain "United States" label repeated the map's own */
+  "Redistricting":S=>{DROP(S,/^United States$/);VIEW(S,[-86,38,1.8],"left")},
+  /* Essex County sat at the globe's edge, its label under the map key; the same doubled "United States" label */
+  "Drawing the voting map":S=>{DROP(S,/^United States$/);VIEW(S,[-84,47,1.8],"left")}
  }
 };
 const applied=new WeakSet();
@@ -164,7 +183,12 @@ every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="gl
    - hg4c | "The end of empires": drag (or play) through 1945–2011 and watch UN membership grow from 51 to 193.
    - hg4c | "Bigger than states": EU with the euro, EU with its own money, or outside? Sort nine countries.
    - hg4c | "Military alliances": put nine NATO members in the order they joined.
-   - hg4c | "Regional unions": buttons turn the globe between the African Union and ASEAN. */
+   - hg4c | "Regional unions": buttons turn the globe between the African Union and ASEAN.
+   - hg4d | "How a border is made": put the four stages (defined, delimited, demarcated, administered) in order.
+   - hg4d | "Compact and elongated states", "Fragmented, prorupted and perforated": buttons turn the globe between
+            shapes half a world apart (Chile, Rwanda, Poland; southern Africa and Indonesia).
+   - hg4d | "Enclaves and exclaves": enclave or exclave? Sort seven places.
+   - hg4d | "Landlocked states": guess how many countries have no coast first (geoflock-tourplay.js). */
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=n=>Math.round(n).toLocaleString("en-GB");
@@ -399,7 +423,46 @@ const NATOQ=SORT({tours:["hg4c"],title:"Military alliances",below:true,
 const TURN_UNION=TURNER({tours:["hg4c"],title:"Regional unions",tip:"Two regional clubs, an ocean apart. Turn the globe from one to the other.",
  places:[["The African Union",22,5,1.3,"55 members, with its headquarters in Addis Ababa. It promotes trade and sends peacekeepers, as it has in Somalia."],
   ["ASEAN",112,8,1.6,"Southeast Asia’s club, from Myanmar to the Philippines, with its secretariat in Jakarta. It works by consensus."]]});
-const DEFS=[NATIONS,SWAP,BTYPES,UNIFED,YUGO,TURN_AUTO,TURN_SEP,UNGROW,EUQ,NATOQ,TURN_UNION];
+
+/* ======================================================================== 10. How a border is made (hg4d)
+   The four stages of a boundary as the stop (and the AP Human Geography course) gives them, after Stephen B. Jones,
+   "Boundary-Making" (1945), whose first stage he called allocation: defined in a treaty, delimited on a map, demarcated on the ground, administered. The US–Mexico
+   examples: the Treaty of Guadalupe Hidalgo (1848) and the Gadsden Purchase (1853) defined the line; joint boundary
+   commissions surveyed and mapped it (1849–55) and set the stone and iron monuments along it (1890s); guards and
+   customs posts run it today. */
+const STAGES=SORT({tours:["hg4d"],title:"How a border is made",below:true,
+ tip:"Put the four stages of making the US–Mexico border in order.",first:"First",last:"Last",desc:false,bars:false,
+ items:[["Demarcated: monuments, fences and walls go up on the ground",3,"on the ground"],["Defined: a treaty describes where the line runs",1,"in words"],["Administered: guards and customs control who and what crosses",4,"day to day"],["Delimited: surveyors draw the line on a map",2,"on a map"]],
+ after:(n,N)=>"Words, then a map, then the ground, then people. For the US and Mexico: treaties in 1848 and 1853, surveys and maps in the 1850s, stone and iron monuments in the 1890s, and walls and border guards today."});
+
+/* the shapes of states, half a world apart; texts are the stops' own */
+const TURN_SHAPE=TURNER({tours:["hg4d"],title:"Compact and elongated states",tip:"Turn the globe to each shape.",
+ places:[["Chile: elongated",-45,-15,1.1,"Over 4,000 km long but on average under 200 km wide. Drag the purple Chile, at its true size, onto Africa."],
+  ["Rwanda: compact",30,-2,2.4,"Roughly round: no part of the country is far from the centre."],["Poland: compact",19,52,2.4,"Roughly round, so its regions are all close to Warsaw."]]});
+const TURN_FRAG=TURNER({tours:["hg4d"],title:"Fragmented, prorupted and perforated",tip:"Turn the globe from southern Africa to Indonesia.",
+ places:[["Namibia and South Africa",29,-20,2.2,"Namibia’s Caprivi Strip is a long arm, a proruption; South Africa is perforated by Lesotho, which it surrounds."],
+  ["Indonesia: fragmented",118,-2,1.6,"About 17,000 islands, spread over more than 5,000 km of sea, to be held together as one state."]]});
+
+/* ======================================================================== 11. Enclave or exclave? (hg4d)
+   The stop's own examples (Lesotho, Vatican City, San Marino, Kaliningrad) and three more textbook exclaves: Alaska,
+   separated from the rest of the US by Canada; Cabinda, separated from the rest of Angola by a strip of DR Congo; and
+   Nakhchivan, separated from the rest of Azerbaijan by Armenia. */
+const ENCL=CLASSIFY({tours:["hg4d"],title:"Enclaves and exclaves",below:true,
+ tip:"Surrounded, or cut off? Sort seven places.",ask:"Is it an enclave or an exclave?",
+ kinds:[["en","Enclave","an enclave"],["ex","Exclave","an exclave"]],
+ items:[["Lesotho","en","A whole country surrounded by one other, South Africa."],["Kaliningrad","ex","A piece of Russia cut off from the rest, between Poland and Lithuania."],
+  ["Vatican City","en","The world’s smallest country, surrounded by the city of Rome."],["Alaska","ex","Part of the US, cut off from the other 48 mainland states by Canada."],
+  ["San Marino","en","A small country entirely surrounded by Italy."],["Cabinda","ex","A province of Angola, cut off from the rest by a strip of DR Congo along the Congo River."],
+  ["Nakhchivan","ex","Part of Azerbaijan, cut off from the rest by Armenia."]],
+ end:()=>"Enclave: surrounded by another state. Exclave: a piece of a state cut off from the main part. Lesotho is surrounded; Kaliningrad is cut off."});
+
+/* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
+   Wikipedia, "Landlocked country": "As of 2026, there are 44 landlocked countries" (UN members and observers). */
+function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
+ const GS={"hg4d|Landlocked states":{q:"How many of the world’s countries have no coast at all?",min:0,max:100,ans:44,unit:"",step:1,show:"44"}};
+ for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
+if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
+const DEFS=[NATIONS,SWAP,BTYPES,UNIFED,YUGO,TURN_AUTO,TURN_SEP,UNGROW,EUQ,NATOQ,TURN_UNION,STAGES,TURN_SHAPE,TURN_FRAG,ENCL];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -491,6 +554,8 @@ every(()=>{try{const on=typeof ps!=="undefined"&&ps&&MYT.has(ps.tour);const b=do
 .rvl-band{fill:rgba(217,104,43,.1)}.rvl-area{fill:rgba(42,120,208,.22);stroke:#2a78d0;stroke-width:1.5;stroke-linejoin:round}.rvl-dashed{fill:none;stroke:#8a98a8;stroke-dasharray:3 3}
 line.rvl-now{stroke:#d9682b;stroke-width:1.5}.rvl-dot{fill:#d9682b;stroke:#fff;stroke-width:1.5}
 :is(body.dark-theme,body.sky-night) .rvl-area{fill:rgba(159,195,255,.22);stroke:#9fc3ff}:is(body.dark-theme,body.sky-night) .rvl-band{fill:rgba(255,178,122,.12)}
+:is(body.dark-theme,body.sky-night) .rvl-btn.rvl-good{background:#1f8a4c;border-color:#4cc27f;color:#fff}:is(body.dark-theme,body.sky-night) .rvl-btn.rvl-bad{background:#c2364f;border-color:#ff7088;color:#fff}
+:is(body.dark-theme,body.sky-night) .rvl-dots i.rvl-y{background:#4cc27f}:is(body.dark-theme,body.sky-night) .rvl-dots i.rvl-x{background:#ff7088}:is(body.dark-theme,body.sky-night) .rvl-dots i.rvl-now{box-shadow:0 0 0 2px #ffb27a inset}
 `;document.head.appendChild(s)}
 
 window.gfPolishRvl={v:1,FIX,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
