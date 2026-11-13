@@ -18,7 +18,13 @@ const fmt=n=>Math.round(n).toLocaleString("en-GB");
 /* ======================================================================== part 1: data fixes */
 const LOCK=(S,k,v)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;
  Object.defineProperty(S,k,{configurable:!!window.__rvgTest,enumerable:true,get:()=>v,set:()=>{}})}catch(e){try{S[k]=v}catch(err){}}};
-const RE=(S,k,a,b)=>{const t=String(S[k]==null?"":S[k]);if(t.indexOf(a)<0)return;LOCK(S,k,t.split(a).join(b))};
+
+/* a field that keeps taking new values from other scripts, but always reads back filtered */
+const FILT=(S,k,fn)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.get&&d.get._rvg){d.get._rvg.push(fn);return}if(d&&d.configurable===false)return;let v=S[k];const fns=[fn];
+ const get=()=>fns.reduce((x,f)=>{try{return f(x)}catch(e){return x}},v);get._rvg=fns;
+ Object.defineProperty(S,k,{configurable:!!window.__rvgTest,enumerable:true,get,set:x=>{v=x}})}catch(e){}};
+/* swap one phrase in a text field, now and whenever another script sets the field again */
+const RE=(S,k,a,b)=>FILT(S,k,t=>typeof t==="string"&&t.indexOf(a)>=0?t.split(a).join(b):t);
 const pinText=p=>Array.isArray(p)?String(p[1]||""):String(p&&(p.text||p.label)||"");
 const DROP=(S,re)=>{const P=S.pins||[];const Q=P.filter(p=>!re.test(strip(pinText(p))));if(Q.length!==P.length)LOCK(S,"pins",Q)};
 const DROPPH=(S,re)=>{const P=S.phPins||[];const Q=P.filter(p=>!re.test(strip(p&&p.label)));if(Q.length!==P.length)LOCK(S,"phPins",Q)};
@@ -51,6 +57,27 @@ const FIX={
    DROP(S,/^(London Heathrow|Dubai|United Arab Emirates)$/);if(Array.isArray(S.hi))LOCK(S,"hi",S.hi.filter(c=>!/^(ae|gb|jp)$/.test(c)))}
  },
  animals:{
+  /* photos of all seventeen countries' animals hang round the whole globe; with the card on the right, the ones from
+     Africa, Asia and Australia were pushed out from under it and piled up over West Africa (a Bengal tiger on the
+     Sahel, on top of the okapi). The stop looks at the Americas: keep their photos, except three at the edge that sat on
+     the map toolbar and the Nature map buttons */
+  "Seventeen wild countries":S=>{LOCK(S,"card","right");LOCK(S,"globe",[-35,-6,1]);FILT(S,"phPins",P=>Array.isArray(P)?P.filter(q=>!(q&&q.at&&q.at[0]>-25)&&!/^(Axolotl|Giant tortoise|Bald eagle)$/.test(strip(q&&q.label))):P)},
+  /* the Great Barrier Reef label and its photos ran under the map key */
+  "The Coral Triangle and the Great Barrier Reef":S=>{LOCK(S,"card","left");LOCK(S,"globe",[144,-9,1.6])},
+  /* the wildebeest photo hung under the map key */
+  "Great journeys":S=>{LOCK(S,"card","left");LOCK(S,"globe",[10,12,1])},
+  /* the card stood on the right, so the Okavango labels lay across the Nature map's own buttons on the left */
+  "Elephant country":S=>{LOCK(S,"card","left");LOCK(S,"globe",[31,-19,2.6])},
+  /* the "Tigers: Asia" label sat on the map's toolbar */
+  "Tigers and lions":S=>{LOCK(S,"card","left");LOCK(S,"globe",[94,18,1.15])},
+  /* the stop's place labels (Alaska, Hudson Bay...) sat on top of the polar bear or penguin game's own (part 3), and its
+     Galápagos photo gave away the game's surprise */
+  "Polar bears never meet penguins":S=>{LOCK(S,"card","left");DROP(S,/./);FILT(S,"phPins",P=>Array.isArray(P)?P.filter(q=>!/^Galápagos penguins$/.test(strip(q&&q.label))):P)},
+  /* Xochimilco and the axolotl photo were under the map key. Vaquitas: the 2025 survey (SEMARNAT with Sea Shepherd and
+     the IUCN's vaquita recovery team) saw 7 to 10, after 6 to 8 in 2024 */
+  "The axolotl’s last lake":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-102,24,2.6]);
+   RE(S,"stat","and only about 6 to 8 vaquitas are left in the sea","and in 2025 surveyors saw only 7 to 10 vaquitas in the sea");
+   RE(S,"more","A 2024 survey saw only about six to eight vaquitas, but they looked healthy and still had calves,","Surveys saw only about six to eight vaquitas in 2024 and seven to ten in 2025, but they looked healthy and still had calves,")}
  },
  politics:{
  },
@@ -78,8 +105,8 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS)return false
   "transport|More bikes than people":G("The Netherlands has about 18 million people. How many bicycles?",1,50,23,"million",{step:1,show:"about 23 million"}),
   /* KAZA elephant survey 2022: about 131,900 elephants in Botswana */
   "animals|Elephant country":G("How many elephants live in Botswana?",1000,1000000,130000,"",{log:1,show:"about 130,000"}),
-  /* WHO, World Malaria Report 2024: about 597,000 deaths in 2023 */
-  "animals|The deadliest animal":G("How many people does malaria, spread by mosquitoes, kill each year?",1000,10000000,600000,"",{log:1,show:"about 600,000"}),
+  /* China's fourth national giant panda survey (2014): 1,864 wild pandas */
+  "animals|Pandas":G("How many giant pandas live in the wild?",100,100000,1900,"",{log:1,show:"about 1,900"}),
   /* SIPRI Yearbook 2026: an estimated 12,187 warheads in January 2026 */
   "politics|Nine nuclear powers":G("How many nuclear warheads were there in the world in January 2026?",100,100000,12200,"",{log:1,show:"about 12,200"}),
   /* Taiwan's Ministry of Foreign Affairs lists 12 diplomatic allies (since Nauru switched in January 2024) */
@@ -115,8 +142,8 @@ function say(L,head,text){const c=L.card;if(!c)return;const k=head+"|"+text;if(L
  e.innerHTML=(head?"<b>"+esc(head)+"</b>":"")+"<span>"+esc(text)+"</span>";e.classList.remove("rvg-new");void e.offsetWidth;e.classList.add("rvg-new")}
 const setHTML=(el,html)=>{if(el&&el._h!==html){el.innerHTML=html;el._h=html}};
 /* turn the globe smoothly so a place shows beside the card, not under it */
-function turnTo(L,ll,zoom){const G=g();if(!G||!G.lookAt||G._flat)return;let side=0;try{const c=ps.card.getBoundingClientRect(),h=L.host.getBoundingClientRect();side=(c.left+c.right)/2>(h.left+h.right)/2?1:-1}catch(e){}
- const z=zoom||G.zoom||1,t=[ll[0]+side*30/z,Math.max(-60,Math.min(60,ll[1]*(1-.3/Math.max(1,z))))],r0=[-G.rot[0],-G.rot[1]],z0=G.zoom,T0=performance.now(),ip=d3.geoInterpolate(r0,t),D=L.D;
+function turnTo(L,ll,zoom,latK){const G=g();if(!G||!G.lookAt||G._flat)return;let side=0;try{const c=ps.card.getBoundingClientRect(),h=L.host.getBoundingClientRect();side=(c.left+c.right)/2>(h.left+h.right)/2?1:-1}catch(e){}
+ const z=zoom||G.zoom||1,t=[ll[0]+side*30/z,Math.max(-60,Math.min(60,ll[1]*(latK||1-.3/Math.max(1,z))))],r0=[-G.rot[0],-G.rot[1]],z0=G.zoom,T0=performance.now(),ip=d3.geoInterpolate(r0,t),D=L.D;
  const step=()=>{if(!L||L.D!==D||!L.el||!L.el.isConnected)return;const f=Math.min(1,(performance.now()-T0)/1000),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2,c=ip(e);try{G.lookAt(c[0],c[1],z0+(z-z0)*e)}catch(err){return}L.dirty=1;if(f<1)requestAnimationFrame(step)};step()}
 const shuffle=(a,seed)=>{let s=seed>>>0;const r=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
 
@@ -156,9 +183,9 @@ function sortDef(tour,title,o){return{tour,title,globe:true,tip:o.tip,
  card:()=>'<div class="rvg-row rvg-btns">'+o.keys.map(k=>'<button type="button" class="rvg-btn rvg-k" data-k="'+k[0]+'">'+esc(k[1])+"</button>").join("")+'</div><div class="rvg-score"></div>',
  init(L){L.cur=0;L.ans={};L.t=0;L.fillG=svgEl(L.geo,"g",{});L.fill=svgEl(L.fillG,"path",{class:"rvg-cfill"});const G=svgEl(L.svg,"g",{});
   L.dots=o.items.map(()=>svgEl(G,"circle",{r:"6",class:"rvg-cdot"}));L.tags=o.items.map(()=>{const d=document.createElement("div");d.className="rvg-tag rvg-small";L.el.appendChild(d);return d});
-  L.bub=document.createElement("div");L.bub.className="rvg-tag rvg-bub";L.el.appendChild(L.bub);setTimeout(()=>{if(L.el&&L.el.isConnected)turnTo(L,o.items[0].ll,o.zoom)},1400)},
+  L.bub=document.createElement("div");L.bub.className="rvg-tag rvg-bub";L.el.appendChild(L.bub);setTimeout(()=>{if(L.el&&L.el.isConnected)turnTo(L,o.items[0].ll,o.zoom,o.latK)},1400)},
  wire(L){L.card.querySelectorAll(".rvg-k").forEach(b=>b.onclick=()=>{const i=L.cur;if(L.ans[i])return;L.ans[i]={k:b.dataset.k,ok:b.dataset.k===o.items[i].s};L._said="";L.dirty=1;
-   clearTimeout(L.nx);L.nx=setTimeout(()=>{if(!L.el||!L.el.isConnected)return;const n=o.items.findIndex((x,j)=>!L.ans[j]);if(n>=0){L.cur=n;L._said="";L.dirty=1;turnTo(L,o.items[n].ll,o.zoom)}},2200)})},
+   clearTimeout(L.nx);L.nx=setTimeout(()=>{if(!L.el||!L.el.isConnected)return;const n=o.items.findIndex((x,j)=>!L.ans[j]);if(n>=0){L.cur=n;L._said="";L.dirty=1;turnTo(L,o.items[n].ll,o.zoom,o.latK)}},2200)})},
  off(L){clearTimeout(L.nx)},
  tick(L,dt){L.t+=dt;const c=L.dots[L.cur];if(c&&!L.ans[L.cur]){c.setAttribute("r",(6+2.5*Math.sin(L.t*5)).toFixed(1));L.fill.style.fillOpacity=(.45+.25*Math.sin(L.t*4)).toFixed(2)}},
  draw(L){let right=0,done=0;const lab=k=>(o.keys.find(x=>x[0]===k)||[])[1];
@@ -178,7 +205,7 @@ function sortDef(tour,title,o){return{tour,title,globe:true,tip:o.tip,
    Galápagos penguin is the only one that lives north of the equator, just (Wikipedia, "Penguin" and "Galápagos penguin").
    Churchill, on Hudson Bay, calls itself the polar bear capital of the world; Punta Tombo holds one of the largest
    Magellanic penguin colonies; Boulders Beach has a colony of African penguins. */
-const BEARS=sortDef("animals","Polar bears never meet penguins",{zoom:1.2,ask:"polar bear or penguin?",
+const BEARS=sortDef("animals","Polar bears never meet penguins",{zoom:1.2,latK:.5,ask:"polar bear or penguin?",
  tip:"A place glows on the globe. Would you meet polar bears or penguins there? Tap your answer.",
  keys:[["b","🐻‍❄️ Polar bears"],["p","🐧 Penguins"]],
  items:[{n:"Churchill, Hudson Bay",ll:[-94.17,58.77],s:"b",why:"Churchill, in Canada, calls itself the polar bear capital of the world: each autumn the bears gather there, waiting for the bay to freeze."},
