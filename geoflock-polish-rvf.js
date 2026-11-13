@@ -82,6 +82,30 @@ const FIX={
   /* Niue itself sat at the globe's edge, its photo on the zoom buttons. Niueans in New Zealand: 34,944 at the 2023
      census (Stats NZ), against 1,681 people on Niue in 2022 (Niue Statistics Office): about 21 times as many */
   "Niue lives in Auckland":S=>{VIEW(S,[-172,-27,2.2]);RE(S,"stat","nearly 20 times as many","about 20 times as many")}
+ },
+ inventions:{
+  /* the Mesopotamia photo, one of the three candidate homes of the wheel, sat under the map key */
+  "The wheel":S=>VIEW(S,[42,40,1.43]),
+  /* the "Dry summers, light soils" label ran under the map key */
+  "The heavy plough and the furlong":S=>VIEW(S,[12,48,2.2]),
+  /* Merca, in Somalia, where the last natural case of smallpox was, sat under the map key */
+  "The first vaccine":S=>VIEW(S,[36,25,1.25]),
+  /* card on the right, map key on the left: Brantford and Boston, two of the three claims, were under the key */
+  "Who called first?":S=>VIEW(S,[-40,47,1.18],"left"),
+  /* Berlin's label and Turing's photo sat on the zoom buttons */
+  "The first computers":S=>VIEW(S,[-28,44,1]),
+  /* the Helsinki label hung under the toolbar at the top */
+  "From LO to Wi-Fi":S=>VIEW(S,[-40,30,1])
+ },
+ environment:{
+  /* the card was switched to the right at run time and covered the eastern end of the wall, Sudan to Djibouti */
+  "A wall of trees":S=>VIEW(S,[12,14,2],"left"),
+  /* Tuvalu and its photo sat at the globe's edge, on the zoom buttons */
+  "A treaty for a sinking nation":S=>VIEW(S,[172,-18,1.43]),
+  /* card on the right: Delhi's photo and the Lahore label were pushed to the far edge of the globe */
+  "The dirtiest air":S=>VIEW(S,[92,30,1.54],"left"),
+  /* the "Beavers, England" label and the wolf photo sat on the zoom buttons at the top */
+  "The wolves return":S=>VIEW(S,[-40,34,1])
  }
 };
 const applied=new WeakSet();
@@ -124,6 +148,9 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
   "migration|China moves to the cities":G("How many migrant workers have left China’s villages for jobs in its cities?",1,1000,300,"million",{log:1,show:"about 300 million"}),
   /* Pew Research Center / US Census Bureau American Community Survey 2023: about 10.9 million Mexican-born people in the US */
   "migration|Mexico to the US":G("How many people born in Mexico live in the United States?",1,50,11,"million",{step:.5,show:"about 11 million"}),
+  /* USDA Foreign Agricultural Service, "Palm oil: world production", 2024/25: Indonesia about 47 and Malaysia about 19.5
+     of about 79 million tonnes, some 84% (the stop's own figure: about 85%) */
+  "environment|Palm oil and Borneo":G("What share of the world’s palm oil do Indonesia and Malaysia grow?",0,100,85,"%",{step:1,show:"about 85%"}),
   /* Deryabina et al., "Long-term census data reveal abundant wildlife populations at Chernobyl", Current Biology 25 (2015):
      wolves about seven times as abundant as in four comparable uninhabited reserves */
   "environment|Chernobyl’s accidental wildlife park":G("Inside the Chernobyl zone, how many times as common are wolves as in nearby nature reserves?",1,20,7,"times",{step:.5,show:"about 7 times"})
@@ -141,7 +168,12 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    block after the stop's headline with a one-line instruction (and, for the globe ones, a layer in amGlobe.host drawn
    with amGlobe.projection()), and removes everything as soon as the stop changes or the tour ends. Next and Back are
    never blocked; every step is wrapped in try/catch. CSS classes start with "rvf-".
-   - resources | "Rare earths aren’t rare": sort six elements from most common in Earth's crust to rarest. */
+   - resources   | "Rare earths aren’t rare": sort six elements from most common in Earth's crust to rarest.
+   - migration   | "The great Atlantic crossing": race a sailing ship against a steamship, Liverpool to New York.
+   - migration   | "Niue lives in Auckland": out of 100 Niueans, how many live on Niue? Drag, then check.
+   - inventions  | "Taking to the air": land the first powered flight on a to-scale jumbo jet's wings.
+   - inventions  | "Now explore": put eight of the tour's inventions in order, oldest first.
+   - environment | "Per person, the Gulf": sort six countries by CO₂ per person. */
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=n=>Math.round(n).toLocaleString("en-GB");
@@ -246,10 +278,10 @@ const NIUE={tours:["migration"],title:"Niue lives in Auckland",globe:false,
   '<div class="rvf-btns"><button type="button" class="rvf-btn rvf-chk">Check</button></div>'},
  wire(L){const c=L.card,r=c.querySelector(".rvf-rng");L.v=50;L.done=false;r.oninput=()=>{if(L.done)return;L.v=+r.value;this.render(L)};
   c.querySelector(".rvf-chk").onclick=()=>{if(L.done){L.done=false;c.querySelector(".rvf-chk").textContent="Check";this.render(L);return}L.done=true;c.querySelector(".rvf-chk").textContent="Try again";this.render(L)};this.render(L)},
- render(L){const c=L.card;if(!c)return;const v=L.done?NIUE_PCT:L.v;c.querySelectorAll(".rvf-dots i").forEach((d,i)=>d.className=i<v?"rvf-h":"");
+ render(L){const c=L.card;if(!c)return;const v=L.done?NIUE_PCT:L.v;c.querySelector(".rvf-rng").value=v;c.querySelectorAll(".rvf-dots i").forEach((d,i)=>d.className=i<v?"rvf-h":"");
   c.querySelector(".rvf-val").textContent=(L.done?NIUE_PCT:L.v)+" in 100";
   if(!L.done)say(L,"","Each dot is one Niuean. Orange ones live on the island.");
-  else{const off=Math.abs(L.v-NIUE_PCT);say(L,(off<=3?"Spot on! ":off<=15?"Close. ":"")+"Only about "+NIUE_PCT+" in 100","You guessed "+L.v+". About "+fmt(NIUE_HOME)+" people live on Niue (2022 census), but "+fmt(NIUE_NZ)+" people in New Zealand are Niuean (2023 census): about 20 times as many.")}}};
+  else{const off=Math.abs(L.v-NIUE_PCT);say(L,(off<=3?"Spot on! ":off<=15?"Close. ":"")+"Only about "+NIUE_PCT+" in 100","You guessed "+L.v+" (the slider now shows the real share). About "+fmt(NIUE_HOME)+" people live on Niue (2022 census), but "+fmt(NIUE_NZ)+" people in New Zealand are Niuean (2023 census): about 20 times as many.")}}};
 
 /* ======================================================================== 4. Shorter than a jumbo jet
    Orville Wright's first flight, 17 December 1903: 12 seconds, 120 ft (36.6 m); the fourth flight that day, Wilbur's,
@@ -258,7 +290,7 @@ const NIUE={tours:["migration"],title:"Niue lives in Auckland",globe:false,
 const WRIGHT1=36.6,WRIGHT4=260,JUMBO=64.4,FMAX=100;
 const FLIGHT={tours:["inventions"],title:"Taking to the air",globe:false,
  tip:"How far did the first powered flight go? Drag the little plane along the jumbo jet’s wings.",
- card(L){const X=m=>(10+m/FMAX*280).toFixed(1);
+ card(L){const X=m=>(12+m/FMAX*272).toFixed(1);
   return'<svg class="rvf-jet" viewBox="0 0 300 120" role="img" aria-label="A jumbo jet seen from above, 64 m from wingtip to wingtip, with a scale in metres">'+
   '<path class="rvf-jb" d="M'+X(JUMBO/2-3)+' 8 L'+X(JUMBO/2+3)+' 8 L'+X(JUMBO/2+3)+' 46 L'+X(JUMBO)+' 64 L'+X(JUMBO)+' 70 L'+X(JUMBO/2+3)+' 62 L'+X(JUMBO/2+2)+' 92 L'+X(JUMBO/2+11)+' 100 L'+X(JUMBO/2+11)+' 104 L'+X(JUMBO/2)+' 100 L'+X(JUMBO/2-11)+' 104 L'+X(JUMBO/2-11)+' 100 L'+X(JUMBO/2-2)+' 92 L'+X(JUMBO/2-3)+' 62 L'+X(0)+' 70 L'+X(0)+' 64 L'+X(JUMBO/2-3)+' 46 Z"/>'+
   '<line class="rvf-span" x1="'+X(0)+'" x2="'+X(JUMBO)+'" y1="78" y2="78"/><text class="rvf-st2" x="'+X(JUMBO/2)+'" y="89" text-anchor="middle">747 wingspan 64 m</text>'+
@@ -270,7 +302,7 @@ const FLIGHT={tours:["inventions"],title:"Taking to the air",globe:false,
   '<div class="rvf-btns"><button type="button" class="rvf-btn rvf-chk">Land it here</button></div>'},
  wire(L){const c=L.card,r=c.querySelector(".rvf-rng");L.v=80;L.done=false;r.oninput=()=>{if(L.done)return;L.v=+r.value;this.render(L)};
   c.querySelector(".rvf-chk").onclick=()=>{L.done=!L.done;c.querySelector(".rvf-chk").textContent=L.done?"Try again":"Land it here";this.render(L)};this.render(L)},
- render(L){const c=L.card;if(!c)return;const X=m=>10+m/FMAX*280;const pl=c.querySelector(".rvf-pl");pl.setAttribute("x",X(L.v).toFixed(1));
+ render(L){const c=L.card;if(!c)return;const X=m=>12+m/FMAX*272;const pl=c.querySelector(".rvf-pl");pl.setAttribute("x",X(L.v).toFixed(1));
   c.querySelector(".rvf-mine").setAttribute("x2",X(L.v).toFixed(1));c.querySelector(".rvf-real").style.opacity=L.done?1:0;c.querySelector(".rvf-val").textContent=L.v+" m";
   if(!L.done)say(L,"","The jet is drawn to scale: wingtip to wingtip is 64 m.");
   else{const off=Math.abs(L.v-WRIGHT1);say(L,(off<=5?"Spot on! ":off<=15?"Close! ":"")+"About 37 m, in 12 seconds","You said "+L.v+" m. The first flight (green) would fit between a jumbo jet’s wingtips with about 27 m to spare. Later that day Wilbur flew 260 m in 59 seconds, and the age of flying had begun.")}}};
@@ -285,26 +317,7 @@ const TIMELINE=SORT({tours:["inventions"],title:"Now explore",
  items:[["The telephone",1876,yr(1876)],["The wheel",-3500,yr(-3500)],["The World Wide Web",1989,yr(1989)],["A printed book",868,yr(868)],["Bouncy rubber balls",-1600,yr(-1600)],["The steam engine",1712,yr(1712)],["Penicillin",1928,yr(1928)],["The first vaccine",1796,yr(1796)]],
  after:(n,N)=>"Over 5,000 years separate the first and the last, and the last five came in under 300 years."});
 
-/* ======================================================================== 6. Norway goes electric
-   Fully electric cars as a share of new passenger cars sold in Norway, rounded: OFV (Opplysningsrådet for
-   veitrafikken), yearly registration statistics, as tabulated by the Norwegian EV Association (elbil.no):
-   2014 12.5%, 2015 17.1%, 2016 15.7%, 2017 20.8%, 2018 31.2%, 2019 42.4%, 2020 54.3%, 2021 64.5%, 2022 79.3%,
-   2023 82.4%, 2024 88.9%, 2025 95.9%. */
-const EV={2014:12.5,2015:17.1,2016:15.7,2017:20.8,2018:31.2,2019:42.4,2020:54.3,2021:64.5,2022:79.3,2023:82.4,2024:88.9,2025:95.9};
-const NORWAY={tours:["environment"],title:"Electric Norway",globe:false,
- tip:"Slide through the years. In which year were more than half of Norway’s new cars electric for the first time?",
- card(L){return'<div class="rvf-cars" aria-hidden="true">'+Array.from({length:100},()=>"<i></i>").join("")+'</div>'+
-  '<div class="rvf-row"><input type="range" class="rvf-rng" min="2014" max="2025" step="1" value="2014" aria-label="Year"><b class="rvf-val"></b></div>'+
-  '<div class="rvf-key"><span><i class="rvf-ke"></i>electric</span><span><i class="rvf-kp"></i>petrol, diesel or hybrid</span></div>'},
- wire(L){const r=L.card.querySelector(".rvf-rng");L.y=2014;L.seen=false;r.oninput=()=>{L.y=+r.value;this.render(L)};this.render(L)},
- render(L){const c=L.card;if(!c)return;const p=EV[L.y],n=Math.round(p);c.querySelectorAll(".rvf-cars i").forEach((d,i)=>d.className=i<n?"rvf-e":"");
-  c.querySelector(".rvf-val").textContent=L.y+": "+Math.round(p)+"%";
-  if(L.y===2020){L.seen=true;say(L,"Yes: 2020","For the first time, more than half the new cars sold in Norway, "+Math.round(p)+" in 100, were fully electric.")}
-  else if(L.y===2025)say(L,"2025: "+Math.round(p)+" in 100","Petrol and diesel cars have almost vanished from Norway’s showrooms."+(L.seen?"":" Now go back: when did electric first pass half?"))
-  else if(L.y<2020)say(L,L.y+": "+Math.round(p)+" in 100",L.seen?"Electric cars were still a minority of new cars.":"Not yet half. Keep sliding.")
-  else say(L,L.y+": "+Math.round(p)+" in 100",L.seen?"Every year since 2020 the share has gone up.":"Past half already. Was it the first year? Slide back to check.")}};
-
-/* ======================================================================== 7. CO₂ per person, in order
+/* ======================================================================== 6. CO₂ per person, in order
    The stop's own list (rough 2023 values, Global Carbon Budget via Our World in Data): Qatar about 35–40 t, Saudi
    Arabia about 18, United States about 14, China about 9, world about 5, India about 2. The numbers only set the order;
    the card shows the list's own words. */
@@ -313,7 +326,7 @@ const CO2=SORT({tours:["environment"],title:"Per person, the Gulf",
  items:[["China",9,"about 9 t"],["Qatar",37.5,"about 35–40 t"],["India",2,"about 2 t"],["United States",14,"about 14 t"],["World average",5,"about 5 t"],["Saudi Arabia",18,"about 18 t"]],
  after:(n,N)=>"Per person, someone in Qatar emits over 15 times as much as someone in India. China, the biggest emitter in total, is under the US per person."});
 
-const DEFS=[RARE,RACE,NIUE,FLIGHT,TIMELINE,NORWAY,CO2];
+const DEFS=[RARE,RACE,NIUE,FLIGHT,TIMELINE,CO2];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if(D.globe&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -374,11 +387,10 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvf-lane i{display:block;height:10px;border-radius:5px;background:rgba(19,41,75,.1);overflow:hidden}.rvf-lane b{display:block;height:100%;width:0;background:#13294b;border-radius:5px}.rvf-lane b.rvf-st{background:#c2364f}
 .rvf-lane em{font-style:normal;text-align:right;color:#9a4a16;white-space:nowrap}
 .rvf-row{display:flex;align-items:center;gap:10px;margin-top:8px}.rvf-rng{flex:1 1 auto;accent-color:#d9682b}.rvf-val{min-width:84px;text-align:right;font-size:15px;color:#9a4a16;white-space:nowrap}
-.rvf-dots,.rvf-cars{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin:2px 0 4px}
-.rvf-dots i,.rvf-cars i{display:block;aspect-ratio:1;border-radius:50%;background:#3b7bd4;transition:background .2s}.rvf-dots i.rvf-h{background:#d9682b}
-.rvf-cars i{border-radius:3px;background:#9aa7b6}.rvf-cars i.rvf-e{background:#1f9a5a}
+.rvf-dots{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin:2px 0 4px}
+.rvf-dots i{display:block;aspect-ratio:1;border-radius:50%;background:#3b7bd4;transition:background .2s}.rvf-dots i.rvf-h{background:#d9682b}
 .rvf-key{display:flex;gap:14px;font-size:12px;font-weight:700;color:#5b6b7c;margin-top:4px}.rvf-key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
-.rvf-kh{background:#d9682b}.rvf-kn{background:#3b7bd4}.rvf-ke{background:#1f9a5a;border-radius:2px!important}.rvf-kp{background:#9aa7b6;border-radius:2px!important}
+.rvf-kh{background:#d9682b}.rvf-kn{background:#3b7bd4}
 .rvf-jet{display:block;width:100%;height:auto;border-radius:10px;background:linear-gradient(#eaf4fb,#fff)}
 .rvf-jb{fill:#c9d3de;stroke:#6b7c90;stroke-width:1}.rvf-span{stroke:#6b7c90;stroke-width:1;stroke-dasharray:3 2}
 .rvf-st2{font:700 8.5px system-ui,sans-serif;fill:#13294b}.rvf-tk{stroke:#13294b;stroke-width:1}
@@ -388,7 +400,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 :is(body.dark-theme,body.sky-night) .rvf-lane em,:is(body.dark-theme,body.sky-night) .rvf-val{color:#ffb27a}:is(body.dark-theme,body.sky-night) .rvf-key{color:#aab6c8}
 :is(body.dark-theme,body.sky-night) .rvf-jet{background:linear-gradient(#1d2b44,#14203a)}:is(body.dark-theme,body.sky-night) .rvf-jb{fill:#55657c;stroke:#9fb0c6}
 :is(body.dark-theme,body.sky-night) .rvf-st2,:is(body.dark-theme,body.sky-night) .rvf-pl{fill:#e8eefc}:is(body.dark-theme,body.sky-night) .rvf-tk{stroke:#e8eefc}
-:is(body.dark-theme,body.sky-night) .rvf-cars i{background:#5d6b7c}:is(body.dark-theme,body.sky-night) .rvf-cars i.rvf-e{background:#3fcf7f}`;document.head.appendChild(s)}
+`;document.head.appendChild(s)}
 
 window.gfPolishRvf={v:1,FIX,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
 })();
