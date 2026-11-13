@@ -43,6 +43,11 @@ guessFirst("silkroad",["A camel caravan walks from Luoyang in China to Rome with
 guessFirst("slr",["If all the ice on land melted, how much higher would the sea be?",["About 7 m","About 66 m","About 300 m"],1,"About 66 m, roughly a 20-storey building: 58 m from Antarctica, 7.4 m from Greenland and a third of a metre from mountain glaciers. Sea ice already floats, so it adds nothing."]);
 /* shrink: the chart's own figures (Central Statistical Bureau of Latvia): 2.67 million in 1990, 1.86 million in 2025 */
 guessFirst("shrink",["In 1990 Latvia had 2.67 million people. How many live there in 2025?",["About 3.0 million","About 2.6 million","About 1.9 million"],2,"About 1.86 million: 3 in every 10 people are gone. Many moved west after Latvia joined the EU in 2004, and fewer babies were born than people died."]);
+/* scatter: the chart's own World Bank life expectancy for 2024 (the life-expectancy map theme's data): USA 78.9 years,
+   Costa Rica 81.0, Chile 81.4 */
+guessFirst("scatter",["Who lives longer on average: people in the USA, or in Costa Rica, a much poorer country?",["The USA","Costa Rica","About the same"],1,"Costa Rica: 81.0 years against 78.9 in the USA (World Bank, 2024). Money helps, but it is not everything: find the USA among the rich countries on the right."]);
+/* water: the chart's own USGS figures (after Shiklomanov 1993): 97.5% of Earth's water is salt, 2.5% fresh */
+guessFirst("water",["Of all the water on Earth, how much is fresh, not salty?",["About 2.5%","About 25%","About half"],0,"About 2.5%, and most of that is frozen in Antarctica and Greenland or hidden underground. Lakes, rivers, soil and air hold well under 1% of the fresh water."]);
 }catch(e){console.warn("review3 guess",e)}
 
 /* ------------------------------------------------------------------ The rank-size rule: a real country
@@ -55,7 +60,7 @@ try{(function(){
 const D=DG.ranksize;if(!D||!D._draw||D._us)return;D._us=1;const draw0=D._draw;
 const US=[["New York",20.08],["LA",13.2],["Chicago",9.45],["Dallas",7.64],["Houston",7.15],["DC",6.28],["Miami",6.14],["Atlanta",6.1]];
 D.svg=()=>'<svg viewBox="0 0 300 176">'+dgTabs(["Rank-size rule","A primate city","Real: the USA"],0,4)+'<g class="dg-dyn"></g></svg>';
-D._draw=svg=>{if(D._tab!==2)return draw0(svg);let h="";const X0=34,Y0=140,k=98/20.08;
+D._draw=svg=>{if(D._tab!==2)return draw0(svg);let h="";const X0=34,Y0=140,k=86/20.08;
  US.forEach(([n,v],i)=>{const x=X0+i*32,ideal=20.08/(i+1);
   h+='<rect x="'+x+'" y="'+(Y0-v*k).toFixed(1)+'" width="22" height="'+(v*k).toFixed(1)+'" rx="2" fill="'+(i?"#6c8ebf":"#c94b2c")+'"'+dgTip(n+": "+v.toFixed(1)+" million (the rule predicts "+ideal.toFixed(1)+" million)")+"/>"+
    dgT(x+11,(Y0-v*k-3).toFixed(1),v.toFixed(1),'text-anchor="middle" font-size="6.6" font-weight="800"')+dgT(x+11,Y0+9,n,'text-anchor="middle" font-size="6.6"')+

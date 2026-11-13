@@ -508,10 +508,13 @@ make("waterfall",{title:"How a waterfall walks backwards",
   for(let i=0;i<4;i++)h+='<path d="M'+f1(xf+12+i*7+rnd(i)*3)+','+GF+' l3,-4 l4,1 l1,3Z" fill="#9a8f80"/>';
   h+='<path d="M6,'+(TOP-1)+' L6,30 L60,40 L120,36 L200,44 L296,40 L296,'+(TOP-1)+'Z" fill="#cfe2c0" opacity=".0"/>';
   b+=T(14,TOP-6,"river",'font-size="6.4" font-weight="700" fill="#1d5f99"')+T(f1(Math.min(xf+40,260)),GF-6,km>1.5?"gorge":"",'font-size="7" font-weight="800" text-anchor="middle" fill="'+INK+'"');
-  b+=T(14,TOP+CAP-3,"hard cap rock",'font-size="6" font-weight="700" fill="#fff"')+T(14,TOP+CAP+16,"soft shale",'font-size="6" font-weight="700" fill="#e6e1ea"');
+  /* once the falls have walked back near the left edge, the falling water covered these labels; they then move into the
+     gorge, pointing back at the cliff */
+  if(xf>96)b+=T(14,TOP+CAP-3,"hard cap rock",'font-size="6" font-weight="700" fill="#fff"')+T(14,TOP+CAP+16,"soft shale",'font-size="6" font-weight="700" fill="#e6e1ea"');
+  else b+=T(f1(xf+22),TOP+CAP-3,"← hard cap rock",'font-size="6" font-weight="700" fill="'+INK+'"')+T(f1(xf+22),TOP+CAP+16,"← soft shale"+(ov>2.5?", undercut":""),'font-size="6" font-weight="700" fill="'+INK+'"');
   b+='<path d="M'+XS+',22 v'+(TOP-24)+'" stroke="'+INK+'" stroke-width=".6" stroke-dasharray="2 2"/>'+T(XS-2,20,"where the falls began",'font-size="5.8" font-weight="700" text-anchor="end" fill="'+INK+'"');
   if(km>1)b+='<path d="M'+f1(xf)+',30 H'+XS+'" stroke="'+ACC+'" stroke-width="1"/><path d="M'+f1(xf)+',27 v6 M'+XS+',27 v6" stroke="'+ACC+'" stroke-width="1"/>'+T(f1((xf+XS)/2),27,km.toFixed(1)+" km",'font-size="7" font-weight="800" text-anchor="middle" fill="#c0561d"');
-  if(ov>2.5)b+=T(f1(xf-ov-3),TOP+CAP+8,"undercut",'font-size="5.8" font-weight="700" text-anchor="end" fill="#fff"');
+  if(ov>2.5&&xf>96)b+=T(f1(xf-ov-3),TOP+CAP+8,"undercut",'font-size="5.8" font-weight="700" text-anchor="end" fill="#fff"');
   s.xf=xf;const A=q(svg,".wf-a");if(A)A.innerHTML=h;const B=q(svg,".wf-b");if(B)B.innerHTML=b;
   setPara(svg,"wf-p",s.p>.98?"<b>Today.</b> The falls have moved back about 11 km, about 1 m a year in the 1800s. Since much of the water is now taken for power, the rate has dropped to roughly 30 cm a year.":
    "Spray and swirling water scour the soft shale under the hard cap rock. The lip is left hanging until it breaks off, and the falls step back upstream, leaving a gorge behind them.");
