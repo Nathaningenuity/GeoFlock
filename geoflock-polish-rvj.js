@@ -35,6 +35,8 @@ const VIEW=(S,g,card)=>{LOCK(S,"globe",g);if(card)LOCK(S,"card",card)};
 
 /* move a text pin (an "area" pin keeps its [[lon,lat]] form) */
 const MOVE=(S,re,ll)=>{const P=S.pins||[];if(!P.some(p=>Array.isArray(p)&&re.test(strip(p[1]))))return;LOCK(S,"pins",P.map(p=>Array.isArray(p)&&re.test(strip(p[1]))?[Array.isArray(p[0]&&p[0][0])?[ll]:ll].concat(p.slice(1)):p))};
+/* turn a point pin into an "area" label: index.html's framing (gfSubjectPts) then leaves it out of the stop's middle */
+const AREA=(S,re)=>{const P=S.pins||[];if(!P.some(p=>Array.isArray(p)&&re.test(strip(p[1]))&&p[2]!=="area"))return;LOCK(S,"pins",P.map(p=>Array.isArray(p)&&re.test(strip(p[1]))&&p[2]!=="area"?[[p[0]],p[1],"area"]:p))};
 const FIX={
  hg1:{
   /* the Boston photo sat at the globe's edge, half under the card (Boston has its own stop, Time–space compression) */
@@ -80,7 +82,29 @@ const FIX={
   /* Singapore, the stop's own counter-example and photo, was off the globe's edge under the map key */
   "Does nature decide?":S=>VIEW(S,[80,14,1],"left")
  },
- hg2a:{},hg2b:{}
+ hg2a:{
+  /* the Jakarta photo hung off the globe's edge (Java has its own stop) */
+  "Where people live":S=>DROPPH(S,/^Jakarta/),
+  /* the five clusters span half the world: West Africa hung from under the card and the eastern United States was
+     round the back. The two Asian clusters, the stop's headline, are framed with Europe; the other two stay in the text */
+  "The big clusters":S=>{DROP(S,/^(West Africa|Eastern United States)/);MOVE(S,/^Europe/,[28,51]);MOVE(S,/^East Asia/,[110,31]);VIEW(S,[78,32,1],"left")},
+  /* New York, Dhaka, Lagos and Shanghai lie so far apart that the globe turned to their middle, over the Arctic: New
+     York hung from under the card and Shanghai sat round the edge. Asia's deltas are framed (the headline photo is
+     Shanghai); New York and Lagos stay in the text */
+  "Coasts and rivers":S=>{DROP(S,/^(New York|Lagos)/);VIEW(S,[104,26,1.3],"left")},
+  /* the Amazon label hung from under the card (the rainforest has the next stop to itself), Tibet sat by the zoom
+     buttons and the Sahara at the card's edge */
+  "Where people avoid":S=>{DROP(S,/^Amazon/);MOVE(S,/^Sahara/,[18,24]);VIEW(S,[52,38,1],"left")},
+  /* Mongolia, the other half of the comparison, sat at the top edge, and the purple Bangladesh lay on the
+     Ulaanbaatar photo */
+  "Arithmetic density":S=>{VIEW(S,[97,37,1.8],"left");const G=(S.ghosts||[]).map(q=>q&&q.code==="bd"?Object.assign({},q,{at:[97,45.5]}):q);if(G.length)LOCK(S,"ghosts",G)},
+  /* Bangladesh and Iowa are on opposite sides of the Earth, so the globe turned to their middle, the North Pole, and
+     the Iowa label hung over the toolbar. The stop opens on Bangladesh; the buttons in part 3 turn the globe to Iowa */
+  "Agricultural density":S=>{AREA(S,/^Iowa/);VIEW(S,[90,24,2],"left")},
+  /* the 1790 label lay across the moving-middle game's own "1790" tag and its "Drag me west" handle */
+  "America’s moving middle":S=>DROP(S,/^1790/)
+ },
+ hg2b:{}
 };
 
 const applied=new WeakSet();
@@ -142,6 +166,7 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg1  | "Large scale, small scale": put six maps in order from the largest scale to the smallest.
    - hg1b | "A map that stopped an epidemic": John Snow's real map; tap the pump you think spread the cholera.
    - hg1b | "Perceptual regions": formal, functional or perceptual? Sort nine regions.
+   - hg2a | "Agricultural density": turn the globe from Bangladesh to Iowa, on the far side of the Earth.
    - hg2a | "Crowded but rich, sparse but stretched": sort six countries by people per km².
    - hg2b | "Natural increase and doubling": set the birth and death rates and watch 100 people grow (or shrink). */
 
@@ -312,8 +337,27 @@ const SNOW={tours:["hg1b"],title:"A map that stopped an epidemic",globe:false,
   if(k===SNOW_BROAD)say(L,(L.gave?"The Broad Street pump: ":L.tries===1?"First try! The Broad Street pump: ":"Found it: the Broad Street pump. ")+n+" of "+SNOWD.length+" deaths lived nearer to it than to any other pump","That is "+pc+"% of the deaths around one pump out of thirteen. Snow also found that brewery workers, who drank beer, and a workhouse with its own well escaped. (Here “nearer” is a straight line; Snow measured walking distance along the streets.)");
   else say(L,SNOW_P[k][0]+": "+n+" of "+SNOWD.length+" deaths lived nearer to this pump than to any other",(n<30?"Too few. ":"Some, but not most. ")+"Which pump has the most deaths around it? Tap another.")}};
 
+/* ======================================================================== 6. Two sides of the Earth (hg2a)
+   Bangladesh and Iowa, the stop's two examples, are almost opposite each other on the globe, so no single view shows
+   both. Two buttons turn the globe from one to the other (the same card-aware flight as psFlyGlobe in index.html). The
+   facts are the stop's own. */
+function turnGlobe(lon,lat,z){try{const G=ps&&ps.g;if(!G||ps.mode!=="globe")return;let L0=lon;const over=typeof psCardOver==="function"?psCardOver():0;
+ if(over){const R=G.size().r*z,a=Math.asin(Math.min(.6,Math.abs(over)/2/R))*180/Math.PI;L0-=Math.sign(over)*a/Math.max(.35,Math.cos(lat*Math.PI/180))}
+ const from=[-G.rot[0],-G.rot[1]],to=[L0,lat],ip=d3.geoInterpolate(from,to),z0=G.zoom,ms=matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches?0:1400,t0=performance.now();
+ const id=G._flyId=(G._flyId||0)+1;G._flying=true;
+ const step=t=>{if(G._flyId!==id||G._dead||ps.g!==G)return;const k=ms?Math.min(1,(t-t0)/ms):1,e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,c=ip(e),lift=Math.sin(Math.PI*e)*.35;
+  G.zoom=Math.max(1,(z0+(z-z0)*e)*(1-lift));G.rot=[-c[0],-c[1]];G.render();if(k<1)requestAnimationFrame(step);else{G._flying=false;G._flyId++}};requestAnimationFrame(step)}catch(e){}}
+const FARMS=[["bd","Bangladesh",90,24,2,"Over a third of workers farm, most on small plots worked by hand: many farmers per km² of farmland, a high agricultural density."],
+ ["us","Iowa, USA",-93.5,42,2.2,"Under 2% of Americans farm. Big machines work huge fields, so a few farmers cover a lot of land: a low agricultural density."]];
+const TURN={tours:["hg2a"],title:"Agricultural density",globe:false,turns:true,
+ tip:"Bangladesh and Iowa are on opposite sides of the Earth. Turn the globe from one to the other.",
+ card(L){return'<div class="rvj-btns rvj-turn">'+FARMS.map((f,i)=>'<button type="button" class="rvj-btn" data-i="'+i+'">'+(i?"Turn to ":"Back to ")+esc(f[1])+'</button>').join("")+'</div>'},
+ wire(L){const c=L.card;L.at=0;c.querySelectorAll(".rvj-turn button").forEach(b=>b.onclick=()=>{const f=FARMS[+b.dataset.i];L.at=+b.dataset.i;turnGlobe(f[2],f[3],f[4]);this.render(L)});this.render(L)},
+ render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvj-turn button").forEach(b=>{b.classList.toggle("rvj-cur",+b.dataset.i===L.at);b.textContent=(+b.dataset.i===L.at?"Here: ":"Turn to ")+FARMS[+b.dataset.i][1]});
+  const f=FARMS[L.at];say(L,f[1],f[5]+(L.at?" Turn back to compare.":""))}};
+
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[SCALE,REGIONS,DENS,DOUBLE,SNOW];
+const DEFS=[SCALE,REGIONS,DENS,DOUBLE,SNOW,TURN];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if(D.globe&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -324,7 +368,7 @@ function mount(D){const G=g();const host=D.globe?(G&&G.host):null;if(D.globe&&!h
 function unmount(){cancelAnimationFrame(raf);raf=0;if(L){try{if(L.D.off)L.D.off(L)}catch(e){}try{if(L.el)L.el.remove()}catch(e){}L=null}
  document.querySelectorAll(".rvj-ctl").forEach(c=>c.remove())}
 function ensureCard(){if(!L||!ps.card)return;const ex=ps.card.querySelector(".rvj-ctl");if(ex&&L.card===ex)return;if(ex)ex.remove();
- const at0=ps.card.querySelector(".ps-stat");if(!at0)return;const D=L.D,c=document.createElement("div");c.className="rvj-ctl";
+ const at0=ps.card.querySelector(".ps-stat");if(!at0)return;const D=L.D,c=document.createElement("div");c.className="rvj-ctl";if(D.turns)c.dataset.turns="1";
  c.innerHTML='<div class="rvj-do">'+esc(D.tip)+"</div>"+(D.card?D.card(L):"")+'<div class="rvj-ep"></div>';
  const tp=ps.card.querySelector("[data-tp]");(tp&&tp.parentNode===at0.parentNode?tp:at0).after(c);L.card=c;L._said="";quiet(c);
  try{if(D.wire)D.wire.call(D,L)}catch(e){console.error(e)}L.dirty=1}
@@ -387,6 +431,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvj-key2{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;font-weight:700;color:#5b6b7c;margin-top:5px}.rvj-key2 i{display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:-1px;border-radius:50%}
 .rvj-kd{background:#2a2f3a}.rvj-kp{background:#2a78d0;border-radius:2px!important}.rvj-kn{background:#d9682b}
 :is(body.dark-theme,body.sky-night) .rvj-key2{color:#aab6c8}
+.rvj-btn.rvj-cur{background:#13294b;color:#fff;border-color:#13294b}:is(body.dark-theme,body.sky-night) .rvj-btn.rvj-cur{background:#9fc3ff;color:#13294b}
 `;document.head.appendChild(s)}
 
 window.gfPolishRvj={v:1,FIX,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
