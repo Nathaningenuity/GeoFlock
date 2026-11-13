@@ -21,8 +21,8 @@
       - time | "One clock for China": slide Beijing's clock through a winter morning and watch dawn cross China.
       - time | "Spain’s clock is off": slide the clock until the Sun is highest over Madrid.
       - plates | "Three ways plates meet": the globe turns to a place; is it pulling apart, crashing or sliding past?
-      - plates | "Hawaii on a conveyor belt": slide back in time and watch each island born over the hotspot.
-      - hazards | "The 2004 tsunami": play the wave out across the Indian Ocean, hour by hour.
+      - plates | "Australia is on the move": run the clock forward and watch Australia drift towards Asia.
+      - hazards | "The town that ignored the map": follow the mud from Nevado del Ruiz to Armero, minute by minute.
       - hazards | "Bangladesh fights back": guess how many died in each great cyclone, then see the toll fall.
    Everything goes (layer, card block, timers) as soon as the stop changes or the tour ends. Globe view only; Next and
    Back are never blocked; every step is wrapped in try/catch. CSS classes start with "rve-". */
@@ -94,7 +94,34 @@ const FIX={
  /* countries that change their clocks and were not lit: Cyprus, Luxembourg, Malta and Kosovo (EU / European summer time),
     Egypt (brought daylight saving back in 2023), Haiti and the Bahamas (US rules). Wikipedia, "Daylight saving time by
     country" (2025). */
- "time|Daylight saving time":{hiAdd:["cy","lu","mt","xk","eg","ht","bs"]}
+ "time|Daylight saving time":{hiAdd:["cy","lu","mt","xk","eg","ht","bs"]},
+ /* ---------------- Plate tectonics (framings found by projecting each stop's pins at 1280×860) */
+ /* Japan, the Mariana Trench and Fuji were under the card: seen from above the North Pacific, Fuji, the trench,
+    Hawaii and Mount St Helens all show */
+ "plates|Where the Pacific sinks":{globe:[144,50,1],exact:1,card:"left"},
+ "plates|Seashells on Everest":{globe:[77,12,1.8],exact:1,card:"left"},        /* the "80 million years ago" India and its shell sat off the bottom */
+ "plates|The Atlantic is growing":{globe:[-48,25,1.15],exact:1,card:"left"},     /* the ridge's tag sat under the Þingvellir photo, the Americas under the card */
+ "plates|Hawaii on a conveyor belt":{globe:[-167,15,4],exact:1,card:"left"},    /* the chain was on the globe's edge */
+ /* Kīlauea is too far west to show with the other three; St Helens, Soufrière Hills and Chaitén now all show */
+ "plates|Why some volcanoes explode":{globe:[-114.5,-4,1],exact:1,card:"left"},
+ /* the 2011 earthquake shortened the day by about 1.8 microseconds (NASA JPL, Richard Gross, 2011) */
+ "plates|Japan’s four plates":{globe:[129.5,37,3],exact:1,card:"left",rep:[["shortened the day by about a millionth of a second","shortened the day by almost two millionths of a second"]]},
+ "plates|The earthquake Japan wrote down":{globe:[147,47,1],exact:1,card:"left"},   /* the Japan end of the tsunami's path was under the card */
+ "plates|Los Angeles is coming":{globe:[-126,36,2.6],exact:1,card:"left"},       /* California sat on the globe's left edge behind the card's tags */
+ "plates|Australia is on the move":{globe:[118,-22,1.6],exact:1,card:"left"},    /* Western Australia was under the card */
+ /* ---------------- Natural hazards */
+ "hazards|Fewer deaths than ever":{globe:[70,22,1],exact:1,card:"left"},          /* India, lit, was half under the card */
+ "hazards|The 2004 tsunami":{globe:[62,5,1.1],exact:1,card:"left"},               /* Somalia and the far end of the waves were under the card */
+ "hazards|Buildings kill, not quakes":{globe:[-72,-14,1],exact:1,card:"right"},   /* the Chile photo was off the bottom */
+ "hazards|China’s great floods":{globe:[108,31,2.6],exact:1,card:"left"},         /* Wuhan, Nanjing and Gaoyou were under the map key */
+ "hazards|The loudest sound":{globe:[75,-15,1],exact:1,card:"left"},              /* Krakatoa itself was under the card */
+ "hazards|Fire seasons":{globe:[-110,45,1],exact:1,card:"left"},                  /* Canada was round the edge; Alberta and Los Angeles hidden */
+ "hazards|The silent killer":{globe:[5,36,1.1],exact:1,card:"left"},             /* Paris was under the card, Jacobabad under the map key */
+ /* New England's tag floated off the globe's edge: the stop now looks across the Atlantic at New England */
+ "hazards|The year without a summer":{globe:[-45,42,1],exact:1,card:"right"},
+ "hazards|When mountains fall":{globe:[-76,-3,2.4],exact:1,card:"left"},          /* Yungay sat at the bottom, Peru's tag in the trees */
+ /* Lituya Bay is 11 km long: the globe's zoom (capped at 6 by the tours) showed a dot, so the stop turns in closer */
+ "hazards|The tallest wave ever":{globe:[-137.55,58.65,6],exact:1,card:"left",zoomTo:[-137.55,58.66,60]}
 };
 /* the Sun's longitude now, and a view just east of it (afternoon to night), for the Time zones tour's first stop */
 function dusk(){let lon=60;try{const s=typeof gfSun==="function"?gfSun():null;if(s)lon=s[0]+62}catch(e){}lon=((lon+540)%360)-180;return[+lon.toFixed(1),12,1]}
@@ -124,6 +151,11 @@ function applyAll(){try{for(const t of TOURS){const T=PS_TOURS[t];if(T&&T.steps)
 {let n=0;const t=setInterval(()=>{const ok=wrapGo()&&wrapFly();if(ok)applyAll();if(ok&&n>20||++n>90)clearInterval(t)},500)}
 /* the first stop of a tour is shown without psGo: fix it there too */
 setInterval(()=>{try{if(typeof ps!=="undefined"&&ps&&TOURS.includes(ps.tour)&&ps._rveT!==ps.tour+ps.i){ps._rveT=ps.tour+ps.i;applyFix(psSteps()[ps.i],ps.tour)}}catch(e){}},400);
+
+/* ---- a stop whose place is tiny turns the globe in closer once the tour's own move has settled */
+let zLast="";setInterval(()=>{try{if(typeof ps==="undefined"||!ps||!ps.tour||ps.mode!=="globe")return;const k=ps.tour+"|"+ps.i;if(k===zLast)return;zLast=k;const X=curFix();if(!X||!X.zoomTo)return;
+ setTimeout(()=>{try{if(!ps||ps.tour+"|"+ps.i!==k)return;const G=g();if(!G||!G.lookAt)return;const t=X.zoomTo,r0=[-G.rot[0],-G.rot[1]],z0=G.zoom,T0=performance.now(),ip=d3.geoInterpolate(r0,[t[0],t[1]]);
+  const step=()=>{if(!ps||ps.tour+"|"+ps.i!==k)return;const f=Math.min(1,(performance.now()-T0)/1400),e=f<.5?2*f*f:1-Math.pow(-2*f+2,2)/2,c=ip(e);try{G.lookAt(c[0],c[1],z0*Math.pow(t[2]/z0,e))}catch(err){return}if(f<1)requestAnimationFrame(step)};step()}catch(e){}},1700)}catch(e){}},300);
 
 /* ---- the turned view: the globe's roll eases to the stop's angle, and back to the globe's own when the stop changes */
 const RO={k:0,v:0,want:null,raf:0};
@@ -393,68 +425,64 @@ const PLQ={tour:"plates",title:"Three ways plates meet",
   else if(a)say(L,(a.ok?"Right: ":"Not quite: ")+KIND[o.k].replace(/^\S+ /,"").toLowerCase(),o.why);
   else say(L,o.n,"Look at the land and the red boundary line. Which way are the plates moving here?")}};
 
-/* ============================================================ G. Hawaii on a conveyor belt
-   Ages of each island's oldest volcano (USGS Hawaiian Volcano Observatory, "Hawaiian volcanoes" / Clague and Dalrymple
-   1987, as summarised in Wikipedia, "Hawaiian–Emperor seamount chain" and the island articles): Kauaʻi about 5.1 million
-   years, Oʻahu (Waiʻanae) about 3.9, Molokaʻi about 1.9, Maui (West Maui) about 1.3, Hawaiʻi (Kohala) about 0.5. The
-   hotspot is taken under Kīlauea and the new seamount Kamaʻehuakanaloa. Each island is drawn as a dot that rides in a
-   straight line from the hotspot to where it is today, at a steady speed: a sketch of the conveyor belt. */
-const ISL=[{n:"Kauaʻi",a:5.1,ll:[-159.53,22.07]},{n:"Oʻahu",a:3.9,ll:[-158.0,21.47]},{n:"Molokaʻi",a:1.9,ll:[-157.0,21.13]},{n:"Maui",a:1.3,ll:[-156.33,20.8]},{n:"Hawaiʻi",a:.5,ll:[-155.5,19.6]}];
-const HOT=[-155.2,19.1];
-const HAWAII={tour:"plates",title:"Hawaii on a conveyor belt",
- tip:"Slide back to 6 million years ago, then press ▶ and watch each island born over the hotspot.",
- card:()=>'<div class="rve-row"><button type="button" class="rve-play" aria-label="Play">▶</button><input type="range" class="rve-range" min="0" max="600" step="1" value="0" aria-label="Millions of years ago"><span class="rve-read rve-hyr" style="flex:0 0 auto"></span></div>',
- init(L){L.T=0;L.play=false;L.hot=svgEl(L.svg,"circle",{r:"16",class:"rve-hot"});L.dots=ISL.map(()=>svgEl(L.svg,"circle",{r:"7",class:"rve-isl"}));L.tags=ISL.map(()=>tag(L,"rve-small rve-tiny"));L.hT=tag(L,"rve-small");L.t=0},
+/* ============================================================ G. Australia is on the move: run the clock forward
+   Geoscience Australia ("Australia on the move" / GDA2020): Australia moves about 7 cm a year, to the north-north-east.
+   The outline is the map's own Australia, moved in a straight line at today's speed and heading (7 cm a year =
+   70 km per million years; heading taken as 20° east of north). A sketch: real plates turn as they go, and nobody can
+   say exactly when, or where, it will hit Asia; geologists expect it to collide with south-east Asia in tens of
+   millions of years, as the stop says. */
+function dest(ll,brg,km){const R=6371,d=km/R,b=brg*Math.PI/180,f1=ll[1]*Math.PI/180,l1=ll[0]*Math.PI/180;
+ const f2=Math.asin(Math.sin(f1)*Math.cos(d)+Math.cos(f1)*Math.sin(d)*Math.cos(b)),l2=l1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(f1),Math.cos(d)-Math.sin(f1)*Math.sin(f2));
+ return[((l2*180/Math.PI+540)%360)-180,f2*180/Math.PI]}
+const AUSD={tour:"plates",title:"Australia is on the move",
+ tip:"Run the clock forward: where will Australia be in 10, 30, 50 million years?",
+ card:()=>'<div class="rve-row"><button type="button" class="rve-play" aria-label="Play">▶</button><input type="range" class="rve-range" min="0" max="500" step="1" value="0" aria-label="Millions of years from now"><span class="rve-read rve-myr" style="flex:0 0 auto;min-width:96px"></span></div>',
+ init(L){L.T=0;L.play=false;L.shape=null;try{const f=feat("au");const P=f&&f.geometry?(f.geometry.type==="Polygon"?[f.geometry.coordinates]:f.geometry.coordinates):[];
+   let best=null,ba=0;P.forEach(c=>{const g={type:"Polygon",coordinates:c};const a=d3.geoArea(g);if(a<2*Math.PI&&a>ba){ba=a;best=c}});L.shape=best}catch(e){}
+  L.ghost=svgEl(L.geo,"path",{class:"rve-ghost"});L.tg=tag(L,"rve-bub")},
  wire(L){const c=L.card,b=c.querySelector(".rve-play"),r=c.querySelector(".rve-range");
-  b.onclick=()=>{if(L.T<=0)L.T=6;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play");L._said=""};
-  r.addEventListener("input",()=>{L.play=false;b.textContent="▶";L.T=(600-+r.value)/100;L.dirty=1})},
- tick(L,dt){L.t+=dt;try{L.hot.setAttribute("r",(15+4*Math.sin(L.t*4)).toFixed(1))}catch(e){}if(L.play){L.T=Math.max(0,L.T-dt*.45);L.dirty=1;if(L.T<=0){L.play=false;try{L.card.querySelector(".rve-play").textContent="▶"}catch(e){}}}},
- draw(L){const T=L.T;const q0=proj(L,HOT);if(q0){L.hot.style.display="";L.hot.setAttribute("cx",q0[0].toFixed(1));L.hot.setAttribute("cy",q0[1].toFixed(1))}else L.hot.style.display="none";
-  putTag(L,L.hT,proj(L,HOT,1),"🔥 hotspot",14);let born=[];
-  ISL.forEach((s,i)=>{const on=T<=s.a,pos=on?d3.geoInterpolate(s.ll,HOT)(T/s.a):null,q=pos?proj(L,pos):null,c=L.dots[i];
-   if(q){c.style.display="";c.setAttribute("cx",q[0].toFixed(1));c.setAttribute("cy",q[1].toFixed(1));const age=s.a-T;c.style.fill=age<.6?"#d9682b":age<2?"#8a9a3a":"#2e9d5b"}else c.style.display="none";
-   if(on)born.push(s);putTag(L,L.tags[i],pos?proj(L,pos,1):null,esc(s.n)+" · "+(s.a-T).toFixed(1).replace(/\.0$/,"")+" Myr old",i%2?10:-26)});
-  if(L.card){const r=L.card.querySelector(".rve-range");if(r&&document.activeElement!==r)r.value=Math.round(600-T*100);setHTML(L.card.querySelector(".rve-hyr"),T<=0?"today":T.toFixed(1)+" million years ago")}
-  const nb=ISL.find(s=>Math.abs(T-s.a)<.25);
-  if(T<=0&&!L.play&&L._wasPlayed)say(L,"A chain, oldest in the north-west","The hotspot stayed put while the Pacific plate carried each volcano away, about 7 to 10 cm a year. Away from the heat they go quiet, sink and wear down: Kauaʻi is green and deeply carved, the Big Island still erupts, and the next island is already growing under the sea.");
-  else if(nb)say(L,nb.n+" is born","About "+nb.a+" million years ago, the hotspot punches a new volcano through the plate. Now watch it ride away to the north-west.");
-  else if(T>5.2)say(L,"6 million years ago","No Kauaʻi, no Oʻahu, none of today’s main islands: only the hotspot, and older islands far to the north-west. Press ▶.");
-  else if(T<=0)say(L,"Today","Slide back in time, or press ▶ to run the conveyor belt.");
-  if(L.play)L._wasPlayed=1}};
+  b.onclick=()=>{if(L.T>=50)L.T=0;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play")};
+  r.addEventListener("input",()=>{L.play=false;b.textContent="▶";L.T=+r.value/10;L.dirty=1})},
+ tick(L,dt){if(L.play){L.T=Math.min(50,L.T+dt*4);L.dirty=1;if(L.T>=50){L.play=false;try{L.card.querySelector(".rve-play").textContent="▶"}catch(e){}}}},
+ draw(L){const km=L.T*70;let d="";if(L.shape&&L.T>0){const mv=L.shape.map(ring=>ring.map(p=>dest(p,20,km)));d=geoD({type:"Polygon",coordinates:mv})}L.ghost.setAttribute("d",d);
+  putTag(L,L.tg,L.T>0?proj(L,dest([134,-25],20,km),1):null,"Australia in "+Math.round(L.T)+" million years",-10);
+  if(L.card){const r=L.card.querySelector(".rve-range");if(r&&document.activeElement!==r)r.value=Math.round(L.T*10);setHTML(L.card.querySelector(".rve-myr"),L.T>0?"+"+Math.round(L.T)+" Myr · "+fmt(km)+" km":"today")}
+  if(L.T>=40)say(L,fmt(km)+" km north","At 7 cm a year, Australia’s middle reaches the latitude of today’s New Guinea. Long before that, New Guinea, the front of the same plate, ploughs into south-east Asia, and new mountains rise: the way India made the Himalaya.");
+  else if(L.T>=10)say(L,Math.round(L.T)+" million years: "+fmt(km)+" km","Fingernail speed adds up. Australia has already moved this way for about 50 million years, since it broke away from Antarctica.");
+  else say(L,"7 cm a year","Too slow to feel, fast enough for GPS: in 30 years it adds up to about 2 m, which is why the maps had to be moved. Run the clock forward.")}};
 
-/* ============================================================ H. The 2004 tsunami: hour by hour
-   Arrival times, rounded (Wikipedia, "2004 Indian Ocean earthquake and tsunami", and the stop's own text): northern
-   Sumatra (Banda Aceh) within about 15–20 minutes; Thailand's coast and Sri Lanka about 2 hours; India's east coast
-   about 2 hours; the Maldives about 3½ hours; Somalia about 7 hours. In the deep ocean a tsunami travels at about
-   √(g·depth): roughly 700 km/h over 4 km of water (NOAA, "Tsunami" FAQs); the ring is drawn at that speed. It slows in
-   shallow water, which is why Thailand, close by but across the shallow Andaman shelf, was hit no sooner than Sri Lanka. */
-const EPI=[95.85,3.3];
-const TPL=[{n:"Banda Aceh",h:.3,ll:[95.32,5.55]},{n:"Phuket, Thailand",h:2,ll:[98.3,8]},{n:"Sri Lanka",h:2,ll:[81.7,7.5]},{n:"Chennai, India",h:2.2,ll:[80.27,13.08]},{n:"Maldives",h:3.5,ll:[73.51,4.17]},{n:"Somalia",h:7,ll:[51.3,10.4]}];
-const TSUNAMI={tour:"hazards",title:"The 2004 tsunami",
- tip:"Press ▶ (or drag the clock) and follow the wave across the Indian Ocean.",
- card:()=>'<div class="rve-row"><button type="button" class="rve-play" aria-label="Play">▶</button><input type="range" class="rve-range" min="0" max="480" step="1" value="0" aria-label="Hours after the earthquake"><span class="rve-read rve-hr" style="flex:0 0 auto;min-width:64px"></span></div><div class="rve-score"></div>',
- init(L){L.h=0;L.play=false;L.rings=[0,1,2].map(()=>svgEl(L.geo,"path",{class:"rve-wave"}));L.dots=TPL.map(()=>svgEl(L.svg,"circle",{r:"6",class:"rve-tp"}));L.tags=TPL.map(()=>tag(L,"rve-small rve-tiny"))},
+/* ============================================================ H. The town that ignored the map: race the lahar
+   Wikipedia, "Armero tragedy": the eruption began at 9:08 p.m. on 13 November 1985; lahars reached Armero at about
+   11:30 p.m., more than two hours later, and buried it; more than 23,000 people died there. The town was not evacuated.
+   The mud's path is the stop's own arrow (Nevado del Ruiz to Armero, about 47 km); the front is drawn moving along it at
+   a steady speed between those two times. */
+const LAHAR={tour:"hazards",title:"The town that ignored the map",look:[[-75.1,4.93],40],
+ tip:"Press ▶ and follow the mud from the volcano to Armero. How long did the town have?",
+ card:()=>'<div class="rve-row"><button type="button" class="rve-play" aria-label="Play">▶</button><input type="range" class="rve-range" min="0" max="150" step="1" value="0" aria-label="Minutes after the eruption"><span class="rve-read rve-clk" style="flex:0 0 auto;min-width:70px"></span></div>',
+ init(L){L.m=0;L.play=false;const S=psSteps()[ps.i];L.P=((S.lines||[]).find(x=>x&&x.coords)||{coords:[[-75.32,4.89],[-74.9,4.965]]}).coords;
+  L.cum=[0];for(let i=1;i<L.P.length;i++)L.cum.push(L.cum[i-1]+d3.geoDistance(L.P[i-1],L.P[i]));
+  L.mud=svgEl(L.geo,"path",{class:"rve-mud"});L.town=svgEl(L.svg,"circle",{r:"9",class:"rve-armero"});L.tg=tag(L,"rve-bub")},
  wire(L){const c=L.card,b=c.querySelector(".rve-play"),r=c.querySelector(".rve-range");
-  b.onclick=()=>{if(L.h>=8)L.h=0;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play")};
-  r.addEventListener("input",()=>{L.play=false;b.textContent="▶";L.h=+r.value/60;L.dirty=1})},
- tick(L,dt){if(L.play){L.h=Math.min(8,L.h+dt*.5);L.dirty=1;if(L.h>=8){L.play=false;try{L.card.querySelector(".rve-play").textContent="▶"}catch(e){}}}},
- draw(L){const km=L.h*700;L.rings.forEach((p,i)=>{const r=(km-i*120)/111.2;p.setAttribute("d",r>0.2&&r<85?geoD(d3.geoCircle().center(EPI).radius(r).precision(2)()):"");p.style.opacity=String(1-i*.3)});
-  let hit=0;TPL.forEach((o,i)=>{const on=L.h>=o.h,q=proj(L,o.ll),c=L.dots[i];if(on)hit++;if(q){c.style.display="";c.setAttribute("cx",q[0].toFixed(1));c.setAttribute("cy",q[1].toFixed(1));c.style.fill=on?"#c2364f":"#fff"}else c.style.display="none";
-   putTag(L,L.tags[i],proj(L,o.ll,1),esc(o.n)+(on?" · hit after ~"+(o.h<1?Math.round(o.h*60)+" min":o.h+" h"):""),i%2?8:-26)});
-  if(L.card){const r=L.card.querySelector(".rve-range");if(r&&document.activeElement!==r)r.value=Math.round(L.h*60);const hh=Math.floor(L.h),mm=Math.round((L.h-hh)*60);
-   setHTML(L.card.querySelector(".rve-hr"),"+"+hh+" h "+String(mm===60?59:mm).padStart(2,"0")+" min");
-   setHTML(L.card.querySelector(".rve-score"),'<span><b>'+hit+"</b> of "+TPL.length+" coasts hit</span>")}
-  if(L.h>=7)say(L,"Seven hours later: Somalia","About 5,000 km from the earthquake, the wave still killed around 300 people in Somalia. With no warning system in the Indian Ocean, almost nobody along these coasts knew it was coming, though for most there were hours to spare. One has been running since 2006.");
-  else if(L.h>=2)say(L,"Two hours: Thailand, Sri Lanka, India","Sri Lanka and India are far away, but the wave raced to them across deep ocean. Thailand is much closer, yet it waited as long: over the shallow Andaman Sea the wave slows down, and grows taller.");
-  else if(L.h>=.3)say(L,"Minutes: Aceh","Banda Aceh, closest to the earthquake, was hit within about 20 minutes, by waves up to 30 m high. There was no time to warn anyone.");
-  else say(L,"7:58 a.m., 26 December 2004","A magnitude 9.1 earthquake lifts the seabed off Sumatra. Press ▶.")}};
+  b.onclick=()=>{if(L.m>=142)L.m=0;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play")};
+  r.addEventListener("input",()=>{L.play=false;b.textContent="▶";L.m=+r.value;L.dirty=1})},
+ tick(L,dt){if(L.play){L.m=Math.min(150,L.m+dt*10);L.dirty=1;if(L.m>=150){L.play=false;try{L.card.querySelector(".rve-play").textContent="▶"}catch(e){}}}},
+ draw(L){const f=clamp(L.m/142,0,1),tot=L.cum[L.cum.length-1],d=f*tot,pts=[L.P[0]];for(let i=1;i<L.P.length;i++){if(L.cum[i]<=d)pts.push(L.P[i]);else{const t=(d-L.cum[i-1])/(L.cum[i]-L.cum[i-1]);pts.push(d3.geoInterpolate(L.P[i-1],L.P[i])(t));break}}
+  L.mud.setAttribute("d",f>0?geoD({type:"LineString",coordinates:pts}):"");const end=L.P[L.P.length-1],q=proj(L,end);
+  if(q){L.town.style.display="";L.town.setAttribute("cx",q[0].toFixed(1));L.town.setAttribute("cy",q[1].toFixed(1));L.town.style.fill=f>=1?"#6b4a2b":"#ffd166"}else L.town.style.display="none";
+  const mins=9*60+8+L.m,hh=Math.floor(mins/60),mm=Math.floor(mins%60),clk=(hh>12?hh-12:hh)+":"+String(mm).padStart(2,"0")+" p.m.";
+  putTag(L,L.tg,proj(L,f<1&&f>0?pts[pts.length-1]:end,1),f>=1?"Armero buried · "+clk:f>0?"Mud · "+clk:"Armero, asleep",-14);
+  if(L.card){const r=L.card.querySelector(".rve-range");if(r&&document.activeElement!==r)r.value=Math.round(L.m);setHTML(L.card.querySelector(".rve-clk"),"🕘 "+clk)}
+  if(f>=1)say(L,"11:30 p.m.: more than two hours too late","The mud took over two hours to reach Armero: time enough for everyone to walk to higher ground. But the warnings were confused, and nobody told the town to leave. Today volcano observatories and towns agree evacuation plans before an eruption.");
+  else if(L.m>20)say(L,"A river of mud","Melted ice, ash and rock pour down the river valleys at the speed of a car, picking up more mud as they go. In Armero, people are going to bed.");
+  else say(L,"9:08 p.m., 13 November 1985","Nevado del Ruiz erupts. Its ice cap starts to melt. Press ▶.")}};
 
 /* ============================================================ I. Bangladesh fights back: guess the toll
    Deaths (Wikipedia, "1970 Bhola cyclone": 300,000–500,000; "1991 Bangladesh cyclone": about 138,000; "Cyclone Sidr"
-   2007: about 3,500 in Bangladesh, as the stop says; "Cyclone Amphan" 2020: 26 in Bangladesh). */
+   2007: about 3,500 in Bangladesh, as the stop says; "Cyclone Amphan" 2020: 26 in Bangladesh). Peak winds: Bhola about
+   185 km/h, Sidr about 260 km/h (the same articles). */
 const CYC=[{y:1970,n:"Bhola cyclone",d:300000,t:"300,000 to 500,000"},{y:1991,n:"1991 cyclone",d:138000,t:"about 138,000"},{y:2007,n:"Cyclone Sidr",d:3500,t:"about 3,500"},{y:2020,n:"Cyclone Amphan",d:26,t:"26"}];
 const BANGLA={tour:"hazards",title:"Bangladesh fights back",cardOnly:1,
- tip:"Cyclone Sidr (2007) was as strong as the 1970 storm. Guess how many it killed, then reveal.",
+ tip:"Cyclone Sidr (2007) had even stronger winds than the 1970 storm. Guess how many it killed, then reveal.",
  card:()=>'<div class="rve-row"><input type="range" class="rve-range rve-gs" min="0" max="500" step="1" value="350" aria-label="Your guess"><button type="button" class="rve-btn rve-reset rve-rev">Reveal</button></div><div class="rve-bars rve-cyc"></div>',
  init(L){L.g=350;L.shown=false},
  wire(L){const c=L.card;c.querySelector(".rve-gs").addEventListener("input",e=>{L.g=+e.target.value;L.dirty=1});c.querySelector(".rve-rev").onclick=()=>{L.shown=true;L._said="";L.dirty=1}},
@@ -467,7 +495,7 @@ const BANGLA={tour:"hazards",title:"Bangladesh fights back",cardOnly:1,
   else say(L,"Your guess: "+fmt(gv),"Slide to guess Sidr’s toll, then press Reveal.")}};
 
 /* ============================================================ the engine: one stop at a time */
-const DEFS=[CLAIMS,METEOR,FROZE,FRANCE,DRIVE,PLQ,HAWAII,TSUNAMI,BANGLA];
+const DEFS=[CLAIMS,METEOR,FROZE,FRANCE,DRIVE,PLQ,AUSD,LAHAR,BANGLA];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||ps.mode!=="globe")return null;const S=psSteps()[ps.i];if(!S)return null;return DEFS.find(d=>d.tour===ps.tour&&d.title===S.title)||null}catch(e){return null}}
 function mount(D){const G=g();if(!G||!G.host)return;if(L&&L.D===D&&L.host===G.host&&L.el.isConnected)return;unmount();
@@ -535,9 +563,9 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 :is(body.dark-theme,body.sky-night) .rve-ph-t{color:#fff}
 .rve-qring{fill:none;stroke-width:4;filter:drop-shadow(0 0 3px rgba(0,0,0,.6))}
 .rve-hot{fill:rgba(255,80,30,.55);stroke:#ffd166;stroke-width:2;filter:drop-shadow(0 0 8px #ff5a1e)}
-.rve-isl{stroke:#fff;stroke-width:2}
-.rve-wave{fill:none;stroke:#e8f6ff;stroke-width:3.5;filter:drop-shadow(0 0 3px #0b5fa8)}
-.rve-tp{stroke:#13294b;stroke-width:2}
+.rve-ghost{fill:rgba(217,104,43,.35);stroke:#d9682b;stroke-width:2.5;stroke-dasharray:6 4}
+.rve-mud{fill:none;stroke:#7a5230;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px #fff)}
+.rve-armero{stroke:#13294b;stroke-width:2.5}
 .rve-bars{margin-top:8px;display:flex;flex-direction:column;gap:5px}.rve-bartitle{font-size:12px;font-weight:700;opacity:.75}
 .rve-lane{display:flex;align-items:center;gap:8px;font-size:12.5px}.rve-lane span{flex:0 0 38px;font-weight:800}.rve-lane b{flex:0 0 112px;text-align:right;font-size:12px}
 .rve-track{position:relative;flex:1 1 auto;height:12px;border-radius:6px;background:rgba(19,41,75,.12)}
