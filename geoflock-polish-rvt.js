@@ -166,6 +166,13 @@ const FIX={
  }
 };
 
+/* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
+   title). On a tour's very first launch index.html flies to the opening stop before the fixes above are applied to it
+   (they go in when the tour opens, a tick later), so the opening flew to its old frame and the re-fly below saw nothing
+   to correct once the fix landed: psGlobeTarget (wrapped above) now finds the frame by title as well. */
+const FRAMES={};
+for(const t in FIX)for(const k in FIX[t]){try{const D={title:k};FIX[t][k](D);const v=VIEWED.get(D);if(v)FRAMES[t+"|"+k]=v}catch(e){}}
+const viewOf=S=>{const v=VIEWED.get(S);if(v)return v;try{return S&&ps&&ps.tour&&FRAMES[ps.tour+"|"+strip(S.title)]}catch(e){return null}};
 const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;
  /* every stop's card on the left: on the right (as some stops were switched at run time, after a tour question) it lay
@@ -559,5 +566,5 @@ line.rvt-now{stroke:#d9682b;stroke-width:1.5}.rvt-dot{fill:#d9682b;stroke:#fff;s
 body:has(.ps-card.tp-veil) .psc-lab{visibility:hidden}
 `;document.head.appendChild(s)}
 
-window.gfPolishRvt={v:1,FIX,viewOf:S=>VIEWED.get(S),tours:MYT,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
+window.gfPolishRvt={v:1,FIX,viewOf,tours:MYT,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
 })();
