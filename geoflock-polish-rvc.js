@@ -54,9 +54,9 @@ const FIX={
     (Statistics Norway). The 2,650 figure often quoted is for the whole Barents Sea (Jon Aars, Norwegian Polar Institute). */
  "europe|Islands of the midnight sun":{rep:[["Polar bears outnumber people on the islands, so anyone leaving town must carry protection.","Polar bears roam the islands, so anyone leaving town must carry protection (people still outnumber the bears: a few hundred bears live there all year, among about 2,500 people)."]]},
  /* Asia */
- "asia|Asia’s high peaks":{globe:[89,34,1.7]},                       /* Gongga Shan was round the edge */
- "asia|The roof of the world":{globe:[89,34,1.7]},
- "asia|Asia’s water tower":{globe:[96,24,1.45]},                     /* the Yangtze's mouth was under the map buttons */
+ "asia|Asia’s high peaks":{globe:[92,32,1.2],card:"left"},           /* Gongga Shan was round the edge, then under the map key */
+ "asia|The roof of the world":{globe:[92,32,1.2],card:"left"},
+ "asia|Asia’s water tower":{globe:[78,28,1.15],card:"left"},         /* the Yangtze's mouth was under the map buttons, the Indus under the card */
  "asia|Deserts and steppe":{globe:[80,36,1.3],card:"left"},          /* the Empty Quarter was off screen, Karakum under the key */
  "asia|Birthplace of religions":{globe:[63,27,1.45]},                /* Bodh Gaya and Varanasi were off the edge */
  "asia|Asia’s giant cities":{globe:[106,14,1.3]},                    /* Jakarta's photo was off the bottom, Delhi under the card */
@@ -327,10 +327,10 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvc-track i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;min-width:2px}
 .rvc-ep{margin-top:8px;font-size:14px;line-height:1.4;min-height:2.8em}.rvc-ep b{display:block;font-size:15px}
 .rvc-ep.rvc-new{animation:rvcIn .45s ease}@keyframes rvcIn{from{opacity:.2;transform:translateY(4px)}}
-body.dark-theme .rvc-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
-body.dark-theme .rvc-do,body.dark-theme .rvc-read{color:#ffb27a}
-body.dark-theme .rvc-btn{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
-body.dark-theme .rvc-btn.rvc-on{background:#fff;color:#13294b}
-body.dark-theme .rvc-track,body.dark-theme .rvc-dots i{background:rgba(255,255,255,.15)}`;document.head.appendChild(s)}
+:is(body.dark-theme,body.sky-night) .rvc-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+:is(body.dark-theme,body.sky-night) .rvc-do,:is(body.dark-theme,body.sky-night) .rvc-read{color:#ffb27a}
+:is(body.dark-theme,body.sky-night) .rvc-btn{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
+:is(body.dark-theme,body.sky-night) .rvc-btn.rvc-on{background:#fff;color:#13294b}
+:is(body.dark-theme,body.sky-night) .rvc-track,:is(body.dark-theme,body.sky-night) .rvc-dots i{background:rgba(255,255,255,.15)}`;document.head.appendChild(s)}
 window.gfPolishRVC={v:1,FIX,L:()=>L};
 })();
