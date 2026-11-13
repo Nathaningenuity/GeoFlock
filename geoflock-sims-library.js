@@ -174,7 +174,9 @@ mk("slseabreeze",{title:"Sea breeze by day, land breeze by night",cat:"climate",
    const loop=[[x0,yb],[x1,yb],[x1,yt],[x0,yt]];if(dir<0)loop.reverse();
    a+='<path d="M'+(dir>0?x0:x1)+','+yb+' H'+(dir>0?x1-14:x0+14)+' Q'+(dir>0?x1:x0)+','+yb+' '+(dir>0?x1:x0)+','+(yb-14)+' V'+(yt+14)+' Q'+(dir>0?x1:x0)+','+yt+' '+(dir>0?x1-14:x0+14)+','+yt+' H'+(dir>0?x0+14:x1-14)+' Q'+(dir>0?x0:x1)+','+yt+' '+(dir>0?x0:x1)+','+(yt+14)+' V'+(yb-14)+'" fill="none" stroke="'+c+'" stroke-width="'+f1(1+str*2.6)+'" stroke-dasharray="7 5" stroke-dashoffset="'+f1(-ph*(4+str*10))+'" opacity=".85"/>';
    a+=arrow(dir>0?120:180,yb,dir>0?160:140,yb,c,1.6+str*2,6);
-   a+=T(150,yb-6,(dir>0?"sea breeze":"land breeze")+" · about "+Math.round(5+str*15)+" km/h",'text-anchor="middle" font-size="6.8" font-weight="900" fill="'+(day?INK:"#fff")+'"');
+   /* the land breeze is the weaker of the two (AMS Glossary of Meteorology, "land breeze"): it had the sea breeze's 20 km/h.
+      Label moved over the sea so it no longer runs into the houses */
+   a+=T(98,yb-6,dir>0?"sea breeze · about "+Math.round(5+str*15)+" km/h":"land breeze · gentler than by day",'text-anchor="middle" font-size="6.8" font-weight="900" fill="'+(day?INK:"#fff")+'"');
    if(dir>0&&str>.5)a+='<g opacity="'+f2(str)+'"><circle cx="232" cy="36" r="9" fill="#fff"/><circle cx="244" cy="32" r="11" fill="#fff"/><circle cx="256" cy="37" r="8" fill="#fff"/><rect x="226" y="36" width="36" height="8" fill="#fff"/></g>'+T(244,56,"clouds pop up inland",'text-anchor="middle" font-size="5.6" font-weight="700" fill="'+INK+'"')}
   setHTML(svg,".sb-air",a);
   setHTML(svg,".sb-t",'<g transform="translate(14,124)"><rect width="56" height="16" rx="5" fill="#fff" opacity=".9"/>'+T(5,7,"sea",'font-size="5.4" fill="'+SUB+'"')+T(5,14,Math.round(S)+" °C",'font-size="7" font-weight="900" fill="#1d4f86"')+'</g><g transform="translate(222,124)"><rect width="62" height="16" rx="5" fill="#fff" opacity=".9"/>'+T(5,7,"land",'font-size="5.4" fill="'+SUB+'"')+T(5,14,Math.round(L)+" °C",'font-size="7" font-weight="900" fill="#b5401c"')+'</g>');
@@ -272,7 +274,8 @@ mk("sluhi",{title:"The urban heat island",cat:"people",h:216,
   c+=T(CX1-2,f1(yT(TR)+8),"countryside "+Math.round(TR)+" °C",'text-anchor="end" font-size="5.8" font-weight="800" fill="#4a7a2a"')+T(150,f1(yT(TR+A)-4),"centre "+Math.round(TR+A)+" °C",'text-anchor="middle" font-size="6.4" font-weight="900" fill="#b5301c"');
   setHTML(svg,".uh-c",c);const dk=q(svg,".uh-dark"),nt=h<6||h>20.5;if(dk)dk.setAttribute("opacity",nt?".45":"0");svg.querySelectorAll(".uh-win").forEach(w=>{w.style.fill=nt?"#ffd76a":"#e8f0f8"});
   txt(svg,".uh-big","The centre is "+A.toFixed(1)+" °C warmer than the countryside");
-  txt(svg,".uh-sub",(nt?"Night: concrete and brick give back the heat they soaked up by day":"Day: dark roofs and roads soak up sunlight, little shade, few plants")+(s.wind?"; wind mixes the air":"")+(s.green?"; trees shade and cool":""));
+  /* with both buttons on, the line ran off the right edge: the extra notes now replace the long cause */
+  txt(svg,".uh-sub",s.wind||s.green?(nt?"Night":"Day")+": "+[s.wind?"wind mixes in cooler country air":"",s.green?"trees shade and cool the streets":""].filter(Boolean).join("; "):(nt?"Night: concrete and brick give back the heat they soaked up by day":"Day: dark roofs and roads soak up sunlight, little shade, few plants"));
   const hh=Math.floor(h),mm=Math.round((h-hh)*60)%60;setSlider(svg,"h",14,192,140,h/24,String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0"));
   btnOn(svg,"wind",!!s.wind,s.wind?"Windy, cloudy":"Calm, clear");btnOn(svg,"green",!!s.green,s.green?"Trees added":"Add trees")},
  drag:(svg,s,n,x)=>{s.h=clamp((x-14)/140,0,.999)*24},
@@ -369,11 +372,13 @@ const CITIES=[["London",-.13,51.5],["Paris",2.35,48.86],["Cairo",31.24,30.04],["
 const dist=(a,b)=>{const R=Math.PI/180,x=Math.sin((b[1]-a[1])*R/2),y=Math.sin((b[0]-a[0])*R/2);return 2*6371*Math.asin(Math.sqrt(x*x+Math.cos(a[1]*R)*Math.cos(b[1]*R)*y*y))};
 const dms=(v,p,n)=>{const a=Math.abs(v),d=Math.floor(a),m=Math.round((a-d)*60);return(m===60?d+1:d)+"°"+String(m===60?0:m).padStart(2,"0")+"′ "+(v>=0?p:n)};
 let PG=null;const proj=r=>{if(!PG)PG=d3.geoOrthographic().scale(GR).translate([GX,GY]).clipAngle(90);PG.rotate(r);return PG};
-mk("sllatlon",{title:"Latitude and longitude: an address for anywhere",cat:"maps",h:206,
+/* A "find it" challenge: you are given a city's latitude and longitude only, steer the pin there and check how close you
+   came (great-circle distance). The nearest-place readout is hidden meanwhile, so it cannot give the answer away. */
+mk("sllatlon",{title:"Latitude and longitude: an address for anywhere",cat:"maps",h:224,
  src:"Coordinates on the WGS 84 globe. One degree of latitude is about 111 km; a degree of longitude is 111 km × cos(latitude), so 0 km at the poles. Distances along great circles.",
  defs:()=>'<radialGradient id="dgLlSea" cx=".38" cy=".35" r=".75"><stop offset="0" stop-color="#5aa5dc"/><stop offset="1" stop-color="#1d4f86"/></radialGradient><radialGradient id="dgLlShade" cx=".36" cy=".32" r=".8"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#001226" stop-opacity=".4"/></radialGradient>',
  frame:()=>'<circle cx="'+GX+'" cy="'+GY+'" r="'+(GR+6)+'" fill="#e6eef6"/><g class="ll-g"></g><circle cx="'+GX+'" cy="'+GY+'" r="'+GR+'" fill="transparent" data-drag="rot"/><g class="ll-pin"></g>'+
-  '<g transform="translate(170,8)"><rect width="124" height="164" rx="9" fill="#fff"/><g class="ll-p"></g></g>'+hint(8,188,"Drag the pin to read its address; drag the globe to turn it")+T(8,200,"Latitude: north or south of the Equator. Longitude: east or west of Greenwich.",'font-size="5.8" fill="'+SUB+'"'),
+  '<g transform="translate(170,8)"><rect width="124" height="164" rx="9" fill="#fff"/><g class="ll-p"></g></g>'+hint(8,188,"Drag the pin to read its address; drag the globe to turn it")+T(8,200,"Latitude: north or south of the Equator. Longitude: east or west of Greenwich.",'font-size="5.8" fill="'+SUB+'"')+btn("find",8,206,84,"Challenge: find it")+'<text class="ll-fm" x="98" y="216" font-size="6.6" font-weight="800" fill="#b04a14">Find a city from its address alone</text>',
  state:()=>({r:[10,-30,0],pin:[-.13,51.5]}),
  draw:(svg,s)=>{const P=proj(s.r),pa=d3.geoPath(P),L=landThin(.8);let h='<circle cx="'+GX+'" cy="'+GY+'" r="'+GR+'" fill="url(#'+uid(svg,"dgLlSea")+')"/>';
   if(L){let d="";L.forEach(o=>{const t=pa({type:"Polygon",coordinates:o.rings});if(t)d+=t});h+='<path d="'+d.replace(/(\.\d)\d+/g,"$1")+'" fill="#a9c47e" stroke="#6f8f55" stroke-width=".3"/>'}
@@ -387,13 +392,20 @@ mk("sllatlon",{title:"Latitude and longitude: an address for anywhere",cat:"maps
   setHTML(svg,".ll-g",h);
   const q2=P(s.pin),vis=d3.geoDistance(s.pin,[-s.r[0],-s.r[1]])<Math.PI/2;
   setHTML(svg,".ll-pin",vis&&q2?'<g class="dg-handle" data-drag="pin" transform="translate('+f1(q2[0])+','+f1(q2[1])+')"><circle r="12" fill="transparent"/><path d="M0,0 C-5,-7 -5,-13 0,-13 C5,-13 5,-7 0,0Z" fill="'+ACC+'" stroke="#fff" stroke-width=".9"/><circle cy="-9" r="2" fill="#fff"/></g>':"");
+  if(s.find&&s.find.done){const C=CITIES[s.find.i],tg=[C[1],C[2]],tp=P(tg);if(tp&&d3.geoDistance(tg,[-s.r[0],-s.r[1]])<Math.PI/2){const g=q(svg,".ll-pin");if(g)g.insertAdjacentHTML("afterbegin",'<circle cx="'+f1(tp[0])+'" cy="'+f1(tp[1])+'" r="3.4" fill="#2f9a5a" stroke="#fff" stroke-width="1.2"/>'+T(f1(tp[0]+5),f1(tp[1]+2),C[0],'font-size="6.4" font-weight="900" fill="#fff" stroke="#14532d" stroke-width="1.8" paint-order="stroke"'))}}
   const near=CITIES.map(c=>[c,dist(s.pin,[c[1],c[2]])]).sort((a,b)=>a[1]-b[1])[0];
   let p=T(8,15,"Latitude",'font-size="6.2" fill="'+SUB+'"')+T(8,28,dms(s.pin[1],"N","S"),'font-size="11" font-weight="900" fill="'+INK+'"')+T(8,37,s.pin[1].toFixed(2)+"°",'font-size="6" fill="'+SUB+'"');
   p+=T(8,52,"Longitude",'font-size="6.2" fill="'+SUB+'"')+T(8,65,dms(s.pin[0],"E","W"),'font-size="11" font-weight="900" fill="'+INK+'"')+T(8,74,s.pin[0].toFixed(2)+"°",'font-size="6" fill="'+SUB+'"');
   p+='<path d="M8,82h108" stroke="#e1e7ef"/>'+T(8,93,"1° of latitude ≈ 111 km",'font-size="6" font-weight="700" fill="'+INK+'"')+T(8,103,"1° of longitude here ≈ "+fmt(111.32*Math.cos(s.pin[1]*R))+" km",'font-size="6" font-weight="700" fill="'+INK+'"');
-  p+=T(8,118,"Nearest big place",'font-size="6" fill="'+SUB+'"')+T(8,129,near[0][0],'font-size="8" font-weight="900" fill="'+INK+'"')+T(8,138,fmt(near[1])+" km away",'font-size="6" fill="'+SUB+'"');
+  const F=s.find,hideNear=F&&!F.done;
+  p+=T(8,118,"Nearest big place",'font-size="6" fill="'+SUB+'"')+T(8,129,hideNear?"? (hidden)":near[0][0],'font-size="8" font-weight="900" fill="'+INK+'"')+T(8,138,hideNear?"until you check":fmt(near[1])+" km away",'font-size="6" fill="'+SUB+'"');
+  const fm=q(svg,".ll-fm");if(fm){if(F){const C=CITIES[F.i];if(F.done){const d=F.d;fm.textContent=(d<300?"Spot on! ":d<1000?"Close! ":"")+"That was "+C[0]+": you were "+fmt(d)+" km away"+(F.n>1?" · "+F.ok+" of "+F.n+" within 1,000 km":"");fm.setAttribute("fill",d<1000?"#2f7a3a":"#b04a14")}else{fm.textContent="Put the pin on "+dms(C[2],"N","S")+", "+dms(C[1],"E","W")+" (turn the globe), then Check";fm.setAttribute("fill","#b04a14")}}}
+  btnOn(svg,"find",!!(F&&!F.done),F?(F.done?"Next place":"Check"):"Challenge: find it");
   p+=T(8,153,Math.abs(s.pin[1])<.5?"On the Equator":s.pin[1]>66.56?"Inside the Arctic Circle":s.pin[1]<-66.56?"Inside the Antarctic Circle":Math.abs(s.pin[1])<23.44?"In the tropics":(s.pin[1]>0?"Northern":"Southern")+" hemisphere",'font-size="6.2" font-weight="800" fill="'+ACC+'"');
   setHTML(svg,".ll-p",p)},
+ act:(svg,s,a)=>{if(a!=="find")return false;const F=s.find;
+  if(F&&!F.done){F.d=dist(s.pin,[CITIES[F.i][1],CITIES[F.i][2]]);F.done=1;F.n++;if(F.d<1000)F.ok++;const C=CITIES[F.i];s.r=[-C[1],-clamp(C[2],-60,60),0];return true}
+  let i;do{i=Math.floor(Math.random()*(CITIES.length-1))}while(F&&i===F.i);s.find={i,done:0,n:F?F.n:0,ok:F?F.ok:0};return true},
  drag:(svg,s,n,x,y)=>{const now=performance.now();const fresh=!s._t||now-s._t>140;s._t=now;
   if(n==="pin"){const P=proj(s.r),dx=x-GX,dy=y-GY,r=Math.hypot(dx,dy),k=r>GR*.98?GR*.98/r:1;const ll=P.invert([GX+dx*k,GY+dy*k]);if(ll&&isFinite(ll[0]))s.pin=[ll[0],ll[1]];return}
   if(fresh){s._p=[x,y];return}const dx=x-s._p[0],dy=y-s._p[1];s._p=[x,y];s.r=[s.r[0]+dx*.6,clamp(s.r[1]-dy*.6,-90,90),0]}});
@@ -425,7 +437,10 @@ mk("sltissot",{title:"Five world maps, one circle",cat:"maps",h:212,tabs:PJ.map(
   setHTML(svg,".ts-c",c&&ce?'<path d="'+c+'" fill="#2f78b8" fill-opacity=".45" stroke="#1d4f86" stroke-width="1"/><g class="dg-handle" data-drag="c" transform="translate('+f1(ce[0])+','+f1(ce[1])+')"><circle r="12" fill="transparent"/><circle r="3" fill="#fff" stroke="#1d4f86" stroke-width="1.2"/></g>':"");
   const lat=Math.round(s.ll[1]);txt(svg,".ts-big","At "+Math.abs(lat)+"°"+(lat>=0?"N":"S")+": the circle is drawn "+(Math.abs(k-1)<.04?"at its true size":k>1?(k<10?k.toFixed(1):Math.round(k))+"× too big":(1/k).toFixed(1)+"× too small")+(s.tab===4?" (compared with the pole)":""));
   setPara(svg,"ts-tx",PJ[s.tab][2])},
- drag:(svg,s,n,x,y)=>{const P=proj(s.tab),ll=P.invert([x,y]);if(ll&&isFinite(ll[0])&&isFinite(ll[1]))s.ll=[ll[0],clamp(ll[1],-78,82)]}});
+ drag:(svg,s,n,x,y)=>{const P=proj(s.tab),ll=P.invert([x,y]);if(ll&&isFinite(ll[0])&&isFinite(ll[1]))s.ll=[ll[0],clamp(ll[1],s.tab===4?-50:-78,82)]}});
+/* the polar map is clipped 60° south of the Equator, so a circle dragged further south vanished and the readout said
+   "Infinity× too small"; on that map the circle now stops at 50° S (its 9° radius stays inside the map) */
+{const D=DG.sltissot,a0=D.act;D.act=(svg,a)=>{const s=svg._s,r=a0(svg,a);if(s&&s.tab===4&&s.ll[1]<-50){s.ll=[s.ll[0],-50];D._d(svg,s)}return r}}
 })();
 
 /* ---------------------------------------------------------------- the Sun, the clock and time zones */
@@ -436,14 +451,15 @@ let PE=null;const proj=()=>PE||(PE=d3.geoEquirectangular().fitExtent([[MX0,MY0],
 const hm=v=>{v=((v%24)+24)%24;const m=Math.round(v*60)%1440;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0")};
 /* the equation of time in minutes (Spencer 1971, rounded) */
 const eot=n=>{const g=2*Math.PI/365*(n-1);return 229.18*(.000075+.001868*Math.cos(g)-.032077*Math.sin(g)-.014615*Math.cos(2*g)-.040849*Math.sin(2*g))};
-mk("slsuntime",{title:"The Sun, the clock and time zones",cat:"earth",h:220,
+mk("slsuntime",{title:"The Sun, the clock and time zones",cat:"earth",h:225,
  src:"Sun position from the date and UTC (declination 23.44° × sin of the date; equation of time after Spencer 1971). Clock times are each place’s standard time without summer time. China uses one time zone, UTC+8, from Kashgar to Shanghai.",
  defs:()=>'<linearGradient id="dgStSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb6e0"/><stop offset="1" stop-color="#4f8fc4"/></linearGradient>',
  frame:()=>{const P=proj(),pa=d3.geoPath(P);let h='<path d="'+pa({type:"Sphere"})+'" fill="url(#dgStSea)"/><path d="'+landPath("st",P)+'" fill="#d9cfa4" stroke="#9a8f68" stroke-width=".3"/>';
   for(let l=-180;l<=180;l+=15){const x=P([l,0])[0];h+='<path d="M'+f1(x)+','+MY0+'V'+(MY0+MH)+'" stroke="#fff" stroke-opacity=".3" stroke-width=".4"/>';if(l>-180&&l<180&&l%30===0)h+=T(f1(x),MY0+MH+7,(l/15>0?"+":"")+(l/15)+"h",'text-anchor="middle" font-size="5.2" fill="'+SUB+'"')}
-  h+='<g class="st-n"></g><g class="st-c"></g><g class="st-s"></g>'+'<rect x="'+MX0+'" y="'+MY0+'" width="'+MW+'" height="'+MH+'" fill="transparent" data-drag="sun"/>';
+  /* the map-wide drag area was drawn over the cities, so "tap a city" never reached them; it now sits under them */
+  h+='<g class="st-n"></g><rect x="'+MX0+'" y="'+MY0+'" width="'+MW+'" height="'+MH+'" fill="transparent" data-drag="sun"/><g class="st-c"></g><g class="st-s"></g>';
   h+=T(MX0,MY0+MH+7,"sun time vs Greenwich:",'font-size="5.2" fill="'+SUB+'"').replace('x="6"','x="6" text-anchor="start"').replace("sun time vs Greenwich:","");
-  h+='<text class="st-big" x="8" y="170" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("st-tx",8,173,286,24,6.3)+slider("d",14,200,276,"Date")+hint(8,215,"Drag the Sun across the map; tap a city to compare its clock with the Sun");
+  h+='<text class="st-big" x="8" y="170" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("st-tx",8,173,286,24,6.3)+slider("d",14,205,276,"Date")+hint(8,220,"Drag the Sun across the map; tap a city to compare its clock with the Sun");
   return h},
  state:()=>({utc:6,n:172,city:0}),
  draw:(svg,s)=>{const P=proj(),pa=d3.geoPath(P),dec=23.44*Math.sin(2*Math.PI*(284+s.n)/365),E=eot(s.n)/60;const sl=-(s.utc+E-12)*15,sun=[((sl+540)%360)-180,dec],anti=[sun[0]+180,-dec];
@@ -454,8 +470,8 @@ mk("slsuntime",{title:"The Sun, the clock and time zones",cat:"earth",h:220,
   setHTML(svg,".st-s",'<path d="M'+f1(sp[0])+','+MY0+'V'+(MY0+MH)+'" stroke="#ffd24a" stroke-width="1.2" stroke-dasharray="3 2"/>'+T(f1(sp[0]+3),MY0+9,"noon here",'font-size="5.6" font-weight="900" fill="#7a5a00" stroke="#fff" stroke-width="1.6" paint-order="stroke"')+'<g class="dg-handle" data-drag="sun" transform="translate('+f1(sp[0])+','+f1(sp[1])+')"><circle r="13" fill="transparent"/><circle r="9" fill="#ffd24a" opacity=".35"/><circle r="5.4" fill="#ffd24a" stroke="#e8a000" stroke-width="1"/></g>');
   const C=CITIES[s.city],clock=s.utc+C[3],sunT=s.utc+C[1]/15+E,diff=clock-sunT;
   txt(svg,".st-big",C[0]+": the clock says "+hm(clock)+", the Sun says "+hm(sunT));
-  setPara(svg,"st-tx",Math.abs(diff)<.25?"Clock and Sun agree within a quarter of an hour: this place is near the middle of its time zone.":"The clock runs "+Math.floor(Math.abs(diff))+" h "+Math.round((Math.abs(diff)%1)*60)+" min "+(diff>0?"ahead of":"behind")+" the Sun"+(C[0]==="Kashgar"?": all of China keeps Beijing time, so in the far west the Sun is highest mid-afternoon.":C[0]==="Madrid"?": Spain keeps Central European Time although it lies as far west as Britain.":". Tap another city."));
-  const d=new Date(Date.UTC(2025,0,1)+s.n*864e5);setSlider(svg,"d",14,200,276,s.n/365,d.getUTCDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()]+" · "+hm(s.utc)+" UTC")},
+  setPara(svg,"st-tx",Math.abs(diff)<.25?"Clock and Sun agree within a quarter of an hour: this place is near the middle of its time zone.":"The clock runs "+Math.floor(Math.round(Math.abs(diff)*60)/60)+" h "+(Math.round(Math.abs(diff)*60)%60)+" min "+(diff>0?"ahead of":"behind")+" the Sun"+(C[0]==="Kashgar"?": all of China keeps Beijing time, so in the far west the Sun is highest mid-afternoon.":C[0]==="Madrid"?": Spain keeps Central European Time although it lies as far west as Britain.":". Tap another city."));
+  const d=new Date(Date.UTC(2025,0,1)+s.n*864e5);setSlider(svg,"d",14,205,276,s.n/365,d.getUTCDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getUTCMonth()]+" · "+hm(s.utc)+" UTC")},
  drag:(svg,s,n,x,y)=>{if(n==="d"){s.n=clamp((x-14)/276,0,1)*364;return}if(y>MY0+MH+4)return false;const ll=proj().invert([x,y]);if(!ll)return false;s.utc=((12-ll[0]/15-eot(s.n)/60)%24+24)%24},
  act:(svg,s,a)=>{const m=/^city:(\d+)/.exec(a);if(m){s.city=+m[1];return true}}});
 })();
@@ -494,10 +510,11 @@ mk("slwind",{title:"Wind: from high pressure to low",cat:"climate",h:214,
   const lbl=(p,t,c)=>'<g class="dg-handle" data-drag="'+t+'" transform="translate('+f1(p[0])+','+f1(p[1])+')"><circle r="13" fill="transparent"/><circle r="9" fill="#fff" opacity=".85"/>'+T(0,4.2,t,'text-anchor="middle" font-size="12" font-weight="900" fill="'+c+'"')+'</g>';
   setHTML(svg,".wi-h",lbl(s.H,"H","#1d4f86")+lbl(s.L,"L","#c0392b")+'<g class="dg-handle" data-drag="P" transform="translate('+f1(s.pr[0])+','+f1(s.pr[1])+')"><circle r="12" fill="transparent"/><circle r="4" fill="#ffd24a" stroke="#1d3047" stroke-width="1"/></g>');
   const ll=proj().invert(s.pr);
-  txt(svg,".wi-big","At the probe: "+Math.round(v)+" km/h from the "+compass(from)+" · force "+bft(v));
+  txt(svg,".wi-big",v<1.5?"At the probe: calm · force 0":"At the probe: "+Math.round(v)+" km/h from the "+compass(from)+" · force "+bft(v));
   setPara(svg,"wi-tx",!s.spin?"Without the Earth’s spin, air would flow straight from high to low pressure and the low would soon fill.":s.fric?"Near the ground friction slows the wind and turns it in towards the low, so it spirals in anticlockwise (northern hemisphere).":"Up high the spin turns the wind until it blows along the isobars: low pressure on its left in the northern hemisphere.");
   btnOn(svg,"spin",!s.spin,s.spin?"Earth spins":"No spin");btnOn(svg,"fric",!s.fric,s.fric?"Near the ground":"Up high (no friction)")},
- drag:(svg,s,n,x,y)=>{const p=[clamp(x,MX0+8,MX1-8),clamp(y,MY0+8,MY1-8)];if(n==="H")s.H=p;else if(n==="L")s.L=p;else if(n==="P")s.pr=p;else return false},
+ /* the H and the L could be dropped on top of each other, which wiped out the pressure pattern; they now stay 40 apart */
+ drag:(svg,s,n,x,y)=>{const p=[clamp(x,MX0+8,MX1-8),clamp(y,MY0+8,MY1-8)];if(n==="H"||n==="L"){const o=n==="H"?s.L:s.H,dx=p[0]-o[0],dy=p[1]-o[1],r=Math.hypot(dx,dy);if(r<40){const k=40/(r||1);p[0]=clamp(o[0]+(r?dx:1)*k,MX0+8,MX1-8);p[1]=clamp(o[1]+dy*k,MY0+8,MY1-8);if(Math.hypot(p[0]-o[0],p[1]-o[1])<39)return false}if(n==="H")s.H=p;else s.L=p}else if(n==="P")s.pr=p;else return false},
  act:(svg,s,a)=>{if(a==="spin"){s.spin=!s.spin;return true}if(a==="fric"){s.fric=!s.fric;return true}}});
 })();
 
@@ -634,7 +651,9 @@ function img(lv){const Z=Zgrid(),F=flood(lv),c=document.createElement("canvas");
   else{const t=clamp(z/8,0,1),xx=i%MW,yy=(i-xx)/MW;const l=1+.12*(fbm(N,xx/6,yy/6,2)-.5);r=(150+t*70)*l;g=(190-t*20)*l;b=(110+t*20)*l;if(z<1.2){r=128;g=168;b=110}}
   if(!F0[i])land++;im.data[k]=r;im.data[k+1]=g;im.data[k+2]=b;im.data[k+3]=255}x.putImageData(im,0,0);
  /* the town's houses and farms, grey if flooded */
- let homes=0,lost=0;TOWN.concat(FARM).forEach(([hx,hy],i)=>{const f=F[hy*MW+hx];homes++;if(f)lost++;x.fillStyle=f?"rgba(70,110,150,.8)":i<TOWN.length?"#b8a898":"#c9583c";x.fillRect(hx-1,hy-1,i<TOWN.length?3:2,i<TOWN.length?3:2)});
+ /* homes that the random scatter put in the river or sea today are not drawn or counted ("Today's coast · 4 of 220
+    homes flooded" at +0 m) */
+ let homes=0,lost=0;TOWN.concat(FARM).forEach(([hx,hy],i)=>{if(F0[hy*MW+hx])return;const f=F[hy*MW+hx];homes++;if(f)lost++;x.fillStyle=f?"rgba(70,110,150,.8)":i<TOWN.length?"#b8a898":"#c9583c";x.fillRect(hx-1,hy-1,i<TOWN.length?3:2,i<TOWN.length?3:2)});
  return{u:c.toDataURL(),pct:wet/land,homes,lost}}
 mk("slsealevel",{title:"Sea-level rise on a low coast",cat:"water",h:216,
  src:"Global sea level rose about 0.2 m from 1901 to 2018; by 2100 it is likely to rise 0.3–0.6 m with low emissions and 0.6–1.0 m with very high ones, and 2 m cannot be ruled out (IPCC AR6 WG1, 2021). The coast is made up; 1 pixel ≈ 100 m.",

@@ -38,6 +38,9 @@ try{
 guessFirst("rainshadow",["Sea air at 20 °C rises over a 4.4 km mountain and rains on the way up. How warm is it when it reaches the plain on the far side?",["Colder, ~10 °C","Same, 20 °C","Warmer, ~33 °C"],2,"Warmer: rising air cools only about 6 °C per km while its vapour turns to rain (that releases heat), but the dry air coming down warms 9.8 °C per km. In the Alps this wind is the foehn."]);
 /* silkroad: the diagram's own figures, about 9,300 km at 30–40 km a day, about 9 months without a day's rest */
 guessFirst("silkroad",["A camel caravan walks from Luoyang in China to Rome without one day of rest. How long does it take?",["About 1 month","About 9 months","About 3 years"],1,"About 9 months for some 9,300 km at a camel’s pace. With rests, markets and winters it took far longer, and no trader made the whole trip: silk changed hands many times."]);
+/* slr: the diagram's own figures, 58 m (Antarctica, Fretwell et al. 2013) + 7.4 m (Greenland, Morlighem et al. 2017)
+   + 0.32 m (mountain glaciers, Farinotti et al. 2019) ≈ 66 m */
+guessFirst("slr",["If all the ice on land melted, how much higher would the sea be?",["About 7 m","About 66 m","About 300 m"],1,"About 66 m, roughly a 20-storey building: 58 m from Antarctica, 7.4 m from Greenland and a third of a metre from mountain glaciers. Sea ice already floats, so it adds nothing."]);
 }catch(e){console.warn("review3 guess",e)}
 
 /* ------------------------------------------------------------------ The rank-size rule: a real country
