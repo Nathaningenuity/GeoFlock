@@ -94,6 +94,20 @@ const FIX={
   "Women who farm":S=>VIEW(S,[30,2,1.6],"left"),
   /* Ireland's label was under the card */
   "Feeding eight billion":S=>VIEW(S,[16,25,1],"left")
+ },
+ hg5d:{
+  /* the card stood on the right, over the Aral Sea photo, the Banaue photo sat above the globe and Havana's round
+     the back, and Rondônia's (the card's own photo) fell under the card. Banaue, Havana and Rondônia have their own
+     stops later in the tour */
+  "Farming and the planet":S=>{DROPPH(S,/^(Banaue|Havana|Rondônia)/);VIEW(S,[12,18,1],"left")},
+  /* the line from Florida ran off the globe's edge */
+  "Bees on lorries":S=>VIEW(S,[-90,38,1.7],"left"),
+  /* the card stood on the right, "USA" was labelled twice (the pin and the highlighted country) and Argentina sat at
+     the bottom of the screen */
+  "Genetically modified crops":S=>{DROP(S,/^USA$/);VIEW(S,[-66,0,1.05],"left")},
+  /* the card stood on the right, over China, the stop's subject; Brazil is half a world away (an area label now, so
+     the globe is not turned to the middle of the two) */
+  "Changing diets":S=>{AREA(S,/^Brazil/);VIEW(S,[100,18,1.1],"left")}
  }
 };
 const applied=new WeakSet();
@@ -137,6 +151,8 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
      12,000 Kenyan roses, flown to Europe, about 6,000 kg: about 5.8 times as much (reported by Scientific American,
      "Floral footprint") */
   "hg5c|Roses from the equator":G("A Dutch greenhouse rose gives off how many times the carbon of a Kenyan rose flown to Europe?",0.2,10,5.8,"×",{step:0.1,show:"about 6 times"}),
+  /* NOAA and LUMCON, July 2024 survey: 6,705 square miles, about 17,400 km², roughly the size of New Jersey */
+  "hg5d|Dead zones":G("How big was the Gulf of Mexico’s dead zone in July 2024?",0,40000,17400," km²",{step:100,show:"about 17,400 km², about the size of New Jersey"}),
   "hg5a|Plantations":G("What share of the world’s palm oil comes from Indonesia and Malaysia?",0,100,83,"%",{step:1,show:"over 80%"})
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
@@ -157,7 +173,8 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg5b | "Three agricultural revolutions": buttons turn the globe to where each began.
    - hg5c | "The Green Revolution": Mexico, the Philippines and Punjab; buttons turn the globe to each.
    - hg5c | "From farm to supermarket": drag a banana 10,000 km from a farm in Ecuador to a shop in Germany; the
-            globe follows it. */
+            globe follows it.
+   - hg5d | "Changing diets": put five foods in order of the land each needs for the same protein. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -409,8 +426,17 @@ const BANANA={tour:"hg5c",title:"From farm to supermarket",globe:true,turn:true,
   const q=P(w.ll),qq=proj(L,w.ll,1);if(q){L.dot.style.display="";L.dot.setAttribute("cx",q[0].toFixed(1));L.dot.setAttribute("cy",q[1].toFixed(1))}else L.dot.style.display="none";
   if(qq){L.tag.style.display="";if(L.tag._h!=="🍌"){L.tag.textContent="🍌";L.tag._h="🍌"}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+12)+"px"}else L.tag.style.display="none"}};
 
+/* ======================================================================== hg5d: Farming and the planet */
+/* Land per 100 g of protein, global means: Poore & Nemecek, Science 2018, via Our World in Data ("Land use per 100
+   grams of protein"): beef (beef herd) 164 m², cheese 40 m², pig meat 11 m², poultry 7.1 m², tofu 2.2 m². */
+const DIET=rankDef("hg5d","Changing diets",{seed:5,first:"most land",head:"Guess the order",
+ tip:"Which foods need the most land? Tap them from most to least, for the same protein.",
+ items:[["Beef","164 m²"],["Cheese","40 m²"],["Pork","11 m²"],["Chicken","7 m²"],["Tofu","2 m²"]],
+ intro:"Each gives 100 grams of protein, about two days’ worth for an adult. How much farmland does each take, on average?",
+ after:"Beef needs about 75 times the land of tofu for the same protein, because cattle eat grass and grain for years first. That is why diets rich in beef push farms into forests."});
+
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[HEARTHS5,FARMS,WHEAT,RANCH,SWIDDEN,SETTLE,SURVEY,SPLIT,REVS,GREEN,BANANA];
+const DEFS=[HEARTHS5,FARMS,WHEAT,RANCH,SWIDDEN,SETTLE,SURVEY,SPLIT,REVS,GREEN,BANANA,DIET];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
