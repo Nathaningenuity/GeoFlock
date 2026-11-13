@@ -32,7 +32,19 @@ const FIX={
  /* the Persian Gulf oil fields were under the card */
  "night|Not every light is a city":{globe:[14,19,1.25],exact:1,card:"left"},
  /* the dark west of China, the point of the stop, was under the card */
- "night|The Hu line by night":{globe:[84,37,1.4],exact:1,card:"left"}
+ "night|The Hu line by night":{globe:[84,37,1.4],exact:1,card:"left"},
+ /* ---------------- The Earth from space */
+ /* the Beijing end of the wall and its photo were on the globe's edge; the stop draws the wall's line itself (wide, or
+    true to size) */
+ "space|You can’t see the Great Wall from space":{globe:[101.5,39,3],exact:1,card:"left",lineDrop:1},
+ /* the eastern end of the arc of deforestation ran off the globe's edge */
+ "space|The Amazon’s edge":{globe:[-62.5,-7,2.5],exact:1,card:"left"},
+ /* the Amazon end of the dust's path was under the card, the Bodélé Depression on the edge */
+ "space|Dust that feeds the Amazon":{globe:[-50,6,1],exact:1,card:"left"},
+ /* the east coast, Sydney and Tasmania were on or past the globe's edge */
+ "space|Australia’s red centre":{globe:[119.5,-27,1.6],exact:1,card:"left"},
+ /* most of the Mid-Atlantic Ridge was under the card */
+ "space|The sea floor":{globe:[-50,22,1.2],exact:1,card:"left"}
 };
 /* framing is pinned: several sweep files set a stop's globe or card side from their own psGo wrappers, some of them
    running after this one, so a plain assignment would be undone. The pinned field ignores later writes. A field another
@@ -46,6 +58,7 @@ function applyFix(S,tour,soft){try{if(!S)return;const X=FIX[tour+"|"+S.title];if
  if(X.hiAdd&&Array.isArray(S.hi)){const add=X.hiAdd.filter(c=>!S.hi.includes(c));if(add.length)SET(S,"hi",S.hi.concat(add))}
  if(X.globe)put(S,"globe",X.globe);if(X.card)put(S,"card",X.card);
  if(X.pinAdd){const P=Array.isArray(S.pins)?S.pins:[];const add=X.pinAdd.filter(a=>!P.some(q=>q&&clean(q[1])===a[1]));if(add.length)SET(S,"pins",P.concat(add))}
+ if(X.lineDrop&&Array.isArray(S.lines)&&S.lines.length)SET(S,"lines",[]);
  if(X.iconDrop&&Array.isArray(S.iconPins)&&S.iconPins.length)SET(S,"iconPins",[]);
  if(X.pinDrop&&Array.isArray(S.pins)){const P=S.pins.filter(q=>!(q&&X.pinDrop.test(clean(q[1]))));if(P.length!==S.pins.length)SET(S,"pins",P)}
  if(X.phMove&&Array.isArray(S.phPins))S.phPins.forEach(q=>{const to=q&&X.phMove[clean(q.label)];if(to)try{q.at=to.slice()}catch(e){}});
@@ -198,8 +211,69 @@ const BORDER={tour:"night",title:"A border you can see from space",
   else say(L,"A line drawn by floodlights","Can you find it without help? Press the button, then tap the map.")}};
 
 
+/* ============================================================ D. You can't see the Great Wall from space: draw it true to size
+   The wall is at most about 9 m wide (Wikipedia, "Great Wall of China", visibility from space). The drawn line is the
+   stop's own sketch of the wall's course; switched to true width, it is drawn exactly as wide as 9 m is at the current
+   zoom, measured from the globe's own projection. */
+const WALLM=9;
+const WALL={tour:"space",title:"You can’t see the Great Wall from space",
+ tip:"Switch the wall to its real width, then zoom in with + as far as you like. Can you make it show?",
+ card:()=>'<div class="rvi-row rvi-btns"><button type="button" class="rvi-btn rvi-true">📏 Draw the wall at its real width</button></div><div class="rvi-score rvi-wall"></div>',
+ init(L){L.on=false;const S=psSteps()[ps.i];L.P=((S.lines||[]).find(x=>x&&x.coords)||{coords:[[98.2,39.8],[102.6,37.9],[106.2,38.4],[109.8,39.2],[113,40.4],[116,40.4],[119.7,40]]}).coords;
+  L.w=svgEl(L.geo,"path",{class:"rvi-wall-line"});L.tg=tag(L,"rvi-bub")},
+ wire(L){L.card.querySelector(".rvi-true").onclick=()=>{L.on=!L.on;L._said="";L.dirty=1}},
+ mpp(L){try{const G=g(),P=G.projection(),c=[-G.rot[0],-G.rot[1]],a=P(c),b=P([c[0],c[1]+.01]);const px=Math.hypot(a[0]-b[0],a[1]-b[1]);return px>0?1111.95/px:null}catch(e){return null}},
+ draw(L){const m=this.mpp(L);L.w.setAttribute("d",geoD({type:"LineString",coordinates:L.P}));L.w.classList.toggle("rvi-wall-true",L.on);L.w.style.strokeWidth=L.on?(m?Math.max(WALLM/m,.0001).toFixed(5):"0"):"";
+  putTag(L,L.tg,L.on?proj(L,L.P[3],1):null,"The wall is drawn here",-12);
+  if(L.card){const b=L.card.querySelector(".rvi-true");b.classList.toggle("rvi-on",L.on);b.textContent=L.on?"↩ Draw it wide again":"📏 Draw the wall at its real width";
+   const km=m?m/1000:0,frac=m?Math.round(m/WALLM):0;setHTML(L.card.querySelector(".rvi-wall"),m?"<span>1 pixel here ≈ <b>"+(km>=10?fmt(km):km.toFixed(km>=1?1:2))+" km</b> across · the wall is <b>1/"+fmt(frac)+"</b> of a pixel wide</span>":"")}
+  if(L.on&&m&&m<2000)say(L,"Still invisible, even this close","Zoomed in this far, one pixel is still about "+fmt(m)+" m: the wall would fill only a sliver of it. And it is built of the local earth and stone, so it has the same colour as the hills. What you can see from orbit is what is wide or a different colour.");
+  else if(L.on)say(L,"It has vanished","At its true width the wall is far thinner than one pixel, so it simply disappears. Press + to zoom in and watch the number fall. Does it ever reach one pixel?");
+  else say(L,"A line drawn much too wide","The dashed line is drawn kilometres wide, so you can see where the wall runs. Switch it to its real width.")}};
+
+/* ============================================================ E. A sea that shrank: guess what is left
+   The Aral Sea covered about 68,000 km² in 1960; by 2007 it had shrunk to about 10% of that and split into four lakes
+   (Wikipedia, "Aral Sea"). */
+const ARAL={tour:"space",title:"A sea that shrank",cardOnly:1,
+ tip:"The Aral Sea covered 68,000 km² in 1960. How much of it was left by 2007? Guess, then reveal.",
+ card:()=>'<div class="rvi-row"><input type="range" class="rvi-range rvi-gs" min="0" max="100" step="1" value="60" aria-label="Your guess, per cent"><button type="button" class="rvi-btn rvi-rev" style="flex:0 0 auto">Reveal</button></div><div class="rvi-aral"></div>',
+ init(L){L.g=60;L.shown=false},
+ wire(L){const c=L.card;c.querySelector(".rvi-gs").addEventListener("input",e=>{L.g=+e.target.value;L.dirty=1;L._said=""});c.querySelector(".rvi-rev").onclick=()=>{L.shown=true;L._said="";L.dirty=1}},
+ draw(L){const c=L.card;if(!c)return;const sq=p=>(Math.sqrt(p/100)*100).toFixed(1);
+  /* two squares drawn to scale by area: 1960, and the guess or the 2007 lake */
+  setHTML(c.querySelector(".rvi-aral"),'<div class="rvi-sq"><div class="rvi-sq60"><span>1960</span></div><div class="rvi-sqg" style="width:'+sq(L.g)+'%;height:'+sq(L.g)+'%"><span>you</span></div>'+(L.shown?'<div class="rvi-sq07" style="width:'+sq(10)+'%;height:'+sq(10)+'%"></div>':"")+'</div><div class="rvi-sqk"><b>Your guess: '+L.g+'%</b> ≈ '+fmt(680*L.g)+' km²'+(L.shown?'<br><b style="color:#1f8a4c">2007: about 10%</b> ≈ 6,800 km², in four pieces':"")+"</div>");
+  const b=c.querySelector(".rvi-rev");if(b)b.disabled=L.shown;
+  if(L.shown){const d=Math.abs(L.g-10);say(L,d<=5?"Very close: about a tenth was left":L.g>10?"Even less than you guessed: about a tenth":"A little more than you guessed: about a tenth","In under fifty years a lake about the size of Sri Lanka shrank to a tenth of its area and broke into four. The fishing towns were left tens of kilometres from the water, and dust from the dry seabed now blows over the farms around it.")}
+  else say(L,"Slide to guess","The orange line on the map is the 1960 shore. The squares are drawn to scale by area.")}};
+
+/* ============================================================ F. Dust that feeds the Amazon: run a year of dust
+   NASA (2015, "NASA Satellite Reveals How Much Saharan Dust Feeds Amazon’s Plants", from Yu et al. 2015, using CALIPSO,
+   2007–2013 averages): about 182 million tonnes of dust leave the Sahara each year; about 27.7 million tonnes fall on the
+   Amazon basin, carrying about 22,000 tonnes of phosphorus. The dust is drawn along the stop's own arrow. */
+const DUST={tour:"space",title:"Dust that feeds the Amazon",
+ tip:"Press ▶ and run one year of wind. Watch the dust cross the Atlantic and add up on the Amazon.",
+ card:()=>'<div class="rvi-row"><button type="button" class="rvi-play" aria-label="Play">▶</button><div class="rvi-read rvi-dd"></div><button type="button" class="rvi-btn rvi-reset" style="flex:0 0 auto" aria-label="Start again">↺</button></div><div class="rvi-bars rvi-dbar"></div>',
+ init(L){L.day=0;L.play=false;L.t=0;const S=psSteps()[ps.i];L.P=((S.lines||[]).find(x=>x&&x.coords)||{coords:[[17.5,17],[-63,-3]]}).coords;
+  L.cum=[0];for(let i=1;i<L.P.length;i++)L.cum.push(L.cum[i-1]+d3.geoDistance(L.P[i-1],L.P[i]));
+  L.dots=[];for(let k=0;k<44;k++)L.dots.push({f:k/44,j:(k*37%11-5)/5,c:svgEl(L.svg,"circle",{r:(2.4+(k%3)).toFixed(1),class:"rvi-dust"})});L.tg=tag(L,"rvi-bub")},
+ at(L,f){const d=f*L.cum[L.cum.length-1];for(let i=1;i<L.P.length;i++)if(L.cum[i]>=d){const t=(d-L.cum[i-1])/Math.max(1e-9,L.cum[i]-L.cum[i-1]);return d3.geoInterpolate(L.P[i-1],L.P[i])(t)}return L.P[L.P.length-1]},
+ wire(L){const c=L.card,b=c.querySelector(".rvi-play");b.onclick=()=>{if(L.day>=365)L.day=0;L.play=!L.play;b.textContent=L.play?"❚❚":"▶";b.setAttribute("aria-label",L.play?"Pause":"Play")};
+  c.querySelector(".rvi-reset").onclick=()=>{L.play=false;b.textContent="▶";L.day=0;L._said="";L.dirty=1}},
+ tick(L,dt){if(L.play){L.t+=dt;L.day=Math.min(365,L.day+dt*20);if(L.day>=365){L.play=false;try{L.card.querySelector(".rvi-play").textContent="▶"}catch(e){}}}L.dirty=1},
+ draw(L){const run=L.play||L.day>0&&L.day<365;
+  L.dots.forEach(d=>{let f=(d.f+L.t*.12)%1;const show=L.day>0&&(L.play||L.day<365);const ll=this.at(L,f);const q=show?proj(L,[ll[0],ll[1]+d.j*1.6*(1-f*.5)]):null;
+   if(q){d.c.style.display="";d.c.setAttribute("cx",q[0].toFixed(1));d.c.setAttribute("cy",q[1].toFixed(1));d.c.style.opacity=(f<.85?.85:.85*(1-(f-.85)/.15)).toFixed(2)}else d.c.style.display="none"});
+  const mt=27.7*L.day/365,ph=22000*L.day/365,out=182*L.day/365;
+  putTag(L,L.tg,L.day>0?proj(L,L.P[L.P.length-1],1):null,"🌳 "+mt.toFixed(1)+" million t of dust",-14);
+  if(L.card){setHTML(L.card.querySelector(".rvi-dd"),L.day>0?"Day "+Math.round(L.day)+" of 365":"One year of trade winds");
+   const w=v=>Math.max(0,Math.min(100,v/182*100)).toFixed(1);
+   setHTML(L.card.querySelector(".rvi-dbar"),'<div class="rvi-lane"><span>Leaves the Sahara</span><div class="rvi-track"><i style="width:'+w(out)+'%;background:#d9a441"></i></div><b>'+out.toFixed(0)+' million t</b></div><div class="rvi-lane"><span>Lands on the Amazon</span><div class="rvi-track"><i style="width:'+w(mt)+'%;background:#2e9d5b"></i></div><b>'+mt.toFixed(1)+' million t</b></div><div class="rvi-lane"><span>Phosphorus in it</span><div class="rvi-track"><i style="width:'+(L.day/365*100).toFixed(1)+'%;background:#8e5bd0"></i></div><b>'+fmt(ph)+' t</b></div>')}
+  if(L.day>=365)say(L,"One year: about 28 million tonnes","About 182 million tonnes of dust leave the Sahara; much of it falls into the ocean or blows on to the Caribbean, and about 28 million tonnes land on the Amazon. The 22,000 tonnes of phosphorus in it roughly make up for what rain washes out of the forest’s poor soils.");
+  else if(L.day>0)say(L,"Across the Atlantic","The trade winds carry the dust thousands of kilometres west, a journey of about a week or more. Some of it falls into the sea on the way.");
+  else say(L,"The Bodélé Depression, Chad","An old lakebed full of fine dust: the biggest single source of dust on Earth. Press ▶.")}};
+
 /* ============================================================ the engine: one stop at a time */
-const DEFS=[TRAIN,FLARE,BORDER];
+const DEFS=[TRAIN,FLARE,BORDER,WALL,ARAL,DUST];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||ps.mode!=="globe")return null;const S=psSteps()[ps.i];if(!S)return null;return DEFS.find(d=>d.tour===ps.tour&&d.title===S.title)||null}catch(e){return null}}
 function mount(D){const G=g();if(!G||!G.host)return;if(L&&L.D===D&&L.host===G.host&&L.el.isConnected)return;unmount();
@@ -261,6 +335,19 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvi-border{fill:none;stroke:#4fd1ff;stroke-width:3;stroke-dasharray:7 5;filter:drop-shadow(0 0 2px #000)}
 .rvi-guess{fill:#d9682b;stroke:#fff;stroke-width:2.5}
 .rvi-catch{position:absolute;inset:0;pointer-events:auto;cursor:crosshair;display:none}
+.rvi-wall-line{fill:none;stroke:#fff;stroke-width:5;stroke-dasharray:9 6;stroke-linecap:round;filter:drop-shadow(0 0 2px #000)}
+.rvi-wall-line.rvi-wall-true{stroke:#c0392b;stroke-dasharray:none;filter:none}
+.rvi-dust{fill:#e0b25a;stroke:rgba(120,80,20,.6);stroke-width:.6}
+.rvi-bars{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.rvi-lane{display:flex;align-items:center;gap:8px;font-size:12px}.rvi-lane span{flex:0 0 112px;font-weight:700}.rvi-lane b{flex:0 0 92px;text-align:right}
+.rvi-track{position:relative;flex:1 1 auto;height:11px;border-radius:6px;background:rgba(19,41,75,.12)}.rvi-track i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;min-width:2px}
+.rvi-aral{display:flex;gap:12px;align-items:flex-end;margin-top:8px}
+.rvi-sq{position:relative;flex:0 0 110px;height:110px}
+.rvi-sq60{position:absolute;inset:0;background:rgba(42,120,208,.25);border:2px dashed #e2672a;border-radius:4px}.rvi-sq60 span{position:absolute;right:4px;top:2px;font-size:11px;font-weight:800;color:#e2672a}
+.rvi-sqg{position:absolute;left:0;bottom:0;background:rgba(42,120,208,.55);border:2px solid #2a78d0;border-radius:3px;transition:width .15s,height .15s}.rvi-sqg span{position:absolute;left:3px;top:1px;font-size:10px;font-weight:800;color:#fff}
+.rvi-sq07{position:absolute;left:0;bottom:0;background:#1f8a4c;border:2px solid #fff;border-radius:3px;animation:rviIn .5s ease}
+.rvi-sqk{font-size:12.5px;line-height:1.45}
+:is(body.dark-theme,body.sky-night) .rvi-track{background:rgba(255,255,255,.15)}
 :is(body.dark-theme,body.sky-night) .rvi-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
 :is(body.dark-theme,body.sky-night) .rvi-do,:is(body.dark-theme,body.sky-night) .rvi-read{color:#ffb27a}
 :is(body.dark-theme,body.sky-night) .rvi-btn{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
