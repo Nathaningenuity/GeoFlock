@@ -26,8 +26,8 @@ const FILT=(S,k,fn)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.g
 /* swap one phrase in a text field, now and whenever another script sets the field again */
 const RE=(S,k,a,b)=>FILT(S,k,t=>typeof t==="string"&&t.indexOf(a)>=0?t.split(a).join(b):t);
 const pinText=p=>Array.isArray(p)?String(p[1]||""):String(p&&(p.text||p.label)||"");
-const DROP=(S,re)=>{const P=S.pins||[];const Q=P.filter(p=>!re.test(strip(pinText(p))));if(Q.length!==P.length)LOCK(S,"pins",Q)};
-const DROPPH=(S,re)=>{const P=S.phPins||[];const Q=P.filter(p=>!re.test(strip(p&&p.label)));if(Q.length!==P.length)LOCK(S,"phPins",Q)};
+/* drop the text pins whose label matches (also from pins other scripts add later) */
+const DROP=(S,re)=>FILT(S,"pins",P=>Array.isArray(P)?P.filter(p=>!re.test(strip(pinText(p)))):P);
 
 const FIX={
  transport:{
@@ -98,6 +98,21 @@ const FIX={
   "How new countries are born":S=>{LOCK(S,"card","left");LOCK(S,"globe",[48,48,1.6]);DROP(S,/^Malaysia$/)}
  },
  culture:{
+  /* New Spain (Mexico), the empire's richest part, and Peru were under the card */
+  "The Spanish Empire":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-92,-2,1.15])},
+  /* Madagascar, one end of the stop's ruler, was under the card: Antananarivo and southern Borneo now both show
+     beside it, with the open Indian Ocean the sailors crossed between them */
+  "Madagascar speaks Bornean":S=>{LOCK(S,"card","left");LOCK(S,"globe",[62,-8,0.85]);
+   /* the long Borneo label then ran under the map key: the card says the rest */
+   FILT(S,"pins",P=>Array.isArray(P)?P.map(p=>Array.isArray(p)&&/^Southern Borneo: Ma/.test(strip(p[1]))?[p[0],"Ma’anyan, Borneo",p[2]]:p):P)},
+  /* Morocco, half of the headline ("a Moroccan and an Iraqi"), was under the card */
+  "The Arab world":S=>{LOCK(S,"card","left");LOCK(S,"globe",[4,24,1])},
+  /* the card stood on the right and the map's floating key lay across its top corner, over the close button */
+  "How the world writes":S=>{LOCK(S,"card","left");LOCK(S,"globe",[5,36,1.44])},
+  /* "Georgia" and "Armenia" were each written twice, a name label under each flag label */
+  "Two neighbours, two alphabets":S=>{DROP(S,/^(Georgia|Armenia)$/)},
+  /* the Guangzhou (Cantonese) label ran under the map key */
+  "Tones need wet air?":S=>{LOCK(S,"globe",[112,20,1.6])}
  }
 };
 /* "In the EU, not in the euro" showed Sofia's cathedral, but Bulgaria joined the euro on 1 January 2026 (European
@@ -124,9 +139,13 @@ const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvg fix",tour,S.title,e)}})}
 function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)applyTo(t,T.steps)})}catch(e){}}
-let lastKey="";
-setInterval(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps())}catch(e){}},300);
-try{applyAll()}catch(e){}setTimeout(applyAll,1500);setTimeout(applyAll,6000);
+/* geoflock-polish-b.js re-patches some of these stops with Object.defineProperty at load + 1.5 s and 4 s after it runs;
+   a field fixed here before then would make those writes throw. So the fixes start once the page has settled, or as
+   soon as one of these tours is opened, whichever comes first. */
+let lastKey="",ready=false;
+const start=()=>{if(ready)return;ready=true;applyAll()};
+if(document.readyState==="complete")setTimeout(start,6000);else addEventListener("load",()=>setTimeout(start,6000));
+setInterval(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}if(!ready)start();const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps())}catch(e){}},300);
 
 /* ======================================================================== part 2: guess first, find it
    geoflock-tourplay.js veils the stop's headline and asks for an estimate first (GUESS), or asks for a tap on the
