@@ -125,16 +125,20 @@ if(typeof DG!=="undefined"&&typeof dgT==="function"){const T=dgT,tip=typeof dgTi
   drag:(svg,n,x)=>{const D=DG.humtime,f=Math.max(0,Math.min(1,(x-38)/252));D._t=4000*Math.pow(1-f,2);D._set(svg)},
   _set:svg=>{const D=DG.humtime,t=D._t;let g="",alive=0;[3000,2000,1000,500,200,50,0].forEach(v=>{const x=X(v);g+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="10" y2="160" stroke="#e3e9ee"/>'+T(x.toFixed(1),168,v?(v>=1000?(v/1000)+" million":v+",000"):"now",'text-anchor="middle" font-size="5.8" opacity=".7"')});
    HUM.forEach(([n,a,b,c],i)=>{const y=14+i*12.2,on=t<=a&&t>=b;if(on)alive++;g+='<rect x="'+X(a).toFixed(1)+'" y="'+y+'" width="'+Math.max(2,X(b)-X(a)).toFixed(1)+'" height="8" rx="3" fill="'+c+'" opacity="'+(on?1:.28)+'"'+tip(n+": about "+a.toLocaleString("en-US")+",000 to "+(b?b.toLocaleString("en-US")+",000 years ago":"today"))+'/>';
-    g+=T(X(a)-3>60?(X(a)-3).toFixed(1):(X(b)+3).toFixed(1),y+7,n,'font-size="5.9" font-weight="'+(on?800:500)+'"'+(X(a)-3>60?' text-anchor="end"':"")+' opacity="'+(on?1:.55)+'"')});
+    /* review 2: a long name left of an early bar ran off the left edge (Paranthropus); it goes after the bar instead */
+    const lft=X(a)-6-n.length*2.95>2;g+=T(lft?(X(a)-3).toFixed(1):(X(b)+3).toFixed(1),y+7,n,'font-size="5.9" font-weight="'+(on?800:500)+'"'+(lft?' text-anchor="end"':"")+' opacity="'+(on?1:.55)+'"')});
    const x=X(t);g+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="10" y2="160" stroke="#1d3047" stroke-width="1.2"/>';
    const when=t<1?"today":t>=1000?(t/1000).toFixed(1)+" million years ago":Math.round(t/5)*5+",000 years ago";g+=T(150,180-2,when+": "+alive+(alive===1?" kind":" kinds")+" of human (and near-human) alive",'text-anchor="middle" font-size="7.4" font-weight="800" fill="#7a2a1a"');
    dgDyn(svg,g.replace(/y="178"/,'y="176"'));const k=svg.querySelector(".dg-ht-k");if(k)k.setAttribute("cx",x.toFixed(1))}};
  /* card simulation: drag through the last 140,000 years and the map's sea level follows (rounded to 10 m) */
- const SEA=[[140,-120],[130,0],[120,-10],[110,-45],[100,-25],[80,-55],[70,-80],[60,-70],[45,-75],[30,-85],[21,-120],[16,-105],[12,-60],[10,-40],[8,-15],[6,0],[0,0]];
+ /* review 2: the last interglacial stood about 6–9 m ABOVE today, about 125,000 years ago (Dutton et al. 2015, Science
+    349); the warm spells about 100,000 and 82,000 years ago (stages 5c and 5a) reached only about 20 m below today (the
+    Huon Peninsula reef terraces, Chappell 1996, Quaternary Science Reviews 15). The old curve stopped at 0 and missed 5a. */
+ const SEA=[[140,-120],[134,-90],[129,-10],[126,6],[118,4],[110,-45],[100,-20],[90,-50],[82,-20],[70,-75],[62,-85],[50,-60],[38,-70],[30,-85],[21,-120],[16,-105],[12,-60],[10,-40],[8,-15],[6,-3],[0,0]];
  const seaAt=t=>{for(let i=1;i<SEA.length;i++){const [t0,v0]=SEA[i-1],[t1,v1]=SEA[i];if(t<=t0&&t>=t1)return v0+(v1-v0)*(t0-t)/(t0-t1)}return 0};
- const sx=t=>30+(140-t)/140*255,sy=v=>40+(-v)/120*100;
+ const sx=t=>30+(140-t)/140*255,sy=v=>40+(10-v)/130*100;
  let seaTm=null;const seaMap=v=>{try{const St=psSteps()[ps.i];if(!St||St.title!=="Sundaland")return;if(St.gfSea===v)return;St.gfSea=v;clearTimeout(seaTm);seaTm=setTimeout(()=>{try{gfMsApply();gfGlobeDirty()}catch(e){}},120)}catch(e){}};
- DG.humsea={title:"Drag the sea level",src:"Sea level over the last 140,000 years, simplified from ice-core and coral records (e.g. Lambeck et al. 2014); the lowest point, about 120 m below today, was about 21,000 years ago.",_t:21,
+ DG.humsea={title:"Drag the sea level",src:"Sea level over the last 140,000 years, simplified from ice-core and coral records (e.g. Lambeck et al. 2014); the lowest point, about 120 m below today, was about 21,000 years ago. Last interglacial about 6–9 m above today (Dutton et al. 2015); warm spells 100,000 and 82,000 years ago from the Huon Peninsula reefs (Chappell 1996).",_t:21,
   svg:()=>'<svg viewBox="0 0 300 200"><g class="dg-dyn"></g><g class="dg-handle" data-drag="t"><rect x="26" y="150" width="263" height="18" fill="transparent"/><line x1="30" x2="285" y1="159" y2="159" stroke="#c9d3dc" stroke-width="3" stroke-linecap="round"/><circle class="dg-hs-k" cy="159" r="6.5" fill="#2f6ea8" stroke="#fff" stroke-width="1.4"/></g></svg>',
   init:svg=>DG.humsea._set(svg),
   drag:(svg,n,x)=>{const D=DG.humsea;D._t=Math.max(0,Math.min(140,140-(x-30)/255*140));D._set(svg)},
@@ -145,10 +149,10 @@ if(typeof DG!=="undefined"&&typeof dgT==="function"){const T=dgT,tip=typeof dgTi
    let d="";for(let k=140;k>=0;k-=1)d+=(k===140?"M":"L")+sx(k).toFixed(1)+","+sy(seaAt(k)).toFixed(1);
    g+='<path d="'+d+'L285,140L30,140Z" fill="#9cc3e0" opacity=".55"/><path d="'+d+'" fill="none" stroke="#2f6ea8" stroke-width="1.8"/>';
    g+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="40" y2="140" stroke="#1d3047" stroke-dasharray="3 2"/><circle cx="'+x.toFixed(1)+'" cy="'+sy(v).toFixed(1)+'" r="4.5" fill="#e8701a" stroke="#fff" stroke-width="1.3"/>';
-   g+=T(8,30,"Sea level compared with today",'font-size="7.4" font-weight="700"');
-   [["21","Coldest: 21,000 years ago",130,96],["0","Today",232,52]].forEach(([k,l,bx,bw])=>{const on=Math.abs(D._t-k)<1;g+='<g data-act="'+k+'" style="cursor:pointer"><rect x="'+bx+'" y="8" width="'+bw+'" height="16" rx="8" fill="'+(on?"#1d3047":"#fff")+'" stroke="#1d3047" stroke-opacity=".3"/>'+T(bx+bw/2,19,l,'text-anchor="middle" font-size="6.8" font-weight="700" fill="'+(on?"#fff":"#1d3047")+'"')+"</g>"});
-   const when=t<1?"Today":Math.round(t)+",000 years ago";g+=T(150,194,when+": sea "+(Math.round(v)>=0?"as today":Math.round(-v)+" m lower")+(v<=-60?" · Sundaland is dry land":""),'text-anchor="middle" font-size="7.6" font-weight="800" fill="#1d3047"');
-   dgDyn(svg,g);const k=svg.querySelector(".dg-hs-k");if(k)k.setAttribute("cx",x.toFixed(1));seaMap(Math.round(v/10)*10)}};
+   g+=T(8,34,"Sea level compared with today",'font-size="7.4" font-weight="700"');
+   [["125","Warmest: 125,000",56,70],["21","Coldest: 21,000 years ago",130,96],["0","Today",232,52]].forEach(([k,l,bx,bw])=>{const on=Math.abs(D._t-k)<1;g+='<g data-act="'+k+'" style="cursor:pointer"><rect x="'+bx+'" y="8" width="'+bw+'" height="16" rx="8" fill="'+(on?"#1d3047":"#fff")+'" stroke="#1d3047" stroke-opacity=".3"/>'+T(bx+bw/2,19,l,'text-anchor="middle" font-size="6.8" font-weight="700" fill="'+(on?"#fff":"#1d3047")+'"')+"</g>"});
+   const when=t<1?"Today":Math.round(t)+",000 years ago";g+=T(150,194,when+": sea "+(Math.round(v)>=2?"about "+Math.round(v)+" m higher than today (warmer, less ice)":Math.round(v)>=0?"as today":Math.round(-v)+" m lower")+(v<=-60?" · Sundaland is dry land":""),'text-anchor="middle" font-size="7.6" font-weight="800" fill="#1d3047"');
+   dgDyn(svg,g);const k=svg.querySelector(".dg-hs-k");if(k)k.setAttribute("cx",x.toFixed(1));seaMap(Math.min(0,Math.round(v/10)*10))}};
  if(typeof PS_DIAG!=="undefined")PS_DIAG[ID+"|Sundaland"]="humsea";try{if(!DG_ORDER.includes("humsea"))DG_ORDER.push("humsea");if(!SIM_KEYS.includes("humsea"))SIM_KEYS.push("humsea")}catch(e){}
  if(typeof PS_DIAG!=="undefined")PS_DIAG[ID+"|Many kinds of human"]="humtime";try{if(!DG_ORDER.includes("humtime"))DG_ORDER.push("humtime");if(!SIM_KEYS.includes("humtime"))SIM_KEYS.push("humtime")}catch(e){}}
 PS_TOURS[ID]={name:"Guided tour on human origins",short:"Human origins",

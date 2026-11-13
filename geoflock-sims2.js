@@ -196,7 +196,7 @@ function frame1(){const P=proj1();const land=landPath("hw1",P,f=>{try{const b=d3
   '<clipPath id="dgHwClip"><rect x="6" y="25" width="288" height="185" rx="8"/></clipPath><g clip-path="url(#dgHwClip)"><path d="'+land+'" fill="#c9c09a" stroke="#8e8462" stroke-width=".5"/>';
  const g=d3.geoPath(P)(d3.geoGraticule().step([10,10])());h+='<path d="'+(g||"").replace(/(\.\d)\d+/g,"$1")+'" fill="none" stroke="#fff" stroke-opacity=".14" stroke-width=".5"/></g>';
  const hs=P([-155.29,19.41]);h+='<circle cx="'+f1(hs[0])+'" cy="'+f1(hs[1])+'" r="16" fill="url(#dgHwGlow)"/><g class="hw-ch"></g>'+
-  T(f1(hs[0]-14),f1(hs[1]+12),"hotspot",'text-anchor="end" font-size="6.6" font-weight="800" fill="#ffd8b8"');
+  T(f1(hs[0]+9),f1(hs[1]+8),"hotspot",'font-size="6.6" font-weight="800" fill="#ffd8b8"');
  const k=P([157.5,54]);h+=T(f1(k[0]+2),f1(k[1]),"Kamchatka",'font-size="6.2" font-weight="700" fill="#e9eedc"');const al=P([-176,50.6]);h+=T(f1(al[0]),f1(al[1]),"Aleutian Islands",'font-size="6.2" font-weight="700" fill="#e9eedc" text-anchor="middle"');
  return h}
 const HDEFS=()=>rockDefs("dgHw")+'<radialGradient id="dgHwOcean" cx=".7" cy=".6" r=".9"><stop offset="0" stop-color="#2f78b8"/><stop offset="1" stop-color="#173f6e"/></radialGradient>'+
@@ -239,7 +239,8 @@ function draw1(svg,s){const P=proj1(),t=s.T;let h="";
  const pts=[];for(let a=t;a<=82;a+=.5)pts.push(P(at(a-t)));if(pts.length>1)h+='<path d="'+ln(pts)+'" fill="none" stroke="#f3d9a6" stroke-width="1.6" stroke-dasharray="1.5 2"/>';
  CHAIN.forEach(([n,lon,lat,a],i)=>{if(a<t)return;const p=P(at(a-t)),big=i===0||i===1||i===8||i===14||i===7;
   h+='<circle cx="'+f1(p[0])+'" cy="'+f1(p[1])+'" r="'+(big?3.2:2.4)+'" fill="'+col(a)+'" stroke="#fff" stroke-width=".6"'+tip(n+": "+(a?"about "+a+" million years old":"erupting today"))+'/>';
-  if(big||t>0&&Math.abs(a-t)<3)h+=T(f1(p[0]+(i>7?5:-4)),f1(p[1]+(i>7?2.5:-5)),n+(a?" · "+a+" Ma":""),'font-size="6.2" font-weight="800" fill="#fff"'+(i>7?"":' text-anchor="end"'))});
+  /* review 2: Kīlauea's and Kauaʻi's labels sat on the chain itself; Kīlauea now goes to the open sea on the right, Kauaʻi below */
+  if(big||t>0&&Math.abs(a-t)<3){const o=i===0?[6,-5,"start"]:i===1?[-3,10,"end"]:i>7?[5,2.5,"start"]:[-4,-5,"end"];h+=T(f1(p[0]+o[0]),f1(p[1]+o[1]),n+(a?" · "+a+" Ma":""),'font-size="6.2" font-weight="800" fill="#fff" text-anchor="'+o[2]+'"')}});
  setHTML(svg,".hw-ch",h);
  const lbl=t<.5?"Today: 80 million years of volcanoes, with a bend at 47 Ma":t<47?Math.round(t)+" million years ago: the plate has slid "+fmt(t*80)+" km back towards the hotspot":Math.round(t)+" million years ago: before the bend the plate moved north, not north-west";
  txt(svg,".hw-now",lbl);setSlider(svg,"t",14,240,206,t/82,t<.5?"now":Math.round(t)+" Ma ago")}

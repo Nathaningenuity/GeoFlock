@@ -116,9 +116,9 @@ DG.islspa={title:"Bigger islands, more species",src:"Reptiles and amphibians of 
   [1,10,100].forEach(s=>{const y=spaY(s);g+='<line x1="40" x2="285" y1="'+y+'" y2="'+y+'" stroke="#fff"/>'+T(34,y+2,s,'text-anchor="end" font-size="6.6" opacity=".7"')});
   g+=T(162,168,"island area, km² (each step is 10 times bigger)",'text-anchor="middle" font-size="6.8"')+T(8,18,"kinds of reptiles and amphibians",'font-size="7" font-weight="700"');
   let d="";for(let i=0;i<=50;i++){const a=Math.pow(10,i/50*5.2);d+=(i?"L":"M")+spaX(a).toFixed(1)+","+spaY(spaS(a)).toFixed(1)}g+='<path d="'+d+'" fill="none" stroke="'+TL+'" stroke-width="2" stroke-dasharray="5 3"/>';
-  SPA.forEach(([n,a,s])=>{const x=spaX(a),y=spaY(s);g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.6" fill="#e8701a" stroke="#fff"'+tip(n+": about "+fmt(a)+" km², about "+s+" kinds")+"/>";const L={Cuba:[-6,3,1],Hispaniola:[-5,-5,1],"Puerto Rico":[-6,-3,1],Jamaica:[5,9,0]}[n]||[5,3,0];g+=T(x+L[0],y+L[1],n,'font-size="6.4" font-weight="700"'+(L[2]?' text-anchor="end"':""))});
+  SPA.forEach(([n,a,s])=>{const x=spaX(a),y=spaY(s);g+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.6" fill="#e8701a" stroke="#fff"'+tip(n+": about "+fmt(a)+" km², about "+s+" kinds")+"/>";const L={Cuba:[-8,11,0],Hispaniola:[-5,-5,1],"Puerto Rico":[-6,-3,1],Jamaica:[5,9,0]}[n]||[5,3,0];g+=T(x+L[0],y+L[1],n,'font-size="6.4" font-weight="700"'+(L[2]?' text-anchor="end"':""))});
   const a=D._a,s=spaS(a),x=spaX(a),y=spaY(s);g+='<line x1="'+x.toFixed(1)+'" x2="'+x.toFixed(1)+'" y1="'+y.toFixed(1)+'" y2="150" stroke="'+TL+'" stroke-opacity=".5"/><circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="5" fill="'+TL+'" stroke="#fff" stroke-width="1.4"/>';
-  g+=T(150,182,"An island of "+(a<10?a.toFixed(1):fmt(a))+" km²: about "+Math.round(s)+" kinds",'text-anchor="middle" font-size="8" font-weight="800" fill="#16594f"')+T(290,18,"10× area ≈ 2× species",'text-anchor="end" font-size="7" fill="#b04a14" font-weight="700"');
+  g+=T(150,182,"An island of "+(a<10?a.toFixed(1):fmt(+a.toPrecision(2)))+" km²: about "+Math.round(s)+" kinds",'text-anchor="middle" font-size="8" font-weight="800" fill="#16594f"')+T(290,18,"10× area ≈ 2× species",'text-anchor="end" font-size="7" fill="#b04a14" font-weight="700"');
   dgDyn(svg,g.replace(/y="182"/,'y="178"'));knob(svg,"a",x)}};
 /* 2. the balance of arrivals and losses (MacArthur and Wilson 1967) */
 DG.islmw={title:"Arrivals and losses balance",src:"The equilibrium theory of island biogeography: R. H. MacArthur and E. O. Wilson (1967). A sketch with a pool of 100 mainland species; rates are illustrative.",_s:.3,_d:.6,_run:null,
@@ -202,7 +202,7 @@ DG.islfrag={title:"Cutting up a forest",src:"A sketch: a 10 km square of forest,
   const corePct=Math.round(100*n*core/100);
   g+=T(156,48,name,'font-size="9" font-weight="800"')+T(156,66,"deep, shady forest left: "+corePct+"%",'font-size="7.4"')+T(156,80,"(light green: hot, dry, windy edges)",'font-size="6.4" opacity=".75"');
   g+=T(156,104,br?"Animals can move between pieces:":"Kinds of forest animal that can",'font-size="7.4" font-weight="700"')+T(156,115,br?"together they hold about":"live in each piece, out of 100:",'font-size="7.4" font-weight="700"')+T(156,140,"about "+Math.round(per),'font-size="16" font-weight="800" fill="'+(per>80?"#2c7a3a":per>55?"#b07a14":"#b0301a")+'"');
-  g+=T(156,156,br?"Bridges and corridors join the islands up again":n>1?"Each piece is now an island of forest":"One big forest: room for everything",'font-size="6.8" opacity=".85"');
+  g+=T(156,156,br?"Corridors join the islands up again":n>1?"Each piece is now an island of forest":"One big forest: room for everything",'font-size="6.8" opacity=".85"');
   const tg=svg.querySelector(".dg-tabs");if(tg)tg.innerHTML=typeof dgPaint==="function"?dgPaint(h):h;dgDyn(svg,g)}};
 if(typeof PS_DIAG!=="undefined")Object.assign(PS_DIAG,{[ID+"|Krakatoa starts again"]:"islkrak",[ID+"|One finch, many finches"]:"islbeak",[ID+"|Island giants"]:"islrule"});
 try{["islkrak","islbeak","islrule"].forEach(k=>{if(!DG_ORDER.includes(k))DG_ORDER.push(k);if(!SIM_KEYS.includes(k))SIM_KEYS.push(k)})}catch(e){}
