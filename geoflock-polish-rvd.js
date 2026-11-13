@@ -376,12 +376,12 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvd-sea{opacity:.82;transition:y .12s,height .12s}.rvd-mark{stroke:#fff;stroke-width:1.5;stroke-dasharray:4 3}
 .rvd-lab{font:800 11px system-ui,sans-serif;fill:#13294b}.rvd-pk{font:700 9.5px system-ui,sans-serif;fill:#13294b;paint-order:stroke;stroke:#fff;stroke-width:3px}
 .rvd-row{display:flex;align-items:center;gap:10px;margin-top:8px}.rvd-rng{flex:1 1 auto;accent-color:#d9682b}.rvd-val{min-width:64px;text-align:right;font-size:15px;color:#9a4a16}
-body.dark-theme .rvd-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
-body.dark-theme .rvd-do,body.dark-theme .rvd-blab b,body.dark-theme .rvd-val{color:#ffb27a}
-body.dark-theme .rvd-btn,body.dark-theme .rvd-chip{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
-body.dark-theme .rvd-chip.rvd-on{background:#fff;color:#13294b}
-body.dark-theme .rvd-track,body.dark-theme .rvd-dots i{background:rgba(255,255,255,.15)}body.dark-theme .rvd-txbar{background:#9fc3ff}body.dark-theme .rvd-stack em{background:#fff}
-body.dark-theme .rvd-xs{background:linear-gradient(#1d2b44,#14203a)}body.dark-theme .rvd-lab{fill:#e8eefc}`;document.head.appendChild(s)}
+:is(body.dark-theme,body.sky-night) .rvd-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+:is(body.dark-theme,body.sky-night) .rvd-do,:is(body.dark-theme,body.sky-night) .rvd-blab b,:is(body.dark-theme,body.sky-night) .rvd-val{color:#ffb27a}
+:is(body.dark-theme,body.sky-night) .rvd-btn,:is(body.dark-theme,body.sky-night) .rvd-chip{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
+:is(body.dark-theme,body.sky-night) .rvd-chip.rvd-on{background:#fff;color:#13294b}
+:is(body.dark-theme,body.sky-night) .rvd-track,:is(body.dark-theme,body.sky-night) .rvd-dots i{background:rgba(255,255,255,.15)}:is(body.dark-theme,body.sky-night) .rvd-txbar{background:#9fc3ff}:is(body.dark-theme,body.sky-night) .rvd-stack em{background:#fff}
+:is(body.dark-theme,body.sky-night) .rvd-xs{background:linear-gradient(#1d2b44,#14203a)}:is(body.dark-theme,body.sky-night) .rvd-lab{fill:#e8eefc}`;document.head.appendChild(s)}
 
 window.gfPolishRvd={v:1,FIX,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
 })();
