@@ -121,7 +121,7 @@ const FIX={
  "hazards|The year without a summer":{globe:[-45,42,1],exact:1,card:"right"},
  "hazards|When mountains fall":{globe:[-76,-3,2.4],exact:1,card:"left"},          /* Yungay sat at the bottom, Peru's tag in the trees */
  /* Lituya Bay is 11 km long: the globe's zoom (capped at 6 by the tours) showed a dot, so the stop turns in closer */
- "hazards|The tallest wave ever":{globe:[-137.55,58.65,6],exact:1,card:"left",zoomTo:[-137.55,58.66,60]}
+ "hazards|The tallest wave ever":{globe:[-137.55,58.65,6],exact:1,card:"left",zoomTo:[-137.55,58.66,25]}
 };
 /* the Sun's longitude now, and a view just east of it (afternoon to night), for the Time zones tour's first stop */
 function dusk(){let lon=60;try{const s=typeof gfSun==="function"?gfSun():null;if(s)lon=s[0]+62}catch(e){}lon=((lon+540)%360)-180;return[+lon.toFixed(1),12,1]}
