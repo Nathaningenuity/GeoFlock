@@ -216,12 +216,12 @@ const PUSHPULL=binDef("hg2c","Push and pull",{tip:"Push or pull? Sort eight reas
  keys:[["push","⬅ Push: drives people out"],["pull","➡ Pull: draws them in"]],ask:"Does this push people out of a place, or pull them towards one?",
  items:[["War breaks out in your city","push","Push, political: conflict and persecution drive people out."],
   ["Factory jobs that pay five times more","pull","Pull, economic: higher wages are the biggest pull of all."],
-  ["Years of drought ruin the harvests","push","Push, environmental: when the land fails, farmers leave."],
   ["Your cousins already live there","pull","Pull, social: family and friends make a new place easier. That is how chain migration starts."],
+  ["Years of drought ruin the harvests","push","Push, environmental: when the land fails, farmers leave."],
   ["You could be jailed for your religion","push","Push, political (or cultural): persecution drives people out, often as refugees."],
   ["A safe, stable government","pull","Pull, political: safety and the rule of law draw people in."],
-  ["The factory in your town has closed","push","Push, economic: no work at home."],
-  ["Good schools and hospitals","pull","Pull, social: people move for their children’s future and their health."]],
+  ["Good schools and hospitals","pull","Pull, social: people move for their children’s future and their health."],
+  ["The factory in your town has closed","push","Push, economic: no work at home."]],
  done:"Most moves have both: something pushing at home and something pulling elsewhere. A good AP answer names the kind too: economic, political, social or environmental."});
 /* Refugee, asylum seeker and internally displaced person as the tour (and UNHCR) define them; "voluntary migrant" is
    the stops' other kind. The examples are the tour's own (Syria, Sudan, Ukraine, the Gulf, Nigerian doctors). */
@@ -242,12 +242,12 @@ const NATAL=binDef("hg2d","Women and fewer births",{tip:"More babies or fewer? S
  keys:[["pro","👶 Pronatalist: more births"],["anti","✋ Antinatalist: fewer"]],ask:"Is this policy trying to raise births or cut them?",
  items:[["China, 1980: one child per couple","anti","Antinatalist, and enforced with fines and pressure."],
   ["Hungary: mothers of three or more pay no income tax for life","pro","Pronatalist: since October 2025 for mothers of three, and since 2020 for mothers of four."],
-  ["Singapore, 1970s: “Stop at Two”","anti","Antinatalist. In 1987 Singapore reversed course and began urging couples to have more."],
   ["Romania, 1966: abortion and birth control banned","pro","Pronatalist, by force: births nearly doubled in a year, at a terrible cost."],
+  ["Singapore, 1970s: “Stop at Two”","anti","Antinatalist. In 1987 Singapore reversed course and began urging couples to have more."],
   ["Thailand: condoms handed out by traffic police","anti","Antinatalist, by persuasion and humour rather than force."],
   ["France: generous family benefits and cheap childcare","pro","Pronatalist: France has paid families to have children for decades."],
-  ["Iran, 1989: free family planning for everyone","anti","Antinatalist: with girls’ education, it cut births faster than almost anywhere."],
-  ["South Korea: baby bonuses and paid parental leave","pro","Pronatalist: over $200 billion since 2006, yet births are still the world’s lowest."]],
+  ["South Korea: baby bonuses and paid parental leave","pro","Pronatalist: over $200 billion since 2006, yet births are still the world’s lowest."],
+  ["Iran, 1989: free family planning for everyone","anti","Antinatalist: with girls’ education, it cut births faster than almost anywhere."]],
  done:"Antinatalist policies mostly worked, especially when girls stayed in school. Pronatalist ones usually disappoint: paying for babies rarely changes how many people want."});
 /* Children per woman. South Korea 0.75 in 2024 (Statistics Korea, Feb 2025); Thailand about 1.0 (the stop's own
    figure); France 1.62 in 2024 (INSEE, Jan 2025); India 2.0 (National Family Health Survey 5, 2019–21); Israel about 2.9
@@ -344,8 +344,8 @@ const JUDGE=binDef("hg3b","Two ways of judging",{tip:"Ethnocentric or relativist
  keys:[["e","Ethnocentric"],["r","Cultural relativism"]],ask:"Is this judging by your own culture, or trying to understand theirs?",
  items:[["“Eating with your hands? How rude!”","e","Ethnocentric: it treats your own table manners as the only right ones. In India or Ethiopia, eating with the right hand is good manners."],
   ["“The coffee ceremony takes an hour, so it must matter to them. I’ll stay.”","r","Relativism: it reads the custom within its own culture, where taking time over coffee shows respect."],
-  ["“Our way of dressing is just normal; theirs is strange.”","e","Ethnocentric: “normal” here means “like us”."],
   ["“Why does bowing matter so much in Japan? Let me find out before I go.”","r","Relativism: asking what a custom means to the people who keep it."],
+  ["“Our way of dressing is just normal; theirs is strange.”","e","Ethnocentric: “normal” here means “like us”."],
   ["Calling a festival “primitive” because it is unfamiliar","e","Ethnocentric: unfamiliar is not the same as worse."],
   ["Learning to greet people in the local language before a trip","r","Relativism in practice: meeting a culture on its own terms."]],
  done:"Relativism does not mean every practice is fine; it means understanding a practice first, in its own setting, before judging it."});
