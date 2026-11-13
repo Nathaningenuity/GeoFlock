@@ -67,7 +67,7 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
    const polys=[];lls.forEach((r,i)=>{const hole=depth[i]%2===1,ar=areaLL(r);if(hole?ar<0:ar>0)revLL(r);if(!hole||!polys.length)polys.push([r]);else polys[polys.length-1].push(r)});
    if(!polys.length)return;const all=polys.flat();if(cls==="ocean")D.ocean.push({rings:all});else D.lakes.push({id:f.tags.id,cls,int:f.tags.intermittent,polys,rings:all,bb:bboxOf(all)})})}
  if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nm(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));const ek=R.keys[0];if(ek){const e=EXT.get(ek),b=R.bb;EXT.set(ek,e?[Math.min(e[0],b[0]),Math.min(e[1],b[1]),Math.max(e[2],b[2]),Math.max(e[3],b[3])]:b.slice())}D.rivers.push(R)}})}
- if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||t.admin_level!==2||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,ls})})}
+ if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||!(t.admin_level>=2&&t.admin_level<=4)||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,lv:t.admin_level,ls})})}
  if(L.water_name){const E=L.water_name.ext;T.feats(L.water_name).forEach(f=>{if(f.type!==1||!f.geom)return;const p=parts(f.geom)[0];if(!p||!p[0])return;const ll=toLL([p[0]],z,tx,ty,E,false);D.names.push({n:nm(f.tags),cls:f.tags.class,ll:[ll[0],ll[1]]})})}
  /* lake names: a name point inside a lake names that lake (and its pieces in other tiles, by the lake's id) */
  D.names.forEach(N=>{if(!N.n||(N.cls&&!/^(lake|reservoir|lagoon|pond|basin)$/.test(N.cls)))return;for(const K of D.lakes){if(N.ll[0]<K.bb[0]||N.ll[0]>K.bb[2]||N.ll[1]<K.bb[1]||N.ll[1]>K.bb[3])continue;if(inRings(K.rings,N.ll)){if(K.id!=null)NAMES.set(K.id,N.n);K.n=N.n;break}}});
@@ -318,7 +318,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
   ctx.globalAlpha=1}
  /* borders over the sea are left out: the tiles carry some claim lines out across the water (a dashed line through the Gulf
     of Venezuela) that read as land borders. A piece is kept where the middle of each of its steps is on land. */
- const landB=landBorders;
+ try{APPF=(g._base||[]).concat(g._big||[]);if(!APPF.length&&typeof amGlobe!=="undefined"&&amGlobe!==g)APPF=(amGlobe._base||[]).concat(amGlobe._big||[])}catch(e){APPF=null}const landB=landBorders;
  if(coast&&borders){ctx.lineWidth=.55;ctx.strokeStyle=I.drewRaster?"rgba(25,25,25,0.55)":"rgba(20,30,20,0.5)";
   each(d=>{ctx.beginPath();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(ctx,pj,r,true))});landB(d).forEach(B=>{if(!B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();
    ctx.setLineDash([3,2]);ctx.beginPath();landB(d).forEach(B=>{if(B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();ctx.setLineDash([])})}}
@@ -403,7 +403,20 @@ async function seaAt(lls){if(!lls||!lls.length)return null;const tk=(ll,z)=>{con
   d=bb.byteLength?build(new Uint8Array(bb),zz,x,y):EMPTY();try{d.ocean.forEach(isLakeSea)}catch(e){}CACHE.set(k,{st:"ok",d,t:performance.now()})}D[k]=d}catch(e){/* a tile that failed: its points are left unknown */}}));
  return lls.map(ll=>{const t=tk(ll,z),d=D[key(z,t[0],t[1])];if(!d)return null;return d.ocean.some(o=>!o._lk&&inRings(o.rings,ll))})}
 /* borders over the sea are left out (see draw1) */
-function landBorders(d){if(d._bl)return d._bl;/* every piece of sea, sea lakes included (the Gulf of Venezuela lies in Maracaibo's rough outline) */const O=d.ocean;if(!O.length)return(d._bl=d.borders);const wet=(x,y)=>O.some(o=>inRings(o.rings,[x,y]));
+/* Country borders the app knows but the tiles file under a lower level: OpenStreetMap gives the Green Line (Northern Cyprus),
+   Hong Kong's and Macau's borders and similar ones admin_level 3 or 4. Such a line is drawn only where the app's own countries
+   (the shapes it fills and names) differ on its two sides along most of its length, so a province line is never drawn but
+   every border the app shows a country across is. APPF: the app's country shapes on screen (set by draw1). */
+let APPF=null;
+function appSides(l){const F=APPF;if(!F||!F.length)return null;const n=l.length/3;if(n<2)return false;
+ const who=(lo,la)=>{let k="";for(const f of F){const b=f._bb||(f._bb=d3.geoBounds(f));if(lo<b[0][0]-.1||lo>b[1][0]+.1||la<b[0][1]-.1||la>b[1][1]+.1)continue;try{if(d3.geoContains(f,[lo,la]))k+="|"+(f.properties.n||f.properties.c)}catch(e){}}return k};
+ const st=Math.max(1,Math.floor(n/12));let tot=0,diff=0;
+ for(let i=0;i+1<n;i+=st){const x0=l[i*3],y0=l[i*3+1],x1=l[i*3+3],y1=l[i*3+4],dx=x1-x0,dy=y1-y0,L=Math.hypot(dx*Math.cos(y0*Math.PI/180),dy);if(!L)continue;
+  /* about 7 km to each side: the app's shapes can be a few kilometres off the tiles' line */const k=.063/L,ox=-dy*k/Math.max(.2,Math.cos(y0*Math.PI/180)),oy=dx*k*Math.cos(y0*Math.PI/180),mx=(x0+x1)/2,my=(y0+y1)/2;
+  const a=who(mx+ox,my+oy),b=who(mx-ox,my-oy);tot++;if(a!==b&&(a||b))diff++}
+ return tot>0&&diff/tot>=.6}
+function landBorders(d){if(d._bl)return d._bl;if(d.borders.some(B=>B.lv>2)){if(!APPF||!APPF.length)return d.borders.filter(B=>!(B.lv>2));
+  d.borders=d.borders.map(B=>{if(!(B.lv>2))return B;const ls=B.ls.filter(l=>appSides(l));return ls.length?{disp:B.disp,lv:B.lv,ls,ok:1}:null}).filter(Boolean).map(B=>(B.lv>2&&(B.lv=2),B))}/* every piece of sea, sea lakes included (the Gulf of Venezuela lies in Maracaibo's rough outline) */const O=d.ocean;if(!O.length)return(d._bl=d.borders);const wet=(x,y)=>O.some(o=>inRings(o.rings,[x,y]));
   d._bl=d.borders.map(B=>{const ls=[];B.ls.forEach(l=>{let cur=[];const flush=()=>{if(cur.length>=6)ls.push(Float64Array.from(cur));cur=[]};
    for(let i=0;i+3<l.length;i+=3){if(wet((l[i]+l[i+3])/2,(l[i+1]+l[i+4])/2)){flush();continue}if(!cur.length)cur.push(l[i],l[i+1],l[i+2]);cur.push(l[i+3],l[i+4],l[i+5])}flush()});return{disp:B.disp,ls}});return d._bl}
 /* the hovered country's outline when zoomed in: the detailed coast and borders, kept to a band around its rough outline (its
