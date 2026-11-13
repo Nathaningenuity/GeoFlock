@@ -1,5 +1,5 @@
 /* GeoFlock: review pass over four map tours (Population, Geography, GDP, Elevation).
-   Two parts:
+   Three parts:
    1. Fixes to the stops' own data (framing, pins, wording), applied by tour and title when the tours are built and again
       whenever one of these tours starts, so later patches cannot undo them. Each fix says why. Framing is mostly about
       the tour card: it covers the left third of the globe, so a place framed in the middle of the globe ended up under
@@ -60,15 +60,58 @@ const FIX={
   "South America lives on its edges":S=>{LOCK(S,"globe",[-60,-18,1.2])}
  },
  gdp:{
-  /* with the stop's own figures ($33,000 and $2,700 a person) Japan is about 12 times richer per person, not 13 */
-  "Flip the map: money per person":S=>{RE(S,"stat","per person Japan’s is 13 times bigger","per person Japan’s is about 12 times bigger")}
+  /* with the card on the right, Italy hid under the GDP map's own menu and the pin's label was cut; with it on the
+     left and the globe turned west, Italy and China both show */
+  "China’s rise":S=>{LOCK(S,"card","left");LOCK(S,"globe",[44,38,1])},
+  /* the card sat over the Americas and the Los Angeles pin; the "every lit country" label ran into the map buttons */
+  "Los Angeles vs. the world":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-112,32,1])},
+  /* the card covered India, half of the stop */
+  "India and the UK":S=>{LOCK(S,"card","left");LOCK(S,"globe",[25,35,1])},
+  /* the "Shenyang" label ran into the zoom buttons */
+  "Count the lights, not the figures":S=>{LOCK(S,"globe",[125,38,2.4])},
+  /* with the card on the right, Ireland hid under the GDP map's own menu on the left */
+  "The richest per person":S=>{LOCK(S,"card","left");LOCK(S,"globe",[2,49,2.6])},
+  /* with the card on the right, Norway's label hid under the GDP map's own menu on the left */
+  "Norway saved its oil money":S=>{LOCK(S,"card","left");LOCK(S,"globe",[14,63,2.2])},
+  /* the card covered DR Congo and Venezuela's label hid under the GDP map's menu: frame both beside the card */
+  "Rich in resources, poor in income":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-42,3,1])},
+  /* Ghana's label poked out from under the card and South Korea's photo sat on the zoom buttons: the two are too far
+     apart for one view of the globe, so show Ghana and West Africa (South Korea is on the chart in the card) */
+  "Poorer than Ghana":S=>{LOCK(S,"card","left");LOCK(S,"globe",[12,12,1])},
+  /* with the stop's own figures ($33,000 and $2,700 a person) Japan is about 12 times richer per person, not 13; and
+     Tokyo's photo sat on the zoom buttons */
+  "Flip the map: money per person":S=>{LOCK(S,"globe",[124,31,1.05]);RE(S,"stat","per person Japan’s is 13 times bigger","per person Japan’s is about 12 times bigger")}
+ },
+ elev:{
+  /* the globe looked at the empty Pacific: none of the three mountains showed. Turn it to Everest (the chart in the card
+     compares all three) */
+  "Everest isn’t the tallest mountain":S=>{LOCK(S,"globe",[100,25,1])},
+  /* the India pin's label ran off the left edge of the globe into the map key: with the card on the left the key
+     tucks under it and the plateau and India both show */
+  "The roof of the world":S=>{LOCK(S,"card","left");LOCK(S,"globe",[86,30,2.6])},
+  /* the El Alto pin said "about a million people", the headline "nearly 900,000": the 2024 census counted 885,035
+     (Instituto Nacional de Estadística, Bolivia) */
+  "Living in thin air":S=>{LOCK(S,"pins",(S.pins||[]).map(p=>Array.isArray(p)&&/^El Alto/.test(p[1])?[p[0],"El Alto ~4,150 m, nearly 900,000 people",p[2]]:p))},
+  /* Mexico City's photo was cut off by the top edge of the globe */
+  "Cities that climbed to keep cool":S=>{LOCK(S,"globe",[-86,7,1.6])},
+  /* Hanoi's label ran off the right edge into the map key */
+  "Where states can’t climb":S=>{LOCK(S,"globe",[103,21,3.1])},
+  /* the Maldives sat on the card's edge and Tuvalu on the zoom buttons; they are too far apart to show both beside
+     the card, so the globe turns to the Maldives (the stop's headline and its sea-level tool) */
+  "Countries that could disappear":S=>{LOCK(S,"globe",[88,-5,1])},
+  /* Iceland, where the ridge comes out of the sea, was cut off by the top of the globe */
+  "The ocean’s hidden spine":S=>{LOCK(S,"globe",[-25,32,1.2])},
+  /* with the card on the right it covered the Great Rift Valley */
+  "Africa is a raised plateau":S=>{LOCK(S,"card","left");LOCK(S,"globe",[26,-12,1.3])}
  },
  geo:{
   /* the big water ball sat half under the card, and the "Pacific" label pointed at a spot under the card */
   "A planet of water":S=>{if(S.drag)LOCK(S,"drag",Object.assign({},S.drag,{at:[-138,16]}));
    LOCK(S,"pins",[[[-150,-5],"Pacific","point"],[[-30,15],"Atlantic","point"],[[75,-15],"Indian","point"]])},
-  /* Antarctica, the answer, was off the bottom of the globe: frame it with southern Africa, the Sahara at the top */
-  "The biggest desert is icy":S=>{LOCK(S,"globe",[25,-40,1])}
+  /* Antarctica, the answer, was off the bottom of the globe: frame it with Africa, the Sahara at the top (its label
+     moved to the Sahara's southern half, so it no longer runs into the map's toggles) */
+  "The biggest desert is icy":S=>{LOCK(S,"globe",[25,-35,1]);
+   LOCK(S,"pins",(S.pins||[]).map(p=>Array.isArray(p)&&/^Sahara/.test(p[1])?[[[12,19],[20,19]],p[1],p[2]]:p))}
  }
 };
 function applyFixes(tour){try{const T=PS_TOURS[tour],F=FIX[tour];if(!T||!F)return;T.steps.forEach(S=>{const f=S&&F[strip(S.title)];if(!f||S._rvaFix)return;
@@ -85,7 +128,6 @@ function addGuesses(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS)return fa
  const A={
   "pop|Russia lives west of the Urals":G("What share of Russians live west of the Ural Mountains?",0,100,74,"%",{step:1,show:"about three in four (74%)"}),
   "pop|The United States: the 100th meridian":G("What share of Americans in the lower 48 states live east of the 100th meridian?",0,100,76,"%",{step:1,show:"about three in four (76%)"}),
-  "gdp|If the world shared equally":G("If the world’s output were shared out equally, how much would each person get a year?",1000,100000,14000,"dollars",{log:1,show:"about $14,000"}),
   "gdp|Norway saved its oil money":G("How much is Norway’s oil fund worth, for every Norwegian?",1000,1000000,300000,"dollars",{log:1,show:"over $300,000"}),
   "pop|Australia keeps to the coast":G("What share of Australians live within 50 km of the sea?",0,100,85,"%",{step:1,show:"about 85%"})
  };
@@ -105,7 +147,7 @@ if(!addGuesses()){let n=0;const iv=setInterval(()=>{if(addGuesses()||++n>40)clea
    with "rva-".
    - geo | "Further north than you think": which city is further north? Pick one; the globe turns to the pair and draws
      the parallels through both.
-   - gdp | "Two giants": stack other economies against the US. Tap countries (or "Fill it for me") and watch the bar
+   - gdp | "Two giants": stack other economies against the US. Tap their names (or "Fill it for me") and watch the bar
      fill; the countries light up on the globe. Uses the GDP map's own figures (COUNTRY_GDP, World Bank, current US$). */
 const NS="http://www.w3.org/2000/svg";
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -269,11 +311,11 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rva-usbar{display:block;height:100%;border-radius:7px;background:#13294b;transition:width .3s}
 .rva-stack i{display:block;height:100%;transition:width .3s}.rva-stack i:first-child{border-radius:7px 0 0 7px}
 .rva-stack em{position:absolute;top:-3px;width:2px;height:20px;margin-left:-1px;background:#13294b}
-body.dark-theme .rva-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
-body.dark-theme .rva-do,body.dark-theme .rva-blab b{color:#ffb27a}
-body.dark-theme .rva-btn,body.dark-theme .rva-chip{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
-body.dark-theme .rva-btn.rva-on,body.dark-theme .rva-chip.rva-on{background:#fff;color:#13294b}
-body.dark-theme .rva-track,body.dark-theme .rva-dots i{background:rgba(255,255,255,.15)}body.dark-theme .rva-usbar{background:#9fc3ff}body.dark-theme .rva-stack em{background:#fff}`;document.head.appendChild(s)}
+body.sky-night .rva-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+body.sky-night .rva-do,body.sky-night .rva-blab b{color:#ffb27a}
+body.sky-night .rva-btn,body.sky-night .rva-chip{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
+body.sky-night .rva-btn.rva-on,body.sky-night .rva-chip.rva-on{background:#fff;color:#13294b}
+body.sky-night .rva-track,body.sky-night .rva-dots i{background:rgba(255,255,255,.15)}body.sky-night .rva-usbar{background:#9fc3ff}body.sky-night .rva-stack em{background:#fff}`;document.head.appendChild(s)}
 
 window.gfPolishRva={v:1,FIX,L:()=>L};
 })();
