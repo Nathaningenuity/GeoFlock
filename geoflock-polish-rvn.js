@@ -59,6 +59,21 @@ const FIX={
   /* the Congo basin was under the card and the Southeast Asian uplands on the globe's edge: 80° apart, they cannot
      both sit beside the card, so the stop opens on the Congo and buttons (part 3) turn the globe to all three forests */
   "Shifting cultivation":S=>VIEW(S,[34,4,1.5],"left")
+ },
+ hg5b:{
+  /* the globe turned to the middle of six photos from Kansas to Punjab and faced the Arctic, with the card on the
+     right over the Punjab photo. Punjab's Green Revolution and Kansas's wheat belong to the next and previous tours;
+     Norfolk's photo lay on top of Westland's; the three left are this tour's own places */
+  "Models of rural land":S=>{DROPPH(S,/^(Punjab|Kansas|Wheat field|Norfolk)/);VIEW(S,[-35,50,1],"left")},
+  /* the card stood on the right over Germany, and Iowa and Quebec sat on the globe's far edge: the sorting game
+     (part 3) turns the globe to each kind of settlement */
+  "Patterns of rural settlement":S=>VIEW(S,[-20,48,1.15],"left"),
+  /* the Seven Ranges label lay under the map key */
+  "Township and range":S=>VIEW(S,[-79,41,2.8],"left"),
+  /* index.html turned the globe to the middle of Britain and Mexico, so it faced North America and the first
+     revolution's Fertile Crescent was round the back. Both become area labels; the stop opens on the Old World and
+     buttons (part 3) turn the globe to each revolution's birthplace */
+  "Three agricultural revolutions":S=>{AREA(S,/^(Second|Third):/);VIEW(S,[22,40,1],"left")}
  }
 };
 const applied=new WeakSet();
@@ -96,6 +111,8 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
   /* Indonesia and Malaysia: about 83% of world palm oil production in 2023/24 (USDA Foreign Agricultural Service,
      "Oilseeds: World Markets and Trade", 2024: world about 79.5, Indonesia about 46-47 and Malaysia about 19 million
      tonnes); the stop's text says "about 85%" */
+  /* a circle in a square covers π/4 of it: the pivot's dry corners are the other 21% */
+  "hg5b|Circles in squares":G("A pivot’s circle fits inside a square field. What share of the square gets watered?",0,100,79,"%",{step:1,show:"about 79% (π ÷ 4)"}),
   "hg5a|Plantations":G("What share of the world’s palm oil comes from Indonesia and Malaysia?",0,100,83,"%",{step:1,show:"over 80%"})
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
@@ -109,7 +126,11 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg5a | "Subsistence and commercial": subsistence or commercial? Sort eight farms; the globe turns to each.
    - hg5a | "Following the wheat north": drag the date from May to September and follow the harvest north.
    - hg5a | "Extensive farming": Anna Creek, the Pampas and the Great Plains are on three continents; buttons turn the globe.
-   - hg5a | "Shifting cultivation": the stop's three rainforests, the Amazon, the Congo and Southeast Asia's uplands. */
+   - hg5a | "Shifting cultivation": the stop's three rainforests, the Amazon, the Congo and Southeast Asia's uplands.
+   - hg5b | "Patterns of rural settlement": clustered, dispersed or linear? Sort eight places; the globe turns to each.
+   - hg5b | "Long lots": metes and bounds, township and range, or long lots? Sort eight places; the globe turns to each.
+   - hg5b | "Split between sons": pass a 10-hectare farm down five generations and watch each son's share shrink.
+   - hg5b | "Three agricultural revolutions": buttons turn the globe to where each began. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -167,7 +188,9 @@ function binDef(tour,title,o){const placed=o.items.some(it=>it[3]);return{tour,t
  tick(L,dt){L.t+=dt;if(L.ring&&L.at)L.ring.setAttribute("r",(9+4*Math.abs(Math.sin(L.t*3))).toFixed(1))},
  draw(L){if(!L.ring)return;const f=L.at,q=f?proj(L,[f[1],f[2]]):null,qq=f?proj(L,[f[1],f[2]],1):null;
   if(q){L.ring.style.display="";L.ring.setAttribute("cx",q[0].toFixed(1));L.ring.setAttribute("cy",q[1].toFixed(1))}else L.ring.style.display="none";
-  if(qq){L.tag.style.display="";if(L.tag._h!==f[0]){L.tag.textContent=f[0];L.tag._h=f[0]}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+16)+"px"}else L.tag.style.display="none"},
+  /* no tag where the stop already labels the place */
+  if(f&&L._tf!==f){L._tf=f;L._dup=false;try{const S=psSteps()[ps.i],P=[].concat(S.pins||[],S.phPins||[]);L._dup=P.some(p=>{let ll=Array.isArray(p)?p[0]:p&&p.at;if(Array.isArray(ll&&ll[0]))ll=ll[0];return ll&&Math.abs(ll[0]-f[1])<.6&&Math.abs(ll[1]-f[2])<.6})}catch(e){}}
+  if(qq&&!L._dup){L.tag.style.display="";if(L.tag._h!==f[0]){L.tag.textContent=f[0];L.tag._h=f[0]}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+16)+"px"}else L.tag.style.display="none"},
  wire(L){const c=L.card;
   c.querySelectorAll(".rvn-bin").forEach(b=>b.onclick=()=>{if(L.ans||L.k>=o.items.length)return;const it=o.items[L.k];L.ans=b.dataset.k;L.res[L.k]=L.ans===it[1];
    if(it[3]){const p=it[3];L.at=[p[3]||"",p[0],p[1]];c.dataset.turned="1";turnGlobe(p[0],p[1],p[2]);L.dirty=1}this.render(L)});
@@ -257,8 +280,65 @@ const SWIDDEN=turnDef("hg5a","Shifting cultivation",{tip:"The stop’s three rai
   ["Congo basin",22,0,2.3,"Many farmers still clear and burn small fields for cassava, maize and plantains. As villages grow, fields are reused before the forest can recover."],
   ["Southeast Asian uplands",101,22,2.6,"In the hills of Laos, northern Thailand and Myanmar, families grow upland rice in fields cleared from the forest, then move on."]]});
 
+/* ======================================================================== hg5b: Models of rural land */
+/* Clustered, dispersed or linear, as the stop defines them, with its own three examples (German villages, Iowa farms,
+   Quebec's St Lawrence) and five more common ones: Vietnam's Red River delta villages, Dutch "lintdorpen" (ribbon
+   villages along a dyke or canal road), Australian sheep stations, the English village round its green, and the long
+   lots along the Mississippi in Louisiana that the "Long lots" stop names. */
+const SETTLE=binDef("hg5b","Patterns of rural settlement",{tip:"Clustered, dispersed or linear? Sort eight places; the globe turns to each.",
+ keys:[["c","🏘 Clustered"],["d","🏠 · 🏠 Dispersed"],["l","🏠🏠🏠 Linear"]],ask:"How are the farm homes laid out here?",
+ items:[["A German village: houses round the church, fields all around","c","Clustered (nucleated): families live together and walk out to their fields.",[10,51,3.5,"Germany"]],
+  ["An Iowa farmhouse alone in the middle of its own land","d","Dispersed: each family lives on its own farm, often a kilometre or more from the next.",[-93.5,42,3.5,"Iowa"]],
+  ["Farmhouses in a row along the St Lawrence","l","Linear: each long lot has its house on the river bank.",[-71.5,46.9,3.5,"Quebec"]],
+  ["A village in Vietnam’s Red River delta, packed inside a bamboo hedge","c","Clustered: houses close together, rice paddies all around, as across much of Asia.",[105.9,20.6,3.5,"Red River delta"]],
+  ["A Dutch village stretched along a dyke road for kilometres","l","Linear: a “lintdorp”, a ribbon village, one house deep on each side of the road.",[4.9,52.6,4,"North Holland"]],
+  ["An Australian sheep station, its nearest neighbour an hour’s drive away","d","Dispersed, at its most extreme: one homestead in the middle of a huge run.",[143,-31,3,"New South Wales"]],
+  ["An English village round its green, with the farmland beyond","c","Clustered: the green was shared ground, and the houses face it.",[-1.5,52.3,3.5,"England"]],
+  ["Old farmhouses one after another along the Mississippi between Baton Rouge and New Orleans","l","Linear: the French long lots gave every farm a river front.",[-90.6,30,3.5,"Louisiana"]]],
+ done:"Clustered villages share land, water and defence; dispersed farms put each family on its own land; linear settlements follow a road, river or dyke."});
+/* Survey systems of the three stops before (metes and bounds, township and range, long lots). Kentucky, once part
+   of Virginia, kept metes and bounds; Ohio's Seven Ranges were the first federal survey (1785); Detroit's French
+   "ribbon farms" ran back from the Detroit River (Detroit Historical Society, "Ribbon farms"). */
+const SURVEY=binDef("hg5b","Long lots",{tip:"Which survey? Sort eight places; the globe turns to each.",
+ keys:[["m","🌳 Metes and bounds"],["t","▦ Township and range"],["l","▥ Long lots"]],ask:"Which way was this land divided?",
+ items:[["Old Virginia farms bounded by creeks, ridges and big trees","m","Metes and bounds: natural features and distances, so the plots are irregular.",[-78.5,37.5,4,"Virginia"]],
+  ["Square fields and a straight road every mile, as far as you can see","t","Township and range: the 1785 grid of square-mile sections.",[-93.5,42,4,"Iowa"]],
+  ["Thin farms running back from the St Lawrence","l","Long lots: every farm gets a share of the river front.",[-71.5,46.9,4,"Quebec"]],
+  ["Kentucky, settled before the federal survey, with crooked boundaries","m","Metes and bounds: Kentucky was part of Virginia and kept its system.",[-85,37.5,4,"Kentucky"]],
+  ["Strips running back from the Mississippi in Louisiana","l","Long lots, brought by French settlers, as in Quebec.",[-90.6,30,4,"Louisiana"]],
+  ["Eastern Ohio, 1785: the very first township grid","t","Township and range: the Seven Ranges, where the federal survey began.",[-80.8,40.6,4,"Seven Ranges, Ohio"]],
+  ["Kansas wheat country, with section roads a mile apart","t","Township and range: from the air, a chequerboard.",[-98.5,38.5,4,"Kansas"]],
+  ["Old French “ribbon farms” along the Detroit River","l","Long lots: Detroit’s old streets still follow the ribbon farms’ edges.",[-83.05,42.33,4,"Detroit"]]],
+ done:"Who surveyed the land first still shows: crooked lines in the East, a grid in the Midwest and West, and long thin strips wherever the French settled."});
+/* Partible inheritance: plain arithmetic. India's average farm: 1.08 ha (Agriculture Census 2015–16, Ministry of
+   Agriculture and Farmers Welfare); a football pitch of 105 × 68 m (FIFA's recommended size) is about 0.71 ha. */
+const SPLIT={tour:"hg5b",title:"Split between sons",globe:false,tip:"Pass the farm down: pick how many sons share it, then split it.",
+ card:()=>'<svg class="rvn-field" viewBox="0 0 240 120" role="img" aria-label="The family farm"></svg><div class="rvn-row rvn-heirs"><span>Sons each time:</span>'+[2,3,4].map(n=>'<button type="button" class="rvn-btn" data-n="'+n+'">'+n+"</button>").join("")+'</div><div class="rvn-row"><button type="button" class="rvn-btn rvn-gen">Next generation ▶</button><button type="button" class="rvn-btn rvn-reset">↺ Start again</button></div>',
+ init(L){L.n=3;L.gen=0},
+ wire(L){const c=L.card;c.querySelectorAll(".rvn-heirs button").forEach(b=>b.onclick=()=>{if(L.gen)return;L.n=+b.dataset.n;this.render(L)});
+  c.querySelector(".rvn-gen").onclick=()=>{if(L.gen<5)L.gen++;this.render(L)};c.querySelector(".rvn-reset").onclick=()=>{L.gen=0;this.render(L)};this.render(L)},
+ render(L){const c=L.card;if(!c)return;const ha=10/Math.pow(L.n,L.gen);let x=0,y=0,w=240,h=120,out="";
+  for(let g=0;g<L.gen;g++){const vert=g%2===0,k=Math.floor(L.n/2);for(let i=0;i<L.n;i++){if(i===k)continue;const r=vert?[x+w*i/L.n,y,w/L.n,h]:[x,y+h*i/L.n,w,h/L.n];out+='<rect class="rvn-cous" x="'+r[0].toFixed(1)+'" y="'+r[1].toFixed(1)+'" width="'+r[2].toFixed(1)+'" height="'+r[3].toFixed(1)+'"/>'}
+   if(vert){x+=w*k/L.n;w/=L.n}else{y+=h*k/L.n;h/=L.n}}
+  out='<rect class="rvn-cous" x="0" y="0" width="240" height="120"/>'+out+'<rect class="rvn-mine" x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+h.toFixed(1)+'"/>';
+  setHTML(c.querySelector(".rvn-field"),out);
+  c.querySelectorAll(".rvn-heirs button").forEach(b=>{b.classList.toggle("rvn-cur",+b.dataset.n===L.n);b.disabled=L.gen>0&&+b.dataset.n!==L.n});
+  c.querySelector(".rvn-gen").disabled=L.gen>=5;
+  const f=v=>v>=1?v.toFixed(1).replace(/\.0$/,""):v>=.1?v.toFixed(2):v.toFixed(3);
+  if(!L.gen)say(L,"10 hectares","Great-great-grandfather’s farm, about 14 football pitches. Each generation it is shared equally between his sons.");
+  else{const who=["","Your great-grandfather","Your grandfather","Your father","You","Your son"][L.gen]+" inherits "+f(ha)+" ha";
+   say(L,who,ha>=1.08?"About "+Math.round(ha/.714)+" football pitches. Still bigger than the average Indian farm today, 1.08 hectares.":ha>=.3?"Smaller than the average Indian farm today (1.08 ha). A tractor no longer pays, and one son may leave for a city job.":"Less than half a football pitch: too small to feed a family. This is why so many Indian farmers also work in cities, and why France merged its strips.")}}};
+
+/* where each revolution began, as the stop and the next stop tell it: Norman Borlaug's wheat breeding in Mexico from
+   1944, in the Yaqui valley of Sonora and near Mexico City (Nobel Prize biography, 1970) */
+const REVS=turnDef("hg5b","Three agricultural revolutions",{tip:"Three revolutions, three continents. Visit where each began.",
+ intro:"Tap a revolution to turn the globe to where it began.",
+ places:[["First: Fertile Crescent",42,34,2.2,"About 10,000 years ago people began sowing wheat and barley and herding sheep and goats instead of hunting and gathering."],
+  ["Second: Britain",-1.5,52.5,3,"From the 1700s: enclosed fields, the Norfolk four-course rotation and new machines. Fewer farm hands were needed, so people moved to factory towns."],
+  ["Third: Mexico",-99.1,19.4,2.4,"From the 1940s Norman Borlaug bred high-yield wheat in Sonora and near Mexico City; with new rice, the Green Revolution spread to India and Pakistan in the 1960s."]]});
+
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[HEARTHS5,FARMS,WHEAT,RANCH,SWIDDEN];
+const DEFS=[HEARTHS5,FARMS,WHEAT,RANCH,SWIDDEN,SETTLE,SURVEY,SPLIT,REVS];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -286,6 +366,8 @@ every(()=>{try{const D=activeDef();if(D){mount(D);ensureCard()}else if(L||docume
 addEventListener("resize",()=>{if(L)L.dirty=1});
 
 {const s=document.createElement("style");s.textContent=`
+.rvn-field{display:block;width:100%;height:auto;border-radius:8px;margin:2px 0 4px}.rvn-cous{fill:#cfe3b0;stroke:#6f8f4a;stroke-width:1}.rvn-mine{fill:#d9682b;stroke:#7a3410;stroke-width:1.5}
+.rvn-heirs span{font-size:12.5px;font-weight:700;opacity:.75}
 .rvn-trail{fill:none;stroke:#d9a21a;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
 .rvn-green{fill:#4c9a3a;stroke:#fff;stroke-width:2}.rvn-gold{fill:#f2c230;stroke:#7a4a12;stroke-width:2}
 .rvn-cmb{fill:#d9682b;stroke:#fff;stroke-width:3}
