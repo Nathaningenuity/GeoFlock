@@ -737,13 +737,20 @@ const AQ0=96,AQ1=142;/* aquifer top and the clay beneath, roughly */
 const surf=x=>x<70?lerp(40,86,x/70)+4*Math.sin(x/9):x<130?86+(x-70)*.05:x<160?92+10*Math.exp(-Math.pow((x-146)/9,2)):x<200?91:90;
 const clayTop=x=>AQ1-x*.04;
 const wt0=x=>x<60?lerp(58,86,x/60):x<146?lerp(86,100,(x-60)/86):lerp(100,104,(x-146)/150);
-const WELLS=[228,262],QM=[34,22],QX=108;
+const WELLS=[228,262],QM=[34,19],QX=108;
+/* Water budget (review 2026-11): rain soaking in (recharge, 1 unit a year) refills the aquifer; springs, the oasis and
+   the qanat let water out again, more when the water table is high (Q falls to 0 as the table drops 3 units). Pumping P
+   is extra outflow. dD/dt = K·(P + Q(D) − 1). Pump less than the recharge and the table settles a little lower (the
+   springs give up the difference); pump more and it keeps falling until the wells run dry. This is the standard
+   "capture" picture of groundwater (Theis 1940; Bredehoeft, Papadopulos & Cooper 1982, "The water budget myth"). */
+const RCH=1,PMAX=2.5,KD=1,DMAX=42,outQ=D=>Math.max(0,1-D/3);
 make("aquifer",{title:"Water underground",
  src:"Schematic cross-section after the US Geological Survey’s groundwater primers. The High Plains (Ogallala) aquifer under the US Great Plains has dropped by more than 30 m in places since the 1950s (USGS). Qanats after UNESCO’s Persian Qanat listing",
- h:212,state:()=>({p:0,D:0,yr:0,t:0}),
+ h:236,state:()=>({p:0,D:0,yr:0,t:0,rate:0,dry:0}),
  frame:()=>{let h='<defs><linearGradient id="dgAqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8ea"/><stop offset="1" stop-color="#f3ead6"/></linearGradient><pattern id="dgAqSand" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#e2c995"/><circle cx="1.5" cy="1.5" r=".7" fill="#c9a970"/><circle cx="4.5" cy="4.2" r=".7" fill="#c9a970"/></pattern><clipPath id="dgAqClip"><rect x="6" y="6" width="290" height="150" rx="8"/></clipPath></defs>';
   h+='<g clip-path="url(#dgAqClip)"><rect x="6" y="6" width="290" height="150" fill="url(#dgAqSky)"/><g class="aq-a"></g><g class="aq-fx"></g></g><g class="aq-b"></g>';
-  h+=para("aq-p",8,158,288,22,6.2)+slider("p",14,198,150,"Pumping by farm wells");
+  h+=para("aq-p",8,158,288,22,6.2)+slider("p",14,198,150,"Pumping");
+  h+=T(14,219,"Water in",'font-size="6" font-weight="800" fill="'+SUB+'"')+T(14,231,"Water out",'font-size="6" font-weight="800" fill="'+SUB+'"')+'<g class="aq-bud"></g>'+btn("reset",214,214,76,"Start again");
   h+='<g transform="translate(176,182)"><text class="aq-yr" x="0" y="8" font-size="7" font-weight="900" fill="'+INK+'"></text><text class="aq-st" x="0" y="19" font-size="6" font-weight="700" fill="'+SUB+'"></text><text class="aq-st2" x="0" y="28" font-size="6" font-weight="700" fill="'+SUB+'"></text></g>';return h},
  draw:(svg,s)=>{const D=s.D;let h="",b="";
   const drop=x=>D*(.5+.5*clamp((x-60)/120,0,1))*(.6+.4*Math.exp(-Math.pow((x-245)/40,2)));
@@ -774,11 +781,25 @@ make("aquifer",{title:"Water underground",
   b+=T(14,14,"rain soaks into the hills",'font-size="5.8" font-weight="700" fill="#1d5f99"');
   s.qOn=qOn;s.spring=spring;
   const A=q(svg,".aq-a");if(A)A.innerHTML=h;const B=q(svg,".aq-b");if(B)B.innerHTML=b;
-  txt(svg,".aq-yr","After "+Math.floor(s.yr)+" years");txt(svg,".aq-st","Water table under the farm: "+Math.round(9+D*.9)+" m down");txt(svg,".aq-st2",dry?(dry===2?"Wells dry: drill deeper or stop":"One well has run dry"):"Wells pumping");
-  setPara(svg,"aq-p",D<3?"Rain soaks into the hills and slowly refills the aquifer. Where the water table meets the ground, water comes out as a spring or an oasis; a qanat taps it without pumps.":"Pumping faster than rain refills the aquifer lowers the water table. Springs, oases and qanats dry up first, then wells need drilling deeper.");
-  setSlider(svg,"p",14,198,150,s.p,s.p<.05?"none":s.p<.4?"a little":s.p<.75?"a lot":"far too much")},
- drag:(svg,s,n,x)=>{s.p=clamp((x-14)/150,0,1)},
- tick:(svg,s,dt)=>{s.t+=dt;const tgt=s.p*s.p*40-(s.p<.12?0:0),old=s.D;s.D+=(tgt-s.D)*Math.min(1,dt*.35);if(Math.abs(tgt-s.D)>.05)s.yr+=dt*6;if(Math.abs(old-s.D)>.02)DG.aquifer._d(svg,s);
+  s.dry=dry;const mr=s.rate*.9;
+  txt(svg,".aq-yr","After "+Math.floor(s.yr)+(Math.floor(s.yr)===1?" year":" years"));txt(svg,".aq-st","Water table under the farm: "+Math.round(9+D*.9)+" m down");
+  const st2=q(svg,".aq-st2");if(st2){const t=dry?(dry===2?"Both wells dry: drill deeper or stop":"One well has run dry"):mr>.05?"Falling "+f1(mr)+" m a year":mr<-.05?"Rising "+f1(-mr)+" m a year":"Steady";if(st2.textContent!==t)st2.textContent=t;st2.setAttribute("fill",dry||mr>.05?"#b5533c":mr<-.05?"#2f7a3a":SUB)}
+  /* the water budget: what comes in each year against what goes out */
+  const P=s.p*PMAX,Q=outQ(D),u=38,x0=52;let g='<rect x="'+x0+'" y="213" width="'+f1(RCH*u)+'" height="7" rx="1.5" fill="#3d8fd1"'+tip("Rain soaking into the ground each year: the only thing that refills the aquifer")+'/>';
+  g+='<rect x="'+x0+'" y="225" width="'+f1(Math.max(.01,P*u))+'" height="7" rx="1.5" fill="#e8701a"'+tip("Pumped out by the farm wells")+'/><rect x="'+f1(x0+P*u)+'" y="225" width="'+f1(Q*u)+'" height="7" rx="1.5" fill="#46b39a"'+tip("Flowing out at springs, the oasis and the qanat")+'/>';
+  g+='<line x1="'+f1(x0+RCH*u)+'" x2="'+f1(x0+RCH*u)+'" y1="211" y2="234" stroke="'+INK+'" stroke-width=".6" stroke-dasharray="1.5 1.5"/>';
+  g+=T(f1(x0+Math.max(RCH,P+Q)*u+4),231,P+Q>RCH+.02?"more out than in":P+Q<RCH-.02?"less out than in":"in = out",'font-size="5.8" font-weight="800" fill="'+(P+Q>RCH+.02?"#b5533c":P+Q<RCH-.02?"#2f7a3a":SUB)+'"');
+  const BU=q(svg,".aq-bud");if(BU&&BU._h!==g){BU._h=g;BU.innerHTML=g}
+  setPara(svg,"aq-p",s.p<.02&&D<.3?"Rain soaks into the hills and refills the aquifer; where the water table meets the ground it flows out as a spring or an oasis. <b>Challenge: what is the most you can pump and keep the water table steady?</b>":
+   s.rate<-.05?"You pumped less, so the water table is rising again, but only as fast as the rain soaks in. Real aquifers like the High Plains can take centuries to refill.":
+   P>RCH+.02?"<b>Pumping more than the rain puts back:</b> the water table keeps falling. Springs, the oasis and the qanat dry up first, then the wells. It never settles.":
+   P>.02?"<b>Pumping less than the rain puts back:</b> the water table settles a little lower, and the springs and oasis give up the difference. Pump more than 100% and it never settles.":
+   "Rain soaks into the hills and slowly refills the aquifer. Where the water table meets the ground, water comes out as a spring or an oasis; a qanat taps it without pumps.");
+  setSlider(svg,"p",14,198,150,s.p,s.p<.02?"none":Math.round(s.p*PMAX*100)+"% of the rain that soaks in")},
+ drag:(svg,s,n,x)=>{s.p=clamp((x-14)/150,0,1);/* snap to "as much as the rain" so it can be found */if(Math.abs(s.p*PMAX-1)<.025)s.p=1/PMAX},
+ act:(svg,s,a)=>{if(a==="reset"){s.p=0;s.D=0;s.yr=0;s.rate=0;return true}return false},
+ tick:(svg,s,dt)=>{s.t+=dt;/* 3 simulated years a second */const yrs=dt*3,old=s.D;s.rate=KD*(s.p*PMAX+outQ(s.D)-RCH);s.D=clamp(s.D+s.rate*yrs,0,DMAX);if(s.D<=0&&s.rate<0||s.D>=DMAX&&s.rate>0)s.rate=0;s.yr+=yrs;
+  if(Math.abs(old-s.D)>.01||Math.floor(s.yr)!==Math.floor(s.yr-yrs))DG.aquifer._d(svg,s);
   const fx=q(svg,".aq-fx");if(!fx)return;let h="";for(let i=0;i<10;i++){const x=12+i*6,y=20+((s.t*50+i*13)%24);h+='<path d="M'+x+','+f1(y)+' l-1,4" stroke="#3d8fd1" stroke-width=".8"/>'}
   if(s.qOn){const qIn=surf(QM[0])+QM[1],qOut=surf(QX);for(let i=0;i<4;i++){const u=((s.t*.25)+i/4)%1;h+='<circle cx="'+f1(lerp(QM[0],QX,u))+'" cy="'+f1(lerp(qIn,qOut,u)-1)+'" r="1.3" fill="#3d8fd1"/>'}}
   fx.innerHTML=h}});
