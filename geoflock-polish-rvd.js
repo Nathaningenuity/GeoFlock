@@ -83,13 +83,18 @@ const FIX={
   "Three giants":S=>{LOCK(S,"card","left");LOCK(S,"globe",NA_WIDE)},
   /* the Yukon and British Columbia, a third of Canada's coast, were under the card */
   "Canada’s water":S=>{LOCK(S,"globe",[-119,58,1.2])},
-  /* the card sat on the right, over the eastern half of the border (Great Lakes to Maine) */
-  "The longest border":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-125,52,1.2])},
+  /* the card sat on the right, over the eastern half of the border (Great Lakes to Maine); with the whole border
+     beside the card, the two-line Northwest Angle label ran under the map key: a shorter one-line label */
+  "The longest border":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-124,52,1.12]);
+   LOCK(S,"pins",(S.pins||[]).map(p=>Array.isArray(p)&&/^Northwest Angle/.test(p[1])?[p[0],"Northwest Angle (US)",p[2]]:p))},
   /* New York, one end of the comparison, was under the card */
   "Greenland belongs to North America":S=>{LOCK(S,"globe",[-66,55,1.3])},
   /* the "Rocky Mountains" pin sat on the Boise and Salt Lake City buttons of the rain game: the stop's headline names
      the Rockies already */
   "Mountains and rivers":S=>{DROP(S,/^Rocky Mountains$/)},
+  /* Panama and Costa Rica were at the far edge, half under a photo: the seven countries now sit in the open, for the
+     "pack them into Texas" game (part 3) */
+  "Smaller than Texas":S=>{LOCK(S,"globe",[-87,18,2.1])},
   /* Columbia, the southern end of the Fall Line, was under the card */
   "Cities on the waterfall line":S=>{LOCK(S,"globe",[-81,37,5.2])},
   /* the Grand Canyon and Moraine Lake photos had nothing to do with languages and hung from points under the card */
@@ -101,18 +106,18 @@ const FIX={
  samerica:{
   /* Peru, Ecuador and the Andes, "its west", were under the card */
   "South America":S=>{LOCK(S,"globe",SA_WIDE)},
-  /* the Washington, D.C. photo hung under the map's toolbar at the top: a little smaller and further south, Washington
+  /* the Washington, D.C. photo hung under the map's toolbar at the top: turned a little north, Washington's photo
      and Cape Horn both show */
-  "Further east than you think":S=>{LOCK(S,"globe",[-75,-6,1])},
+  "Further east than you think":S=>{LOCK(S,"globe",[-75,2,1])},
   /* the Ecuador pin, the "east to west" label and the "drag me" label of the US outline were under the card; the
      "east to west" label then ran under the map key, so it now hangs from the middle of Brazil */
   "Brazil is half the continent":S=>{LOCK(S,"globe",[-75,-14,1]);MOVEPIN(S,/^Brazil, east to west/,[[-60,-9]])},
   /* the Buenos Aires and Pampas labels ran under the map key */
   "Rich from frozen beef":S=>{LOCK(S,"globe",[-59.5,-35,4.63])},
   /* "about 1,000 km off Ecuador", but Ecuador was off the screen: both now show */
-  "Darwin’s islands":S=>{LOCK(S,"globe",[-89,-1,3])},
+  "Darwin’s islands":S=>{LOCK(S,"globe",[-85,-1,2.3])},
   /* the "French Guiana: part of France" label ran under the map key */
-  "Europe in South America":S=>{LOCK(S,"globe",[-53.5,4,4.85])},
+  "Europe in South America":S=>{LOCK(S,"globe",[-51,4,4.85])},
   /* "follow the Andes from Venezuela to Tierra del Fuego": the Andes were under the card */
   "Now explore":S=>{LOCK(S,"globe",SA_WIDE)}
  },
