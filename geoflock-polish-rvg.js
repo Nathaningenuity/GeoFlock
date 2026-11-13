@@ -80,10 +80,46 @@ const FIX={
    RE(S,"more","A 2024 survey saw only about six to eight vaquitas, but they looked healthy and still had calves,","Surveys saw only about six to eight vaquitas in 2024 and seven to ten in 2025, but they looked healthy and still had calves,")}
  },
  politics:{
+  /* the card stood on the right, so the UN headquarters label lay across the Politics map's own buttons on the left */
+  "A seat worth paying for":S=>{LOCK(S,"card","left");LOCK(S,"globe",[-70,22,1])},
+  /* Finland's 1,340 km border more than doubled NATO's land border with Russia (NATO, "Finland joins NATO", 4 April
+     2023); "its land border" read as if Finland's own border had grown */
+  "NATO":S=>{RE(S,"stat","Finland alone more than doubled its land border with Russia","Finland alone more than doubled NATO’s land border with Russia")},
+  /* the game on this stop (part 3) asks which club each country is in: the stop's own "Switzerland: in neither" label
+     gave one answer away */
+  "The EU is not NATO":S=>{LOCK(S,"card","left");DROP(S,/in neither/)},
+  /* the card stood on the right, so the Schengen label lay across the Politics map's buttons; with the card on the
+     left, Lisbon (one end of the ruler) and Helsinki both show beside it */
+  "Borders without passports":S=>{LOCK(S,"card","left");LOCK(S,"globe",[19,50,2.2])},
+  /* Jerusalem, where the Order began, was off the globe's edge */
+  "A country without land":S=>{LOCK(S,"card","left");LOCK(S,"globe",[30,37,2.8])},
+  /* the Czechia and Slovakia labels sat on the map's toolbar: Europe, where the stop's peaceful splits are, now sits
+     beside the card (Singapore, at the far side, is in the photo and the text) */
+  "How new countries are born":S=>{LOCK(S,"card","left");LOCK(S,"globe",[48,48,1.6]);DROP(S,/^Malaysia$/)}
  },
  culture:{
  }
 };
+/* "In the EU, not in the euro" showed Sofia's cathedral, but Bulgaria joined the euro on 1 January 2026 (European
+   Council, 8 July 2025): Copenhagen's Nyhavn instead, as Denmark is the stop's headline */
+function heroFix(){try{if(typeof PS_PHOTO==="undefined"||typeof PS_PHOTO_DATA==="undefined")return false;
+ const i=PS_PHOTO_DATA.findIndex(p=>p&&/^Nyhavn, Copenhagen/.test(p.f||""));if(i<0)return false;PS_PHOTO["politics|In the EU, not in the euro"]=i;return true}catch(e){return false}}
+{let n=0;const t=setInterval(()=>{if(heroFix()&&++n>3||++n>60)clearInterval(t)},1000)}
+/* on the politics and languages stops, the map's own floating key (top right) lay across the stop's title chip and,
+   on some stops, the full-screen button: it moves down below the chip and left of the buttons, unless it would then
+   cover the card */
+const KEYT=new Set(["politics","culture"]);
+setInterval(()=>{try{const k=[...document.querySelectorAll(".ps-mapkey")].find(e=>e.offsetWidth&&!e.closest(".ps-card"));if(!k)return;
+ const reset=()=>{k.style.removeProperty("translate");delete k.dataset.rvg};
+ if(typeof ps==="undefined"||!ps||!KEYT.has(ps.tour)||ps.mode!=="globe"){if(k.dataset.rvg)reset();return}
+ if(k.dataset.rvg)k.style.removeProperty("translate");const r=k.getBoundingClientRect();let dx=0,dy=0;
+ const b=document.querySelector(".ps-mapbanner");
+ if(b&&b.offsetWidth){const br=b.getBoundingClientRect();if(!(br.right<r.left||br.left>r.right||br.bottom<r.top||br.top>r.bottom))dy=br.bottom+6-r.top}
+ const btn=[...document.querySelectorAll("button")].find(x=>x.offsetWidth&&/full ?screen/i.test(x.getAttribute("aria-label")||x.title||""));
+ if(btn){const q=btn.getBoundingClientRect();if(r.right>q.left-4&&r.left<q.right&&r.top+dy<q.bottom&&r.bottom+dy>q.top)dx=q.left-8-r.right}
+ if(!dx&&!dy){delete k.dataset.rvg;return}
+ const c=ps.card&&ps.card.getBoundingClientRect();if(c&&c.width&&!(r.right+dx<c.left||r.left+dx>c.right||r.bottom+dy<c.top||r.top+dy>c.bottom)){delete k.dataset.rvg;return}
+ k.style.setProperty("translate",dx+"px "+dy+"px","important");k.dataset.rvg="1"}catch(e){}},400);
 const applied=new WeakSet();
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvg fix",tour,S.title,e)}})}
@@ -181,7 +217,11 @@ const LANGR=rankDef("culture","The most spoken languages",{seed:5,hideStat:1,fir
 /* ---------------------------------------------------------------- SORT ON THE GLOBE: a place glows; which group? */
 function sortDef(tour,title,o){return{tour,title,globe:true,tip:o.tip,
  card:()=>'<div class="rvg-row rvg-btns">'+o.keys.map(k=>'<button type="button" class="rvg-btn rvg-k" data-k="'+k[0]+'">'+esc(k[1])+"</button>").join("")+'</div><div class="rvg-score"></div>',
- init(L){L.cur=0;L.ans={};L.t=0;L.fillG=svgEl(L.geo,"g",{});L.fill=svgEl(L.fillG,"path",{class:"rvg-cfill"});const G=svgEl(L.svg,"g",{});
+ init(L){L.cur=0;L.ans={};L.t=0;
+  /* o.veil: [w,s,e,n] — the map's own colours give the answers away there, so they are washed out until every
+     answer is in, then revealed */
+  if(o.veil){L.veil=svgEl(L.geo,"path",{class:"rvg-veil"});try{const B=o.veil;L.veilF=projFeatures().filter(f=>{const c=d3.geoCentroid(f);return c[0]>B[0]&&c[0]<B[2]&&c[1]>B[1]&&c[1]<B[3]})}catch(e){L.veilF=[]}}
+  L.fillG=svgEl(L.geo,"g",{});L.fill=svgEl(L.fillG,"path",{class:"rvg-cfill"});const G=svgEl(L.svg,"g",{});
   L.dots=o.items.map(()=>svgEl(G,"circle",{r:"6",class:"rvg-cdot"}));L.tags=o.items.map(()=>{const d=document.createElement("div");d.className="rvg-tag rvg-small";L.el.appendChild(d);return d});
   L.bub=document.createElement("div");L.bub.className="rvg-tag rvg-bub";L.el.appendChild(L.bub);setTimeout(()=>{if(L.el&&L.el.isConnected)turnTo(L,o.items[0].ll,o.zoom,o.latK)},1400)},
  wire(L){L.card.querySelectorAll(".rvg-k").forEach(b=>b.onclick=()=>{const i=L.cur;if(L.ans[i])return;L.ans[i]={k:b.dataset.k,ok:b.dataset.k===o.items[i].s};L._said="";L.dirty=1;
@@ -189,12 +229,13 @@ function sortDef(tour,title,o){return{tour,title,globe:true,tip:o.tip,
  off(L){clearTimeout(L.nx)},
  tick(L,dt){L.t+=dt;const c=L.dots[L.cur];if(c&&!L.ans[L.cur]){c.setAttribute("r",(6+2.5*Math.sin(L.t*5)).toFixed(1));L.fill.style.fillOpacity=(.45+.25*Math.sin(L.t*4)).toFixed(2)}},
  draw(L){let right=0,done=0;const lab=k=>(o.keys.find(x=>x[0]===k)||[])[1];
+  L.allIn=o.items.every((x,i)=>L.ans[i]);if(L.veil)L.veil.setAttribute("d",L.allIn?"":L.veilF.map(f=>geoD(f)).join(""));
   o.items.forEach((it,i)=>{const a=L.ans[i],q=proj(L,it.ll),c=L.dots[i];if(q&&!it.code){c.style.display="";c.setAttribute("cx",q[0].toFixed(1));c.setAttribute("cy",q[1].toFixed(1))}else c.style.display="none";
    c.style.fill=a?(a.ok?"#1f8a4c":"#c2364f"):i===L.cur?"#ffd166":"#fff";if(i!==L.cur||a)c.setAttribute("r","6");if(a){done++;if(a.ok)right++}
-   const t=L.tags[i],qq=a&&i!==L.cur?proj(L,it.ll,1):null;if(qq){t.style.display="";const h=(a.ok?"✓ ":"✗ ")+it.n;if(t._h!==h){t.textContent=h;t._h=h}t.style.left=qq[0]+"px";t.style.top=(qq[1]+9)+"px"}else t.style.display="none"});
+   const t=L.tags[i],qq=a&&i!==L.cur&&!(o.veil&&L.allIn)?proj(L,it.ll,1):null;if(qq){t.style.display="";const h=(a.ok?"✓ ":"✗ ")+it.n;if(t._h!==h){t.textContent=h;t._h=h}t.style.left=qq[0]+"px";t.style.top=(qq[1]+9)+"px"}else t.style.display="none"});
   const it=o.items[L.cur],a=L.ans[L.cur];
-  L.fill.setAttribute("d",it.code?geoD(feat(it.code)):"");L.fill.style.fill=a?(a.ok?"#1f8a4c":"#c2364f"):"#ffd166";if(a)L.fill.style.fillOpacity=".7";
-  const q=proj(L,it.ll,1);if(q){L.bub.style.display="";const h=a?(a.ok?"Right! ":"No: ")+lab(it.s):it.n+": "+o.ask;if(L.bub._h!==h){L.bub.textContent=h;L.bub._h=h}L.bub.style.left=q[0]+"px";L.bub.style.top=(q[1]-14)+"px"}else L.bub.style.display="none";
+  L.fill.setAttribute("d",it.code&&!(o.veil&&L.allIn)?geoD(feat(it.code)):"");L.fill.style.fill=a?(a.ok?"#1f8a4c":"#c2364f"):o.glow||"#ffd166";if(a)L.fill.style.fillOpacity=".7";
+  const q=o.veil&&L.allIn?null:proj(L,it.ll,1);if(q){L.bub.style.display="";const h=a?(a.ok?"Right! ":"No: ")+lab(it.s):it.n+": "+o.ask;if(L.bub._h!==h){L.bub.textContent=h;L.bub._h=h}L.bub.style.left=q[0]+"px";L.bub.style.top=(q[1]-14)+"px"}else L.bub.style.display="none";
   if(L.card){L.card.querySelectorAll(".rvg-k").forEach(b=>{b.disabled=!!a;b.classList.toggle("rvg-right",!!a&&b.dataset.k===it.s);b.classList.toggle("rvg-wrong",!!a&&!a.ok&&b.dataset.k===a.k)});
    setHTML(L.card.querySelector(".rvg-score"),'<div class="rvg-dots">'+o.items.map((x,i)=>'<i class="'+(L.ans[i]?L.ans[i].ok?"rvg-ok":"rvg-no":"")+(i===L.cur?" rvg-at":"")+'" title="'+esc(x.n)+'"></i>').join("")+"</div><span><b>"+right+"</b> right of "+done+"</span>")}
   if(done===o.items.length)say(L,"All "+done+": "+right+" right",o.done);
@@ -219,7 +260,7 @@ const BEARS=sortDef("animals","Polar bears never meet penguins",{zoom:1.2,latK:.
   {n:"Phillip Island, Australia",ll:[145.2,-38.5],s:"p",why:"Little penguins, the smallest kind, waddle ashore here at dusk, near Melbourne."}],
  done:"Bears in the north, penguins in the south. Penguins could never walk to the Arctic: the warm tropics in between are a wall they cannot cross, and polar bears need sea ice to hunt from."});
 /* NATO's 32 members (nato.int, "NATO member countries"); the EU's 27 (european-union.europa.eu, "Country profiles"). */
-const CLUBS=sortDef("politics","The EU is not NATO",{zoom:2,ask:"EU, NATO, both or neither?",
+const CLUBS=sortDef("politics","The EU is not NATO",{zoom:2,veil:[-30,34,48,72],glow:"#e8590c",ask:"EU, NATO, both or neither?",
  tip:"A country lights up. Is it in the EU, in NATO, in both or in neither? Tap your answer.",
  keys:[["e","EU only"],["n","NATO only"],["b","Both"],["x","Neither"]],
  items:[{n:"Germany",code:"de",ll:[10.4,51.1],s:"b",why:"A founder of both clubs’ forerunners: in NATO since 1955 (West Germany), and a founding member of the European communities."},
@@ -232,7 +273,7 @@ const CLUBS=sortDef("politics","The EU is not NATO",{zoom:2,ask:"EU, NATO, both 
   {n:"United Kingdom",code:"gb",ll:[-2,53],s:"n",why:"A NATO founder; it left the EU in 2020."},
   {n:"Sweden",code:"se",ll:[16,62],s:"b",why:"In the EU since 1995, and NATO’s newest member, since 2024."},
   {n:"Serbia",code:"rs",ll:[20.8,44],s:"x",why:"Neither: Serbia has applied to join the EU, but is militarily neutral and has no wish to join NATO."}],
- done:"Most European countries are in both clubs, but not all: the EU is about trade, laws and money, NATO is a military alliance that includes the US and Canada."});
+ done:"The map’s colours are back: most European countries are in both clubs, but not all. The EU is about trade, laws and money; NATO is a military alliance that includes the US and Canada."});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
 const DEFS=[AIRP,LANGR,BEARS,CLUBS];
@@ -271,6 +312,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvg-small{background:rgba(255,255,255,.94);color:#13294b;font-weight:800;font-size:12.5px;padding:3px 9px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 .rvg-cdot{stroke:#13294b;stroke-width:2.5}
 .rvg-cfill{stroke:#13294b;stroke-width:1.5;transition:fill .3s}
+.rvg-veil{fill:#ece6d8;fill-opacity:.94;stroke:#b9b2a3;stroke-width:.6}
 .rvg-ctl{margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:rgba(19,41,75,.06);border:1px solid rgba(19,41,75,.12)}
 .rvg-do{font-weight:800;font-size:14px;line-height:1.35;color:#9a4a16;margin-bottom:8px}
 .rvg-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -295,7 +337,8 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 :is(body.dark-theme,body.sky-night) .rvg-chip{background:rgba(217,104,43,.18);color:#ffd2b3;border-color:#d9682b}
 :is(body.dark-theme,body.sky-night) .rvg-slot{background:rgba(255,255,255,.07)}
 :is(body.dark-theme,body.sky-night) .rvg-slot.rvg-ok{background:rgba(31,138,76,.35)}:is(body.dark-theme,body.sky-night) .rvg-slot.rvg-no{background:rgba(194,54,79,.3)}
-:is(body.dark-theme,body.sky-night) .rvg-dots i{background:rgba(255,255,255,.15)}`;document.head.appendChild(s)}
+:is(body.dark-theme,body.sky-night) .rvg-dots i{background:rgba(255,255,255,.15)}
+:is(body.dark-theme,body.sky-night) .rvg-veil{fill:#2b3446;stroke:#4b566b}`;document.head.appendChild(s)}
 
 window.gfPolishRvg={v:1,FIX};
 })();
