@@ -61,7 +61,12 @@ const FIX={
  /* Guam was round the globe's edge */
  "geopol|The first island chain":{globe:[116,22,1.7],exact:1,card:"left"},
  /* the Gulf of Finland's tag sat on the map toolbar */
- "geopol|Cables on the seabed":{globe:[32,38,1.6],exact:1,card:"left"}
+ "geopol|Cables on the seabed":{globe:[32,38,1.6],exact:1,card:"left"},
+ /* ---------------- How countries are run */
+ /* the globe was tipped over the Arctic with Washington under the card: now the Americas, with Europe on the edge */
+ "govmap|Presidents or prime ministers":{globe:[-60,22,1],exact:1,card:"left"},
+ /* the stop's quiz names each country once answered (Liechtenstein's tag sat on top of Switzerland) */
+ "govmap|No army":{pinDrop:/./}
 };
 /* framing is pinned: several sweep files set a stop's globe or card side from their own psGo wrappers, some of them
    running after this one, so a plain assignment would be undone. The pinned field ignores later writes. A field another
@@ -365,6 +370,8 @@ const COUP={tour:"govmap",title:"Soldiers take over",
   r.addEventListener("input",()=>{L.play=false;b.textContent="▶";L.T=+r.value;L.dirty=1})},
  tick(L,dt){if(L.play){L.T=Math.min(72,L.T+dt*4);L.dirty=1;if(L.T>=72){L.play=false;try{L.card.querySelector(".rvi-play").textContent="▶"}catch(e){}}}},
  draw(L){const done=COUPS.filter(o=>o.t<=L.T),last=done[done.length-1];
+  /* the globe turns to each new coup (Myanmar is round the back of the globe from Africa) */
+  if(done.length!==L.nd){L.nd=done.length;if(last&&L.sh[last.c].f&&L.T>0){const k=last.c;clearTimeout(L.tt);L.tt=setTimeout(()=>{try{if(L&&L.el.isConnected)turnTo(L,d3.geoCentroid(L.sh[k].f),1.5)}catch(e){}},60)}}
   Object.keys(L.sh).forEach(k=>{const s=L.sh[k],hit=done.filter(o=>o.c===k);s.p.setAttribute("d",hit.length&&s.f?geoD(s.f):"");s.p.classList.toggle("rvi-coup-new",!!last&&last.c===k&&L.T-last.t<3);
    let ctr=null;try{ctr=s.f?d3.geoCentroid(s.f):null}catch(e){}
    putTag(L,s.t,hit.length&&ctr&&!(last&&last.c===k)?proj(L,ctr,1):null,hit.map(o=>o.y).join(", ")+(hit.length>1?" ×2":""),6)});
@@ -394,7 +401,7 @@ const ARMY=[{n:"Switzerland",k:"y",ll:[8.2,46.8],why:"Neutral, but armed: most S
  {n:"Mauritius",k:"n",ll:[57.55,-20.25],why:"No army: a police unit, the Special Mobile Force, handles defence."}];
 const ARMYK={y:"🪖 Has an army",n:"🕊 No army"};
 const NOARMY={tour:"govmap",title:"No army",
- tip:"The globe turns to a country. Does it keep an army?",
+ tip:"The globe turns to a country. Does it keep an army? Its colour on the map is a clue.",
  card:()=>'<div class="rvi-row rvi-btns">'+Object.keys(ARMYK).map(k=>'<button type="button" class="rvi-btn rvi-k" data-k="'+k+'">'+ARMYK[k]+"</button>").join("")+'</div><div class="rvi-score"></div>',
  init(L){L.cur=0;L.ans={};L.t=0;L.ring=svgEl(L.svg,"circle",{r:"14",class:"rvi-qring"});L.tags=ARMY.map(()=>tag(L,"rvi-small"));L.bub=tag(L,"rvi-bub");setTimeout(()=>{if(L&&L.el.isConnected)turnTo(L,ARMY[0].ll,2.4)},1700)},
  wire(L){L.card.querySelectorAll(".rvi-k").forEach(b=>b.onclick=()=>{const i=L.cur;if(L.ans[i])return;L.ans[i]={k:b.dataset.k,ok:b.dataset.k===ARMY[i].k};L._said="";L.dirty=1;
@@ -410,8 +417,45 @@ const NOARMY={tour:"govmap",title:"No army",
   else if(a)say(L,(a.ok?"Right: ":"No: ")+ARMYK[o.k].replace(/^\S+ /,"").toLowerCase(),o.why);
   else say(L,o.n+"?","Army or no army? Tap your answer.")}};
 
+/* ============================================================ K. Stops whose places are spread round the world: fly to each
+   A row of place buttons; each turns the globe to that place, rings it and says why it is there (each line restates the
+   stop's own text). Places round the back of the globe, or under the card, are one tap away. */
+function flyDef(tour,title,tip,zoom,P,end){return{tour,title,tip,
+ card:()=>'<div class="rvi-row rvi-btns rvi-fly">'+P.map((p,i)=>'<button type="button" class="rvi-btn rvi-f" data-i="'+i+'">'+esc(p.b)+"</button>").join("")+'</div><div class="rvi-score"></div>',
+ init(L){L.cur=-1;L.seen={};L.t=0;L.ring=svgEl(L.svg,"circle",{r:"14",class:"rvi-qring"});L.bub=tag(L,"rvi-bub")},
+ wire(L){L.card.querySelectorAll(".rvi-f").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;L.cur=i;L.seen[i]=1;L._said="";L.dirty=1;turnTo(L,P[i].ll,P[i].z||zoom)})},
+ tick(L,dt){L.t+=dt;if(L.cur>=0)try{L.ring.setAttribute("r",(14+4*Math.sin(L.t*5)).toFixed(1))}catch(e){}},
+ draw(L){const p=P[L.cur],q=p?proj(L,p.ll):null;if(q){L.ring.style.display="";L.ring.setAttribute("cx",q[0].toFixed(1));L.ring.setAttribute("cy",q[1].toFixed(1));L.ring.style.stroke="#ffd166"}else L.ring.style.display="none";
+  putTag(L,L.bub,q?proj(L,p.ll,1):null,p?esc(p.n):"",-22);const n=Object.keys(L.seen).length;
+  if(L.card){L.card.querySelectorAll(".rvi-f").forEach(b=>{const i=+b.dataset.i;b.classList.toggle("rvi-on",i===L.cur);b.classList.toggle("rvi-seen",!!L.seen[i]&&i!==L.cur)});
+   setHTML(L.card.querySelector(".rvi-score"),'<span><b>'+n+"</b> of "+P.length+" visited</span>")}
+  if(p)say(L,p.n,n===P.length&&end?p.t+" "+end:p.t);else say(L,"Pick a place","The globe turns to it.")}}}
+/* Kings who are elected: the stop's five examples */
+const ELECT=flyDef("govmap","Kings who are elected","Tap a country: the globe flies there. Who chooses its monarch?",2.2,[
+ {b:"🇦🇩 Andorra",n:"Andorra: two co-princes",ll:[1.52,42.51],z:5,t:"Its heads of state are the President of France, chosen by French voters, and the Bishop of Urgell in Spain."},
+ {b:"🇻🇦 Vatican",n:"Vatican City: the Pope",ll:[12.45,41.9],z:5,t:"Cardinals elect the Pope, who then rules the Vatican for life."},
+ {b:"🇦🇪 UAE",n:"United Arab Emirates",ll:[54.4,24.4],t:"The seven emirs, each a hereditary ruler, choose a president from among themselves."},
+ {b:"🇰🇭 Cambodia",n:"Cambodia: a throne council",ll:[104.9,12.6],t:"When the throne is empty, a council of leaders picks the new king from the royal family."},
+ {b:"🇲🇾 Malaysia",n:"Malaysia: a king every five years",ll:[101.7,3.2],t:"Nine state rulers, most of them sultans, take turns as king for five years. Since January 2024 it has been Sultan Ibrahim of Johor."}],
+ "Five ways to choose a monarch without simply inheriting the crown.");
+/* The oldest constitutions: the stop's places */
+const CONST=flyDef("govmap","The oldest constitutions","Tap a place: the globe flies there. Where are the oldest written rules, and who has none?",2,[
+ {b:"🇺🇸 Philadelphia",n:"Philadelphia, 1787",ll:[-75.16,39.95],t:"The US constitution, written here in 1787, is the oldest written national constitution still in force: about 4,500 words and 27 amendments."},
+ {b:"🇸🇲 San Marino",n:"San Marino: 1600",ll:[12.45,43.94],z:5,t:"Its statutes of 1600 are older still, and some count them as the oldest constitution of all."},
+ {b:"🇬🇧 Britain",n:"Britain: no single document",ll:[-1.5,52.5],t:"Its rules are spread across laws, court rulings and custom."},
+ {b:"🇮🇱 Israel",n:"Israel: no single constitution",ll:[35,31.5],z:3,t:"Like Britain and New Zealand, it has no single written constitution; its Basic Laws do the job instead."},
+ {b:"🇮🇸 Iceland",n:"Iceland: the Althing, 930",ll:[-21.1,64.25],t:"Its parliament first met in 930 at Þingvellir, in a rift valley where two plates pull apart."}],"");
+/* Big countries split power: the stop's federations, and China */
+const FEDS=flyDef("govmap","Big countries split power","Tap a country: the globe flies there. Federation, or run from the capital?",1.4,[
+ {b:"🇺🇸 USA",n:"USA: 50 states",ll:[-98,39],t:"A federation: each state makes many of its own laws. Gambling, for example, is legal in some states and banned in others."},
+ {b:"🇧🇷 Brazil",n:"Brazil: 26 states",ll:[-52,-10],t:"A federation of 26 states and a federal district round the capital, Brasília."},
+ {b:"🇳🇬 Nigeria",n:"Nigeria: 36 states",ll:[8,9.5],z:2.2,t:"A federation of 36 states, which gives its many peoples a share of power."},
+ {b:"🇮🇳 India",n:"India: 28 states",ll:[79,22],t:"A federation of 28 states, many drawn round a shared language."},
+ {b:"🇨🇳 China",n:"China: run from Beijing",ll:[104,35],t:"About as big as the United States, but a unitary state: its provinces govern on the capital’s behalf."}],
+ "Most of the largest countries share power this way, but not China.");
+
 /* ============================================================ the engine: one stop at a time */
-const DEFS=[TRAIN,FLARE,BORDER,WALL,ARAL,DUST,WARM,MAL,COUP,NOARMY];
+const DEFS=[TRAIN,FLARE,BORDER,WALL,ARAL,DUST,WARM,MAL,COUP,NOARMY,ELECT,CONST,FEDS];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||ps.mode!=="globe")return null;const S=psSteps()[ps.i];if(!S)return null;return DEFS.find(d=>d.tour===ps.tour&&d.title===S.title)||null}catch(e){return null}}
 function mount(D){const G=g();if(!G||!G.host)return;if(L&&L.D===D&&L.host===G.host&&L.el.isConnected)return;unmount();
@@ -457,6 +501,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 .rvi-row{display:flex;align-items:center;gap:10px}
 .rvi-btns{gap:6px;flex-wrap:wrap}
 .rvi-btn{flex:1 1 auto;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid rgba(19,41,75,.2);background:#fff;color:#13294b;font-weight:700;font-size:12.5px;padding:6px 10px;border-radius:999px;cursor:pointer}
+.rvi-btn.rvi-seen{border-color:#1f8a4c}.rvi-fly .rvi-btn{flex:0 0 auto}
 .rvi-btn.rvi-on{background:#13294b;color:#fff;border-color:#13294b}
 .rvi-btn:disabled{cursor:default;opacity:.55}.rvi-btn.rvi-right{opacity:1;background:#1f8a4c;color:#fff;border-color:#1f8a4c}.rvi-btn.rvi-wrong{opacity:1;background:#c2364f;color:#fff;border-color:#c2364f}
 .rvi-play{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:0;background:#d9682b;color:#fff;font-size:13px;cursor:pointer}
@@ -492,7 +537,8 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 :is(body.dark-theme,body.sky-night) .rvi-ctl{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
 :is(body.dark-theme,body.sky-night) .rvi-do,:is(body.dark-theme,body.sky-night) .rvi-read{color:#ffb27a}
 :is(body.dark-theme,body.sky-night) .rvi-btn{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
-:is(body.dark-theme,body.sky-night) .rvi-btn.rvi-on{background:#fff;color:#13294b}
+:is(body.dark-theme,body.sky-night) .rvi-btn.rvi-seen{border-color:#1f8a4c}.rvi-fly .rvi-btn{flex:0 0 auto}
+.rvi-btn.rvi-on{background:#fff;color:#13294b}
 :is(body.dark-theme,body.sky-night) .rvi-dots i{background:rgba(255,255,255,.15)}`;document.head.appendChild(s)}
 window.gfPolishRVI={v:1,FIX,L:()=>L};
 })();
