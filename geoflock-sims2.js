@@ -494,7 +494,7 @@ make("meander",{title:"How a river makes an oxbow lake",cat:"water",h:226,y0:20,
 
 /* ================================================================ 5. Two tides a day, spring and neap */
 (function(){
-const EX=88,EY=84,ER=27,MO=60,AS=.46;/* Earth centre and radius, Moon's orbit (not to scale), the Sun's pull as a share of the Moon's (NOAA) */
+const EX=88,EY=84,ER=27,MO=56,AS=.46;/* MO was 60: at first quarter the Moon hung off the bottom of the panel *//* Earth centre and radius, Moon's orbit (not to scale), the Sun's pull as a share of the Moon's (NOAA) */
 const PL=[-.1,51.5];/* the place we watch: London */
 let PO=null;
 const tideAt=(a,am)=>Math.cos(2*(a-am))+AS*Math.cos(2*(a-Math.PI));/* a: the place's angle on screen; the Sun is to the left (angle pi) */
@@ -509,12 +509,14 @@ make("tides",{title:"Two tides a day, spring and neap",cat:"water",h:222,y0:4,
  frame:()=>{let st="";for(let i=0;i<46;i++)st+='<circle cx="'+f1(8+rnd(i*3.1)*162)+'" cy="'+f1(8+rnd(i*5.3)*140)+'" r="'+f2(.3+rnd(i*7.7)*.6)+'" fill="#fff" opacity="'+f2(.3+rnd(i*2.2)*.6)+'"/>';
   return '<rect x="6" y="6" width="166" height="146" rx="8" fill="#0d1630"/>'+st+'<rect x="6" y="6" width="40" height="146" rx="8" fill="url(#dgTiSun)"/>'+T(10,20,"Sun",'font-size="7.4" font-weight="900" fill="#ffe7a0"')+T(10,29,"far this way",'font-size="5.8" fill="#ffe7a0"')+
    '<circle cx="'+EX+'" cy="'+EY+'" r="'+MO+'" fill="none" stroke="#fff" stroke-opacity=".22" stroke-dasharray="2 3"/><g class="ti-bulge"></g><g class="ti-earth"></g><g class="ti-moon"></g>'+
-   T(89,146,"Earth from above the North Pole",'text-anchor="middle" font-size="5.8" fill="#c9d6ea"')+
+   T(166,138,"Earth from above",'text-anchor="end" font-size="5.6" fill="#c9d6ea"')+T(166,145,"the North Pole",'text-anchor="end" font-size="5.6" fill="#c9d6ea"')+
    '<g transform="translate(178,6)"><rect width="116" height="146" rx="8" fill="#fff"/>'+T(8,13,"Water level in London",'font-size="7" font-weight="800" fill="'+INK+'"')+T(8,21,"the next two days",'font-size="5.8" fill="'+SUB+'"')+'<g class="ti-ch"></g></g>'+
    '<text class="ti-big" x="10" y="166" font-size="9.4" font-weight="900" fill="'+INK+'"></text><text class="ti-sub" x="10" y="176" font-size="6.6" font-weight="700" fill="'+SUB+'"></text>'+
    slider("ph",14,198,206,"Days since new moon")+btn("play",232,190,62,"▶ Play")+hint(10,216,"Drag the Moon: tides are biggest when Sun, Moon and Earth line up")},
  state:()=>({h:6,ph:0,play:1}),
- draw:(svg,s)=>{const lam=s.h*15,am=Math.PI+s.ph/29.53*2*Math.PI;/* Moon's angle on screen, new moon towards the Sun */
+ draw:(svg,s)=>{const lam=s.h*15,am=Math.PI-s.ph/29.53*2*Math.PI;/* Moon's angle on screen, new moon towards the Sun.
+   Seen from above the North Pole the Moon orbits anticlockwise, the same way the Earth spins; it went clockwise here (first
+   quarter drawn at the top, last quarter at the bottom), so the angle now decreases with the days (screen y points down) */
   const P=earthProj(lam),pa=d3.geoPath(P),L=landThin(1.2);let e='<circle cx="'+EX+'" cy="'+EY+'" r="'+ER+'" fill="url(#'+uid(svg,"dgTiSea")+')"/>';
   if(L){let d="";L.forEach(o=>{if(o.c[1]<-5)return;const s2=pa({type:"Polygon",coordinates:o.rings});if(s2)d+=s2});e+='<path d="'+d.replace(/(\.\d)\d+/g,"$1")+'" fill="#9fbf7a" stroke="#6f8f55" stroke-width=".3"/>'}
   e+='<rect x="'+(EX-ER)+'" y="'+(EY-ER)+'" width="'+2*ER+'" height="'+2*ER+'" fill="url(#'+uid(svg,"dgTiNight")+')" clip-path="circle('+ER+'px at '+ER+'px '+ER+'px)" opacity="0"/>';
@@ -526,9 +528,9 @@ make("tides",{title:"Two tides a day, spring and neap",cat:"water",h:222,y0:4,
   let bp=[];for(let i=0;i<=72;i++){const a=i/72*2*Math.PI,r=ER+4.5+4.2*tideAt(a,am);bp.push([EX+Math.cos(a)*r,EY+Math.sin(a)*r])}
   setHTML(svg,".ti-bulge",'<path d="'+ln(bp)+'Z" fill="#6fc0ef" opacity=".55" stroke="#9fd8f7" stroke-width=".6"/>');
   const mx=EX+Math.cos(am)*MO,my=EY+Math.sin(am)*MO;
-  setHTML(svg,".ti-moon",'<g class="dg-handle" data-drag="moon" transform="translate('+f1(mx)+','+f1(my)+')"><circle r="13" fill="transparent"/><circle r="7" fill="url(#'+uid(svg,"dgTiMoon")+')"/><path d="M0,-7 A7,7 0 0 1 0,7Z" fill="#1a1d26" opacity=".7"/><circle cx="-2" cy="-2" r="1.2" fill="#a9a59a"/><circle cx="2" cy="2.5" r="1" fill="#a9a59a"/><circle cx="-3" cy="3" r=".7" fill="#a9a59a"/></g>'+T(f1(mx),f1(my+(my>EY?16:-11)),"Moon",'text-anchor="middle" font-size="6.6" font-weight="800" fill="#fff"'));
+  setHTML(svg,".ti-moon",'<g class="dg-handle" data-drag="moon" transform="translate('+f1(mx)+','+f1(my)+')"><circle r="13" fill="transparent"/><circle r="7" fill="url(#'+uid(svg,"dgTiMoon")+')"/><path d="M0,-7 A7,7 0 0 1 0,7Z" fill="#1a1d26" opacity=".7"/><circle cx="-2" cy="-2" r="1.2" fill="#a9a59a"/><circle cx="2" cy="2.5" r="1" fill="#a9a59a"/><circle cx="-3" cy="3" r=".7" fill="#a9a59a"/></g>'+(mx>EX+30?T(f1(mx),f1(my>EY?my-11:my+16),"Moon",'text-anchor="middle" font-size="6.6" font-weight="800" fill="#fff"'):T(f1(mx+10),f1(my+2.4),"Moon",'font-size="6.6" font-weight="800" fill="#fff"')));
   /* the next 48 hours at the place */
-  const W2=100,H2=96,x0=8,y0=30;let pts=[],hi=-9,lo=9;for(let k=0;k<=96;k++){const hh=s.h+k/2,ph=s.ph+k/2/24,lv=tideAt(placeAngle(hh*15),Math.PI+ph/29.53*2*Math.PI);hi=Math.max(hi,lv);lo=Math.min(lo,lv);pts.push([x0+k/96*W2,y0+H2/2-lv*H2/3.2])}
+  const W2=100,H2=96,x0=8,y0=30;let pts=[],hi=-9,lo=9;for(let k=0;k<=96;k++){const hh=s.h+k/2,ph=s.ph+k/2/24,lv=tideAt(placeAngle(hh*15),Math.PI-ph/29.53*2*Math.PI);hi=Math.max(hi,lv);lo=Math.min(lo,lv);pts.push([x0+k/96*W2,y0+H2/2-lv*H2/3.2])}
   let c='<rect x="'+x0+'" y="'+y0+'" width="'+W2+'" height="'+H2+'" fill="#eef5fb"/><path d="M'+x0+','+(y0+H2/2)+'h'+W2+'" stroke="#9fb2c4" stroke-width=".5" stroke-dasharray="2 2"/>';
   for(let k=0;k<=48;k+=12)c+='<path d="M'+f1(x0+k/48*W2)+','+(y0+H2)+'v3" stroke="#9fb2c4" stroke-width=".6"/>'+T(f1(x0+k/48*W2),y0+H2+10,k?"+"+k+"h":"now",'text-anchor="middle" font-size="5.6" fill="'+SUB+'"');
   c+='<path d="'+ln(pts)+'L'+(x0+W2)+','+(y0+H2)+'L'+x0+','+(y0+H2)+'Z" fill="#3d8fd1" opacity=".25"/><path d="'+ln(pts)+'" fill="none" stroke="#2f78b8" stroke-width="1.4"/><circle cx="'+x0+'" cy="'+f1(pts[0][1])+'" r="2.4" fill="'+ACC+'" stroke="#fff" stroke-width=".7"/>';
@@ -539,7 +541,7 @@ make("tides",{title:"Two tides a day, spring and neap",cat:"water",h:222,y0:4,
   txt(svg,".ti-sub","Tidal range "+Math.round(rng*100)+"% of the biggest · "+(spring?"Sun and Moon pull in line":neap?"Sun and Moon pull at right angles":"the Moon moves on 12° a day"));
   const pd=s.ph;setSlider(svg,"ph",14,198,206,pd/29.53,pd<.8||pd>28.7?"new moon":Math.abs(pd-14.8)<.8?"full moon":Math.abs(pd-7.4)<.8?"first quarter":Math.abs(pd-22.1)<.8?"last quarter":Math.round(pd)+" days");
   btnOn(svg,"play",!!s.play,s.play?"❚❚ Pause":"▶ Play")},
- drag:(svg,s,n,x,y)=>{if(n==="moon"){let a=Math.atan2(y-EY,x-EX)-Math.PI;a=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);s.ph=a/(2*Math.PI)*29.53}else s.ph=clamp((x-14)/206,0,1)*29.53},
+ drag:(svg,s,n,x,y)=>{if(n==="moon"){let a=Math.PI-Math.atan2(y-EY,x-EX);a=((a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);s.ph=a/(2*Math.PI)*29.53}else s.ph=clamp((x-14)/206,0,1)*29.53},
  act:(svg,s,a)=>{if(a==="play"){s.play=!s.play;return true}},
  tick:(svg,s,dt)=>{if(!s.play)return;s.h+=dt*4;s.ph=(s.ph+dt*4/24)%29.53;DG.tides._d(svg,s)}});
 })();
@@ -731,11 +733,14 @@ const depth=x=>{for(let i=1;i<PROF.length;i++)if(x<=PROF[i][0]){const a=PROF[i-1
 const TT=[0];for(let x=1;x<=1600;x++){const d=Math.max(5,-depth(x-.5));TT.push(TT[x-1]+1000/Math.sqrt(9.81*d)/3600)}
 const posAt=t=>{let x=0;while(x<1600&&TT[x+1]<=t)x++;return x};
 let PM=null;const proj=()=>PM||(PM=d3.geoMercator().fitExtent([[6,6],[294,92]],{type:"MultiPoint",coordinates:[[76,0],[101,15]]}));
-make("tsunami",{title:"Why a tsunami slows down and rears up near land",cat:"water",h:218,
+/* The slider stopped at 2 h 18 min with the wave still 50 km out over 550 m of water, so the landfall text never showed:
+   in this depth profile the wave reaches the last 100 m of water, a couple of km off the beach, at 2 h 23 min. The slider
+   now runs to 2 h 24 min and that counts as landfall. The hint sat on the slider, and the wave hump was too small to see. */
+make("tsunami",{title:"Why a tsunami slows down and rears up near land",cat:"water",h:224,
  src:"26 December 2004, magnitude 9.1 off Sumatra (USGS). Wave speed = √(g × depth); height grows as depth shrinks (Green’s law, height ∝ depth^−¼), from about 0.6 m in deep water. It reached Sri Lanka about 2 hours later (NOAA NCEI). Depths rounded from GEBCO.",
  defs:()=>'<linearGradient id="dgTsSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f86c4"/><stop offset="1" stop-color="#0f2f5a"/></linearGradient>',
  frame:()=>{const P=proj();return'<clipPath id="dgTsClip"><rect x="6" y="6" width="288" height="86" rx="8"/></clipPath><g clip-path="url(#dgTsClip)"><rect x="6" y="6" width="288" height="86" fill="#2a6aa6"/><path d="'+landPath("tsu",P,f=>{try{const b=d3.geoBounds(f);return b[1][1]>-12&&b[0][1]<30&&b[1][0]>60&&b[0][0]<110}catch(e){return false}})+'" fill="#cbbf98" stroke="#8e8462" stroke-width=".4"/><g class="ts-m"></g></g><rect x="6" y="6" width="288" height="86" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>'+
-  '<g class="ts-p"></g><text class="ts-big" x="8" y="174" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="ts-sub" x="8" y="184" font-size="6.4" font-weight="700" fill="'+SUB+'"></text>'+slider("t",14,204,206,"Time after the earthquake")+btn("play",232,196,62,"▶ Play")+hint(8,216,"Drag the time: the wave races across deep water, then slows and grows")},
+  '<g class="ts-p"></g><text class="ts-big" x="8" y="174" font-size="8.4" font-weight="900" fill="'+INK+'"></text><text class="ts-sub" x="8" y="184" font-size="6.4" font-weight="700" fill="'+SUB+'"></text>'+slider("t",14,204,206,"Time after the earthquake")+btn("play",232,196,62,"▶ Play")+hint(8,221,"Drag the time: the wave races across deep water, then slows and grows")},
  state:()=>({t:.6,play:0}),
  draw:(svg,s)=>{const P=proj(),t=s.t,x=posAt(t),d=-depth(Math.min(1599,x)),sp=Math.sqrt(9.81*Math.max(5,d))*3.6,hgt=.6*Math.pow(4000/Math.max(10,d),.25);
   /* the wave front on the map: faster where the sea is deep (west), slower in the shallow Andaman Sea (east) */
@@ -747,16 +752,16 @@ make("tsunami",{title:"Why a tsunami slows down and rears up near land",cat:"wat
   setHTML(svg,".ts-m",m);
   /* the profile */const X0=6,X1=294,Y0=100,Y1=164,SLY=112,xd=k=>X0+k/1600*(X1-X0),yd=v=>SLY+(-v)/4600*(Y1-SLY-2);let p='<rect x="'+X0+'" y="'+Y0+'" width="'+(X1-X0)+'" height="'+(SLY-Y0)+'" fill="#e6f1fa"/>';
   const bed=[];for(let k=0;k<=1600;k+=10)bed.push([xd(k),yd(depth(k))]);p+='<path d="M'+X0+','+SLY+'H'+X1+'V'+Y1+'H'+X0+'Z" fill="url(#'+uid(svg,"dgTsSea")+')"/><path d="'+ln(bed)+'L'+X1+','+Y1+'L'+X0+','+Y1+'Z" fill="#7a5a3a"/>';
-  /* the wave: a long low hump in deep water that grows steep near the coast */const wx=xd(x),wl=Math.max(6,Math.min(60,sp/14)),A=Math.min(9,hgt*1.6);p+='<path d="M'+f1(wx-wl)+','+SLY+' Q'+f1(wx)+','+f1(SLY-A*2)+' '+f1(wx+wl*.4)+','+SLY+'Z" fill="#9fd8f7" stroke="#fff" stroke-width=".6"/>';
+  /* the wave: a long low hump in deep water that grows steep near the coast */const wx=xd(x),wl=Math.max(6,Math.min(60,sp/14)),A=Math.min(14,2.5+hgt*2.5);p+='<path d="M'+f1(wx-wl)+','+SLY+' Q'+f1(wx)+','+f1(SLY-A*2)+' '+f1(wx+wl*.4)+','+SLY+'Z" fill="#9fd8f7" stroke="#fff" stroke-width=".6"/>';
   p+=T(X0+4,Y0+9,"Sumatra",'font-size="5.8" font-weight="800" fill="'+INK+'"')+T(X1-4,Y0+9,"Sri Lanka",'text-anchor="end" font-size="5.8" font-weight="800" fill="'+INK+'"')+T(xd(640),f1(yd(-2100)+10),"Ninety East Ridge",'text-anchor="middle" font-size="5.4" font-weight="700" fill="#f6e7da"')+T(xd(1100),Y1-4,"4 km deep",'text-anchor="middle" font-size="5.6" font-weight="800" fill="#cfe4f7"');
   setHTML(svg,".ts-p",p);
   const hh=Math.floor(t),mm=Math.round((t-hh)*60)%60;
-  txt(svg,".ts-big",x>=1599?"Landfall in Sri Lanka, about 2 hours after the quake":fmt(sp)+" km/h over water "+fmt(d)+" m deep · wave about "+(Math.round(hgt*10)/10)+" m high");
-  txt(svg,".ts-sub",x>=1599?"Run-up on the beaches reached up to about 10 m; some 35,000 people died in Sri Lanka":sp>500?"As fast as a jet airliner, but so low and long that ships at sea barely notice it":"In shallow water it slows down, the back catches up with the front, and it rears up");
-  setSlider(svg,"t",14,204,206,t/2.3,hh+" h "+String(mm).padStart(2,"0")+" min");btnOn(svg,"play",!!s.play,s.play?"❚❚ Pause":"▶ Play")},
- drag:(svg,s,n,x)=>{s.play=0;s.t=clamp((x-14)/206,0,1)*2.3},
- act:(svg,s,a)=>{if(a==="play"){if(!s.play&&s.t>=2.29)s.t=0;s.play=!s.play;return true}},
- tick:(svg,s,dt)=>{if(!s.play)return;s.t=Math.min(2.3,s.t+dt*.25);if(s.t>=2.3)s.play=0;DG.tsunami._d(svg,s)}});
+  txt(svg,".ts-big",x>=1575?"Landfall in Sri Lanka, about 2 hours after the quake":fmt(sp)+" km/h over water "+fmt(d)+" m deep · wave about "+(Math.round(hgt*10)/10)+" m high");
+  txt(svg,".ts-sub",x>=1575?"Run-up on the beaches reached up to about 10 m; some 35,000 people died in Sri Lanka":sp>500?"As fast as a jet airliner, but so low and long that ships at sea barely notice it":"In shallow water it slows down, the back catches up with the front, and it rears up");
+  setSlider(svg,"t",14,204,206,t/2.4,hh+" h "+String(mm).padStart(2,"0")+" min");btnOn(svg,"play",!!s.play,s.play?"❚❚ Pause":"▶ Play")},
+ drag:(svg,s,n,x)=>{s.play=0;s.t=clamp((x-14)/206,0,1)*2.4},
+ act:(svg,s,a)=>{if(a==="play"){if(!s.play&&s.t>=2.39)s.t=0;s.play=!s.play;return true}},
+ tick:(svg,s,dt)=>{if(!s.play)return;s.t=Math.min(2.4,s.t+dt*.25);if(s.t>=2.4)s.play=0;DG.tsunami._d(svg,s)}});
 /* a point at a distance (km) and bearing (degrees) from a start point */
 function dest(p,brg,km){const d=km/6371,b=brg*R,la=p[1]*R,lo=p[0]*R,la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(b)),lo2=lo+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2));return[lo2/R,la2/R]}
 })();
@@ -823,7 +828,8 @@ make("tallest",{title:"Which mountain is tallest? It depends how you measure",ca
    h+='<path d="M'+cx+','+cy+' '+ln(arc).replace("M","L")+'Z" fill="#c9b48a" stroke="#8e7a52" stroke-width=".6"/>'+T(cx+4,cy-4,"Earth’s centre (far below)",'font-size="5.4" fill="#5a4a2a"');
    M.forEach((m,i)=>{const l=Math.abs(m[1]),r0=rp(l),r1=r0+m[2]/1000*k*1.4,a=l*R,x0=cx+Math.cos(a)*r0*1.3,y0=cy-Math.sin(a)*r0*.95,x1=cx+Math.cos(a)*r1*1.3,y1=cy-Math.sin(a)*r1*.95;
     h+='<path d="M'+f1(x0)+','+f1(y0)+'L'+f1(x1)+','+f1(y1)+'" stroke="'+m[4]+'" stroke-width="5" stroke-linecap="round"/>';const eq=l<5,ly=eq?(m[0]==="Chimborazo"?y1-22:y1-12):y1+2;lab+=(eq?'<path d="M'+f1(x1)+','+f1(y1-2)+'L'+f1(x1-2)+','+f1(ly+2)+'" stroke="#9fb2c4" stroke-width=".5"/>':"")+T(f1(eq?x1-3:x1+4),f1(ly),m[0]+" "+rC(m[1],m[2]).toFixed(1)+" km",'font-size="5.6" font-weight="800" fill="'+INK+'"'+(eq?' text-anchor="end"':""))});
-   lab+=T(150,40,"(the bulge is drawn many times bigger than it is)",'text-anchor="middle" font-size="5.4" fill="'+SUB+'"');
+   /* the note sat on Denali's label; it now sits inside the Earth, above "Earth’s centre" */
+   lab+=T(cx+4,cy-12,"(the bulge is drawn many times bigger than it is)",'text-anchor="start" font-size="5.4" fill="'+SUB+'"');
    txt(svg,".ta-big","From the centre of the Earth, Chimborazo wins: 6,384.4 km");
    setPara(svg,"ta-tx","The Earth bulges at the Equator: its radius there is 21 km longer than at the poles. Chimborazo sits almost on the Equator, so its top is the point furthest from the centre, about 2 km further out than Everest’s.")}
   setHTML(svg,".ta-g",h);setHTML(svg,".ta-l",lab)},

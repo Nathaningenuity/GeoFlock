@@ -41,6 +41,8 @@ guessFirst("silkroad",["A camel caravan walks from Luoyang in China to Rome with
 /* slr: the diagram's own figures, 58 m (Antarctica, Fretwell et al. 2013) + 7.4 m (Greenland, Morlighem et al. 2017)
    + 0.32 m (mountain glaciers, Farinotti et al. 2019) ≈ 66 m */
 guessFirst("slr",["If all the ice on land melted, how much higher would the sea be?",["About 7 m","About 66 m","About 300 m"],1,"About 66 m, roughly a 20-storey building: 58 m from Antarctica, 7.4 m from Greenland and a third of a metre from mountain glaciers. Sea ice already floats, so it adds nothing."]);
+/* shrink: the chart's own figures (Central Statistical Bureau of Latvia): 2.67 million in 1990, 1.86 million in 2025 */
+guessFirst("shrink",["In 1990 Latvia had 2.67 million people. How many live there in 2025?",["About 3.0 million","About 2.6 million","About 1.9 million"],2,"About 1.86 million: 3 in every 10 people are gone. Many moved west after Latvia joined the EU in 2004, and fewer babies were born than people died."]);
 }catch(e){console.warn("review3 guess",e)}
 
 /* ------------------------------------------------------------------ The rank-size rule: a real country
@@ -62,6 +64,21 @@ D._draw=svg=>{if(D._tab!==2)return draw0(svg);let h="";const X0=34,Y0=140,k=98/2
  h+=dgT(X0,160,"Real cities fall off more slowly: the 8th has 6.1 million, not 2.5",'font-size="7.2" opacity=".85"')+dgT(X0,170,"hover the bars",'class="dg-hint"');
  dyn(svg,h)};
 })()}catch(e){console.warn("review3 ranksize",e)}
+
+/* ------------------------------------------------------------------ The rock cycle: a goal
+   Tapping arrows had no aim. The hint line now keeps score: visit all five stages (magma, igneous, sediment,
+   sedimentary, metamorphic). From magma the fewest steps is 4 (cooling, weathering, burial, heat and pressure). */
+try{(function(){
+const D=DG.rockcycle;if(!D||!D.init||D._goal)return;D._goal=1;const init0=D.init;
+const NAME={mag:"magma",ign:"igneous",sed:"sediment",sry:"sedimentary",met:"metamorphic"};
+D.init=(svg,...r)=>{const v=init0.call(D,svg,...r);try{const vis=new Set;let last="";const go=()=>{if(!svg.isConnected)return;const s=svg._s,h=svg.querySelector(".rc-hint");
+  if(s&&h){vis.add(s.at);const key=s.at+"|"+s.n+"|"+(s.mv?1:0);if(key!==last){last=key;
+   const st=svg.querySelector(".rc-steps");if(st)st.style.display="none";
+   if(!s.n)h.textContent="Goal: take the rock through all five stages · tap a glowing arrow";
+   else if(vis.size<5)h.textContent=vis.size+" of 5 stages · "+s.n+" step"+(s.n>1?"s":"")+" · to go: "+Object.keys(NAME).filter(k=>!vis.has(k)).map(k=>NAME[k]).join(", ");
+   else{h.textContent="All five stages in "+s.n+" steps"+(s.n<=4?": the fewest possible!":" (the fewest is 4)");h.setAttribute("fill","#2f7a3a")}}}
+  requestAnimationFrame(go)};requestAnimationFrame(go)}catch(e){}return v};
+})()}catch(e){console.warn("review3 rockcycle",e)}
 
 /*@@MORE@@*/
 })();
