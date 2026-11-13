@@ -11,9 +11,10 @@
    Photos: the shared library (PS_PHOTO_DATA) plus new Wikimedia Commons files in GF_RVPHYS_PHOTOS (author, licence, page). */
 (function(){
 window.GF_RVPHYS_PHOTOS=[{"f": "3Falls Niagara.jpg", "d": "photos/xcf72e0051565b75d.webp", "by": "Saffron Blaze", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:3Falls_Niagara.jpg"}, {"f": "Dry Falls.jpg", "d": "photos/x981269a8889e8951.webp", "by": "Ikiwaner", "lic": "CC BY-SA 3.0", "page": "https://commons.wikimedia.org/wiki/File:Dry_Falls.jpg"}, {"f": "Lituya Bay overview.jpg", "d": "photos/xd12f2c1fc7f26b35.webp", "by": "D.J. Miller, United States Geological Survey", "lic": "Public domain", "page": "https://commons.wikimedia.org/wiki/File:Lituya_Bay_overview.jpg"}, {"f": "Dune du Pilat - Atlantique.jpg", "d": "photos/xae1e61e3a2e65bf9.webp", "by": "Jörg Braukmann", "lic": "CC BY-SA 4.0", "page": "https://commons.wikimedia.org/wiki/File:Dune_du_Pilat_-_Atlantique.jpg"}];
-const def=(o,k,v)=>Object.defineProperty(o,k,{configurable:true,enumerable:true,writable:true,value:v});
+const nc=(o,k)=>{const d=Object.getOwnPropertyDescriptor(o,k);return d&&!d.configurable};
+const def=(o,k,v)=>nc(o,k)?0:Object.defineProperty(o,k,{configurable:true,enumerable:true,writable:true,value:v});
 /* psLock style: a getter that ignores later writes (some tour files put their own photo-pin list back) */
-const lock=(o,k,v)=>Object.defineProperty(o,k,{configurable:true,enumerable:true,get(){return v},set(){}});
+const lock=(o,k,v)=>nc(o,k)?0:Object.defineProperty(o,k,{configurable:true,enumerable:true,get(){return v},set(){}});
 const TT=id=>{try{const t=typeof PS_TOURS!=="undefined"&&PS_TOURS[id];return t&&Array.isArray(t.steps)&&t.steps.length?t:null}catch(e){return null}};
 const st=(id,title)=>{const t=TT(id);return t?t.steps.find(s=>s&&s.title===title):null};
 const S=o=>Object.assign({_autoSpin:1,_ctx:1,_lg:1,_ky:1,_enr:1},o);
@@ -22,7 +23,7 @@ const ph=(at,label,f)=>({at,label,col:OR,icon:"photo",_f:f});
 const P=(at,label)=>[at,label,"point"];
 const A=(pts,label)=>[pts,label,"area"];
 /* change a stop: writes go through defineProperty (some fields are locked getters); a new view is locked and marked _ff */
-const lockv=(t,k,v)=>Object.defineProperty(t,k,{configurable:true,enumerable:true,get(){return v},set(){}});
+const lockv=(t,k,v)=>nc(t,k)?0:Object.defineProperty(t,k,{configurable:true,enumerable:true,get(){return v},set(){}});
 function set(id,title,f){const s=st(id,title);if(!s)return null;try{f(new Proxy(s,{set(t,k,v){
   if(k==="view"){lockv(t,k,v);def(t,"_ff",1)}else if(k==="phPins"){lock(t,k,v);def(t,"_sqPruned",-1)}else def(t,k,v);return true},
   deleteProperty(t,k){try{def(t,k,undefined);delete t[k]}catch(e){}return true}}))}catch(e){console.error("review-phys",id,title,e)}return s}
