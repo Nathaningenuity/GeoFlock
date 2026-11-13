@@ -137,6 +137,36 @@ const FIX={
      back, Rio below the screen and Victoria Falls under the map key. The stop opens on its headline, Parícutin; buttons
      (part 2) turn the globe to each of the seven */
   "Natural wonders":S=>{DROPPH(S,/^(Everest|Grand Canyon|Rio|Great Barrier)/);VIEW(S,[-70,15,1.4])}
+ },
+ explorers:{
+  /* six photos: Magellan, Zheng He, Cook and the Norge airship round the back, and a William Clark portrait hanging over
+     the map toggles; with the card on the left the voyage labels of da Gama and Magellan sat under the map key and below
+     the screen. The five coloured voyages stay; the opening keeps Columbus's photo, and the others each have a stop */
+  "The great journeys":S=>{DROPPH(S,/^(Magellan|Zheng He|Cook|Norge|William Clark)/);VIEW(S,[28,6,1])},
+  /* the card was on the right, over Asia, and the map key over East Africa; Europe and the Bering land bridge sat on the
+     globe's edge. The stop opens on East Africa; buttons (part 2) follow the first explorers from there */
+  "The first explorers":S=>VIEW(S,[60,18,1.2]),
+  /* Chang'an, where Zhang Qian set out, was at the globe's right edge, its label under the map key */
+  "The envoy who opened the Silk Road":S=>VIEW(S,[100,38,2]),
+  /* Palos's label was on the globe's edge, by the zoom buttons */
+  "Columbus, 1492":S=>VIEW(S,[-38,28,1.11]),
+  /* da Gama's goal, Calicut, was on the globe's right edge */
+  "Around Africa to India":S=>VIEW(S,[42,0,1]),
+  /* "About 250 men": "the five-ship fleet left Spain on 20 September 1519 with about 270 men", and "only 18 men out of the
+     original 270" came home (Wikipedia, "Magellan expedition") */
+  "Around the world":S=>{RE(S,"stat","About 250 men set off","About 270 men set off")},
+  /* the card was on the right, over Calicut and Malacca, with the map key over Hormuz and Malindi */
+  "Zheng He’s treasure fleets":S=>VIEW(S,[86,12,1.05]),
+  /* Xanadu's photo (and Marco Polo's portrait) sat on the zoom buttons, 104° from Venice: Xanadu keeps a label */
+  "Marco Polo":S=>{DROPPH(S,/^Xanadu/);ADDAREA(S,[116.2,42.35],"Xanadu, Kublai’s summer palace");VIEW(S,[80,35,1])},
+  /* card on the right, over Tahiti and Hawaii, and the map key over Botany Bay; Tahiti's label and Cook's portrait then
+     sat under the key on the right */
+  "Captain Cook":S=>VIEW(S,[-165,-22,1]),
+  /* card on the right, over Mauritius; the voyage goes round the world, so the stop opens on Brest and Rio, where she
+     joined and where bougainvillea was found */
+  "The first woman to sail round the world":S=>VIEW(S,[-10,-10,1]),
+  /* the card was on the right, over St Louis, and the map key over the Pacific end of the route */
+  "Lewis and Clark":S=>VIEW(S,[-98,44,2])
  }
 };
 const applied=new WeakSet();
@@ -363,15 +393,38 @@ const NATW=TURNER({tours:["landmarks"],title:"Natural wonders",tip:"The seven na
   ["Northern lights",18.96,69.65,2.2,"They shine on dark winter nights near the Arctic Circle, as here over northern Norway."],
   ["Parícutin",-102.25,19.49,2.6,"The volcano born in a Mexican cornfield in February 1943, over 300 m tall within a year."]]});
 
+/* ======================================================================== explorers */
+/* ---- The first explorers: turn the globe along the first people's spread, place by place (places and dates from the
+   stop itself: East Africa; Australia at least 50,000 years ago, across open sea; Europe about 45,000 years ago; the
+   Bering land bridge into the Americas at least 15,000 years ago). */
+const FIRSTX=TURNER({tours:["explorers"],title:"The first explorers",tip:"Follow the first explorers out of Africa, one step at a time.",
+ intro:"No maps, no ships, no writing: just small groups moving on, generation after generation. Start in Africa.",
+ places:[["East Africa",37,3,1.8,"Our species evolved in Africa; small groups began to leave it, on foot and along the coasts."],
+  ["Australia",136,-22,1.6,"Reached at least 50,000 years ago: even with the sea at its lowest, the last stretch was open water, so they must have come by boat, probably a raft or canoe."],
+  ["Europe",0,46,1.8,"Reached about 45,000 years ago, in the middle of the last Ice Age."],
+  ["Bering land bridge",-168,65.5,1.8,"With the sea lower, Siberia and Alaska were joined: people walked into the Americas at least 15,000 years ago."]]});
+
+/* ---- Review on the last stop: put the tour's journeys in order. Dates from the tour's own stops (Pytheas about 325 BC,
+   Zhang Qian about 138 BC, Leif Erikson about 1000, Marco Polo 1271, Ibn Battuta 1325, Zheng He 1405, Columbus 1492,
+   Magellan 1519, Lewis and Clark 1804, Amundsen 1911, Apollo 11 1969). */
+const XORDER=SORT({tours:["explorers"],title:"Now explore",below:true,bars:false,
+ tip:"Review: put these journeys in order, earliest first.",first:"Earliest",last:"Latest",
+ items:[["Pytheas sails to Thule",-325,"about 325 BC"],["Zhang Qian heads west",-138,"about 138 BC"],["Leif Erikson reaches Vinland",1000,"about 1000"],
+  ["Marco Polo leaves Venice",1271,"1271"],["Ibn Battuta leaves Tangier",1325,"1325"],["Zheng He’s first voyage",1405,"1405"],["Columbus reaches the Bahamas",1492,"1492"],
+  ["Magellan’s fleet sets off",1519,"1519"],["Lewis and Clark set out",1804,"1804"],["Amundsen reaches the South Pole",1911,"1911"],["Apollo 11 lands on the Moon",1969,"1969"]],
+ after:(r,N)=>"Over 2,000 years from Pytheas to the Moon: the Vikings beat Columbus by about 500 years, and Zheng He’s fleets sailed decades before him."});
+
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    Mont-Saint-Michel: "The tides vary greatly, at roughly 14 metres (46 ft) between highest and lowest water marks"
-   (Wikipedia, "Mont-Saint-Michel"), as the stop's headline says. */
+   (Wikipedia, "Mont-Saint-Michel"), as the stop's headline says. Ibn Battuta: the stop's own figure, about 120,000 km
+   (Wikipedia, "Ibn Battuta", gives about 117,000 km). */
 function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
- const GS={"landmarks|An island only twice a day":{q:"How far can the sea rise and fall between low and high tide in the bay of Mont-Saint-Michel?",min:1,max:30,ans:14,unit:" m",step:1,show:"about 14 m, about as tall as a four-storey building"}};
+ const GS={"explorers|Ibn Battuta":{q:"Marco Polo travelled for 24 years. About how far did Ibn Battuta travel in his 29 years on the road?",min:10000,max:300000,ans:120000,unit:" km",step:5000,show:"about 120,000 km, three times round the equator"},
+  "landmarks|An island only twice a day":{q:"How far can the sea rise and fall between low and high tide in the bay of Mont-Saint-Michel?",min:1,max:30,ans:14,unit:" m",step:1,show:"about 14 m, about as tall as a four-storey building"}};
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
 
-const DEFS=[GRAINS,SWAP,COFFEE,FERM,WONDERS,NATW];
+const DEFS=[GRAINS,SWAP,COFFEE,FERM,WONDERS,NATW,FIRSTX,XORDER];
 
 
 let L=null,raf=0;
