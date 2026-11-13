@@ -109,7 +109,7 @@ function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEac
  LOCK(S,"card","left");const f=F[strip(S.title)];if(!f)return;applied.add(S);
  try{f(S)}catch(e){console.error("rvo fix",tour,S.title,e)}})}
 let lastKey="";
-every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps());/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f)f(S)}catch(e){}}catch(e){}},300);
+every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}/* every tick (cheap: each stop is fixed once), since on a tour's first launch psSteps() can still be the old list when ps.tour changes */applyTo(t,psSteps());const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;/* and once more on the stop itself, in case another file re-set a field after the first pass */try{const S=psSteps()[ps.i],f=S&&FIX[t][strip(S.title)];if(f)f(S)}catch(e){}}catch(e){}},300);
 /* (not at page load: other files fill in these stops' photos after load by assigning S.phPins, which a locked field
    would ignore, so the stops lost all their photos; the fixes go in when one of these tours opens) */
 /* Only the card side is locked at load, so a tour's first stop already opens with its card on the left */
@@ -119,7 +119,7 @@ cardsLeft();setTimeout(cardsLeft,1500);setTimeout(cardsLeft,6000);
 /* The card shift, kept (as geoflock-polish-rvb.js, -rvf.js and -rvl.js do for theirs): psFlyGlobe (index.html) turns a stop's place
    out from under the card, but geoflock-tourload.js's "aim" turns the globe back to the stop's plain centre whenever it
    is more than 20° from it, which the shift often is at low zoom. So on these four tours the same stop landed under the
-   card or beside it depending on timing. Here aim is told the stop is already aimed, and for four seconds after a stop
+   card or beside it depending on timing. Here aim is told the stop is already aimed, and for eight seconds after a stop
    opens, if the globe has come to rest away from where psFlyGlobe would put it, it flies there once more. A drag or
    zoom by the reader in that time cancels it. */
 const MYT=new Set(["hg6a","hg6b","hg6c","hg6d"]);let goAt=0,goKey="",refl=0,touched=0;
@@ -127,10 +127,11 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
  if(over){const R=ps.g.size().r*z,a=Math.asin(Math.min(.6,Math.abs(over)/2/R))*180/Math.PI;lon-=Math.sign(over)*a/Math.max(.35,Math.cos(lat*Math.PI/180))}return[lon,lat,z]}
 ["pointerdown","wheel"].forEach(t=>addEventListener(t,e=>{try{if(e.target&&e.target.closest&&e.target.closest(".globe-host canvas, .globe-stage"))touched=1}catch(err){}},true));
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
- const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=performance.now();refl=0;touched=0}ps._gfAimed=psSteps()[ps.i];
+ const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=0;refl=0;touched=0}goAt++;ps._gfAimed=psSteps()[ps.i];
  /* a stop whose own game turns the globe (the oil barrels, the coral reef) is left to it */
  if(document.querySelector(".gc3-ctl,.ge2-ctl,.rvo-ctl[data-turns]"))return;
- const t=performance.now()-goAt;if(touched||refl>=2||t<900||t>4500||ps.g._flying)return;
+ /* counted in ticks of this 250 ms check, not in clock time: a tour's first launch can block the page for many seconds while its map loads, which used up the whole window before the globe had even moved */
+ if(touched||refl>=2||goAt<4||goAt>32||ps.g._flying)return;
  const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||Math.abs(ps.g.zoom-T[2])>.15){refl++;psFlyGlobe()}}catch(e){}},250);
 /* the same stop opened again (Back, a dot, a link) gets the same four seconds: psGo is wrapped to start the clock again */
 (function wrapGo(n){try{if(typeof window.psGo!=="function"||window.psGo._rvo){if(n<40)setTimeout(()=>wrapGo(n+1),500);return}const g0=window.psGo;
