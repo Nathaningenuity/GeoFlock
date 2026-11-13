@@ -55,6 +55,33 @@ const FIX={
   "Frozen electricity":S=>VIEW(S,[-38,36,1.15],"left"),
   /* the long "Western Sahara (disputed...)" label hung off the bottom of the globe */
   "Phosphate":S=>VIEW(S,[-9.5,26.5,4.3])
+ },
+ migration:{
+  /* the "Miami: over half born abroad" label ran under the map key */
+  "America the magnet":S=>VIEW(S,[-88,38,1.45]),
+  /* Chicago, the end of one arrow, sat under the map's legend at the top */
+  "Mexico to the US":S=>VIEW(S,[-100,33,1.8]),
+  /* the long Kerala label ran under the map key (the text says where the workers come from) */
+  "Nine in ten from abroad":S=>RENAME(S,/^Kerala/,"Kerala, India"),
+  "India’s diaspora":S=>RENAME(S,/^Kerala/,"Kerala"),
+  /* Liverpool, where the race starts, sat at the top edge under the legend */
+  "The great Atlantic crossing":S=>VIEW(S,[-32,32,1]),
+  /* the Changsha label ran under the map key and Beijing's hung at the edge of the globe */
+  "China moves to the cities":S=>VIEW(S,[119,31,2.6]),
+  /* Europe sat at the top edge, its Istanbul photo on the zoom buttons */
+  "Called in to rebuild":S=>VIEW(S,[-20,34,1]),
+  /* the card was switched to the right at run time, so the map key moved left over Bangkok and the Singapore photo:
+     card back on the left, as the stop was written */
+  "Chinese Southeast Asia":S=>VIEW(S,[110,10,1.83],"left"),
+  /* Lebanon itself, where every arrow starts, was under the card */
+  "Lebanon’s global family":S=>VIEW(S,[5,12,1]),
+  /* the view was centred on the Atlantic: Australia, the stop's headline, was round the back and Canada's pins under
+     the card. Australia and Canada are too far apart to show together beside the card: Australia and New Zealand,
+     the headline, are framed (Canada stays in the text) */
+  "Built by newcomers":S=>VIEW(S,[150,-32,1.3],"left"),
+  /* Niue itself sat at the globe's edge, its photo on the zoom buttons. Niueans in New Zealand: 34,944 at the 2023
+     census (Stats NZ), against 1,681 people on Niue in 2022 (Niue Statistics Office): about 21 times as many */
+  "Niue lives in Auckland":S=>{VIEW(S,[-172,-27,2.2]);RE(S,"stat","nearly 20 times as many","about 20 times as many")}
  }
 };
 const applied=new WeakSet();
@@ -340,11 +367,11 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 :is(body.dark-theme,body.sky-night) .rvf-btn,:is(body.dark-theme,body.sky-night) .rvf-chip,:is(body.dark-theme,body.sky-night) .rvf-rank li{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.22)}
 :is(body.dark-theme,body.sky-night) .rvf-rank li.rvf-ok{border-color:#4cc27f;box-shadow:inset 3px 0 0 #4cc27f}:is(body.dark-theme,body.sky-night) .rvf-rank li.rvf-no{border-color:#ff7088;box-shadow:inset 3px 0 0 #ff7088}
 :is(body.dark-theme,body.sky-night) .rvf-bar{background:rgba(255,178,122,.2)}
-.rvf-boat{font-size:15px;padding:2px 6px}.rvf-steam{background:#9a4a16}
-.rvf-bt{stroke:#fff;stroke-width:2.5}.rvf-bsail{fill:#13294b}.rvf-bsteam{fill:#d9682b}
-.rvf-wake{fill:none;stroke-width:3.5;stroke-linecap:round}.rvf-wsail{stroke:#13294b;stroke-dasharray:2 6}.rvf-wsteam{stroke:#d9682b}
+.rvf-boat{font-size:15px;padding:2px 6px}.rvf-steam{background:#c2364f}
+.rvf-bt{stroke:#fff;stroke-width:2.5}.rvf-bsail{fill:#13294b}.rvf-bsteam{fill:#c2364f}
+.rvf-wake{fill:none;stroke-width:3.5;stroke-linecap:round}.rvf-wsail{stroke:#13294b;stroke-dasharray:2 6}.rvf-wsteam{stroke:#c2364f}
 .rvf-lanes{display:grid;gap:6px}.rvf-lane{display:grid;grid-template-columns:150px 1fr 70px;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
-.rvf-lane i{display:block;height:10px;border-radius:5px;background:rgba(19,41,75,.1);overflow:hidden}.rvf-lane b{display:block;height:100%;width:0;background:#13294b;border-radius:5px}.rvf-lane b.rvf-st{background:#d9682b}
+.rvf-lane i{display:block;height:10px;border-radius:5px;background:rgba(19,41,75,.1);overflow:hidden}.rvf-lane b{display:block;height:100%;width:0;background:#13294b;border-radius:5px}.rvf-lane b.rvf-st{background:#c2364f}
 .rvf-lane em{font-style:normal;text-align:right;color:#9a4a16;white-space:nowrap}
 .rvf-row{display:flex;align-items:center;gap:10px;margin-top:8px}.rvf-rng{flex:1 1 auto;accent-color:#d9682b}.rvf-val{min-width:84px;text-align:right;font-size:15px;color:#9a4a16;white-space:nowrap}
 .rvf-dots,.rvf-cars{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin:2px 0 4px}
