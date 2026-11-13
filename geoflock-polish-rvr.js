@@ -172,6 +172,26 @@ FIX.hsince91={
   /* Caracas, where many of the walkers came from, was off the globe's edge */
   "The Darién Gap":S=>VIEW(S,[-74.5,8.5,3],"left")
 };
+FIX.heurope={
+  /* the Chauvet photo hung on the globe's bottom edge, Lascaux and Altamira close to it: framed on the whole stop, from
+     the Altar Stone's Scotland to Chauvet */
+  "Europe’s first artists":S=>VIEW(S,[0,51.3,3.6],"left"),
+  /* the Byzantium photo sat on the zoom buttons at the globe's edge */
+  "Greeks round a pond":S=>VIEW(S,[24,40,2.27],"left"),
+  /* the card was on the right, with London, Paris and Hadrian's Wall crowded on the globe's far edge */
+  "Built by Rome":S=>VIEW(S,[12,47,1.8],"left"),
+  /* the card was on the right; the Visigoths and Vandals were on the globe's far edge */
+  "Rome falls, nations rise":S=>VIEW(S,[5,44,2.17],"left"),
+  /* at zoom 1 the card shift turned the globe out over the Atlantic, with Europe's labels piled up at its top edge:
+     closer in on the Viking lands, from Dublin to Novgorod (the far voyages to Iceland and Greenland run off the edge) */
+  "The Vikings":S=>VIEW(S,[8,56,2.2],"left"),
+  /* Liège, the Ruhr and its colliery photo were on (and over) the globe's right edge */
+  "Coal, rivers and ports":S=>VIEW(S,[3,52.5,4.17],"left"),
+  /* "Garibaldi lands, 1860" hung off the globe's bottom edge */
+  "Two new countries":S=>VIEW(S,[11,45,3.2],"left"),
+  /* the card was on the right, with the map key over its close button and Rome on the globe's far edge */
+  "Charlemagne’s Europe again":S=>VIEW(S,[10,48,1.59],"left")
+};
 const applied=new WeakSet();
 /* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
    is in (see XF): if this file locked the field first, the portrait could not be added */
@@ -284,8 +304,9 @@ function GUESS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,tip:cfg.t
 
 /* ---------------- which side? one item at a time, tap a box ----------------
    cfg: {tours, title, tip, bins:[names], items:[[text, bin index, why]], after(nRight, N) → text, and optionally
-   turn:[[lon,lat,zoom] per box] and where:[text per box]: each answer turns the globe to its box's place} */
-function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cfg.turn,tip:cfg.tip,
+   turn:[[lon,lat,zoom] per box] and where:[text per box]: each answer turns the globe to its box's place; with
+   mark, that place is ringed once answered, and named if markTag(item) gives a name} */
+function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:!!cfg.mark,turns:!!cfg.turn,tip:cfg.tip,
  card(L){return'<div class="rvr-q"><span class="rvr-n"></span><b class="rvr-item"></b></div><div class="rvr-bins">'+cfg.bins.map((b,i)=>'<button type="button" class="rvr-btn rvr-bin" data-b="'+i+'">'+esc(b)+'</button>').join("")+
   '<button type="button" class="rvr-btn rvr-next" hidden>Next →</button><button type="button" class="rvr-btn rvr-again" hidden>Start again</button></div><div class="rvr-dots">'+cfg.items.map(()=>"<i></i>").join("")+'</div>'},
  wire(L){const c=L.card;L.k=0;L.ans=[];L.wait=false;
@@ -301,7 +322,9 @@ function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cf
   const right=L.ans.filter((a,i)=>a===cfg.items[i][1]).length;
   if(done)say(L,right+" of "+N+" right",cfg.after(right,N));
   else if(L.wait)say(L,L.ans[L.k]===it[1]?"Right: "+esc(cfg.bins[it[1]]):"No: it was "+esc(cfg.bins[it[1]]),esc(it[2])+(cfg.where?" "+esc(cfg.where[it[1]]):""));
-  else say(L,"",esc(cfg.ask||"Tap your answer."))}}}
+  else say(L,"",esc(cfg.ask||"Tap your answer."));L.dirty=1},
+ draw(L){if(!L.svg)return;L.svg.innerHTML="";if(!L.tg)L.tg=tag(L,"rvr-ctag");const it=cfg.items[L.k],t=L.wait&&it&&cfg.turn?cfg.turn[it[1]]:null,q=t?proj(L,[t[0],t[1]]):null;
+  if(q){svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:11,class:"rvr-tring"});svgEl(L.svg,"circle",{cx:q[0],cy:q[1],r:5,class:"rvr-tdot"})}putTag(L,L.tg,q&&cfg.markTag?q:null,q&&cfg.markTag?esc(cfg.markTag(it)):"",14)}}}
 
 /* ======================================================================== part 2: stops you can play with
    Same pattern as geoflock-polish-rvm.js: a watchdog polls `ps`, matches the stop by tour and title, adds a control
@@ -322,7 +345,10 @@ function BINS(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cf
                 country joins the EU (and London greys out in 2020).
    - hsince91 | "September 11": buttons turn the globe from New York to Afghanistan, 10,800 km away.
    - hsince91 | "Brexit": guess the turnout, then see.
-   - hsince91 | "Now explore": put eight moments since 1991 in order. */
+   - hsince91 | "Now explore": put eight moments since 1991 in order.
+   - heurope | "Rome falls, nations rise": which people named each place (France, England, Lombardy, Burgundy,
+               Normandy)? Each answer turns the globe there.
+   - heurope | "Now explore": put eight moments of Europe's story in order, from Lascaux to Chernobyl. */
 const RE_KM=6371.0088;
 
 /* ======================================================================== 1. Across the Pacific (hwars)
@@ -413,7 +439,7 @@ const TURN_FLU=TURNER({tours:["hwars"],mark:true,title:"Why “Spanish” flu?",
    Soviet flights all left from Baikonur, the American ones from Cape Canaveral and the Kennedy Space Center beside it
    (NASA; Wikipedia, "Baikonur Cosmodrome"); each answer turns the globe there. */
 const BINS_SPACE=BINS({tours:["hcoldwar"],title:"The space race",tip:"Who got there first: the Soviet Union or the United States? Eight firsts.",ask:"Tap the side you think got there first.",
- turn:[[63.3,45.96,1.5],[-80.6,28.5,1.5]],where:["It flew from Baikonur, in today’s Kazakhstan.","It flew from Florida, at Cape Canaveral."],
+ mark:true,turn:[[63.3,45.96,1.5],[-80.6,28.5,1.5]],where:["It flew from Baikonur, in today’s Kazakhstan.","It flew from Florida, at Cape Canaveral."],
  bins:["Soviet Union","United States"],
  items:[["The first satellite in orbit",0,"Sputnik 1, 4 October 1957: a beeping metal ball that shocked America."],
   ["The first people to walk on the Moon",1,"Apollo 11, July 1969: Neil Armstrong and Buzz Aldrin."],
@@ -503,8 +529,36 @@ const SORT_91=SORT({tours:["hsince91"],title:"Now explore",
   ["The UK votes to leave the EU",2016.48,"Jun 2016"],["Srebrenica massacre",1995.53,"Jul 1995"],["Russia invades Ukraine",2022.15,"Feb 2022"],["South Sudan independent",2011.52,"Jul 2011"]],
  after:(r,N)=>"Three decades, from the end of one superpower to the biggest war in Europe since 1945. Drag the History map’s timeline: most borders have barely moved since 1995."});
 
+/* ======================================================================== 11. Who named it? (heurope)
+   The tour's own facts: France is named after the Franks, England after the Angles, Lombardy after the Lombards and
+   Burgundy after the Burgundians ("Rome falls, nations rise"); Normandy after the Vikings, the "Northmen" ("The
+   Vikings"). Each answer turns the globe to the place. Added details: Rollo's Vikings granted the land in 911 (Wikipedia,
+   "Rollo", the Treaty of Saint-Clair-sur-Epte); the Lombards entered Italy in 568 (Wikipedia, "Kingdom of the
+   Lombards"); Clovis "made Paris his capital" (Wikipedia, "Clovis I"); the Angles came from Angeln, in today's
+   Schleswig, and the first Burgundian kingdom lay on the Rhône and Saône (Encyclopaedia Britannica, "Angle",
+   "Burgundy"). */
+const BINS_NAMES=BINS({tours:["heurope"],title:"Rome falls, nations rise",mark:true,markTag:it=>it[0],tip:"Which people gave each place its name? Five places, five peoples.",ask:"Tap the people the place is named after.",
+ bins:["Franks","Angles","Lombards","Burgundians","Northmen"],
+ turn:[[2.5,47,2.4],[-1.5,52.6,3],[9.7,45.6,3.4],[4.8,47.1,3.4],[0.2,49.1,3.4]],
+ items:[["Normandy",4,"Viking “Northmen” were given this land in 911; you meet them at the next stop."],
+  ["England",1,"“Angle-land”: the Angles, with the Saxons, crossed from what is now Denmark and north Germany."],
+  ["Burgundy",3,"The Burgundians’ kingdom lay along the Rhône; the name lives on in the region and its wine."],
+  ["France",0,"The Franks’ kingdom grew into France, and their king Clovis made Paris his capital."],
+  ["Lombardy",2,"The Lombards ruled much of Italy from 568; Milan is Lombardy’s capital today."]],
+ after:(r,N)=>"Rome’s western empire broke into kingdoms named after the peoples who took it over, and many of those names are still on the map."});
+
+/* ======================================================================== 12. Put Europe's story in order (heurope)
+   The tour's own dates: Lascaux's paintings about 17,000 years old; Ötzi killed about 5,300 years ago; Stonehenge begun
+   about 5,000 years ago; Hadrian's Wall begun in 122 AD; Lindisfarne raided in 793; Luther's protest in 1517; Lisbon's
+   earthquake in 1755; Chernobyl in 1986. */
+const SORT_EUR=SORT({tours:["heurope"],title:"Now explore",
+ tip:"Before you go: put these eight moments of Europe’s story in order, earliest first.",first:"Earliest",last:"Latest",desc:false,bars:false,
+ items:[["Luther’s protest",1517,"1517"],["Lascaux’s bulls painted",-15000,"about 15,000 BC"],["Chernobyl explodes",1986,"1986"],["Ötzi is killed in the Alps",-3300,"about 3300 BC"],
+  ["Vikings raid Lindisfarne",793,"793"],["Stonehenge is begun",-3000,"about 3000 BC"],["Lisbon’s earthquake",1755,"1755"],["Hadrian’s Wall is begun",122,"122 AD"]],
+ after:(r,N)=>"Lascaux’s painters lived about 12,000 years before Ötzi, and Ötzi was already about 3,400 years in the ice when Hadrian’s Wall was begun. Drag the History map’s timeline to travel through it."});
+
 /* ---------------- the engine: one stop at a time ---------------- */
-const DEFS=[TURN_PAC,SORT_WW,JULY,TURN_FLU,BINS_SPACE,GUESS_PART,SORT_CW,EUG,TURN_911,GUESS_BREXIT,SORT_91];
+const DEFS=[TURN_PAC,SORT_WW,JULY,TURN_FLU,BINS_SPACE,GUESS_PART,SORT_CW,EUG,TURN_911,GUESS_BREXIT,SORT_91,BINS_NAMES,SORT_EUR];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
