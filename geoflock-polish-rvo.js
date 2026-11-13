@@ -74,6 +74,12 @@ const FIX={
   /* New York's pin sat at the globe's right edge, by the zoom buttons */
   "The rank-size rule":S=>VIEW(S,[-92,38,1.6]),
   "The gravity model":S=>VIEW(S,[-90,40,1.6])
+ },
+ hg6b:{
+  /* the six photos span the world (Chicago, Los Angeles, Mexico City, Lagos, Jakarta, New York): the globe turned to the
+     Atlantic, with Lagos and Jakarta round the back and Los Angeles under the card. Lagos and Jakarta have their own
+     stops later; the four in North America are framed beside the card */
+  "Inside the city":S=>{DROPPH(S,/^(Lagos|Jakarta)/);VIEW(S,[-92,30,1.2])}
  }
 };
 const applied=new WeakSet();
@@ -283,7 +289,37 @@ const CPT=CLASSIFY({tours:["hg6a"],title:"Central place theory",below:true,
   ["A hospital with an emergency department",["t","c"],"It needs tens of thousands of people around it: a large town or a city."],
   ["An international airport","c","Only a big city draws enough travellers, from far around, to fill the flights."]],
  end:()=>"Low-threshold goods are everywhere; high-threshold ones only in the few big centres. That is why Christaller’s map has many villages, fewer towns and one city."});
-const DEFS=[RAIL,SPRAWL,JAX,WORLDC,CPT];
+
+/* ======================================================================== hg6b: Inside the city */
+/* ---- Which model fits? A review of the tour's own models and its own cities (each answer turns the globe there):
+   Burgess (1925) and Hoyt (1939) from Chicago, Harris and Ullman (1945) from Los Angeles, Harris's galactic city (1997)
+   around Washington, Griffin and Ford (1980) from Mexico City, de Blij's African city from Lagos and McGee's Southeast
+   Asian city from Jakarta. */
+const MODELS=CLASSIFY({tours:["hg6b"],title:"The Southeast Asian city",turns:true,below:true,
+ tip:"Review: which model fits each city? Each answer turns the globe there.",ask:"Which model of the city fits best?",
+ kinds:[["con","Concentric zones","the concentric zone model"],["sec","Sector","the sector model"],["mn","Multiple nuclei","the multiple nuclei model"],["gal","Galactic","the galactic city model"],
+  ["lat","Latin American","the Latin American city model"],["afr","African","the African city model"],["sea","Southeast Asian","the Southeast Asian city model"]],
+ items:[["Jakarta: grew round the Dutch port of Batavia, with a Chinese merchants’ quarter beside it","sea","McGee’s model: the old colonial port at the centre, with Western and “alien” commercial zones beside it.",[106.81,-6.15,4]],
+  ["Los Angeles: an old downtown, and other centres round the airport and the port","mn","Harris and Ullman: a car city that grew round several nuclei, not one.",[-118.3,33.95,4]],
+  ["Mexico City: rich homes along the Paseo de la Reforma, squatter settlements on the fringe","lat","Griffin and Ford: an elite spine from the old plaza, and rings that grow poorer outward.",[-99.15,19.43,4]],
+  ["Washington: office towers at Tysons, where highways meet the Capital Beltway","gal","The galactic city: edge cities orbit the old downtown, linked by the ring road.",[-77.15,38.9,4]],
+  ["Chicago’s North Shore: a high-income wedge running out along the lake","sec","Hoyt’s sectors: the rich follow the most attractive direction, here the lakeshore.",[-87.7,42.05,4]],
+  ["Lagos: a colonial business district, a traditional centre and huge open-air markets","afr","De Blij’s African city has three CBDs: colonial, traditional and market.",[3.39,6.46,4]],
+  ["Chicago in the 1920s: the Loop, ringed by factories, then workers’ homes, then commuter suburbs","con","Burgess’s rings, drawn from Chicago itself.",[-87.63,41.88,4]]],
+ end:(r,N)=>"Each model was drawn from one city, so each fits its own region best, and no real city fits one exactly."});
+/* ---- Chicago's pattern or Paris's? The contrast the stop itself draws (Burgess's Chicago, two stops back, against
+   Paris and its banlieues); no new facts. */
+const INOUT=CLASSIFY({tours:["hg6b"],title:"Rich in the middle",below:true,
+ tip:"Inside out: does each one fit Chicago’s pattern or Paris’s?",ask:"Chicago’s pattern or Paris’s?",
+ kinds:[["chi","Chicago (Burgess)","Chicago’s pattern"],["par","Paris","Paris’s pattern"]],
+ items:[["The richest families live in grand flats right in the centre","par","Paris kept wealth at the centre: palaces, culture and good transport made it prestigious."],
+  ["Social housing towers rise in the suburbs beyond the ring road","par","The banlieues beyond the Périphérique hold Paris’s big estates of high-rise social housing."],
+  ["The well-off commute in from big houses on the edge","chi","Burgess’s outer ring: the commuter zone, where the better-off live."],
+  ["Run-down housing and factories crowd round downtown","chi","Burgess’s zone of transition, next to the CBD, where newcomers arrive first."],
+  ["Strict planning keeps towers out of the old centre","par","Paris held its old centre to a low, even height; the towers went up outside it."],
+  ["Newcomers start near the centre and move outward as they get richer","chi","Burgess’s city grows by newcomers arriving in the middle and moving out."]],
+ end:()=>"Same pieces, opposite places: in Chicago’s model wealth rises outward; in Paris it falls outward."});
+const DEFS=[RAIL,SPRAWL,JAX,WORLDC,CPT,MODELS,INOUT];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
