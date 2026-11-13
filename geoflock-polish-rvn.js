@@ -74,6 +74,26 @@ const FIX={
      revolution's Fertile Crescent was round the back. Both become area labels; the stop opens on the Old World and
      buttons (part 3) turn the globe to each revolution's birthplace */
   "Three agricultural revolutions":S=>{AREA(S,/^(Second|Third):/);VIEW(S,[22,40,1],"left")}
+ },
+ hg5c:{
+  /* six photos from Iowa to Punjab, half a world apart, turned the globe towards the Atlantic with Iowa and Colombia
+     under the card and the DR Congo photo on the globe's edge. Iowa, Punjab and Colombia each have their own stop
+     later in the tour; the opening keeps Côte d'Ivoire, Champagne and the DR Congo */
+  "Food in a global system":S=>{DROPPH(S,/^(Iowa|Punjab|Colombia)/);VIEW(S,[15,20,1.1],"left")},
+  /* index.html turned the globe to the middle of Mexico and the Philippines, so Mexico sat under the card and the
+     rice institute round the back. The two become area labels, the stop opens on Punjab and the Philippines, and
+     buttons (part 3) turn the globe to each step of the revolution */
+  "The Green Revolution":S=>{AREA(S,/^(Mexico|IRRI)/);VIEW(S,[106,22,1.2],"left")},
+  /* Ecuador, the start of the chain, was under the card: the stop now has a banana to follow (part 3) */
+  "From farm to supermarket":S=>VIEW(S,[-36,18,1],"left"),
+  /* Lake Naivasha, where the roses grow, was on the globe's edge */
+  "Roses from the equator":S=>VIEW(S,[36,20,1.4],"left"),
+  /* Colombia, where the beans start, was under the card's corner */
+  "Fair trade":S=>VIEW(S,[-35,22,1],"left"),
+  /* Ethiopia was on the globe's edge */
+  "Women who farm":S=>VIEW(S,[30,2,1.6],"left"),
+  /* Ireland's label was under the card */
+  "Feeding eight billion":S=>VIEW(S,[16,25,1],"left")
  }
 };
 const applied=new WeakSet();
@@ -113,6 +133,10 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
      tonnes); the stop's text says "about 85%" */
   /* a circle in a square covers π/4 of it: the pivot's dry corners are the other 21% */
   "hg5b|Circles in squares":G("A pivot’s circle fits inside a square field. What share of the square gets watered?",0,100,79,"%",{step:1,show:"about 79% (π ÷ 4)"}),
+  /* Cranfield University (A. Williams, 2007, for World Flowers): 12,000 Dutch roses gave off about 35,000 kg of CO2,
+     12,000 Kenyan roses, flown to Europe, about 6,000 kg: about 5.8 times as much (reported by Scientific American,
+     "Floral footprint") */
+  "hg5c|Roses from the equator":G("A Dutch greenhouse rose gives off how many times the carbon of a Kenyan rose flown to Europe?",0.2,10,5.8,"×",{step:0.1,show:"about 6 times"}),
   "hg5a|Plantations":G("What share of the world’s palm oil comes from Indonesia and Malaysia?",0,100,83,"%",{step:1,show:"over 80%"})
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
@@ -130,13 +154,16 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - hg5b | "Patterns of rural settlement": clustered, dispersed or linear? Sort eight places; the globe turns to each.
    - hg5b | "Long lots": metes and bounds, township and range, or long lots? Sort eight places; the globe turns to each.
    - hg5b | "Split between sons": pass a 10-hectare farm down five generations and watch each son's share shrink.
-   - hg5b | "Three agricultural revolutions": buttons turn the globe to where each began. */
+   - hg5b | "Three agricultural revolutions": buttons turn the globe to where each began.
+   - hg5c | "The Green Revolution": Mexico, the Philippines and Punjab; buttons turn the globe to each.
+   - hg5c | "From farm to supermarket": drag a banana 10,000 km from a farm in Ecuador to a shop in Germany; the
+            globe follows it. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
 function svgEl(parent,tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs||{})e.setAttribute(k,attrs[k]);parent.appendChild(e);return e}
 function proj(L,ll,card){const G=g();if(!G||!ll)return null;try{if(!G._flat){const d=d3.geoDistance([-G.rot[0],-G.rot[1]],ll);if(d>Math.PI/2-.03)return null}
- const s=G.projection()(ll);if(!s||!isFinite(s[0]))return null;const x=s[0]+L.ox,y=s[1]+L.oy,B=L.cb;if(card&&B&&x>B[0]&&x<B[2]&&y>B[1]&&y<B[3])return null;return[x,y]}catch(e){return null}}
+ const s=G.projection()(ll);if(!s||!isFinite(s[0]))return null;if(!G._flat&&G.size){const z=G.size();if(z&&z.r&&Math.hypot(s[0]-z.w/2,s[1]-z.h/2)>z.r+1)return null}const x=s[0]+L.ox,y=s[1]+L.oy,B=L.cb;if(card&&B&&x>B[0]&&x<B[2]&&y>B[1]&&y<B[3])return null;return[x,y]}catch(e){return null}}
 function say(L,head,text){const c=L.card;if(!c)return;const k=head+"|"+text;if(L._said===k)return;L._said=k;const e=c.querySelector(".rvn-ep");if(!e)return;
  e.innerHTML=(head?"<b>"+esc(head)+"</b>":"")+"<span>"+esc(text)+"</span>";e.classList.remove("rvn-new");void e.offsetWidth;e.classList.add("rvn-new")}
 const setHTML=(el,html)=>{if(el&&el._h!==html){el.innerHTML=html;el._h=html}};
@@ -337,8 +364,53 @@ const REVS=turnDef("hg5b","Three agricultural revolutions",{tip:"Three revolutio
   ["Second: Britain",-1.5,52.5,3,"From the 1700s: enclosed fields, the Norfolk four-course rotation and new machines. Fewer farm hands were needed, so people moved to factory towns."],
   ["Third: Mexico",-99.1,19.4,2.4,"From the 1940s Norman Borlaug bred high-yield wheat in Sonora and near Mexico City; with new rice, the Green Revolution spread to India and Pakistan in the 1960s."]]});
 
+/* ======================================================================== hg5c: Food in a global system */
+/* Borlaug: in Mexico from 1944; by 1963 Mexico's wheat harvest was six times that of 1944 (Nobel Prize biography;
+   Wikipedia, "Norman Borlaug"). IR8, the "miracle rice", released by the International Rice Research Institute at
+   Los Baños in 1966 (IRRI; Wikipedia, "IR8"). India imported the Mexican wheat seed in 1965–66, and its wheat harvest
+   more than doubled, from about 12 million tonnes in 1965 to about 26 million in 1972 (FAOSTAT, wheat production, India). */
+const GREEN=turnDef("hg5c","The Green Revolution",{tip:"The seeds came from Mexico and the Philippines. Follow them to Punjab.",
+ intro:"Tap a place to turn the globe to it.",
+ places:[["Mexico, from 1944",-99.1,19.4,2.6,"Norman Borlaug bred short, sturdy wheat that resisted rust disease and could carry heavy heads of grain. By 1963 Mexico’s wheat harvest was six times that of 1944."],
+  ["IRRI, the Philippines, 1966",121.24,14.17,3,"At the International Rice Research Institute, south of Manila, scientists released IR8, the “miracle rice”: short stems and far bigger yields with fertiliser."],
+  ["Punjab, from 1966",75.5,30.8,3,"India brought in Mexican wheat seed in 1965–66. With canals, wells and fertiliser, Punjab’s farmers took it up fastest, and India’s wheat harvest more than doubled by 1972."]]});
+/* One banana's commodity chain, along the stop's own route. Machala, in El Oro province, calls itself the world's
+   banana capital (Wikipedia, "Machala"); bananas are shipped green, chilled to about 13 °C so they do not ripen
+   (Wikipedia, "Banana", Trade), through the Panama Canal, to Antwerp, one of Europe's main banana ports (Port of
+   Antwerp-Bruges), then ripened with ethylene gas in ripening rooms before they go to the shops. About 10,000 km in
+   all, the stop's own figure. */
+const BANANA={tour:"hg5c",title:"From farm to supermarket",globe:true,turn:true,
+ tip:"Drag the banana from the farm in Ecuador to a shop in Germany.",
+ route:[[-79.96,-3.26],[-80.6,-2.6],[-80.3,2],[-79.6,8.6],[-79.75,9.3],[-77,13],[-73.5,17],[-68,19],[-50,30],[-25,42],[-7,48.6],[1.4,51],[4.4,51.25],[8.68,50.11]],
+ card:()=>'<div class="rvn-sl"><input type="range" class="rvn-km" min="0" max="1000" step="1" value="0" aria-label="How far the banana has gone"><b class="rvn-kv">🍌</b></div><div class="rvn-row"><button type="button" class="rvn-btn rvn-play">▶ Ship it</button></div>',
+ init(L){const R=this.route;L.cum=[0];for(let i=1;i<R.length;i++)L.cum.push(L.cum[i-1]+d3.geoDistance(R[i-1],R[i])*6371);L.tot=L.cum[L.cum.length-1];L.f=0;
+  L.line=svgEl(L.svg,"path",{class:"rvn-route"});L.done=svgEl(L.svg,"path",{class:"rvn-trail"});L.dot=svgEl(L.svg,"circle",{r:"9",class:"rvn-cmb"});
+  L.tag=document.createElement("div");L.tag.className="rvn-tag rvn-new2";L.el.appendChild(L.tag)},
+ at(L,f){const km=f*L.tot,R=this.route;let i=1;while(i<R.length-1&&L.cum[i]<km)i++;const k=Math.max(0,Math.min(1,(km-L.cum[i-1])/Math.max(1e-6,L.cum[i]-L.cum[i-1])));return{ll:d3.geoInterpolate(R[i-1],R[i])(k),i}},
+ follow(L){try{const G=ps&&ps.g;if(!G||ps.mode!=="globe")return;const p=this.at(L,L.f).ll,z=2;let lon=p[0];const over=typeof psCardOver==="function"?psCardOver():0;
+  if(over){const R=G.size().r*z,a=Math.asin(Math.min(.6,Math.abs(over)/2/R))*180/Math.PI;lon-=Math.sign(over)*a/Math.max(.35,Math.cos(p[1]*Math.PI/180))}
+  const c=[-G.rot[0],-G.rot[1]],t=d3.geoInterpolate(c,[lon,p[1]])(L.play?.08:.35);G._flyId=(G._flyId||0)+1;G._flying=false;G.zoom=G.zoom+(z-G.zoom)*.3;G.rot=[-t[0],-t[1]];G.render()}catch(e){}},
+ wire(L){const c=L.card,r=c.querySelector(".rvn-km");const go=()=>{c.dataset.turned="1"};
+  r.oninput=()=>{go();L.play=0;L.f=+r.value/1000;L.dirty=1;this.text(L);this.follow(L);clearTimeout(L.tmo);L.tmo=setTimeout(()=>{if(!L.play&&L.card&&L.card.isConnected){const p=this.at(L,L.f).ll;turnGlobe(p[0],p[1],2)}},260)};
+  c.querySelector(".rvn-play").onclick=()=>{go();if(L.f>=1)L.f=0;L.play=1};this.text(L)},
+ tick(L,dt){if(!L.play)return;L.f=Math.min(1,L.f+dt/14);if(L.f>=1)L.play=0;L.dirty=1;try{L.card.querySelector(".rvn-km").value=Math.round(L.f*1000)}catch(e){}this.text(L);this.follow(L)},
+ text(L){const c=L.card;if(!c)return;const km=Math.round(L.f*L.tot/100)*100,i=this.at(L,L.f).i;
+  c.querySelector(".rvn-kv").textContent="🍌 "+km.toLocaleString("en-GB")+" km";c.querySelector(".rvn-play").textContent=L.play?"▶ Sailing…":"▶ Ship it";
+  if(L.f<.02)say(L,"A farm near Machala, Ecuador","Bananas are cut while still green, washed and packed in boxes. Ecuador sells more bananas abroad than any other country.");
+  else if(i<=3)say(L,"Down the Pacific coast","A refrigerated ship keeps the fruit at about 13 °C, cold enough to stop it ripening on the way.");
+  else if(i<=5)say(L,"The Panama Canal","A short cut from the Pacific to the Caribbean, instead of sailing round South America.");
+  else if(i<=10)say(L,"Across the Atlantic","About two weeks at sea. The shipping line, not the farmer, earns this part of the price.");
+  else if(i<=12)say(L,"Antwerp","One of Europe’s main banana ports. Trucks take the boxes to ripening rooms, where ethylene gas turns them yellow in a few days.");
+  else if(L.f<1)say(L,"To the shops","The importer, the ripener and the supermarket each take a share of the price.");
+  else say(L,"A supermarket in Frankfurt","About 10,000 km and three weeks from the farm. That is a commodity chain: grower, packer, shipper, ripener, retailer, and each one takes a cut.")},
+ draw(L){const R=this.route,P=ll=>proj(L,ll),path=pts=>{let d="",pen=0;pts.forEach(ll=>{const q=P(ll);if(q){d+=(pen?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1);pen=1}else pen=0});return d};
+  const dense=[];for(let i=1;i<R.length;i++){const ip=d3.geoInterpolate(R[i-1],R[i]);for(let k=0;k<8;k++)dense.push(ip(k/8))}dense.push(R[R.length-1]);
+  L.line.setAttribute("d",path(dense));const w=this.at(L,L.f),done=[];for(let i=0;i<w.i;i++){const ip=d3.geoInterpolate(R[i],R[i+1]);for(let k=0;k<8;k++)done.push(ip(k/8))}done.push(w.ll);L.done.setAttribute("d",path(done));
+  const q=P(w.ll),qq=proj(L,w.ll,1);if(q){L.dot.style.display="";L.dot.setAttribute("cx",q[0].toFixed(1));L.dot.setAttribute("cy",q[1].toFixed(1))}else L.dot.style.display="none";
+  if(qq){L.tag.style.display="";if(L.tag._h!=="🍌"){L.tag.textContent="🍌";L.tag._h="🍌"}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+12)+"px"}else L.tag.style.display="none"}};
+
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[HEARTHS5,FARMS,WHEAT,RANCH,SWIDDEN,SETTLE,SURVEY,SPLIT,REVS];
+const DEFS=[HEARTHS5,FARMS,WHEAT,RANCH,SWIDDEN,SETTLE,SURVEY,SPLIT,REVS,GREEN,BANANA];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
@@ -360,7 +432,10 @@ function loop(){if(!L||!L.host)return;raf=requestAnimationFrame(t=>{try{const G=
   if(L.D.tick)L.D.tick.call(L.D,L,dt);
   const key=(G.rot||[]).join(",")+G.zoom+"|"+hr.width+"x"+hr.height+"|"+cr.left+","+cr.top+"|"+(cb?cb.map(Math.round).join(","):"");
   if(key!==L.key||L.dirty){L.key=key;L.dirty=0;L.root.setAttribute("width",hr.width);L.root.setAttribute("height",hr.height);
-   L.clipP.setAttribute("d","M-10 -10H"+(hr.width+10)+"V"+(hr.height+10)+"H-10Z"+(cb?"M"+cb[0]+" "+cb[1]+"H"+cb[2]+"V"+cb[3]+"H"+cb[0]+"Z":""));
+   /* clipped to the globe's visible disc (zoomed in, the sphere is larger than the round window it is seen through),
+      with a hole where the card is */
+   let outer="M-10 -10H"+(hr.width+10)+"V"+(hr.height+10)+"H-10Z";try{const sz=G.size&&G.size();if(sz&&sz.r&&!G._flat){const cx=L.ox+sz.w/2,cy=L.oy+sz.h/2,r=sz.r+2;outer="M"+(cx-r).toFixed(1)+" "+cy.toFixed(1)+"a"+r.toFixed(1)+" "+r.toFixed(1)+" 0 1 0 "+(2*r).toFixed(1)+" 0a"+r.toFixed(1)+" "+r.toFixed(1)+" 0 1 0 "+(-2*r).toFixed(1)+" 0Z"}}catch(e){}
+   L.clipP.setAttribute("d",outer+(cb?"M"+cb[0]+" "+cb[1]+"H"+cb[2]+"V"+cb[3]+"H"+cb[0]+"Z":""));
    L.D.draw.call(L.D,L)}}catch(e){console.error(e)}loop()})}
 every(()=>{try{const D=activeDef();if(D){mount(D);ensureCard()}else if(L||document.querySelector(".rvn-ctl"))unmount()}catch(e){}},300);
 addEventListener("resize",()=>{if(L)L.dirty=1});
@@ -368,6 +443,7 @@ addEventListener("resize",()=>{if(L)L.dirty=1});
 {const s=document.createElement("style");s.textContent=`
 .rvn-field{display:block;width:100%;height:auto;border-radius:8px;margin:2px 0 4px}.rvn-cous{fill:#cfe3b0;stroke:#6f8f4a;stroke-width:1}.rvn-mine{fill:#d9682b;stroke:#7a3410;stroke-width:1.5}
 .rvn-heirs span{font-size:12.5px;font-weight:700;opacity:.75}
+.rvn-route{fill:none;stroke:#13294b;stroke-width:2.5;stroke-dasharray:6 5;opacity:.7}
 .rvn-trail{fill:none;stroke:#d9a21a;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
 .rvn-green{fill:#4c9a3a;stroke:#fff;stroke-width:2}.rvn-gold{fill:#f2c230;stroke:#7a4a12;stroke-width:2}
 .rvn-cmb{fill:#d9682b;stroke:#fff;stroke-width:3}
