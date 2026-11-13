@@ -43,5 +43,62 @@ D._draw=svg=>{const G=D._g,hide=G&&!G.done;let h="";
  dyn(svg,h)};
 })()}catch(e){console.warn("review2 juntas",e)}
 
+/* ------------------------------------------------------------------ guess first, then see the chart
+   The same one-tap guess as batch 1 (geoflock-sims-review1.js) on four more charts whose point is a surprise. Answers
+   are the charts' own figures: USGS (each magnitude step about 32 times the energy); Baikal 23,600 km³ against the Great
+   Lakes' 22,700 km³ (WorldAtlas, after US EPA); UN World Urbanization Prospects 2025 (Jakarta about 42 million); UN World
+   Population Prospects 2024 (Asia about 59% of the people on about 30% of the land). */
+try{(function(){
+const Q={
+ quake:["How many magnitude-5 earthquakes release as much energy as one magnitude 9?",["About 4","About 1,000","About a million"],2,"About a million: each step up in magnitude releases about 32 times the energy, and 32 × 32 × 32 × 32 ≈ 1,000,000 (USGS)."],
+ lakesvol:["Which holds more water: Lake Baikal, or all five Great Lakes of North America together?",["Lake Baikal","The five Great Lakes"],0,"Lake Baikal, just: about 23,600 km³ against 22,700 km³. It is up to 1,642 m deep; the Great Lakes are wide but shallow."],
+ megacities:["Which is the world’s biggest city in the UN’s 2025 count?",["Tokyo","Delhi","Jakarta","Shanghai"],2,"Jakarta, with about 42 million people. The UN now draws city edges more widely; Tokyo, long the leader, is third."],
+ landpeople:["Asia has about 30% of the world’s land. What share of the world’s people live there?",["About a quarter","About a third","More than half"],2,"More than half: about 59% of everyone. Oceania has 6% of the land but under 1% of the people."]};
+const ACC="#e8701a",INK="#1d3047";
+const wrap=(t,max)=>{const out=[];let line="";t.split(" ").forEach(x=>{if((line+" "+x).trim().length>max){out.push(line);line=x}else line=(line+" "+x).trim()});if(line)out.push(line);return out};
+Object.keys(Q).forEach(k=>{const D=DG[k];if(!D||D._gq)return;const [qq,opts,ans,why]=Q[k];const svg0=D.svg,act0=D.act;D._gq=1;
+ D.svg=a=>{const s=svg0(a);if(typeof s!=="string")return s;const m=/viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/.exec(s);if(!m)return s;const W=+m[1],H=+m[2];
+  let o='<g class="gq-ov"><rect x="0" y="0" width="'+W+'" height="'+H+'" rx="6" fill="#f3f6fa" opacity=".98"/>';
+  const L=wrap(qq,52),y0=Math.max(16,H/2-28-L.length*6);L.forEach((l,i)=>{o+=dgT(W/2,y0+i*12,esc(l),'text-anchor="middle" font-size="9.5" font-weight="800" fill="'+INK+'"')});
+  const bw=opts.length>3?62:opts.length>2?84:110,gap=6,tw=opts.length*bw+(opts.length-1)*gap,bx=(W-tw)/2,by=y0+L.length*12+6;
+  opts.forEach((t,i)=>{const x=bx+i*(bw+gap);o+='<g data-act="gq:'+i+'" class="gq-b" style="cursor:pointer"><rect x="'+x+'" y="'+by+'" width="'+bw+'" height="18" rx="9" fill="#fff" stroke="'+ACC+'" stroke-width="1.4"/>'+dgT(x+bw/2,by+12.2,esc(t),'text-anchor="middle" font-size="7.6" font-weight="800" fill="'+INK+'"')+'</g>'});
+  o+='<g class="gq-why"></g><g data-act="gq:skip" style="cursor:pointer"><rect x="'+(W/2-60)+'" y="'+(by+25)+'" width="120" height="13" fill="transparent"/>'+dgT(W/2,by+34,"just show me the chart",'text-anchor="middle" font-size="6.8" font-weight="700" fill="#5b6b80" text-decoration="underline"')+'</g></g>';
+  return s.replace(/<\/svg>\s*$/,o+"</svg>")};
+ D.act=(svg,a,...r)=>{if(!/^gq:/.test(a))return act0?act0.call(D,svg,a,...r):false;const ov=svg.querySelector(".gq-ov");if(!ov||ov._done)return true;
+  const hide=()=>{ov._done=1;ov.style.transition="opacity .5s";ov.style.opacity="0";setTimeout(()=>{ov.style.display="none"},520)};
+  if(a==="gq:skip"){hide();return true}
+  const i=+a.slice(3),right=i===ans;ov.querySelectorAll(".gq-b").forEach((b,j)=>{const rr=b.querySelector("rect"),t=b.querySelector("text");if(j===ans){rr.style.fill="#2f9a5a";rr.style.stroke="#2f9a5a";t.style.fill="#fff"}else if(j===i){rr.style.fill="#c94b2c";rr.style.stroke="#c94b2c";t.style.fill="#fff"}});
+  const W=+(svg.getAttribute("viewBox")||"0 0 300").split(" ")[2]||300,b0=ov.querySelector(".gq-b rect"),by=b0?+b0.getAttribute("y")+30:100;
+  const L=wrap((right?"Right! ":"Not quite. ")+why,66);let h="";L.forEach((l,j)=>{h+=dgT(W/2,by+j*10,esc(l),'text-anchor="middle" font-size="7.4" font-weight="'+(j?600:800)+'" fill="'+(right?"#2f7a3a":"#b23c0a")+'"')});
+  const wy=ov.querySelector(".gq-why");if(wy)wy.innerHTML=h;const sk=ov.querySelector('[data-act="gq:skip"]');if(sk)sk.style.display="none";
+  ov._done=1;setTimeout(()=>{ov._done=0;hide()},2600+L.length*700);return true}});
+})()}catch(e){console.warn("review2 guess",e)}
+
+/* ------------------------------------------------------------------ Build a population pyramid: a goal
+   "Stop the growth": life expectancy is set to 79 years and you hunt for the number of children per woman that holds the
+   population steady. In this model the answer is about 2.1 (replacement fertility: 2 parents replaced, plus a little for
+   the extra boys born and for the few girls who die before they have children; UN Population Division). Below that the
+   population shrinks and ages; above it, it keeps growing. */
+try{(function(){
+const D=DG.pyramid;if(!D||D._goal)return;D._goal=1;const svg0=D.svg,act0=D.act,drag0=D.drag,init0=D.init;
+D.svg=a=>{let s=svg0(a);if(typeof s!=="string")return s;s=s.replace('viewBox="0 0 300 206"','viewBox="0 0 300 224"');
+ return s.replace(/<\/svg>\s*$/,'<g class="pp-goal"><g data-act="goal" style="cursor:pointer"><rect x="10" y="208" width="96" height="13" rx="6.5" fill="#1d3047"/>'+dgT(58,216.8,"Goal: stop the growth",'text-anchor="middle" font-size="6.6" font-weight="800" fill="#fff"')+'</g><text class="pp-gm" x="112" y="217" font-size="6.6" font-weight="700" fill="#b04a14"></text></g></svg>')};
+const growth=s=>{if(!s.last)return null;const a=s.last.reduce((x,y)=>x+y,0),b=s.P.reduce((x,y)=>x+y,0);return(Math.pow(b/a,1/5)-1)*100};
+function watch(svg){if(svg._ppw)return;svg._ppw=1;let last=-1;const go=()=>{if(!svg.isConnected){svg._ppw=0;return}const s=svg._s,m=svg.querySelector(".pp-gm");
+  if(s&&m&&s.goal){const key=s.yr+"|"+s.tfr+"|"+s.le;if(key!==last){last=key;const g=growth(s);let t;
+   if(s.le<75)t="Keep life expectancy near 79 years (the goal set it there)";
+   else if(g==null||s.yr<5)t="Drag children per woman and watch the growth a year";
+   else if(Math.abs(g)<.12){t="Done! "+s.tfr.toFixed(1)+" children per woman just replaces the parents";s.won=1}
+   else t="Growth "+(g>0?"+":"")+g.toFixed(1)+"% a year: "+(g>0?"fewer children":"more children")+" per woman";
+   m.textContent=t;m.setAttribute("fill",s.won&&Math.abs(g||9)<.12?"#2f7a3a":"#b04a14")}}
+  requestAnimationFrame(go)};requestAnimationFrame(go)}
+D.init=(svg,...r)=>{const v=init0.call(D,svg,...r);try{const m=svg.querySelector(".pp-gm");if(m)m.textContent="Can you make the population stop growing?";watch(svg)}catch(e){}return v};
+D.act=(svg,a,...r)=>{if(a!=="goal"){if(/^tab/.test(a)&&svg._s&&svg._s.goal){svg._s.goal=0;const m=svg.querySelector(".pp-gm");if(m){m.textContent="Can you make the population stop growing?";m.setAttribute("fill","#b04a14")}}return act0.call(D,svg,a,...r)}const s=svg._s;if(!s)return false;
+ s.goal=1;s.won=0;s.tfr=4;s.le=79;act0.call(D,svg,"reset");s.play=true;s.acc=.5;watch(svg);return true};
+/* in goal mode each change starts from that setting's settled shape, so the growth shown is the long-run one (no
+   momentum from the old pyramid's crowd of young people) */
+D.drag=(svg,n,x,...r)=>{const v=drag0.call(D,svg,n,x,...r);const s=svg._s;if(s&&s.goal){s.won=0;act0.call(D,svg,"reset");s.play=true;s.acc=.5}return v};
+})()}catch(e){console.warn("review2 pyramid",e)}
+
 /*@@MORE@@*/
 })();

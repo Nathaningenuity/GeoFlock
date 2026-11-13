@@ -587,7 +587,7 @@ const K=[{nm:"Convectional",T0:30,lift:"Heat from the ground",cl:"Towering cumul
    p:"The Sun heats the ground, and warm air rises in bubbles. It cools as it climbs; when it reaches its dew point, cloud forms, building into towering thunderstorms."},
  {nm:"Frontal",T0:15,lift:"Warm air slides over cold",cl:"Thick layers (nimbostratus)",rn:"Long, steady rain",wh:"Mid-latitudes, like Britain",
    p:"Where a warm air mass meets a cold one, the lighter warm air is pushed up over the cold, dense air along the front. It cools, and a wide sheet of cloud brings hours of rain."},
- {nm:"Relief",T0:20,lift:"Mountains in the wind’s way",cl:"Cloud on the windward side",rn:"Wet side, dry rain shadow",wh:"Mawsynram, India; west Norway",
+ {nm:"Relief",T0:20,lift:"Mountains in the wind’s way",cl:"Cloud on the windward side",rn:"Wet side, dry rain shadow",wh:"Mawsynram (India); Norway",
    p:"Wind meets mountains and is forced up. It cools and rains on the windward side; going down the far side it warms again, arriving warm and dry: a rain shadow."}];
 const mtn=x=>Math.max(0,2.6*Math.exp(-Math.pow((x-118)/34,2)));
 function path(k,u){if(k===0){const x=58+6*Math.sin(u*9);return[x,u*10.5]}
@@ -608,7 +608,7 @@ make("rain",{title:"Three ways to make rain",
   else if(k===1){const fl=x=>G-(x-40)*.035*PK;h+='<path d="M40,'+G+' L196,'+f1(fl(196))+' L196,'+G+'Z" fill="#6fa3d6" opacity=".75"'+tip("Cold, dense air pushes in under the warm air")+'/>';h+='<rect x="6" y="'+G+'" width="190" height="20" fill="#7a9a54"/>';
    const x0=Math.max(40,40+cb/.035),pts=[];for(let x=x0;x<=196;x+=4)pts.push([x,fl(x)-2]);for(let x=196;x>=x0;x-=4)pts.push([x,fl(x)-lerp(16,44,(x-x0)/150)]);
    if(pts.length>4)h+='<path d="'+ln(pts)+'Z" fill="#e9eef3" stroke="#c4ced8"'+tip("A wide sheet of layered cloud along the front")+'/>';h+='<path d="M40,'+G+' L196,'+f1(fl(196))+'" stroke="#c0392b" stroke-width="1.6"/>';for(let x=60;x<190;x+=24)h+='<circle cx="'+x+'" cy="'+f1(fl(x)-1)+'" r="3" fill="#c0392b"/>';
-   b+=T(14,G-8,"warm air",'font-size="6.6" font-weight="800" fill="#c0561d"')+T(180,G-6,"cold air",'font-size="6.6" font-weight="800" text-anchor="end" fill="#1d5f99"')+T(100,f1(fl(100)+12),"front",'font-size="6" font-weight="800" fill="#1d5f99"');s.rx=[x0+4,Math.min(196,x0+110)]}
+   b+=T(14,G-8,"warm air",'font-size="6.6" font-weight="800" fill="#c0561d"')+T(150,G-22,"cold air",'font-size="6.6" font-weight="800" text-anchor="middle" fill="#0f3a63"')+T(100,f1(fl(100)+12),"front",'font-size="6" font-weight="800" fill="#1d5f99"');s.rx=[x0+4,Math.min(196,x0+110)]}
   else{const pts=[];for(let x=6;x<=196;x+=2)pts.push([x,G-mtn(x)*PK]);h+='<path d="'+ln(pts)+'L196,180L6,180Z" fill="#8a9a64"/>';
    h+='<path d="'+ln(pts.filter(p=>p[0]>118))+'L196,180L118,180Z" fill="#c9b07a"/>';
    if(cb<2.6){const xs=pts.filter(p=>p[0]<=118&&(G-p[1])/PK>=cb);if(xs.length){const x0=xs[0][0];h+='<path d="M'+f1(x0-4)+','+f1(cy)+' Q'+f1(x0+10)+','+f1(cy-18)+' 100,'+f1(Math.min(cy,G-2.6*PK)-14)+' Q122,'+f1(G-2.6*PK-18)+' 128,'+f1(G-2.6*PK+4)+' Z" fill="#eef2f6" stroke="#c4ced8"/>';s.rx=[x0,116]}else s.rx=null}else s.rx=null;

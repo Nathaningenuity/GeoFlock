@@ -302,8 +302,9 @@ make("plates",{title:"How fast the plates move",cat:"plates",h:226,
   setHTML(svg,".pl-a",a);
   /* cities ride along */
   let c="";const pos={};CITIES.forEach(([n,k,lon,lat],i)=>{const m=M[k];const q0=P([lon,lat]),ll=t>0?rot(m,lon,lat):[lon,lat],q1=P(ll);pos[n]=ll;if(!q1)return;
-   if(t>0)c+='<path d="M'+f1(q0[0])+','+f1(q0[1])+'L'+f1(q1[0])+','+f1(q1[1])+'" stroke="#fff" stroke-width=".8" stroke-dasharray="1.5 1.5" opacity=".8"/>';
-   c+='<circle cx="'+f1(q1[0])+'" cy="'+f1(q1[1])+'" r="2.1" fill="'+ACC+'" stroke="#fff" stroke-width=".7"'+tip(n+" rides the "+PNAME[k]+" plate")+'/>'+(t>0||i%2===0?T(f1(q1[0]+3),f1(q1[1]-2.5),n,'font-size="5.8" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"'):"")});
+   /* review 2: Honolulu crosses the map's edge; skip the trail that would then run across the whole map, and keep its name inside */
+   if(t>0&&Math.abs(q1[0]-q0[0])<100)c+='<path d="M'+f1(q0[0])+','+f1(q0[1])+'L'+f1(q1[0])+','+f1(q1[1])+'" stroke="#fff" stroke-width=".8" stroke-dasharray="1.5 1.5" opacity=".8"/>';
+   c+='<circle cx="'+f1(q1[0])+'" cy="'+f1(q1[1])+'" r="2.1" fill="'+ACC+'" stroke="#fff" stroke-width=".7"'+tip(n+" rides the "+PNAME[k]+" plate")+'/>'+(t>0||i%2===0?T(f1(q1[0]+(q1[0]>255?-3:3)),f1(q1[1]-2.5),n,(q1[0]>255?'text-anchor="end" ':'')+'font-size="5.8" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"'):"")});
   setHTML(svg,".pl-c",c);
   const dist=(a,b)=>{const x=xyz(a[0],a[1]),y=xyz(b[0],b[1]);return Math.acos(clamp(x[0]*y[0]+x[1]*y[1]+x[2]*y[2],-1,1))*6371};
   let lbl;if(t<.01)lbl="Today: the fastest plates move about 7–10 cm a year, as fast as fingernails grow";
@@ -469,17 +470,18 @@ make("meander",{title:"How a river makes an oxbow lake",cat:"water",h:226,y0:20,
   h+='<path class="me-flow" d="'+ln(chan)+'" fill="none" stroke="#bfe3fb" stroke-width="1.1" stroke-dasharray="3 9" stroke-linejoin="round" opacity=".9"/>';
   /* labels at the middle bend */
   const m=P[Math.floor(P.length/2)],nk=neck(P);
-  if(!cut){h+=T(f1(m[0]),f1(m[1]-22),"cut bank: fast water erodes",'text-anchor="middle" font-size="6.2" font-weight="800" fill="#5a2e14" stroke="#fff" stroke-width="2" stroke-opacity=".7" paint-order="stroke"');
+  if(!cut){h+=T(f1(m[0]),f1(m[1]-16),"cut bank: fast water erodes",'text-anchor="middle" font-size="6.2" font-weight="800" fill="#5a2e14" stroke="#fff" stroke-width="2" stroke-opacity=".7" paint-order="stroke"');
    const pi=off(P,Math.floor(P.length/2),18);h+=T(f1(pi[0]),f1(pi[1]+8),"point bar: slow water drops sand",'text-anchor="middle" font-size="6.2" font-weight="800" fill="#5a4a1a" stroke="#fff" stroke-width="2" stroke-opacity=".7" paint-order="stroke"');
    if(t>tc-.15){const a=P[Math.floor(P.length/2)-55]||m;h+=T(f1(a[0]),f1(a[1]+16),"the neck narrows",'text-anchor="middle" font-size="6.2" font-weight="800" fill="'+ACC+'" stroke="#fff" stroke-width="2" paint-order="stroke"')}}
   else if(ox){const c=ox[Math.floor(ox.length/2)];h+=T(f1(c[0]),f1(c[1]+(c[1]>88?14:-10)),t-tc>.22?"oxbow turning to marsh":"oxbow lake",'text-anchor="middle" font-size="6.8" font-weight="900" fill="#173f6e" stroke="#fff" stroke-width="2.2" paint-order="stroke"')}
   h+=arrow(16,40,36,40,"#fff",1.4,4)+T(40,42,"flow",'font-size="6.2" font-weight="800" fill="#fff"');
   setHTML(svg,".me-p",h);
   /* the river bed across a bend */
-  const x0=220,y0=106;let xs='<rect x="'+(x0-6)+'" y="'+(y0-10)+'" width="82" height="48" rx="6" fill="#fff" opacity=".9"/>'+T(x0+35,y0-2,"across a bend",'text-anchor="middle" font-size="5.8" font-weight="800" fill="'+INK+'"');
+  const x0=220,y0=106;let xs='<rect x="'+(x0-6)+'" y="'+(y0-10)+'" width="82" height="52" rx="6" fill="#fff" opacity=".9"/>'+T(x0+35,y0-2,"across a bend",'text-anchor="middle" font-size="5.8" font-weight="800" fill="'+INK+'"');
   xs+='<path d="M'+x0+','+(y0+6)+' L'+(x0+6)+','+(y0+6)+' L'+(x0+10)+','+(y0+26)+' C'+(x0+22)+','+(y0+28)+' '+(x0+44)+','+(y0+16)+' '+(x0+64)+','+(y0+8)+' L'+(x0+70)+','+(y0+6)+' V'+(y0+34)+' H'+x0+'Z" fill="#b48a5a"/>';
   xs+='<path d="M'+(x0+6)+','+(y0+8)+' L'+(x0+10)+','+(y0+26)+' C'+(x0+22)+','+(y0+28)+' '+(x0+44)+','+(y0+16)+' '+(x0+60)+','+(y0+9)+' L'+(x0+6)+','+(y0+8)+'Z" fill="#3f8fcf" opacity=".9"/><path d="M'+(x0+40)+','+(y0+17)+' C'+(x0+50)+','+(y0+13)+' '+(x0+58)+','+(y0+10)+' '+(x0+64)+','+(y0+8)+'" stroke="#e3cf98" stroke-width="3"/>';
-  xs+=T(x0+2,y0+40,"deep, eroding",'font-size="5.2" font-weight="700" fill="#5a2e14"')+T(x0+72,y0+40,"shallow, sand",'text-anchor="end" font-size="5.2" font-weight="700" fill="#5a4a1a"');
+  /* review 2: the two labels ran into each other below the box */
+  xs+=T(x0-2,y0+40,"deep, eroding",'font-size="4.8" font-weight="700" fill="#5a2e14"')+T(x0+74,y0+40,"shallow, sand",'text-anchor="end" font-size="4.8" font-weight="700" fill="#5a4a1a"');
   setHTML(svg,".me-x",cut?"":xs);
   const yrs=Math.round(t*240);
   txt(svg,".me-st",!cut?(t<.35?"A gentle bend":"The bends grow"):t-tc<.12?"Cut-off! The river takes the short cut":"An oxbow lake, slowly filling in");
@@ -560,25 +562,27 @@ make("monsoon",{title:"Why the monsoon switches on and off",cat:"climate",h:214,
   '<path d="'+landPath("mon",P,f=>{try{const b=d3.geoBounds(f);return b[1][1]>-12&&b[0][1]<45&&b[1][0]>45&&b[0][0]<110}catch(e){return false}})+'" fill="url(#dgMoLand)" stroke="#8e8462" stroke-width=".4"/>';
   /* the Himalayas and the Tibetan plateau */
   const hm=[[73,35],[78,33],[84,29],[88,28],[92,28],[96,29]].map(P);h+='<path d="'+ln(hm)+'" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".85"/><path d="'+ln(hm)+'" fill="none" stroke="#8a7a6a" stroke-width="1" stroke-dasharray="2 2"/>';
-  const t=P([86,33.5]);h+=T(f1(t[0]),f1(t[1]),"Himalayas",'text-anchor="middle" font-size="6" font-weight="800" fill="#5a4a3a"');
+  /* review 2: winds and clouds now sit under the place names (the July clouds hid "India", "Mumbai" and the rain belt) */
+  h+='<g class="mo-w"></g>';
+  const t=P([83.5,33.8]);/* review 2: was 86°E, under the winter "H" (now at 95.5°E) */h+=T(f1(t[0]),f1(t[1]),"Himalayas",'text-anchor="middle" font-size="6" font-weight="800" fill="#5a4a3a"');
   [["Arabian Sea",64,14],["Bay of Bengal",89,14],["India",79,22]].forEach(([n,lo,la])=>{const p=P([lo,la]);h+=T(f1(p[0]),f1(p[1]),n,'text-anchor="middle" font-size="6.2" font-weight="800" fill="'+(n==="India"?"#4a3a2a":"#d8ecfa")+'"')});
   const mb=P([72.9,19.1]);h+='<circle cx="'+f1(mb[0])+'" cy="'+f1(mb[1])+'" r="2.2" fill="'+ACC+'" stroke="#fff" stroke-width=".7"/>'+T(f1(mb[0]-3),f1(mb[1]+2),"Mumbai",'text-anchor="end" font-size="5.8" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"');
-  h+='<g class="mo-w"></g></g><rect x="6" y="6" width="194" height="144" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>';
+  h+='<g class="mo-l"></g></g><rect x="6" y="6" width="194" height="144" rx="8" fill="none" stroke="#9fb2c4" stroke-width=".6"/>';
   h+='<g transform="translate(206,6)"><rect width="88" height="144" rx="8" fill="#fff"/>'+T(6,12,"Rain in Mumbai",'font-size="6.6" font-weight="800" fill="'+INK+'"')+T(6,20,"mm each month",'font-size="5.6" fill="'+SUB+'"')+'<g class="mo-b"></g></g>';
   h+='<text class="mo-big" x="8" y="162" font-size="8.4" font-weight="900" fill="'+INK+'"></text>'+para("mo-tx",8,165,286,26,6.3)+slider("m",14,200,206,"Month")+btn("play",232,192,62,"▶ Play")+hint(8,212,"Drag through the year: the wind turns round and the rain belt moves");
   return h},
  state:()=>({m:6,play:0,ph:0}),
  draw:(svg,s)=>{const P=proj(),m=s.m,w=at(W,m),lat=at(ITCZ,m);let h="";
   /* the rain belt */
-  const y=P([80,lat])[1];h+='<path d="M6,'+f1(y)+' C60,'+f1(y-5)+' 120,'+f1(y+6)+' 200,'+f1(y-3)+'" fill="none" stroke="#fff" stroke-width="7" opacity=".18"/><path d="M6,'+f1(y)+' C60,'+f1(y-5)+' 120,'+f1(y+6)+' 200,'+f1(y-3)+'" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="4 3"/>'+T(196,f1(y-5),"rain belt (ITCZ)",'text-anchor="end" font-size="5.6" font-weight="800" fill="#fff"');
+  const y=P([80,lat])[1];h+='<path d="M6,'+f1(y)+' C60,'+f1(y-5)+' 120,'+f1(y+6)+' 200,'+f1(y-3)+'" fill="none" stroke="#fff" stroke-width="7" opacity=".18"/><path d="M6,'+f1(y)+' C60,'+f1(y-5)+' 120,'+f1(y+6)+' 200,'+f1(y-3)+'" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="4 3"/>';const itcz=T(196,f1(y-5),"rain belt (ITCZ)",'text-anchor="end" font-size="5.6" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.4" paint-order="stroke"');
   /* clouds and rain over the land when the wet wind blows */
   if(w>.2){const k=w;[[73,19],[76,12],[88,24],[91,25],[80,22],[84,20]].forEach(([lo,la],i)=>{const p=P([lo,la]);h+='<g transform="translate('+f1(p[0])+','+f1(p[1]-6)+') scale('+f2(.6+k*.5)+')" opacity="'+f2(.4+k*.6)+'"><circle cx="-4" cy="0" r="5" fill="#f4f7fb"/><circle cx="3" cy="-2" r="6" fill="#f4f7fb"/><circle cx="9" cy="1" r="4" fill="#f4f7fb"/><path d="M-4,6 l-1.5,5 M1,6 l-1.5,6 M6,6 l-1.5,5" stroke="#4a9ad8" stroke-width="1"/></g>'})}
   /* the wind */
   const a=w>0?-Math.PI/4-.15:Math.PI*3/4+.1,sp=Math.abs(w);for(let j=0;j<5;j++)for(let i=0;i<6;i++){const lo=58+i*8+(j%2)*4,la=-2+j*7.5,p=P([lo,la]);const L=4+sp*9,ph=(s.ph*sp*.8+i*.13+j*.29)%1;
    const x0=p[0]+Math.cos(a)*L*(ph-.5)*1.2,y0=p[1]+Math.sin(a)*L*(ph-.5)*1.2;if(sp>.12)h+=arrow(x0,y0,x0+Math.cos(a)*L,y0+Math.sin(a)*L,w>0?"#e8f6ff":"#ffe7c4",1.1,3.4)}
   /* the pressure that drives it */
-  const hp=P([w>0?72:92,w>0?28:32.5]);h+=T(f1(hp[0]),f1(hp[1]),w>0?"L":"H",'text-anchor="middle" font-size="14" font-weight="900" fill="'+(w>0?"#c0392b":"#1d4f86")+'" stroke="#fff" stroke-width="2" paint-order="stroke"')+T(f1(hp[0]),f1(hp[1]+8),w>0?"hot land, low pressure":"cold land, high pressure",'text-anchor="middle" font-size="5.4" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"');
-  setHTML(svg,".mo-w",h);
+  const hp=P([w>0?72:95.5,w>0?28:32.5]);h+=T(f1(hp[0]),f1(hp[1]),w>0?"L":"H",'text-anchor="middle" font-size="14" font-weight="900" fill="'+(w>0?"#c0392b":"#1d4f86")+'" stroke="#fff" stroke-width="2" paint-order="stroke"')+T(f1(hp[0]),f1(hp[1]+8),w>0?"hot land, low pressure":"cold land, high pressure",'text-anchor="middle" font-size="5.4" font-weight="800" fill="#fff" stroke="#1d3047" stroke-width="1.6" paint-order="stroke"');
+  setHTML(svg,".mo-w",h);setHTML(svg,".mo-l",itcz);
   let b="";const bx=6,bw=6,bh=96,by=124;RAIN.forEach((v,i)=>{const H=v/850*bh,on=i===Math.round(m)%12;b+='<rect x="'+f1(bx+i*bw*1.2)+'" y="'+f1(by-H)+'" width="'+bw+'" height="'+f1(Math.max(.6,H))+'" fill="'+(on?ACC:"#3d8fd1")+'"'+tip(MON[i]+": about "+v+" mm")+'/>'+T(f1(bx+i*bw*1.2+bw/2),by+7,MON[i][0],'text-anchor="middle" font-size="5" fill="'+SUB+'"')});
   const mi=Math.round(m)%12;b+=T(6,138,MON[mi]+": "+RAIN[mi]+" mm",'font-size="6.6" font-weight="900" fill="'+INK+'"');setHTML(svg,".mo-b",b);
   txt(svg,".mo-big",w>.2?MON[mi]+": the wet south-west monsoon":w<-.2?MON[mi]+": the dry north-east monsoon":MON[mi]+": the wind is turning round");

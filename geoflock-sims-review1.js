@@ -110,7 +110,7 @@ Object.keys(Q).forEach(k=>{const D=DG[k];if(!D||D._gq)return;const [qq,opts,ans,
   const L=wrap(qq,W,58),y0=Math.max(16,H/2-28-L.length*6);L.forEach((l,i)=>{o+=dgT(W/2,y0+i*12,esc(l),'text-anchor="middle" font-size="9.5" font-weight="800" fill="'+INK+'"')});
   const bw=opts.length>3?66:opts.length>2?84:110,gap=6,tw=opts.length*bw+(opts.length-1)*gap,bx=(W-tw)/2,by=y0+L.length*12+6;
   opts.forEach((t,i)=>{const x=bx+i*(bw+gap);o+='<g data-act="gq:'+i+'" class="gq-b gq-b'+i+'" style="cursor:pointer"><rect x="'+x+'" y="'+by+'" width="'+bw+'" height="18" rx="9" fill="#fff" stroke="'+ACC+'" stroke-width="1.4"/>'+dgT(x+bw/2,by+12.2,esc(t),'text-anchor="middle" font-size="7.6" font-weight="800" fill="'+INK+'"')+'</g>'});
-  o+='<g class="gq-why"></g><g data-act="gq:skip" style="cursor:pointer">'+dgT(W/2,by+34,"just show me the chart",'text-anchor="middle" font-size="6.8" font-weight="700" fill="#5b6b80" text-decoration="underline"')+'</g></g>';
+  o+='<g class="gq-why"></g><g data-act="gq:skip" style="cursor:pointer"><rect x="'+(W/2-60)+'" y="'+(by+25)+'" width="120" height="13" fill="transparent"/>'+dgT(W/2,by+34,"just show me the chart",'text-anchor="middle" font-size="6.8" font-weight="700" fill="#5b6b80" text-decoration="underline"')+'</g></g>';
   return s.replace(/<\/svg>\s*$/,o+"</svg>")};
  D.act=(svg,a)=>{if(!/^gq:/.test(a))return act0?act0.call(D,svg,a):false;const ov=svg.querySelector(".gq-ov");if(!ov||ov._done)return true;
   const hide=()=>{ov._done=1;ov.style.transition="opacity .5s";ov.style.opacity="0";setTimeout(()=>{ov.style.display="none"},520)};
