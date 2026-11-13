@@ -86,6 +86,19 @@ const FIX={
      the Atlantic between them, with Shanghai round the back and the American four at the globe's edge (the card, on the
      right, covered the rest). Shanghai and London have their own stops later; the American four are framed */
   "Building better cities":S=>{DROPPH(S,/^(Shanghai|London)/);VIEW(S,[-93,36,1.15])}
+ },
+ hg6d:{
+  /* the seven photos span the world (Baltimore, Brooklyn, Lagos, Rio de Janeiro, Manila, Jakarta, Curitiba): Manila and
+     Jakarta were round the back and Rio and Curitiba below the screen's bottom edge (Rio's photo still hung there when
+     framed on the Americas). All but Curitiba have their own stops later (Curitiba is in the last stop's text); the
+     three round the North Atlantic are framed */
+  "Cities under pressure":S=>{DROPPH(S,/^(Manila|Jakarta|Curitiba|Rio)/);VIEW(S,[-24,28,1])},
+  /* Brooklyn's photo pin is dropped by index.html (it has no square photo), which left the stop with nothing on the map */
+  "Gentrification":S=>ADDAREA(S,[-73.95,40.68],"Brooklyn"),
+  /* "Lagos and Kinshasa, each over 15 million": by the UN's 2025 count (World Urbanization Prospects 2025, the count the
+     megacity stop of A world of cities uses) Lagos has about 12.8 million and Kinshasa about 10.9 million (The Star,
+     Kenya, 21 Jan 2026, "The 15 most populous cities in Africa", citing WUP 2025) */
+  "Informal settlements":S=>RE(S,"body","Lagos and Kinshasa, each over 15 million, are among","Lagos and Kinshasa, with about 13 and 11 million people by the UN’s 2025 count, are among")
  }
 };
 const applied=new WeakSet();
@@ -383,7 +396,36 @@ const BROWN=CLASSIFY({tours:["hg6c"],title:"Brownfields",below:true,
   ["A shopping centre on a closed steelworks","b","Reusing an old industrial site spares a field somewhere else."],
   ["Offices on woodland cleared beside a motorway junction","g","Never built on before, so it is greenfield, even though it is next to a road."]],
  end:()=>"Brownfields cost more to clean but spare the countryside; that is why smart growth puts them first."});
-const DEFS=[RAIL,SPRAWL,JAX,WORLDC,CPT,MODELS,INOUT,MAGNETS,SUPER,BROWN];
+
+/* ======================================================================== hg6d: Cities under pressure */
+/* ---- Gentrification in four steps: the usual stage model of the process (as the stop describes it: wealthier people
+   move in, renovate, new cafés and shops open, rents rise, long-time residents are pushed out). No figures. */
+const GENTRI=SORT({tours:["hg6d"],title:"Gentrification",below:true,bars:false,
+ tip:"Put the four steps of gentrification in order.",first:"First step",last:"Last step",
+ items:[["Rents are low, so students and artists move in",1,"1st",""],["Cafés and galleries open; the area gets a name",2,"2nd",""],
+  ["Developers renovate, and prices and rents climb",3,"3rd",""],["Long-time residents and small shops are priced out",4,"4th",""]],
+ after:(r,N)=>"Each step makes the next more likely: cheap rents draw pioneers, their cafés draw the better-off, and rising rents push out the people who were there first."});
+
+/* ---- Name the pressure: a review of the tour's own terms, each with a made-up but typical case. */
+const PRESS=CLASSIFY({tours:["hg6d"],title:"Moving people",below:true,
+ tip:"Review: which of this tour’s pressures is each one?",ask:"Which pressure is this?",
+ kinds:[["red","Redlining","redlining"],["blk","Blockbusting","blockbusting"],["gen","Gentrification","gentrification"],["dis","Disamenity zone","a disamenity zone"],["ab","Zone of abandonment","a zone of abandonment"],["env","Environmental injustice","environmental injustice"]],
+ items:[["Banks refuse every mortgage in a district because of who lives there","red","Redlining: the 1930s HOLC maps shaded such districts red as “hazardous”."],
+  ["Cafés open, rents double, and long-time tenants have to move out","gen","Gentrification: investment arrives, but the people who lived there are pushed out."],
+  ["Families build shacks on a rubbish dump at the city’s edge","dis","A disamenity zone: the worst land, left to the poorest, like Manila’s Payatas dump."],
+  ["Agents tell white owners prices will crash, buy cheap and resell dear","blk","Blockbusting: fear sold for profit, which deepened segregation."],
+  ["A car town loses its factories; whole streets of houses stand empty","ab","A zone of abandonment, like much of Detroit."],
+  ["A city puts its incinerator beside a poor, mostly minority district","env","Environmental injustice: the pollution goes where people have least power to refuse it."]],
+ end:()=>"Some pressures come from disinvestment (redlining, abandonment), some from new money (gentrification), and some from where the hazards are put."});
+
+/* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
+   Venice's historic centre fell to 49,997 residents on 10 August 2022, below 50,000 for the first time (ANSA, 11 Aug
+   2022, city council figures). */
+function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
+ const GS={"hg6d|Venice is emptying":{q:"In 1951 about 175,000 people lived in Venice’s historic centre. How many live there now?",min:10000,max:200000,ans:49997,unit:"",step:1000,show:"under 50,000 (49,997 in August 2022)"}};
+ for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
+if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
+const DEFS=[RAIL,SPRAWL,JAX,WORLDC,CPT,MODELS,INOUT,MAGNETS,SUPER,BROWN,GENTRI,PRESS];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
