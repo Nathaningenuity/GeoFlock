@@ -431,6 +431,7 @@ function picOf(key){try{const im=typeof globeImages==="function"?globeImages(key
  const c=document.createElement("canvas");c.width=2048;c.height=1024;const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(im[0],0,0,1024,1024);x.drawImage(im[1],1024,0,1024,1024);
  PIC={a:im[0],b:im[1],d:x.getImageData(0,0,2048,1024).data,n:0};return PIC}catch(e){return null}}
 const picAt=(P,lo,la)=>{const x=Math.max(0,Math.min(2047,Math.floor((((lo+180)%360+360)%360)/360*2048))),y=Math.max(0,Math.min(1023,Math.floor((90-la)/180*1024))),o=(y*2048+x)*4;return[P.d[o],P.d[o+1],P.d[o+2]]};
+const picBil=(P,lo,la)=>{const x=(((lo+180)%360+360)%360)/360*2048-.5,y=(90-la)/180*1024-.5,x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0,D=P.d,at=(X,Y)=>(Math.max(0,Math.min(1023,Y))*2048+((X%2048)+2048)%2048)*4,a=at(x0,y0),b=at(x0+1,y0),c=at(x0,y0+1),d=at(x0+1,y0+1);const o=[0,0,0];for(let k=0;k<3;k++)o[k]=(D[a+k]*(1-fx)+D[b+k]*fx)*(1-fy)+(D[c+k]*(1-fx)+D[d+k]*fx)*fy;return o};
 /* the picture's sea: clearly blue and not bright (pale bluish ice caps, as on Baffin Island, are land) */
 const seaish=p=>p[2]>p[0]+25&&p[0]<190;/* (pale shallows such as the Bahama Banks are sea; ice is bright in red too) */
 /* each stretch of coast: the median colour of the picture's land 8–16 km inland of it (whichever side is land there) */
@@ -448,7 +449,7 @@ function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))
  if(n<6||y1>85||y0<-85)return null;const pad=.08*Math.max(x1-x0,y1-y0);x0-=pad;x1+=pad;y0-=pad;y1+=pad;
  /* two screen pixels a cell, at most 900 cells a side */
  /* about a screen pixel a cell, longitude and latitude each (a degree of longitude is short far north), at most 1400 a side */
- const csx=Math.max((x1-x0)/w,(x1-x0)/1400,.001),csy=Math.max((y1-y0)/h,(y1-y0)/1400,.001),cs=csy;const nx=Math.ceil((x1-x0)/csx),ny=Math.ceil((y1-y0)/csy),lon0=c[0]+x0,lat1=y1;
+ const csx=Math.max((x1-x0)/w,(x1-x0)/1100,.001),csy=Math.max((y1-y0)/h,(y1-y0)/1100,.001),cs=csy;const nx=Math.ceil((x1-x0)/csx),ny=Math.ceil((y1-y0)/csy),lon0=c[0]+x0,lat1=y1;
  /* the tiles' land on the grid (finer tiles drawn last, over their parents) */
  const cv=document.createElement("canvas");cv.width=nx;cv.height=ny;const m=cv.getContext("2d",{willReadFrequently:true});m.fillStyle="#808080";m.fillRect(0,0,nx,ny);/* grey: no tile there */
  const X=lo=>(((lo-lon0)%360+540)%360-180+(lon0-lon0))/cs,XX=lo=>{let d=lo-lon0;d=((d%360)+540)%360-180;return d/csx},Y=la=>(lat1-la)/cs;
@@ -456,16 +457,45 @@ function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))
  s.tiles.filter(t=>t.d).sort((a,b)=>a.z-b.z).forEach(t=>{const N=2**t.z,ll=(x,y)=>{const mm=Math.PI*(1-2*y/N);return[x/N*360-180,Math.atan(Math.sinh(mm))*180/Math.PI]};const a=ll(t.x,t.y),b=ll(t.x+1,t.y+1);
   m.save();m.beginPath();m.rect(XX(a[0]),Y(a[1]),(b[0]-a[0])/csx,(a[1]-b[1])/cs);m.clip();m.fillStyle="#fff";m.fillRect(0,0,nx,ny);m.beginPath();t.d.ocean.forEach(o=>o.rings.forEach(r=>lin(m,r,true)));m.fillStyle="#000";m.fill("evenodd");/* rivers and lakes are left as the picture has them (wide rivers such as the Amazon are blue in it; copying land over them made blocks) */m.beginPath();t.d.lakes.forEach(K=>K.rings.forEach(r=>lin(m,r,true)));m.lineWidth=3;m.strokeStyle=m.fillStyle="#808080";m.fill("evenodd");m.stroke();m.restore()});
  const M=m.getImageData(0,0,nx,ny).data,N=nx*ny,state=new Int8Array(N);
- /* 1 land in both, 2 land the picture shows as sea (a gap), 3 sea in both, 4 sea the picture shows as land (a blur of land
-    out over the water, round small islands and ice) */
- for(let j=0;j<ny;j++){const la=lat1-(j+.5)*cs;for(let i=0;i<nx;i++){const k=j*nx+i,v=M[k*4];if(v>96&&v<160)continue;const ps=seaish(picAt(P,lon0+(i+.5)*csx,la));state[k]=v>=160?(ps?2:1):(ps?3:4)}}
- /* each gap takes the nearest picture land, each blur the nearest picture sea: a breadth-first spread (at most 120 cells) */
- const src=new Int32Array(N).fill(-1),q=new Int32Array(N);let any=false;
- for(const[from,to]of[[1,2],[3,4]]){let qh=0,qt=0;for(let k=0;k<N;k++)if(state[k]===from){src[k]=k;q[qt++]=k}
+ /* 1 land in both, 2 land the picture can't colour (it shows sea there, or a pixel blended toward the sea along its coast),
+    3 sea in both, 4 sea the picture shows as land (a blur of land out over the water, round small islands and ice).
+    The picture is read smoothly (bilinear) so the line between 1 and 2 follows the coast instead of the picture's pixel steps. */
+ const PO=.7*180/1024;/* about two thirds of a picture pixel */
+ const bad=p=>p[2]>p[0]+6&&!(p[0]>205&&p[1]>205);/* bluish, and not ice */
+ const CR=new Uint8Array(N*3);
+ for(let j=0;j<ny;j++){const la=lat1-(j+.5)*cs;for(let i=0;i<nx;i++){const k=j*nx+i,v=M[k*4];if(v>96&&v<160)continue;const lo=lon0+(i+.5)*csx;
+   if(v>=160){const p=picBil(P,lo,la);let ok=!bad(p);if(ok)for(const[dx,dy]of[[PO,0],[-PO,0],[0,PO],[0,-PO]])if(bad(picBil(P,lo+dx,la+dy))){ok=false;break}
+    state[k]=ok?1:2;if(ok){CR[k*3]=p[0];CR[k*3+1]=p[1];CR[k*3+2]=p[2]}}
+   else state[k]=seaish(picAt(P,lo,la))?3:4}}
+ /* land the picture can't colour: filled smoothly from the good land round it (a push-pull fill: averaged over ever coarser
+    grids, then brought back down blended), so a sliver of coast takes the colour of the land just inland, with no streaks.
+    Land with no good land within about 25 km (small islets) takes a plain land colour instead: the median of the view's land. */
+ let any2=false,any4=false;for(let k=0;k<N;k++){if(state[k]===2)any2=true;else if(state[k]===4)any4=true}
+ const out=new Uint8ClampedArray(N*4);
+ if(any2){const L=[];let w=nx,h=ny,R=new Float32Array(N),G=new Float32Array(N),B=new Float32Array(N),W=new Float32Array(N);
+  for(let k=0;k<N;k++)if(state[k]===1){R[k]=CR[k*3];G[k]=CR[k*3+1];B[k]=CR[k*3+2];W[k]=1}
+  L.push({w,h,R,G,B,W});
+  while(w>1||h>1){const w2=Math.max(1,Math.ceil(w/2)),h2=Math.max(1,Math.ceil(h/2)),n2=w2*h2,R2=new Float32Array(n2),G2=new Float32Array(n2),B2=new Float32Array(n2),W2=new Float32Array(n2);
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++){const k=y*w+x,q=(y>>1)*w2+(x>>1),ww=W[k];if(!ww)continue;R2[q]+=R[k]*ww;G2[q]+=G[k]*ww;B2[q]+=B[k]*ww;W2[q]+=ww}
+   for(let q=0;q<n2;q++)if(W2[q]){R2[q]/=W2[q];G2[q]/=W2[q];B2[q]/=W2[q];W2[q]=Math.min(1,W2[q])}
+   L.push({w:w2,h:h2,R:R2,G:G2,B:B2,W:W2});w=w2;h=h2;R=R2;G=G2;B=B2;W=W2}
+  for(let l=L.length-2;l>=0;l--){const A=L[l],C=L[l+1];for(let y=0;y<A.h;y++){const py=Math.max(0,Math.min(C.h-1,(y+.5)/2-.5)),y0=Math.floor(py),y1=Math.min(C.h-1,y0+1),fy=py-y0;
+    for(let x=0;x<A.w;x++){const k=y*A.w+x,ww=A.W[k];if(ww>=1)continue;const px=Math.max(0,Math.min(C.w-1,(x+.5)/2-.5)),x0=Math.floor(px),x1=Math.min(C.w-1,x0+1),fx=px-x0;
+     const bl=c=>(c[y0*C.w+x0]*(1-fx)+c[y0*C.w+x1]*fx)*(1-fy)+(c[y1*C.w+x0]*(1-fx)+c[y1*C.w+x1]*fx)*fy;
+     A.R[k]=A.R[k]*ww+bl(C.R)*(1-ww);A.G[k]=A.G[k]*ww+bl(C.G)*(1-ww);A.B[k]=A.B[k]*ww+bl(C.B)*(1-ww);A.W[k]=1}}}
+  /* how far each gap cell is from good land (in cells, through land), to pick out islets with none near */
+  const far=Math.max(3,Math.round(25/(cs*111.2))),dist=new Int32Array(N).fill(-1),q=new Int32Array(N);let qh=0,qt=0;
+  for(let k=0;k<N;k++)if(state[k]===1){dist[k]=0;q[qt++]=k}
+  while(qh<qt){const k=q[qh++],i=k%nx,j=(k-i)/nx;if(dist[k]>=far)continue;for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=ny)continue;const kk=b*nx+a;if(state[kk]!==2||dist[kk]>=0)continue;dist[kk]=dist[k]+1;q[qt++]=kk}}
+  /* the plain land colour: the median of the good land in view (a fixed muted green-tan when there is none) */
+  let neu=[178,176,128];{const S=[[],[],[]];for(let k=0;k<N;k+=7)if(state[k]===1)for(let c=0;c<3;c++)S[c].push(CR[k*3+c]);if(S[0].length>20)neu=S.map(v=>v.sort((x,y)=>x-y)[v.length>>1])}
+  const F0=L[0];for(let k=0;k<N;k++){if(state[k]!==2)continue;const o=k*4;if(dist[k]<0){out[o]=neu[0];out[o+1]=neu[1];out[o+2]=neu[2]}else{out[o]=F0.R[k];out[o+1]=F0.G[k];out[o+2]=F0.B[k]}out[o+3]=128}}
+ /* each blur of picture land over the sea takes the nearest picture sea (an offset, drawn by the shader from there) */
+ if(any4){const src=new Int32Array(N).fill(-1),q=new Int32Array(N);let qh=0,qt=0;for(let k=0;k<N;k++)if(state[k]===3){src[k]=k;q[qt++]=k}
   while(qh<qt){const k=q[qh++],i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;
-   for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=ny)continue;const kk=b*nx+a;if(state[kk]!==to||src[kk]>=0)continue;if(Math.abs(a-si)>40||Math.abs(b-sj)>40)continue;src[kk]=sk;q[qt++]=kk;any=true}}}
- if(!any)return{none:true};
- const out=new Uint8ClampedArray(N*4);for(let k=0;k<N;k++){if((state[k]!==2&&state[k]!==4)||src[k]<0)continue;const i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;out[k*4]=128+(si-i);out[k*4+1]=128-(sj-j);out[k*4+3]=255}
+   for(const[di,dj]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=nx||b>=ny)continue;const kk=b*nx+a;if(state[kk]!==4||src[kk]>=0)continue;if(Math.abs(a-si)>40||Math.abs(b-sj)>40)continue;src[kk]=sk;q[qt++]=kk}}
+  for(let k=0;k<N;k++){if(state[k]!==4||src[k]<0)continue;const i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;out[k*4]=128+(si-i);out[k*4+1]=128-(sj-j);out[k*4+3]=255}}
+ if(!any2&&!any4)return{none:true};
  return{nx,ny,data:out,bb:[lon0,lat1,nx*csx,ny*cs],k:[csx,cs]}}
 window.gfFillPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!/^(relief|gfRelShade|reliefAdj)/i.test(String(o.key||"")))return null;
  const s=on(gv);if(!s||s.z<COASTZ)return null;const key=[o.key,gv.rot[0].toFixed(3),gv.rot[1].toFixed(3),gv.zoom.toFixed(3),s.tiles.filter(t=>t.d).length].join("|");
