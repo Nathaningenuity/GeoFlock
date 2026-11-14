@@ -154,6 +154,44 @@ FIX.houses={
     stop opens on Titicaca, and buttons (part 2) turn the globe to each */
  "Homes on the water":S=>VIEW(S,[-69.9,-15.8,2.4])
 };
+FIX.biomes={
+ /* the Amazon, Monteverde and polar bear photos sat under the card (each has its own stop), and the Cape winelands' label
+    below the screen (the Cape is on the Mediterranean scrub stop); on the first launch the taiga photo sat on the search
+    box (the taiga has its own stop) */
+ "Biomes":S=>{DROPPH(S,/^(The Amazon from the air|Monteverde|Polar bear|Cape winelands|Taiga in the Sayan)/);VIEW(S,[32,18,1])},
+ /* the "rising air" label sat under the card (over the Amazon), the taiga's and Australia's round the back of the globe:
+    the labels move onto the 25° E walk of the sorting game (part 2), from the Congo to Finland, framed on Africa and
+    Europe */
+ "Why biomes follow latitude":S=>{MOVE(S,/^Rising air/,[23,1]);MOVE(S,/^Cold: taiga/,[30,64]);
+  XF(S,"pins","dropAus",P=>P.filter(p=>!(Array.isArray(p)&&/^Sinking air/.test(strip(p[1]))&&Array.isArray(p[0])&&p[0][0]>100)));VIEW(S,[26,30,1.05])},
+ /* the Yana Bay photo sat under the card and the north-east Greenland photo above the globe: framed on Canada's tundra */
+ "Tundra":S=>DROPPH(S,/^(Thawing coast|Northeast Greenland)/),
+ /* the moose's photo hung above the screen */
+ "Taiga":S=>DROPPH(S,/^A moose$/),
+ /* the Great Smoky Mountains photo sat under the card, half a world from the stop's frame on Europe */
+ "Temperate forest":S=>DROPPH(S,/^Great Smoky/),
+ /* the prairie and the bison sat under the card at the top of the screen, the pampas and the rhea round the back of the
+    globe, the Highveld below the screen: the stop opens on the steppe, and buttons (part 2) turn the globe to each */
+ "Grasslands: steppe, prairie and pampas":S=>VIEW(S,[70,47,1.3]),
+ /* four of the five regions were under the card, below the screen or round the back of the globe: the stop opens on
+    the Mediterranean, and buttons (part 2) turn the globe to each */
+ "Mediterranean scrub":S=>VIEW(S,[20,40,1.7]),
+ /* the Namib's photo hung below the screen, the Gobi's above it and the oryx's on the globe's edge by the map key (the
+    other desert stops show them) */
+ "The desert biome":S=>DROPPH(S,/^(Deadvlei|Camels in the Gobi|Arabian oryx)/),
+ /* the two rainfall labels sat at the east end of their dashed lines, under the map key: they move to the middle of
+    each line */
+ "Where the desert has a shore":S=>{MOVE(S,/^about 200 mm/,[8,16.8]);MOVE(S,/^about 600 mm/,[8,12.3])},
+ /* the elephants' photo sat under the map key and the lion's label below the screen; the Cerrado and the Llanos were
+    under the card and northern Australia round the back: buttons (part 2) turn the globe to each */
+ "Savanna":S=>VIEW(S,[36,-11,1.6]),
+ /* the Amazon and the tree frog sat under the card, Borneo and New Guinea round the back of the globe: the stop opens on
+    the Congo, and buttons (part 2) turn the globe to each */
+ "Tropical rainforest":S=>VIEW(S,[22,0,1.4]),
+ /* the Brooks Range label hung above the screen and the forest fire's photo (in Oregon) sat under the card: framed
+    from above the pole, Yamal and the Brooks Range on either side */
+ "Biomes on the move":S=>{DROPPH(S,/^A forest fire/);VIEW(S,[109,82,1.5])}
+};
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title). On a tour's very first launch index.html flies to the opening stop before the fixes above are applied to it
@@ -455,6 +493,63 @@ const CLIMHOME=CLASSIFY({tours:["houses"],title:"Now explore",turns:true,below:t
   ["Iceland’s turf houses","cold","Thick walls of cut turf kept out the long, windy winters.",[-19.36,65.54,2.4]]],
  end:()=>"Before central heating and air conditioning, every home had to suit its climate, built of whatever lay close at hand."});
 
+/* ======================================================================== biomes */
+/* ---- Why biomes follow latitude: walk north along about 25° E and put the biomes in the order you meet them. Places
+   and latitudes: Kisangani 0.5° N (Congo rainforest), Wau 7.7° N (South Sudan's savanna), Kufra 24.2° N (Sahara),
+   Athens 38° N (Mediterranean), Białowieża 52.7° N (temperate forest, the tour's own stop), Oulu 65° N (Finland's
+   taiga), the North Cape 71.2° N (tundra) (Wikipedia, each place); the order is the stop's own: rainforest at the
+   Equator, deserts near 30°, then forest, taiga and tundra. */
+const LATWALK=SORT({tours:["biomes"],title:"Why biomes follow latitude",
+ tip:"Walk north from the Congo to the Arctic along 25° E. In what order do you meet the biomes?",
+ first:"Nearest the Equator",last:"Nearest the pole",bars:false,
+ items:[["Rainforest",.5,"Kisangani, 0.5° N"],["Savanna",7.7,"Wau, 7.7° N"],["Desert",24.2,"Kufra, 24° N"],["Mediterranean scrub",38,"Athens, 38° N"],
+  ["Temperate forest",52.7,"Białowieża, 53° N"],["Taiga",65,"Oulu, 65° N"],["Tundra",71.2,"North Cape, 71° N"]],
+ after:(r,N)=>"Rain every day near the Equator, deserts where the air sinks near 30°, then longer and colder winters: forest, taiga and finally treeless tundra. "+(r===N?"You walked it perfectly.":"The same stripes circle the whole globe.")});
+
+/* ---- Review on the last stop: which biome is each place in? (from the tour's own stops) */
+const WHICHBIOME=CLASSIFY({tours:["biomes"],title:"Now explore",turns:true,below:true,
+ tip:"Review: which biome is each place in? Each answer turns the globe there.",ask:"Which biome?",
+ kinds:[["tundra","Tundra","tundra"],["taiga","Taiga","taiga"],["grass","Grassland","grassland"],["desert","Desert","desert"],["savanna","Savanna","savanna"],["rain","Rainforest","rainforest"]],
+ items:[["Churchill, on Hudson Bay","tundra","Polar bears wait on the tundra here each autumn for the sea to freeze.",[-94.17,58.77,2.2]],
+  ["The Serengeti","savanna","Grass with scattered trees, where the year splits into a wet season and a long dry one.",[34.8,-2.3,2.2]],
+  ["Oymyakon, Siberia","taiga","Among the coldest villages on Earth, in the larch forest of the taiga.",[143.2,63.46,2]],
+  ["The Gobi","desert","A desert, but not a hot one: it has bitter winters.",[103,42.5,2]],
+  ["The Amazon","rain","Rain almost every day and warmth all year, so plants never stop growing.",[-62,-3.5,2]],
+  ["The Argentine pampas","grass","Too dry for forest, too wet for desert: grass, and now one of the world’s breadbaskets.",[-61,-35,2]],
+  ["Erg Chebbi, in the Sahara","desert","Less than about 250 mm of rain a year.",[-4,31.1,2.2]],
+  ["The Cerrado of Brazil","savanna","South America’s own savanna.",[-47.9,-15.8,2]],
+  ["The Yamal peninsula","tundra","Treeless, though shrubs are spreading as summers warm.",[69,70,2]],
+  ["Borneo","rain","Giant trees above a closed canopy 30–45 m up.",[114,1,2]],
+  ["Ukraine’s steppe","grass","Grass roots built its thick, black, fertile soils.",[35,47.5,2]]],
+ end:()=>"Warmth and rain set the biome: the same few landscapes repeat on every continent."});
+/* ---- buttons that turn the globe between a stop's places, too far apart to show at once (texts from each stop) */
+const GRASS=TURNER({tours:["biomes"],title:"Grasslands: steppe, prairie and pampas",tip:"Grasslands on four continents. Turn the globe to each.",
+ intro:"Pick a grassland to fly there.",
+ places:[["Ukraine’s steppe",35,48,2.2,"Deep grass roots built thick, black, fertile soils: a breadbasket."],
+  ["Mongolian steppe",106,47,2.2,"Near the eastern end of the grass belt that runs about 8,000 km from Hungary."],
+  ["Prairie",-100,43,2,"Only a few per cent of North America’s tallgrass prairie is left; the rest is maize, wheat and soy."],
+  ["Pampas",-61,-35,2.2,"Argentina’s grassland, another of the world’s breadbaskets."],
+  ["Highveld",29,-26,2.4,"South Africa’s high, grassy plateau."]]});
+const MEDI=TURNER({tours:["biomes"],title:"Mediterranean scrub",tip:"Five small regions with the same climate. Turn the globe to each.",
+ intro:"Pick a region to fly there. Which side of its continent is each on?",
+ places:[["Mediterranean",15,40,2,"Olives, grapes, cork oaks and the cedars of Lebanon, round the sea that gave the biome its name."],
+  ["California",-120,36,2.2,"On the west side of North America, 30–40° from the Equator."],
+  ["Central Chile",-71.5,-33.5,2.4,"On the west side of South America, 30–40° south."],
+  ["Cape fynbos",19,-33.8,2.6,"About 9,000 kinds of plants, most found nowhere else."],
+  ["South-west Australia",117,-32,2.2,"Again the west side of a continent, 30–40° from the Equator: home of the quokka."]]});
+const SAVA=TURNER({tours:["biomes"],title:"Savanna",tip:"Savannas on three continents. Turn the globe to each.",
+ intro:"Pick a savanna to fly there.",
+ places:[["Serengeti",34.8,-2.3,2.4,"Elephants, giraffes, zebras, wildebeest and the lions that hunt them."],
+  ["Cerrado",-47,-15,2.2,"Brazil’s savanna."],
+  ["Llanos",-67,7,2.4,"The savanna plains of Venezuela and Colombia."],
+  ["Northern Australia",132,-15,2.2,"A savanna of gum trees."]]});
+const RAIN=TURNER({tours:["biomes"],title:"Tropical rainforest",tip:"The great rainforests sit on the Equator. Turn the globe to each.",
+ intro:"Pick a forest to fly there.",
+ places:[["Congo basin",23,0,2.2,"Africa’s rainforest, home of the western gorilla."],
+  ["Amazon",-62,-4,2,"The biggest rainforest of all."],
+  ["Borneo",114,1,2.4,"Home of the orangutan."],
+  ["New Guinea",142,-5,2.2,"The rainforest of the world’s second-biggest island."]]});
+
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    Kumbh Mela: "more than 660 million (66 crores) people had taken a dip in the river" by 26 February, over the 45 days
    from 13 January to 26 February 2025 (Wikipedia, "2025 Prayag Maha Kumbh Mela"; The Economist doubted the official
@@ -483,7 +578,7 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
 .rvy-ppl circle{fill:#13294b;stroke:#fff;stroke-width:.6}
 `;document.head.appendChild(s)}
 
-const DEFS=[RAMADAN,HARVEST,SUNMOON,STILTS,EARTH,UNDER,ROOFS,SETTLE,WATER,PITCH,CLIMHOME];
+const DEFS=[RAMADAN,HARVEST,SUNMOON,STILTS,EARTH,UNDER,ROOFS,SETTLE,WATER,PITCH,CLIMHOME,LATWALK,WHICHBIOME,GRASS,MEDI,SAVA,RAIN];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
