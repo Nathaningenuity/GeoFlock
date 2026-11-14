@@ -25,8 +25,11 @@ const LOCK=(S,k,v)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.co
  Object.defineProperty(S,k,{configurable:TEST(),enumerable:true,get:()=>v,set:()=>{}})}catch(e){try{S[k]=v}catch(err){}}};
 /* a field that keeps taking new values from other scripts, but always reads back filtered */
 const FILT=(S,k,fn)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.get&&d.get._rvs){d.get._rvs.push(fn);return}if(d&&d.configurable===false)return;let v=S[k];const fns=[fn];
- const get=()=>fns.reduce((x,f)=>{try{return f(x)}catch(e){return x}},v);get._rvs=fns;
- Object.defineProperty(S,k,{configurable:TEST(),enumerable:true,get,set:x=>{v=x}})}catch(e){}};
+ /* a field that another script already serves through its own (configurable) getter, as geoflock-polish-m.js does for
+    the photos it adds, keeps that getter and setter underneath */
+ const og=d&&d.get,os=d&&d.set;
+ const get=()=>fns.reduce((x,f)=>{try{return f(x)}catch(e){return x}},og?og.call(S):v);get._rvs=fns;
+ Object.defineProperty(S,k,{configurable:TEST(),enumerable:true,get,set:x=>{if(os)os.call(S,x);else v=x}})}catch(e){}};
 /* swap one phrase in a text field, now and whenever another script sets the field again */
 const RE=(S,k,a,b)=>FILT(S,k,t=>typeof t==="string"&&t.indexOf(a)>=0?t.split(a).join(b):t);
 const pinText=p=>Array.isArray(p)?String(p[1]||""):String(p&&(p.text||p.label)||"");
@@ -120,12 +123,43 @@ const FIX={
      globe faces Australasia, and the Changpa nomads' photo, the Tibet label (which then hung over the map's switches at
      the top) and the general "1–2% Neanderthal DNA" label, placed in Germany, go; the text still tells Tibet's story */
   "We still carry them":S=>{DROP(S,/^(About 1–2% Neanderthal|Tibet)/);DROPPH(S,/^Changpa/);VIEW(S,[144,-17,1])}
+ },
+ islandlife:{
+  /* the seven photos span the world: the Komodo dragon, the dodo and the dragon's blood tree were round the back of the
+     globe, the marine iguana under the map key, and Ball's Pyramid and the kākāpō at the screen's bottom. Each has its
+     own stop; the Pacific's three (Hawaii, Lord Howe, New Zealand) are framed beside the card */
+  "Islands of life":S=>{DROPPH(S,/^(Komodo|The dodo|Dragon|Marine iguana)/);VIEW(S,[-178,-6,1])},
+  /* the coconut crab (Chagos) and the Aldabra tortoises, 50–75° west of Komodo, were under the card and off the globe's
+     edge, and the giant wētā under the map key. The next stop's game visits Aldabra; the coconut crab has its own
+     mention on the red crabs' stop */
+  "Island giants":S=>{DROPPH(S,/^(Coconut crab|Aldabra)/);VIEW(S,[138,-22,1.25])},
+  /* the Key deer was under the card, the island fox round the back of the globe and Wrangel's mammoth on the map's
+     switches at the top. The stop opens on the Mediterranean's dwarfs; its game (part 3) turns the globe to the rest */
+  "Island dwarfs":S=>{DROPPH(S,/^(Key deer|Island fox|Wrangel)/);VIEW(S,[22,37,2.2])},
+  /* Socotra itself, and its three photos, sat under the card's edge */
+  "Socotra":S=>VIEW(S,[56.5,12.5,6]),
+  /* the card opened on the right, and the takahē's photo hung under the map key on the left */
+  "A land of birds":S=>VIEW(S,[172,-41,4.7]),
+  /* the elephant bird's photo was under the card and New Zealand below the map key: the globe now faces the Indian
+     Ocean between them, zoomed out (the kiwi's photo, which then hung under the key, goes: the kiwi has its own photo
+     on the stop before) */
+  "The kiwi’s Madagascan cousin":S=>{DROPPH(S,/^A kiwi$/);VIEW(S,[118,-22,1])},
+  /* the globe faced South-East Asia, between Mauritius and Guam, both round its edges (the Guam photos beyond the
+     right edge, Mauritius off the left). It opens on Guam; buttons (part 3) turn it to Mauritius and back */
+  "Strangers from the ships":S=>VIEW(S,[144.8,13.4,3.5]),
+  /* the Baikal seal's photo, 6,000 km away in Siberia, pulled at the framing and lay off the screen, and the Lake Malawi
+     photo at the bottom edge */
+  "Lakes are islands too":S=>{DROPPH(S,/^Baikal/);VIEW(S,[33,-6,3])}
  }
 };
 /* stops that keep the card where their own script put it */
 const KEEPSIDE=new Set(/*KEEPSIDE*/[]);
 const applied=new WeakSet();
-function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;applied.add(S);const t=strip(S.title);
+/* stops whose photos geoflock-polish-m.js adds, with a getter of its own, when the stop is first shown: their fixes wait
+   until it has (S._gfXp), or its defineProperty would fail on a field fixed here first and the stop would lose them */
+const WAITXP=new Set(["islandlife|Island giants"]);
+function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;const t=strip(S.title);
+ if(WAITXP.has(tour+"|"+t)&&!S._gfXp){LOCK(S,"card","left");return}applied.add(S);
  try{if(!KEEPSIDE.has(tour+"|"+t))LOCK(S,"card","left");const f=F[t];if(f)f(S)}catch(e){console.error("rvs fix",tour,S.title,e)}})}
 function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)applyTo(t,T.steps)})}catch(e){}}
 /* geoflock-polish-b.js re-patches some stops with Object.defineProperty at load + 1.5 s and 4 s after it runs; a field
@@ -134,7 +168,7 @@ function applyAll(){try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T)ap
 let lastKey="",ready=false;
 const start=()=>{if(ready)return;ready=true;applyAll()};
 if(document.readyState==="complete")setTimeout(start,6000);else addEventListener("load",()=>setTimeout(start,6000));
-every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}if(!ready)start();const k=t+"|"+ps.i;if(k===lastKey)return;lastKey=k;applyTo(t,psSteps())}catch(e){}},300);
+every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}if(!ready)start();lastKey=t+"|"+ps.i;applyTo(t,psSteps())}catch(e){}},300);
 
 /* The card shift, kept (as geoflock-polish-rvb.js, -rvk.js and -rvn.js do for theirs): psFlyGlobe (index.html) turns a
    stop's place out from under the card, but geoflock-tourload.js's "aim" turns the globe back to the stop's plain
@@ -176,7 +210,9 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - humans | "The first to leave Africa": buttons turn the globe to Dmanisi, Lantian and Java.
    - humans | "Many kinds of human": buttons visit the five kinds of human alive 100,000 years ago.
    - humans | "Our own species": buttons visit the four oldest Homo sapiens sites, from Jebel Irhoud to Herto.
-   - humans | "Now explore": put eight moments of the tour in order, from the monkeys' raft to Europe. */
+   - humans | "Now explore": put eight moments of the tour in order, from the monkeys' raft to Europe.
+   - islandlife | "Island dwarfs": grew or shrank? Sort eight island animals; the globe turns to each island.
+   - islandlife | "Strangers from the ships": buttons turn the globe between Guam, its snake-free islet and Mauritius. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -341,9 +377,35 @@ const TIMELINE=rankDef("humans","Now explore",{seed:5,first:"oldest",head:"Put t
   ["The first stone tools, Lomekwi","3.3 million"],["Lucy walks upright","3.2 million"],["Humans reach Dmanisi","1.8 million"],["The oldest Homo sapiens, Jebel Irhoud","300,000"],["People reach Europe","about 45,000"]],
  intro:"Some of these are tens of millions of years apart, some only 100,000.",
  after:"If the 40 million years since the monkeys’ raft were one day, our species would have appeared about 11 minutes before midnight."});
+/* ======================================================================== islandlife */
+/* The island rule, with the tour's own animals and sizes: Komodo dragons up to 3 m; Sicily's elephants about 1 m tall;
+   Florida's Key deer the size of a large dog; Flores's rats the size of cats; the giant wētā heavier than a sparrow;
+   the pygmy three-toed sloth of Escudo de Veraguas about 40% smaller; Cyprus's dwarf hippos (Wikipedia, "Cyprus dwarf
+   hippopotamus": about 0.75 m tall). Aldabra tortoises: about 180,000 on the atoll (Wikipedia, "Aldabra giant tortoise");
+   the Galápagos and Aldabra tortoises are the giants of their kind, mainland tortoises being much smaller. Wrangel's
+   mammoths are left out: they are no longer thought to have been dwarfs. Answers are mixed so that taking turns cannot
+   win. */
+const DWARF=binDef("islandlife","Island dwarfs",{tip:"Grew or shrank? Sort eight island animals; the globe turns to each island.",
+ keys:[["g","⬆ Grew"],["s","⬇ Shrank"]],ask:"On its island, did this animal grow bigger than its mainland cousins, or shrink?",
+ items:[["The Komodo dragon","g","Grew: up to 3 m long, the biggest lizard on Earth, with no big predators to fear.",[119.5,-8.6,3.2,"Komodo"]],
+  ["Sicily’s elephants","s","Shrank: to about 1 m tall, from mainland ancestors about 4 m tall.",[14.4,37.6,3.2,"Sicily"]],
+  ["Florida’s Key deer","s","Shrank: no bigger than a large dog.",[-81.4,24.7,3.4,"Big Pine Key"]],
+  ["The Flores giant rat","g","Grew: Flores had rats the size of cats.",[120.5,-8.6,3.2,"Flores"]],
+  ["New Zealand’s giant wētā, an insect","g","Grew: it can be heavier than a sparrow.",[175.07,-36.2,3.2,"Little Barrier Island"]],
+  ["The pygmy three-toed sloth","s","Shrank: about 40% smaller than its mainland cousins, on one tiny island off Panama.",[-81.55,9.1,3.4,"Escudo de Veraguas"]],
+  ["The Aldabra giant tortoise","g","Grew: about 180,000 of these giants roam one coral atoll.",[46.4,-9.4,3.4,"Aldabra"]],
+  ["Cyprus’s hippos","s","Shrank: Cyprus’s dwarf hippos stood about 0.75 m tall.",[33,35,3.2,"Cyprus"]]],
+ done:"The island rule: with little food, big animals shrink; with no predators, small ones grow."});
+/* Guam and Mauritius as the stop tells them; the Dutch landed on Mauritius in 1598 (Wikipedia, "Dodo"); Guam rails
+   released on Cocos Island, a snake-free islet off Guam's southern tip, since 2010 (Wikipedia, "Guam rail") */
+const STRANGERS=turnDef("islandlife","Strangers from the ships",{tip:"Two islands, two stowaways. Visit each.",
+ intro:"Tap a place to turn the globe to it.",
+ places:[["Guam: the brown tree snake",144.8,13.45,3.4,"The snake arrived in cargo about 1950 and spread to up to 2 million. Most of the island’s forest birds were eaten."],
+  ["Cocos Island: a snake-free refuge",144.65,13.24,5,"Since 2010 Guam rails, bred in zoos, have been released on this small islet off Guam’s southern tip."],
+  ["Mauritius: the dodo",57.5,-20.3,3.4,"Dutch sailors landed in 1598. With them came rats, pigs and monkeys, and within about 80 years the dodo was gone."]]});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[KOREA,TOWN,TOPCLASS,LAYERS,LEAVE,FIVE,OURS,TIMELINE];
+const DEFS=[KOREA,TOWN,TOPCLASS,LAYERS,LEAVE,FIVE,OURS,TIMELINE,DWARF,STRANGERS];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
