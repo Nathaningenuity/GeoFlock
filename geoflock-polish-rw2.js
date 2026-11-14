@@ -173,6 +173,47 @@ FIX.bremote={
   "Now explore":S=>VIEW(S,[-133,-3,1])
 };
 
+FIX.bprisoners={
+  /* the card opened on the right, over the zoom buttons; the DMZ photo lay on the zoom buttons, the icebreakers' at the
+     globe's top edge over the map's switches, the Congo's at the bottom edge, and the Tibetan Plateau and Himalayas photos
+     under the card: framed on the Old World, Moscow to the Himalayas; the photos of places with stops of their own that
+     were pushed off the globe's edges go (the Kremlin stays); the new frame put the Tibetan Plateau photo on the zoom buttons, so it goes too */
+  "Prisoners of Geography":S=>{DROPPH(S,/^(The DMZ|Icebreakers|The Congo at Kinshasa|The Himalayas|The Tibetan Plateau|Steamboats|The Panama Canal)/);VIEW(S,[50,33,1.05])},
+  /* Vladivostok's label hung off the globe's right edge and a "Russia" label on a long leader (the map shades it):
+     framed Murmansk to the Bosporus (Vladivostok, far east, is left out of the framing) */
+  "The hunt for a warm-water port":S=>{DROP(S,/^Russia$/);AREA(S,/^Vladivostok$/);VIEW(S,[30,55.7,2.7])},
+  /* the Great Wall photo lay on the zoom buttons and Manchuria's label beside them; Kashgar's photo at the card's edge:
+     framed Kashgar to Manchuria; the Great Wall photo goes */
+  "China: a heartland and its buffers":S=>{DROPPH(S,/^The Great Wall/);VIEW(S,[102.8,40.8,1.65])},
+  /* a "United States" label on a long leader (the map shades it; geoflock-sweep-tours4.js's drop no longer held) */
+  "America’s lucky geography":S=>DROP(S,/^United States$/),
+  /* Budapest's photo hung at the globe's right edge and Rotterdam's was pushed out over Britain: framed closer, the
+     Rhine's mouth to the Danube; Budapest's photo, still pushed to the edge, goes (its label comes back) */
+  "Europe’s rivers and harbours":S=>{DROPPH(S,/^Budapest’s parliament/);VIEW(S,[11.7,47.6,4.2])},
+  /* the cobalt miners' photo lay at the bottom edge (the card shows the same miners) and Kinshasa's label on a long
+     leader: framed Kinshasa to Goma; the photo goes */
+  "Congo: too big to hold":S=>{DROPPH(S,/^Cobalt miners/);VIEW(S,[24.5,-6.5,3])},
+  /* Kirkuk, the line's far end, sat at the globe's edge by the zoom buttons */
+  "Lines in the sand":S=>VIEW(S,[41,34.4,5.5]),
+  /* "India", "Pakistan" and "Afghanistan" labels on long leaders (the map shades them), and the Himalayas photo off the
+     globe's right edge (the card shows the mountains) */
+  "India and Pakistan":S=>{DROP(S,/^(India|Pakistan|Afghanistan)$/);DROPPH(S,/^The Himalayas/);VIEW(S,[77.5,28.9,3.5])},
+  /* "North Korea" and "South Korea" labels on leaders (the map shades both) and Seoul's skyline photo, pushed out over
+     the sea, crowded the ruler, and Panmunjom's photo was pushed far south of the border (the card shows Panmunjom): framed
+     closer; both photos go (Seoul's and Panmunjom's labels come back in their place). The stat's share
+     of people round Seoul moves into the stop's guess (revealed there) */
+  "Korea: Seoul within range":S=>{DROP(S,/^(North Korea|South Korea)$/);DROPPH(S,/^(Seoul’s skyline|Panmunjom)/);RE(S,"stat","Half of South Korea’s people live in and around Seoul, only about 50 km from the border","Seoul, South Korea’s capital, lies only about 50 km from the border: guess below how many Koreans live round it");VIEW(S,[127.7,38.1,5.5])},
+  /* the Panama Canal photo hung at the top edge over the search box and Buenos Aires at the bottom edge; a "Peru" label
+     on a long leader: framed Panama to the River Plate */
+  "Latin America’s walls":S=>{DROP(S,/^Peru$/);VIEW(S,[-66.1,-13.4,1.5])},
+  /* the River Plate's label lay under the card, off the globe, and a "Brazil" label hung over the map's switches */
+  "Brazil’s wall by the sea":S=>DROP(S,/^(The River Plate|Brazil)$/),
+  /* the card opened on the right, over the route: card left, framed along the Northern Sea Route, Murmansk to the Bering
+     Strait; the icebreakers' photo lay on the route's label (the card shows the ice) */
+  "The Arctic opens up":S=>{DROPPH(S,/^Icebreakers/);VIEW(S,[100,80,1.45])},
+  "Now explore":S=>VIEW(S,[60,30,1])
+};
+
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
@@ -387,8 +428,33 @@ const SORT_REMOTE=SORT({tours:["bremote"],title:"Now explore",turns:true,
   ["Lonely Island’s weather station shuts",1996,"1996",0,[82.25,77.48,2.4]]],
  after:(r,N)=>"Sighted, wrecked on, fought over, abandoned: Schalansky’s point is that even the remotest specks of land have human stories, and often dark ones."});
 
+/* ======================================================================== 6. How many live round Seoul? (bprisoners, Korea:
+   Seoul within range) Wikipedia, "Seoul Capital Area", demographics: in 2020 its population passed half the country's,
+   25,925,799 of 51,849,861 (50.002%). The stat's "half" is taken out (part 1) so the guess comes first. */
+const GUESS_SEOUL=GUESS({tours:["bprisoners"],title:"Korea: Seoul within range",
+ tip:"North Korea’s guns are dug into the hills north of the border. What share of all South Koreans live in and around Seoul, within their reach, do you think?",
+ vals:[5,10,20,30,40,50,60,70,80],start:2,answer:50,close:1,fmt:v=>v+"%",
+ after:"About half: in 2020 nearly 26 million of South Korea’s 52 million people lived in the Seoul Capital Area. That is why, Marshall argues, neither side can easily start a war."});
 
-const DEFS=[GUESS_RIHLA,SORT_RIHLA,TURN_REMOTE,GUESS_BOUVET,SORT_REMOTE];
+/* ======================================================================== 7. Wall, moat or open door? (bprisoners, Now
+   explore) Marshall's own walls and doors, as the tour's stops tell them: the North European Plain (no mountains to stop
+   an invader); the Himalayas (a war between India and China very hard); Iran's Zagros (a fortress); the Atlantic and
+   Pacific (the US's moats); the open plains of the India–Pakistan border; the Andes (behind the Pacific coast); the
+   Tibetan Plateau (China's buffer). Each answer turns the globe there. */
+const BINS_PRIS=BINS({tours:["bprisoners"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Marshall’s world is full of walls, moats and open doors. Which is each of these?",ask:"A wall, a moat, or an open door?",
+ bins:["A wall","A moat","An open door"],
+ items:[["The plain from Poland to Russia",2,"No mountains stand in an invader’s way, so armies crossed it again and again.",[21,52.5,2.4],"North European Plain"],
+  ["The Himalayas",0,"The world’s highest mountains make a land war between India and China very hard.",[84,28.6,2.4],"Himalayas"],
+  ["Iran’s Zagros Mountains",0,"They ring Iran like a fortress, hard to invade.",[47.6,33.8,2.4],"Zagros"],
+  ["The Atlantic and the Pacific",1,"With an ocean on each side, the US has rarely had to fear invasion.",[-95,38,1.4],"United States"],
+  ["The India–Pakistan border plains",2,"The two rivals share a long border on open plains.",[72,30,2.4],"Punjab plains"],
+  ["The Andes",0,"They rise straight behind South America’s Pacific coast and cut it off from the interior.",[-72,-15,2],"Andes"],
+  ["The Tibetan Plateau",0,"Beijing holds it as a buffer that keeps rivals far from China’s heartland.",[88,31.5,2],"Tibet"]],
+ after:(r,N)=>(r===N?"All right. ":"")+"Walls keep enemies out but also hold a country in; doors let trade in and armies too. Marshall’s point: leaders must work within them."});
+
+
+const DEFS=[GUESS_RIHLA,SORT_RIHLA,TURN_REMOTE,GUESS_BOUVET,SORT_REMOTE,GUESS_SEOUL,BINS_PRIS];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
