@@ -159,6 +159,62 @@ FIX.b80days={
   "Now explore":S=>VIEW(S,[48,33,1.05])
 };
 
+/* set a text pin's label above its place (index.html's label placer, psLayout, honours "above") */
+const ABOVE=(S,re)=>XF(S,"pins","above"+re,P=>P.map(p=>Array.isArray(p)&&re.test(strip(p[1]))?{at:[Array.isArray(p[0][0])?p[0][0]:p[0]],text:p[1],above:true}:p));
+FIX.bplagues={
+  /* the Ganges photo lay on the zoom buttons, Elmina's was pushed far south to the globe's bottom edge, and Camp
+     Funston's hung at the globe's far edge under the card (each place has a stop of its own) */
+  "Plagues and Peoples":S=>{DROPPH(S,/^(The Ganges at Varanasi|Elmina Castle|Camp Funston)/);VIEW(S,[40,28,1])},
+  /* Olduvai Gorge's label lay under the map key: framed a little east */
+  "Born among parasites":S=>VIEW(S,[28,-2,1.5]),
+  /* "Turkey", "Syria" and "Iraq" labels on long leaders (the map names them) */
+  "Crowds, farms and new diseases":S=>{DROP(S,/^(Turkey|Syria|Iraq|Iran)$/);VIEW(S,[41,33,3])},
+  /* the Mediterranean's circle lay under the card and China's at the globe's edge by the zoom buttons: framed wider */
+  "Four pools of disease":S=>VIEW(S,[64,32,0.8]),
+  /* Rome lay under the card and Luoyang at the globe's edge by the zoom buttons: the stop's buttons turn the globe from
+     one end of Eurasia to the other */
+  "The pools meet: Rome and Han China":S=>VIEW(S,[12.5,41.9,1.8]),
+  /* Pelusium lay at the globe's edge by the map key: framed a little east */
+  "The Plague of Justinian":S=>VIEW(S,[25.5,37,2.4]),
+  /* Yunnan, McNeill's guess, lay under the map key: framed Sarai to Yunnan */
+  "The Mongols open the steppe":S=>VIEW(S,[78,38,1.35]),
+  /* Caffa, where the stop begins, lay at the globe's edge by the map key and Cairo under it: framed a little east and
+     wider */
+  "From Caffa to Europe, 1346–1351":S=>VIEW(S,[22,44,1.7]),
+  /* Ragusa's label ran under the map key: framed a little east. The stat's 30 days move into the stop's guess (revealed
+     there) */
+  "Forty days: the first quarantines":S=>{RE(S,"stat","made ships from plague areas wait 30 days before landing","made ships from plague areas wait before landing: guess below for how long");VIEW(S,[16.5,43.5,3.5])},
+  /* Tenochtitlan and Veracruz, where the stop's story is, lay at the card's edge, and Seville at the globe's top edge by
+     the search box: framed on the Caribbean and Mexico (Seville, where the route starts, is left out of the framing) */
+  "Smallpox conquers Mexico":S=>{AREA(S,/^Seville$/);VIEW(S,[-78,20,1.6])},
+  /* Elmina lay off the globe's right edge under the map key, with Cape Coast Castle's photo, and Saint-Domingue at the
+     card's edge: the stop's buttons turn the globe between West Africa and the Caribbean; the Cape Coast photo goes (the
+     card shows Elmina) */
+  "Fevers that guarded Africa":S=>{DROPPH(S,/^Cape Coast Castle/);VIEW(S,[-8,11,2.2])},
+  /* the stat's death toll moves into the stop's guess (revealed there) */
+  "Panama: the mosquito wins, then loses":S=>RE(S,"stat","France’s attempt to dig a canal at Panama in the 1880s cost some 22,000 lives, most to yellow fever and malaria","France’s attempt to dig a canal at Panama in the 1880s ended in disaster: guess below how many lives it cost"),
+  /* Jessore and Haridwar, where cholera broke out, lay off the globe's right edge: the stop's buttons follow it west
+     from Bengal; the Ganges photo goes (the stop opens on Bengal, where it hung on the zoom buttons) */
+  "Cholera follows the pilgrims and the armies":S=>{DROPPH(S,/^The Ganges at Varanasi/);VIEW(S,[87.5,25,2.2])},
+  /* San Francisco and Sydney were round the back of the globe and Cape Town at the bottom edge under the graphics
+     notice, and the Bombay photo was pushed far south of Bombay: the stop's buttons turn the globe to each port; the photo
+     goes */
+  "The third pandemic":S=>{DROPPH(S,/^Bombay’s waterfront/);VIEW(S,[99,23,1.6])},
+  /* Camp Funston lay under the card and Freetown under the map key: framed Kansas to Brest and Freetown (83° of
+     longitude apart, so at the globe's widest view Freetown sits by the key), and Freetown's label set above its place */
+  "The influenza of 1918":S=>{ABOVE(S,/^Freetown$/);VIEW(S,[-46,46,1])},
+  /* Merca, the last natural case, lay at the globe's edge under the map key with a "Somalia" label (the map names it):
+     framed England to Somalia, Merca's label set above its place; the cowpox cartoon's photo, pushed off England onto
+     Geneva, goes (Berkeley's label comes back) */
+  "The end of smallpox":S=>{DROP(S,/^Somalia$/);ABOVE(S,/^Merca/);DROPPH(S,/^A cartoon of the cowpox/);VIEW(S,[44,22,1.3])},
+  /* Yambuku lay at the card's edge with the Kinshasa photo and a "DR Congo" label below it, and Guangdong and Wuhan off
+     the globe's right edge: the stop's buttons turn the globe between Central Africa and China; the label goes */
+  "The contest goes on":S=>{DROP(S,/^DR Congo$/);VIEW(S,[22,-1,2])},
+  "Now explore":S=>VIEW(S,[40,28,1])
+};
+
+FIX.b12maps={};FIX.b1001={};
+
 
 const EARLY={};
 const early=()=>{try{for(const t in EARLY){const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{const f=S&&EARLY[t][strip(S.title)];if(f)f(S)})}}catch(e){}};
@@ -372,8 +428,82 @@ const BINS_80=BINS({tours:["b80days"],title:"Now explore",turnItems:true,mark:tr
   ["Liverpool to London",0,"On a special train he hired: too late, he thought.",[-1.8,52.5,3],"Liverpool to London"]],
  after:(r,N)=>(r===N?"All right! ":"")+"Trains, steamers, an elephant, a pilot boat and a sledge with a sail: Verne’s point was that by 1872 the world was joined up enough for money and nerve to take a man all the way round."});
 
+/* ======================================================================== 5. Two ends of Eurasia (bplagues, The pools meet:
+   Rome and Han China) Rome and Luoyang are some 85° of longitude apart; the buttons turn the globe along the roads
+   between them. The texts are the card's own. */
+const TURN_ROME=TURNER({tours:["bplagues"],title:"The pools meet: Rome and Han China",mark:true,
+ tip:"Rome and Han China lie at the two ends of Eurasia: turn the globe along the roads between them.",
+ places:[["Rome",12.5,41.9,1.8,"Around AD 165 the ‘Antonine plague’, possibly smallpox, swept the Roman Empire and killed millions."],
+  ["Ctesiphon",44.58,33.09,1.8,"On the roads between the empires. Roman writers blamed soldiers coming home from war in Mesopotamia for the plague.",1],
+  ["Luoyang, Han China",112.45,34.62,1.8,"The Han capital, at the far end of the Silk Road. China suffered terrible epidemics in the same years, and both empires weakened over the next century.",1]]});
 
-const DEFS=[TURN_80,TURN_DAY,GUESS_BLY,BINS_80];
+/* ======================================================================== 6. How long did ships wait? (bplagues, Forty days:
+   the first quarantines) Wikipedia, "Quarantine": a document of 1377 says that before entering Ragusa newcomers "had to
+   spend 30 days (a trentine) in a restricted place"; in 1448 the Venetian Senate "prolonged the waiting period to 40
+   days, thus giving birth to the term 'quarantine'". The stat's 30 days are taken out (part 1) so the guess comes first. */
+const GUESS_RAGUSA=GUESS({tours:["bplagues"],title:"Forty days: the first quarantines",
+ tip:"Ragusa made ships from plague areas wait before anyone could come ashore. For how long, do you think?",
+ vals:[1,3,7,14,30,40,60,90],start:2,answer:30,close:1,fmt:v=>v+(v===1?" day":" days"),
+ after:"30 days, a ‘trentine’. Venice later stretched the wait to 40 days, quaranta giorni, which gave us the word quarantine."});
+
+/* ======================================================================== 7. West Africa or the Caribbean? (bplagues, Fevers
+   that guarded Africa) The stop's two shores are an ocean apart; the buttons turn the globe between them. */
+const TURN_FEVER=TURNER({tours:["bplagues"],title:"Fevers that guarded Africa",mark:true,
+ tip:"The same fevers guarded both sides of the Atlantic: turn the globe between them.",
+ places:[["West Africa’s forts",-8,11,2.2,"Malaria and yellow fever killed most Europeans who went inland, so they kept to forts on the coast, like Elmina and Gorée."],
+  ["Saint-Domingue",-72.2,19.76,2.4,"Slave ships carried the fevers and the mosquito across the ocean. In 1802 yellow fever destroyed the army Napoleon sent here, helping Haiti win its independence.",1]]});
+
+/* ======================================================================== 8. How many died digging? (bplagues, Panama)
+   Wikipedia, "Panama Canal": the French attempt's "death toll from 1881 to 1889 was estimated at over 22,000, of whom
+   as many as 5,000 were French citizens"; "about 5,600 workers died from disease and accidents during the US
+   construction". The stat's toll is taken out (part 1) so the guess comes first. */
+const GUESS_PANAMA=GUESS({tours:["bplagues"],title:"Panama: the mosquito wins, then loses",
+ tip:"In the 1880s a French company tried to dig a canal through the jungle at Panama. How many workers died, do you think?",
+ vals:[500,1000,2500,5000,10000,22000,50000,100000],start:3,answer:22000,close:1,fmt:v=>v.toLocaleString("en-GB"),
+ after:"Over 22,000 between 1881 and 1889, most of them to yellow fever and malaria. The Americans, who fought the mosquitoes, lost about 5,600 workers to disease and accidents in 1904–1914."});
+
+/* ======================================================================== 9. Follow cholera west (bplagues, Cholera follows
+   the pilgrims and the armies) From the Ganges delta to London is a quarter of the way round the world; the buttons
+   follow it. The texts are the card's own. */
+const TURN_CHOL=TURNER({tours:["bplagues"],title:"Cholera follows the pilgrims and the armies",mark:true,
+ tip:"Cholera travelled a quarter of the way round the world in 15 years: follow it west.",
+ places:[["Bengal, 1817",84,25,2.2,"Cholera broke out of its home in the Ganges delta, carried by British troops, merchant ships and pilgrims at the Kumbh Mela at Haridwar."],
+  ["Mecca",39.83,21.42,2.2,"Pilgrims at the hajj caught it and carried it home along the sea roads.",1],
+  ["Moscow, 1830",37.62,55.75,2.2,"It reached Moscow in 1830, and London two years later.",1],
+  ["London, 1854",-0.13,51.51,2.4,"The doctor John Snow traced an outbreak to a single water pump on Broad Street. Fear of cholera, McNeill argues, drove cities to build clean water supplies and sewers.",1]]});
+
+/* ======================================================================== 10. Plague on the steamships (bplagues, The third
+   pandemic) The stop's ports are spread round the whole Earth; the buttons turn the globe to each. The texts are the
+   card's own. */
+const TURN_THIRD=TURNER({tours:["bplagues"],title:"The third pandemic",mark:true,
+ tip:"Steamships carried plague to every inhabited continent: turn the globe to each port.",
+ places:[["Yunnan and Hong Kong",106,23,1.6,"Plague left Yunnan in the 1850s. In Hong Kong in 1894 Alexandre Yersin found the bacterium that causes it."],
+  ["Bombay, 1896",72.88,18.95,2,"India was worst hit: some 12 million people died there.",1],
+  ["San Francisco, 1900",-122.42,37.77,2,"Plague settled into the ground squirrels and prairie dogs of the American West, where it still infects a few people each year.",1],
+  ["Sydney, 1900",151.2,-33.86,2,"Rats aboard the steamships brought it to Australia.",1],
+  ["Cape Town, 1901",18.42,-33.92,2,"By then plague had reached every inhabited continent.",1]]});
+
+/* ======================================================================== 11. Africa and China (bplagues, The contest goes
+   on) The stop's places are a third of the way round the world apart. The texts are the card's own. */
+const TURN_CONTEST=TURNER({tours:["bplagues"],title:"The contest goes on",mark:true,
+ tip:"New diseases have jumped from animals on both sides of the Old World: turn the globe between them.",
+ places:[["Central Africa",22,-1,2,"Ebola was first identified at Yambuku in 1976, the year the book came out. HIV, which crossed from chimpanzees, spread from Kinshasa along river boats and railways from the 1920s.",2],
+  ["China",113,27,2,"SARS (2002) and Covid-19 (2019) both began in China, and both travelled the world by plane.",2]]});
+
+/* ======================================================================== 12. Plagues in order (bplagues, Now explore) The
+   tour's own dates; each tap turns the globe there. */
+const SORT_PLAG=SORT({tours:["bplagues"],title:"Now explore",turns:true,
+ tip:"Nearly two thousand years of people against germs: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["The Antonine plague strikes Rome",165,"AD 165",0,[12.5,41.9,2.4]],["Plague at Pelusium",541,"541",0,[32.55,31.04,2.4]],
+  ["The Black Death at Caffa",1346,"1346",0,[35.38,45.03,2.4]],["Ragusa’s first quarantine",1377,"1377",0,[18.09,42.64,2.6]],
+  ["Smallpox reaches Mexico",1520,"1520",0,[-96.13,19.2,2.4]],["Yellow fever beats Napoleon’s army in Haiti",1802,"1802",0,[-72.2,19.76,2.4]],
+  ["Cholera breaks out of Bengal",1817,"1817",0,[89.21,23.17,2.4]],["Yersin finds the plague germ in Hong Kong",1894,"1894",0,[114.17,22.28,2.4]],
+  ["Influenza at Camp Funston",1918,"1918",0,[-96.78,39.07,2.2]],["The last natural case of smallpox",1977,"1977",0,[44.77,1.72,2.4]]],
+ after:(r,N)=>"Every new link between peoples, from caravans to steamships and planes, opened a new door to disease; McNeill’s point is that the contest never ends."});
+
+
+const DEFS=[TURN_80,TURN_DAY,GUESS_BLY,BINS_80,TURN_ROME,GUESS_RAGUSA,TURN_FEVER,GUESS_PANAMA,TURN_CHOL,TURN_THIRD,TURN_CONTEST,SORT_PLAG];
 
 
 let L=null,raf=0;
