@@ -340,7 +340,7 @@ function drawOne(e){fixWind(e);islandize(e);const mode=SHOW[e.cat],col=e.ucol||e
  let g=e._g;if(g&&g.ownerSVGElement!==svg){g.remove();g=e._g=null}if(g&&g!==svg.lastElementChild)svg.appendChild(g);if(!g){g=e._g=document.createElementNS("http://www.w3.org/2000/svg","g");g.setAttribute("class","gfSearchLayer");g.setAttribute("pointer-events","none");g.setAttribute("data-spin","no");svg.appendChild(g)}
  const d=d3.geoPath(GLOBE_ROBINSON)(shapeAt(e))||"",line=e.g.type==="MultiLineString",keep=mode==="layer"?.62:.36,fo=isle(e)?0:fillOf(e,e.col?.62:(a<1?a*.8:keep),a);
  /* one island: a white outline, as a searched country has; a chain keeps its colour */
- if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':e.cat==="islands"?'<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"'+(e.ucol?' style="stroke:'+e.ucol+' !important"':'')+'/>':'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'}
+ if(g._d!==d){g._d=d;g.innerHTML=line?'<path class="gfs-case" d="'+d+'"/><path class="gfs-line" d="'+d+'"/>':e.cat==="islands"?'<path class="gfs-wcase" d="'+d+'"/><path class="gfs-white" d="'+d+'"'+(e.ucol?' style="stroke:'+e.ucol+' !important"':'')+'/>':(()=>{const S=shapeAt(e);if(S&&S.type==="MultiPolygon"&&S.coordinates.length>1){/* several touching pieces: the edge only outside the shape */const id="gfsm"+(drawOne._n=(drawOne._n||0)+1);return'<defs><mask id="'+id+'" maskUnits="userSpaceOnUse" x="-5000" y="-5000" width="20000" height="20000"><rect x="-5000" y="-5000" width="20000" height="20000" fill="#fff"/><path d="'+d+'" fill="#000"/></mask></defs><path class="gfs-fill" d="'+d+'"/><path class="gfs-edge gfs-edge2" mask="url(#'+id+')" d="'+d+'"/>'}return'<path class="gfs-fill" d="'+d+'"/><path class="gfs-edge" d="'+d+'"/>'})()}
  g.style.setProperty("--gfs",col);g.style.setProperty("--gfa",fo.toFixed(3));g.style.setProperty("--gfe",(a<1?Math.max(a,.6):1).toFixed(3));g.style.opacity=(line||e.cat==="islands")&&e.uop!=null?String(e.uop):""}
 /* globe: shapes drawn on the globe canvas */
 function globeDraw(ctx,p){if(!LIST.length||!active())return;LIST.forEach(e=>globeDrawOne(ctx,p,e))}
@@ -365,7 +365,15 @@ function globeDrawOne(ctx,p,e){fixWind(e);islandize(e);if(e.cat==="countries"){c
   if(window.gfDetail&&gfDetail.hotSharp&&typeof amGlobe!=="undefined"&&gfDetail.ownsCoast&&gfDetail.ownsCoast(amGlobe)){const G=shapeAt(e);ctx.restore();ctx.save();ctx.globalAlpha=uop(e);
    if(gfDetail.hotSharp(amGlobe,ctx,[{type:"Feature",properties:{},geometry:G}],[["rgba(20,30,45,.5)",3.4],[e.ucol||"#fff",1.7]])){ctx.restore();return pin(e)}ctx.beginPath();path(G)}
   ctx.lineJoin=ctx.lineCap="round";ctx.strokeStyle="rgba(20,30,45,.5)";ctx.lineWidth=3.4;ctx.stroke();ctx.strokeStyle=e.ucol||"#fff";ctx.lineWidth=1.7;ctx.stroke()}
- else{if(!isle(e)){ctx.globalAlpha=fillOf(e,e.col?.62:a<1?a*.8:keep,a);ctx.fillStyle=col;ctx.fill()}{/* a sharp lake is outlined along its shore only */{const S=sharp(e);if(S&&S._edge){ctx.beginPath();path(S._edge)}}/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}ctx.restore();pin(e,true)}
+ else{if(!isle(e)){ctx.globalAlpha=fillOf(e,e.col?.62:a<1?a*.8:keep,a);ctx.fillStyle=col;ctx.fill()}{/* a sharp lake is outlined along its shore only */{const S=sharp(e);
+  /* a shape made of several touching pieces (an ocean of its seas): only its outside edge, so the lines between the pieces
+     don't show. The outline is drawn twice as wide on a spare canvas, then everything inside the shape is cut away. */
+  if(S&&!S._edge&&S.type==="MultiPolygon"&&S.coordinates.length>1){const cv=ctx.canvas;if(!drawOne._oc)drawOne._oc=document.createElement("canvas");const O=drawOne._oc;if(O.width!==cv.width||O.height!==cv.height){O.width=cv.width;O.height=cv.height}
+   const o=O.getContext("2d"),T=ctx.getTransform();o.setTransform(1,0,0,1,0,0);o.globalCompositeOperation="source-over";o.clearRect(0,0,O.width,O.height);o.setTransform(T);const op=d3.geoPath(p,o);
+   o.beginPath();op(S);o.lineJoin=o.lineCap="round";o.lineWidth=5.6;o.strokeStyle="rgba(255,255,255,.7)";o.stroke();o.globalAlpha=a<1?Math.max(a,.6):1;o.lineWidth=3.2;o.strokeStyle=col;o.stroke();o.globalAlpha=1;
+   o.globalCompositeOperation="destination-out";o.fillStyle="#000";o.fill();o.globalCompositeOperation="source-over";
+   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.drawImage(O,0,0);ctx.restore()}
+  else{if(S&&S._edge){ctx.beginPath();path(S._edge)}/* thin, with round corners: a sharp corner on a ragged coast would stick out as a spike */ctx.lineJoin=ctx.lineCap="round";ctx.globalAlpha=1;ctx.lineWidth=2.8;ctx.strokeStyle="rgba(255,255,255,.7)";ctx.stroke();ctx.globalAlpha=a<1?Math.max(a,.6):1;ctx.lineWidth=1.6;ctx.strokeStyle=col;ctx.stroke()}}}}ctx.restore();pin(e,true)}
 /* the icon or city marker, as an HTML pin positioned over the map */
 function screenOf(ll){if(onGlobe()){const G=amGlobe,pr=G.projection(),c=[-G.rot[0],-G.rot[1]];if(!G._flat&&d3.geoDistance(ll,c)>Math.PI/2-.02)return null;const p=pr(ll);if(!p||(window.gfGlobeShows&&!gfGlobeShows(G,p)))return null;const r=G.canvas.getBoundingClientRect();return[r.left+p[0],r.top+p[1]]}
  const svg=document.querySelector("#allMapsWrap svg");if(!svg)return null;const p=GLOBE_ROBINSON(ll);if(!p)return null;const m=svg.getScreenCTM();if(!m)return null;return[p[0]*m.a+m.e,p[1]*m.d+m.f]}
@@ -582,6 +590,7 @@ if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=functio
 const css=document.createElement("style");css.textContent=`
 .gfSearchLayer path{ vector-effect:non-scaling-stroke; }
 .gfSearchLayer .gfs-fill{ fill:var(--gfs) !important; fill-opacity:var(--gfa,.3) !important; stroke:none !important; }
+.gfSearchLayer .gfs-edge2{ stroke-width:3.6px !important; }
 .gfSearchLayer .gfs-edge{ fill:none !important; stroke:var(--gfs) !important; stroke-opacity:var(--gfe,1) !important; stroke-width:1.8px !important; stroke-linecap:round; stroke-linejoin:round; filter:drop-shadow(0 0 1.5px rgba(255,255,255,.9)); }
 .gfSearchLayer .gfs-wcase{ fill:none !important; stroke:rgba(20,30,45,.5) !important; stroke-width:3.4px !important; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
 .gfSearchLayer .gfs-white{ fill:none !important; stroke:#fff !important; stroke-width:1.7px !important; stroke-linecap:round; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
