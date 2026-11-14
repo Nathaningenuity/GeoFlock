@@ -162,6 +162,9 @@ FIX.maths={
   "Great circles":S=>VIEW(S,[75,60,1])
 };
 FIX.psychology={
+  /* the opening's photos of Yunnan and Sapporo lay round the back of the globe, Phoenix and Tenejapa on its left edge
+     under the card, the Kalahari below the screen: each has a stop of its own; Tromsø, Bern and Land's End stay */
+  "From the land to the mind":S=>DROPPH(S,/^(Rice terraces|Sapporo|Phoenix|Musicians from Tenejapa|The Kalahari)/),
   /* Shanghai's photo lay under the map key and a China label hung on a long leader: framed further east */
   "Rice south, wheat north":S=>{DROP(S,/^China$/);VIEW(S,[116.5,32,2.6])},
   /* Tromsø, the stop's place, was off the globe's right edge under the map key: framed to show it and Florida */
@@ -169,8 +172,9 @@ FIX.psychology={
   /* a United States label at the globe's right edge, under the map key */
   "Heat and tempers":S=>DROP(S,/^United States$/),
   /* the Evanston label hung at the top of the screen over the map switches, half a world from the Kalahari photo; the
-     text names Evanston, and the stop's game tests the reader instead */
-  "A world of right angles":S=>DROP(S,/^Evanston/),
+     text names Evanston, and the stop's game tests the reader instead. Framed on the Kalahari, whose San photo hung
+     at the globe's bottom edge */
+  "A world of right angles":S=>{DROP(S,/^Evanston/);VIEW(S,[22,-12,1.3])},
   /* a United Kingdom label at the globe's right edge, under the map key */
   "Blue space":S=>DROP(S,/^United Kingdom$/)
 };
@@ -652,6 +656,9 @@ every(()=>{try{const on=typeof ps!=="undefined"&&ps&&MYT.has(ps.tour);const b=do
 .rvx-kbl{fill:#e9dfc4;stroke:#b9a77a;stroke-width:1;cursor:pointer}.rvx-kbb{fill:none;stroke:#8a6a3a;stroke-width:9;stroke-linecap:round;cursor:pointer}
 .rvx-kbb.rvx-kbok{stroke:#f2b33d}.rvx-kbb.rvx-kbu{stroke:#d9682b;stroke-dasharray:2 4;stroke-width:6;cursor:default}
 .rvx-kbme{fill:#c2364f;stroke:#fff;stroke-width:3;transition:cx .4s,cy .4s}.rvx-kbt{font:800 15px system-ui,sans-serif;fill:#13294b;text-anchor:middle}
+:is(body.dark-theme,body.sky-night) .rvx-ctl .rvx-btn.rvx-good{opacity:1;background:#1f8a4c;border-color:#4cc27f;color:#fff}
+:is(body.dark-theme,body.sky-night) .rvx-ctl .rvx-btn.rvx-bad{opacity:1;background:#c2364f;border-color:#ff7088;color:#fff}
+:is(body.dark-theme,body.sky-night) .rvx-kbt{fill:#13294b}
 `;document.head.appendChild(s)}
 
 window.gfPolishRvx={v:1,FIX,XFS,viewOf,tours:MYT,L:()=>L,stop(){IV.forEach(clearInterval);try{unmount()}catch(e){}}};
