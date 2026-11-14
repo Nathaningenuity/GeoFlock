@@ -214,6 +214,43 @@ FIX.bprisoners={
   "Now explore":S=>VIEW(S,[60,30,1])
 };
 
+FIX.bggs={
+  /* the oracle bone and treasure ship photos lay on the zoom buttons, the zebras' at the bottom edge, and Göbekli Tepe's
+     beside the cuneiform tablet's; Sacsayhuamán's and the llama's hung at the globe's far edge under the card: those six
+     go (each has a stop of its own), and the globe is turned a little east so the Americas are out of view */
+  "Guns, Germs, and Steel":S=>{DROPPH(S,/^(A Chinese oracle bone|Zheng He’s treasure ship|Zebras: never tamed|Göbekli Tepe|Sacsayhuamán|A llama at)/);VIEW(S,[50,20,1])},
+  /* "Papua New Guinea" and "Indonesia" labels on long leaders, one off the globe (geoflock-sweep-tours4.js's drop no
+     longer held) */
+  "Yali’s question":S=>DROP(S,/^(Papua New Guinea|Indonesia)$/),
+  /* the Chatham Islands label, the stop's own place, ran under the map key; a "New Zealand" label (the map names it):
+     framed east, and the label shortened (the card tells of the Moriori) */
+  "The Chatham Islands, 1835":S=>{DROP(S,/^New Zealand$/);RENAME(S,/^Chatham Islands: the Moriori$/,"Chatham Islands");VIEW(S,[183.5,-42.5,4.6])},
+  /* the "Inca Empire, 1530" label ran under the map key and the Cusco photo lay by it: framed Panama to Cusco; the
+     Cusco photo, still pushed to the bottom edge, goes (the card shows Cusco's walls; its label comes back) */
+  "Cajamarca, 1532":S=>{DROPPH(S,/^Cusco, the Inca/);VIEW(S,[-71.3,-2.9,3.2])},
+  /* Eastern North America's label hung at the top edge over the map's switches, and the maize and potato photos at the
+     globe's far edge, under the card and at the bottom: those photos go, and the stop's buttons turn the globe to each
+     homeland */
+  "Farming began more than once":S=>{DROPPH(S,/^(Maize cobs|Andean potatoes)/);AREA(S,/^(Eastern North America|Mesoamerica|The Andes)/);VIEW(S,[45,22,1])},
+  /* the horse-racing photo was stacked on the yak and camel labels by the zoom buttons. The stat's count moves into the
+     stop's guess (revealed there) */
+  "Animals worth taming":S=>{DROPPH(S,/^Horse racing/);RE(S,"stat","Of the 14 big mammals people ever domesticated, 13 came from Eurasia; only the llama came from the Americas","People have domesticated only 14 kinds of big mammal: guess below how many came from Eurasia")},
+  /* the Yellow River, the ruler's far end, lay off the globe's right edge and Lisbon under the card: framed Lisbon to the
+     Yellow River */
+  "Eurasia lies east–west":S=>VIEW(S,[65,45,0.95]),
+  /* Tenochtitlan and Veracruz, where the stop's story goes, lay under the card: framed Seville to Mexico and Quito */
+  "Germs from the farmyard":S=>VIEW(S,[-65.4,15.9,1.05]),
+  /* China's oracle bones were round the back of the globe: framed Egypt to China (Mesoamerica, half a world away, is out
+     of view) */
+  "Writing was invented only a few times":S=>VIEW(S,[74.2,38,1.05]),
+  /* Nanjing, where the fleets set out, lay off the globe's right edge by the zoom buttons and Malindi at the bottom
+     edge: framed Nanjing to Malindi */
+  "Why Europe, not China?":S=>VIEW(S,[75.6,20.5,1.05]),
+  /* the Great Lakes label ran under the map key and the Great Zimbabwe photo lay at the bottom edge */
+  "Africa’s great migration":S=>VIEW(S,[26.2,-11.7,2.1]),
+  "Now explore":S=>VIEW(S,[40,20,1])
+};
+
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
@@ -453,8 +490,41 @@ const BINS_PRIS=BINS({tours:["bprisoners"],title:"Now explore",turnItems:true,ma
   ["The Tibetan Plateau",0,"Beijing holds it as a buffer that keeps rivals far from China’s heartland.",[88,31.5,2],"Tibet"]],
  after:(r,N)=>(r===N?"All right. ":"")+"Walls keep enemies out but also hold a country in; doors let trade in and armies too. Marshall’s point: leaders must work within them."});
 
+/* ======================================================================== 8. Farming's homelands (bggs, Farming began more
+   than once) The stop's own homelands and crops. They lie on every side of the globe, so the buttons turn it. */
+const TURN_FARM=TURNER({tours:["bggs"],title:"Farming began more than once",mark:true,
+ tip:"Farming was invented on its own in a handful of places all round the world: turn the globe to each.",
+ places:[["Africa and the Fertile Crescent",45,22,1,"Wheat and barley in the Fertile Crescent, which had the richest wild plants of all; teff and coffee in Ethiopia; sorghum in the Sahel."],
+  ["China",112,34.5,2,"Rice and millet: with the Fertile Crescent, China had the richest wild plants to tame.",1],
+  ["New Guinea",144.3,-5.8,2.4,"Taro and bananas: farming began here on its own, with crops that were harder to make a living from.",1],
+  ["Mesoamerica",-97,17.5,2.4,"Maize and beans. Wild maize took thousands of years of breeding to give big cobs.",1],
+  ["The Andes",-72,-13,2.4,"Potatoes, high in the mountains.",1],
+  ["Eastern North America",-87,37,2.2,"Sunflowers: one more homeland, far from the others.",1]]});
 
-const DEFS=[GUESS_RIHLA,SORT_RIHLA,TURN_REMOTE,GUESS_BOUVET,SORT_REMOTE,GUESS_SEOUL,BINS_PRIS];
+/* ======================================================================== 9. How many from Eurasia? (bggs, Animals worth
+   taming) Wikipedia, "Guns, Germs, and Steel": Diamond identifies only 14 domesticated large mammal species worldwide, 13
+   of them in Eurasia, against one in South America (the llama, counting the alpaca with it). The stat's count is taken
+   out (part 1) so the guess comes first. */
+const GUESS_ANIMALS=GUESS({tours:["bggs"],title:"Animals worth taming",
+ tip:"Horses, cattle, camels, llamas… Of the 14 kinds of big mammal ever domesticated, how many came from Eurasia, do you think?",
+ min:0,max:14,step:1,start:7,answer:13,close:1,fmt:v=>v+" of 14",
+ after:"13 of the 14. Only the llama (with its cousin the alpaca) came from the Americas. Eurasia’s farmers got meat, milk, wool and animals to pull loads; the Americas had none of that but the llama’s."});
+
+/* ======================================================================== 10. Diamond's story in order (bggs, Now explore)
+   The tour's own dates: farming in the Fertile Crescent by about 8500 BC; writing in Sumer about 3200 BC; Chinese writing
+   by about 1200 BC; the Bantu reach South Africa by about AD 300; Zheng He's fleets from 1405; smallpox on Hispaniola 1518;
+   Cajamarca 1532; the Chatham Islands 1835. Each tap turns the globe there. */
+const SORT_GGS=SORT({tours:["bggs"],title:"Now explore",turns:true,
+ tip:"Ten thousand years of Diamond’s history: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Farming in the Fertile Crescent",-8500,"by about 8500 BC",0,[40,35,2.4]],["Writing in Sumer",-3200,"about 3200 BC",0,[45.64,31.32,2.4]],
+  ["Writing on Chinese oracle bones",-1200,"by about 1200 BC",0,[114.35,36.1,2.4]],["Bantu farmers reach South Africa",300,"by about AD 300",0,[28,-27,2.2]],
+  ["Zheng He’s treasure fleets sail",1405,"from 1405",0,[118.8,32.06,2.2]],["Smallpox reaches Hispaniola",1518,"1518",0,[-69.9,18.5,2.4]],
+  ["Pizarro captures Atahualpa at Cajamarca",1532,"1532",0,[-78.52,-7.16,2.4]],["The Māori reach the Chatham Islands",1835,"1835",0,[183.45,-43.95,2.4]]],
+ after:(r,N)=>"A head start in farming, ten thousand years ago, ran on into writing, empires, ships and germs: Diamond’s answer to Yali’s question."});
+
+
+const DEFS=[GUESS_RIHLA,SORT_RIHLA,TURN_REMOTE,GUESS_BOUVET,SORT_REMOTE,GUESS_SEOUL,BINS_PRIS,TURN_FARM,GUESS_ANIMALS,SORT_GGS];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
