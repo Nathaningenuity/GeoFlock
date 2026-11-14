@@ -429,8 +429,8 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    const up=()=>{lab.removeEventListener("pointermove",mv);lab.removeEventListener("pointerup",up);lab.removeEventListener("pointercancel",up)};
    lab.addEventListener("pointermove",mv);lab.addEventListener("pointerup",up);lab.addEventListener("pointercancel",up)});
   ["click","mousedown","wheel"].forEach(t=>lab.addEventListener(t,ev=>ev.stopPropagation()))}
- if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode;const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
-  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
+ if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode+(e.cat==="coords"?" gfs-coordpin":"");const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
+  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+(e.sub?' <small>'+esc(e.sub)+'</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
  const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
  const s0=screenOf(e.ll);if(!s0){hide();return}const wr=mapRect();
  if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo")||el.classList.contains("gfs-name"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
@@ -573,8 +573,54 @@ function drawRegs(ctx,p,e){const R=regsOf(e);if(!R)return;const path=d3.geoPath(
 function hiCol(e){if(e.ucol)return e.ucol;/* a point has no highlight: the swatch is its dot */if(e.g&&/Point$/.test(e.g.type))return"#c0392b";if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
 /* the swatch opens a little panel: the colour, and how see-through the highlight is */
 function swatch(e,i){const op=Math.round((e.uop!=null?e.uop:hasFill(e)?(e.col||SHOW[e.cat]==="layer"?.62:.36):1)*100);return'<span class="gfs-sw" role="button" tabindex="0" title="Colour and transparency" style="--c:'+hiCol(e)+';--o:'+Math.max(.3,op/100)+'"><span class="gfs-pop" hidden><label>Colour <input type="color" data-gc="'+i+'" value="'+hiCol(e)+'" aria-label="Highlight colour of '+esc(e.n)+'"></label><label>'+(hasFill(e)?"Fill":"Strength")+' <input type="range" data-go="'+i+'" min="0" max="100" step="5" value="'+op+'" aria-label="Opacity of '+esc(e.n)+'"><b>'+op+'%</b></label></span></span>'}
+/* ---------- coordinates: "11.457, -85.515", "11.457N 85.515W", 11°27'25"N 85°30'54"W ----------
+   a pin is dropped there, named like the map's GPS readout (11°27′N 85°31′W) with the country or sea it falls in */
+COL.coords="#c0392b";TYPE.coords="coordinates";EMO.coords="📍";SHOW.coords="city";
+/* {lat,lon}; {err} when it reads as coordinates but cannot be (out of range, two latitudes...); null when it is not coordinates */
+function parseCoord(q){let s=String(q||"").trim();if(!s||!/\d/.test(s))return null;
+ s=s.replace(/[−–—]/g,"-").replace(/[″”“]/g,'"').replace(/[′’‘´`]/g,"'").replace(/''/g,'"').replace(/[º˚]/g,"°").replace(/\s+/g," ");
+ if(!/^[\d .,;:\/°'"+\-NSEWnsew]+$/.test(s))return null;
+ const parts=[];let cur=null,sign=0;const open=()=>{cur={v:[],m:[],h:"",sg:sign};sign=0;parts.push(cur)};const tk=/\s*(?:(\d+(?:\.\d+)?|\.\d+)\s*([°'"])?|([NSEWnsew])|([+-])|([,;\/]))/y;let m,i=0;
+ while(i<s.length){tk.lastIndex=i;m=tk.exec(s);if(!m||m[0]==="")return null;i=tk.lastIndex;
+  if(m[1]!=null){const mk=m[2]||"";
+   /* minutes and seconds join the number before them; a bare number or one with ° starts the next coordinate */
+   if(mk==="'"||mk==='"'){if(!cur||!cur.v.length||cur.done)return null;cur.v.push(+m[1]);cur.m.push(mk)}
+   else{if(!cur||cur.v.length||cur.done)open();else if(sign){cur.sg=sign;sign=0}cur.v.push(+m[1]);cur.m.push(mk||"°")}}
+  else if(m[3]){const h=m[3].toUpperCase();if(cur&&cur.v.length&&!cur.h&&!cur.done){cur.h=h;cur.done=1}else{open();cur.h=h}}
+  else if(m[4]){if(cur&&cur.v.length){cur.done=1}sign=m[4]==="-"?-1:1}
+  else if(m[5]){if(!cur||!cur.v.length)return null;cur.done=1}}
+ if(parts.length!==2)return parts.length<2?{partial:1}:null;
+ const val=p=>{const [d,mi,se]=p.v;if(p.v.length>3)return NaN;
+  if(p.v.length>1&&(p.m[1]!=="'"||!Number.isInteger(d)||mi>=60))return NaN;if(p.v.length>2&&(p.m[2]!=='"'||!Number.isInteger(mi)||se>=60))return NaN;
+  const a=d+(mi||0)/60+(se||0)/3600;return(p.sg<0||p.h==="S"||p.h==="W")?-a:a};
+ let [A,B]=parts;let a=val(A),b=val(B);if(!isFinite(a)||!isFinite(b))return{err:"Those numbers do not read as coordinates"};
+ const ax=p=>p.h==="N"||p.h==="S"?"lat":p.h==="E"||p.h==="W"?"lon":"";let xa=ax(A),xb=ax(B);
+ if(xa&&xa===xb)return{err:"Give one latitude (N or S) and one longitude (E or W)"};
+ let lat,lon;if(xa==="lon"||xb==="lat"){lat=b;lon=a}else if(xa||xb){lat=a;lon=b}
+ /* latitude first, unless the first number cannot be a latitude and the second can */
+ else if(Math.abs(a)>90&&Math.abs(b)<=90){lat=b;lon=a}else{lat=a;lon=b}
+ if(Math.abs(lat)>90||Math.abs(lon)>180)return{err:"Out of range: latitude goes from -90 to 90, longitude from -180 to 180"};
+ return{lat,lon}}
+/* as the GPS readout at the map's bottom right: 11°27′N 85°31′W */
+const dmsTxt=(v,p,n)=>{const a=Math.abs(v);let d=Math.floor(a),mi=Math.round((a-d)*60);if(mi===60){d++;mi=0}return d+"°"+String(mi).padStart(2,"0")+"′"+(v>=0?p:n)};
+const llLabel=(lat,lon)=>dmsTxt(lat,"N","S")+" "+dmsTxt(lon,"E","W");
+/* the country the point is in, or the sea or lake (cheap: one look through the country outlines and the search's shapes) */
+function placeAt(ll){let ctry="",water="";
+ try{const fs=typeof projFeatures==="function"?projFeatures():[];for(const f of fs){if(!f||!f.geometry)continue;let hit=false;try{hit=d3.geoContains(f,ll)}catch(x){}if(hit){const k=String(f.properties&&f.properties.c||"").toLowerCase(),C=typeof COUNTRY_BY_CODE!=="undefined"&&(COUNTRY_BY_CODE[k]||COUNTRY_BY_CODE[k.toUpperCase()]);ctry=C?C.n:(f.properties&&f.properties.n)||"";break}}}catch(x){}
+ /* on land only a lake counts; a shape bigger than a hemisphere is one wound the wrong way round, not the place */
+ try{const w=at(ll).find(e=>(e.cat==="lakes"||(!ctry&&e.cat==="seas"))&&e._ar<2*Math.PI);if(w)water=w.n}catch(x){}
+ return water&&ctry?water+", "+ctry:water||ctry}
+function coordEntry(c){const ll=[+c.lon.toFixed(6),+c.lat.toFixed(6)],n=llLabel(c.lat,c.lon);
+ return{n,alt:[],keys:[norm(n)],cat:"coords",typ:"coordinates",g:{type:"Point",coordinates:ll},ll,fame:0,sub:placeAt(ll),dec:c.lat.toFixed(4)+", "+c.lon.toFixed(4)}}
 function wire(){loadMoreIslands();loadProv();loadRegs();loadHydroLakes();loadLakeNames();const input=document.getElementById("globalSearchInput"),box=document.getElementById("globalSearchSuggestions");if(!input||!box||input._gfs)return;input._gfs=1;
  input.addEventListener("input",()=>{if(!active())return;const q=input.value.trim();box.querySelectorAll(".gfs-res").forEach(x=>x.remove());if(!q)return;
+  /* coordinates: one row that drops a pin there (Enter takes it, as the top row); the template's lat and lon still to fill in */
+  {const C=parseCoord(q),tpl=/^(lat|[\d\s.°'"′″+\-−NSns]+)\s*,\s*(lon|[\d\s.°'"′″+\-−EWew]+)$/.test(q)&&/\b(lat|lon)\b/.test(q);
+   if(tpl||(C&&!C.partial)){box.innerHTML="";const e=C&&!C.err&&!C.partial?coordEntry(C):null;
+    box.insertAdjacentHTML("beforeend",e?'<div class="global-search-result gfs-res gfs-coordres" data-coord="1"><span class="gfs-emo">📍</span><span>'+esc(e.n)+(e.sub?'<small>'+esc(e.sub)+'</small>':'')+'</span><span class="gsr-cap">Drop a pin</span></div>'
+     :'<div class="gfs-did gfs-coordtip">'+(tpl?"Type the latitude, then Tab for the longitude (e.g. 11.46, -85.52)":esc(C.err))+'</div>');
+    const r=box.querySelector("[data-coord]");if(r)r.onclick=()=>{input.value="";box.innerHTML="";show(e)};return}
+   if(C&&C.partial&&/^[\s+\-−]*\d/.test(q)){box.querySelectorAll(".gfs-coordtip").forEach(x=>x.remove());box.insertAdjacentHTML("afterbegin",'<div class="gfs-did gfs-coordtip">Coordinates? Latitude, then longitude: e.g. 11.46, -85.52</div>')}}
   /* the site's own country suggestions are kept, but scored the same way as places, and weak guesses are dropped */
   const nq=norm(q),ctry=[...box.querySelectorAll(".global-search-result[data-code]")].map(el=>{const c=(COUNTRY_BY_CODE||{})[el.dataset.code];const keys=c?[c.n].concat((typeof COUNTRY_ALIASES!=="undefined"&&COUNTRY_ALIASES[c.c])||[]).map(norm):[];return{el,s:score(nq,keys),f:1}});
   const R=find(q,true);const best=Math.min(9,...ctry.map(x=>x.s),...R.map(x=>x[0]));
@@ -584,7 +630,10 @@ function wire(){loadMoreIslands();loadProv();loadRegs();loadHydroLakes();loadLak
   box.innerHTML="";const shown=[];keep.forEach(x=>{if(x.el){box.appendChild(x.el);return}const k=shown.push(x.e)-1;box.insertAdjacentHTML("beforeend",'<div class="global-search-result gfs-res" data-i="'+k+'"><span class="gfs-emo">'+emoOf(x.e)+'</span><span>'+esc(x.e.n)+'</span><span class="gsr-cap">'+(x.e.typ||TYPE[x.e.cat])+'</span></div>')});
   if(best>=4&&keep.length)box.insertAdjacentHTML("afterbegin",'<div class="gfs-did">Did you mean…</div>');
   box.querySelectorAll(".gfs-res").forEach(el=>el.onclick=()=>{const e=shown[+el.dataset.i];input.value="";box.innerHTML="";show(e)})});
- input.addEventListener("keydown",e=>{if(e.key==="Escape"&&LIST.length)clear()})}
+ input.addEventListener("keydown",e=>{if(e.key==="Escape"&&LIST.length)clear();
+  /* in the "lat, lon" template: Tab (or a comma) after the latitude goes on to "lon", ready to type over */
+  if((e.key==="Tab"&&!e.shiftKey||e.key===",")&&/\blon\s*$/.test(input.value)){const v=input.value,j=v.search(/lon\s*$/);if(input.selectionStart<=j){e.preventDefault();input.setSelectionRange(j,j+3)}}
+  else if(e.key==="Tab"&&e.shiftKey&&/^\s*lat\b/.test(input.value)){e.preventDefault();input.setSelectionRange(input.value.indexOf("lat"),input.value.indexOf("lat")+3)}})}
 wire();document.addEventListener("DOMContentLoaded",wire);setTimeout(wire,1500);
 if(typeof renderChrome==="function"){const _rc=renderChrome;renderChrome=function(){const r=_rc.apply(this,arguments);try{wire();const i=document.getElementById("globalSearchInput");if(i&&active())i.placeholder="Search a country, city, river, mountain…";else if(i&&i.placeholder.startsWith("Search a country, city"))i.placeholder="Search for a country…";xBtn()}catch(e){}return r}}
 const css=document.createElement("style");css.textContent=`
@@ -662,7 +711,11 @@ const css=document.createElement("style");css.textContent=`
 #gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
 #gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
-.gfs-res .gfs-emo{ width:28px; text-align:center; font-size:18px; }`;
+.gfs-res .gfs-emo{ width:28px; text-align:center; font-size:18px; }
+.gfs-coordres > span:nth-child(2){ white-space:nowrap; font-variant-numeric:tabular-nums; } .gfs-coordres > span:nth-child(2) small{ display:block; white-space:normal; font-weight:500; font-size:11.5px; opacity:.7; margin-top:2px; } .gfs-coordres .gsr-cap{ text-align:right; }
+.gfs-coordtip{ font-style:normal; padding:8px 14px; }
+/* a coordinate's pin: its dot (not the middle of dot and label) on the spot */
+.gfs-pin.gfs-city.gfs-coordpin{ transform:translate(-8px,-50%); }`;
 document.head.appendChild(css);
 /* the smallest searchable shapes under a place, smallest first (an island, its island chain, its country): used by the
    Geometry set's Shortest-distance tool */
@@ -685,12 +738,14 @@ const st=document.createElement("style");st.textContent=`
 body.sky-night .gf-shint{ background:#1d2638; color:#e6edf7; }`;document.head.appendChild(st);
 function wire(){const i=document.getElementById("globalSearchInput");if(!i||i._gfHint)return;i._gfHint=1;const wrap=i.parentNode;if(getComputedStyle(wrap).position==="static")wrap.style.position="relative";
  const h=document.createElement("div");h.className="gf-shint";h.hidden=true;h.setAttribute("role","listbox");
- h.innerHTML='<small>You can search for</small>'+CATS.map(c=>'<button type="button" data-ex="'+c[2]+'"><i aria-hidden="true">'+c[0]+'</i>'+c[1]+'<em>e.g. '+c[2]+'</em></button>').join("");wrap.appendChild(h);
+ h.innerHTML='<small>You can search for</small>'+'<button type="button" data-coordex title="Drop a pin at a latitude and longitude"><i aria-hidden="true">📍</i>Coordinates<em>e.g. 11.46, -85.52</em></button>'+CATS.map(c=>'<button type="button" data-ex="'+c[2]+'"><i aria-hidden="true">'+c[0]+'</i>'+c[1]+'<em>e.g. '+c[2]+'</em></button>').join("");wrap.appendChild(h);
  const maps=()=>{try{return appMode==="allmaps"}catch(e){return false}};
  const sync=()=>{h.hidden=!(maps()&&document.activeElement===i&&!i.value.trim())};
  i.addEventListener("focus",sync);i.addEventListener("input",sync);i.addEventListener("blur",()=>setTimeout(()=>{if(!h.contains(document.activeElement))h.hidden=true},150));
  h.addEventListener("mousedown",e=>e.preventDefault());
  h.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>{i.value=b.dataset.ex;i.focus();i.dispatchEvent(new Event("input",{bubbles:true}));h.hidden=true});
+ /* Coordinates: a template to fill in, with "lat" picked so typing replaces it (Tab then goes on to "lon") */
+ {const cb=h.querySelector("[data-coordex]");if(cb)cb.onclick=()=>{i.value="lat, lon";i.focus();i.dispatchEvent(new Event("input",{bubbles:true}));h.hidden=true;try{i.setSelectionRange(0,3)}catch(e){}}}
  i.addEventListener("keydown",e=>{if(e.key==="Escape")h.hidden=true})}
 wire();document.addEventListener("DOMContentLoaded",wire);setInterval(wire,1500);
 })();
