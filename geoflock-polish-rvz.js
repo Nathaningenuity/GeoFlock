@@ -166,6 +166,24 @@ FIX.bcandide={
   "A garden by Constantinople":S=>VIEW(S,[28,40.8,4])
 };
 
+FIX.bjourneywest={
+  /* the road's east end, Chang'an, lay at the globe's edge under the map key: framed a little wider and further east */
+  "Journey to the West":S=>VIEW(S,[96,32,1.3]),
+  /* the Huaguo Shan and Huai'an labels ran under the map key: framed further east and a little wider */
+  "Monkey, Pigsy and Sandy":S=>VIEW(S,[121,30,1.3]),
+  /* Hami's label ran under the map key: framed further east */
+  "A king who would not let him go":S=>VIEW(S,[92.5,43,6]),
+  /* Kashmir's label ran under the map key: framed further east */
+  "Gandhara and Kashmir":S=>VIEW(S,[75,34,5.16]),
+  /* the Kushinagar and Sarnath labels ran under the map key: framed further east */
+  "Harsha’s India":S=>VIEW(S,[84.5,26,4.25]),
+  /* the Nalanda photo and the Tamralipti label lay under the map key: framed a little wider, Valabhi to Tamralipti */
+  "Nalanda":S=>VIEW(S,[86,20,2.6]),
+  /* the Mogao Caves photo lay on the zoom buttons: framed wider; the "Chang'an, 645" label, then at the globe's edge
+     under the map key, goes (the text tells of his welcome there) */
+  "Home along the Taklamakan":S=>{DROP(S,/^Chang’an, 645/);VIEW(S,[92,37.5,1.9])}
+};
+
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
    fixes are applied to it, so psGlobeTarget (wrapped above) finds the frame by title as well. */
