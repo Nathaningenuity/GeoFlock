@@ -69,6 +69,13 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
  if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nm(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));const ek=R.keys[0];if(ek){const e=EXT.get(ek),b=R.bb;EXT.set(ek,e?[Math.min(e[0],b[0]),Math.min(e[1],b[1]),Math.max(e[2],b[2]),Math.max(e[3],b[3])]:b.slice())}D.rivers.push(R)}})}
  if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||!(t.admin_level>=2&&t.admin_level<=4)||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,lv:t.admin_level,ls})})}
  if(L.water_name){const E=L.water_name.ext;T.feats(L.water_name).forEach(f=>{if(f.type!==1||!f.geom)return;const p=parts(f.geom)[0];if(!p||!p[0])return;const ll=toLL([p[0]],z,tx,ty,E,false);D.names.push({n:nm(f.tags),cls:f.tags.class,ll:[ll[0],ll[1]]})})}
+ /* below zoom 11 the tiles' lakes have lost their islands (Lake Nicaragua comes without Ometepe, Canada's lakes without theirs):
+    the map's own lakes (Natural Earth) keep them as holes, so those holes are put back into the tile lake they lie in */
+ if(z<=10&&D.lakes.length)try{const NE=globeOverlays().lakes||[];D.lakes.forEach(K=>{if(K.cls==="river")return;const b=K.bb;
+   NE.forEach(F=>{const g=F.geometry||F;if(!g||!g.coordinates)return;const P=g.type==="Polygon"?[g.coordinates]:g.type==="MultiPolygon"?g.coordinates:[];
+    P.forEach(poly=>{for(let h=1;h<poly.length;h++){const r=poly[h],p=r[0];if(!p||p[0]<b[0]||p[0]>b[2]||p[1]<b[1]||p[1]>b[3])continue;
+     /* only where the tile lake has water there (a hole the tile already has is left alone) */let mx=0,my=0;r.forEach(q=>{mx+=q[0];my+=q[1]});mx/=r.length;my/=r.length;
+     if(!inRings(K.rings,[mx,my])||!inRings(K.rings,p))continue;const o=new Float64Array(r.length*3);r.forEach((q,i)=>{o[i*3]=q[0];o[i*3+1]=q[1];o[i*3+2]=0});K.rings.push(o)}})})})}catch(e){}
  /* lake names: a name point inside a lake names that lake (and its pieces in other tiles, by the lake's id) */
  D.names.forEach(N=>{if(!N.n||(N.cls&&!/^(lake|reservoir|lagoon|pond|basin)$/.test(N.cls)))return;for(const K of D.lakes){if(N.ll[0]<K.bb[0]||N.ll[0]>K.bb[2]||N.ll[1]<K.bb[1]||N.ll[1]>K.bb[3])continue;if(inRings(K.rings,N.ll)){if(K.id!=null)NAMES.set(K.id,N.n);K.n=N.n;break}}});
  return D}
@@ -288,13 +295,13 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
    if(SL.length&&(seaC||!ne)){/* Elevation: a named lake (Maracaibo, Lagoa dos Patos) in the lakes' blue like every other lake; only bays and
      estuaries open to the sea keep the shallow-sea colour, so they join the sea beside them */
    const isLk=K=>isSeaLake(K)||(window.gfSeaLake&&K.n&&gfSeaLake(K.n));
-   const fillSet=(L2,c)=>{if(!L2.length)return;ctx.fillStyle=c;ctx.beginPath();L2.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero")};
+   const fillSet=(L2,c)=>{if(!L2.length)return;ctx.fillStyle=c;L2.forEach(K=>{ctx.beginPath();K.rings.forEach(r=>ringPath(ctx,pj,r,true));ctx.fill("evenodd")})};
    if(elev){fillSet(SL.filter(isLk),lf);fillSet(SL.filter(K=>!isLk(K)),seaC)}else fillSet(SL,seaC||"#6fa3cd")}
    /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
    [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
     const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
     groups.forEach(([lo,hi])=>{const G=M.filter(K=>{const v=vis(K);return v>lo&&v<=hi||(!sat&&true)});if(!G.length)return;const a=sat?(lo+hi)/2:1;
-     ctx.globalAlpha=Math.min(1,a)*fa;ctx.fillStyle=lf;ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("nonzero");
+     ctx.globalAlpha=Math.min(1,a)*fa;ctx.fillStyle=lf;/* each lake on its own, even-odd: its islands (Ometepe in Lake Nicaragua) stay holes whichever way their rings run */G.forEach(K=>{ctx.beginPath();K.rings.forEach(r=>ringPath(ctx,pj,r,true));ctx.fill("evenodd")});
      if(I.drewRaster||dry){ctx.globalAlpha=Math.min(1,a);ctx.strokeStyle=ls;if(dry)ctx.setLineDash([3,2]);ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>edgePath(ctx,pj,r,true)));ctx.stroke();ctx.setLineDash([])}})});ctx.globalAlpha=1})}
  /* Satellite: the tiles give the sharp coast and borders only; rivers are the map's own major ones (and lakes are in the photo) */
  if(ov.rivers&&!sat){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
