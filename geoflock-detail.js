@@ -254,7 +254,9 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  /* only on the plain Relief and Elevation pictures: on City Lights (a dark picture) and on maps coloured over the relief
     (Climate...) the sampled colour came out as a bright blue band along every coast */
  const plain=/^(relief|gfRelShade|reliefAdj)/i.test(String(I.texKey||""))/* (with terrain shading or your own shades the picture has its own key) */&&(typeof allMapsColorMode==="undefined"||allMapsColorMode==="relief");/* (not Elevation either: its depth-shaded sea showed the band as pale squares) */
- if(I.drewRaster&&!sat&&plain){try{const W=Math.max(5,Math.min(55,bandPx(pj,s)*1.3));if(seaC){const sig=colSig(I);let px=null;
+ /* (not on the 3D globe: there the picture's own coast is corrected exactly, pixel by pixel, by gfFillPatch below; the blurred band
+    sampled the pale shallows round atolls and reefs and left light blotches round every islet) */
+ if(I.drewRaster&&!sat&&plain&&!(g.gl&&!g._flat)){try{const W=Math.max(5,Math.min(55,bandPx(pj,s)*1.3));if(seaC){const sig=colSig(I);let px=null;
    each(d=>{if(!d.ocean.length)return;/* each stretch of coast in the colour of the sea just off it (the picture's sea is lighter over
      shallows and darker over deeps: one colour for the whole view left pale bands round darker seas, as in the Gulf of Bothnia) */
     const G=new Map();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach((r,ri)=>{const n=r.length/3;for(let c0=0;c0<n;c0+=CH){const id=ri+":"+c0;
