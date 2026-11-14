@@ -146,6 +146,26 @@ FIX.bcollapse={
   "An oil field that saved the forest":S=>DROP(S,/^Papua New Guinea$/)
 };
 
+FIX.bcandide={
+  /* the "Holy Roman Empire" label ran under the map key: framed a little further east */
+  "Westphalia: the best of all possible castles":S=>VIEW(S,[11,51.3,5]),
+  /* Leuthen's label ran under the map key: framed further east */
+  "Bulgars and Abares":S=>VIEW(S,[15.5,51,3.5]),
+  /* the Buenos Aires photo hung below the globe, over the toolkit: framed wider and further south, Cádiz to the Plate */
+  "From Cádiz to Buenos Aires":S=>VIEW(S,[-32,-8,1.15]),
+  /* Paraguay and Argentina labels on long leaders crossed the missions' own labels; the map names both */
+  "The Jesuits of Paraguay":S=>DROP(S,/^(Paraguay|Argentina|Brazil)$/),
+  /* the slave routes ran off the globe's right edge: Elmina and the Loango coast, the routes' African ends, were out of
+     sight. Framed on the Atlantic crossing from Elmina to Paramaribo; the Loango coast's label, which would then sit under
+     the map key, goes (its route still shows), and "Elmina, Gold Coast" is shortened to "Elmina" for the same reason */
+  "Suriname: the price of sugar":S=>{DROP(S,/^Loango/);RENAME(S,/^Elmina/,"Elmina");VIEW(S,[-18,4,1])},
+  /* Bordeaux and Paris were specks on a view of half the Atlantic: framed on France (the sheep's voyage from Suriname is
+     the stop before) */
+  "Bordeaux and Paris":S=>VIEW(S,[-1,46.5,3.4]),
+  /* Constantinople and the Ottoman Empire's label lay under the map key: framed on the city */
+  "A garden by Constantinople":S=>VIEW(S,[28,40.8,4])
+};
+
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
    fixes are applied to it, so psGlobeTarget (wrapped above) finds the frame by title as well. */
