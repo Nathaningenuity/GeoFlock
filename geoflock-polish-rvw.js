@@ -52,14 +52,14 @@ const FIX={
      has its own stop (the manta ray's Peru has two) */
   "Ocean life":S=>{DROPPH(S,/^(A black smoker|Great Barrier Reef|Antarctic krill|Manta ray|Emperor penguins)$/);VIEW(S,[-150,0,1])},
   /* the Great Barrier Reef, the stop's biggest reef, and the bleached coral's photo lay under the map key */
-  "Coral reefs and the Coral Triangle":S=>VIEW(S,[140,-5,1.6]),
+  "Coral reefs and the Coral Triangle":S=>VIEW(S,[148,-4,1.5]),
   /* the card opened on the right, over the zoom buttons; the stop's own kelp coasts lay round the back of the globe.
      It opens on California and buttons (part 3) visit the five coasts the text names */
   "Kelp forests":S=>VIEW(S,[-121,37,2.4]),
   /* a tour question flipped the card to the right, over Benguela's seals; on the left, with the globe turned out from
      under it, Benguela and its seals lay under the map key. The globe now tips south a little; buttons (part 3) visit the
      four zones */
-  "Upwelling: where the fish are":S=>VIEW(S,[-15,-15,1]),
+  "Upwelling: where the fish are":S=>VIEW(S,[-8,-8,1]),
   /* a second "Peru" label, besides the map's own, hung in the ocean at the end of a long leader line */
   "The anchoveta and El Niño":S=>DROP(S,/^Peru$/),
   /* the Juan de Fuca Ridge, which the text never mentions, hung its label over the map's switches at the top (and its
@@ -73,6 +73,39 @@ const FIX={
   "Ocean parks":S=>{VIEW(S,[-164,26,2.2]);FILT(S,"ghosts",A=>Array.isArray(A)?A.map(x=>x&&x.code==="mn"?Object.assign({},x,{at:[-160,36]}):x):A)},
   /* Iran's outline and the patch's label lay under the map key */
   "Plastic seas":S=>{VIEW(S,[-140,30,2]);FILT(S,"ghosts",A=>Array.isArray(A)?A.map(x=>x&&x.code==="ir"?Object.assign({},x,{at:[-137,43]}):x):A)}
+ },
+ amigration:{
+  /* the opening's lines (tern, godwit, monarchs, humpbacks) mostly lay under the card or round the back of the globe; the
+     locust photo sat under the map key and the monarch and humpback photos under the card. The globe now faces the
+     Americas and the Atlantic, where three of the four journeys run (the godwit's has its own stop) */
+  "Animals on the move":S=>{DROPPH(S,/^(A locust swarm|Bar-tailed godwit|Muskox|Nile crocodile)$/);VIEW(S,[-55,12,1])},
+  /* the card opened on the right, over the zoom buttons; the herds' loop, about 800 km round, was a 60-pixel knot. Zoomed
+     in, the month slider (part 3) can follow the herds round it */
+  "Wildebeest follow the rain":S=>VIEW(S,[35.2,-2.1,11]),
+  /* the Greenland nest's two labels (the stop's and its game's) sat on the map's switches at the top: the globe tips
+     north and the stop's own label, which said the same as the game's, goes */
+  "The Arctic tern":S=>{DROP(S,/^Nesting: north-east Greenland$/);VIEW(S,[-25,35,1])},
+  /* neither end of the flight was on screen (Alaska above the top, New Zealand and Tasmania below the bottom); the long
+     Alaska label then ran into the search box */
+  "The godwit’s non-stop flight":S=>{RELABEL(S,/^Yukon–Kuskokwim delta/,"Yukon delta, Alaska");VIEW(S,[-172,6,1])},
+  /* the card opened on the right and the globe faced the open Pacific: the Yellow Sea, the stop's subject, lay under
+     the map key and the Chukotka label on the map's switches */
+  "The East Asian–Australasian Flyway":S=>VIEW(S,[130,20,1.1]),
+  /* the nesting grounds were off the top of the screen and southern Africa under the card (framed further west, the
+     Arabian Sea label then ran under the map key) */
+  "The falcons of Nagaland":S=>VIEW(S,[72,10,1]),
+  /* the cards of these two opened on the right, over the zoom buttons */
+  "Monarch butterflies":S=>VIEW(S,[-95,35,1.8]),
+  "The river of raptors":S=>VIEW(S,[-96,22,2.8]),
+  /* the Adams River photo hung off the globe's right edge */
+  "Salmon come home":S=>VIEW(S,[-140,56,1.8]),
+  /* the card opened on the right, over Brazil's Abrolhos Bank; the Antarctic feeding grounds were below the screen. The
+     Abrolhos label is shortened to clear the map key */
+  "Humpback whales":S=>{RELABEL(S,/^Abrolhos Bank/,"Abrolhos, Brazil");VIEW(S,[-50,-26,1])},
+  /* the card opened on the right and the Caribbean, where the 1988 swarms landed, was round the globe's edge */
+  "Locust swarms":S=>VIEW(S,[-35,15,1.1]),
+  /* Durban's label ran under the map key */
+  "The sardine run":S=>VIEW(S,[27,-32,4])
  }
 };
 /* stops that keep the card where their own script put it */
@@ -130,6 +163,9 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
  const GS={
   /* the longest blue whale measured was 29.9 m; its maximum confirmed length is 29.9–30.5 m (Wikipedia, "Blue whale") */
   "ocean|The great whales":G("The blue whale is the biggest animal that has ever lived. How long can one grow?",5,60,30,"m",{step:1,show:"up to about 30 m"}),
+  /* the stop's own figure: about 8,300 km between Antarctica and Costa Rica (Rasmussen et al., Biology Letters 2007,
+     "Southern Hemisphere humpback whales wintering off Central America") */
+  "amigration|Humpback whales":G("Some humpbacks swim each year between Antarctica and Costa Rica. How far is that, one way?",1000,15000,8300,"km",{step:100,show:"about 8,300 km"}),
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
@@ -141,7 +177,9 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - ocean | "Kelp forests": buttons turn the globe to California, Chile, South Africa, Tasmania and Norway.
    - ocean | "Upwelling: where the fish are": buttons visit the four great upwelling zones.
    - ocean | "Into the deep": drag a submarine from the surface to Challenger Deep, past the light zones, a penguin's and
-             a whale's deepest dives, the Titanic and the deepest fish. */
+             a whale's deepest dives, the Titanic and the deepest fish.
+   - amigration | "Wildebeest follow the rain": drag through the year (or play it) and watch the herds go round their loop.
+   - amigration | "Now explore": pick an animal: the globe turns to its journey and draws it. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -283,7 +321,65 @@ const DIVE={tour:"ocean",title:"Into the deep",globe:false,tip:"Drag the sub dow
   if(!d)say(L,"At the surface","Drag the slider, or dive from one record to the next.");
   else say(L,m?m[1]:z[1],(m?m[2]+" ":"")+"The water presses "+atm.toLocaleString("en-GB")+" times as hard as the air at the surface.")}};
 
-const DEFS=[KELP,UPWELL,DIVE];
+/* ======================================================================== amigration */
+/* The herds' year, month by month, along the stop's own loop (its lines and pins). Calving on the south-eastern short-
+   grass plains from January to March, about 500,000 calves in two to three weeks around February; north-west towards
+   the Grumeti River in May, staying until late June; the Grumeti and Mara river crossings from July; in Kenya from late
+   July or August through the dry season; back south with the short rains in early November, reaching the plains by
+   December; about 250,000 die on the roughly 800 km journey (Wikipedia, "Serengeti", The Great Migration) */
+const HERD=[[35,-3,"January: the southern plains","The herds gather on the short-grass plains of the southern Serengeti as the rains bring fresh grass."],
+ [35,-3,"February: calving","About half a million calves are born within two to three weeks."],
+ [35,-3,"March: still calving","Calving goes on from January to March, on the rain-ripened grass."],
+ [34.5,-2.6,"April: moving west","The herds begin to move west."],
+ [34.1,-2.15,"May: the western corridor","Herds stretching for kilometres head north-west, towards the Grumeti River."],
+ [34.1,-2.15,"June: by the Grumeti","They stay here until late June."],
+ [34.4,-1.7,"July: north to Kenya","The Grumeti and Mara river crossings begin as the herds head north into Kenya."],
+ [35.03,-1.55,"August: the Mara River","The most dangerous crossings of all: crocodiles wait in the water."],
+ [35,-1.5,"September: the Maasai Mara","The herds spend the dry season in Kenya’s Maasai Mara."],
+ [35,-1.5,"October: the Maasai Mara","Still in Kenya, through the dry season."],
+ [35.25,-1.9,"November: turning south","The short rains begin and the herds turn back south."],
+ [35.1,-2.8,"December: home again","They reach the southern plains, in time for the calves in February. The loop is about 800 km."]];
+const WILDE={tour:"amigration",title:"Wildebeest follow the rain",globe:true,tip:"Drag through the year and follow the herds round their loop.",
+ card:()=>'<div class="rvw-sl"><input type="range" class="rvw-mon" min="0" max="11" step="1" value="0" aria-label="Month"><b class="rvw-mv"></b></div>'+
+  '<div class="rvw-row"><button type="button" class="rvw-btn rvw-play">▶ Play the year</button></div>',
+ init(L){L.m=0;L.t=0;L.pos=[HERD[0][0],HERD[0][1]];L.dots=[];for(let i=0;i<14;i++)L.dots.push(svgEl(L.svg,"circle",{r:"3.4",class:"rvw-gnu"}));
+  L.tag=document.createElement("div");L.tag.className="rvw-tag";L.el.appendChild(L.tag)},
+ off(L){clearInterval(L.play)},
+ tick(L,dt){L.t+=dt;const T=HERD[L.m],k=Math.min(1,dt*3);L.pos=[L.pos[0]+(T[0]-L.pos[0])*k,L.pos[1]+(T[1]-L.pos[1])*k];L.dirty=1},
+ draw(L){const q=proj(L,L.pos),qq=proj(L,L.pos,1);
+  L.dots.forEach((d,i)=>{if(!q){d.style.display="none";return}d.style.display="";const a=i*2.4+L.t*.8,r=4+((i*7)%13)*1.3;
+   d.setAttribute("cx",(q[0]+Math.cos(a)*r).toFixed(1));d.setAttribute("cy",(q[1]+Math.sin(a)*r*.7).toFixed(1))});
+  if(qq){L.tag.style.display="";const t=HERD[L.m][2].split(":")[0];if(L.tag._h!==t){L.tag.textContent=t;L.tag._h=t}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+20)+"px"}else L.tag.style.display="none"},
+ wire(L){const c=L.card,r=c.querySelector(".rvw-mon"),pb=c.querySelector(".rvw-play");
+  r.oninput=()=>{clearInterval(L.play);L.play=0;pb.textContent="▶ Play the year";L.m=+r.value;this.render(L)};
+  pb.onclick=()=>{if(L.play){clearInterval(L.play);L.play=0;pb.textContent="▶ Play the year";return}pb.textContent="❚❚ Pause";if(L.m===11)L.m=-1;
+   const step=()=>{if(!c.isConnected){clearInterval(L.play);return}L.m++;r.value=L.m;this.render(L);if(L.m>=11){clearInterval(L.play);L.play=0;pb.textContent="▶ Play again"}};step();L.play=setInterval(step,1600)};
+  this.render(L)},
+ render(L){const c=L.card;if(!c)return;const H=HERD[L.m];c.querySelector(".rvw-mv").textContent=H[2].split(":")[0];say(L,H[2],H[3])}};
+/* "Pick an animal": the tour's journeys, each drawn from its own stop's lines (and that stop's figures, sourced there) */
+const ANIMALS=[["Arctic tern","The Arctic tern",[-25,10,1],"About 70,000 km a year, Greenland to Antarctica and back."],
+ ["Bar-tailed godwit","The godwit’s non-stop flight",[-172,6,1],"About 13,500 km from Alaska to Tasmania in 11 days, without landing."],
+ ["Humpback whale","Humpback whales",[-50,-26,1],"About 8,300 km from Antarctica to Costa Rica."],
+ ["Amur falcon","The falcons of Nagaland",[72,10,1],"From north-east Asia to southern Africa, non-stop over the Arabian Sea."],
+ ["Monarch butterfly","Monarch butterflies",[-95,35,1.8],"Up to about 4,000 km to a few mountains in Mexico."],
+ ["European eel","Eels to the Sargasso Sea",[-30,38,1.5],"Up to 6,000 km from Europe’s rivers to the Sargasso Sea."],
+ ["Desert locust","Locust swarms",[-35,15,1.1],"In 1988, about 5,000 km across the Atlantic on the trade winds."],
+ ["Salmon","Salmon come home",[-140,56,1.8],"From the ocean back to the very stream where they hatched."],
+ ["Caribou","Caribou on the tundra",[-141,67,4],"More than 1,000 km a year, to calve by the Arctic Ocean."],
+ ["Wildebeest","Wildebeest follow the rain",[35.2,-2.1,11],"A loop of about 800 km round the Serengeti and the Maasai Mara."]];
+const PICK={tour:"amigration",title:"Now explore",globe:true,turn:true,tip:"Pick an animal to see its journey, then hover the countries on its route.",
+ card:()=>'<div class="rvw-row rvw-turn">'+ANIMALS.map((a,i)=>'<button type="button" class="rvw-btn" data-i="'+i+'">'+esc(a[0])+'</button>').join("")+'</div>',
+ init(L){L.at=-1;L.t=0;L.g=svgEl(L.svg,"g",{});L.paths=[]},
+ tick(L,dt){L.t+=dt;if(L.paths.length){L.paths.forEach(p=>p.style.strokeDashoffset=String(-(L.t*30)%24))}},
+ draw(L){const G=g();if(L.at<0||!G)return;try{const P=G.projection(),gp=d3.geoPath(P);L.g.setAttribute("transform","translate("+L.ox+","+L.oy+")");
+  L.lines.forEach((ln,i)=>{const d=gp({type:"LineString",coordinates:ln})||"";L.paths[i].setAttribute("d",d)})}catch(e){}},
+ wire(L){const c=L.card;c.querySelectorAll(".rvw-turn button").forEach(b=>b.onclick=()=>{const k=+b.dataset.i,a=ANIMALS[k];L.at=k;c.dataset.turned="1";
+   let lines=[];try{const S=PS_TOURS.amigration.steps.find(x=>strip(x.title)===a[1]);lines=(S&&S.lines||[]).filter(x=>x&&Array.isArray(x.coords)).map(x=>x.coords)}catch(e){}
+   L.lines=lines;L.g.innerHTML="";L.paths=lines.map(()=>svgEl(L.g,"path",{class:"rvw-route"}));turnGlobe(a[2][0],a[2][1],a[2][2]);L.dirty=1;this.render(L)});this.render(L)},
+ render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvw-turn button").forEach(b=>b.classList.toggle("rvw-cur",+b.dataset.i===L.at));
+  if(L.at<0)say(L,"","Tap an animal: the globe turns to its journey.");else{const a=ANIMALS[L.at];say(L,a[0],a[3])}}};
+
+const DEFS=[KELP,UPWELL,DIVE,WILDE,PICK];
 /* ---------------------------------------------------------------- the engine: one stop at a time */
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
@@ -405,6 +501,7 @@ body.rvw-offlayer .ps-mapkey.at-right,body.rvw-offlayer .ps-mapbanner{display:no
 (function diag(n){try{if(typeof PS_DIAG!=="undefined"&&PS_DIAG["ocean|The anchoveta and El Niño"]){PS_DIAG["ocean|The anchoveta and El Niño"]="upwell:1";if(window.gfDiag2&&gfDiag2.STOPS)gfDiag2.STOPS["ocean|The anchoveta and El Niño"]="upwell:1";return}}catch(e){}if(n<40)setTimeout(()=>diag(n+1),500)})(0);
 
 {const s=document.createElement("style");s.textContent=`
+.rvw-gnu{fill:#3b2a1a;stroke:#f2e3c6;stroke-width:1}.rvw-route{fill:none;stroke:#d9682b;stroke-width:4;stroke-linecap:round;stroke-dasharray:14 10;filter:drop-shadow(0 0 1.5px #fff)}
 .rvw-col{display:block;width:100%;height:auto;margin:2px 0 4px}.rvw-zl{stroke:rgba(255,255,255,.35);stroke-width:1;stroke-dasharray:3 3}
 .rvw-cab{stroke:#ffd166;stroke-width:1.2;stroke-dasharray:2 2}.rvw-sub{fill:#ffd166;stroke:#7a4a12;stroke-width:1.5}.rvw-win{fill:#13294b}.rvw-beam{fill:rgba(255,236,170,.28)}
 .rvw-em{filter:drop-shadow(0 0 2px rgba(255,255,255,.85))}.rvw-zt{font:700 9.5px system-ui,sans-serif;fill:#fff;opacity:.55}.rvw-zt.rvw-zon{opacity:1;font-weight:800}.rvw-hit{fill:rgba(255,209,102,.35);stroke:#ffd166;stroke-width:1.5}
