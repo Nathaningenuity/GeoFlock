@@ -119,6 +119,41 @@ FIX.festivals={
     American Samoa label below the screen: framed on the Pacific, where the race starts and ends */
  "Hogmanay and the race to midnight":S=>{DROPPH(S,/^(Times Square|Edinburgh)/);VIEW(S,[-162,8,1])}
 };
+FIX.houses={
+ /* the card opened on the right, over the zoom buttons; with it on the left, the Kerala houseboats' photo sat under the
+    map key (the houseboats are on the last stop) */
+ "Houses of the world":S=>{DROPPH(S,/^Kerala/);VIEW(S,[48,30,1])},
+ /* Canada and Greenland named twice, by the map and by labels on long leaders */
+ "Snow houses":S=>DROP(S,/^(Canada|Greenland)/),
+ /* Belén sat under the card, Kampong Ayer and Tonlé Sap round the back of the globe: the stop opens on Ganvié, and
+    buttons (part 2) turn the globe to each */
+ "Houses on stilts":S=>VIEW(S,[2.4,6.5,2.2]),
+ /* the globe flew to the North Pole: Taos and the Hopi photo sat under the card, Djenné on the globe's edge under the map
+    key, and Shibam (the card's photo and headline) round the back. Framed on Shibam and Djenné; buttons (part 2) turn
+    the globe to each, and to Taos. Country labels go, and so does Shibam's photo, its square under the map key (the
+    card's own photo is Shibam) */
+ "Building with earth":S=>{DROP(S,/^(United States|Mali|Yemen)$/);DROPPH(S,/^Shibam/);VIEW(S,[27,17,1.1])},
+ /* Matmata and Derinkuyu sat under the card, the yaodong photo under the map key: the stop opens on China's yaodong
+    (its headline), and buttons (part 2) turn the globe to each. Country labels go */
+ "Living underground":S=>{DROP(S,/^(Turkey|China|Tunisia)$/);VIEW(S,[108,36,2.2])},
+ /* the KwaMhlanga and Botshabelo labels ran into the map key; South Africa named twice */
+ "Ndebele painted houses":S=>{DROP(S,/^South Africa$/);VIEW(S,[29.5,-25.5,4])},
+ /* the Ngorongoro label ran into the map key */
+ "Maasai homes":S=>VIEW(S,[38.5,-1.5,3.4]),
+ /* the Norfolk photo sat under the card and the Shirakawa-go label ran into the map key: the stop opens on
+    Shirakawa-go (its headline), and buttons (part 2) turn the globe to Norfolk */
+ "Steep roofs for rain and snow":S=>VIEW(S,[136.9,36.3,3]),
+ /* the Netherlands named twice */
+ "The Dutch canal house":S=>DROP(S,/^Netherlands$/),
+ /* the Singapore photo's label sat at the bottom of the screen */
+ "Cities of towers":S=>VIEW(S,[108,9,1.9]),
+ /* Rocinha and Medellín sat under the card, Dharavi on the globe's edge, Soweto's label below the screen: buttons
+    (part 2) turn the globe to each */
+ "Cities built by their people":S=>VIEW(S,[54,-8,1.05]),
+ /* Lake Titicaca (the headline) and the Uros photo were round the back of the globe, Cần Thơ's photo on its edge: the
+    stop opens on Titicaca, and buttons (part 2) turn the globe to each */
+ "Homes on the water":S=>VIEW(S,[-69.9,-15.8,2.4])
+};
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title). On a tour's very first launch index.html flies to the opening stop before the fixes above are applied to it
@@ -343,12 +378,91 @@ const SUNMOON=CLASSIFY({tours:["festivals"],title:"Now explore",turns:true,below
   ["Chuseok","both","The full moon of the eighth lunar month, in a calendar kept in step with the Sun.",[126.98,37.57,2.2]]],
  end:(r,N)=>"Festivals that follow the Sun keep their season; those that follow the Moon alone move through the year; lunisolar ones wander by a few weeks but stay in their season."});
 
+/* ======================================================================== houses */
+/* ---- buttons that turn the globe between a stop's places, too far apart to show at once (texts from each stop) */
+const STILTS=TURNER({tours:["houses"],title:"Houses on stilts",tip:"Homes on stilts and rafts, on three continents. Turn the globe to each.",
+ intro:"Pick a place to fly there.",
+ places:[["Ganvié, Benin",2.42,6.47,2.6,"On Lake Nokoué: a town of 20,000 or more people living in houses on stilts."],
+  ["Kampong Ayer, Brunei",114.94,4.88,2.6,"A whole water town of wooden houses joined by boardwalks."],
+  ["Tonlé Sap, Cambodia",104,12.8,2.4,"The lake swells several times over in the monsoon, so some homes float on rafts instead."],
+  ["Belén, Peru",-73.25,-3.76,2.4,"On the Amazon at Iquitos, where rivers rise by 10 m or more, some homes float."]]});
+const EARTH=TURNER({tours:["houses"],title:"Building with earth",tip:"Earth homes in three deserts. Turn the globe to each.",
+ intro:"Pick a place to fly there.",
+ places:[["Shibam, Yemen",48.63,15.93,2.8,"Mud-brick towers five to eleven storeys high, packed inside a wall against floods and raiders."],
+  ["Djenné, Mali",-4.56,13.91,2.8,"Townspeople replaster the Great Mosque, the world’s largest mud-brick building, every year."],
+  ["Taos Pueblo, US",-105.55,36.44,2.8,"In New Mexico: adobe homes lived in for about 1,000 years."]]});
+const UNDER=TURNER({tours:["houses"],title:"Living underground",tip:"Homes dug into the ground, in three countries. Turn the globe to each.",
+ intro:"Pick a place to fly there.",
+ places:[["Yan’an, China",109.49,36.6,2.6,"On the Loess Plateau, yaodong are dug into hillsides or round sunken courtyards."],
+  ["Matmata, Tunisia",9.97,33.54,2.8,"Amazigh (Berber) families dug round courtyard pits with rooms in the walls; one played Luke Skywalker’s home."],
+  ["Derinkuyu, Turkey",34.73,38.37,2.8,"In Cappadocia’s soft volcanic rock: an underground city about 85 m deep."]]});
+const ROOFS=TURNER({tours:["houses"],title:"Steep roofs for rain and snow",tip:"Two steep thatched roofs, a world apart. Turn the globe to each.",
+ intro:"Pick a place to fly there.",
+ places:[["Shirakawa-go, Japan",136.91,36.26,3,"Gasshō roofs, ‘praying hands’, shed metres of snow; their attics once raised silkworms."],
+  ["Norfolk, England",1.4,52.7,3,"Reed thatch sheds rain and keeps a house warm: a good reed roof can last 50 years."]]});
+const SETTLE=TURNER({tours:["houses"],title:"Cities built by their people",tip:"Neighbourhoods built by the people who live there. Turn the globe to each.",
+ intro:"Pick a place to fly there.",
+ places:[["Dharavi, Mumbai",72.85,19.04,2.8,"Its recycling, pottery and leather workshops sell their goods across India."],
+  ["Kibera, Nairobi",36.79,-1.31,2.8,"Many homes lack secure water, sanitation or legal title, yet it is busy with shops, schools and workshops."],
+  ["Soweto, Johannesburg",27.86,-26.27,2.8,"Johannesburg’s Soweto, in the photo."],
+  ["Rocinha, Rio",-43.25,-22.99,2.8,"One of Rio de Janeiro’s favelas, built up a steep hillside."],
+  ["Medellín, Colombia",-75.57,6.25,2.8,"The city built cable cars to link its hillside neighbourhoods to the metro."]]});
+const WATER=TURNER({tours:["houses"],title:"Homes on the water",tip:"Homes that float, on four continents. Turn the globe to each.",
+ intro:"Pick a place to fly there.",
+ places:[["Lake Titicaca",-69.97,-15.82,2.6,"The Uros build their islands of totora reeds, adding fresh layers on top as the bottom ones rot."],
+  ["Amsterdam",4.9,52.37,3,"About 2,500 houseboats line its canals; new Dutch floating homes rise and fall with the water."],
+  ["Dal Lake, Srinagar",74.87,34.12,2.8,"Carved wooden houseboats dating from the 1800s."],
+  ["Kerala, India",76.4,9.5,2.8,"Old rice barges, kettuvallam, have become houseboats on the backwaters."],
+  ["Cần Thơ, Vietnam",105.78,10.03,2.8,"A floating market in the Mekong Delta, in the photo."]]});
+
+/* ---- Cities of towers: how many people would stand on one football pitch (105 × 68 m, 0.714 ha) at each place's
+   density? Kowloon Walled City: "an estimated 33,000 residents within its 2.6-hectare borders" in 1987, "approximately
+   1,255,000 inhabitants per square kilometre" (Wikipedia, "Kowloon Walled City"). Manhattan: 28,154 per km² (2020
+   census, land area; Wikipedia, "Manhattan"). Singapore: 8,290 per km² (2025 estimate; Wikipedia, "Singapore"). One
+   dot is 10 people. */
+const PITCH_HA=.714,DENS=[["Kowloon Walled City, 1987",1255000],["Manhattan",28154],["Singapore",8290]];
+const PITCH={tours:["houses"],title:"Cities of towers",globe:false,
+ tip:"How crowded? Fill a football pitch with the people who would live on it.",
+ card(L){return'<svg class="rvy-pitch" viewBox="0 0 300 194" role="img" aria-label="A football pitch"><rect class="rvy-grass" x="0" y="0" width="300" height="194" rx="6"/>'+
+  '<g class="rvy-lines"><rect x="8" y="8" width="284" height="178"/><line x1="150" y1="8" x2="150" y2="186"/><circle cx="150" cy="97" r="26"/><rect x="8" y="55" width="44" height="84"/><rect x="248" y="55" width="44" height="84"/></g><g class="rvy-ppl"></g></svg>'+
+  '<div class="rvy-btns rvy-pb">'+DENS.map((d,i)=>'<button type="button" class="rvy-btn" data-i="'+i+'">'+esc(d[0].replace(/, 1987$/,""))+'</button>').join("")+'</div>'},
+ wire(L){const c=L.card;L.at=-1;L.seen=new Set();c.querySelectorAll(".rvy-pb button").forEach(b=>b.onclick=()=>{L.at=+b.dataset.i;L.seen.add(L.at);this.render(L)});this.render(L)},
+ render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvy-pb button").forEach(b=>b.classList.toggle("rvy-cur",+b.dataset.i===L.at));
+  const g=c.querySelector(".rvy-ppl");if(L.at<0){g.innerHTML="";say(L,"","Pick a place. One dot is 10 people.");return}
+  const d=DENS[L.at],n=d[1]*PITCH_HA/100,dots=Math.max(1,Math.round(n/10));
+  /* dots on a grid over the pitch, filled in a scattered order so a few dots spread out */
+  const cols=40,rows=Math.ceil(dots/cols)>23?Math.ceil(dots/cols):23,P=[];for(let r=0;r<23;r++)for(let k=0;k<cols;k++)P.push([10+k*7,12+r*7.6]);
+  const ord=P.map((p,i)=>[(i*7919)%P.length,p]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+  g.innerHTML=ord.slice(0,Math.min(dots,ord.length)).map(p=>'<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.4"/>').join("");
+  const r2=v=>{const k=Math.pow(10,Math.max(0,Math.floor(Math.log10(v))-1));return fmt(Math.round(v/k)*k)};
+  let txt=d[0]+": about "+r2(n)+" people on one pitch.";
+  if(L.at===0)txt+=" That is more than 40 times as crowded as Manhattan. Its 33,000 people lived on 2.6 hectares, less than four football pitches.";
+  else if(L.at===1)txt+=" Manhattan’s towers hold over 28,000 people to the square kilometre.";
+  else txt+=" Singapore is one of the most crowded countries on Earth, yet a pitch there would still look almost empty.";
+  say(L,"About "+r2(n)+" people",txt)}};
+
+/* ---- Review on the last stop: which climate shaped each home? (from the tour's own text) */
+const CLIMHOME=CLASSIFY({tours:["houses"],title:"Now explore",turns:true,below:true,
+ tip:"Review: which climate shaped each home? Each answer turns the globe there.",ask:"What climate was it built for?",
+ kinds:[["cold","Cold winters","cold winters"],["dry","Hot and dry","a hot, dry climate"],["wet","Hot and wet","a hot, wet climate"]],
+ items:[["An igloo","cold","Snow is full of trapped air, so it insulates well, and the low entrance tunnel traps the cold air.",[-81.8,69.4,2.2]],
+  ["A ger on the steppe","cold","Felt from the herders’ own sheep keeps out winters of −40 °C.",[106.9,47.9,2.2]],
+  ["Yazd’s windcatchers","dry","They catch any breeze high above the street and steer it down into the rooms.",[54.37,31.9,2.4]],
+  ["Ganvié’s stilt houses","wet","Stilts keep homes above floods and let breezes cool the floor.",[2.42,6.47,2.4]],
+  ["Taos Pueblo’s adobe","dry","Thick earth walls soak up the day’s heat slowly and give it back at night.",[-105.55,36.44,2.4]],
+  ["Matmata’s pit homes","dry","A few metres underground the temperature hardly changes all year.",[9.97,33.54,2.4]],
+  ["Kampong Ayer’s water town","wet","Like other homes of the hot, wet tropics, its houses stand on stilts above the water.",[114.94,4.88,2.4]],
+  ["Iceland’s turf houses","cold","Thick walls of cut turf kept out the long, windy winters.",[-19.36,65.54,2.4]]],
+ end:()=>"Before central heating and air conditioning, every home had to suit its climate, built of whatever lay close at hand."});
+
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    Kumbh Mela: "more than 660 million (66 crores) people had taken a dip in the river" by 26 February, over the 45 days
    from 13 January to 26 February 2025 (Wikipedia, "2025 Prayag Maha Kumbh Mela"; The Economist doubted the official
-   figures). The stop's headline says "over 600 million visits in six weeks"; its other text gives no number. */
+   figures). Igloo: "on the outside, temperatures may be as low as −45 °C", "on the inside, the temperature may
+   range from −7 to 16 °C when warmed by body heat alone" (Wikipedia, "Igloo"). The Kumbh stop's headline says "over 600 million visits in six weeks"; its other text gives no number. */
 function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
- const GS={"festivals|The biggest crowd on Earth":{q:"How many dips in the river did officials count at the 2025 Kumbh Mela, in six weeks?",min:0,max:1500,ans:660,unit:"million",step:10,show:"about 660 million, by the official count from 13 January to 26 February 2025: more than the population of the whole European Union"}/*@@GS@@*/};
+ const GS={"festivals|The biggest crowd on Earth":{q:"How many dips in the river did officials count at the 2025 Kumbh Mela, in six weeks?",min:0,max:1500,ans:660,unit:"million",step:10,show:"about 660 million, by the official count from 13 January to 26 February 2025: more than the population of the whole European Union"},
+  "houses|Snow houses":{q:"With a small lamp and body heat, how much warmer than the air outside can the inside of an igloo be?",min:0,max:60,ans:30,unit:"°C warmer",step:1,show:"over 30 °C: when it is −45 °C outside, body heat alone can keep the inside between −7 and 16 °C"}/*@@GS@@*/};
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
 {const s=document.createElement("style");s.textContent=`
@@ -364,8 +478,12 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
 :is(body.dark-theme,body.sky-night) .rvy-yrc{fill:#fff}:is(body.dark-theme,body.sky-night) .rvy-yrm,:is(body.dark-theme,body.sky-night) .rvy-yrd{fill:#aab6c8}
 :is(body.dark-theme,body.sky-night) .rvy-yrk{color:#aab6c8}:is(body.dark-theme,body.sky-night) .rvy-ram{stroke:#4cc27f}
 `;document.head.appendChild(s)}
+{const s=document.createElement("style");s.textContent=`
+.rvy-pitch{display:block;width:100%;height:auto;border-radius:8px}.rvy-grass{fill:#5fa55a}.rvy-lines *{fill:none;stroke:rgba(255,255,255,.75);stroke-width:1.5}
+.rvy-ppl circle{fill:#13294b;stroke:#fff;stroke-width:.6}
+`;document.head.appendChild(s)}
 
-const DEFS=[RAMADAN,HARVEST,SUNMOON];
+const DEFS=[RAMADAN,HARVEST,SUNMOON,STILTS,EARTH,UNDER,ROOFS,SETTLE,WATER,PITCH,CLIMHOME];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
