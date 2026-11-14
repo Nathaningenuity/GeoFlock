@@ -151,7 +151,45 @@ FIX.bextinction={
   "Now explore":S=>VIEW(S,[-30,15,1])
 };
 
-FIX.energy={};
+FIX.energy={
+  /* the pumpjack and Itaipu photos lay under the card and the Nesjavellir photo at the globe's top edge by the map's
+     switches (each place has a stop of its own) */
+  "Energy of the world":S=>{DROPPH(S,/^(Oil pumpjack|Itaipu Dam|Nesjavellir)/);VIEW(S,[30,25,1])},
+  /* Dhahran's label ran under the map key and a "Saudi Arabia" label hung on a long leader (the map names it): framed a
+     little east, the label goes */
+  "Ghawar, the biggest oil field":S=>{DROP(S,/^Saudi Arabia$/);VIEW(S,[56,26,4])},
+  /* a "Saudi Arabia" label on a long leader (the map names it) */
+  "Burning oil to stay cool":S=>DROP(S,/^Saudi Arabia$/),
+  /* Almetyevsk, where Druzhba begins, lay at the globe's edge by the zoom buttons: framed a little east */
+  "Pipelines across a continent":S=>VIEW(S,[35,54,1.8]),
+  /* the whole of Britain was shaded, which pushed the labels far from their places (the label placer keeps labels off a
+     stop's shaded countries, as geoflock-polish-rw4.js found), with a "United Kingdom" label on a leader, and the
+     Zollverein photo lay at the globe's edge by the map key: shading, label and photo go; framed closer */
+  "Coal: the first and the last":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/);DROPPH(S,/^Zollverein/);VIEW(S,[-1.4,52.4,6])},
+  /* Chongqing's label was pushed far south, off shaded China: the shading goes */
+  "Three Gorges":S=>NOSHADE(S),
+  /* the Iguazu Falls label ran under the map key, kept off shaded Brazil and Paraguay: shading off, framed a little east */
+  "Itaipu, a dam for two":S=>{NOSHADE(S);VIEW(S,[-53.6,-25.3,4])},
+  /* the labels were pushed off shaded Iceland: the shading goes. The stat's share moves into the stop's guess (revealed
+     there) */
+  "Iceland: heat from below":S=>{NOSHADE(S);RE(S,"stat","Nine in ten homes in Iceland are heated with hot water from underground","Iceland heats its homes with hot water from underground: guess below how many of them")},
+  /* Vindeby lay off the globe's edge under the zoom buttons and the offshore wind farm photo was pushed far inland onto
+     England; five countries were shaded, keeping the labels off the coasts: framed a little east, the photo and the
+     shading go */
+  "Wind over the North Sea":S=>{NOSHADE(S);DROPPH(S,/^Offshore wind farm/);VIEW(S,[5,55,4.6])},
+  /* "France" and "Germany" labels on leaders (the map names them), and Flamanville's pushed far off shaded France */
+  "France: a nuclear nation":S=>{NOSHADE(S);DROP(S,/^(France|Germany)$/)},
+  /* Dinorwig's and the upper lake's labels, 2 km apart, were pushed far west onto the card's edge, off shaded Britain,
+     with a "United Kingdom" label: the shading and that label go, the upper lake's label too (the card's cross-section
+     shows it), and the stop is framed closer */
+  "The kettle surge":S=>{NOSHADE(S);DROP(S,/^(United Kingdom|Marchlyn Mawr.*)$/);VIEW(S,[-3.9,53.1,9])},
+  /* the east's label ran under the map key, off shaded Japan, with a "Japan" label: framed a little east, the shading and
+     the label go */
+  "One country, two frequencies":S=>{NOSHADE(S);DROP(S,/^Japan$/);VIEW(S,[142,37,3.5])},
+  /* Xinjiang's label hung at the globe's top edge and Bhadla's ran under the map key: framed closer on Asia */
+  "The energy transition":S=>VIEW(S,[85,33,1.5]),
+  "Now explore":S=>VIEW(S,[30,25,1])
+};
 FIX.currencies={};
 FIX.conflicts={};
 
@@ -379,8 +417,32 @@ const BINS_EXT=BINS({tours:["bextinction"],title:"Now explore",turnItems:true,ma
   ["The moa",0,"New Zealand’s giant birds were gone by about 1400.",[172,-43,2.2],"New Zealand"]],
  after:(r,N)=>(r===N?"All right! ":"")+"Every animal still hanging on is there because people worked to save it: Kolbert’s hope is that the ingenuity driving the extinction can also slow it."});
 
+/* ======================================================================== 5. Iceland's hot water (energy, Iceland: heat from
+   below) Wikipedia, "Geothermal power in Iceland": "at least 90% of all homes in Iceland are heated with geothermal
+   energy". The stat's share is taken out (part 1) so the guess comes first. */
+const GUESS_ICE=GUESS({tours:["energy"],title:"Iceland: heat from below",
+ tip:"Hot water from under the ground warms Icelanders’ homes. How many homes, do you think?",
+ vals:[10,25,40,50,60,75,90],start:2,answer:90,close:1,fmt:v=>v+"%",
+ after:"At least nine in ten homes. Iceland sits on a plate boundary, where hot rock lies close to the surface."});
 
-const DEFS=[TURN_GUBBIO,TURN_BIG5,SORT_ARRIVE,BINS_EXT];
+/* ======================================================================== 6. Fossil, renewable or nuclear? (energy, Now
+   explore) A review of the tour's own places; each answer turns the globe there. */
+const BINS_EN=BINS({tours:["energy"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"The tour visited every kind of power. Which kind is each of these?",ask:"Fossil fuel, renewable or nuclear?",
+ bins:["Fossil fuel","Renewable","Nuclear"],
+ items:[["Three Gorges Dam",1,"Falling water from the Yangtze: the world’s biggest power station.",[111,30.82,3],"Three Gorges"],
+  ["Ghawar",0,"The largest conventional oil field ever found.",[49.2,25.4,3],"Ghawar"],
+  ["Ratcliffe-on-Soar",0,"Britain’s last coal-fired power station, closed in 2024.",[-1.27,52.87,3.5],"Ratcliffe-on-Soar"],
+  ["Flamanville",2,"France’s newest reactor, 2024.",[1.88,49.54,3.5],"Flamanville"],
+  ["Dogger Bank",1,"Wind turbines on a sandbank far out in the North Sea.",[1.9,54.85,3.5],"Dogger Bank"],
+  ["Nesjavellir",1,"Steam and hot water from under Iceland.",[-21.2,64.11,3],"Nesjavellir"],
+  ["The Druzhba pipeline",0,"It carries Russian oil about 4,000 km into central Europe.",[52.3,54.9,2.4],"Almetyevsk"],
+  ["Civaux",2,"One of France’s 57 reactors.",[0.17,46.27,3.5],"Civaux"],
+  ["Noor Ouarzazate",1,"Mirrors focus the Saharan sunshine.",[-6.87,31.03,3],"Noor Ouarzazate"]],
+ after:(r,N)=>(r===N?"All right! ":"")+"Oil, coal and gas still supply most of the world’s energy, but the renewables are growing fastest of all."});
+
+
+const DEFS=[TURN_GUBBIO,TURN_BIG5,SORT_ARRIVE,BINS_EXT,GUESS_ICE,BINS_EN];
 
 
 
