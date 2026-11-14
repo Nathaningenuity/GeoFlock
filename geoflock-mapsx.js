@@ -150,28 +150,70 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  const TITLES={resources:"Energy and resources",hazards:"Natural hazards",plates:"Plate tectonics",transport:"Transport and trade",seas:"Seas & oceans",climate:"The world’s climates",geo:"The world’s best surprises",time:"Time zones"};
  function apply(){try{for(const k in ADD){const T=typeof PS_TOURS!=="undefined"&&PS_TOURS[k];if(!T||!T.steps||!T.steps[0]||T.steps[0].title!==TITLES[k])continue;for(const i in ADD[k]){const S=T.steps[+i];if(S&&!S.on)S.on=ADD[k][i]}}}catch(e){}}
  apply();addEventListener("load",()=>setTimeout(apply,1500))})();
-/* 7. Sea names follow their sea: a long, narrow sea or gulf (the Gulf of California, the Red Sea, the Persian Gulf) has its
-   name slanted along its length, worked out from the sea's own outline; a round sea keeps a level name. Steep names read
-   from top to bottom, as the landform names do. */
+/* 7. Sea names on the globe.
+   - Where: always inside the name's own sea (the Bay of Campeche in the southern Gulf of Mexico, the Arabian Sea west of
+     India, the North Atlantic out in the open ocean and not in the Bay of Biscay), at the most open water of the part of
+     that sea in view: the spot farthest from its edges (coasts, and the lines where it meets its neighbours), from the
+     screen's edge and from names already placed. A sea partly in view keeps its name, moved into the part that shows.
+     The spots are worked out from the sea's own outline in longitude and latitude when the sea is first named (the
+     earlier spots, kept from page load, could be some 30 degrees out, putting the Arabian Sea in the Bay of Bengal).
+   - Which way: level whenever a level name fits inside the sea there; only a sea too narrow for that (the Red Sea,
+     the Gulf of California, the Adriatic) has its name slanted along its length, steep names reading top to bottom.
+   - Size: grows as the globe is zoomed in, like the country and city names, and a little more (about half as big
+     again close up), so a sea name is not lost beside the land's names. */
 (function(){if(typeof GlobeView==="undefined"||typeof ALLMAPS_MARINE==="undefined"||typeof globeParsePath!=="function")return;
- const ANG=new Map(),ALT=new Map();
+ const ANG=new Map();
  ALLMAPS_MARINE.forEach(r=>{try{const n=r[0],d=r[4];if(!n||!d||ANG.has(n))return;const pts=globeParsePath(d).flat();if(pts.length<6)return;
   let mx=0,my=0;pts.forEach(q=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(q=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
   const h=(sxx+syy)/2,r2=Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l1=h+r2,l2=h-r2;let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;
-  if(l1<3*Math.max(l2,1e-9)||Math.abs(a)<12)a=0;if(a<-50)a+=180;ANG.set(n,a);
-  /* other places inside the sea where the name can go, deepest inside first: used only when its usual spot is off the
-     screen or taken (a sea partly in view keeps its name) */
-  try{const rings=globeParsePath(d);let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;pts.forEach(q=>{x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])});
-   const inside=(x,y)=>{let c=false;rings.forEach(r=>{for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}});return c};
-   const C=[],N=9;for(let i=1;i<N;i++)for(let j=1;j<N;j++){const x=x0+(x1-x0)*i/N,y=y0+(y1-y0)*j/N;if(!inside(x,y))continue;let dm=1e9;pts.forEach(q=>{const dd=Math.hypot(q[0]-x,q[1]-y);if(dd<dm)dm=dd});const ll=globeInv(x,y);if(ll)C.push({ll,dm})}
-   C.sort((u,v)=>v.dm-u.dm);ALT.set(n,C.slice(0,12))}catch(e){}}catch(e){}});
+  if(l1<3*Math.max(l2,1e-9)||Math.abs(a)<12)a=0;if(a<-50)a+=180;ANG.set(n,a)}catch(e){}});
+ const D2R=Math.PI/180;
+ /* the sea's outline as flat rings of [lon,lat] (outer rings and islands alike: inside = inside an odd number of rings).
+    Each ring is made continuous in longitude: a point on the map's edge can come back as 180 degrees east or west, and a
+    ring jumping right round the world that way made the North Pacific take in the Atlantic and the Mediterranean. A spot
+    is then tested as it is and a whole turn east and west. */
+ function geo(S){if(S._g!==undefined)return S._g;let g=null;try{const R=[];(S.poly&&S.poly.coordinates||[]).forEach(P=>P.forEach(r=>{if(!r||r.length<4)return;const c=[[r[0][0],r[0][1]]];for(let i=1;i<r.length;i++){let x=r[i][0];const px=c[i-1][0];while(x-px>180)x-=360;while(x-px<-180)x+=360;c.push([x,r[i][1]])}R.push(c)}));
+  if(R.length){let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;R.forEach(r=>r.forEach(q=>{if(q[0]<x0)x0=q[0];if(q[0]>x1)x1=q[0];if(q[1]<y0)y0=q[1];if(q[1]>y1)y1=q[1]}));g={R,bb:[x0,y0,x1,y1]}}}catch(e){}return S._g=g}
+ function in1(g,x,y){let c=false;for(const r of g.R)for(let i=0,j=r.length-1;i<r.length;j=i++){const xi=r[i][0],yi=r[i][1],xj=r[j][0],yj=r[j][1];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c}
+ function inside(g,x,y){return in1(g,x,y)||(g.bb[0]<-180&&in1(g,x-360,y))||(g.bb[2]>180&&in1(g,x+360,y))}
+ /* distance (radians, roughly) from a spot to the nearest edge of the sea */
+ function ed1(g,x,y){const k=Math.cos(y*D2R);let best=1e9;for(const r of g.R)for(let i=0,j=r.length-1;i<r.length;j=i++){const ax=(r[j][0]-x)*k,ay=r[j][1]-y,bx=(r[i][0]-x)*k,by=r[i][1]-y,vx=bx-ax,vy=by-ay,L=vx*vx+vy*vy;let t=L?-(ax*vx+ay*vy)/L:0;t=t<0?0:t>1?1:t;const dx=ax+t*vx,dy=ay+t*vy,d=dx*dx+dy*dy;if(d<best)best=d}return best}
+ function edgeDist(g,x,y){let b=ed1(g,x,y);if(g.bb[0]<-180)b=Math.min(b,ed1(g,x-360,y));if(g.bb[2]>180)b=Math.min(b,ed1(g,x+360,y));return Math.sqrt(b)*D2R}
+ /* spots inside the sea, on a grid over its outline's box, each with its distance to the sea's edge */
+ function spots(S){if(S._sp)return S._sp;const g=geo(S),C=[];if(g){const[x0,y0,x1,y1]=g.bb,N=26;for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){const x=x0+(x1-x0)*(i+.5)/(N+1),y=y0+(y1-y0)*(j+.5)/(N+1);if(inside(g,x,y))C.push({ll:[((x+540)%360)-180,y],dm:edgeDist(g,x,y)})}
+  if(S.ll&&inside(g,S.ll[0],S.ll[1]))C.push({ll:S.ll,dm:edgeDist(g,S.ll[0],S.ll[1]),home:true})}return S._sp=C}
+ window.gfSeaGeo={geo,inside,ANG};
  const P=GlobeView.prototype,_s=P._seaLabels;if(!_s)return;
- P._seaLabels=function(ctx,p,O,show,onRaster){if(this._flat||!O||!O.seas)return _s.apply(this,arguments);
-  const zr=.7/this.zoom,darkSea=!onRaster&&!document.body.classList.contains("light-theme"),ink=darkSea?"rgba(178,212,240,0.92)":"rgba(28,78,128,0.85)",halo=darkSea?"rgba(10,20,45,0.75)":"rgba(255,255,255,0.35)",k=this.ls(),sizes=[7.6*k,6*k,5.2*k,4.8*k];
-  const{w,h}=this.size(),onScr=q=>q&&q[0]>8&&q[1]>8&&q[0]<w-8&&q[1]<h-8;
-  O.seas.forEach(S=>{const tier=SEA_TIERS[Math.min(S.tier,3)];if(zr>tier.show)return;const fs=sizes[Math.min(S.tier,3)],font="italic 500 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;
-   const tw=ctx.measureText(S.n).width,a=(ANG.get(S.n)||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),hw=(tw*c+fs*s)/2,hh=(tw*s+fs*c)/2;
-   /* its usual spot first; only if that is off the screen or taken, another spot inside the sea */
-   const kpx=this.size().r*this.zoom/318.31;for(const A of [{ll:S.ll,dm:1e9}].concat(ALT.get(S.n)||[])){const ll=A.ll;/* a spot far enough from the coast that the name stays on the water */if(A.dm*kpx<hw+4)continue;if(!show(ll,1.2))continue;const xy=p(ll);if(!onScr(xy))continue;
-    /* a moved name must sit wholly on water: its middle and both ends are not on land */
-    if(A.dm<1e9){const pr=this.projection(),land=this._base||[],ca=Math.cos(a),sa=Math.sin(a);let wet=true;for(const t of [-1,0,1]){const q=pr.invert&&pr.invert([xy[0]+ca*tw/2*t,xy[1]+sa*tw/2*t]);if(!q||land.some(f=>{try{return d3.geoContains(f,q)}catch(e){return false}})){wet=false;break}}if(!wet)continue}if(!this._fits([xy[0]-hw,xy[1]-hh,xy[0]+hw,xy[1]+hh]))continue;this._text(ctx,S.n,xy[0],xy[1],ink,halo,font,a||undefined);return}})}})();
+ P._seaLabels=function(ctx,p,O,show,onRaster){if(this._flat||!O||!O.seas)return _s.apply(this,arguments);window.gfSeaGeo.O=O;
+  const zr=.7/this.zoom,darkSea=!onRaster&&!document.body.classList.contains("light-theme"),ink=darkSea?"rgba(178,212,240,0.92)":"rgba(28,78,128,0.85)",halo=darkSea?"rgba(10,20,45,0.75)":"rgba(255,255,255,0.35)";
+  const grow=1+.25*Math.max(0,Math.min(1,(this.zoom-1.5)/4.5)),k=this.ls()*grow,sizes=[7.6*k,6*k,5.2*k,4.8*k];
+  const{w,h,r:RD}=this.size(),pr=this.projection(),R=pr.scale(),ctr=[-this.rot[0],-this.rot[1]],vis=Math.min(1.2,this.visibleAngle?this.visibleAngle():1.2);
+  /* the part of the world in view, for spots made on the fly close up */
+  let vb=null;if(this.zoom>2.5){const L=[];for(let i=0;i<=4;i++)for(let j=0;j<=4;j++){const q=pr.invert([w*i/4,h*j/4]);if(q&&isFinite(q[0]))L.push(q)}if(L.length===25){const xs=L.map(q=>q[0]),ys=L.map(q=>q[1]);if(Math.max(...xs)-Math.min(...xs)<180)vb=[Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)]}}
+  /* the part of the globe's canvas that is on the page (the canvas can run below the window) */
+  let X0=0,Y0=0,X1=w,Y1=h;try{const rc=this.canvas.getBoundingClientRect();if(rc.width>0){X0=Math.max(0,-rc.left);Y0=Math.max(0,-rc.top);X1=Math.min(w,innerWidth-rc.left);Y1=Math.min(h,innerHeight-rc.top-30)}}catch(e){}if(X1-X0<100||Y1-Y0<100){X0=0;Y0=0;X1=w;Y1=h}
+  /* not under the map's own buttons and panels (the map key, the zoom buttons, a notice) */
+  let rc0=null;try{rc0=this.canvas.getBoundingClientRect();if(!(rc0.width>0))rc0=null}catch(e){}
+  const hidden=(x,y)=>{if(!rc0)return false;try{const el=document.elementFromPoint(rc0.left+x,rc0.top+y);return!!el&&el.tagName!=="CANVAS"&&el!==this.host&&!(el.closest&&el.closest("svg"))}catch(e){return false}};
+  O.seas.forEach(S=>{const tier=SEA_TIERS[Math.min(S.tier,3)];if(zr>tier.show)return;const g=geo(S);if(!g)return;
+   if(vb&&![0,-360,360].some(o=>!(g.bb[2]+o<vb[0]||g.bb[0]+o>vb[2]||g.bb[3]<vb[1]||g.bb[1]>vb[3])))return;
+   const fs=sizes[Math.min(S.tier,3)],font="italic 500 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.font=font;const tw=ctx.measureText(S.n).width;
+   let C=spots(S).filter(A=>d3.geoDistance(A.ll,ctr)<vis);
+   /* close up, the sea's grid can be coarser than the view: add spots across the screen that are in this sea */
+   if(vb&&C.length<4){for(let i=1;i<10;i++)for(let j=1;j<8;j++){const q=pr.invert([X0+(X1-X0)*i/10,Y0+(Y1-Y0)*j/8]);if(q&&isFinite(q[0])&&inside(g,q[0],q[1]))C.push({ll:q,dm:edgeDist(g,q[0],q[1])})}}
+   if(!C.length)return;
+   /* how open each spot is on screen: its distance to the sea's edge, to the screen's edge, to the globe's rim */
+   const sc=[];for(const A of C){const xy=p(A.ll);if(!xy)continue;const cd=d3.geoDistance(A.ll,ctr);const open=Math.min(A.dm*R*Math.max(.25,Math.cos(cd)),xy[0]-X0,X1-xy[0],(xy[1]-Y0)*1.5,(Y1-xy[1])*1.5,(Math.min(R*Math.sin(vis),RD)-Math.hypot(xy[0]-w/2,xy[1]-h/2)));if(open<fs*.6)continue;/* (a little nearer the middle of the view wins a tie: the open western Mediterranean, not its far corner) */const mid=Math.hypot(xy[0]-(X0+X1)/2,xy[1]-(Y0+Y1)/2)/Math.hypot((X1-X0)/2,(Y1-Y0)/2);sc.push({A,xy,open:open*(A.home?1.08:1)*(1-.35*Math.min(1,mid))})}
+   sc.sort((u,v)=>v.open-u.open);
+   const a0=(ANG.get(S.n)||0)*D2R;
+   /* a name fits at a spot when its box (ends, corners, middle) is wholly inside the sea */
+   const fits=(xy,a)=>{const ca=Math.cos(a),sa=Math.sin(a),hx=tw/2+2,hy=fs/2+1;for(const[u,v] of [[0,0],[-1,0],[1,0],[-1,-1],[1,-1],[-1,1],[1,1],[-.5,-1],[.5,-1],[-.5,1],[.5,1],[0,-1],[0,1]]){const X=xy[0]+ca*u*hx-sa*v*hy,Y=xy[1]+sa*u*hx+ca*v*hy;if(X<X0+2||Y<Y0+2||X>X1-2||Y>Y1-2||Math.hypot(X-w/2,Y-h/2)>Math.min(R,RD)-4)return false;const q=pr.invert([X,Y]);if(!q||!isFinite(q[0])||!inside(g,q[0],q[1]))return false}return true};
+   const box=(xy,a)=>{const c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),hw=(tw*c+fs*s)/2,hh=(tw*s+fs*c)/2;return[xy[0]-hw,xy[1]-hh,xy[0]+hw,xy[1]+hh]};
+   let pick=null,fb=null;
+   for(const E of sc.slice(0,14)){const tries=[0];if(a0)tries.push(a0);for(const a of tries){const b=box(E.xy,a);if(!this._fits(b)){continue}
+     /* (_fits took the box; it is given back unless this is the spot chosen) */this._placed.pop();
+     if(fits(E.xy,a)&&![-1,0,1].some(u=>hidden(E.xy[0]+Math.cos(a)*u*tw/2,E.xy[1]+Math.sin(a)*u*tw/2))){pick={E,a,b};break}if(!fb&&a===0)fb={E,a,b}}if(pick)break}
+   /* nowhere does the whole name fit inside the sea: still named, level, at its most open spot in view, as long as the
+      name stays mostly on its water (its middle and both ends) */
+   if(!pick&&fb){const ok=[[0],[-.45],[.45]].every(([u])=>{const X=fb.E.xy[0]+u*tw,Y=fb.E.xy[1];if(X<X0||X>X1||Math.hypot(X-w/2,Y-h/2)>Math.min(R,RD)-4||hidden(X,Y))return false;const q=pr.invert([X,Y]);return q&&isFinite(q[0])&&inside(g,q[0],q[1])});if(ok)pick=fb}
+   if(!pick)return;this._placed.push(pick.b);this._text(ctx,S.n,pick.E.xy[0],pick.E.xy[1],ink,halo,font,pick.a||undefined)})}})();

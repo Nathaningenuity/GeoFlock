@@ -117,6 +117,11 @@ window.gfSearchMore=function(){const E=[];
  /* ---- regions ---- */
  {let ring=[[-80.19,25.76],[-64.78,32.3],[-66.1,18.47],[-80.19,25.76]];let g={type:"Polygon",coordinates:[ring]};try{if(d3.geoArea(g)>2*Math.PI)g={type:"Polygon",coordinates:[ring.slice().reverse()]}}catch(e){}
   E.push({n:"Bermuda Triangle",alt:["Devil's Triangle"],cat:"regions",typ:"area of sea (by legend)",g,ll:[-70.4,25.5],fame:2})}
+ /* Sundaland: the Sunda Shelf, dry land in the last Ice Age (about 20,000 years ago) when the sea was some 120 m lower,
+    joining Borneo, Sumatra, Java and Bali to Asia. Outline: roughly the shelf's 120 m depth line (as on H. K. Voris's 2000
+    maps of Southeast Asia's past coasts, and GEBCO depths), with the land it joined on the Asian side */
+ {let ring=[[99.5,13.6],[101,13.4],[102.5,12],[104.5,10.6],[106.5,10.4],[109.2,11.8],[110.5,9.5],[111.5,7.5],[113,6],[115.5,7.2],[117,7.6],[119.2,6.4],[119,4.4],[118.6,1.6],[117.6,-1],[116.6,-3.6],[117.2,-5.6],[116.2,-8.4],[114,-8.9],[110,-8.3],[106,-7.4],[105,-6.6],[103,-5.1],[100.2,-2.2],[97.6,.9],[95.1,5.7],[97.6,6.8],[98.2,9],[99,10.6],[99.5,13.6]];let g={type:"Polygon",coordinates:[ring]};try{if(d3.geoArea(g)>2*Math.PI)g={type:"Polygon",coordinates:[ring.slice().reverse()]}}catch(e){}
+  E.push({n:"Sundaland",alt:["Sunda Shelf","Sunda Land"],cat:"regions",typ:"Ice Age land now under the sea (the Sunda Shelf)",g,ll:[107.5,1.5],fame:2})}
  [["Fertile Crescent",[42,34],"historic region",[],2],["Kurdistan",[43.5,37],"region where Kurds live",["Kurdish region"],2],["Transnistria",[29.4,47.2],"breakaway region of Moldova",["Pridnestrovie"],2],
   ["Silicon Valley",[-122,37.4],"tech region",[],2],["Tornado Alley",[-98,37],"region with many tornadoes",[],2],["Rust Belt",[-82,41],"old industrial region",[],2],["Corn Belt",[-92,41.5],"farming region",[],2],
   ["Bible Belt",[-88,34],"cultural region",[],3],["Golden Triangle",[100.1,20.35],"where Thailand, Laos and Myanmar meet",["Golden Triangle (Southeast Asia)"],2],["Grand Banks",[-50,45],"shallow fishing banks",["Grand Banks of Newfoundland"],2],
