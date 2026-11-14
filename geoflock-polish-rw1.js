@@ -103,8 +103,10 @@ FIX.bsilkroads={
      a view of the roads): it goes from the map; Venice to Chang'an framed on the open side of the card, and the Genghis
      Khan statue's and Mogao Caves' photos, then by the zoom buttons, go (each has a stop of its own) */
   "The Silk Roads":S=>{NOPPL(S,"Peter Frankopan");DROPPH(S,/^(Genghis Khan|Mogao Caves)/);VIEW(S,[70,42,1])},
-  /* the Samarkand and Balkh labels ran under the map key and Merv's hung on a long leader: framed further west and closer */
-  "The world’s centre":S=>{DROP(S,/^Bukhara$/);VIEW(S,[62.5,35,2.6])},
+  /* the Samarkand and Balkh labels ran under the map key and Merv's hung on a long leader: framed further west and closer;
+     the shaded countries' name labels, on long leaders up to the search box, go (the map names them), and so does Bukhara's
+     (its photo names it) */
+  "The world’s centre":S=>{DROP(S,/^(Bukhara|Iran|Iraq|Afghanistan|Turkmenistan|Uzbekistan|Tajikistan|Kyrgyzstan|Kazakhstan)$/);VIEW(S,[67,36,2.2])},
   /* Susa, Persepolis and the "Persian Empire" label lay under the map key: framed east, Sardis to Persepolis */
   "Persia’s royal road":S=>VIEW(S,[49,32.1,2.1]),
   /* Chang'an and Dunhuang, where the stop's silk game starts, sat on the globe's right edge, the game's "carried by" bubble
@@ -139,8 +141,8 @@ FIX.bsilkroads={
      the Black Sea, goes (the card shows the steppe) */
   "The road of wheat":S=>{DROPPH(S,/^Ukraine’s steppe/);VIEW(S,[47.4,44,3])},
   /* Kabul and the Bamyan photo lay under the map key; "Iran", "Iraq" and "Afghanistan" labels on long leaders (the map names
-     them, and shades them). The share of the world's oil through Hormuz moves into the stop's guess (it is revealed there) */
-  "1979 and after":S=>{DROP(S,/^(Iran|Iraq|Afghanistan)$/);RE(S,"more"," About a fifth of the world’s oil passes through the Strait of Hormuz.","");VIEW(S,[69,29.5,2.2])},
+     them, and shades them); Kabul's label, which ran to the map key, shortened. The share of the world's oil through Hormuz moves into the stop's guess (it is revealed there) */
+  "1979 and after":S=>{DROP(S,/^(Iran|Iraq|Afghanistan)$/);RENAME(S,/^Kabul: Soviet invasion/,"Kabul: Soviet invasion, 1979");RE(S,"more"," About a fifth of the world’s oil passes through the Strait of Hormuz.","");VIEW(S,[72,30,2.1])},
   /* the Duisburg label hung over the map's switches, Piraeus's was pushed onto Iran and the Malacca photo lay at the bottom
      edge over the toolkit: framed Duisburg to Chongqing; the Malacca photo and the "China" label (the map shades it) go */
   "The new Silk Roads":S=>{DROP(S,/^China$/);DROPPH(S,/^Ships in the Malacca/);VIEW(S,[59.5,42.3,1])}
@@ -160,8 +162,8 @@ FIX.bflat={
      lay by the map key, and the Berlin Wall photo at the globe's top edge: framed east and closer, Bangalore to Shanghai (the Wall
      has its own stop) */
   "The World Is Flat":S=>{DROPPH(S,/^(Shenzhen|Containers at Yangshan|The Berlin Wall|Shanghai)/);VIEW(S,[105,22,1.2])},
-  /* the Electronics City label ran under the map key */
-  "Bangalore: the field is levelled":S=>VIEW(S,[80.5,14.5,4.5]),
+  /* the Electronics City label ran under the map key; an "India" label on a long leader (the map names it) */
+  "Bangalore: the field is levelled":S=>{DROP(S,/^India$/);VIEW(S,[84,15,4.2])},
   /* the card opened on the right, over the zoom buttons (every stop's card is locked left below) */
   "Three ages of globalisation":S=>VIEW(S,[-31,49.1,1.4]),
   /* Singapore, the cables' far end, lay under the map key: framed east, Alexandria to Singapore (Bude's label, at the cables'
