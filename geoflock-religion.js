@@ -65,7 +65,7 @@ const SYM_FILL="rgba(255,255,255,0.62)";
 
 /* ---------- state ---------- */
 function relOn(){try{return thOn()&&allMapsColorMode==="culture"&&allMapsSubMode.culture==="rel"}catch(e){return false}}
-function catShown(code){const k=thCatOf(code,"rel");if(!k||k==="dep"||!SYM_OF[k])return null;if(thFocus&&thFocus!==k)return null;return k}
+function catShown(code){const k=thCatOf(code,"rel");if(!k||k==="dep"||!SYM_OF[k])return null;if(thFocus&&thFocus!=="_"&&!String(thFocus).split("+").includes(k))return null;/* several picked: "sun+shi+hin" */return k}
 const TILE_PX=34;/* one pattern tile on screen, about; holds two symbols */
 function level(unitsPerPx){return Math.pow(2,Math.round(Math.log2(TILE_PX*unitsPerPx)))}
 
