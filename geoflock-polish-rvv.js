@@ -54,7 +54,10 @@ const XF=(S,k,id,fn)=>{try{if(k==="phPins"&&!(XFS.get(S)||{})[k]&&pplPending(S))
   Object.defineProperty(S,k,{configurable:TESTING(),enumerable:true,
    get:()=>{const pk=k==="phPins"?pplReady(S):0;if(B.out&&B.at===B.v&&B.atN===B.n&&B.pk===pk)return sync(S,k,B.out);let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
     if(pk)v=pplAdd(S,v);B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{B.v=x}})}
- if(!R[k].fns[id]){R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1}}catch(e){}};
+ if(!R[k].fns[id]){R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1;
+  /* index.html builds a stop's photo squares once, by position: if the stop is already on screen, its squares are
+     rebuilt so the photos match their places (as geoflock-polish-rvo.js's drop helper does) */
+  if(k==="phPins")try{document.querySelectorAll(".ps-phpins").forEach(e=>{if(e._for===S)e.remove()})}catch(e){}}}catch(e){}};
 const DROP=(S,re)=>XF(S,"pins","drop"+re,P=>P.filter(p=>!re.test(pinText(p))));
 const DROPPH=(S,re)=>XF(S,"phPins","drop"+re,P=>P.filter(p=>!re.test(strip(p&&p.label))));
 /* rename a text pin */
@@ -139,6 +142,34 @@ FIX.deserts={
  /* the Senegal label sat under the card and Djibouti's off the globe's edge, by the map key: framed on the western
     Sahel, the Wall's line running on east; the Djibouti label goes (the text names both ends) */
  "Making deserts, and stopping them":S=>{DROP(S,/^Djibouti$/);VIEW(S,[14,14,1.3])}
+};
+FIX.ice={
+ /* Kilimanjaro's photo sat under the map key, the Biafo Glacier's on the globe's edge and Yakutsk's above it (each has
+    its own stop) */
+ "Ice":S=>{DROPPH(S,/^(Kilimanjaro|Biafo|Yakutsk)/);VIEW(S,[2,58,1.2])},
+ /* an "Antarctica" label hung under the card at the bottom of the screen, and the Ross Ice Shelf's ran under the map key */
+ "Antarctica’s ice sheet":S=>{DROP(S,/^Antarctica/);VIEW(S,[140,-80,1.9])},
+ /* the Andes' and New Guinea's ice sat round the back of the globe or under the card: buttons (part 2) turn the globe
+    to each */
+ "Ice on the equator":S=>VIEW(S,[30,-3,1.2]),
+ /* the Gangotri and Khumbu labels ran under the map key */
+ "The Third Pole":S=>VIEW(S,[90,32,2.2]),
+ /* the Karakoram label ran into the map key */
+ "The glaciers that aren’t shrinking":S=>VIEW(S,[79,36,6]),
+ /* the icebreakers' photo pin sat under the card */
+ "The frozen ocean":S=>DROPPH(S,/^Icebreakers/),
+ /* the Iceberg Alley label ran under the map key, the Titanic's photo beside it; the Ilulissat icebergs photo sat on
+    the iceberg game's "Calved at Ilulissat" tag */
+ "Icebergs and the Titanic":S=>{DROPPH(S,/^Ilulissat icebergs/);VIEW(S,[-46,56,2])},
+ /* a Russia label sat under the card */
+ "Ground that never thaws":S=>DROP(S,/^Russia$/),
+ /* Chicago and the thick North American ice sat under the card, their labels floating over the Atlantic: the stop
+    opens on Europe, and buttons (part 2) turn the globe from Berlin to Chicago and the other places the ice shaped */
+ "The last ice age":S=>{DROP(S,/^(Chicago|Ice up to)/);VIEW(S,[10,55,1.3])},
+ /* the card was on the right, over the zoom buttons */
+ "Valleys the ice dug":S=>VIEW(S,[168.5,-44.5,6]),
+ /* the Little Dome C label sat on the zoom buttons; an "Antarctica" label hung below the screen */
+ "Ice that remembers":S=>{DROP(S,/^Antarctica/);VIEW(S,[125,-77,3.57])}
 };
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
@@ -419,6 +450,51 @@ const WHYDRY=CLASSIFY({tours:["deserts"],title:"Now explore",turns:true,below:tr
   ["The Rub’ al Khali","sink","Arabia sits in the same belt of sinking air as the Sahara.",[50,20,2.2]]],
  end:()=>"Sinking air, mountains, distance from the sea, cold currents and cold itself: most deserts have one or two of these at once."});
 
+/* ======================================================================== ice */
+/* ---- Ice on the equator: turn the globe to each of the tropics' ice fields. The stop's own facts (Kilimanjaro over
+   80% lost since 1912; Venezuela's last glacier, 2024; Chacaltaya gone by 2009), and Wikipedia: "Quelccaya Ice Cap"
+   (once "considered the largest ice area of the tropics", 42.8 km² in 2009, about 30% of its area lost 1979–2014);
+   "Puncak Jaya" (4,884 m; "a total glaciated area of 0.165 ± 0.008 km² in 2024", "a loss of total glacier surface
+   area of ~99% since ~1850", expected to disappear "by the beginning of the 2030s"); "Humboldt Glacier" (Venezuela's
+   last, reclassified as an ice field in 2024); "Rwenzori Mountains" (the "Mountains of the Moon"). */
+const EQICE=TURNER({tours:["ice"],title:"Ice on the equator",tip:"Ice near the equator, on three continents. Turn the globe to each.",
+ intro:"Pick a mountain to fly there. Which one has the least ice left?",
+ places:[["Kilimanjaro",37.355,-3.066,2.4,"Tanzania, 5,895 m: it has lost over 80% of the ice it had in 1912."],
+  ["Mount Kenya",37.31,-0.15,2.4,"Kenya: its glaciers sit just 17 km south of the equator."],
+  ["Rwenzori",29.87,0.39,2.4,"The ‘Mountains of the Moon’ on the Uganda–Congo border, with some of Africa’s last glaciers."],
+  ["Venezuela",-70.99,8.55,2.4,"The Humboldt Glacier, the country’s last, shrank too small to count as a glacier in 2024."],
+  ["Quelccaya",-70.82,-13.93,2.4,"Peru: once the largest ice area in the tropics, 43 km² in 2009; it lost about 30% of its area from 1979 to 2014."],
+  ["Chacaltaya",-68.13,-16.35,2.4,"Bolivia: once the highest ski area in the world. By 2009 its glacier was gone."],
+  ["Puncak Jaya",137.16,-4.08,2.4,"New Guinea, 4,884 m: about 99% of its ice has gone since 1850, and the rest may vanish by the early 2030s."]]});
+
+/* ---- The last ice age: turn the globe from the ice's edge in Europe to North America and the marks the ice left
+   (all from the stop's own text: Berlin at the ice edge, Chicago under it, ice up to 3 km thick, the Great Lakes'
+   hollows scraped out, Long Island a hill of rubble, the land round the Gulf of Bothnia still rising up to about 1 cm
+   a year). */
+const ICEAGE=TURNER({tours:["ice"],title:"The last ice age",tip:"Turn the globe across the ice-age world, 20,000 years ago.",
+ intro:"The dashed lines show roughly where the ice ended. Pick a place.",
+ places:[["Berlin",13.4,52.52,2,"At the ice edge: the Scandinavian ice sheet reached about this far south."],
+  ["Gulf of Bothnia",20,63,2,"Under the thickest European ice. Freed of its weight, the land here is still rising, by up to about 1 cm a year."],
+  ["Chicago",-87.63,41.88,2,"Under the ice: the North American ice sheet reached past the site of the city."],
+  ["Hudson Bay",-85,58,1.8,"Here the ice was up to about 3 km thick, ten times the height of the Eiffel Tower."],
+  ["The Great Lakes",-84,45,2,"The ice scraped out their hollows; they filled with meltwater as it retreated."],
+  ["Long Island",-73,40.8,2.2,"A hill of rubble pushed up and left behind at the ice’s edge."]]});
+
+/* ---- Review on the last stop: would it raise the sea if it melted? From the tour's own text: Greenland's ice about 7
+   m and Antarctica's about 58 m; "ice that already floats, such as sea ice, does not raise the sea when it melts"
+   (icebergs float too); mountain glaciers such as the Aletsch and the Third Pole's sit on land. Each answer turns the
+   globe there. */
+const RAISE=CLASSIFY({tours:["ice"],title:"Now explore",turns:true,below:true,
+ tip:"Review: if this ice melted, would the sea rise? Each answer turns the globe there.",ask:"Would the sea rise?",
+ kinds:[["y","Yes, the sea rises","the sea rises"],["n","No, it already floats","it already floats"]],
+ items:[["Greenland’s ice sheet","y","Yes, by about 7 m: it sits on land, so its meltwater adds to the sea.",[-42,72,1.8]],
+  ["The Aletsch Glacier","y","Yes, a little: mountain glaciers sit on land too.",[8,46.5,2.4]],
+  ["Sea ice at the North Pole","n","No: it is frozen seawater, already floating, like an ice cube in a glass.",[0,85,1.6]],
+  ["An iceberg in Iceberg Alley","n","No: it already floats, nine-tenths under water.",[-52,48,2]],
+  ["Antarctica’s ice sheet","y","Yes, by about 58 m if it all melted, which would take many centuries.",[100,-80,1.6]],
+  ["The Third Pole’s glaciers","y","Yes: they sit on land. First they swell the rivers, then the rivers run lower.",[85,32,2]]],
+ end:()=>"Ice on land raises the sea when it melts; ice that already floats does not. But melting sea ice still matters: dark water soaks up more sunlight."});
+
 
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    The Twelve Apostles: Wikipedia, "The Twelve Apostles (Victoria)": "Seven of the original nine stacks remain
@@ -446,7 +522,7 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
 :is(body.dark-theme,body.sky-night) .rvv-chs,:is(body.dark-theme,body.sky-night) .rvv-tide{border-color:rgba(255,255,255,.18)}
 `;document.head.appendChild(s)}
 
-const DEFS=[CHESIL,FUNDY,WHOCOAST,DSIZE,WHYDRY];
+const DEFS=[CHESIL,FUNDY,WHOCOAST,DSIZE,WHYDRY,EQICE,ICEAGE,RAISE];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
