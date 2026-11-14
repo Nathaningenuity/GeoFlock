@@ -104,6 +104,42 @@ FIX.coasts={
     (Victoria)": "Another collapsed in 2009, leaving seven remaining stacks") */
  "The Twelve Apostles":S=>RE(S,"more","collapsed into the sea.","collapsed into the sea, and another fell in 2009.")
 };
+FIX.deserts={
+ /* the Erg Chebbi and Tassili photos sat on the card's edge, their pins under it, and the Namib's below the screen (each
+    has its own stop); turned out from under the card, the globe showed Uyuni's and the Atacama's photos on its bottom
+    edge (their own stops too), and the Gobi's camels at its top edge (the Gobi has its own stop). Framed on the Sahara
+    and Arabia */
+ "Deserts":S=>{DROPPH(S,/^(Erg Chebbi|Tassili|Dune 45|Salar de Uyuni|Valle de la Luna|Camels in the Gobi)/);VIEW(S,[45,34,1])},
+ /* the Gobi's label sat on the globe's right edge, hidden; framed further east, its label ran into the stop's Gobi
+    thermometer, so it moves to the western Gobi */
+ "Not heat, but rain":S=>{MOVE(S,/^Gobi/,[97,40]);VIEW(S,[80,33,1.4])},
+ /* the Tropic of Capricorn photo (the card's own) hung below the screen, and the Kalahari's label at its bottom */
+ "Deserts on the tropics":S=>{DROPPH(S,/^Tropic of Capricorn/);VIEW(S,[16,4,1])},
+ /* the card was on the right, over the zoom buttons; the Rainy Chilean coast label and the Torres del Paine photo hung
+    at the bottom of the screen, an Argentina label on a long leader */
+ "Behind the mountains":S=>{DROP(S,/^Argentina$/);VIEW(S,[-67.5,-47,2.6])},
+ /* labels on long leaders round the Gobi: the China label sat under the map key; the country labels go */
+ "The Gobi":S=>DROP(S,/^(China|Mongolia)$/),
+ /* an "Antarctica" label hung below the screen */
+ "The biggest desert is cold":S=>DROP(S,/^Antarctica/),
+ /* the Tassili photo (the card's own) sat on the ruler's distance and the United States shape's tag; the Gilf Kebir label
+    ran into the map key. The United States shape's tag sat on the ruler's distance label, both at 12° E: the shape
+    starts a little further north (it can be dragged anywhere) */
+ "The Sahara":S=>{DROPPH(S,/^Tassili/);XF(S,"ghosts","usN",G=>G.map(x=>x&&x.code==="us"&&Array.isArray(x.at)&&x.at[1]<24?Object.assign({},x,{at:[x.at[0],25]}):x));VIEW(S,[16,22,1.8])},
+ /* Saudi Arabia named twice, by the map and by a label */
+ "The Empty Quarter":S=>DROP(S,/^Saudi Arabia$/),
+ /* a Bolivia label on a long leader across the Altiplano */
+ "The great salt flat":S=>DROP(S,/^Bolivia$/),
+ /* the China label sat under the map key, on the globe's edge */
+ "The Taklamakan":S=>DROP(S,/^China$/),
+ /* Kerman's label sat under the map key and Nizwa's photo at the bottom of the screen; Iran named twice */
+ "Oases and qanats":S=>{DROP(S,/^Iran$/);VIEW(S,[64,28,3])},
+ /* Bilma's label and Agadez's photo sat under the map key; country labels on long leaders */
+ "People of the desert":S=>{DROP(S,/^(Mali|Niger|Algeria|Libya)$/);VIEW(S,[8,19,2.4])},
+ /* the Senegal label sat under the card and Djibouti's off the globe's edge, by the map key: framed on the western
+    Sahel, the Wall's line running on east; the Djibouti label goes (the text names both ends) */
+ "Making deserts, and stopping them":S=>{DROP(S,/^Djibouti$/);VIEW(S,[14,14,1.3])}
+};
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title). On a tour's very first launch index.html flies to the opening stop before the fixes above are applied to it
@@ -353,12 +389,44 @@ const WHOCOAST=CLASSIFY({tours:["coasts"],title:"Now explore",turns:true,below:t
   ["The Twelve Apostles","wav","Caves became arches, and arches fell, leaving stacks of limestone.",[143.1,-38.66,2.6]]],
  end:()=>"Waves wear coasts back and move the sand along; rivers build them out; ice dug the fjords; and coral animals and people have made new land too."});
 
+/* ======================================================================== deserts */
+/* ---- Not heat, but rain: put the deserts in order of size (Wikipedia, "List of deserts by area": Antarctic 14,200,000
+   km², Arctic 13,900,000, Sahara 9,200,000, Arabian 2,330,000, Gobi 1,295,000, Kalahari 900,000, Taklamakan 337,000,
+   Namib 81,000). The two biggest are frozen, which is this stop's point. */
+const DSIZE=SORT({tours:["deserts"],title:"Not heat, but rain",below:true,desc:true,log:true,
+ tip:"Put these deserts in order of size, biggest first.",first:"Biggest",last:"Smallest",
+ items:[["Antarctica",14.2,"14.2 million km²"],["The Arctic",13.9,"13.9 million km²"],["The Sahara",9.2,"9.2 million km²"],["The Arabian Desert",2.33,"2.3 million km²"],
+  ["The Gobi",1.295,"1.3 million km²"],["The Kalahari",.9,"900,000 km²"],["The Taklamakan",.337,"337,000 km²"],["The Namib",.081,"81,000 km²"]],
+ after:(r,N)=>"The two biggest deserts are the frozen ones: what makes a desert is how little rain or snow falls, not the heat."});
+
+/* ---- Review on the last stop: why is each desert dry? The reasons are the tour's own (the Sahara, the Kalahari and
+   Arabia under the sinking air near the tropics; Patagonia and Death Valley in rain shadows; the Gobi behind the
+   Himalaya and far from the sea; the Taklamakan walled in by mountains, far from any ocean; the Namib and the Atacama
+   beside cold currents; Antarctica's air too cold to hold water). The Atacama also lies in the Andes' rain shadow
+   (Wikipedia, "Atacama Desert"), so both count. Each answer turns the globe there. */
+const WHYDRY=CLASSIFY({tours:["deserts"],title:"Now explore",turns:true,below:true,
+ tip:"Review: why is each desert dry? Each answer turns the globe there.",ask:"What keeps the rain away?",
+ kinds:[["sink","Sinking air","sinking air near the tropics"],["shadow","Mountains block the rain","a rain shadow"],["far","Far from the sea","being far from any sea"],["cold","A cold current","a cold ocean current"],["ice","Too cold for snow","air too cold to hold water"]],
+ items:[["The Sahara","sink","Air that rose over the rainforests sinks again near the Tropic of Cancer, warming and drying out.",[12,22,1.8]],
+  ["Patagonia","shadow","The Andes catch the westerly winds’ rain on Chile’s side.",[-69,-45,2.2]],
+  ["The Namib","cold","The cold Benguela Current chills the air so it cannot rise and rain: fog comes instead.",[15,-24,2.2]],
+  ["The Taklamakan",["far","shadow"],"Walled in by mountains and further from the sea than almost anywhere: both count.",[83,39,2.2]],
+  ["Antarctica","ice","The air is so cold it holds almost no water: about 50 mm a year falls on the high plateau.",[100,-80,1.6]],
+  ["The Gobi",["shadow","far"],"Behind the Himalaya and the Tibetan Plateau, and far from the sea: both count.",[103,43,2.2]],
+  ["The Kalahari","sink","It lies under the sinking air near the Tropic of Capricorn.",[22,-23,2.2]],
+  ["Death Valley","shadow","Pacific air drops its rain on the Sierra Nevada first.",[-117,36.4,2.2]],
+  ["The Atacama",["cold","shadow"],"The cold Humboldt Current offshore, and the Andes blocking the east: both count.",[-69.5,-24,2.2]],
+  ["The Rub’ al Khali","sink","Arabia sits in the same belt of sinking air as the Sahara.",[50,20,2.2]]],
+ end:()=>"Sinking air, mountains, distance from the sea, cold currents and cold itself: most deserts have one or two of these at once."});
+
 
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    The Twelve Apostles: Wikipedia, "The Twelve Apostles (Victoria)": "Seven of the original nine stacks remain
-   standing" (one fell in 2005, another in 2009). */
+   standing" (one fell in 2005, another in 2009). Death Valley: 56.7 °C at Furnace Creek, 10 July 1913, the highest air
+   temperature on record (WMO Archive of Weather and Climate Extremes; Wikipedia, "Death Valley"). */
 function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
- const GS={"coasts|The Twelve Apostles":{q:"Despite the name, how many of the Twelve Apostles’ stacks are still standing?",min:0,max:12,ans:7,unit:"stacks",step:1,show:"seven: there were only ever nine, and two have fallen since 2005"}/*@@GS@@*/};
+ const GS={"coasts|The Twelve Apostles":{q:"Despite the name, how many of the Twelve Apostles’ stacks are still standing?",min:0,max:12,ans:7,unit:"stacks",step:1,show:"seven: there were only ever nine, and two have fallen since 2005"},
+  "deserts|Death Valley’s heat trap":{q:"The hottest air temperature ever recorded was measured here, in 1913. How hot was it?",min:20,max:70,ans:56.7,unit:"°C",step:0.5,show:"56.7 °C, at Furnace Creek on 10 July 1913"}/*@@GS@@*/};
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
 {const s=document.createElement("style");s.textContent=`
@@ -378,7 +446,7 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
 :is(body.dark-theme,body.sky-night) .rvv-chs,:is(body.dark-theme,body.sky-night) .rvv-tide{border-color:rgba(255,255,255,.18)}
 `;document.head.appendChild(s)}
 
-const DEFS=[CHESIL,FUNDY,WHOCOAST];
+const DEFS=[CHESIL,FUNDY,WHOCOAST,DSIZE,WHYDRY];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
