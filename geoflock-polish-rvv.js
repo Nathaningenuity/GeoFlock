@@ -53,7 +53,10 @@ const XF=(S,k,id,fn)=>{try{if(k==="phPins"&&!(XFS.get(S)||{})[k]&&pplPending(S))
  if(!R[k]){const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;const B={v:S[k],fns:{}};R[k]=B;
   Object.defineProperty(S,k,{configurable:TESTING(),enumerable:true,
    get:()=>{const pk=k==="phPins"?pplReady(S):0;if(B.out&&B.at===B.v&&B.atN===B.n&&B.pk===pk)return sync(S,k,B.out);let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
-    if(pk)v=pplAdd(S,v);B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{B.v=x}})}
+    if(pk)v=pplAdd(S,v);const was=B.out;B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;
+    /* another file swapped in a new set of photos: squares built from the old set are rebuilt */
+    if(was&&k==="phPins")setTimeout(()=>{try{document.querySelectorAll(".ps-phpins").forEach(e=>{if(e._for===S)e.remove()})}catch(e){}},0);
+    return sync(S,k,v)},set:x=>{B.v=x}})}
  if(!R[k].fns[id]){R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1;
   /* index.html builds a stop's photo squares once, by position: if the stop is already on screen, its squares are
      rebuilt so the photos match their places (as geoflock-polish-rvo.js's drop helper does) */
@@ -170,6 +173,35 @@ FIX.ice={
  "Valleys the ice dug":S=>VIEW(S,[168.5,-44.5,6]),
  /* the Little Dome C label sat on the zoom buttons; an "Antarctica" label hung below the screen */
  "Ice that remembers":S=>{DROP(S,/^Antarctica/);VIEW(S,[125,-77,3.57])}
+};
+FIX.art={
+ /* the Lascaux and Sagrada Família photos sat under the card and Hōryū-ji's on the zoom buttons (each has its own stop);
+    in the later set of opening photos, the Taj Mahal's sat on the zoom buttons (it has its own stop) */
+ "Art and architecture":S=>{DROPPH(S,/^(Lascaux|Sagrada|Hōryū-ji|The Taj Mahal)/);VIEW(S,[40,25,1])},
+ /* with the card on the left (it was on the right, over the zoom buttons), Ur and Uruk sat on the globe's far edge:
+    framed on Giza, Meroë and Mesopotamia together */
+ "Pyramids and ziggurats":S=>VIEW(S,[42,26,2.3]),
+ /* Japan named twice, by the map and by a label at the end of a long leader */
+ "Pagodas that dance":S=>DROP(S,/^Japan$/),
+ /* with the card on the left (it was on the right, over the zoom buttons), the Strasbourg and Milan photos sat under
+    the map key */
+ "Gothic cathedrals":S=>VIEW(S,[8,49,4.2]),
+ /* Bamiyan, the lapis mines and the Afghanistan label sat on the globe's right edge, hidden: framed on the whole road
+    from Afghanistan to Venice */
+ "The blue from one valley":S=>{DROP(S,/^Afghanistan$/);RENAME(S,/^Bamiyan/,"Bamiyan’s murals");VIEW(S,[57,36,1.1])},
+ /* an Italy label sat between Venice and Florence */
+ "Venice paints on canvas":S=>DROP(S,/^Italy$/),
+ /* the plaque's photo hung below the screen (the card's own photo shows Benin's bronzes) */
+ "The Benin Bronzes":S=>DROPPH(S,/^A Benin Bronze plaque/),
+ /* country labels piled on Paris at the card's edge and on Edo: Paris and Edo keep theirs */
+ "The Great Wave":S=>DROP(S,/^(France|Netherlands|Japan)$/),
+ /* the Chicago and New York photos sat under the card, Shibam's and Dubai's on the globe's edge by the map key: the
+    stop is framed on Chicago, where skyscrapers were born (the tall-buildings game, part 2, takes in the rest) */
+ "Skyscrapers":S=>VIEW(S,[-82,40,1.8]),
+ /* country labels on long leaders, named by the map already */
+ "The Alhambra":S=>DROP(S,/^(Spain|Morocco)$/),
+ "The Forbidden City":S=>DROP(S,/^China$/),
+ "Dots in the desert":S=>DROP(S,/^Australia$/)
 };
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
@@ -495,14 +527,46 @@ const RAISE=CLASSIFY({tours:["ice"],title:"Now explore",turns:true,below:true,
   ["The Third Pole’s glaciers","y","Yes: they sit on land. First they swell the rivers, then the rivers run lower.",[85,32,2]]],
  end:()=>"Ice on land raises the sea when it melts; ice that already floats does not. But melting sea ice still matters: dark water soaks up more sunlight."});
 
+/* ======================================================================== art */
+/* ---- Skyscrapers: put the tour's tall buildings in order of height. Burj Khalifa 828 m, Shibam's towers about 30 m
+   (the stop's own text); Tokyo Skytree 634 m and Sagrada Família 172.5 m (the tour's own stops); the Great Pyramid
+   146.6 m when built and Lincoln Cathedral's spire "reputedly" 160 m, 1311–1548 (Wikipedia, "List of tallest
+   buildings and structures"); Florence's dome and lantern 114.5 m (Wikipedia, "Florence Cathedral"); the Home
+   Insurance Building 42.1 m when built in 1885 (Wikipedia, "Home Insurance Building"). */
+const TALL=SORT({tours:["art"],title:"Skyscrapers",below:true,desc:true,log:true,
+ tip:"Put the tour’s tall buildings in order of height, tallest first.",first:"Tallest",last:"Shortest",
+ items:[["Burj Khalifa, Dubai (2010)",828,"828 m"],["Tokyo Skytree (2012)",634,"634 m"],["Sagrada Família, Barcelona (2026)",172.5,"172.5 m"],["Lincoln Cathedral’s spire (1311)",160,"about 160 m"],
+  ["The Great Pyramid (about 2560 BC)",146.6,"146.6 m"],["Florence’s dome (1436)",114.5,"114.5 m"],["Home Insurance Building, Chicago (1885)",42.1,"42 m"],["Shibam’s mud towers (1500s)",30,"up to about 30 m"]],
+ after:(r,N)=>"For nearly 4,000 years stone tombs and cathedrals held the record. Steel frames and lifts let the first skyscraper, only 42 m tall, start a race that has gone twenty times higher."});
+
+/* ---- Review on the last stop: why does it look like that? The tour's opening names the reasons (the stone, clay and
+   colours at hand, a damp climate, earthquakes, beliefs about what may be shown), and its stops give each answer:
+   Ur's mud brick and Egypt's stone, the brass of melted-down manillas in Benin, Japan's swaying pagodas and Tokyo
+   Skytree's central column, Venice's oil on canvas, and Papunya's dots hiding sacred designs. Each answer turns the
+   globe there. */
+const WHYART=CLASSIFY({tours:["art"],title:"Now explore",turns:true,below:true,
+ tip:"Review: why does each work look the way it does? Each answer turns the globe there.",ask:"What shaped it?",
+ kinds:[["mat","What was at hand","what was at hand"],["clim","The climate","the climate"],["eq","Earthquakes","earthquakes"],["bel","Beliefs","beliefs"]],
+ items:[["The Ziggurat of Ur, of mud brick","mat","Mesopotamia’s river plain has almost no stone, so its builders used mud brick, skinned with baked brick set in tar.",[46.1,30.96,2.4]],
+  ["Hōryū-ji’s loosely stacked pagoda","eq","Its storeys sway in opposite directions in a quake, soaking up the shaking.",[135.73,34.61,2.4]],
+  ["Venice’s oil paintings on canvas","clim","Damp, salty air made frescoes flake, so Venetian painters turned to canvas.",[12.34,45.44,2.4]],
+  ["Papunya’s fields of dots","bel","Some designs are sacred and secret, so artists hid them under dots.",[131.9,-23.2,2.2]],
+  ["The pyramids of Giza, of stone","mat","The Nile is lined with limestone cliffs, so Egypt built in stone.",[31.13,29.98,2.4]],
+  ["Tokyo Skytree’s central column","eq","Its designers borrowed the pagodas’ central post, the shinbashira, to ride out quakes.",[139.81,35.71,2.4]],
+  ["Benin’s brass heads","mat","Much of the metal was European brass, paid in manillas, which the casters melted down.",[5.63,6.34,2.4]]],
+ end:()=>"Artists use what their land gives them, build for the ground they stand on and the air they breathe, and show (or hide) what their beliefs allow."});
+
 
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    The Twelve Apostles: Wikipedia, "The Twelve Apostles (Victoria)": "Seven of the original nine stacks remain
    standing" (one fell in 2005, another in 2009). Death Valley: 56.7 °C at Furnace Creek, 10 July 1913, the highest air
-   temperature on record (WMO Archive of Weather and Climate Extremes; Wikipedia, "Death Valley"). */
+   temperature on record (WMO Archive of Weather and Climate Extremes; Wikipedia, "Death Valley"). The Great
+   Pyramid: "the tallest man-made structure in the world for more than 3,800 years" (Wikipedia, "Great Pyramid of
+   Giza"), the stop's own figure. */
 function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
  const GS={"coasts|The Twelve Apostles":{q:"Despite the name, how many of the Twelve Apostles’ stacks are still standing?",min:0,max:12,ans:7,unit:"stacks",step:1,show:"seven: there were only ever nine, and two have fallen since 2005"},
-  "deserts|Death Valley’s heat trap":{q:"The hottest air temperature ever recorded was measured here, in 1913. How hot was it?",min:20,max:70,ans:56.7,unit:"°C",step:0.5,show:"56.7 °C, at Furnace Creek on 10 July 1913"}/*@@GS@@*/};
+  "deserts|Death Valley’s heat trap":{q:"The hottest air temperature ever recorded was measured here, in 1913. How hot was it?",min:20,max:70,ans:56.7,unit:"°C",step:0.5,show:"56.7 °C, at Furnace Creek on 10 July 1913"},
+  "art|Pyramids and ziggurats":{q:"For how many years was the Great Pyramid the tallest building on Earth?",min:100,max:5000,ans:3800,unit:"years",step:100,show:"about 3,800 years, until Lincoln Cathedral’s spire rose higher, about 1311"}/*@@GS@@*/};
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
 {const s=document.createElement("style");s.textContent=`
@@ -522,7 +586,7 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
 :is(body.dark-theme,body.sky-night) .rvv-chs,:is(body.dark-theme,body.sky-night) .rvv-tide{border-color:rgba(255,255,255,.18)}
 `;document.head.appendChild(s)}
 
-const DEFS=[CHESIL,FUNDY,WHOCOAST,DSIZE,WHYDRY,EQICE,ICEAGE,RAISE];
+const DEFS=[CHESIL,FUNDY,WHOCOAST,DSIZE,WHYDRY,EQICE,ICEAGE,RAISE,TALL,WHYART];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
