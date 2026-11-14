@@ -140,6 +140,8 @@ FIX.science={
   "Launching into space":S=>{DROP(S,/^French Guiana/);VIEW(S,[-62,18,1.3])}
 };
 FIX.maths={
+  /* the Kerala backwaters photo hung on the globe's right edge, by the map key: it has a stop of its own */
+  "Maths":S=>DROPPH(S,/^The Kerala/),
   /* an Egypt label on a long leader, and the map names Egypt */
   "The flood that invented geometry":S=>DROP(S,/^Egypt$/),
   /* two photos on the same point at Alexandria, one covering the "Ptolemaic Egypt, 300 BC" label: the card's own
@@ -149,7 +151,7 @@ FIX.maths={
   "Zu Chongzhi and π":S=>{DROP(S,/^China$/);VIEW(S,[118.5,31.5,3.1])},
   /* India (Bhinmal, Gwalior) lay off the globe's right edge under the map key; Italy, Iraq and Algeria labels on long
      leaders: framed wider, from Béjaïa to Gwalior */
-  "Zero and algebra go west":S=>{DROP(S,/^(Italy|Iraq|Algeria)$/);VIEW(S,[42,30,1.15])},
+  "Zero and algebra go west":S=>{DROP(S,/^(Italy|Iraq|Algeria|India)$/);VIEW(S,[60,32,1])},
   /* an Iran label on a long leader at the bottom of the screen */
   "Tiles ahead of their time":S=>DROP(S,/^Iran$/),
   /* France and Spain labels on long leaders crossed the ruler */
