@@ -106,6 +106,30 @@ const FIX={
   "Locust swarms":S=>VIEW(S,[-35,15,1.1]),
   /* Durban's label ran under the map key */
   "The sardine run":S=>VIEW(S,[27,-32,4])
+ },
+ crops:{
+  /* five of the six photos (maize, potatoes, cacao, tomatoes in the Americas, bananas in New Guinea) were round the back
+     of the globe or under the card; each crop has its own stop */
+  "Where our food comes from":S=>{DROPPH(S,/^(Maize|Andean potatoes|Cacao pod|Bananas|Tomatoes)$/);VIEW(S,[55,25,1])},
+  /* turned out from under the card, the globe lost China off its right edge, and the Saint Petersburg seed bank's label
+     ran under the card: the Old World's centres are framed beside it (the sorting game, part 3, visits the Americas) */
+  "Vavilov’s centres":S=>VIEW(S,[60,30,1]),
+  /* a second "Mexico" label, besides the map's own, on a leader line */
+  "Maize from teosinte":S=>DROP(S,/^Mexico$/),
+  /* the Hemudu and Shangshan labels, the stop's oldest rice, lay under the map key */
+  "Rice from the Yangtze":S=>VIEW(S,[122,24,2.3]),
+  /* Ethiopia's teff and wild coffee were off the globe's right edge and the sorghum label under the map key; the Yemen
+     coffee photo sat on the zoom buttons */
+  "Africa’s crops and coffee":S=>{DROPPH(S,/^Coffee cherries, Yemen/);VIEW(S,[29,2,1.35])},
+  /* a tour question flipped the card to the right, over the zoom buttons; the Côte d'Ivoire photo, half a world east,
+     was off the screen (cocoa there has its own photo on Crops far from home) */
+  "Chocolate from the Amazon":S=>{DROPPH(S,/^Opening cacao pods/);VIEW(S,[-77,-3,2.6])},
+  /* Brazil's coffee and the Colombian coffee photo lay under the card; buttons (part 3) visit all five crops */
+  "Crops far from home":S=>VIEW(S,[-15,5,1]),
+  /* Réunion, where Albius found his trick, had its label under the map key */
+  "Vanilla by hand":S=>VIEW(S,[53,-16,3.4]),
+  /* the Aleppo seed bank, the vault's first withdrawal, lay under the map key */
+  "A vault for seeds":S=>VIEW(S,[26,56,1.25])
  }
 };
 /* stops that keep the card where their own script put it */
@@ -166,6 +190,8 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
   /* the stop's own figure: about 8,300 km between Antarctica and Costa Rica (Rasmussen et al., Biology Letters 2007,
      "Southern Hemisphere humpback whales wintering off Central America") */
   "amigration|Humpback whales":G("Some humpbacks swim each year between Antarctica and Costa Rica. How far is that, one way?",1000,15000,8300,"km",{step:100,show:"about 8,300 km"}),
+  /* Edmond Albius, born about 1829, found the trick in 1841, aged about 12 (Wikipedia, "Edmond Albius") */
+  "crops|Vanilla by hand":G("Vanilla flowers are still pollinated by hand, with a trick found on Réunion in 1841 by an enslaved boy, Edmond Albius. How old was he?",5,40,12,"",{step:1,show:"about 12 years old"}),
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
@@ -179,7 +205,10 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - ocean | "Into the deep": drag a submarine from the surface to Challenger Deep, past the light zones, a penguin's and
              a whale's deepest dives, the Titanic and the deepest fish.
    - amigration | "Wildebeest follow the rain": drag through the year (or play it) and watch the herds go round their loop.
-   - amigration | "Now explore": pick an animal: the globe turns to its journey and draws it. */
+   - amigration | "Now explore": pick an animal: the globe turns to its journey and draws it.
+   - crops | "Vavilov’s centres": where was it first farmed? Sort eight crops; the globe turns to each one's birthplace.
+   - crops | "Maize from teosinte": breed maize: each year keep the plant with the biggest cob, from a dozen seeds to 300.
+   - crops | "Crops far from home": buttons visit where five crops grow most today, far from where they began. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -379,7 +408,52 @@ const PICK={tour:"amigration",title:"Now explore",globe:true,turn:true,tip:"Pick
  render(L){const c=L.card;if(!c)return;c.querySelectorAll(".rvw-turn button").forEach(b=>b.classList.toggle("rvw-cur",+b.dataset.i===L.at));
   if(L.at<0)say(L,"","Tap an animal: the globe turns to its journey.");else{const a=ANIMALS[L.at];say(L,a[0],a[3])}}};
 
-const DEFS=[KELP,UPWELL,DIVE,WILDE,PICK];
+/* ======================================================================== crops */
+/* Where each crop was first farmed, as the tour's own stops tell it (each stop gives its source): maize in Mexico's
+   Balsas valley, potatoes by Lake Titicaca, wheat at Karacadağ and lentils in the Fertile Crescent, rice on the lower
+   Yangtze, bananas at Kuk Swamp in New Guinea, sorghum in eastern Sudan, coffee in Ethiopia's Kaffa. Answers are mixed
+   so that taking turns cannot win. */
+const ORIGIN=binDef("crops","Vavilov’s centres",{tip:"Where was it first farmed? Sort eight crops; the globe turns to each one’s birthplace.",
+ keys:[["a","🌎 The Americas"],["f","🌾 Fertile Crescent"],["af","🌍 Africa"],["as","🌏 Asia and New Guinea"]],ask:"Where was this crop first farmed?",
+ items:[["Maize","a","Mexico: farmers in the Balsas River valley bred it from teosinte, a wild grass, about 9,000 years ago.",[-100.5,18.3,3.4,"Balsas valley"]],
+  ["Wheat","f","The Fertile Crescent: einkorn wheat was first farmed in the Karacadağ hills of south-east Turkey.",[39.8,37.7,3.4,"Karacadağ"]],
+  ["Coffee","af","Ethiopia: Arabica coffee grows wild in the mountain forests of Kaffa.",[36.2,7.3,3.4,"Kaffa"]],
+  ["Rice","as","China: rice was tamed from wild rice on the lower Yangtze about 9,000 years ago.",[121.35,30.02,3.2,"Hemudu"]],
+  ["Potatoes","a","The Andes: tamed near Lake Titicaca over 7,000 years ago.",[-69.3,-15.9,3.4,"Lake Titicaca"]],
+  ["Bananas","as","New Guinea: people at Kuk Swamp were farming bananas about 7,000 years ago.",[144.33,-5.78,3.4,"Kuk Swamp"]],
+  ["Sorghum","af","Africa: tamed on the plains of eastern Sudan about 5,000 years ago.",[36,15,3.2,"Eastern Sudan"]],
+  ["Lentils","f","The Fertile Crescent, with wheat, barley, peas and chickpeas, about 10,500 years ago.",[38.4,35.87,3.4,"Abu Hureyra"]]],
+ done:"Most crops began in a few hilly regions, the centres Vavilov mapped, far from today’s great farm belts."});
+/* Breed maize: a game of choosing, not real numbers. Teosinte's 'cob' held about a dozen hard seeds and a maize cob
+   holds hundreds of kernels (the stop's own figures); in between, each round shows six plants grown from the last
+   pick, varying around it, and the reader keeps the best. */
+const MAIZE={tour:"crops",title:"Maize from teosinte",globe:false,tip:"Be an early farmer: each year, keep the seeds of the plant with the biggest cob. Can you breed maize?",
+ card:()=>'<div class="rvw-cobs"></div><div class="rvw-row"><span class="rvw-gen"></span><button type="button" class="rvw-btn rvw-again2" hidden>Start again</button></div>',
+ init(L){L.best=12;L.n=0;L.seed=11;L.hist=[12]},
+ roll(L){let s=(L.seed=(L.seed*1664525+1013904223)>>>0);const r=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+  L.cobs=Array.from({length:6},()=>Math.max(6,Math.round(L.best*(.78+r()*.6))))},
+ wire(L){const c=L.card;this.roll(L);c.querySelector(".rvw-again2").onclick=()=>{this.init(L);this.roll(L);this.render(L)};this.render(L)},
+ render(L){const c=L.card;if(!c)return;const done=L.best>=300;
+  const cob=k=>{const h=Math.min(46,10+Math.sqrt(k)*2.1),w=Math.min(18,5+Math.sqrt(k)*.7),rows=Math.max(1,Math.round(Math.sqrt(k)/2.2));
+   let dots="";const per=Math.ceil(k/rows),cap=Math.min(per,26);for(let j=0;j<rows&&j<8;j++)for(let i=0;i<cap;i++)dots+='<circle cx="'+(10-w/2+(j+.5)*w/Math.min(rows,8)).toFixed(1)+'" cy="'+(52-h+(i+.5)*h/cap).toFixed(1)+'" r="'+Math.max(.7,Math.min(1.8,w/Math.min(rows,8)/2.4)).toFixed(2)+'" fill="#f2c230"/>';
+   return '<svg viewBox="0 0 20 56" width="22" height="56"><path d="M10 56 V'+(54-h).toFixed(1)+'" stroke="#6f8f4a" stroke-width="1.5"/><ellipse cx="10" cy="'+(53-h/2).toFixed(1)+'" rx="'+(w/2).toFixed(1)+'" ry="'+(h/2).toFixed(1)+'" fill="#d9a21a" stroke="#7a4a12" stroke-width=".8"/>'+dots+'</svg>'};
+  setHTML(c.querySelector(".rvw-cobs"),done?"":L.cobs.map((k,i)=>'<button type="button" class="rvw-cob" data-i="'+i+'">'+cob(k)+"<b>"+k+"</b></button>").join(""));
+  c.querySelectorAll(".rvw-cob").forEach(b=>b.onclick=()=>{L.best=L.cobs[+b.dataset.i];L.n++;L.hist.push(L.best);this.roll(L);this.render(L)});
+  c.querySelector(".rvw-gen").textContent=L.n?"Year "+L.n+" of your farm · best cob so far: "+Math.max(...L.hist)+" seeds":"Each plant’s number is the seeds on its cob.";
+  c.querySelector(".rvw-again2").hidden=!L.n;
+  if(done)say(L,"You bred maize: "+L.best+" seeds a cob, from teosinte’s dozen, in "+L.n+" years","Real farmers took thousands of years. And the maize they made can no longer survive without people to plant it.");
+  else if(!L.n)say(L,"Teosinte: about a dozen hard seeds","Tap the plant whose cob has the most seeds. Its seeds are next year’s crop.");
+  else say(L,L.best>L.hist[L.hist.length-2]?"Bigger!":"Smaller this year","Plants vary, and seeds take after their parents. Keep picking the biggest; aim for 300 seeds a cob.")}};
+/* Each crop and where it grows most today, as the tour's stops tell it */
+const FAR=turnDef("crops","Crops far from home",{tip:"Each of these crops is grown most a long way from where it began. Visit them.",
+ intro:"Tap a crop to turn the globe to where most of it grows today.",
+ places:[["Cassava: Nigeria",8,8,2.6,"Cassava came from the Amazon. It became a staple of Africa, and Nigeria now grows the most."],
+  ["Coffee: Brazil",-45.5,-21.5,2.6,"Coffee came from Ethiopia. Brazil now grows about a third of the world’s coffee."],
+  ["Cocoa: Côte d’Ivoire",-6,6.5,2.8,"Cacao came from the Amazon. About 40% of the world’s cocoa is now grown in Côte d’Ivoire."],
+  ["Potatoes: China",105,35,2.4,"Potatoes came from the Andes. China now grows the most."],
+  ["Bananas: India",78,20,2.6,"Bananas were first farmed in New Guinea. India now grows the most."]]});
+
+const DEFS=[KELP,UPWELL,DIVE,WILDE,PICK,ORIGIN,MAIZE,FAR];
 /* ---------------------------------------------------------------- the engine: one stop at a time */
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
@@ -502,6 +576,9 @@ body.rvw-offlayer .ps-mapkey.at-right,body.rvw-offlayer .ps-mapbanner{display:no
 
 {const s=document.createElement("style");s.textContent=`
 .rvw-gnu{fill:#3b2a1a;stroke:#f2e3c6;stroke-width:1}.rvw-route{fill:none;stroke:#d9682b;stroke-width:4;stroke-linecap:round;stroke-dasharray:14 10;filter:drop-shadow(0 0 1.5px #fff)}
+.rvw-cobs{display:flex;gap:4px;justify-content:space-between;margin-top:4px}.rvw-cob{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid rgba(19,41,75,.2);background:#fff;border-radius:10px;padding:4px 0;cursor:pointer;font:800 12px system-ui,sans-serif;color:#13294b}
+.rvw-cob:hover{border-color:#d9682b;background:#fff4ec}.rvw-gen{font-size:12.5px;font-weight:700;opacity:.8}
+:is(body.dark-theme,body.sky-night) .rvw-cob{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
 .rvw-col{display:block;width:100%;height:auto;margin:2px 0 4px}.rvw-zl{stroke:rgba(255,255,255,.35);stroke-width:1;stroke-dasharray:3 3}
 .rvw-cab{stroke:#ffd166;stroke-width:1.2;stroke-dasharray:2 2}.rvw-sub{fill:#ffd166;stroke:#7a4a12;stroke-width:1.5}.rvw-win{fill:#13294b}.rvw-beam{fill:rgba(255,236,170,.28)}
 .rvw-em{filter:drop-shadow(0 0 2px rgba(255,255,255,.85))}.rvw-zt{font:700 9.5px system-ui,sans-serif;fill:#fff;opacity:.55}.rvw-zt.rvw-zon{opacity:1;font-weight:800}.rvw-hit{fill:rgba(255,209,102,.35);stroke:#ffd166;stroke-width:1.5}
