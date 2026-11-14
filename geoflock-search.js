@@ -512,19 +512,54 @@ function regsOf(e){const cc=String(e.cc).toLowerCase();if(e._rg&&e._rg.cc===cc)r
   const owner=new Map(),adj=items.map(()=>new Set());
   items.forEach((x,i)=>{const g=x.f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;P.forEach(pl=>pl.forEach(r=>r.forEach(c=>{const k=Math.round(c[0]*50)+","+Math.round(c[1]*50);const o=owner.get(k);if(o==null)owner.set(k,i);else if(o!==i){adj[i].add(o);adj[o].add(i)}})))});
   /* greedy colouring, the most connected first */
-  const col=new Array(items.length).fill(-1);items.map((_,i)=>i).sort((a,b)=>adj[b].size-adj[a].size).forEach(i=>{const used=new Set([...adj[i]].map(j=>col[j]));let c=0;while(used.has(c)&&c<4)c++;col[i]=c});
+  /* balanced: each region takes the colour least used so far among those its neighbours don't have, so all five appear about equally */
+  const NC=5,cnt=new Array(NC).fill(0),col=new Array(items.length).fill(-1);items.map((_,i)=>i).sort((a,b)=>adj[b].size-adj[a].size).forEach(i=>{const used=new Set([...adj[i]].map(j=>col[j]));let c=-1;for(let k=0;k<NC;k++){if(used.has(k))continue;if(c<0||cnt[k]<cnt[c])c=k}if(c<0)c=[...Array(NC).keys()].sort((a,b)=>cnt[a]-cnt[b])[0];col[i]=c;cnt[c]++});
   /* where each name goes: the middle of its largest piece */
   const lab=items.map(x=>{const g=x.f.geometry,P=g.type==="Polygon"?[g.coordinates]:g.coordinates;let best=P[0],ba=-1;P.forEach(pl=>{const a=d3.geoArea({type:"Polygon",coordinates:pl});if(a>ba){ba=a;best=pl}});const c=d3.geoCentroid({type:"Polygon",coordinates:best});return{c,big:{type:"Polygon",coordinates:best}}});
   e._rg={cc,d:{items,col,lab}};e._rgP=null;draw()}).catch(()=>{e._rgP=null});return null}
+/* screen-space label layout for a country's regions (see drawRegs) */
+let _mctx=null;function tw(t,fs){if(!_mctx)_mctx=document.createElement("canvas").getContext("2d");_mctx.font="700 "+fs+"px Inter, system-ui, sans-serif";return _mctx.measureText(t).width}
+function scrRings(p,g){const rings=[];let cur=null;const sink={beginPath(){},moveTo(x,y){cur=[[x,y]];rings.push(cur)},lineTo(x,y){if(cur)cur.push([x,y])},closePath(){cur=null},arc(){}};try{d3.geoPath(p,sink)({type:"Feature",geometry:g})}catch(e){}return rings.filter(r=>r.length>2)}
+function inside(R,x,y){let c=false;for(const r of R)for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>y)!==(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+function edist(R,x,y){let m=Infinity;for(const r of R)for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[j],b=r[i],dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;let t=L?((x-a[0])*dx+(y-a[1])*dy)/L:0;t=t<0?0:t>1?1:t;const ex=a[0]+t*dx-x,ey=a[1]+t*dy-y,d=ex*ex+ey*ey;if(d<m)m=d}return Math.sqrt(m)}
+/* the run of the region along a horizontal (or vertical) line through x,y */
+function span(R,x,y,vert){const hits=[];for(const r of R)for(let i=0,j=r.length-1;i<r.length;j=i++){let a=r[i],b=r[j];if(vert){a=[a[1],a[0]];b=[b[1],b[0]]}const X=vert?y:x,Y=vert?x:y;if((a[1]>Y)!==(b[1]>Y))hits.push((b[0]-a[0])*(Y-a[1])/(b[1]-a[1])+a[0])}hits.sort((u,v)=>u-v);const X=vert?y:x;for(let k=0;k+1<hits.length;k+=2)if(hits[k]<=X&&X<=hits[k+1])return[hits[k],hits[k+1]];return[X,X]}
+function splits(n){const out=[[n]];const idx=[];for(let i=1;i<n.length-1;i++)if(n[i]===" "||n[i]==="-")idx.push(i);if(idx.length){const m=n.length/2;const i=idx.sort((a,b)=>Math.abs(a-m)-Math.abs(b-m))[0];out.push(n[i]==="-"?[n.slice(0,i+1),n.slice(i+1)]:[n.slice(0,i),n.slice(i+1)])}return out}
+function regLabels(p,R){const W0=(p.translate()[0]||0)*2+400,H0=(p.translate()[1]||0)*2+400;
+ const jobs=R.items.map((x,i)=>{const big=R.lab[i]&&R.lab[i].big;let rings=big?scrRings(p,big):[];
+   /* if the largest piece is off screen, try the whole region */
+   if(!rings.length)rings=scrRings(p,x.f.geometry);if(!rings.length)return null;
+   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;rings.forEach(r=>r.forEach(([a,b])=>{if(a<x0)x0=a;if(a>x1)x1=a;if(b<y0)y0=b;if(b>y1)y1=b}));
+   if(x1<-50||y1<-50||x0>W0||y0>H0)return null;return{i,rings,b:[x0,y0,x1,y1],area:(x1-x0)*(y1-y0)}}).filter(Boolean);
+ /* small regions first: they have the fewest places a name can go */
+ jobs.sort((a,b)=>a.area-b.area);const placed=[],res=[];
+ jobs.forEach(J=>{const{rings,b}=J,n=R.items[J.i].n||"";if(!n)return;const w=b[2]-b[0],h=b[3]-b[1];const G=14,cand=[];
+  for(let gx=0;gx<=G;gx++)for(let gy=0;gy<=G;gy++){const x=b[0]+w*(gx+.5)/(G+1),y=b[1]+h*(gy+.5)/(G+1);if(inside(rings,x,y))cand.push({x,y,d:edist(rings,x,y)})}
+  if(!cand.length){const c=p(R.lab[J.i].c);if(c)cand.push({x:c[0],y:c[1],d:3})}
+  cand.sort((u,v)=>v.d-u.d);
+  /* refine the best spot a little */
+  if(cand.length&&w>4){const c0=cand[0];const sx=w/(G+1),sy=h/(G+1);for(let ix=-3;ix<=3;ix++)for(let iy=-3;iy<=3;iy++){const x=c0.x+ix*sx/3,y=c0.y+iy*sy/3;if(inside(rings,x,y)){const d=edist(rings,x,y);if(d>c0.d){c0.x=x;c0.y=y;c0.d=d}}}}
+  const fit=c=>{const hs=span(rings,c.x,c.y,false),vs=span(rings,c.x,c.y,true);const cx=(hs[0]+hs[1])/2,ww=Math.max(hs[1]-hs[0],c.d*2),hh=Math.max(vs[1]-vs[0],c.d*2);
+    let best=null;splits(n).forEach(L=>{const k=Math.max(...L.map(t=>tw(t,10)))/10;let fs=Math.min(13,(ww*.9)/k,(hh*.85)/(L.length*1.12));if(fs<5.5)fs=5.5;const score=fs-(L.length>1?.6:0);if(!best||score>best.score)best={L,fs,score}});
+    const bw=Math.max(...best.L.map(t=>tw(t,best.fs))),bh=best.L.length*best.fs*1.12;const x=Math.abs(cx-c.x)<ww/4?cx:c.x;
+    return{x,y:c.y,fs:best.fs,lines:best.L,box:[x-bw/2-1.5,c.y-bh/2-1,x+bw/2+1.5,c.y+bh/2+1]}};
+  const hit=bx=>placed.some(o=>bx[0]<o[2]&&bx[2]>o[0]&&bx[1]<o[3]&&bx[3]>o[1]);
+  let pick=null;for(const c of cand.slice(0,12)){const f=fit(c);if(!hit(f.box)){pick=f;break}
+   /* try smaller before moving on */
+   const sm=Object.assign({},f);for(let fs=f.fs-1;fs>=5.5;fs-=1){const bw=Math.max(...f.lines.map(t=>tw(t,fs))),bh=f.lines.length*fs*1.12;const bx=[f.x-bw/2-1.5,f.y-bh/2-1,f.x+bw/2+1.5,f.y+bh/2+1];if(!hit(bx)){pick=Object.assign(sm,{fs,box:bx});break}}if(pick)break}
+  if(!pick&&cand.length)pick=fit(cand[0]);if(!pick)return;placed.push(pick.box);res.push(pick)});
+ return res}
 function drawRegs(ctx,p,e){const R=regsOf(e);if(!R)return;const path=d3.geoPath(p,ctx);ctx.save();
  R.items.forEach((x,i)=>{ctx.beginPath();path(x.f);ctx.globalAlpha=e.ralpha!=null?e.ralpha:.78;ctx.fillStyle=rcol(e)[R.col[i]];ctx.fill();if(R.hot===i){ctx.globalAlpha=.35;ctx.fillStyle="#fff";ctx.fill()}ctx.globalAlpha=1;ctx.lineJoin="round";ctx.lineWidth=1.1;ctx.strokeStyle="rgba(255,255,255,.95)";ctx.stroke()});
  if(R.hot!=null&&R.items[R.hot]){ctx.beginPath();path(R.items[R.hot].f);ctx.lineWidth=2.6;ctx.strokeStyle="#fff";ctx.stroke()}
- /* names: as large as the region allows (7 to 13 px), left out where they would not fit or would overlap */
- const placed=[];ctx.textAlign="center";ctx.textBaseline="middle";
- R.items.map((x,i)=>{const b=d3.geoPath(p).bounds(R.lab[i].big);return{i,w:b[1][0]-b[0][0],h:b[1][1]-b[0][1]}}).sort((a,b)=>b.w*b.h-a.w*a.h).forEach(({i,w,h})=>{if(!isFinite(w))return;const q=p(R.lab[i].c);if(!q)return;
-  const n=R.items[i].n||"";let fs=Math.max(7,Math.min(13,Math.sqrt(w*h)/6));ctx.font="700 "+fs.toFixed(1)+"px Inter, system-ui, sans-serif";let tw=ctx.measureText(n).width;if(tw>w*1.1||fs*1.2>h){return}
-  const box=[q[0]-tw/2-2,q[1]-fs/2-1,q[0]+tw/2+2,q[1]+fs/2+1];if(placed.some(o=>box[0]<o[2]&&box[2]>o[0]&&box[1]<o[3]&&box[3]>o[1]))return;placed.push(box);
-  ctx.lineWidth=3;ctx.strokeStyle="rgba(20,30,45,.55)";ctx.strokeText(n,q[0],q[1]);ctx.fillStyle="#fff";ctx.fillText(n,q[0],q[1])});
+ /* names: every region gets its name. It goes at the most open spot inside the region (the point farthest from its edges, in screen space),
+    as large as fits there (13 px down to 5.5 px), on one line or split onto two at a hyphen or space; if that spot would overlap a name
+    already placed, the next most open spots are tried. Results are kept until the view changes. */
+ const key=p.rotate().map(v=>v.toFixed(2)).join()+"|"+p.scale().toFixed(1)+"|"+p.translate().map(v=>v.toFixed(1)).join();
+ if(!R._lc||R._lc.key!==key)R._lc={key,res:regLabels(p,R)};
+ ctx.textAlign="center";ctx.textBaseline="middle";
+ R._lc.res.forEach(L=>{ctx.font="700 "+L.fs.toFixed(1)+"px Inter, system-ui, sans-serif";ctx.lineJoin="round";ctx.lineWidth=Math.max(2,L.fs/4.2);ctx.strokeStyle="rgba(20,30,45,.6)";ctx.fillStyle="#fff";
+  L.lines.forEach((t,k)=>{const y=L.y+(k-(L.lines.length-1)/2)*L.fs*1.12;ctx.strokeText(t,L.x,y);ctx.fillText(t,L.x,y)})});
  ctx.restore()}
 /* each result's highlight colour, which the person can change: a swatch on its chip */
 function hiCol(e){if(e.ucol)return e.ucol;/* a point has no highlight: the swatch is its dot */if(e.g&&/Point$/.test(e.g.type))return"#c0392b";if(e.cat==="countries"||e.cat==="islands")return"#ffffff";return e.col||COL[e.cat]||"#c2259a"}
