@@ -124,6 +124,28 @@ FIX.bnations={
   "Geography or institutions?":S=>DROP(S,/^Stockholm/)
 };
 
+FIX.bcollapse={
+  /* the opening's Ahu Tongariki photo hung below the globe, Tasiilaq's at its top edge and the New Guinea highlands'
+     round the back: each has a stop of its own (the stop's game turns the globe to each ending in turn) */
+  "Collapse":S=>DROPPH(S,/^(Ahu Tongariki|Tasiilaq|The New Guinea)/),
+  /* the card was on the right; on the left, the mainland end of the ruler lay under the map key and the magnifier's
+     caption over the ruler's distance: framed east, Rapa Nui and Chile both in view; the Pitcairn label went under the
+     card (Pitcairn has the next stop) */
+  "Easter Island":S=>{DROP(S,/^Pitcairn$/);VIEW(S,[-90,-33,1.25])},
+  /* the Pueblo Bonito label hung on a long leader down into Mexico: framed closer on the Four Corners */
+  "Chaco Canyon":S=>VIEW(S,[-109.3,36.4,5.6]),
+  /* the island's west, Reykjavík and the "Icelandic Commonwealth" label lay under the card: framed on the island */
+  "Iceland’s blowing soil":S=>VIEW(S,[-18.6,64.9,5.4]),
+  /* Bergen, the ruler's far end, lay under the map key, and a "Greenland (Denmark)" label hung on a long leader at the
+     top: framed east, from L'Anse aux Meadows to Norway */
+  "The Norse in Greenland":S=>{DROP(S,/^Greenland/);VIEW(S,[-11,57,1.6])},
+  /* Japan sat at the globe's top edge, the Kiso and Edo labels by the map switches; Japan, Papua New Guinea and Solomon
+     Islands labels on long leaders: framed wider, Japan to Tikopia */
+  "Societies that succeeded":S=>{DROP(S,/^(Japan|Papua New Guinea|Solomon Islands)$/);VIEW(S,[152,12,1.2])},
+  /* a Papua New Guinea label on a long leader; the map names it */
+  "An oil field that saved the forest":S=>DROP(S,/^Papua New Guinea$/)
+};
+
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
    fixes are applied to it, so psGlobeTarget (wrapped above) finds the frame by title as well. */
@@ -352,7 +374,64 @@ const BINS_COL=BINS({tours:["bcollapse"],title:"Now explore",turnItems:true,mark
   ["Neighbours run the pumps together",3,"A response: in the polders rich and poor drown together, so they cooperate.",[4.64,51.88,3],"Kinderdijk"]],
  after:(r,N)=>(r===N?"Every one right. ":"")+"Diamond’s fifth factor matters most: Greenland’s Norse and Japan’s shoguns faced hard times, but only one changed course."});
 
-const DEFS=[GUESS_KOREA,SORT_NAT,BINS_NAT,SORT_COL,BINS_COL];
+/* ======================================================================== 6. Retrace Candide's journey (bcandide, A garden by
+   Constantinople) The novel's order, as the tour's stops give it (Candide, 1759): the castle in Westphalia (ch. 1),
+   Holland (ch. 3), Lisbon (ch. 5), Buenos Aires (ch. 13), El Dorado (ch. 17–18), Suriname (ch. 19), Portsmouth (ch. 23),
+   Venice (ch. 24–26), then the garden by Constantinople. Each tap turns the globe there. */
+const SORT_CAND=SORT({tours:["bcandide"],title:"A garden by Constantinople",turns:true,
+ tip:"The garden is the end of the road. Can you put Candide’s journey back in order? Each place you tap turns the globe there.",
+ first:"First",last:"Last",bars:false,
+ items:[["The castle in Westphalia",1,"ch. 1",0,[7.9,51.9,2.6]],["Holland and the kind Jacques",2,"ch. 3",0,[4.9,52.37,2.6]],
+  ["Lisbon in ruins",3,"ch. 5",0,[-9.14,38.71,2.6]],["Buenos Aires and the governor",4,"ch. 13",0,[-58.38,-34.6,2]],
+  ["El Dorado",5,"ch. 17–18",0,[-63,4,2]],["Suriname",6,"ch. 19",0,[-55.17,5.83,2]],
+  ["Portsmouth: an admiral shot",7,"ch. 23",0,[-1.1,50.8,2.6]],["Venice and the six kings",8,"ch. 24–26",0,[12.34,45.44,2.6]]],
+ after:(r,N)=>"Three continents and two oceans, and the answer is a small farm on the Sea of Marmara: ‘we must cultivate our garden’."});
+
+/* ======================================================================== 7. Real or made up? (bcandide, Now explore)
+   A review of the tour's own stops: the Lisbon earthquake (1 November 1755), the Jesuit missions, Admiral Byng's
+   execution (March 1757) and the Seven Years' War are real; the baron's castle and El Dorado are Voltaire's; the six
+   kings are real people at an invented supper; the Suriname scene sets an invented man in a real system of slavery. */
+const BINS_CAND=BINS({tours:["bcandide"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Voltaire mixed real events with pure invention. Which is which?",ask:"Real, made up, or a made-up scene in real history?",
+ bins:["Real","Made up","Real history, made-up scene"],
+ items:[["An earthquake destroys Lisbon on All Saints’ Day",0,"Real: 1 November 1755, one of Europe’s strongest earthquakes.",[-9.14,38.71,3],"Lisbon"],
+  ["Baron Thunder-ten-tronckh’s castle",1,"Made up: a castle grand only to its owners.",[7.9,51.9,3],"Westphalia"],
+  ["Six kings who have lost their thrones dine together",2,"The kings were real, among them Ahmed III and Ivan VI; the supper in Venice is Voltaire’s joke.",[12.34,45.44,3],"Venice"],
+  ["Children play with gold nuggets in the street",1,"Made up: El Dorado, the one happy country in the book.",[-63,4,2.4],"El Dorado"],
+  ["An admiral is shot on his own deck",0,"Real: Admiral John Byng, Portsmouth, March 1757.",[-1.1,50.8,3],"Portsmouth"],
+  ["‘Bulgars’ and ‘Abares’ fight a heroic butchery",2,"Readers take them for the Prussians and French of the Seven Years’ War; the battle itself is invented.",[11.9,51.25,3],"Rossbach"],
+  ["Priests run mission towns for the Guaraní",0,"Real: some thirty Jesuit reductions, until Spain expelled the order in 1767.",[-55.71,-27.13,3],"Trinidad mission"],
+  ["A man who lost a hand in a sugar mill",2,"The man is Voltaire’s, but Suriname’s plantations, worked by enslaved Africans, were real.",[-55.17,5.83,3],"Suriname"]],
+ after:(r,N)=>(r===N?"Every one right. ":"")+"Voltaire’s trick: put invented people into real disasters, and ask whether this is the best of all possible worlds."});
+
+/* ======================================================================== 8. Retrace Xuanzang's road out (bjourneywest, Home
+   along the Taklamakan) The tour's own stops, in his order: the Jade Gate frontier at Guazhou, Gaochang, Kucha, Suyab,
+   Samarkand, Bamiyan, Kashmir, Nalanda. Each tap turns the globe there. */
+const SORT_XZ=SORT({tours:["bjourneywest"],title:"Home along the Taklamakan",turns:true,
+ tip:"Before he heads home: put the stops on his road out in order. Watch the globe; the road was anything but straight.",
+ first:"First",last:"Last",bars:false,
+ items:[["The Jade Gate frontier",1,"past the watchtowers",0,[95.78,40.52,2.4]],["Gaochang",2,"the king who would not let him go",0,[89.53,42.85,2.4]],
+  ["Kucha",3,"before the icy Tian Shan",0,[82.96,41.72,2.4]],["Suyab",4,"the khan’s great tent",0,[75.2,42.81,2.4]],
+  ["Samarkand",5,"the Sogdians’ capital",0,[66.97,39.65,2.4]],["Bamiyan",6,"the giant Buddhas",0,[67.83,34.83,2.4]],
+  ["Kashmir",7,"two years of study",0,[74.8,34.08,2.4]],["Nalanda",8,"about five years",0,[85.44,25.14,2.4]]],
+ after:(r,N)=>"North round the Tian Shan, west to Samarkand, then back south-east over the Hindu Kush: mountains and safe roads, not straight lines, set his route."});
+
+/* ======================================================================== 9. History or novel? (bjourneywest, Now explore)
+   A review of the tour's own stops: the real journey (his biography and the Great Tang Records) against the 1592 novel. */
+const BINS_XZ=BINS({tours:["bjourneywest"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Did it happen to the real monk, or only in the novel?",ask:"The real Xuanzang, or the novel?",
+ bins:["The real journey","Only in the novel"],
+ items:[["He sets out against the emperor’s orders",0,"The real journey: travel beyond the frontier was banned, so he went by night.",[108.94,34.27,3],"Chang’an"],
+  ["The emperor sends him off with a golden bowl",1,"Only in the novel, which turns his escape round.",[108.94,34.27,3],"Chang’an"],
+  ["A magic palm-leaf fan puts out the flames",1,"Only in the novel: Monkey tricks it out of Princess Iron Fan.",[89.6,42.92,3],"Flaming Mountains"],
+  ["A king refuses to let him leave",0,"The real journey: he went on hunger strike until Qu Wentai of Gaochang gave in.",[89.53,42.85,3],"Gaochang"],
+  ["Three or four in ten of his party die of cold",0,"The real journey: crossing the glaciers of the Tian Shan.",[78.43,41.4,3],"Bedel Pass"],
+  ["The first scriptures have blank pages",1,"Only in the novel: the pilgrims would not pay a fee.",[85.44,25,3],"Vulture Peak"],
+  ["A boat overturns and manuscripts are lost",0,"The real journey: about 50 on the Indus, on his way home.",[72.43,34.05,3],"The Indus"],
+  ["An old turtle dunks the pilgrims in a river",1,"Only in the novel: the last of the 81 ordeals.",null,""]],
+ after:(r,N)=>(r===N?"Every one right. ":"")+"The novel keeps the real road, and fills it with monsters."});
+
+const DEFS=[GUESS_KOREA,SORT_NAT,BINS_NAT,SORT_COL,BINS_COL,SORT_CAND,BINS_CAND,SORT_XZ,BINS_XZ];
 
 
 let L=null,raf=0;
