@@ -38,8 +38,12 @@ const XF=(S,k,id,fn)=>{try{if(k==="phPins"&&!(XFS.get(S)||{})[k]&&pplPending(S))
  if(!R[k]){const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;const B={v:S[k],fns:{}};R[k]=B;
   Object.defineProperty(S,k,{configurable:!!(window.__rvuTest||/[?&]rvutest\b/.test(location.search)),enumerable:true,
    get:()=>{const pk=k==="phPins"?pplReady(S):0;if(B.out&&B.at===B.v&&B.atN===B.n&&B.pk===pk)return sync(S,k,B.out);let v=Array.isArray(B.v)?B.v.slice():(B.v||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
-    if(pk)v=pplAdd(S,v);B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{B.v=x}})}
- R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1}catch(e){}};
+    if(pk)v=pplAdd(S,v);if(k==="phPins"&&B.out&&B.out.length!==v.length)setTimeout(()=>resq(S),0);B.out=v;B.at=B.v;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{B.v=x}})}
+ R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1;if(k==="phPins")resq(S)}catch(e){}};
+/* index.html builds a stop's photo squares once, by position in the list (as geoflock-polish-rvo.js found): when this
+   file changes the list of a stop already drawn, its squares are rebuilt, or a dropped photo's square stays and every
+   label after it slides onto the wrong place */
+function resq(S){try{document.querySelectorAll(".ps-phpins").forEach(e=>{if(e._for===S)e.remove()})}catch(e){}}
 /* The getter hands back the same array until the value underneath or the edits change. geoflock-portraits.js adds the
    people's round portraits by wrapping phPins itself, and does so again whenever S.phPins is not its own list
    (S._gfPpl): so the filtered list is also stored there, which tells it the stop is done (otherwise it tried to redefine
@@ -168,7 +172,47 @@ FIX.literature={
   /* Harvard and Du Bois's Atlanta were under the card, Ambedkar's photo on the zoom buttons and Singer's Melbourne
      round the back of the globe: the stop opens on Harvard, and buttons in part 2 turn the globe to the others */
   "Now explore":S=>{DROPPH(S,/^(Melbourne|Mumbai|Atlanta)/);VIEW(S,[-71,40,2])}
-};FIX.sports={};
+};FIX.sports={
+  /* the Michigan hockey photo lay under the card and the Buzkashi photo on the zoom buttons: the hockey stop has its own,
+     and Buzkashi becomes a plain label */
+  "Sports around the world":S=>{DROPPH(S,/^(College ice hockey|Buzkashi)/);ADDAREA(S,[66.5,34.3],"Buzkashi, Afghanistan");VIEW(S,[15,38,1])},
+  /* London's label was on the globe's top edge, over the search box. And the list of titles stopped at 2022: Spain
+     won the 2026 final, 1–0 against Argentina after extra time at MetLife Stadium on 19 July 2026 (ABC News, "Spain
+     defeats Argentina 1-0 to win 2026 World Cup"), its second title after 2010 */
+  "The world’s game":S=>{VIEW(S,[0,25,1]);
+    try{const L=S.list;if(Array.isArray(L)&&L.some(r=>r&&r[0]==="Spain"&&r[1]==="1"))LOCK(S,"list",[["Brazil","5"],["Germany","4"],["Italy","4"],["Argentina","3"],["France","2"],["Uruguay","2"],["Spain","2"],["England","1"]])}catch(e){}
+    RE(S,"stat","Only eight countries won the first 22 World Cups; Brazil won the most","Only eight countries have won the 23 World Cups; Brazil has won the most");
+    RE(S,"more","Up to 2022 every World Cup winner came from Europe or South America","Every World Cup winner, up to Spain in 2026, has come from Europe or South America")},
+  /* the MetLife Stadium label and the Estadio Azteca photo were under the card (the 2026 hosts are the stop's subject) */
+  "World Cup hosts":S=>VIEW(S,[-78,30,1.3]),
+  /* the opening turned to the middle of England, India and Australia and left Melbourne's photo off the globe's
+     bottom edge, under the notice bar */
+  "Cricket and the Commonwealth":S=>VIEW(S,[112,-15,1]),
+  /* the globe turned to the middle of Japan and the Caribbean and came to rest over the Bering Sea, with both out of
+     sight: framed on the Americas (Koshien is named in the text) */
+  "Baseball’s map":S=>VIEW(S,[-68,28,1.4]),
+  /* the plain "Norway" label repeated the map's own */
+  "Skiing speaks Norwegian":S=>DROP(S,/^Norway$/),
+  /* Ellis Park's label was under the card and Eden Park's under the map key, half a world apart: framed on the South
+     Pacific, the stop's first subject */
+  "Rugby in the South Pacific and southern Africa":S=>VIEW(S,[170,-24,1.6]),
+  /* Bekoji's label ran under the map key and Addis Ababa's off the top; the plain "Kenya" label went */
+  "Runners from the highlands":S=>{DROP(S,/^Kenya$/);VIEW(S,[39,3,3.6])},
+  /* the plain "Mexico" label repeated the map's own */
+  "The jump into thin air":S=>DROP(S,/^Mexico$/),
+  "Sumo":S=>DROP(S,/^Japan$/),
+  /* Alpe d'Huez's photo was on the globe's right edge; the plain "France" label went */
+  "The Tour de France":S=>{DROP(S,/^France$/);VIEW(S,[4.5,45.5,4])},
+  /* Montreal's photo was under the card and Los Angeles and Brisbane round the back: the buttons in part 2 turn the
+     globe to each host (and name them: their labels, on the globe's edge or under the card, went) */
+  "The Olympic map":S=>{DROPPH(S,/^Montreal/);DROP(S,/^(Los Angeles|Rio|Brisbane)/);VIEW(S,[18,30,1.15])},
+  /* Kyalami's label ran under the map key and São Paulo's (not in the text) under the bottom bar: framed on Europe and
+     Africa, from Silverstone and Monaco to Kyalami */
+  "Formula One":S=>{DROP(S,/^São Paulo$/);RENAME(S,/^Kyalami/,"Kyalami, 1993");VIEW(S,[22,10,1.05])},
+  /* Teahupoʻo's photo hung off the globe's bottom edge, under the notice bar, and Santa Cruz and Trestles off its right
+     edge: the ruler's end and its own label mark Teahupoʻo */
+  "Surfing from Hawaii":S=>{DROP(S,/^(United States|French Polynesia)/);DROPPH(S,/^Teahupo/);VIEW(S,[-138,10,1])}
+};
 
 const applied=new WeakSet();
 /* a stop whose photo pins this file edits, and to which geoflock-portraits.js adds a portrait, waits until the portrait
@@ -413,7 +457,45 @@ const TURN_FAIR=TURNER({tours:["philosophy"],mark:true,title:"Now explore",tip:"
   ["Mumbai: Ambedkar",72.88,19.08,2,"B. R. Ambedkar, born into a caste treated as ‘untouchable’, fought caste discrimination and chaired the committee that drafted India’s constitution."],
   ["Melbourne: Singer",144.96,-37.81,2,"Peter Singer asks why a child drowning in front of you should matter more than one dying far away."]]});
 
-const DEFS=[BINS_INST,SORT_MUS,TURN_NOBEL,BINS_KIGO,SORT_LIT,SORT_PHIL,BINS_ARIS,TURN_FAIR];
+/* ======================================================================== 9. North or south of 45°? (sports, ice hockey)
+   Latitudes rounded from each city's coordinates (Wikipedia): Helsinki 60.2° N, Montreal 45.5° N, Toronto 43.7° N,
+   Boston 42.4° N, Prague 50.1° N, Pittsburgh 40.4° N, Riga 56.9° N. The Hockey Hall of Fame is in Toronto; the Boston
+   Bruins (1924) were the NHL's first US team (Wikipedia, "Hockey Hall of Fame", "Boston Bruins"). */
+const BINS_ICE=BINS({tours:["sports"],title:"Ice hockey and the cold north",turnItems:true,mark:true,markTag:it=>it[5]?it[4]:"",
+ tip:"Test the dashed line: is each hockey city north or south of 45°?",ask:"North or south of 45° N?",
+ bins:["North of 45°","South of 45°"],
+ items:[["Helsinki",0,"60° N: Finland’s lakes freeze hard every winter, and hockey is its national passion.",[24.94,60.17,2],"Helsinki"],
+  ["Montreal",0,"Only just: 45.5° N. The first indoor game was played here in 1875.",[-73.57,45.5,2],"Montreal"],
+  ["Toronto",1,"Just south, at 43.7° N, yet home of the Maple Leafs and the Hockey Hall of Fame: the line is a rule of thumb.",[-79.38,43.65,2],"Toronto",1],
+  ["Boston",1,"42.4° N: the Bruins, the NHL’s first US team (1924), play here.",[-71.06,42.36,2],"Boston",1],
+  ["Prague",0,"50° N: Czechia is one of hockey’s great nations.",[14.42,50.09,2],"Prague"],
+  ["Pittsburgh",1,"40.4° N, about as far south as Madrid, but the Penguins have won the Stanley Cup five times.",[-79.99,40.44,2],"Pittsburgh",1],
+  ["Riga",0,"57° N: in Latvia, world championship games empty the streets.",[24.11,56.95,2],"Riga",1]],
+ after:(r,N)=>"Hockey grew where lakes and ponds freeze hard, mostly north of 45°. Today’s indoor rinks with machine-made ice let it be played much further south."});
+
+/* ======================================================================== 10. Olympic hosts round the globe (sports)
+   The stop's own hosts: Athens 1896 and 2004, Paris 1900, 1924 and 2024, Rio 2016 (the only South American host),
+   Los Angeles 1932, 1984 and 2028, Brisbane 2032 (after Melbourne 1956 and Sydney 2000), and Dakar's Youth Olympic
+   Games, 31 October–13 November 2026, as the stop gives them (Wikipedia, "Summer Olympic Games": the list of hosts). */
+const TURN_OLY=TURNER({tours:["sports"],mark:true,title:"The Olympic map",tip:"Turn the globe from host to host.",
+ places:[["Athens",23.74,37.97,2.2,"The modern Games began here in 1896, in the marble Panathenaic Stadium, and came back in 2004.",1],
+  ["Paris",2.35,48.86,2.5,"Host in 1900, 1924 and 2024: with London, the only city to host three times so far.",1],
+  ["Rio de Janeiro",-43.2,-22.9,2.2,"In 2016, still the only Summer Games held in South America."],
+  ["Los Angeles",-118.24,34.05,2.2,"Host in 1932 and 1984, and again in 2028: its third time."],
+  ["Brisbane",153.03,-27.47,2.2,"Australia’s third Summer Games, in 2032, after Melbourne 1956 and Sydney 2000."],
+  ["Dakar",-17.45,14.7,2.2,"Africa’s first Olympic event: the Youth Olympic Games, from 31 October to 13 November 2026.",1]]});
+
+/* ======================================================================== 11. Put the sports in order (sports, Now explore)
+   The tour's own dates: golf at St Andrews since at least the 1500s, football's rules 1863, the first indoor ice hockey
+   game 1875, the first Wimbledon championship 1877, judo 1882, basketball 1891, volleyball 1895, the first Formula One
+   world championship race 1950. */
+const SORT_SPORT=SORT({tours:["sports"],title:"Now explore",tip:"Put eight of the tour’s sports in the order they began.",
+ first:"Oldest",last:"Newest",bars:false,
+ items:[["Golf at St Andrews",1500,"by the 1500s"],["Football’s rules",1863,"1863"],["Indoor ice hockey",1875,"1875"],["Wimbledon",1877,"1877"],
+  ["Judo",1882,"1882"],["Basketball",1891,"1891"],["Volleyball",1895,"1895"],["Formula One",1950,"1950"]],
+ after:(r,N)=>"Six of the eight got their rules or first championships in just over 30 years, from 1863 to 1895."});
+
+const DEFS=[BINS_INST,SORT_MUS,TURN_NOBEL,BINS_KIGO,SORT_LIT,SORT_PHIL,BINS_ARIS,TURN_FAIR,BINS_ICE,TURN_OLY,SORT_SPORT];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
