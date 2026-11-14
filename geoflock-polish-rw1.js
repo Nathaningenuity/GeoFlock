@@ -31,6 +31,8 @@ const pinText=p=>Array.isArray(p)?strip(p[1]):strip(p&&p.text);
    through (to the value underneath). Each edit has an id, so applying the fixes again does not stack them.
    A field another script already serves through its own getter (as geoflock-sweep-tours2.js and geoflock-polish-m.js
    do) keeps that getter and setter underneath, as geoflock-polish-rvs.js found. */
+/* (the cached list is also recomputed when it, or the list underneath, has changed length in place: some files push
+   restored pins straight into the array a stop's pins field hands them) */
 const XFS=new WeakMap();
 let PEND=false;
 const PPW=new WeakMap();/* (it waits at most about 20 s) */
@@ -39,8 +41,8 @@ const pplPending=S=>{try{const t=ps&&ps.tour,n=strip(S.title);if(!(window.GF_POR
 const XF=(S,k,id,fn)=>{try{if(k==="phPins"&&!(XFS.get(S)||{})[k]&&pplPending(S)){PEND=true;return}let R=XFS.get(S);if(!R){R={};XFS.set(S,R)}
  if(!R[k]){const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;const B={v:S[k],fns:{},og:d&&d.get,os:d&&d.set};R[k]=B;
   Object.defineProperty(S,k,{configurable:!!(window.__rw1Test||/[?&]rw1test\b/.test(location.search)),enumerable:true,
-   get:()=>{const pk=k==="phPins"?pplReady(S):0,bv=B.og?B.og.call(S):B.v;if(B.out&&B.at===bv&&B.atN===B.n&&B.pk===pk)return sync(S,k,B.out);let v=Array.isArray(bv)?bv.slice():(bv||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
-    if(pk)v=pplAdd(S,v);if(k==="phPins"&&B.out&&B.out.length!==v.length)setTimeout(()=>resq(S),0);B.out=v;B.at=bv;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{if(B.os)B.os.call(S,x);else B.v=x}})}
+   get:()=>{const pk=k==="phPins"?pplReady(S):0,bv=B.og?B.og.call(S):B.v;if(B.out&&B.at===bv&&B.atN===B.n&&B.pk===pk&&B.out.length===B.ol&&(!bv||bv.length===B.bl))return sync(S,k,B.out);let v=Array.isArray(bv)?bv.slice():(bv||[]);for(const f in B.fns){try{v=B.fns[f](v)}catch(e){}}
+    if(pk)v=pplAdd(S,v);if(k==="phPins"&&B.out&&B.out.length!==v.length)setTimeout(()=>resq(S),0);B.out=v;B.ol=v.length;B.bl=bv&&bv.length;B.at=bv;B.atN=B.n;B.pk=pk;return sync(S,k,v)},set:x=>{if(B.os)B.os.call(S,x);else B.v=x}})}
  R[k].fns[id]=fn;R[k].n=(R[k].n||0)+1;if(k==="phPins")resq(S)}catch(e){}};
 /* index.html builds a stop's photo squares once, by position in the list (as geoflock-polish-rvo.js found): when this
    file changes the list of a stop already drawn, its squares are rebuilt, or a dropped photo's square stays and every
@@ -182,6 +184,46 @@ FIX.bflat={
   /* Barcelona lay under the map key: framed on the Atlantic, Toronto to Barcelona. The phone-call share moves into the
      stop's guess (revealed there) */
   "Is the world really flat?":S=>{RE(S,"stat","found that only about 2% of phone-call minutes were international","asked how much of what we do really crosses borders: guess below");VIEW(S,[-35,46,1.3])}
+};
+
+FIX.bspiky={
+  /* the card opened on the right and the globe looked down on the North Pole (index.html flew to the middle of pins from
+     San Francisco to Tokyo), Tokyo, Shanghai and Hong Kong photos hanging below the globe: framed on the Atlantic, New York
+     to London and Lagos; the Asian photos and the San Francisco label go (they have stops of their own) */
+  "The World Is Spiky":S=>{DROP(S,/^(San Francisco Bay|Tokyo|Shanghai)$/);DROPPH(S,/^(Shibuya|Shanghai at night|Hong Kong at night)/);VIEW(S,[-12,38,1])},
+  /* Tokyo and Shanghai sat by the zoom buttons */
+  "Where people are":S=>VIEW(S,[90,25,1]),
+  /* the globe looked down from high over the Arctic, the US north-east and Central Africa at its edges: framed on the
+     Atlantic (Japan, then at the top edge, is left out of the framing) */
+  "Read the lights":S=>{AREA(S,/^Japan$/);VIEW(S,[-12,35,1])},
+  /* the Boston photo lay on the zoom buttons */
+  "Bos-Wash: one long city":S=>VIEW(S,[-71.4,40,5.5]),
+  /* the Shinjuku photo lay on the zoom buttons */
+  "Greater Tokyo: the tallest peak":S=>VIEW(S,[138,34,5]),
+  /* the card opened on the right, over the zoom buttons, and the banana's labels ran off the globe's left edge */
+  "Europe’s banana":S=>VIEW(S,[7.6,47.5,4.2]),
+  /* the Seoul photo lay on the zoom buttons and North Korea's label at the top edge */
+  "Asia’s rising peaks":S=>VIEW(S,[124.8,30,3.2]),
+  /* the stop's turning buttons start on East Asia */
+  "Where new ideas come from":S=>VIEW(S,[133,28.3,2]),
+  /* an "India" label on a long leader at the globe's edge (the map names it), Bihar's beside it */
+  "India: peaks, not a plain":S=>{DROP(S,/^India$/);VIEW(S,[82.8,19.5,3.4])},
+  /* the Bay Area label lay under the card */
+  "The peaks of science":S=>VIEW(S,[-40,48,1.05]),
+  /* the Cairo photo lay by the zoom buttons and Soweto's below the globe: framed a little wider */
+  "Africa’s lights":S=>VIEW(S,[28,2,1]),
+  /* New York and its Times Square photo lay off the globe's right edge; a "United States" label on a long leader (the map
+     names it) */
+  "Who’s your city?":S=>{DROP(S,/^United States$/);VIEW(S,[-86,36,1.3])},
+  /* the card opened on the right, over the zoom buttons; "United States" and "Canada" labels on long leaders; framed
+     a little further east; Toronto's label, which ran under the map key, shortened (Florida has lived there since 2007) */
+  "The creative class":S=>{DROP(S,/^(United States|Canada)$/);RENAME(S,/^Toronto: Florida/,"Toronto: Florida’s home");VIEW(S,[-82,39,1.25])},
+  /* New York's label hung over the map's switches at the globe's top edge */
+  "Peaks pull apart":S=>VIEW(S,[-13,45,1]),
+  /* New York lay under the card, Tokyo by the zoom buttons and the Singapore photo by the map key: framed from London to
+     Tokyo; New York's label, then over the map's switches at the globe's top edge, and the Singapore photo go (the
+     flights still run to New York) */
+  "Flat and spiky at once":S=>{DROPPH(S,/^Singapore/);DROP(S,/^New York$/);VIEW(S,[42,35,1])}
 };
 
 
@@ -404,8 +446,36 @@ const SORT_FLAT=SORT({tours:["bflat"],title:"Now explore",turns:true,
   ["Nilekani: the field is being levelled",2004,"2004",0,[77.59,12.97,2.4]]],
  after:(r,N)=>"First countries, then companies, then people with a computer: Friedman’s three ages of globalisation, one flattener at a time."});
 
+/* ======================================================================== 7. Then and now (bspiky, Where new ideas come from)
+   The stop's own clusters. WIPO, Global Innovation Index 2025, science and technology cluster ranking: 1 Shenzhen–Hong
+   Kong–Guangzhou, 2 Tokyo–Yokohama, 3 San Jose–San Francisco (Tokyo–Yokohama was first the year before). Florida's 2005
+   patent peaks were in the US and Japan (the stop's text). The two sides of the Pacific cannot show at once. */
+const TURN_IDEAS=TURNER({tours:["bspiky"],title:"Where new ideas come from",mark:true,
+ tip:"Florida’s 2005 peaks against today’s: turn the globe across the Pacific.",
+ places:[["East Asia",128,30,1.6,"Today’s tallest idea peaks are here. In WIPO’s 2025 ranking of science and technology clusters, the top two are in East Asia."],
+  ["San Jose–San Francisco",-122,37.4,2.6,"Silicon Valley: one of Florida’s 2005 peaks, and third in WIPO’s 2025 ranking, the highest outside East Asia.",1],
+  ["Boston–Cambridge",-71.1,42.37,2.6,"Harvard, MIT and their spin-offs: another of the American peaks on Florida’s 2005 map.",1],
+  ["Tokyo–Yokohama",139.64,35.44,2.6,"Japan’s great peak in 2005, and still near the top: first in WIPO’s ranking until 2024, second in 2025.",1],
+  ["Shenzhen–Hong Kong–Guangzhou",114.06,22.54,2.6,"Barely a peak in 2005; first in WIPO’s 2025 ranking. Peaks can rise, and fast.",1]]});
 
-const DEFS=[TURN_SILVER,GUESS_HORMUZ,SORT_SILK,TURN_SLEEPS,GUESS_CALLS,SORT_FLAT];
+/* ======================================================================== 8. Bright, dim or dark? (bspiky, Now explore)
+   A review of what the tour's stops say about the night lights: Bos-Wash's lights hardly break; South Korea glows end to
+   end, North Korea is almost completely dark; the Nile valley shines like a thread and Gauteng glows; Lagos is far dimmer
+   than its crowds would suggest; Central Africa is dark. Each answer turns the globe there. */
+const BINS_SPIKY=BINS({tours:["bspiky"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"From space at night, which places blaze, which are dim for their crowds, and which are dark?",ask:"Bright, dim for its crowds, or dark?",
+ bins:["Bright","Dim for its crowds","Dark"],
+ items:[["Boston to Washington",0,"Bright: the lights hardly break for 630 km.",[-74,40.7,3],"Bos-Wash"],
+  ["North Korea",2,"Dark: almost no lights, right next to South Korea.",[127,40,3],"North Korea"],
+  ["Lagos",1,"Dim for its crowds: one of the world’s biggest cities, far dimmer than its size would suggest.",[3.4,6.45,3],"Lagos"],
+  ["The Nile valley",0,"Bright: it shines like a thread through the dark desert.",[31.2,27,3],"The Nile"],
+  ["Central Africa",2,"Dark: across much of Africa about 600 million people have no power at home.",[22,0,2.4],"Central Africa"],
+  ["South Korea",0,"Bright: it glows from end to end.",[127.8,36.5,3],"South Korea"],
+  ["Gauteng, South Africa",0,"Bright: Johannesburg and Pretoria glow.",[28.1,-26,3],"Gauteng"]],
+ after:(r,N)=>(r===N?"All right. ":"")+"Light follows money, not just people: Florida’s spikes, seen from space."});
+
+
+const DEFS=[TURN_SILVER,GUESS_HORMUZ,SORT_SILK,TURN_SLEEPS,GUESS_CALLS,SORT_FLAT,TURN_IDEAS,BINS_SPIKY];
 
 
 let L=null,raf=0;
