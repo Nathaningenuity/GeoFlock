@@ -247,11 +247,11 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  const each=fn=>s.tiles.forEach(t=>{if(!t.d)return;ctx.save();if(!boxClip(ctx,pj,t)){ctx.restore();return}try{fn(t.d)}finally{ctx.restore()}});
  const rivCol=sat?"rgb(26,66,120)":I.drewRaster?"#2f7ab8":"#14568c",rivA=Math.max(LT>1?.05:.12,Math.min(.9,(LT>1?.05:.12)+.4*(z-1)));
  /* fill maps: the sea drawn again over the land colours along the sharp coast */
- if(false&&coast&&!I.drewRaster){/* (off: colour maps keep the map's own coast, so fills and outlines agree) cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
+ if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
   ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fillStyle="#000";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});
   ctx.globalCompositeOperation="destination-over";ctx.fillStyle=I.ocean||"#5797cf";each(d=>{ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.fill("evenodd")});ctx.restore()}
  /* ...and the other way: land on the sharp coast that lies outside a country's rough shape takes that country's colour */
- if(false&&coast&&!I.drewRaster)try{fillOut(g,ctx,s,pj)}catch(e){console.error(e)}
+ if(coast&&!I.drewRaster)try{fillOut(g,ctx,s,pj)}catch(e){console.error(e)}
  /* Elevation: water joined to the sea is the colour of the shallow sea on its depth scale (a few tens of metres), not a colour
     read off the coast, which came out dark blue in bays beside pale shallows (the Gulf of Venezuela, Lagoa dos Patos) */
  const elev=I.texKey==="elevation";
@@ -328,7 +328,10 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  /* borders over the sea are left out: the tiles carry some claim lines out across the water (a dashed line through the Gulf
     of Venezuela) that read as land borders. A piece is kept where the middle of each of its steps is on land. */
  try{APPF=(g._base||[]).concat(g._big||[]);if(!APPF.length&&typeof amGlobe!=="undefined"&&amGlobe!==g)APPF=(amGlobe._base||[]).concat(amGlobe._big||[])}catch(e){APPF=null}const landB=landBorders;
- /* (the tiles' coast and border lines are no longer drawn: the map draws its own country outlines at every zoom) */
+ /* the tiles' sharp coast and border lines (the outline drawn when you hover a country stays the map's own, gfDetail.hotSharp) */
+ if(coast&&borders){ctx.lineWidth=.55;ctx.strokeStyle=I.drewRaster?"rgba(25,25,25,0.55)":"rgba(20,30,20,0.5)";
+  each(d=>{ctx.beginPath();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>edgePath(ctx,pj,r,true))});landB(d).forEach(B=>{if(!B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();
+   ctx.setLineDash([3,2]);ctx.beginPath();landB(d).forEach(B=>{if(B.disp)B.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke();ctx.setLineDash([])})}
 }
 
 /* ---------- hover: name and outline the river or lake under the pointer ---------- */
