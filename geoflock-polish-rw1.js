@@ -226,6 +226,50 @@ FIX.bspiky={
   "Flat and spiky at once":S=>{DROPPH(S,/^Singapore/);DROP(S,/^New York$/);VIEW(S,[42,35,1])}
 };
 
+FIX.bbeagle={
+  /* Darwin's portrait (at Plymouth) hung over the search box and the Plymouth and Falmouth labels at the top edge; the
+     Ushuaia photo lay below the globe, Table Mountain's by the map key and the tortoise's and Aconcagua's under the card:
+     framed a little further south and east; those four photos go (each place has its own stop) */
+  "The Voyage of the Beagle":S=>{DROPPH(S,/^(Ushuaia|Table Mountain|A Galápagos giant tortoise|Aconcagua)/);VIEW(S,[-25,15,1])},
+  /* the Plymouth, Shrewsbury and Cambridge labels were stacked by the search box */
+  "Plymouth, 1831: a young man joins":S=>VIEW(S,[1,32,1.7]),
+  /* the Porto Praya label ran under the map key */
+  "Cape Verde: rocks that rose":S=>VIEW(S,[-21.8,14.8,6]),
+  /* the Salvador label ran under the map key and the Sugarloaf photo lay at the bottom edge; a "Brazil" label on a long
+     leader (the map names it) */
+  "Bahia: into the rainforest":S=>{DROP(S,/^Brazil$/);VIEW(S,[-37,-17.5,3])},
+  /* the Punta Alta label, the stop's own place, ran under the map key: framed east, and the label shortened (the stat
+     gives the month); "Argentina" and "Uruguay" labels on long leaders, one by the map key */
+  "Giant bones at Punta Alta":S=>{DROP(S,/^(Argentina|Uruguay)$/);RENAME(S,/^Punta Alta: fossils/,"Punta Alta: fossils, 1832");VIEW(S,[-55,-37.5,3.2])},
+  /* the Wulaia label ran under the map key and the Falklands' penguin photo lay beside it; "Argentina" and "Chile" labels
+     hung far off the globe */
+  "Tierra del Fuego":S=>{DROP(S,/^(Argentina|Chile)$/);VIEW(S,[-61,-54.5,3.4])},
+  /* the Santa Cruz mouth's label ran to the map key; an "Argentina" label on a long leader */
+  "Patagonia: a land that rose":S=>{DROP(S,/^Argentina$/);VIEW(S,[-66.5,-48.5,3])},
+  /* a "Chile" label on a long leader at the top */
+  "The earthquake at Concepción":S=>DROP(S,/^Chile$/),
+  /* "Chile" and "Argentina" labels on long leaders, one by the map key */
+  "Seashells on the Andes":S=>DROP(S,/^(Chile|Argentina)$/),
+  /* Ecuador's thermometer and label lay at the map key's edge */
+  "Galápagos: islands of difference":S=>VIEW(S,[-85,-1.5,3]),
+  /* the stop's sailing game draws its own numbered islands: the stop's island labels and four photos lay on top of the
+     game's circles (its mockingbirds are in the game's drawer), and its "drag the Beagle" hint ran under the map key */
+  "Tortoises, mockingbirds and finches":S=>{DROP(S,/^(Floreana|San Cristóbal|Santiago|Isabela)/);DROPPH(S,/^(A Galápagos giant tortoise|A ground finch|A blue-footed booby|A San Cristóbal mockingbird)/);VIEW(S,[-88.3,-0.6,6])},
+  /* Tahiti lay off the globe's right edge, under the map key */
+  "Tahiti and New Zealand":S=>VIEW(S,[-168,-28,1.5]),
+  /* an "Australia" label on a long leader (the map names it) */
+  "Australia: a strange continent":S=>DROP(S,/^Australia$/),
+  /* the Bikini photo lay on the zoom buttons: framed wider, Cocos to Enewetak; the
+     coral's depth at Enewetak moves into the stop's guess (it is revealed there) */
+  "Coral atolls: Cocos (Keeling)":S=>{DROPPH(S,/^Bikini/);RE(S,"more","drilled into Enewetak atoll and hit volcanic rock under more than a kilometre of coral: Darwin was right.","drilled into Enewetak atoll to test Darwin’s idea: if he was right, they would find old coral all the way down to the sunken volcano.");VIEW(S,[134,-4,1.1])},
+  /* the Mauritius photo lay by the map key and Falmouth's label at the top: framed east and a little wider; the Mauritius
+     photo, still by the key, goes (its label comes back in its place) */
+  "Home by the Cape":S=>{DROPPH(S,/^Mauritius/);ADDPIN(S,[[57.5,-20.16],"Mauritius","point"]);VIEW(S,[30,4,1])},
+  /* the card opened on the right, over the zoom buttons; London and Ternate are too far apart to show at once (the stop's
+     buttons turn the globe between them) */
+  "From the Beagle to the Origin":S=>VIEW(S,[0.05,51.33,3])
+};
+
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
@@ -474,8 +518,39 @@ const BINS_SPIKY=BINS({tours:["bspiky"],title:"Now explore",turnItems:true,mark:
   ["Gauteng, South Africa",0,"Bright: Johannesburg and Pretoria glow.",[28.1,-26,3],"Gauteng"]],
  after:(r,N)=>(r===N?"All right. ":"")+"Light follows money, not just people: Florida’s spikes, seen from space."});
 
+/* ======================================================================== 9. How deep is the coral? (bbeagle, Coral atolls:
+   Cocos (Keeling)) The 1952 drill holes at Enewetak reached volcanic rock at about 1.27 km (Parry Island) and 1.41 km
+   (Elugelab) below the surface (USGS: Ladd and Schlanger, Professional Paper 260-Y, 1960; and the 1952 seismic study
+   quoting the drill depths, 4,170 and 4,610 ft). The stop's own "more than a kilometre" is taken out (part 1). */
+const GUESS_CORAL=GUESS({tours:["bbeagle"],title:"Coral atolls: Cocos (Keeling)",
+ tip:"Reef corals grow only in the top few tens of metres of the sea. In 1952 drills went down through Enewetak atoll: how deep was the coral rock before they hit the old volcano, do you think?",
+ vals:[0.01,0.05,0.1,0.25,0.5,1,1.4,2,5],start:2,answer:1.4,close:1,fmt:v=>v<1?Math.round(v*1000)+" m":v.toLocaleString("en-GB")+" km",
+ after:"The deepest hole hit volcanic rock about 1.4 km down (the other about 1.3 km). Coral that grew in shallow water now lies over a kilometre deep: the island sank, and the coral kept growing up, just as Darwin said."});
 
-const DEFS=[TURN_SILVER,GUESS_HORMUZ,SORT_SILK,TURN_SLEEPS,GUESS_CALLS,SORT_FLAT,TURN_IDEAS,BINS_SPIKY];
+/* ======================================================================== 10. Two men, one idea (bbeagle, From the Beagle to
+   the Origin) The stop's own places and dates: Down House from 1842; Wallace's letter from Ternate, 1858; the papers read
+   at the Linnean Society, London, 1 July 1858; the Origin 24 November 1859. */
+const TURN_ORIGIN=TURNER({tours:["bbeagle"],title:"From the Beagle to the Origin",mark:true,
+ tip:"Two naturalists on opposite sides of the world: turn the globe between them.",
+ places:[["Down House",0.05,51.33,3,"Darwin’s home from 1842. He had the idea of natural selection by 1838, and spent 20 years testing it.",1],
+  ["Ternate",127.38,0.79,2.4,"In 1858 Alfred Russel Wallace, collecting in the islands of south-east Asia, sent Darwin a letter with the same idea.",1],
+  ["London",-0.13,51.51,3,"1 July 1858: both men’s papers were read together at the Linnean Society. The Origin followed on 24 November 1859.",1]]});
+
+/* ======================================================================== 11. The voyage in order (bbeagle, Now explore)
+   The tour's own dates: Cape Verde January 1832; Bahia 28 February 1832; Punta Alta September 1832; Wulaia January 1833;
+   up the Santa Cruz May 1834; Concepción 20 February 1835; the Galápagos 15 September 1835; Sydney January 1836;
+   Falmouth 2 October 1836. Each tap turns the globe there. */
+const SORT_BEAGLE=SORT({tours:["bbeagle"],title:"Now explore",turns:true,
+ tip:"Five years round the world: put the Beagle’s stops in order. Each one you tap turns the globe there.",
+ first:"First",last:"Last",bars:false,
+ items:[["Cape Verde: seashells in a cliff",1,"January 1832",0,[-23.51,14.92,2.4]],["Bahia: into the rainforest",2,"February 1832",0,[-38.51,-12.97,2.4]],
+  ["Punta Alta: giant bones",3,"September 1832",0,[-62.07,-38.88,2.4]],["Tierra del Fuego: the Fuegians go home",4,"January 1833",0,[-68.15,-55.05,2.4]],
+  ["Up the Santa Cruz river",5,"May 1834",0,[-71.2,-50.2,2.4]],["The earthquake at Concepción",6,"February 1835",0,[-73.05,-36.83,2.4]],
+  ["The Galápagos",7,"September 1835",0,[-90.5,-0.7,2.4]],["Sydney",8,"January 1836",0,[151.21,-33.86,2.4]],["Home to Falmouth",9,"October 1836",0,[-5.07,50.15,2.4]]],
+ after:(r,N)=>"From Bahia (February 1832) to the Galápagos (October 1835): over three and a half of the five years were spent round South America, whose coasts the Beagle had come to chart."});
+
+
+const DEFS=[TURN_SILVER,GUESS_HORMUZ,SORT_SILK,TURN_SLEEPS,GUESS_CALLS,SORT_FLAT,TURN_IDEAS,BINS_SPIKY,GUESS_CORAL,TURN_ORIGIN,SORT_BEAGLE];
 
 
 let L=null,raf=0;
