@@ -213,7 +213,45 @@ FIX.bplagues={
   "Now explore":S=>VIEW(S,[40,28,1])
 };
 
-FIX.b12maps={};FIX.b1001={};
+FIX.b12maps={
+  /* the Gyeongbokgung photo lay on the zoom buttons and the Panthéon's was stacked under the Rijksmuseum's (each has a
+     stop of its own) */
+  "A History of the World in Twelve Maps":S=>{DROPPH(S,/^(Gyeongbokgung Palace|The Panthéon)/);VIEW(S,[40,30,1])},
+  /* an "Iraq" label on a long leader (the map names it), and Sippar's label under the map key: framed a little west */
+  "The world on a clay tablet":S=>{DROP(S,/^Iraq$/);VIEW(S,[42.3,33,3])},
+  /* Taprobane, Ptolemy's too-big Sri Lanka, lay under the map key and Thule at the globe's top edge: framed a little
+     west */
+  "Ptolemy’s Geography":S=>VIEW(S,[42,24,1.05]),
+  /* Palermo, where al-Idrisi worked, had lost its label (a photo pass took it), and Ceuta's and Córdoba's labels, two
+     places a few km apart, were pushed far north on long leaders through the seven climates' labels: framed closer on
+     the Mediterranean, Palermo's label back and Córdoba's gone (the card shows its mosque) */
+  "Al-Idrisi’s map for a Norman king":S=>{DROP(S,/^Córdoba$/);ADDPIN(S,[[13.36,38.12],"Palermo: Roger II’s court","point"]);VIEW(S,[8,36,1.6])},
+  /* the Church of the Holy Sepulchre photo was pushed far south of Jerusalem, into Egypt (the card shows the map) */
+  "The Hereford Mappa Mundi":S=>DROPPH(S,/^The Church of the Holy Sepulchre/),
+  /* Seoul's, Kyoto's and China's labels were crowded at the globe's edge by the zoom buttons and Africa's tip was off
+     the bottom edge: framed on Korea, the map's home (China's label on a long leader goes, and a "North Korea" label: the
+     map names both), and Kyoto's, under the map key with Korea in sight (the card and the first button tell of
+     the Kyoto copy); the stop's buttons turn the globe to the far ends of its world */
+  "The Kangnido: a Korean view of the world":S=>{DROP(S,/^(China, drawn huge.*|North Korea|Kyoto: the oldest.*)$/);VIEW(S,[133,36,2])},
+  /* Saint-Dié lay at the globe's edge by the zoom buttons and ‘America’ at the bottom edge: framed on the Atlantic */
+  "Waldseemüller names America":S=>VIEW(S,[-35,18,1]),
+  /* the Vatican photo was pushed far from Rome onto Seville's label; the stop's buttons turn the globe between the two
+     lines (Ternate and the Zaragoza line, at the far end, are left out of the opening frame) */
+  "Diogo Ribeiro divides the globe":S=>{DROPPH(S,/^The Vatican/);AREA(S,/^(Ternate|Zaragoza line|Tordesillas line)/);VIEW(S,[-30,25,1.1])},
+  /* the Rijksmuseum photo and Blaeu's portrait hung at the globe's top edge over the map's switches, the Cape at the
+     bottom edge and Batavia and Dejima round the back: the stop's buttons turn the globe to each Dutch outpost; the
+     Rijksmuseum photo goes (the card shows Blaeu's map) */
+  "Blaeu: maps for money":S=>{DROPPH(S,/^The Rijksmuseum/);AREA(S,/^(Batavia|Dejima)/);VIEW(S,[4.9,50,2.2])},
+  /* London's label hung at the card's edge on a long leader: framed a little west */
+  "Mackinder’s heartland":S=>VIEW(S,[58,50,1.15]),
+  /* Brazil's true-size shape, which the card asks you to drag over the USA, lay round the back of the globe: the stop's
+     buttons turn the globe between the two shapes */
+  "The Peters projection":S=>VIEW(S,[10,46,1.5]),
+  /* the Silicon Valley photo was pushed far out to sea (the card shows the satellite picture); framed on North America,
+     Mountain View clear of the card */
+  "Google Earth":S=>{DROPPH(S,/^Silicon Valley/);VIEW(S,[-105,38,1])},
+  "Now explore":S=>VIEW(S,[40,30,1])
+};
 
 
 const EARLY={};
@@ -502,8 +540,53 @@ const SORT_PLAG=SORT({tours:["bplagues"],title:"Now explore",turns:true,
   ["Influenza at Camp Funston",1918,"1918",0,[-96.78,39.07,2.2]],["The last natural case of smallpox",1977,"1977",0,[44.77,1.72,2.4]]],
  after:(r,N)=>"Every new link between peoples, from caravans to steamships and planes, opened a new door to disease; McNeill’s point is that the contest never ends."});
 
+/* ======================================================================== 13. Two lines, half a world apart (b12maps, Diogo
+   Ribeiro divides the globe) The Tordesillas line (46.6°W) and the Zaragoza line (144.5°E) are 169° of longitude apart:
+   no side of the globe shows both. The texts are the card's own. */
+const TURN_RIBEIRO=TURNER({tours:["b12maps"],title:"Diogo Ribeiro divides the globe",mark:true,
+ tip:"Spain’s and Portugal’s two lines are half a world apart: turn the globe from one to the other.",
+ places:[["The Tordesillas line",-30,25,1.1,"Drawn down the Atlantic in 1494: Portugal’s side to the east, Spain’s to the west.",2],
+  ["The Zaragoza line",140,10,1.1,"In 1529 Spain sold its claim to the Moluccas, the clove and nutmeg islands, to Portugal for 350,000 ducats; the line was set about 17° east of the islands.",2]]});
 
-const DEFS=[TURN_80,TURN_DAY,GUESS_BLY,BINS_80,TURN_ROME,GUESS_RAGUSA,TURN_FEVER,GUESS_PANAMA,TURN_CHOL,TURN_THIRD,TURN_CONTEST,SORT_PLAG];
+/* ======================================================================== 14. The Kangnido's world (b12maps, The Kangnido)
+   Korea and Africa's southern tip are some 107° of longitude apart; the buttons turn the globe across the map's world.
+   The texts are the card's own. */
+const TURN_KANG=TURNER({tours:["b12maps"],title:"The Kangnido: a Korean view of the world",mark:true,
+ tip:"The Kangnido stretches from Korea to Africa: turn the globe across its world.",
+ places:[["Korea and China",133,36,2,"Hanseong (Seoul), the map’s home. China fills the middle of the map; Korea is drawn far larger than life and Japan small. The oldest surviving copy is kept in Kyoto.",2],
+  ["Alexandria",29.89,31.21,2,"The far west is there too: the Mediterranean and Alexandria’s lighthouse, from Chinese maps made under the Mongols.",1],
+  ["Africa’s southern tip",20,-34.8,2,"A pointed southern tip of Africa, drawn decades before Europeans sailed round it.",1]]});
+
+/* ======================================================================== 15. The Dutch outposts (b12maps, Blaeu: maps for
+   money) Amsterdam, the Cape, Batavia and Dejima are spread half round the world. The texts are the card's own. */
+const TURN_BLAEU=TURNER({tours:["b12maps"],title:"Blaeu: maps for money",mark:true,
+ tip:"Blaeu’s maps followed the Dutch ships: turn the globe from Amsterdam to their outposts.",
+ places:[["Amsterdam",4.9,50,2.2,"The Blaeu family were official mapmakers to the Dutch East India Company, keeping its secret charts of the route to Asia.",2],
+  ["The Cape, 1652",18.42,-33.92,2.2,"The first stop on the Company’s route to Asia (the arrows).",1],
+  ["Batavia",106.82,-6.13,2.2,"Batavia, today’s Jakarta, on the Company’s route to Asia.",1],
+  ["Dejima, Nagasaki",129.87,32.74,2.2,"Dejima, in Nagasaki harbour, the far end of the Company’s route (the arrows).",1]]});
+
+/* ======================================================================== 16. India over Europe, Brazil over the USA
+   (b12maps, The Peters projection) The stop's two true-size shapes lie 112° of longitude apart. */
+const TURN_PETERS=TURNER({tours:["b12maps"],title:"The Peters projection",
+ tip:"Two true-size shapes wait to be dragged: turn the globe from one to the other.",
+ places:[["India over Europe",10,46,1.5,"Drag India, at its true size, over Europe and compare."],
+  ["Brazil over the USA",-96,42,1.4,"Drag Brazil, at its true size, over the United States and compare."]]});
+
+/* ======================================================================== 15. Twelve maps in order (b12maps, Now explore)
+   The tour's own dates; each tap turns the globe to where the map was made (or found). */
+const SORT_12=SORT({tours:["b12maps"],title:"Now explore",turns:true,
+ tip:"Put the tour’s maps in the order they were made. Each one you tap turns the globe to where it was made.",
+ first:"Oldest",last:"Newest",bars:false,
+ items:[["The Babylonian world map",-600,"about 600 BC",0,[44.42,32.54,2.4]],["Ptolemy’s Geography",150,"about AD 150",0,[29.92,31.2,2.4]],
+  ["Al-Idrisi’s map for Roger II",1154,"1154",0,[13.36,38.12,2.4]],["The Hereford Mappa Mundi",1300,"about 1300",0,[-2.716,52.054,2.4]],
+  ["The Kangnido",1402,"1402",0,[126.98,37.57,2.4]],["Waldseemüller’s ‘America’",1507,"1507",0,[6.95,48.28,2.4]],
+  ["Mercator’s map for sailors",1569,"1569",0,[6.76,51.43,2.4]],["Mackinder’s heartland",1904,"1904",0,[-0.175,51.5,2.4]],
+  ["The Peters projection",1973,"1973",0,[7.1,50.73,2.4]],["Google Earth",2005,"2005",0,[-122.08,37.42,2.4]]],
+ after:(r,N)=>"From a clay disc with Babylon in the middle to a whole planet on a screen: Brotton’s point is that every one of them was drawn by someone, for some purpose."});
+
+
+const DEFS=[TURN_80,TURN_DAY,GUESS_BLY,BINS_80,TURN_ROME,GUESS_RAGUSA,TURN_FEVER,GUESS_PANAMA,TURN_CHOL,TURN_THIRD,TURN_CONTEST,SORT_PLAG,TURN_RIBEIRO,TURN_KANG,TURN_BLAEU,TURN_PETERS,SORT_12];
 
 
 let L=null,raf=0;
