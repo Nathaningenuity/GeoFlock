@@ -192,6 +192,29 @@ FIX.biomes={
     from above the pole, Yamal and the Brooks Range on either side */
  "Biomes on the move":S=>{DROPPH(S,/^A forest fire/);VIEW(S,[109,82,1.5])}
 };
+FIX.forests={
+ /* the Monteverde photo sat under the card and the Valdivian rainforest's on the globe's bottom edge (each has its own
+    stop) */
+ "Forests":S=>DROPPH(S,/^(Monteverde|Valdivian)/),
+ /* the moose's photo hung above the screen */
+ "The taiga: the biggest forest":S=>DROPPH(S,/^Moose/),
+ /* the New York label sat on the globe's edge under the map key */
+ "The summer Canada burned":S=>VIEW(S,[-80,40,1.8]),
+ /* the jaguar's label (in the Pantanal) hung at the bottom of the screen */
+ "The Amazon’s trees":S=>VIEW(S,[-61,-9,2]),
+ /* São Paulo sat on the globe's edge and the Río de la Plata label at the bottom of the screen */
+ "Forests make rain":S=>VIEW(S,[-53,-20,1.7]),
+ /* the okapi's label ran into the map key */
+ "The Congo":S=>VIEW(S,[26,0,2.6]),
+ /* Papua New Guinea's highlands and the bird-of-paradise sat on the globe's edge */
+ "Borneo and New Guinea":S=>VIEW(S,[134,-2,2]),
+ /* the Roosevelt elk's label ran into the map key */
+ "Rainforests in the cold":S=>VIEW(S,[-126,52,3]),
+ /* the Malaysian oil palms' photo sat round the back of the globe */
+ "Where forests are lost":S=>DROPPH(S,/^Oil palms/),
+ /* Ethiopia named twice */
+ "Forests kept by churches":S=>DROP(S,/^Ethiopia$/)
+};
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title). On a tour's very first launch index.html flies to the opening stop before the fixes above are applied to it
@@ -550,14 +573,37 @@ const RAIN=TURNER({tours:["biomes"],title:"Tropical rainforest",tip:"The great r
   ["Borneo",114,1,2.4,"Home of the orangutan."],
   ["New Guinea",142,-5,2.2,"The rainforest of the world’s second-biggest island."]]});
 
+/* ======================================================================== forests */
+/* ---- Review on the last stop: which kind of forest? (from the tour's own stops) */
+const WHICHFOREST=CLASSIFY({tours:["forests"],title:"Now explore",turns:true,below:true,
+ tip:"Review: which kind of forest is each one from? Each answer turns the globe there.",ask:"Which forest?",
+ kinds:[["taiga","Taiga","the taiga"],["rain","Tropical rainforest","tropical rainforest"],["temp","Cold rainforest","temperate (cold) rainforest"],["mangrove","Mangroves","mangroves"],["cloud","Cloud forest","cloud forest"]],
+ items:[["Siberia’s larches","taiga","Siberia’s commonest tree: a conifer that drops its needles every autumn.",[110,62,2]],
+  ["The Tongass, Alaska","temp","The largest US national forest is a rainforest, of spruce and cedar, not palms.",[-134,57,2.4]],
+  ["Menara, 100.8 m tall","rain","A yellow meranti in Borneo’s dipterocarp forest: the tallest tropical tree known.",[117.8,4.95,2.4]],
+  ["Tigers that swim between islands","mangrove","The Sundarbans is the only mangrove forest with tigers.",[89.2,21.9,2.6]],
+  ["The Hoh Rain Forest","temp","Over 3.5 m of rain a year; moss and ferns cover every branch.",[-123.93,47.86,2.6]],
+  ["Monteverde’s golden toad","cloud","Found only there, and last seen in 1989.",[-84.8,10.3,2.6]],
+  ["Bonobos","rain","They live in the Congo rainforest, only south of the river.",[22,-2.5,2.4]],
+  ["A moose","taiga","It browses the boreal forest of the far north.",[-110,60,2]],
+  ["Roots like snorkels","mangrove","Breathing roots poke up out of the salty mud.",[89.3,22.1,2.6]],
+  ["The alerce","temp","A tree of Chile’s Valdivian rainforest that can live over 3,000 years.",[-73.5,-40.2,2.4]],
+  ["Leaves that drink from the clouds","cloud","On tropical mountains, between about 1,000 and 3,000 m.",[-84.8,10.3,2.6]]],
+ end:()=>"Cold or hot, wet or salty: every climate grows its own kind of forest."});
+
 /* ---------------- guess first (geoflock-tourplay.js veils the headline and asks for an estimate) ----------------
    Kumbh Mela: "more than 660 million (66 crores) people had taken a dip in the river" by 26 February, over the 45 days
    from 13 January to 26 February 2025 (Wikipedia, "2025 Prayag Maha Kumbh Mela"; The Economist doubted the official
-   figures). Igloo: "on the outside, temperatures may be as low as −45 °C", "on the inside, the temperature may
-   range from −7 to 16 °C when warmed by body heat alone" (Wikipedia, "Igloo"). The Kumbh stop's headline says "over 600 million visits in six weeks"; its other text gives no number. */
+   figures); the European Union has about 450 million people (Eurostat, 1 January 2025). Igloo: "on the outside, temperatures may be as low as −45 °C", "on the inside, the temperature may
+   range from −7 to 16 °C when warmed by body heat alone" (Wikipedia, "Igloo"). Hyperion: about 116 m (the stop's own headline);
+   Big Ben's tower is 96 m tall (Wikipedia, "Big Ben"). The Amazon: about 390 billion trees of about 16,000 kinds (the
+   stop's own headline, from ter Steege et al., Science, 2013); with about 8.2 billion people (UN, 2025) that is about 50
+   each. Neither stop's other text gives the number. The Kumbh stop's headline says "over 600 million visits in six weeks"; its other text gives no number. */
 function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)return false;
  const GS={"festivals|The biggest crowd on Earth":{q:"How many dips in the river did officials count at the 2025 Kumbh Mela, in six weeks?",min:0,max:1500,ans:660,unit:"million",step:10,show:"about 660 million, by the official count from 13 January to 26 February 2025: more than the population of the whole European Union"},
-  "houses|Snow houses":{q:"With a small lamp and body heat, how much warmer than the air outside can the inside of an igloo be?",min:0,max:60,ans:30,unit:"°C warmer",step:1,show:"over 30 °C: when it is −45 °C outside, body heat alone can keep the inside between −7 and 16 °C"}/*@@GS@@*/};
+  "houses|Snow houses":{q:"With a small lamp and body heat, how much warmer than the air outside can the inside of an igloo be?",min:0,max:60,ans:30,unit:"°C warmer",step:1,show:"over 30 °C: when it is −45 °C outside, body heat alone can keep the inside between −7 and 16 °C"},
+  "forests|Giant trees":{q:"How tall is the tallest living tree known?",min:20,max:200,ans:116,unit:"m",step:1,show:"about 116 m: Hyperion, a coast redwood, taller than London’s Big Ben tower (96 m)"},
+  "forests|The Amazon’s trees":{q:"About how many trees are there in the Amazon?",min:0,max:1000,ans:390,unit:"billion",step:10,show:"about 390 billion, of about 16,000 kinds: around 50 for every person on Earth"}/*@@GS@@*/};
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
 {const s=document.createElement("style");s.textContent=`
@@ -578,7 +624,7 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
 .rvy-ppl circle{fill:#13294b;stroke:#fff;stroke-width:.6}
 `;document.head.appendChild(s)}
 
-const DEFS=[RAMADAN,HARVEST,SUNMOON,STILTS,EARTH,UNDER,ROOFS,SETTLE,WATER,PITCH,CLIMHOME,LATWALK,WHICHBIOME,GRASS,MEDI,SAVA,RAIN];
+const DEFS=[RAMADAN,HARVEST,SUNMOON,STILTS,EARTH,UNDER,ROOFS,SETTLE,WATER,PITCH,CLIMHOME,LATWALK,WHICHBIOME,GRASS,MEDI,SAVA,RAIN,WHICHFOREST];
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tours.includes(ps.tour)&&d.title===t);if(!D)return null;if((D.globe||D.turns)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
