@@ -150,6 +150,25 @@ const FIX={
   /* the Baikal seal's photo, 6,000 km away in Siberia, pulled at the framing and lay off the screen, and the Lake Malawi
      photo at the bottom edge */
   "Lakes are islands too":S=>{DROPPH(S,/^Baikal/);VIEW(S,[33,-6,3])}
+ },
+ regions:{
+  /* Puerto Rico was named twice, by its flag tag and again by a plain label */
+  "America’s islands":S=>DROP(S,/^Puerto Rico \(United States\)$/),
+  /* the globe faced the Pacific, with Réunion, the stop's headline, round the back. It opens on Réunion; buttons
+     (part 3) visit France's other lands. The Bora Bora photo goes: index.html turned the globe to the middle of it and
+     Réunion's, over the Southern Ocean, and buttons now take the reader to French Polynesia */
+  "France across the oceans":S=>{DROPPH(S,/^Bora Bora/);VIEW(S,[55.5,-21,2.6])},
+  /* the Cayman Islands' label was under the card; the stop's game (part 3) turns the globe to each place */
+  "Britain’s scattered pieces":S=>VIEW(S,[-38,32,1]),
+  /* Mariehamn's photo, on Åland, hung under the map key */
+  "Arctic oddities":S=>VIEW(S,[22,64,2.6]),
+  /* Sukhumi's photo sat on the zoom buttons and Kyrenia's at the bottom of the screen */
+  "Breakaway regions of Europe":S=>VIEW(S,[37,40,2.8]),
+  /* "the two governments have talked about independence by about 2027": in June 2026 Papua New Guinea's parliament ruled
+     that ratifying the vote needs three-quarters of its 118 MPs (89), and in July 2026 Bougainville's leaders
+     recommended declaring independence in 2030 (Pacific Islands News Association, 11 June and 28 July 2026). No
+     ratification vote had been reported by November 2026 */
+  "A vote for a new country":S=>RE(S,"body","Papua New Guinea’s parliament must agree, and the two governments have talked about independence by about 2027.","Papua New Guinea’s parliament must agree, and in 2026 it ruled that three-quarters of its MPs must vote yes. Bougainville’s leaders want independence by 2030.")
  }
 };
 /* stops that keep the card where their own script put it */
@@ -193,7 +212,10 @@ function addPlay(){try{const TP=window.gfTourPlay;if(!TP||!TP.GUESS||!TP.FIND)re
  const GS={
   /* Dutch men born in 1996 averaged 182.5 cm, the tallest of 200 countries (NCD Risk Factor Collaboration, "A century of
      trends in adult human height", eLife 2016; in Wikipedia, "Human height") */
-  "people|From short to tallest":G("Dutch men were among Europe’s shorter men in the mid-1800s. How tall is a young Dutch man on average today?",150,200,183,"cm",{step:1,show:"about 1.83 m, the tallest on Earth"})
+  "people|From short to tallest":G("Dutch men were among Europe’s shorter men in the mid-1800s. How tall is a young Dutch man on average today?",150,200,183,"cm",{step:1,show:"about 1.83 m, the tallest on Earth"}),
+  /* 97.7% for independence, 1.7% for greater autonomy, on an 87% turnout (Wikipedia, "2019 Bougainvillean independence
+     referendum") */
+  "regions|A vote for a new country":G("In 2019 Bougainville voted on leaving Papua New Guinea. What share of the voters chose independence?",0,100,97.7,"%",{step:1,show:"97.7%"})
  };
  for(const k in GS)if(!TP.GUESS[k]&&!TP.FIND[k])TP.GUESS[k]=GS[k];return true}catch(e){return false}}
 if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInterval(iv)},500)}
@@ -212,7 +234,10 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - humans | "Our own species": buttons visit the four oldest Homo sapiens sites, from Jebel Irhoud to Herto.
    - humans | "Now explore": put eight moments of the tour in order, from the monkeys' raft to Europe.
    - islandlife | "Island dwarfs": grew or shrank? Sort eight island animals; the globe turns to each island.
-   - islandlife | "Strangers from the ships": buttons turn the globe between Guam, its snake-free islet and Mauritius. */
+   - islandlife | "Strangers from the ships": buttons turn the globe between Guam, its snake-free islet and Mauritius.
+   - regions | "France across the oceans": buttons visit Réunion, French Guiana, French Polynesia and New Caledonia.
+   - regions | "Britain’s scattered pieces": Overseas Territory or Crown Dependency? Sort eight places; the globe turns to
+               each. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -403,9 +428,36 @@ const STRANGERS=turnDef("islandlife","Strangers from the ships",{tip:"Two island
  places:[["Guam: the brown tree snake",144.8,13.45,3.4,"The snake arrived in cargo about 1950 and spread to up to 2 million. Most of the island’s forest birds were eaten."],
   ["Cocos Island: a snake-free refuge",144.65,13.24,5,"Since 2010 Guam rails, bred in zoos, have been released on this small islet off Guam’s southern tip."],
   ["Mauritius: the dodo",57.5,-20.3,3.4,"Dutch sailors landed in 1598. With them came rats, pigs and monkeys, and within about 80 years the dodo was gone."]]});
+/* ======================================================================== regions */
+/* France's lands as the stop tells them; Paris to Réunion about 9,400 km along the great circle (computed); French Polynesia, 121 islands and atolls over more than
+   2,000 km (Wikipedia, "French Polynesia") */
+const FRANCE=turnDef("regions","France across the oceans",{tip:"France on three oceans. Visit four of its faraway lands.",
+ intro:"Tap a place to turn the globe to it.",
+ places:[["Réunion: France, and the EU",55.5,-21.1,3.4,"A full part of France and of the EU, with the euro, about 9,400 km from Paris."],
+  ["French Guiana: Europe’s spaceport",-52.8,5.2,3.4,"Also a full part of France. Europe’s rockets launch from Kourou, close to the equator, where the Earth’s spin gives them a free push."],
+  ["French Polynesia",-149.5,-17.6,3,"Wide self-government and its own money, the CFP franc, on 121 islands and atolls spread over more than 2,000 km of ocean."],
+  ["New Caledonia",165.5,-21.3,3,"It voted on independence in 2018, 2020 and 2021 and stayed French each time."]]});
+/* The two kinds, as the stop defines them: British Overseas Territories (former colonies; the UK answers for their
+   defence and foreign affairs) and Crown Dependencies (possessions of the Crown, never part of the UK and never
+   colonies). Bermuda settled 1612, the oldest remaining territory (Wikipedia, "Bermuda"); Jersey and Guernsey stayed
+   with the English Crown when Normandy was lost in 1204, and Guernsey's bailiwick includes Alderney and Sark (Wikipedia,
+   "Channel Islands"); Tynwald "claims to be the oldest continuous parliamentary body in the world" (Wikipedia,
+   "Tynwald"); Pitcairn, settled by the Bounty's mutineers in 1790 (Wikipedia, "Pitcairn Islands"). Answers are mixed
+   so that taking turns cannot win. */
+const CROWN=binDef("regions","Britain’s scattered pieces",{tip:"Overseas Territory or Crown Dependency? Sort eight places; the globe turns to each.",
+ keys:[["o","🌍 Overseas Territory"],["c","👑 Crown Dependency"]],ask:"Which kind of British place is this?",
+ items:[["Bermuda","o","An Overseas Territory: settled in 1612, the oldest one left.",[-64.78,32.3,4,"Bermuda"]],
+  ["Jersey","c","A Crown Dependency: once part of Normandy, it stayed with the English Crown when Normandy was lost in 1204.",[-2.13,49.21,5,"Jersey"]],
+  ["The Isle of Man","c","A Crown Dependency: its parliament, Tynwald, claims to be the oldest that has never stopped meeting.",[-4.55,54.23,5,"Isle of Man"]],
+  ["Gibraltar","o","An Overseas Territory, at the tip of Spain, which also claims it.",[-5.35,36.14,5,"Gibraltar"]],
+  ["The Falkland Islands","o","An Overseas Territory; Argentina also claims them, as the Islas Malvinas.",[-59.5,-51.75,3.5,"Falkland Islands"]],
+  ["Guernsey","c","A Crown Dependency, like Jersey; its bailiwick also takes in Alderney and Sark.",[-2.58,49.45,5,"Guernsey"]],
+  ["The Cayman Islands","o","An Overseas Territory, and a big financial centre thanks to its low taxes.",[-81.25,19.3,4,"Cayman Islands"]],
+  ["The Pitcairn Islands","o","An Overseas Territory in the middle of the Pacific, settled by the Bounty’s mutineers in 1790.",[-130.1,-25.07,4,"Pitcairn Islands"]]],
+ done:"The three Crown Dependencies sit close to Britain and were never colonies; the fourteen Overseas Territories are what is left of the empire, from the Caribbean to Antarctica."});
 
 /* ---------------------------------------------------------------- the engine: one stop at a time */
-const DEFS=[KOREA,TOWN,TOPCLASS,LAYERS,LEAVE,FIVE,OURS,TIMELINE,DWARF,STRANGERS];
+const DEFS=[KOREA,TOWN,TOPCLASS,LAYERS,LEAVE,FIVE,OURS,TIMELINE,DWARF,STRANGERS,FRANCE,CROWN];
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
  const D=DEFS.find(d=>d.tour===ps.tour&&d.title===t);if(!D)return null;if((D.globe||D.turn)&&ps.mode!=="globe")return null;return D}catch(e){return null}}
