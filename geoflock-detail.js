@@ -462,7 +462,7 @@ function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))
     3 sea in both, 4 sea the picture shows as land (a blur of land out over the water, round small islands and ice).
     The picture is read smoothly (bilinear) so the line between 1 and 2 follows the coast instead of the picture's pixel steps. */
  const PO=.7*180/1024;/* about two thirds of a picture pixel */
- const bad=p=>p[2]>p[0]+6&&!(p[0]>205&&p[1]>205);/* bluish, and not ice */
+ const bad=p=>p[2]>p[0]+6&&p[2]>p[1]+2&&!(p[0]>205&&p[1]>205);/* bluish (bluer than green too: rainforest greens are bluer than red), and not ice */
  const CR=new Uint8Array(N*3);
  for(let j=0;j<ny;j++){const la=lat1-(j+.5)*cs;for(let i=0;i<nx;i++){const k=j*nx+i,v=M[k*4];if(v>96&&v<160)continue;const lo=lon0+(i+.5)*csx;
    if(v>=160){const p=picBil(P,lo,la);let ok=!bad(p);if(ok)for(const[dx,dy]of[[PO,0],[-PO,0],[0,PO],[0,-PO]])if(bad(picBil(P,lo+dx,la+dy))){ok=false;break}
