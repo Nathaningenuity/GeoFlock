@@ -280,7 +280,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
      ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}
    /* ...and the other way: land on the sharp coast that the picture shows as sea (fjord walls, headlands, small islands) is
       painted in the picture's own land colour from just inland of it */
-   if(!(g.gl&&!g._flat))try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
+   if(false)try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
  /* Elevation: the named lakes the tiles store as sea (Lake Maracaibo, Lagoa dos Patos) in the lakes' blue, kept to the tiles'
     water, so they look as every other lake does (zoomed out they are the map's own lakes, in the same blue) */
  if(ov.lakes&&elev&&window.gfSeaLake)try{const LK=(globeOverlays().lakes||[]).filter(L=>L&&L.n&&!/^Caspian/.test(L.n)&&gfSeaLake(L.n));if(LK.length){const LP=d3.geoPath(g.projection(),ctx);
@@ -505,7 +505,8 @@ function fillGrid(g,key){const s=on(g);if(!s||s.z<COASTZ||!s.tiles.some(t=>t.d))
   for(let k=0;k<N;k++){if(state[k]!==4||src[k]<0)continue;const i=k%nx,j=(k-i)/nx,sk=src[k],si=sk%nx,sj=(sk-si)/nx;out[k*4]=128+(si-i);out[k*4+1]=128-(sj-j);out[k*4+3]=255}}
  if(!any2&&!any4)return{none:true};
  return{nx,ny,data:out,bb:[lon0,lat1,nx*csx,ny*cs],k:[csx,cs]}}
-window.gfFillPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!/^(relief|gfRelShade|reliefAdj)/i.test(String(o.key||"")))return null;
+/* the fill of land the picture shows as sea (coloured from the nearest picture land) is switched off: it came out as blocky tan and green patches over the fjords and islands */
+window.gfFillPatch=function(G,o){return null;const gv=o&&o.gv;if(!gv||gv._flat||!/^(relief|gfRelShade|reliefAdj)/i.test(String(o.key||"")))return null;
  const s=on(gv);if(!s||s.z<COASTZ)return null;const key=[o.key,gv.rot[0].toFixed(3),gv.rot[1].toFixed(3),gv.zoom.toFixed(3),s.tiles.filter(t=>t.d).length].join("|");
  if(FP&&FP.gl!==G.gl)FP=null;
  if((!FP||FP.key!==key)&&!FPbusy){clearTimeout(FPt);FPt=setTimeout(function go(){if(FPbusy)return;if(gv._moving){FPt=setTimeout(go,250);return}FPbusy=true;try{const F=fillGrid(gv,o.key),gl=G.gl;
