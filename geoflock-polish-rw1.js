@@ -152,6 +152,38 @@ CAPS["bsilkroads|Roads of faith"]="The ‘Nestorian Stele’, set up by Christia
 const setCaps=()=>{try{window.PS_PHOTO_CAP=window.PS_PHOTO_CAP||{};for(const k in CAPS)PS_PHOTO_CAP[k]=CAPS[k]}catch(e){}};
 setCaps();setTimeout(setCaps,1500);setTimeout(setCaps,6000);addEventListener("load",()=>setTimeout(setCaps,2000));
 
+FIX.bflat={
+  /* three photos (Shanghai's skyline, Shenzhen and the Yangshan containers) were piled on each other by the zoom buttons:
+     they go (the China stop has Shenzhen and Yangshan; the card shows Shanghai); Friedman's portrait at Bangalore and the tech park's photo
+     lay by the map key, and the Berlin Wall photo at the globe's top edge: framed east and closer, Bangalore to Shanghai (the Wall
+     has its own stop) */
+  "The World Is Flat":S=>{DROPPH(S,/^(Shenzhen|Containers at Yangshan|The Berlin Wall|Shanghai)/);VIEW(S,[105,22,1.2])},
+  /* the Electronics City label ran under the map key */
+  "Bangalore: the field is levelled":S=>VIEW(S,[80.5,14.5,4.5]),
+  /* the card opened on the right, over the zoom buttons (every stop's card is locked left below) */
+  "Three ages of globalisation":S=>VIEW(S,[-31,49.1,1.4]),
+  /* Singapore, the cables' far end, lay under the map key: framed east, Alexandria to Singapore (Bude's label, at the cables'
+     European end, then hung over the map's switches at the globe's edge, and goes; the lines still start there) */
+  "Fibre under the sea":S=>{DROP(S,/^Bude/);VIEW(S,[90,20,1])},
+  /* an "India" label on a long leader by the map key (the map names and shades it) */
+  "Y2K: India’s big break":S=>DROP(S,/^India$/),
+  /* a "China" label on a long leader (the map names and shades it); Shenzhen and Dongguan sat at the card's edge;
+     Geneva, half a world away, is left out of the framing (its label shows when the globe turns there) */
+  "China joins the world’s factory floor":S=>{DROP(S,/^China$/);AREA(S,/^Geneva/);VIEW(S,[117,27,2.6])},
+  /* Taiwan and the Philippines lay under the map key, Korea's label over the search box and Japan off the globe */
+  "The Dell laptop and peace":S=>VIEW(S,[127.9,17.3,1.4]),
+  /* Tokyo, the ruler's far end, lay under the map key */
+  "Dalian: Japan’s back office":S=>VIEW(S,[136.7,35.7,3]),
+  /* Salt Lake City's label hung at the top of the screen and Cape Girardeau's by the map key; a "United States" label
+     on a long leader (the map names it) and the US Capitol photo, then off the globe's edge, go */
+  "Drive-through orders from far away":S=>{DROP(S,/^United States$/);DROPPH(S,/^The US Capitol/);VIEW(S,[-93.3,37.3,2.5])},
+  /* Bihar and Bangalore, half the stop's story, were round the back of the globe: framed from the Sahel to Bihar */
+  "The unflat world":S=>VIEW(S,[52.5,18,1.2]),
+  /* Barcelona lay under the map key: framed on the Atlantic, Toronto to Barcelona. The phone-call share moves into the
+     stop's guess (revealed there) */
+  "Is the world really flat?":S=>{RE(S,"stat","found that only about 2% of phone-call minutes were international","asked how much of what we do really crosses borders: guess below");VIEW(S,[-35,46,1.3])}
+};
+
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
@@ -342,8 +374,38 @@ const SORT_SILK=SORT({tours:["bsilkroads"],title:"Now explore",turns:true,
   ["Oil struck at Masjed Soleyman",1908,"1908",0,[49.29,31.95,2.4]],["China’s new Silk Road announced in Astana",2013,"2013",0,[71.43,51.13,2.4]]],
  after:(r,N)=>"Silk, faith, furs, plague, empire, oil: the goods changed, but the roads kept running through the same lands in between."});
 
+/* ======================================================================== 4. Turn between the two clocks (bflat, Working
+   while America sleeps) New York and Bangalore are about 150° of longitude apart, too far to show at once. The times are
+   the stop's own map: 3 a.m. Greenwich time on 20 March, when New York keeps summer time (UTC−4) and India UTC+5:30. */
+const TURN_SLEEPS=TURNER({tours:["bflat"],title:"Working while America sleeps",mark:true,
+ tip:"New York and Bangalore are half a world apart: turn the globe from one to the other.",
+ places:[["The map at the start",10,25,1,"3 a.m. in London: the night side covers the Americas, while the day is beginning in India."],
+  ["New York",-74,40.7,2.2,"11 p.m.: offices are dark. Work e-mailed to India now arrives as the day there begins."],
+  ["Bangalore",77.59,12.97,2.2,"8.30 in the morning: the working day starts on the files New York sent at bedtime, done by its breakfast.",1]]});
 
-const DEFS=[TURN_SILVER,GUESS_HORMUZ,SORT_SILK];
+/* ======================================================================== 5. How global are phone calls? (bflat, Is the world
+   really flat?) Pankaj Ghemawat, "Actually, the world isn't flat" (TED, 2012) and World 3.0 (2011): only about 2% of
+   voice-calling minutes were international (about 6% counting internet calls). The stat's own figure is taken out (part 1)
+   so the guess comes first. */
+const GUESS_CALLS=GUESS({tours:["bflat"],title:"Is the world really flat?",
+ tip:"If the world were flat, calling Mumbai would be as normal as calling the next town. What share of all phone-call minutes are international, do you think?",
+ vals:[1,2,5,10,15,20,30,40,50],start:5,answer:2,close:1,fmt:v=>v+"%",
+ after:"Only about 2% of voice-calling minutes were international, Ghemawat found (about 6% counting internet calls). Most calls, like most trade and most people, stay close to home: the world is only ‘semi-globalised’."});
+
+/* ======================================================================== 6. The flatteners in order (bflat, Now explore)
+   The tour's own dates: Columbus 1492; the first lasting Atlantic cable 1866; the Berlin Wall 9 November 1989; Netscape's
+   shares 9 August 1995; the Y2K work before 1 January 2000; China in the WTO 11 December 2001; Nilekani's remark 2004. */
+const SORT_FLAT=SORT({tours:["bflat"],title:"Now explore",turns:true,
+ tip:"From Globalisation 1.0 to 3.0: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Columbus sails from Palos",1492,"1492",0,[-6.89,37.23,2.4]],["The first lasting Atlantic telegraph cable",1866,"1866",0,[-10.3,51.9,2.4]],
+  ["The Berlin Wall comes down",1989,"1989",0,[13.38,52.52,2.4]],["Netscape sells its first shares",1995,"1995",0,[-122.08,37.39,2.4]],
+  ["Firms rush to fix the Y2K bug in India",1999,"before 2000",0,[78,20,2.2]],["China joins the WTO",2001,"2001",0,[114.06,22.54,2.4]],
+  ["Nilekani: the field is being levelled",2004,"2004",0,[77.59,12.97,2.4]]],
+ after:(r,N)=>"First countries, then companies, then people with a computer: Friedman’s three ages of globalisation, one flattener at a time."});
+
+
+const DEFS=[TURN_SILVER,GUESS_HORMUZ,SORT_SILK,TURN_SLEEPS,GUESS_CALLS,SORT_FLAT];
 
 
 let L=null,raf=0;
