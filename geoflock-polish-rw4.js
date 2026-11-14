@@ -190,7 +190,31 @@ FIX.energy={
   "The energy transition":S=>VIEW(S,[85,33,1.5]),
   "Now explore":S=>VIEW(S,[30,25,1])
 };
-FIX.currencies={};
+FIX.currencies={
+  /* the Wall Street, Basseterre and Panama City photos lay under the card, and Harare's at the globe's bottom edge (its
+     stop is gone; it now hangs on Germany, 1923) */
+  "Money on the map":S=>{DROPPH(S,/^(Wall Street|Basseterre|Panama City|Harare)/);VIEW(S,[20,20,1])},
+  /* a "United Kingdom" label on a long leader (the map names it), and London's pushed far off shaded Britain: the label
+     and the shading go */
+  "The pound sterling":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/)},
+  /* Batavia was round the back of the globe, Cape Town off its bottom edge and Dejima at its edge by the zoom buttons,
+     and two Amsterdam photos lay on one spot over its label: the stop's buttons turn the globe to each Dutch outpost
+     (left out of the opening frame), and the canals photo goes */
+  "Amsterdam’s stock exchange":S=>{DROPPH(S,/^Amsterdam’s canals/);AREA(S,/^(Batavia|Dejima|Cape Town)/);VIEW(S,[4.9,52.37,2.2])},
+  /* Dakar's label hung at the globe's top edge over the map's switches and Yaoundé lay at its edge under the zoom
+     buttons, with the Libreville photo below it: framed wider; the photo goes */
+  "The CFA francs":S=>{DROPPH(S,/^Libreville/);VIEW(S,[1.5,7,2.1])},
+  /* the Berlin photo hung at the globe's top edge over the map's switches and the Harare photo off its bottom edge (the
+     card tells of Zimbabwe): framed on Germany, the Harare photo goes. The stat's figure moves into the stop's guess
+     (revealed there) */
+  "Germany, 1923":S=>{DROPPH(S,/^Harare/);RE(S,"stat","In November 1923 one US dollar cost 4.2 trillion German marks","In 1923 German money became almost worthless: guess below what one US dollar cost by November");VIEW(S,[11,51,3])},
+  /* an "Iraq" label on a long leader (the map names it) */
+  "Money with no country behind it":S=>DROP(S,/^Iraq$/),
+  /* Tokyo, Hong Kong, Singapore and Sydney were round the back of the globe and the New York photo under the card: the
+     stop's buttons follow the trading day round the world (the far cities are left out of the opening frame) */
+  "The market never sleeps":S=>{AREA(S,/^(Tokyo|Hong Kong|Singapore|Sydney|New York)$/);VIEW(S,[145,0,1.1])},
+  "Now explore":S=>VIEW(S,[20,20,1])
+};
 FIX.conflicts={};
 
 
@@ -441,8 +465,49 @@ const BINS_EN=BINS({tours:["energy"],title:"Now explore",turnItems:true,mark:tru
   ["Noor Ouarzazate",1,"Mirrors focus the Saharan sunshine.",[-6.87,31.03,3],"Noor Ouarzazate"]],
  after:(r,N)=>(r===N?"All right! ":"")+"Oil, coal and gas still supply most of the world’s energy, but the renewables are growing fastest of all."});
 
+/* ======================================================================== 7. The Dutch outposts (currencies, Amsterdam's
+   stock exchange) Amsterdam, the Cape, Batavia and Dejima are spread half round the world. The texts are the card's own. */
+const TURN_VOC=TURNER({tours:["currencies"],title:"Amsterdam’s stock exchange",mark:true,
+ tip:"The shares paid for voyages half round the world: turn the globe from Amsterdam to the Company’s outposts.",
+ places:[["Amsterdam",4.9,52.37,2.2,"Anyone could buy a share in the Dutch East India Company’s voyages and sell it on; traders met every day at an exchange opened in 1611.",1],
+  ["Cape Town, 1652",18.42,-33.92,2.2,"Founded in 1652, a stop on the Company’s route to Asia.",1],
+  ["Batavia",106.81,-6.13,2.2,"Batavia, today’s Jakarta, among the Company’s bases in the spice islands of Asia.",1],
+  ["Dejima, Nagasaki",129.87,32.74,2.2,"Dejima, in Nagasaki harbour, at the far end of the Company’s trading empire.",1]]});
 
-const DEFS=[TURN_GUBBIO,TURN_BIG5,SORT_ARRIVE,BINS_EXT,GUESS_ICE,BINS_EN];
+/* ======================================================================== 8. What did a dollar cost? (currencies, Germany,
+   1923) Wikipedia, "Hyperinflation in the Weimar Republic": "By November 1923, one US dollar was worth 4.2105 trillion
+   German marks", and in 1914–18 the mark "steadily devalued from 4.2 to 7.9 marks per dollar"; the Rentenmark was introduced on 16 November 1923. The stat's figure is taken out (part 1) so the guess
+   comes first. */
+const NUMW=v=>v>=1e12?(v/1e12).toLocaleString("en-GB")+" trillion":v>=1e9?(v/1e9)+" billion":v>=1e6?(v/1e6)+" million":v.toLocaleString("en-GB");
+const GUESS_MARK=GUESS({tours:["currencies"],title:"Germany, 1923",
+ tip:"In 1914 a US dollar cost about 4.2 marks. By November 1923, how many marks did it cost, do you think?",
+ vals:[100,10000,1e6,1e9,4.2e12,1e15],start:2,answer:4.2e12,close:0,fmt:v=>NUMW(v)+" marks",
+ after:"4.2 trillion marks: 4,200,000,000,000. A new currency, the Rentenmark, arrived on 16 November 1923 and ended the crisis."});
+
+/* ======================================================================== 9. Follow the trading day (currencies, The market
+   never sleeps) The world's money markets are spread round the globe; the buttons follow the Sun. The texts are the
+   card's own. */
+const TURN_MKT=TURNER({tours:["currencies"],title:"The market never sleeps",mark:true,
+ tip:"Currency trading follows the Sun round the planet: turn the globe from market to market.",
+ places:[["Sydney and Tokyo",145,0,1.1,"The trading day opens here, in Sydney and Tokyo.",2],
+  ["Hong Kong and Singapore",109,12,1.6,"Next the trading moves to Hong Kong and Singapore.",2],
+  ["London",-0.09,51.51,1.8,"London handles the biggest share of the world’s currency trading, partly because its working day overlaps Asia’s afternoon and New York’s morning.",1],
+  ["New York",-74.01,40.71,1.8,"Then New York, and the day begins again in Sydney. Undersea cables carry deals between these cities in a fraction of a second.",1]]});
+
+/* ======================================================================== 10. Money in order (currencies, Now explore) The
+   tour's own dates; each tap turns the globe there and names the place. */
+const SORT_CUR=SORTM({tours:["currencies"],title:"Now explore",turns:true,
+ tip:"From lumps of electrum to money on a phone: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["The first coins are struck",-600,"about 600 BC",0,[28.04,38.49,2.4],"Sardis"],["China’s government prints paper money",1024,"1024",0,[104.07,30.67,2.2],"Chengdu"],
+  ["The Dutch East India Company sells shares",1602,"1602",0,[4.9,52.37,2.4],"Amsterdam"],["The Bank of England is founded",1694,"1694",0,[-0.09,51.51,2.4],"London"],
+  ["Panama starts using the US dollar",1904,"1904",0,[-79.52,8.98,2.4],"Panama"],["A dollar costs 4.2 trillion marks",1923,"1923",0,[13.4,52.52,2.4],"Berlin"],
+  ["The CFA francs are created",1945,"1945",0,[-17.45,14.69,2.2],"Dakar"],["The Eastern Caribbean dollar is fixed to the US dollar",1976,"1976",0,[-62.72,17.3,2.6],"Basseterre"],
+  ["Euro notes and coins arrive",2002,"2002",0,[8.68,50.11,2.4],"Frankfurt"],["M-Pesa is launched",2007,"2007",0,[36.82,-1.29,2.4],"Nairobi"]],
+ after:(r,N)=>"Money has been metal, paper, a promise in a bank and now numbers on a phone: what makes it work is that people trust it."});
+
+
+const DEFS=[TURN_GUBBIO,TURN_BIG5,SORT_ARRIVE,BINS_EXT,GUESS_ICE,BINS_EN,TURN_VOC,GUESS_MARK,TURN_MKT,SORT_CUR];
 
 
 
