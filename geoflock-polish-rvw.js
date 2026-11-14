@@ -130,6 +130,23 @@ const FIX={
   "Vanilla by hand":S=>VIEW(S,[53,-16,3.4]),
   /* the Aleppo seed bank, the vault's first withdrawal, lay under the map key */
   "A vault for seeds":S=>VIEW(S,[26,56,1.25])
+ },
+ capitals:{
+  /* five of the seven photos were out of sight or in the way: Canberra round the back of the globe, the US Capitol, La
+     Paz and Aso Rock under the card, the Naypyidaw pagoda on the zoom buttons and Ulaanbaatar by the search box. Each city has its own stop. Framed, so that index.html no longer tips the globe up to Siberia, the middle of the two
+     photos left */
+  "Capital cities":S=>{DROPPH(S,/^(Parliament House, Canberra|The US Capitol|Aso Rock, Abuja|Uppatasanti Pagoda|La Paz|Ulaanbaatar)/);VIEW(S,[45,30,1])},
+  /* Nanjing and Hangzhou, where the capital and the Grand Canal came from, had their labels pushed off the bottom of the
+     screen; a second "China" label, besides the map's own, hung on a long leader */
+  "Beijing, guarding the north":S=>{DROP(S,/^China$/);RELABEL(S,/^Hangzhou/,"Hangzhou: the canal’s south end");VIEW(S,[124,34,2.4])},
+  /* the Philadelphia and New York labels lay under the map key */
+  "Washington, D.C.":S=>VIEW(S,[-74,38,4.5]),
+  /* a second "Brazil" label, besides the map's own; the Rio label ran under the map key */
+  "Brasília: built in 41 months":S=>{DROP(S,/^Brazil$/);VIEW(S,[-40,-19,2.8])},
+  /* the Almaty label lay under the map key */
+  "Astana on the steppe":S=>VIEW(S,[75,48,3.2]),
+  /* the Bloemfontein label lay under the map key and the Johannesburg photo on the zoom buttons */
+  "Three capitals":S=>VIEW(S,[30,-35,2.8])
  }
 };
 /* stops that keep the card where their own script put it */
@@ -208,7 +225,9 @@ if(!addPlay()){let n=0;const iv=setInterval(()=>{if(addPlay()||++n>40)clearInter
    - amigration | "Now explore": pick an animal: the globe turns to its journey and draws it.
    - crops | "Vavilov’s centres": where was it first farmed? Sort eight crops; the globe turns to each one's birthplace.
    - crops | "Maize from teosinte": breed maize: each year keep the plant with the biggest cob, from a dozen seeds to 300.
-   - crops | "Crops far from home": buttons visit where five crops grow most today, far from where they began. */
+   - crops | "Crops far from home": buttons visit where five crops grow most today, far from where they began.
+   - capitals | "Now explore": which is the capital? Eight pairs, from Beijing or Nanjing to Naypyidaw or Yangon; each
+                answer turns the globe to the capital. */
 const NS="http://www.w3.org/2000/svg";
 const g=()=>{try{return typeof amGlobe!=="undefined"?amGlobe:null}catch(e){return null}};
 function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:t!=="mousedown"&&t!=="pointerdown"}))}
@@ -453,7 +472,40 @@ const FAR=turnDef("crops","Crops far from home",{tip:"Each of these crops is gro
   ["Potatoes: China",105,35,2.4,"Potatoes came from the Andes. China now grows the most."],
   ["Bananas: India",78,20,2.6,"Bananas were first farmed in New Guinea. India now grows the most."]]});
 
-const DEFS=[KELP,UPWELL,DIVE,WILDE,PICK,ORIGIN,MAIZE,FAR];
+/* ======================================================================== capitals */
+/* Which is the capital? Eight pairs from the tour's own stops (each gives its source). The capital is first or second
+   in no regular pattern; once answered, the globe turns to the capital */
+const PAIRS=[["China","Beijing","Nanjing",0,[116.4,39.9,3],"Beijing, since the Ming emperor Yongle moved the capital from Nanjing in 1421."],
+ ["Russia","St Petersburg","Moscow",1,[37.62,55.75,3.2],"Moscow, again since 1918. St Petersburg was the capital for about two centuries before that."],
+ ["Australia","Sydney","Canberra",1,[149.13,-35.28,3.4],"Canberra, built between Sydney and Melbourne, the two rivals."],
+ ["Canada","Ottawa","Toronto",0,[-75.7,45.42,3.4],"Ottawa, chosen by Queen Victoria in 1857. Toronto is about four times bigger."],
+ ["Brazil","Rio de Janeiro","Brasília",1,[-47.88,-15.79,3.2],"Brasília, since 1960. Rio, on the coast, was the capital until then."],
+ ["Nigeria","Lagos","Abuja",1,[7.49,9.06,3.4],"Abuja, since 1991. Lagos is still the biggest city."],
+ ["Kazakhstan","Astana","Almaty",0,[71.43,51.13,3.2],"Astana, since 1997. Almaty, in a corner by the mountains, was the capital before."],
+ ["Myanmar","Naypyidaw","Yangon",0,[96.13,19.75,3.4],"Naypyidaw, since 2005. Yangon is still the largest city."]];
+const PAIR={tour:"capitals",title:"Now explore",globe:true,turn:true,tip:"Which is the capital? Eight countries whose capital is not the city you might expect.",
+ card:()=>'<div class="rvw-q"><span class="rvw-n"></span><b class="rvw-item"></b></div><div class="rvw-row rvw-bins"><button type="button" class="rvw-btn rvw-bin" data-k="0"></button><button type="button" class="rvw-btn rvw-bin" data-k="1"></button></div>'+
+  '<div class="rvw-dots">'+PAIRS.map(()=>"<i></i>").join("")+'</div><div class="rvw-row"><button type="button" class="rvw-btn rvw-next" hidden>Next ▶</button><button type="button" class="rvw-btn rvw-again" hidden>Play again</button></div>',
+ init(L){L.k=0;L.res=[];L.ans=null;L.t=0;L.at=null;L.ring=svgEl(L.svg,"circle",{r:"9",class:"rvw-ring"});L.ring.style.display="none";L.tag=document.createElement("div");L.tag.className="rvw-tag rvw-new2";L.tag.style.display="none";L.el.appendChild(L.tag)},
+ tick(L,dt){L.t+=dt;if(L.at)L.ring.setAttribute("r",(9+4*Math.abs(Math.sin(L.t*3))).toFixed(1))},
+ draw(L){const f=L.at,q=f?proj(L,[f[1],f[2]]):null,qq=f?proj(L,[f[1],f[2]],1):null;
+  if(q){L.ring.style.display="";L.ring.setAttribute("cx",q[0].toFixed(1));L.ring.setAttribute("cy",q[1].toFixed(1))}else L.ring.style.display="none";
+  if(qq){L.tag.style.display="";if(L.tag._h!==f[0]){L.tag.textContent=f[0];L.tag._h=f[0]}L.tag.style.left=qq[0]+"px";L.tag.style.top=(qq[1]+16)+"px"}else L.tag.style.display="none"},
+ wire(L){const c=L.card;
+  c.querySelectorAll(".rvw-bin").forEach(b=>b.onclick=()=>{if(L.ans!=null||L.k>=PAIRS.length)return;const P=PAIRS[L.k];L.ans=+b.dataset.k;L.res[L.k]=L.ans===P[3];
+   const p=P[4];L.at=[P[1+P[3]],p[0],p[1]];c.dataset.turned="1";turnGlobe(p[0],p[1],p[2]);L.dirty=1;this.render(L)});
+  c.querySelector(".rvw-next").onclick=()=>{L.k++;L.ans=null;L.at=null;L.dirty=1;this.render(L)};
+  c.querySelector(".rvw-again").onclick=()=>{L.k=0;L.res=[];L.ans=null;L.at=null;L.dirty=1;this.render(L)};this.render(L)},
+ render(L){const c=L.card;if(!c)return;const N=PAIRS.length,end=L.k>=N,P=PAIRS[Math.min(L.k,N-1)];
+  c.querySelector(".rvw-n").textContent=end?"Done":(L.k+1)+" / "+N;c.querySelector(".rvw-item").textContent=end?"":"The capital of "+P[0]+"?";
+  c.querySelectorAll(".rvw-bin").forEach(b=>{const k=+b.dataset.k;b.hidden=end;b.textContent=P[1+k];b.disabled=L.ans!=null;b.classList.toggle("rvw-right",L.ans!=null&&k===P[3]);b.classList.toggle("rvw-wrong",L.ans!=null&&k===L.ans&&L.ans!==P[3])});
+  c.querySelectorAll(".rvw-dots i").forEach((d,i)=>d.className=L.res[i]===true?"rvw-ok":L.res[i]===false?"rvw-no":i===L.k&&!end?"rvw-at":"");
+  const nx=c.querySelector(".rvw-next");nx.hidden=end||L.ans==null;nx.textContent=L.k===N-1?"See my score ▶":"Next ▶";c.querySelector(".rvw-again").hidden=!end;
+  if(end){const r=L.res.filter(Boolean).length;say(L,r+" of "+N+(r===N?": all right!":""),"In each of these countries the biggest or best-known city is not the capital. Hover any country on the map to see its capital.")}
+  else if(L.ans==null)say(L,"","Tap the city you think is the capital.");
+  else say(L,(L.ans===P[3]?"Right: ":"Not quite: ")+P[1+P[3]],P[5])}};
+
+const DEFS=[KELP,UPWELL,DIVE,WILDE,PICK,ORIGIN,MAIZE,FAR,PAIR];
 /* ---------------------------------------------------------------- the engine: one stop at a time */
 let L=null,raf=0,lastT=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
