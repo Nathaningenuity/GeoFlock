@@ -136,6 +136,43 @@ const EARLY={brihla:{"The Travels of Ibn Battuta":S=>RE(S,"stat","travelled some
 const early=()=>{try{for(const t in EARLY){const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{const f=S&&EARLY[t][strip(S.title)];if(f)f(S)})}}catch(e){}};
 early();setTimeout(early,1500);setTimeout(early,6000);addEventListener("load",()=>setTimeout(early,500));
 
+/* The Most Remote Places (geoflock-tours-bremote.js). geoflock-polish-m.js centres each island stop on its island (globe
+   zoom 5) and drops the pins next to it, so several islands were left as a bare ring with no name: their names come back
+   (added once here, as text pins, beside the ring). Its centring also took the first island ring on the opening and
+   "Now explore" stops (which ring all sixteen islands), so both opened close in on St Kilda, the opening's card on the
+   right over the zoom buttons: both are framed on the Pacific, as the tour meant (its own globe field), cards left. Where the island's own pin
+   survived (whichever file got to the stop first), it is swapped for the one added here, so the name shows once. */
+const RI={lonely:[82.25,77.48],tromelin:[54.52,-15.89],pingelap:[160.7,6.22],pukapuka:[-165.85,-10.88],floreana:[-90.43,-1.28],clipperton:[-109.22,10.3]};
+FIX.bremote={
+  /* framed on the eastern Pacific, Howland to Floreana (the stop's buttons turn the globe to the other oceans); the Rapa Nui
+     photo lay under the map key and Christmas Island's label and photo hung at the globe's far edge below the card (each
+     has a stop of its own); Rapa Nui, whose photo it was, gets its name back as a label */
+  "Atlas of Remote Islands":S=>{DROPPH(S,/^(Ahu Tongariki|Red crabs on Christmas)/);AREA(S,/^Christmas Island$/);ADDPIN(S,[[-109.35,-27.12],"Rapa Nui","point"]);VIEW(S,[-133,-3,1])},
+  /* a "Russia" label on a long leader, off the globe's bottom edge */
+  "Lonely Island":S=>{DROP(S,/^(Russia|Lonely Island \(Uyed.*)$/);ADDPIN(S,[RI.lonely,"Lonely Island","point"])},
+  /* the stat's "nearest land" moves into the stop's guess (revealed there) */
+  "Bouvet Island":S=>RE(S,"stat","Bouvet is often called the remotest island on Earth: about 1,700 km from the nearest land, the coast of Antarctica","Bouvet is often called the remotest island on Earth: how far is it to the nearest land? Guess below"),
+  "Tromelin":S=>ADDPIN(S,[RI.tromelin,"Tromelin","point"]),
+  /* a "Micronesia" label sat on Pohnpei's (geoflock-sweep-tours4.js's drop of it no longer held) */
+  "Pingelap":S=>{DROP(S,/^(Micronesia|Pingelap)$/);ADDPIN(S,[RI.pingelap,"Pingelap","point"])},
+  /* geoflock-eyezoom.js's round close-up of the island, set to its right, lay under the map key: the island framed a
+     little left of the open side's middle (at the same zoom) so the close-up clears the key */
+  "Christmas Island":S=>VIEW(S,[109.7,-10.49,5]),
+  "Rapa Nui":S=>VIEW(S,[-104.85,-27.12,5]),
+  /* a "Papua New Guinea" label lay under the card */
+  "Takuu":S=>DROP(S,/^Papua New Guinea$/),
+  /* "Papua New Guinea" and "Kiribati" labels hung off the globe's edges */
+  "Howland":S=>DROP(S,/^(Papua New Guinea|Kiribati)$/),
+  /* a "Cook Islands" label hung off the globe's bottom edge, with Rarotonga's */
+  "Pukapuka":S=>{DROP(S,/^(Cook Islands|Rarotonga)/);ADDPIN(S,[RI.pukapuka,"Pukapuka","point"])},
+  /* the Henderson Island photo was pushed up onto the zoom buttons (the card shows Pitcairn) */
+  "Pitcairn":S=>DROPPH(S,/^Henderson Island/),
+  "Floreana":S=>{DROP(S,/^(Post Office Bay|Santa Cruz)$/);ADDPIN(S,[RI.floreana,"Floreana","point"])},
+  /* Manzanillo's and a "Mexico" label hung at the top edge, over the map's switches */
+  "Clipperton":S=>{DROP(S,/^(Manzanillo|Mexico$)/);ADDPIN(S,[RI.clipperton,"Clipperton","point"])},
+  "Now explore":S=>VIEW(S,[-133,-3,1])
+};
+
 
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
@@ -317,8 +354,41 @@ const SORT_RIHLA=SORT({tours:["brihla"],title:"Now explore",turns:true,
   ["The book is finished in Fez",1355,"1355",0,[-4.98,34.03,2.6]]],
  after:(r,N)=>"East as far as China, then home, then off again to Spain and Mali: few people before the age of steam ever saw so much of the world."});
 
+/* ======================================================================== 3. One ocean at a time (bremote, Atlas of Remote
+   Islands) The rings mark the tour's sixteen islands, spread over every ocean: one side of the globe cannot show them all. */
+const TURN_REMOTE=TURNER({tours:["bremote"],title:"Atlas of Remote Islands",
+ tip:"The sixteen rings are spread round the whole Earth: turn the globe one ocean at a time.",
+ places:[["The eastern Pacific",-133,-3,1,"Howland, Pukapuka, Napuka, Pitcairn, Rapa Nui, Floreana and Clipperton, scattered across the biggest ocean."],
+  ["The western Pacific",168,15,1.2,"Semisopochnoi in the Aleutians, Pingelap in Micronesia and Takuu off Bougainville."],
+  ["The Atlantic",-19.6,-7.4,0.9,"St Kilda off Scotland, Tristan da Cunha in the middle of the South Atlantic and Bouvet near the ice."],
+  ["The Indian Ocean",83.8,-18.4,1.3,"Tromelin, east of Madagascar, and Christmas Island, south of Java."],
+  ["The Arctic",82,72,1.6,"Lonely Island, in the frozen Kara Sea north of Siberia."]]});
 
-const DEFS=[GUESS_RIHLA,SORT_RIHLA];
+/* ======================================================================== 4. How far to the nearest land? (bremote, Bouvet
+   Island) Wikipedia, "Bouvet Island": it "lies 1,700 km north of the Princess Astrid Coast of Queen Maud Land, Antarctica";
+   the nearest inhabited place is Tristan da Cunha, about 2,260 km to the north-west; South Africa's coast is 2,520 km away.
+   The stat's own "about 1,700 km" is taken out (part 1) so the guess comes first. */
+const GUESS_BOUVET=GUESS({tours:["bremote"],title:"Bouvet Island",
+ tip:"Bouvet sits alone in the stormy Southern Ocean. How far is it to the nearest land of any kind, do you think?",
+ vals:[100,250,500,1000,1700,2500,4000,6000],start:2,answer:1700,close:1,fmt:v=>v.toLocaleString("en-GB")+" km",
+ after:"About 1,700 km, to the ice coast of Queen Maud Land in Antarctica. The nearest people live even farther off: Tristan da Cunha, about 2,260 km away, and South Africa’s coast is 2,520 km."});
+
+/* ======================================================================== 5. Island stories in order (bremote, Now explore)
+   The tour's own dates: Bouvet sighted 1739; Tromelin's wreck 1761; Byron at Napuka 1765; the Bounty burnt at Pitcairn
+   1790; the slave raiders at Rapa Nui 1862; Clipperton's last man killed 1917; St Kilda left 1930; Earhart lost near
+   Howland 1937; Lonely Island's station empty from 1996. Each tap turns the globe there. */
+const SORT_REMOTE=SORT({tours:["bremote"],title:"Now explore",turns:true,
+ tip:"Two and a half centuries of island stories: put them in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Bouvet is sighted, then lost for decades",1739,"1739",0,[3.36,-54.42,2.4]],["The wreck on Tromelin",1761,"1761",0,[54.52,-15.89,2.4]],
+  ["Byron’s ‘Islands of Disappointment’",1765,"1765",0,[-141.25,-14.17,2.4]],["The Bounty is burnt at Pitcairn",1790,"1790",0,[-130.1,-25.07,2.4]],
+  ["Slave raiders reach Rapa Nui",1862,"1862",0,[-109.35,-27.12,2.4]],["Clipperton’s forgotten garrison",1917,"1917",0,[-109.22,10.3,2.4]],
+  ["The last St Kildans leave",1930,"1930",0,[-8.57,57.81,2.4]],["Earhart vanishes on the way to Howland",1937,"1937",0,[-176.62,0.81,2.4]],
+  ["Lonely Island’s weather station shuts",1996,"1996",0,[82.25,77.48,2.4]]],
+ after:(r,N)=>"Sighted, wrecked on, fought over, abandoned: Schalansky’s point is that even the remotest specks of land have human stories, and often dark ones."});
+
+
+const DEFS=[GUESS_RIHLA,SORT_RIHLA,TURN_REMOTE,GUESS_BOUVET,SORT_REMOTE];
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
