@@ -253,6 +253,43 @@ FIX.b12maps={
   "Now explore":S=>VIEW(S,[40,30,1])
 };
 
+FIX.b1001={
+  /* the Umayyad Mosque, Aleppo citadel and Al-Azhar photos were stacked at the card's edge, pushed far from their cities,
+     and the Zanzibar dhow's hung at the globe's bottom edge (Damascus and Cairo have stops of their own) */
+  "One Thousand and One Nights":S=>{DROPPH(S,/^(The Umayyad Mosque|The Citadel of Aleppo|Al-Azhar Mosque|A dhow off Zanzibar)/);VIEW(S,[57,25,1.3])},
+  /* the Tigris photo and the Round City plan were stacked above and below Baghdad, and the Abbasid label ran off the
+     globe's edge: the Tigris photo goes (the opening shows it), and the stop is framed a little east */
+  "Harun al-Rashid’s Baghdad":S=>{DROPPH(S,/^The Tigris at Baghdad/);VIEW(S,[46,32,3])},
+  /* "Iraq" and "Kuwait" labels on long leaders (the map names them), and Sohar and the Old Muscat photo under the map
+     key: framed Basra to Muscat; the Old Muscat photo, still pushed under the key, goes (Muscat's label comes back) */
+  "Basra: Sindbad sets out":S=>{DROP(S,/^(Iraq|Kuwait)$/);DROPPH(S,/^Old Muscat/);VIEW(S,[54,25.5,3])},
+  /* the Gulf, where the sea road starts, lay under the card, and the Malacca ships' photo was pushed far south of the
+     strait: framed the Gulf to Guangzhou and Belitung, Belitung's label set above its place, clear of the map key; the photo
+     goes */
+  "Sindbad’s sea road":S=>{DROPPH(S,/^Ships in the Strait/);ABOVE(S,/^Belitung/);VIEW(S,[90,12,1.2])},
+  /* Madagascar lay at the card's edge, with the baobab photo below it at the bottom edge: framed a little west; the
+     baobabs go (the elephant bird's photo marks Madagascar) */
+  "The Roc and the valley of diamonds":S=>{DROPPH(S,/^Baobabs on Madagascar/);VIEW(S,[63,-2,1.15])},
+  /* the four places, close together, had their labels pushed out on leaders round a "Sri Lanka" label (the map names it),
+     with the Temple of the Tooth photo pushed far north over the sea and Galle Fort's far south: framed closer; the
+     label and both photos go (Kandy's label comes back) */
+  "Serendib":S=>{DROP(S,/^Sri Lanka$/);DROPPH(S,/^(The Temple of the Tooth|Galle Fort)/);VIEW(S,[80.4,7.2,8])},
+  /* Ternate and Banda, where cloves and nutmeg grew, lay at the globe's right edge by the map key, an "Indonesia" label
+     hung on a long leader, and the pepper photo was pushed far from India's pepper coast out to sea by the card: framed
+     Sumatra to Banda; the label and the photo go */
+  "Camphor, cloves and nutmeg":S=>{DROP(S,/^Indonesia$/);DROPPH(S,/^Pepper on the vine/);VIEW(S,[118,-1,1.8])},
+  /* a "Syria" label on a long leader (the map names it) */
+  "Damascus":S=>DROP(S,/^Syria$/),
+  /* Damascus, where the caliph gives his order, lay off the globe's right edge: framed Kairouan to Damascus */
+  "The City of Brass":S=>VIEW(S,[22,32,2.2]),
+  /* Aleppo, Hanna Diyab's home, lay under the map key and the Grand Bazaar photo at the globe's edge: framed Paris to
+     Aleppo; the photo, still pushed to the edge, goes (Istanbul's label comes back) */
+  "Galland’s Nights, 1704":S=>{DROPPH(S,/^The Grand Bazaar/);VIEW(S,[24,42,2])},
+  /* Hollywood was round the back of the globe: the stop's buttons turn the globe to it */
+  "The tales travel on":S=>VIEW(S,[40,30,1]),
+  "Now explore":S=>VIEW(S,[57,25,1.3])
+};
+
 
 const EARLY={};
 const early=()=>{try{for(const t in EARLY){const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{const f=S&&EARLY[t][strip(S.title)];if(f)f(S)})}}catch(e){}};
@@ -585,8 +622,50 @@ const SORT_12=SORT({tours:["b12maps"],title:"Now explore",turns:true,
   ["The Peters projection",1973,"1973",0,[7.1,50.73,2.4]],["Google Earth",2005,"2005",0,[-122.08,37.42,2.4]]],
  after:(r,N)=>"From a clay disc with Babylon in the middle to a whole planet on a screen: Brotton’s point is that every one of them was drawn by someone, for some purpose."});
 
+/* ======================================================================== 17. In the old manuscripts, or added later?
+   (b1001, Galland's Nights, 1704) Wikipedia, "One Thousand and One Nights": "Aladdin's Lamp" and "Ali Baba and the Forty
+   Thieves" first appear in Galland's translation and are in no original Arabic manuscript; Galland heard them from the
+   Maronite storyteller Hanna Diab. "The Seven Voyages of Sinbad the Sailor" "had an independent existence before being
+   added to the collection in later manuscripts and translations" (the tour's Basra stop: Galland added them from another
+   manuscript). "The Hunchback's Tale" and "The Fisherman and the Jinni" are among the core tales of the Galland
+   (Syrian) manuscript, which holds the frame story. Each answer turns the globe to Syria, where Galland's manuscript was
+   copied, or to Paris, where the added tales joined the Nights. */
+const BINS_1001=BINS({tours:["b1001"],title:"Galland’s Nights, 1704",mark:true,
+ tip:"Galland’s Nights mixed tales from an old Syrian manuscript with tales from elsewhere. Which is each of these?",ask:"In the old Arabic manuscript, or added later?",
+ bins:["In the old manuscript","Added later"],
+ turn:[[37,35,2.4],[2.35,48.86,2.4]],
+ items:[["Shahrazad’s frame story",0,"The frame holds the whole collection together, in every manuscript."],
+  ["Aladdin and the magic lamp",1,"No Arabic manuscript older than Galland has it: Hanna Diyab, from Aleppo, told it to him in Paris in 1709."],
+  ["The Fisherman and the Jinni",0,"One of the core tales of Galland’s Syrian manuscript."],
+  ["Sindbad the Sailor",1,"Sindbad’s voyages were once a separate book; Galland added them from another manuscript."],
+  ["Ali Baba and the Forty Thieves",1,"Another of Hanna Diyab’s tales, told to Galland in Paris."],
+  ["The Hunchback",0,"One of the core tales of Galland’s Syrian manuscript, full of the streets of Mamluk Cairo."]],
+ where:["Galland’s manuscript was copied in Syria.","The added tales joined the Nights in Paris."],
+ after:(r,N)=>(r===N?"All right! ":"")+"Two of the most famous ‘Arabian Nights’, Aladdin and Ali Baba, first appeared in French: the Nights kept growing wherever they travelled."});
 
-const DEFS=[TURN_80,TURN_DAY,GUESS_BLY,BINS_80,TURN_ROME,GUESS_RAGUSA,TURN_FEVER,GUESS_PANAMA,TURN_CHOL,TURN_THIRD,TURN_CONTEST,SORT_PLAG,TURN_RIBEIRO,TURN_KANG,TURN_BLAEU,TURN_PETERS,SORT_12];
+/* ======================================================================== 18. The tales go round the world (b1001, The tales
+   travel on) London, Calcutta and Hollywood are spread round the globe. The texts are the card's own. */
+const TURN_1001=TURNER({tours:["b1001"],title:"The tales travel on",mark:true,
+ tip:"The Nights travelled from Cairo all round the world: turn the globe to follow them.",
+ places:[["Europe and Cairo",40,30,1,"Cheap English versions translated from Galland’s French appeared in London from 1706; the first Arabic edition printed in the Arab world came from Bulaq, in Cairo, in 1835.",2],
+  ["Calcutta",88.36,22.57,2,"Later translators, like Edward Lane and Richard Burton, worked from Arabic editions printed in Cairo and Calcutta.",1],
+  ["Hollywood",-118.24,34.05,2,"Films, ballets and cartoons followed: Sindbad, Ali Baba and Aladdin became world characters.",1]]});
+
+/* ======================================================================== 19. The Nights in order (b1001, Now explore) The
+   tour's own dates (Baghdad founded 762; the Belitung wreck about 830; Galland's Nights from 1704; Hanna Diyab in Paris
+   1709; Bulaq 1835; Disney's Aladdin 1992), with the Calcutta edition of 1839–42 (Wikipedia, "One Thousand and One
+   Nights": "Calcutta II", 1839–1842). Each tap turns the globe there. */
+const SORT_1001=SORT({tours:["b1001"],title:"Now explore",turns:true,
+ tip:"Over a thousand years of the Nights: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Baghdad is founded as a round city",762,"762",0,[44.38,33.35,2.4]],["A ship sinks off Belitung with Chinese pottery",830,"about 830",0,[107.6,-2.75,2.4]],
+  ["Galland’s French Nights begin to appear",1704,"1704",0,[2.35,48.86,2.4]],["Hanna Diyab tells Galland about Aladdin",1709,"1709",0,[2.35,48.86,2.4]],
+  ["Bulaq prints the Nights in Arabic",1835,"1835",0,[31.23,30.06,2.4]],["The Calcutta edition is printed",1839,"1839–42",0,[88.36,22.57,2.4]],
+  ["Disney’s Aladdin",1992,"1992",0,[-118.24,34.05,2.2]]],
+ after:(r,N)=>"From the caliph’s Baghdad to a Hollywood cartoon: the Nights have been retold, translated and added to for more than a thousand years."});
+
+
+const DEFS=[TURN_80,TURN_DAY,GUESS_BLY,BINS_80,TURN_ROME,GUESS_RAGUSA,TURN_FEVER,GUESS_PANAMA,TURN_CHOL,TURN_THIRD,TURN_CONTEST,SORT_PLAG,TURN_RIBEIRO,TURN_KANG,TURN_BLAEU,TURN_PETERS,SORT_12,BINS_1001,TURN_1001,SORT_1001];
 
 
 let L=null,raf=0;
