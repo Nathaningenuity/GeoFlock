@@ -118,19 +118,21 @@ FIX.mythology={
 };
 FIX.science={
   /* the opening's card was on the right (over the zoom buttons) and the map key on the left: the card goes left like the
-     rest; framed so its European photos sit beside it */
-  "Where science happened":S=>VIEW(S,[2,32,1]),
+     rest, framed on Europe beside it. Samarkand's photo then lay under the map key, the Galápagos and Apollo 11 photos
+     under the card and on the globe's edge, Halley VI round the back: each has a stop of its own */
+  "Where science happened":S=>{DROPPH(S,/^(The Registan|A Galápagos|Apollo|Halley)/);VIEW(S,[12,32,1.15])},
   /* a China label on a long leader hung off the globe's edge by the map key */
   "Zhang Heng’s earthquake detector":S=>DROP(S,/^China$/),
   /* Basra's label ran under the map key: framed further east */
-  "Ibn al-Haytham and light":S=>VIEW(S,[41.5,29.5,2.6]),
-  /* Darwin's portrait sat on top of the San Cristóbal photo; the ruler's end marks San Cristóbal */
-  "Darwin in the Galápagos":S=>DROPPH(S,/^San Cristóbal/),
+  "Ibn al-Haytham and light":S=>VIEW(S,[51,29.5,2.6]),
+  /* Darwin's portrait sat on top of the San Cristóbal photo and the ruler's distance: the photo goes (the ruler's end
+     marks San Cristóbal), and the stop is framed closer, so the distance sits clear of the portrait */
+  "Darwin in the Galápagos":S=>{DROPPH(S,/^San Cristóbal/);VIEW(S,[-85.5,-1,4.6])},
   /* Warsaw's photo lay under the map key and the France label hung on a long leader: framed further east, the country
      labels go (the ruler joins the two cities) */
-  "Marie Curie":S=>{DROP(S,/^(France|Poland)$/);VIEW(S,[14.5,50.5,3.1])},
+  "Marie Curie":S=>{DROP(S,/^(France|Poland)$/);VIEW(S,[21,50.5,3.1])},
   /* Sobral lay under the card and Príncipe under the map key: the 5,340 km ruler is now wholly in view */
-  "The eclipse that tested Einstein":S=>VIEW(S,[-16,2,1.2]),
+  "The eclipse that tested Einstein":S=>VIEW(S,[-6,2,1.15]),
   /* a Gabon label on a long leader; the map names it */
   "The natural nuclear reactor":S=>DROP(S,/^Gabon$/),
   /* the card was on the right; framed for the stop's game, Cape Canaveral to Kourou beside the card; the French Guiana
@@ -372,7 +374,7 @@ const LONGCLOCK={tours:["science"],title:"Greenwich and longitude",globe:true,tu
  tip:"Sail H4 to Jamaica! The watch keeps Greenwich time. Slide it to the Greenwich time when the Sun is highest where the ship is, and find Port Royal.",
  card(L){return'<div class="rvx-row"><input type="range" class="rvx-rng" min="0" max="420" step="1" value="0" aria-label="Greenwich time at local noon"><b class="rvx-val"></b></div>'+
   '<div class="rvx-btns"><button type="button" class="rvx-btn rvx-again">Back to Greenwich</button></div>'},
- wire(L){const c=L.card,r=c.querySelector(".rvx-rng");L.m=0;c.dataset.turns="1";turnGlobe(-40,32,1.15);
+ wire(L){const c=L.card,r=c.querySelector(".rvx-rng");L.m=0;c.dataset.turns="1";turnGlobe(-40,30,1);
   r.oninput=()=>{L.m=+r.value;this.render(L)};c.querySelector(".rvx-again").onclick=()=>{L.m=0;r.value=0;this.render(L)};this.render(L)},
  render(L){const c=L.card;if(!c)return;const m=L.m,lon=m/4,ok=Math.abs(m-PRM)<=3;L.ok=ok;
   c.querySelector(".rvx-val").textContent=hm(m);
