@@ -215,7 +215,36 @@ FIX.currencies={
   "The market never sleeps":S=>{AREA(S,/^(Tokyo|Hong Kong|Singapore|Sydney|New York)$/);VIEW(S,[145,0,1.1])},
   "Now explore":S=>VIEW(S,[20,20,1])
 };
-FIX.conflicts={};
+FIX.conflicts={
+  /* the globe turned to a point near the North Pole, between photos half a world apart, with the Peace Arch's at the top
+     edge, Belfast's at the card's edge and Hiroshima's, Panmunjom's and the Plain of Jars' at the far edge: framed on
+     the Old World, and the Peace Arch, Belfast, Hiroshima and Plain of Jars photos go (all but Hiroshima have stops of
+     their own) */
+  "Conflicts and peace":S=>{DROPPH(S,/^(The Peace Arch|A peace wall in Belfast|Hiroshima Peace Memorial|Plain of Jars)/);VIEW(S,[40,30,1])},
+  /* Western Sahara's mission lay under the card, the Central African Republic's label at its edge, and Kashmir's off the
+     globe's right edge: framed a little east; the far two's labels go (Western Sahara's hung over the map's
+     switches whatever the frame) and the stop's buttons turn the globe to them, naming them */
+  "Blue helmets":S=>{DROP(S,/^(MINURSO|UNMOGIP)/);VIEW(S,[34,15,1.6])},
+  /* a "Cyprus" label on a leader (the map names it), with Kyrenia's and Nicosia's photos pushed off the island: framed
+     closer */
+  "Cyprus: the Green Line":S=>{DROP(S,/^Cyprus$/);VIEW(S,[33.3,35.15,10])},
+  /* "India", "Pakistan" and "China" labels on long leaders, China's off the globe (the map names them) */
+  "Kashmir":S=>DROP(S,/^(India|Pakistan|China)$/),
+  /* "El Salvador" and "Honduras" labels on leaders (the map names them). The stat's 100 hours move into the stop's
+     guess (revealed there) */
+  "The Football War":S=>{DROP(S,/^(El Salvador|Honduras)$/);RE(S,"stat","fought a 100-hour war that broke out after World Cup qualifying matches","fought a war that broke out after World Cup qualifying matches: guess below how long it lasted")},
+  /* "Argentina" and "Chile" labels hung off the globe (the map names them) */
+  "The Pope stopped a war":S=>DROP(S,/^(Argentina|Chile)$/),
+  /* "Eritrea" and "Ethiopia" labels on leaders (the map names them) */
+  "A war over a dusty town":S=>DROP(S,/^(Eritrea|Ethiopia)$/),
+  /* the Bogotá photo hung at the globe's bottom edge and "Colombia" and "Cuba" labels on leaders: framed wider, the
+     labels go */
+  "Colombia’s peace deal":S=>{DROP(S,/^(Colombia|Cuba)$/);VIEW(S,[-77,14,2.6])},
+  /* the Bakassi peninsula, where the stop's story is, lay off the globe's bottom edge: framed wider, The Hague to
+     Bakassi */
+  "Settled in court":S=>VIEW(S,[7,29,1.3]),
+  "Now explore":S=>VIEW(S,[20,25,1])
+};
 
 
 const EARLY={};
@@ -506,8 +535,38 @@ const SORT_CUR=SORTM({tours:["currencies"],title:"Now explore",turns:true,
   ["Euro notes and coins arrive",2002,"2002",0,[8.68,50.11,2.4],"Frankfurt"],["M-Pesa is launched",2007,"2007",0,[36.82,-1.29,2.4],"Nairobi"]],
  after:(r,N)=>"Money has been metal, paper, a promise in a bank and now numbers on a phone: what makes it work is that people trust it."});
 
+/* ======================================================================== 11. Missions far apart (conflicts, Blue helmets)
+   Western Sahara and Kashmir are 88° of longitude apart; the buttons turn the globe to the missions at the ends. The
+   texts are the cards' own (Kashmir's from the Kashmir stop). */
+const TURN_BLUE=TURNER({tours:["conflicts"],title:"Blue helmets",mark:true,
+ tip:"The blue helmets’ missions stretch from the Atlantic to the Himalayas: turn the globe to the far ones.",
+ places:[["Africa and the Middle East",34,15,1.6,"Most missions are here: in Cyprus, Lebanon and on the Golan Heights, in Kosovo, South Sudan, Abyei, the Central African Republic and DR Congo.",2],
+  ["Western Sahara",-13.2,27.15,2,"MINURSO, far to the west, on the Atlantic coast of Africa."],
+  ["Kashmir",74.8,34.08,2,"UNMOGIP: UN military observers have watched the ceasefire line between India and Pakistan since 1949."]]});
 
-const DEFS=[TURN_GUBBIO,TURN_BIG5,SORT_ARRIVE,BINS_EXT,GUESS_ICE,BINS_EN,TURN_VOC,GUESS_MARK,TURN_MKT,SORT_CUR];
+/* ======================================================================== 12. How long was the Football War? (conflicts,
+   The Football War) Wikipedia, "Football War": "also known as the Soccer War or the 100 Hour War"; it began on 14 July
+   1969 and the ceasefire took effect at midnight on 18 July. The stat's 100 hours are taken out (part 1) so the guess
+   comes first. */
+const GUESS_FOOT=GUESS({tours:["conflicts"],title:"The Football War",
+ tip:"The war broke out after three World Cup qualifying matches. How long did the fighting last, do you think?",
+ vals:[10,24,100,720,8760,43800],start:3,answer:100,close:0,fmt:v=>({10:"10 hours",24:"1 day",100:"100 hours",720:"a month",8760:"a year",43800:"5 years"})[v],
+ after:"About 100 hours: it began on 14 July 1969, and a ceasefire took effect at midnight on 18 July. Its other name is the 100 Hour War."});
+
+/* ======================================================================== 13. Peace in order (conflicts, Now explore) The
+   tour's own dates; each tap turns the globe there and names the place. */
+const SORT_PEACE=SORTM({tours:["conflicts"],title:"Now explore",turns:true,
+ tip:"Nearly 400 years of making peace: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["The Peace of Westphalia",1648,"1648",0,[7.63,51.96,2.4],"Münster"],["The Red Cross is founded",1863,"1863",0,[6.14,46.2,2.4],"Geneva"],
+  ["Coal and steel are shared",1951,"1951",0,[6.13,49.61,2.4],"Luxembourg"],["The Korean armistice",1953,"1953",0,[126.68,37.96,2.4],"Panmunjom"],
+  ["The Football War",1969,"1969",0,[-87.5,14.3,2.4],"El Salvador and Honduras"],["The Green Line splits Cyprus",1974,"1974",0,[33.36,35.18,2.6],"Nicosia"],
+  ["Chile and Argentina sign the Beagle treaty",1984,"1984",0,[-67,-55,2.4],"The Beagle Channel"],["The Good Friday Agreement",1998,"1998",0,[-5.93,54.6,2.6],"Belfast"],
+  ["The court rules on Bakassi",2002,"2002",0,[8.65,4.6,2.4],"Bakassi"],["Colombia’s peace deal",2016,"2016",0,[-74.07,4.71,2.4],"Bogotá"]],
+ after:(r,N)=>"Treaties, ceasefire lines, courts and mediators: every one of these took years of talking, and some of the peace is still fragile."});
+
+
+const DEFS=[TURN_GUBBIO,TURN_BIG5,SORT_ARRIVE,BINS_EXT,GUESS_ICE,BINS_EN,TURN_VOC,GUESS_MARK,TURN_MKT,SORT_CUR,TURN_BLUE,GUESS_FOOT,SORT_PEACE];
 
 
 
