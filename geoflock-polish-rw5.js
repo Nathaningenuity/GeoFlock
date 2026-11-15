@@ -204,7 +204,7 @@ FIX.words={
   "The mountain of languages":S=>VIEW(S,[45,42.3,5.5]),
   /* a "Papua New Guinea" label on a leader into Indonesia (the map names it), and Vanuatu and the Solomon Islands off
      the globe's edge: the label goes; framed further east */
-  "Papua New Guinea: 840 languages":S=>{DROP(S,/^Papua New Guinea$/);VIEW(S,[153,-9,2.4])},
+  "Papua New Guinea: 840 languages":S=>{DROP(S,/^Papua New Guinea$/);VIEW(S,[151,-11,2.1])},
   /* the globe looked at the empty Pacific: Wales and Israel were round the back and New Zealand at the bottom edge by
      the map's notices; the stop's buttons turn the globe to each language (the far ones are left out of the opening
      frame), and the "New Zealand" and "Israel" labels go (the map names them) */
@@ -229,7 +229,7 @@ FIX.learning={
   "Print, Protestants and reading":S=>{NOSHADE(S);DROP(S,/^Germany$/);DROPPH(S,/^Stockholm$/);VIEW(S,[10,50,2.6])},
   /* the globe looked at the middle of Canada, shaded, with the cable's two ends at its top edge by the map's switches,
      and "Ireland" and "Canada" labels on leaders: framed on the Atlantic between the two ends, labels and shading go */
-  "Cables under the sea":S=>{NOSHADE(S);DROP(S,/^(Ireland|Canada)$/);VIEW(S,[-32,50,2.2])},
+  "Cables under the sea":S=>{NOSHADE(S);DROP(S,/^(Ireland|Canada)$/);VIEW(S,[-30,51,1.7])},
   /* Finland's label hung over the map's switches at the globe's top edge and Australia was off its bottom: the stop's
      buttons turn the globe from country to country (the far ones are left out of the opening frame) */
   "School around the world":S=>{NOSHADE(S);AREA(S,/^(Finland|Japan|Australia):/);VIEW(S,[104,12,1.6])},
@@ -237,9 +237,8 @@ FIX.learning={
   "School by radio":S=>DROP(S,/^Australia$/),
   /* a "Kenya" label on a long leader across Garissa's (the map names it) */
   "Libraries on camels":S=>DROP(S,/^Kenya$/),
-  /* a "United Kingdom" label on a leader (the map names it), and the whole of Britain shown though the stop is about
-     10 km of London: label and shading go, framed on London */
-  "The Knowledge":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/);VIEW(S,[-0.13,51.5,40])},
+  /* a "United Kingdom" label on a leader (the map names it), and Britain's shading: both go */
+  "The Knowledge":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/)},
   "Now explore":S=>VIEW(S,[40,30,1])
 };
 
