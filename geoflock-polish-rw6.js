@@ -22,10 +22,12 @@ const IV=[];const every=(f,ms)=>{IV.push(setInterval(f,ms))};
 /* (window.__rw6Test or ?rw6test, set only by a test page, keep the fields configurable so values can be tried and changed) */
 const LOCK=(S,k,v)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;
  Object.defineProperty(S,k,{configurable:!!(window.__rw6Test||/[?&]rw6test\b/.test(location.search)),enumerable:true,get:()=>v,set:()=>{}})}catch(e){try{S[k]=v}catch(err){}}};
-/* the card's side is locked with a getter that stays configurable: geoflock-tourfix-drag.js redefines some of these
-   stops' card fields on every stop change, and a field it cannot redefine stops the rest of its pass */
+/* the card's side: on the history tours a fixed, non-configurable getter (a stop's question switched the card to the
+   right at run time otherwise, as geoflock-polish-rvm.js found); on Oceania a getter that stays configurable, since
+   geoflock-tourfix-drag.js redefines some of its stops' card fields on every stop change, and a field it cannot redefine
+   stops the rest of its pass */
 const LOCKC=(S,k,v)=>{try{const d=Object.getOwnPropertyDescriptor(S,k);if(d&&d.configurable===false)return;if(d&&d.get&&d.get._rw6&&S[k]===v)return;
- const gt=()=>v;gt._rw6=1;Object.defineProperty(S,k,{configurable:true,enumerable:true,get:gt,set:()=>{}})}catch(e){try{S[k]=v}catch(err){}}};
+ const gt=()=>v;gt._rw6=1;Object.defineProperty(S,k,{configurable:TOUR_OF.get(S)==="oceania"||!!window.__rw6Test,enumerable:true,get:gt,set:()=>{}})}catch(e){try{S[k]=v}catch(err){}}};
 /* swap one phrase in a text field (only if it is still there), then lock the field */
 const RE=(S,k,a,b)=>{const t=String(S[k]==null?"":S[k]);if(t.indexOf(a)<0)return;LOCK(S,k,t.split(a).join(b))};
 const pinText=p=>Array.isArray(p)?strip(p[1]):strip(p&&p.text);
@@ -147,8 +149,145 @@ FIX.oceania={
 };
 
 
+FIX.hasia={
+  /* the Terracotta Army photo hung at the globe's edge by the zoom buttons and Borobudur's off its bottom right: framed
+     further east */
+  "Asia’s story":S=>VIEW(S,[114,22,1]),
+  /* the Badaling photo hung at the globe's edge over the zoom buttons and a "China" label on a long leader at its bottom
+     edge (the map names the empire): framed a little east, the label goes. The stat's figure moves into the stop's
+     guess (revealed there) */
+  "The emperor’s clay army":S=>{DROP(S,/^China$/);VIEW(S,[118,38,2.63]);RE(S,"stat","was buried with about 8,000 life-size clay soldiers","was buried with an army of life-size clay soldiers: guess below how many")},
+  /* the Harappa and Mohenjo-daro photos hung at the globe's right edge, under the map buttons: framed further east */
+  "The first cities":S=>VIEW(S,[66,28,1.6]),
+  /* Nara, where the arrows end, was at the globe's edge under the map key: framed further east */
+  "Buddhism spreads":S=>VIEW(S,[108,20,1.18]),
+  /* Luoyang, where the arrows end, was off the globe's right edge, and the Bamiyan photo's label was cut to "Buddhas":
+     framed further east, the label shortened to the place */
+  "When the Buddha looked Greek":S=>{PHLABEL(S,/^Bamiyan/,"Bamiyan");VIEW(S,[90,36,1.8])},
+  /* the card was on the right, over the zoom buttons, and the globe had turned to the Pacific, with Spain, where the
+     stat begins, round the back; a "Saudi Arabia" label hung on Mecca's photo (the map names the land): the card goes
+     left, framed from Spain to the Indus, the label goes. Only Saudi Arabia was shaded, with the key calling it the
+     Umayyad Caliphate, which stretched from Spain to the Indus: the shading goes, and the map's own borders of 700 show
+     the caliphate */
+  "Islam’s rapid spread":S=>{DROP(S,/^Saudi Arabia$/);NOSHADE(S);VIEW(S,[40,28,1])},
+  /* today's "Thailand", "Laos", "Vietnam" and "Cambodia" labels hung on long leaders (one under the map key), over the
+     map's own names and the Khmer Empire's: they go */
+  "Angkor":S=>DROP(S,/^(Thailand|Laos|Vietnam|Cambodia)$/),
+  /* "North Korea" and "South Korea" labels, on a map of 1453, covered the kingdom's own name, Joseon, and "Japan" and
+     "Vietnam" labels hung under the zoom buttons and off the globe: they go */
+  "An alphabet invented by a king":S=>DROP(S,/^(North Korea|South Korea|Japan|Vietnam)$/),
+  /* the card was on the right, over the zoom buttons: it goes left, framed on India */
+  "The Mughals":S=>VIEW(S,[84,24,1.8]),
+  /* the Edo photo hung at the globe's edge by the zoom buttons, beside a "Japan" label (the map names it): framed a
+     little east, the label goes */
+  "Japan closes, then opens":S=>{DROP(S,/^Japan$/);VIEW(S,[139,34.5,3.6])},
+  /* the card was on the right, and Calcutta, where the arrow starts, was off the globe; "China" and "Hong Kong (China)"
+     labels on leaders repeated the map key and the photo: the card goes left, framed from Calcutta to Shanghai, the
+     labels go, and so does Shanghai's text label, a second label beside its photo */
+  "Opium and Hong Kong":S=>{DROP(S,/^(China|Hong Kong \(China\)|Shanghai: opened 1842)$/);VIEW(S,[113,24,1.9])},
+  /* the card was on the right, over the zoom buttons: it goes left, framed on India */
+  "Gandhi and the princes":S=>VIEW(S,[80,23,2.33]),
+  /* "Vietnam" and "Cambodia" labels on long leaders (the map names them; "Vietnam" pointed at the North): they go */
+  "The Vietnam War":S=>DROP(S,/^(Vietnam|Cambodia)$/),
+  /* Japan, the first "miracle", lay at the globe's edge by the map key, and Hong Kong was labelled "(China)" on a map of
+     1970, when it was British: framed further east, the label is plain "Hong Kong"; Tokyo's photo, under the zoom buttons beside its own label, goes. Singapore, the stat's subject, had no label: it
+     gets one */
+  "Asian miracles":S=>{RENAME(S,/^Hong Kong \(China\)$/,"Hong Kong");DROPPH(S,/^Tokyo/);ADDPIN(S,[[103.82,1.35],"Singapore","point"]);VIEW(S,[126,20,1.45])},
+  /* the card was on the right, over Afghanistan and the zoom buttons: it goes left, framed from Iran to Afghanistan */
+  "1979: a turning year":S=>VIEW(S,[64,33,2.6]),
+  "Now explore":S=>VIEW(S,[95,28,1])
+};
 
+FIX.hafrica={
+  /* the opening photo, labelled "Fort Jesus, Mombasa", hung from Timbuktu (each place has a stop of its own): it goes;
+     framed a little west, so the Horn of Africa clears the map buttons */
+  "Africa’s history":S=>{DROPPH(S,/^(Timbuktu|Fort Jesus)/);VIEW(S,[14,3,1.04])},
+  /* the Jebel Irhoud skull's photo was labelled only "300,000 years" and hung at the globe's top edge, and Hadar's
+     label at its right edge by the map buttons: framed a little wider, the photo named */
+  "Where we began":S=>{PHLABEL(S,/^Jebel Irhoud/,"Jebel Irhoud");VIEW(S,[22,4,1.15])},
+  /* an "Egypt" label hung on a long leader over the map's own "Egypt" */
+  "Abu Simbel":S=>DROP(S,/^Egypt$/),
+  /* a "Sudan" label hung on a long leader (the stop is about Kush, named on the map as Meroë) */
+  "Kush against Rome":S=>DROP(S,/^Sudan$/),
+  /* Taghaza, the salt town the stop is named for, was not on the map: it gets a pin (Wikipedia, "Taghaza": 23°36′N
+     5°00′W) */
+  "A town built of salt":S=>ADDPIN(S,[[-5,23.6],"Taghaza: houses of salt","point"]),
+  /* Mecca, where the pilgrimage went, was round the globe's edge and the Cairo photo lay on the zoom buttons: framed
+     further east, Mali to Mecca */
+  "Mansa Musa’s gold":S=>VIEW(S,[26,22,1.15]),
+  /* the Oman photo lay on the zoom buttons, Gujarat round the globe's edge, and Kilwa and the dhow photo off its bottom
+     edge: framed east and wider, from Kilwa to Gujarat */
+  "The Swahili coast":S=>VIEW(S,[52,2,1.25]),
+  /* the photo of Porto-Novo, capital of the other Benin, was labelled only "Great Mosque" */
+  "Two Benins":S=>PHLABEL(S,/^Porto-Novo/,"Porto-Novo, Benin’s capital"),
+  /* Ouidah and Luanda, where the ships left from, lay at the globe's right edge by the map buttons: framed a little
+     east */
+  "What the slave trade cost Africa":S=>VIEW(S,[-22,2,1]),
+  /* the globe turned to the middle of the Sahara, with the Cape, the stop's subject, at its bottom edge and its photo
+     off it, and Batavia round the back: the stop's buttons turn the globe along the Company's route (Batavia is left
+     out of the opening frame), and the garden's photo, the card's own plan of 1727 again, hung off the globe's bottom
+     edge: it goes */
+  "A colony that began as a vegetable garden":S=>{AREA(S,/^Batavia/);DROPPH(S,/^Cape Town/);VIEW(S,[24,-27,1.5])},
+  /* the Leopold cartoon's label was cut to "Cartoon of King": it is named */
+  "Carving up Africa":S=>PHLABEL(S,/^Congo/,"Leopold’s Congo"),
+  /* a "South Africa" label on a leader (the map names it) and Venda's at the globe's edge by the map buttons: the label
+     goes, framed a little east */
+  "Apartheid’s fake countries":S=>{DROP(S,/^South Africa$/);VIEW(S,[28.5,-28,3.8])},
+  /* a "Rwanda" label sat on the map's own "Rwanda" */
+  "Rwanda, 1994":S=>DROP(S,/^Rwanda$/),
+  "Now explore":S=>VIEW(S,[18,3,1.04])
+};
 
+FIX.hnamerica={
+  /* a Fort Sumter photo hung from Florida on the opening map (it has a stop of its own): it goes; framed a little east,
+     so the west coast clears the card */
+  "North America’s history":S=>{DROPPH(S,/^Fort Sumter/);VIEW(S,[-92,40,1])},
+  /* the White Sands footprints, the stat's subject, were round the globe's edge: framed between Beringia and New
+     Mexico */
+  "The first Americans":S=>VIEW(S,[-128,48,1.1]),
+  /* La Venta, the Tuxtla mountains and El Manatí, all within about 1°, had their labels pushed out round the Olmec
+     name: framed closer */
+  "The rubber people":S=>VIEW(S,[-94.6,18,8]),
+  /* a "United States" label (and the whole country shaded) on a map of 1100, and Cahokia far away in a wide view: the
+     shading and the label go, framed on the Mississippi */
+  "Cahokia":S=>{NOSHADE(S);DROP(S,/^United States$/);VIEW(S,[-89,38.6,3.4])},
+  /* today's "Mexico" label hung on a long leader on the map of 1500 */
+  "The Aztecs":S=>DROP(S,/^Mexico$/),
+  /* the San Salvador photo, the card's own painting again, was pushed off its island onto Cuba (Columbus's portrait
+     marks the landing): it goes */
+  "The Taíno meet Columbus":S=>DROPPH(S,/^San Salvador/),
+  /* today's "Mexico" label hung on a leader on the map of 1500 */
+  "Cortés and the smallpox":S=>DROP(S,/^Mexico$/),
+  /* St Augustine, the stat's subject, was off the globe's right edge: framed further east */
+  "Spain in the US":S=>VIEW(S,[-94,32,1.8]),
+  /* the card was on the right, over the zoom buttons: it goes left, framed on the coast */
+  "Thirteen colonies":S=>VIEW(S,[-73,40,3]),
+  /* St Louis sat at the globe's right edge and New Orleans' photo at its bottom edge: framed a little east */
+  "The Louisiana Purchase":S=>VIEW(S,[-93,38,2.2]),
+  /* New York, the city the canal made, was not named on the map, where the Hudson's arrow ends: it gets a label */
+  "The canal that made New York":S=>ADDPIN(S,[[-74.01,40.71],"New York","point"]),
+  /* the Cherokee homeland's photo sat at the globe's edge by the map buttons: framed a little east */
+  "The Trail of Tears":S=>VIEW(S,[-86,34.5,3.6]),
+  /* today's "Mexico" label hung on a leader over the map's own name */
+  "Mexico loses half":S=>DROP(S,/^Mexico$/),
+  /* the Gettysburg photo lay on the zoom buttons and Lincoln's portrait out at sea: framed a little east */
+  "The Civil War":S=>VIEW(S,[-83,36,2.08]),
+  /* the card was on the right and Sacramento, where the line starts, was off the globe: the card goes left, framed
+     coast to coast */
+  "Coast to coast by rail":S=>VIEW(S,[-104,40,2.2]),
+  /* the card was on the right, over Ottawa: it goes left, framed from Alaska to Ottawa */
+  "1867: two big deals":S=>VIEW(S,[-112,54,1.05]),
+  /* Cape Horn's label was cut off at the globe's bottom edge: framed further south */
+  "Digging the Panama Canal":S=>VIEW(S,[-70,-8,1]),
+  /* a "United States" label sat on the map's own, Guam's and the Northern Marianas' hung behind the card, and American
+     Samoa's and the Virgin Islands' at the globe's edges: those go, and Puerto Rico's label loses its "(United States)"
+     (the key says the pale places are US territories) */
+  "A superpower":S=>{DROP(S,/^(United States|Guam|Northern Mariana|American Samoa|U\.S\. Virgin)/);RENAME(S,/^Puerto Rico/,"Puerto Rico");VIEW(S,[-95,30,1])},
+  "Now explore":S=>VIEW(S,[-92,40,1])
+};
+/* The modern world (hmodern) is retired (geoflock-tourshelves.js takes it off the shelves; its stops live on in the
+   world wars, Cold War and since-1991 tours): nothing here */
+FIX.hmodern={};
 
 
 const EARLY={};
@@ -182,7 +321,7 @@ every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){last
 /* (not at page load: other files fill in these stops' photos after load by assigning S.phPins; the fixes go in when one
    of these tours opens). Only the card side is locked at load, so a tour's first stop already opens with its card on
    the left. */
-const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S)LOCKC(S,"card","left")})})}catch(e){}};
+const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S){TOUR_OF.set(S,t);LOCKC(S,"card","left")}})})}catch(e){}};
 cardsLeft();setTimeout(cardsLeft,1500);setTimeout(cardsLeft,6000);
 
 /* The card shift, kept (as geoflock-polish-rvb.js, -rvt.js and -rvu.js do for theirs): psFlyGlobe (index.html) turns a
@@ -231,7 +370,7 @@ function quiet(el){["mousedown","pointerdown","touchstart","click","dblclick","w
 function SORT(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cfg.turns,tip:cfg.tip,
  card(L){return'<div class="rw6-sortq"><span>'+esc(cfg.first)+'</span><i>→</i><span>'+esc(cfg.last)+'</span></div><ol class="rw6-rank"></ol><div class="rw6-pool"></div>'+
   '<div class="rw6-btns"><button type="button" class="rw6-btn rw6-undo">Undo</button><button type="button" class="rw6-btn rw6-show">Show me</button><button type="button" class="rw6-btn rw6-again" hidden>Start again</button></div>'},
- wire(L){const c=L.card;L.order=[];L.shown=false;
+ wire(L){const c=L.card;L.order=[];L.shown=false;/* (rw6) and not "given up": a card rebuilt after "Show me" starts afresh */L.gave=false;
   /* a fixed shuffle (so it never starts in the right order): every other item from the end */
   const idx=cfg.items.map((_,i)=>i),mix=[];for(let i=0;i<idx.length;i++)mix.push(i%2?idx[idx.length-1-(i>>1)]:idx[i>>1]);L.mix=mix.reverse();
   c.querySelector(".rw6-undo").onclick=()=>{if(L.shown)return;L.order.pop();this.render(L)};
@@ -354,11 +493,97 @@ const BINS_OCE=BINS({tours:["oceania"],title:"Now explore",turnItems:true,mark:t
  after:(r,N)=>(r===N?"All right! ":"")+"Polynesia is the big triangle, Micronesia the small islands, most of them north of the equator, and Melanesia the bigger, higher islands from New Guinea to Fiji."});
 
 
+/* ======================================================================== 2. How big an army? (hasia, The emperor's clay
+   army) Wikipedia, "Terracotta Army": "Estimates from 2007 were that the three pits containing the Terracotta Army hold
+   more than 8,000 soldiers"; found on 29 March 1974 by farmers digging a well. The stat's figure is taken out (part 1)
+   so the guess comes first. */
+const GUESS_CLAY=GUESS({tours:["hasia"],title:"The emperor’s clay army",
+ tip:"China’s first emperor was buried with an army of life-size clay soldiers. How many, do you think?",
+ vals:[80,300,800,2000,8000,30000],start:2,answer:8000,close:0,fmt:v=>"about "+v.toLocaleString("en-GB"),
+ after:"More than 8,000, each with its own face, in three pits beside the tomb. Farmers digging a well found the first of them in March 1974."});
+
+/* ======================================================================== 3. Asia in order (hasia, Now explore) The
+   tour's own dates; each tap turns the globe there and names the place. */
+const SORT_ASIA=SORTM({tours:["hasia"],title:"Now explore",turns:true,
+ tip:"Five thousand years of Asia: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Writing is invented in Sumer",-3200,"about 3200 BC",0,[45.64,31.32,2.4],"Uruk"],["Qin Shi Huang unites China",-221,"221 BC",0,[109.27,34.38,2.2],"Xi’an"],
+  ["Muslim armies reach Sindh",711,"711",0,[67.5,24.8,2.4],"Sindh"],["Angkor Wat is built",1110,"early 1100s",0,[103.87,13.41,2.4],"Angkor"],
+  ["King Sejong’s alphabet, Hangul",1443,"1443",0,[126.98,37.57,2.4],"Seoul"],["Babur founds the Mughal Empire",1526,"1526",0,[76.97,29.39,2.4],"Panipat"],
+  ["Japan shuts out most foreigners",1635,"1630s",0,[129.85,32.74,2.4],"Dejima, Nagasaki"],["Britain takes Hong Kong Island",1842,"1842",0,[114.17,22.3,2.4],"Hong Kong"],
+  ["Oil is struck in Bahrain",1932,"1932",0,[50.55,26.03,2.4],"Bahrain"],["India becomes independent",1947,"1947",0,[77.2,28.6,2.4],"Delhi"],
+  ["Singapore is pushed out of Malaysia",1965,"1965",0,[103.82,1.35,2.4],"Singapore"],["Iran’s revolution",1979,"1979",0,[51.39,35.69,2.4],"Tehran"]],
+ after:(r,N)=>"From clay tablets to oil wells: most of the world’s people have lived in Asia through all of it."});
+
+/* ======================================================================== 4. On horseback or on foot? (hafrica, The fly
+   that stopped the horse) The tour's own text: the tsetse fly, common in the wet forests near the coast, kills horses,
+   so the cavalry empires (Mali, Songhai, Oyo) ruled the drier grasslands to the north, and the forest kingdoms (Asante,
+   Benin) fought on foot. Each answer turns the globe to the kingdom's city (Timbuktu for Mali, Gao for Songhai, Old Oyo,
+   Kumasi for Asante, Benin City). */
+const BINS_HORSE=BINS({tours:["hafrica"],title:"The fly that stopped the horse",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Was each kingdom an army of horsemen or of foot soldiers? Think where the tsetse fly lives.",ask:"Horsemen or foot soldiers?",
+ bins:["On horseback","On foot"],
+ items:[["Mali",0,"Mali ruled the dry grasslands of the Sahel, where horses could live.",[-3,16.77,3],"Timbuktu, Mali"],
+  ["Asante",1,"Kumasi lay in the forest, deep in the tsetse belt: Asante fought on foot.",[-1.62,6.69,3],"Kumasi, Asante"],
+  ["Songhai",0,"Gao, on the Niger at the edge of the desert, was cavalry country.",[-0.2,16.27,3],"Gao, Songhai"],
+  ["Oyo",0,"Oyo’s horsemen ruled the open savanna, though its rulers had to buy their horses from the north.",[4.1,8.97,3],"Old Oyo"],
+  ["Benin",1,"Benin City stood in the forest near the coast, where the tsetse killed horses.",[5.63,6.34,3],"Benin City"]],
+ after:(r,N)=>(r===N?"All right! ":"")+"The line between them is roughly where the dry grassland meets the forest: a fly drew a border across West Africa."});
+
+/* ======================================================================== 5. Africa in order (hafrica, Now explore) The
+   tour's own dates; each tap turns the globe there and names the place. */
+const SORT_AFR=SORTM({tours:["hafrica"],title:"Now explore",turns:true,
+ tip:"Over 3,000 years of Africa’s story: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["Ramesses II carves Abu Simbel",-1250,"about 1250 BC",0,[31.63,22.34,2.4],"Abu Simbel"],["Hannibal crosses the Alps",-218,"218 BC",0,[6.9,45.2,2.4],"The Alps"],
+  ["Kush raids Roman Egypt",-25,"about 25 BC",0,[32.9,24.09,2.4],"Aswan"],["Great Zimbabwe is begun",1100,"about 1100",0,[30.93,-20.27,2.4],"Great Zimbabwe"],
+  ["Mansa Musa’s gold reaches Cairo",1324,"1324",0,[31.24,30.04,2.4],"Cairo"],["A vegetable garden at the Cape",1652,"1652",0,[18.42,-33.93,2.4],"Cape Town"],
+  ["The Zulu win at Isandlwana",1879,"1879",0,[30.65,-28.36,2.4],"Isandlwana"],["Ethiopia wins at Adwa",1896,"1896",0,[38.9,14.17,2.4],"Adwa"],
+  ["Ghana becomes independent",1957,"1957",0,[-0.19,5.6,2.4],"Accra"],["South Sudan is born",2011,"2011",0,[31.58,4.85,2.4],"Juba"]],
+ after:(r,N)=>"From pharaohs to the newest country on Earth: Africa’s history is far older and richer than most maps show."});
+
+/* ======================================================================== 5b. Along the Company's route (hafrica, A colony
+   that began as a vegetable garden) Amsterdam, the Cape and Batavia are spread round half the globe; the buttons follow
+   the ships. The texts are the card's own. */
+const TURN_VOC_AF=TURNER({tours:["hafrica"],title:"A colony that began as a vegetable garden",mark:true,
+ tip:"Follow a Dutch East India Company ship: turn the globe along its route.",
+ places:[["The Cape",18.42,-33.93,1.5,"About halfway along the route, Jan van Riebeeck planted the Company’s Garden in 1652 to grow vegetables for passing ships.",1],
+  ["Amsterdam",4.9,52.37,1.8,"The ships set out from the Netherlands, many of their sailors soon sick with scurvy for lack of fresh food.",1],
+  ["Batavia",106.8,-6.2,1.8,"Batavia, today’s Jakarta, the Company’s base in Asia at the end of the voyage.",1]]});
+
+/* ======================================================================== 6. Was it ever Mexico? (hnamerica, Mexico loses
+   half) The tour's own text: Texas broke away from Mexico in 1836, and after the war of 1846–48 Mexico gave up
+   California, Nevada, Utah and most of Arizona and New Mexico; Florida went from Spain to the US in 1819 ("Spain in the
+   US"), Louisiana was bought from France in 1803 ("The Louisiana Purchase") and Alaska from Russia in 1867 ("1867: two
+   big deals"); Mexico was independent only from 1821. Each answer turns the globe to the state. */
+const BINS_MEX=BINS({tours:["hnamerica"],title:"Mexico loses half",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Which of today’s US states were once part of Mexico? Each answer turns the globe there.",ask:"Once part of Mexico, or never?",
+ bins:["Once part of Mexico","Never Mexican"],
+ items:[["California",0,"Mexico gave it up in 1848, nine days after gold was found at Sutter’s Mill.",[-119.4,37.2,2.6],"California"],
+  ["Florida",1,"Spain handed Florida to the US in 1819, two years before Mexico was independent.",[-81.7,28.1,2.6],"Florida"],
+  ["Nevada",0,"Part of what Mexico gave up after the war of 1846–48.",[-116.6,39.3,2.6],"Nevada"],
+  ["Texas",0,"Texas broke away from Mexico in 1836 and joined the US in 1845.",[-99.3,31.4,2.6],"Texas"],
+  ["Louisiana",1,"The US bought it from France in 1803.",[-92,31,2.6],"Louisiana"],
+  ["Utah",0,"Part of what Mexico gave up in 1848.",[-111.7,39.3,2.6],"Utah"],
+  ["Alaska",1,"Russia sold it to the US in 1867.",[-152,62,2],"Alaska"],
+  ["New Mexico",0,"Most of it was Mexican until 1848, and it kept the name.",[-106.1,34.4,2.6],"New Mexico"]],
+ after:(r,N)=>(r===N?"All right! ":"")+"About half of Mexico’s land became part of the US, which is why so many places in the Southwest have Spanish names."});
+
+/* ======================================================================== 7. North America in order (hnamerica, Now explore)
+   The tour's own dates; each tap turns the globe there and names the place. */
+const SORT_NAM=SORTM({tours:["hnamerica"],title:"Now explore",turns:true,
+ tip:"Over 3,000 years of North America: put the tour’s moments in order. Each one you tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["The Olmecs carve giant heads",-1400,"from about 1400 BC",0,[-94.04,18.1,2.4],"La Venta"],["Cahokia at its peak",1050,"about 1050",0,[-90.06,38.66,2.4],"Cahokia"],
+  ["Tenochtitlan is founded",1325,"1325",0,[-99.13,19.43,2.4],"Tenochtitlan"],["Columbus lands in the Bahamas",1492,"1492",0,[-74.5,24.05,2.4],"San Salvador"],
+  ["Spain builds St Augustine",1565,"1565",0,[-81.31,29.9,2.4],"St Augustine"],["Independence is declared",1776,"1776",0,[-75.16,39.95,2.4],"Philadelphia"],
+  ["The Louisiana Purchase",1803,"1803",0,[-90.07,29.95,2.4],"New Orleans"],["The Erie Canal opens",1825,"1825",0,[-78.88,42.89,2.4],"Buffalo"],
+  ["Gold at Sutter’s Mill",1848,"1848",0,[-120.89,38.8,2.4],"Sutter’s Mill"],["The golden spike",1869,"1869",0,[-112.55,41.62,2.4],"Promontory Summit"],
+  ["The Panama Canal opens",1914,"1914",0,[-79.7,9.1,2.4],"Panama"]],
+ after:(r,N)=>"From Olmec rubber balls to a canal between two oceans: North America’s map was made and remade many times."});
 
 
-
-
-const DEFS=[BINS_OCE];
+const DEFS=[BINS_OCE,GUESS_CLAY,SORT_ASIA,BINS_HORSE,SORT_AFR,TURN_VOC_AF,BINS_MEX,SORT_NAM];
 
 
 
