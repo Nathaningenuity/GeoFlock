@@ -317,16 +317,23 @@ let COASTS=null,COASTP=null;
 function loadCoasts(){if(COASTP)return;COASTP=fetch("textures/ISLAND_COASTS.json?v=1").then(r=>r.json()).then(j=>{COASTS=j;LIST.forEach(e=>{if(isle(e)){e._fine=undefined;e._shK=null;e._bb=null;if(e._g)e._g._d=null}});draw();follow()}).catch(()=>{})}
 function fine(e){if(!isle(e))return null;if(e._fine!==undefined)return e._fine;if(!COASTS){loadCoasts();return null}e._fine=null;const ix=COASTS.e[e.n];if(!ix)return null;
  const P=ix.map(i=>{const f=COASTS.p[i],r=[];let x=0,y=0;for(let k=0;k<f.length;k+=2){x+=f[k];y+=f[k+1];r.push([x/1e3,y/1e3])}const a=r[0],z=r[r.length-1];if(a[0]!==z[0]||a[1]!==z[1])r.push(a.slice());
-  /* d3 reads a ring wound the other way as the whole Earth outside the island: turn those round */try{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()}catch(x){}return[r]});
+  /* d3 reads a ring wound the other way as the whole Earth outside the island: turn those round */try{if(d3.geoArea({type:"Polygon",coordinates:[r]})>2*Math.PI)r.reverse()}catch(x){}return mapLand([r])||[r]});
  /* an island chain whose detailed coast covers only some of its islands (the Pitcairn Islands: Pitcairn itself, but not
     Henderson, Ducie or Oeno) keeps its other islands from the simple outline, so zooming in never drops them */
  try{const G=e.g&&(e.g.type==="Polygon"?[e.g.coordinates]:e.g.type==="MultiPolygon"?e.g.coordinates:[]);if(G&&G.length){const F={type:"MultiPolygon",coordinates:P},cs=P.map(Q=>{try{return d3.geoCentroid({type:"Polygon",coordinates:Q})}catch(x){return null}}).filter(Boolean);
   G.forEach(Q=>{let c;try{c=d3.geoCentroid({type:"Polygon",coordinates:Q})}catch(x){return}if(!c||!isFinite(c[0]))return;if(d3.geoContains(F,c))return;if(cs.some(k=>d3.geoDistance(k,c)<.0016))return;P.push(Q)})}}catch(x){}
  e._fine={type:"MultiPolygon",coordinates:P};return e._fine}
+/* Natural Earth's land file puts some small islands off from where its country shapes (the map's own coast) have them:
+   its Christmas Island is a few km east and too narrow. A small island takes the map's own shape of it when there is one
+   (about the same size and place), so the highlight sits on the map's coast */
+function mapLand(Q){try{const G={type:"Polygon",coordinates:Q},b=d3.geoBounds(G),w=b[1][0]-b[0][0],h=b[1][1]-b[0][1];if(!(w>0&&w<2&&h<2))return null;const a=d3.geoArea(G);let best=null,bi=.45;
+ for(const o of landParts()){if(!o.b){o.b=d3.geoBounds({type:"Polygon",coordinates:o.P});o.a=d3.geoArea({type:"Polygon",coordinates:o.P})}const B=o.b;if(B[1][0]<B[0][0])continue;
+  const ix=Math.min(b[1][0],B[1][0])-Math.max(b[0][0],B[0][0]),iy=Math.min(b[1][1],B[1][1])-Math.max(b[0][1],B[0][1]);if(ix<=0||iy<=0)continue;const r=a/o.a;if(r<.5||r>2)continue;
+  const u=ix*iy/(w*h+(B[1][0]-B[0][0])*(B[1][1]-B[0][1])-ix*iy);if(u>bi){bi=u;best=o}}return best?best.P:null}catch(x){return null}}
 const shapeOf=e=>fine(e)||e.g;
 /* the shape to draw at this zoom, as a hovered country is: the simple outline zoomed out, the detailed coast once the map is close
    enough for its detail to show (a degree over about 10 pixels) */
-function shapeAt(e){if(!fine(e))return e.g;let ppd=0;try{const a=screenOf(e.ll),b=screenOf([e.ll[0]+1,e.ll[1]]);if(a&&b)ppd=Math.hypot(b[0]-a[0],b[1]-a[1])}catch(x){}return ppd>=10?fine(e):e.g}
+function shapeAt(e){if(!fine(e))return e.g;let ppd=0;try{/* a step of a hundredth of a degree: a whole degree away is off screen when close in */const a=screenOf(e.ll),b=screenOf([e.ll[0]+.01,e.ll[1]]);if(a&&b)ppd=100*Math.hypot(b[0]-a[0],b[1]-a[1]);else if(onGlobe()&&amGlobe.zoom>8)ppd=99}catch(x){}return ppd>=10?fine(e):e.g}
 function islandize(e){if(e._isl||e.cat!=="regions"||!isle(e)||fine(e))return;e._isl=1;try{const own=landParts().filter(o=>d3.geoContains(e.g,o.c)).map(o=>o.P);if(own.length){e.g={type:"MultiPolygon",coordinates:own};e._shK=null}}catch(x){}}
 /* a searched country keeps a white outline round it until its chip is closed */
 const cShape=e=>{if(e._cg===undefined){e._cg=null;try{e._cg=membersOf([e.cc])}catch(x){}}return e._cg};
