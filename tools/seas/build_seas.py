@@ -7,7 +7,9 @@ Sources
     Fetched from geo.vliz.be/geoserver/MarineRegions/wfs (typeName MarineRegions:iho, outputFormat application/json).
   - Natural Earth 1:10m land and minor islands (public domain), naturalearthdata.com.
 
-Usage: python3 build_seas.py iho.json ne_10m_land.shp ne_10m_minor_islands.shp out.json
+Usage: python3 build_seas.py iho.json ne_10m_land.shp ne_10m_minor_islands.shp ne_10m_antarctic_ice_shelves_polys.shp out.json
+Antarctica's ice shelves are taken out too, and the South Atlantic, Indian and South Pacific Oceans stop where the
+Southern Ocean begins (the IHO's 1953 limits ran them to Antarctica; the app shows the Southern Ocean on its own).
 Each sea is keyed by the name the app uses for it. A few app seas take in IHO areas the app has no name of its own for
 (the Mediterranean takes in its western and eastern basins and the Alboran and Ligurian Seas; the Baltic the Gulf of Riga;
 the Red Sea the Gulf of Aqaba; Skagerrak and Kattegat both). IHO areas with no app name are kept under their own names
@@ -44,8 +46,8 @@ def land_shapes(*paths):
             out.extend(list(g.geoms) if hasattr(g, "geoms") else [g])
     return out
 
-def main(iho, landp, minorp, outp):
-    land = land_shapes(landp, minorp)
+def main(iho, landp, minorp, icep, outp):
+    land = land_shapes(landp, minorp, icep)
     tree = STRtree(land)
     F = json.load(open(iho))["features"]
     groups = {}
@@ -56,9 +58,12 @@ def main(iho, landp, minorp, outp):
         if not g.is_valid: g = g.buffer(0)
         for key in {RENAME.get(n, n)} | ({ALSO[n]} if n in ALSO else set()):
             groups.setdefault(key, []).append(g)
+    south = unary_union(groups["Southern Ocean"])
     res = {}
     for key, gs in groups.items():
         g = unary_union(gs) if len(gs) > 1 else gs[0]
+        if key in ("South Atlantic Ocean", "Indian Ocean", "South Pacific Ocean"):
+            g = g.difference(south)
         hits = [land[i] for i in tree.query(g)]
         if hits:
             g = g.difference(unary_union(hits))
@@ -87,4 +92,4 @@ def main(iho, landp, minorp, outp):
                "seas": res}, open(outp, "w"), separators=(",", ":"), ensure_ascii=False)
 
 if __name__ == "__main__":
-    main(*sys.argv[1:5])
+    main(*sys.argv[1:6])
