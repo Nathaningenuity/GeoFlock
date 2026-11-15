@@ -459,7 +459,7 @@ const SORT_VOTE=SORTM({tours:["hoceania"],title:"Women vote first",turns:true,
    expedition saw the ice "at a point with coordinates 69º21'28"S 2º14'50"W". The other texts are the card's own. */
 const TURN_SIGHT=TURNER({tours:["hantarctica"],title:"First sight of land",mark:true,
  tip:"Three expeditions, one year: turn the globe to each sighting, in order.",
- places:[["All three",-30,-66,1.6,"Bellingshausen’s sighting was far to the east of the other two: about 55° of longitude away.",2],
+ places:[["The three sightings",-30,-66,1.6,"Bellingshausen’s sighting was far to the east of the other two: about 55° of longitude away.",2],
   ["Bellingshausen",-2.25,-69.36,2.6,"27 January 1820: the Russian expedition led by Bellingshausen sees an ice shelf. He may not have known he was looking at a continent."],
   ["Bransfield",-57,-63.5,3,"30 January 1820: three days later, Britain’s Edward Bransfield sights the Antarctic Peninsula.",1],
   ["Palmer",-61.5,-64.5,3,"November 1820: the American sealer Nathaniel Palmer sees it too.",1]]});
@@ -525,34 +525,6 @@ const BINS_TREATY=BINS({tours:["hantarctica"],title:"A continent for science",tu
   ["Australia",0,"One of the twelve.",[134,-25,1.6],"Australia"],
   ["Canada",1,"It joined in 1988.",[-100,58,1.4],"Canada"]],
  after:(r,N)=>(r===N?"All right! ":"")+"The twelve were the countries with bases in Antarctica in 1957–58. By 2024, 58 countries had joined the treaty."});
-
-/* ======================================================================== 10. Up the river (musicsport, Born in the American
-   South) The stop's own places and texts: the music follows its line from New Orleans up the Mississippi to Chicago,
-   and on to the Bronx. */
-const TURN_SOUTH=TURNER({tours:["musicsport"],title:"Born in the American South",mark:true,
- tip:"Follow the music up the Mississippi: each button turns the globe to where a sound was born.",
- places:[["New Orleans",-90.07,29.95,4,"Jazz: African American musicians created it in New Orleans around 1900.",1],
-  ["The Mississippi Delta",-90.57,34.2,4,"The blues grew up in the cotton country of the Mississippi Delta.",1],
-  ["Memphis",-90.05,35.15,4,"Memphis gave the world rock and roll, and Elvis Presley, in the 1950s.",1],
-  ["Chicago",-87.63,41.88,4,"Millions of Black Americans moved north in the Great Migration and took the blues with them; in Chicago it went electric.",1],
-  ["The Bronx",-73.87,40.84,4,"Hip hop began at block parties in the Bronx, New York, in the 1970s.",1]]});
-
-/* ======================================================================== 11. Where did it begin? (musicsport, Now explore)
-   A review of the tour's own stops; each answer turns the globe to the place the card names. */
-const BINS_MS=BINS({tours:["musicsport"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
- tip:"The tour found where the world’s favourite sounds and sports began. Where did each of these start?",ask:"Which part of the world?",
- bins:["The Americas","Europe or Africa","Asia"],
- items:[["Reggae",0,"It grew up in Kingston, Jamaica, in the 1960s.",[-76.79,18,2.6],"Kingston"],
-  ["Judo",2,"It was invented in Tokyo in 1882.",[139.7,35.7,2.6],"Tokyo"],
-  ["Tango",0,"It was born in the ports of the Río de la Plata in the late 1800s.",[-57.5,-35,2.4],"Río de la Plata"],
-  ["Afrobeats",1,"It comes from Lagos, in Nigeria.",[3.38,6.52,2.6],"Lagos"],
-  ["The Beatles",1,"They formed in Liverpool in 1960.",[-2.98,53.41,2.8],"Liverpool"],
-  ["Chess",2,"It began in India about 1,500 years ago, as chaturanga.",[78,22,2],"India"],
-  ["Hip hop",0,"It began at block parties in the Bronx, New York, in the 1970s.",[-73.87,40.84,2.6],"The Bronx"],
-  ["Taekwondo",2,"It was developed in South Korea in the 1950s.",[127,37.57,2.6],"South Korea"],
-  ["Football’s modern rules",1,"They were written in England in 1863.",[-0.13,51.51,2.8],"London"],
-  ["Capoeira",0,"It comes from enslaved Africans in Brazil.",[-38.5,-12.97,2.4],"Bahia"]],
- after:(r,N)=>(r===N?"All right! ":"")+"Each began in one place, and then travelled with sailors, migrants, soldiers, records and now the internet."});
 
 /* ======================================================================== 12. Two kinds of faith (hg3c, Two kinds of faith)
    The card's own sorting (Christianity, Islam and Buddhism universalising; Hinduism, Shinto and Judaism ethnic); each
@@ -630,7 +602,7 @@ const TURN_GALLEON=TURNER({tours:["hgunpowder"],title:"Silver and the Manila gal
 :is(body.dark-theme,body.sky-night) .rw7-ra{color:#9fc3ff}:is(body.dark-theme,body.sky-night) .rw7-rs{color:#ff8a9e}:is(body.dark-theme,body.sky-night) .rw7-note{color:#aab6c8}
 `;document.head.appendChild(s)}
 
-const DEFS=[TURN_RUBBER,GUESS_FALK,SORT_SAM,TURN_FLEET,TURN_ANZAC,SORT_VOTE,TURN_SIGHT,RACE,BINS_TREATY,TURN_SOUTH,BINS_MS,BINS_FAITH,BINS_ACC,SORT_PORT,BINS_EXCH,TURN_GALLEON];
+const DEFS=[TURN_RUBBER,GUESS_FALK,SORT_SAM,TURN_FLEET,TURN_ANZAC,SORT_VOTE,TURN_SIGHT,RACE,BINS_TREATY,BINS_FAITH,BINS_ACC,SORT_PORT,BINS_EXCH,TURN_GALLEON];
 
 
 
