@@ -239,9 +239,9 @@ FIX.hafrica={
 };
 
 FIX.hnamerica={
-  /* a Fort Sumter photo hung from Florida on the opening map (it has a stop of its own): it goes; framed a little east,
-     so the west coast clears the card */
-  "North America’s history":S=>{DROPPH(S,/^Fort Sumter/);VIEW(S,[-92,40,1])},
+  /* a Fort Sumter photo hung from Florida on the opening map, and after it a Viñales Valley photo from Cuba (each has a
+     stop or a tour of its own): they go; framed a little east, so the west coast clears the card */
+  "North America’s history":S=>{DROPPH(S,/^(Fort Sumter|Cuba|Viñales)/);VIEW(S,[-92,40,1])},
   /* the White Sands footprints, the stat's subject, were round the globe's edge: framed between Beringia and New
      Mexico */
   "The first Americans":S=>VIEW(S,[-128,48,1.1]),
@@ -264,21 +264,24 @@ FIX.hnamerica={
   "Thirteen colonies":S=>VIEW(S,[-73,40,3]),
   /* St Louis sat at the globe's right edge and New Orleans' photo at its bottom edge: framed a little east */
   "The Louisiana Purchase":S=>VIEW(S,[-93,38,2.2]),
-  /* New York, the city the canal made, was not named on the map, where the Hudson's arrow ends: it gets a label */
-  "The canal that made New York":S=>ADDPIN(S,[[-74.01,40.71],"New York","point"]),
+  /* New York, the city the canal made, was not named on the map, where the Hudson's arrow ends: it gets a label. Philadelphia's, 130 km away, pushed it off its place, and goes (the card names the city) */
+  "The canal that made New York":S=>{ADDPIN(S,[[-74.01,40.71],"New York","point"]);DROP(S,/^Philadelphia$/);VIEW(S,[-75.6,41.7,6.2])},
   /* the Cherokee homeland's photo sat at the globe's edge by the map buttons: framed a little east */
   "The Trail of Tears":S=>VIEW(S,[-86,34.5,3.6]),
-  /* today's "Mexico" label hung on a leader over the map's own name */
-  "Mexico loses half":S=>DROP(S,/^Mexico$/),
+  /* today's "Mexico" label hung on a leader over the map's own name, and Texas, part of the land lost, lay at the
+     globe's edge: the label goes, framed a little east (the Mexico City photo, then cut off at the globe's bottom
+     edge, goes too) */
+  "Mexico loses half":S=>{DROP(S,/^Mexico$/);DROPPH(S,/^Mexico City/);VIEW(S,[-103,31,2.4])},
   /* the Gettysburg photo lay on the zoom buttons and Lincoln's portrait out at sea: framed a little east */
   "The Civil War":S=>VIEW(S,[-83,36,2.08]),
   /* the card was on the right and Sacramento, where the line starts, was off the globe: the card goes left, framed
      coast to coast */
-  "Coast to coast by rail":S=>VIEW(S,[-104,40,2.2]),
-  /* the card was on the right, over Ottawa: it goes left, framed from Alaska to Ottawa */
-  "1867: two big deals":S=>VIEW(S,[-112,54,1.05]),
+  "Coast to coast by rail":S=>VIEW(S,[-106,40,2.7]),
+  /* the card was on the right, over Ottawa: it goes left, framed from Alaska to Ottawa. Ottawa's photo, half a
+     continent from Alaska, hung by the map buttons whatever the frame: a plain label marks the new capital instead */
+  "1867: two big deals":S=>{DROPPH(S,/^Ottawa/);ADDPIN(S,[[-75.7,45.42],"Ottawa","point"]);VIEW(S,[-108,54,1.05])},
   /* Cape Horn's label was cut off at the globe's bottom edge: framed further south */
-  "Digging the Panama Canal":S=>VIEW(S,[-70,-8,1]),
+  "Digging the Panama Canal":S=>VIEW(S,[-64,-20,1]),
   /* a "United States" label sat on the map's own, Guam's and the Northern Marianas' hung behind the card, and American
      Samoa's and the Virgin Islands' at the globe's edges: those go, and Puerto Rico's label loses its "(United States)"
      (the key says the pale places are US territories) */
