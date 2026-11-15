@@ -169,7 +169,7 @@ FIX.hoceania={
   "Gold and the Eureka Stockade":S=>VIEW(S,[144.3,-37.2,13]),
   /* the card sat on the right and New Zealand, the stop's subject, was off the globe's bottom edge; the card's list of
      dates moves into the stop's sorting game (part 2), and the country labels go */
-  "Women vote first":S=>{NOCOUNTRY(S,OCE);LOCK(S,"list",[]);VIEW(S,[160,-35,1.4])},
+  "Women vote first":S=>{NOCOUNTRY(S,OCE);LOCK(S,"list",[]);VIEW(S,[160,-38,1.4])},
   /* the Big Island's label covered the map's "Hawaiian Kingdom" (the stop is about Honolulu) */
   "A kingdom overthrown":S=>DROP(S,/^Hawaiʻi, the Big Island$/),
   /* the card sat on the right, with "Australia" and "New Zealand" labels on long leaders */
@@ -179,8 +179,8 @@ FIX.hoceania={
   "The Anzac legend":S=>VIEW(S,[80,0,1]),
   /* the card sat on the right, Darwin was off the globe's left edge and Sydney off its bottom */
   "Bombs on Darwin":S=>VIEW(S,[146,-20,1.35]),
-  /* the card sat on the right, over Moruroa; the Australian sites, half a world away, are left out of the frame */
-  "Nuclear tests":S=>{AREA(S,/^(Maralinga|Monte Bello)/);VIEW(S,[-170,-4,1.05])},
+  /* the card sat on the right, over Moruroa: framed so the Australian sites clear the card and Moruroa stays in sight */
+  "Nuclear tests":S=>VIEW(S,[168,-12,1.05]),
   "New Pacific nations":S=>VIEW(S,[172,-10,1.1])
 };
 
@@ -504,7 +504,7 @@ const RACE=(function(){const DAY=864e5,T0=Date.UTC(1911,9,19),T1=Date.UTC(1912,2
    const qp=proj(L,[0,-90]);if(qp)svgEl(L.svg,"circle",{cx:qp[0],cy:qp[1],r:7,class:"rw7-pole"});
    const a=proj(L,Aat(k)),s=proj(L,Sat(k));
    if(a)svgEl(L.svg,"circle",{cx:a[0],cy:a[1],r:8,class:"rw7-mA"});if(s)svgEl(L.svg,"circle",{cx:s[0],cy:s[1],r:8,class:"rw7-mS"});
-   putTag(L,L.ta,a,"Amundsen",-34);putTag(L,L.ts,s,"Scott",12)}}})();
+   putTag(L,L.ta,a,"Amundsen",12);putTag(L,L.ts,s,"Scott",12)}}})();
 
 /* ======================================================================== 9. Signed in 1959? (hantarctica, A continent for
    science) Wikipedia, "Antarctic Treaty System": the 12 original signatories (Argentina, Australia, Belgium, Chile,
@@ -526,6 +526,98 @@ const BINS_TREATY=BINS({tours:["hantarctica"],title:"A continent for science",tu
   ["Canada",1,"It joined in 1988.",[-100,58,1.4],"Canada"]],
  after:(r,N)=>(r===N?"All right! ":"")+"The twelve were the countries with bases in Antarctica in 1957–58. By 2024, 58 countries had joined the treaty."});
 
+/* ======================================================================== 10. Up the river (musicsport, Born in the American
+   South) The stop's own places and texts: the music follows its line from New Orleans up the Mississippi to Chicago,
+   and on to the Bronx. */
+const TURN_SOUTH=TURNER({tours:["musicsport"],title:"Born in the American South",mark:true,
+ tip:"Follow the music up the Mississippi: each button turns the globe to where a sound was born.",
+ places:[["New Orleans",-90.07,29.95,4,"Jazz: African American musicians created it in New Orleans around 1900.",1],
+  ["The Mississippi Delta",-90.57,34.2,4,"The blues grew up in the cotton country of the Mississippi Delta.",1],
+  ["Memphis",-90.05,35.15,4,"Memphis gave the world rock and roll, and Elvis Presley, in the 1950s.",1],
+  ["Chicago",-87.63,41.88,4,"Millions of Black Americans moved north in the Great Migration and took the blues with them; in Chicago it went electric.",1],
+  ["The Bronx",-73.87,40.84,4,"Hip hop began at block parties in the Bronx, New York, in the 1970s.",1]]});
+
+/* ======================================================================== 11. Where did it begin? (musicsport, Now explore)
+   A review of the tour's own stops; each answer turns the globe to the place the card names. */
+const BINS_MS=BINS({tours:["musicsport"],title:"Now explore",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"The tour found where the world’s favourite sounds and sports began. Where did each of these start?",ask:"Which part of the world?",
+ bins:["The Americas","Europe or Africa","Asia"],
+ items:[["Reggae",0,"It grew up in Kingston, Jamaica, in the 1960s.",[-76.79,18,2.6],"Kingston"],
+  ["Judo",2,"It was invented in Tokyo in 1882.",[139.7,35.7,2.6],"Tokyo"],
+  ["Tango",0,"It was born in the ports of the Río de la Plata in the late 1800s.",[-57.5,-35,2.4],"Río de la Plata"],
+  ["Afrobeats",1,"It comes from Lagos, in Nigeria.",[3.38,6.52,2.6],"Lagos"],
+  ["The Beatles",1,"They formed in Liverpool in 1960.",[-2.98,53.41,2.8],"Liverpool"],
+  ["Chess",2,"It began in India about 1,500 years ago, as chaturanga.",[78,22,2],"India"],
+  ["Hip hop",0,"It began at block parties in the Bronx, New York, in the 1970s.",[-73.87,40.84,2.6],"The Bronx"],
+  ["Taekwondo",2,"It was developed in South Korea in the 1950s.",[127,37.57,2.6],"South Korea"],
+  ["Football’s modern rules",1,"They were written in England in 1863.",[-0.13,51.51,2.8],"London"],
+  ["Capoeira",0,"It comes from enslaved Africans in Brazil.",[-38.5,-12.97,2.4],"Bahia"]],
+ after:(r,N)=>(r===N?"All right! ":"")+"Each began in one place, and then travelled with sailors, migrants, soldiers, records and now the internet."});
+
+/* ======================================================================== 12. Two kinds of faith (hg3c, Two kinds of faith)
+   The card's own sorting (Christianity, Islam and Buddhism universalising; Hinduism, Shinto and Judaism ethnic); each
+   answer turns the globe to the faith's hearth, as pinned on the stop. */
+const BINS_FAITH=BINS({tours:["hg3c"],title:"Two kinds of faith",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Does each faith seek converts everywhere, or belong mainly to one people? Sort them.",ask:"Universalising or ethnic?",
+ bins:["Universalising","Ethnic"],
+ items:[["Christianity",0,"About 2.4 billion followers; it offers its message to all and spread by conversion.",[35.2,31.8,2.6],"Jerusalem"],
+  ["Islam",0,"About 2 billion followers; it spread by conversion from its hearth in Arabia.",[39.8,21.4,2.6],"Mecca"],
+  ["Hinduism",1,"Tied to one people and homeland: it spread mainly when believers migrated, as Indian workers did to Mauritius, Fiji and Trinidad.",[83,25.3,2.6],"Varanasi"],
+  ["Buddhism",0,"It began in northern India but lives on mostly in East and Southeast Asia, carried by converts.",[83.3,27.5,2.6],"Lumbini"],
+  ["Shinto",1,"Japan’s own faith, tied to its people and land.",[138,36,2.4],"Japan"],
+  ["Judaism",1,"Tied to one people and a homeland.",[35.2,31.8,2.6],"Jerusalem"]],
+ after:(r,N)=>(r===N?"All right! ":"")+"Universalising faiths spread far from their hearths by conversion; ethnic faiths stay mostly where their people live, and move when they migrate."});
+
+/* ======================================================================== 13. Acculturation or assimilation? (hg3c,
+   Acculturation and assimilation) The card's own definitions, tried on simple made-up examples (the first two are the
+   card's own). */
+const BINS_ACC=BINS({tours:["hg3c"],title:"Acculturation and assimilation",
+ tip:"Try the two ideas on some families. Has each adopted the new culture while keeping its own, or lost its own?",ask:"Acculturation or assimilation?",
+ bins:["Acculturation","Assimilation"],
+ items:[["A family speaks English at work and their home language at home",0,"They have adopted a trait of the new culture and kept their own."],
+  ["Great-grandchildren of Italian immigrants speak only English",1,"The original language is largely lost."],
+  ["A newcomer learns the local language but still cooks and celebrates as at home",0,"New traits added, old ones kept."],
+  ["After three generations, a family keeps none of its old festivals or language",1,"The original culture has largely gone."],
+  ["Children of immigrants watch local TV, then pray at their parents’ temple",0,"Two cultures side by side in one family."]],
+ after:(r,N)=>(r===N?"All right! ":"")+"Acculturation adds; assimilation replaces. Many families pass from the first to the second over a few generations."});
+
+/* ======================================================================== 14. Portugal's sea road in order (hgunpowder,
+   Round Africa to India) The stop's own dates (its pins and photos); each tap turns the globe there. */
+const SORT_PORT=SORTM({tours:["hgunpowder"],title:"Round Africa to India",turns:true,
+ tip:"Portugal worked its way round Africa to Asia, port by port. Put the steps in order; each tap turns the globe there.",
+ first:"Earliest",last:"Latest",bars:false,
+ items:[["A castle at Elmina, West Africa",1482,"1482",0,[-1.35,5.08,2.4],"Elmina"],["Round the Cape of Good Hope",1488,"1488",0,[18.47,-34.36,2.4],"Cape of Good Hope"],
+  ["Vasco da Gama reaches Calicut",1498,"1498",0,[75.8,11.25,2.4],"Calicut"],["Goa is seized",1510,"1510",0,[73.82,15.5,2.4],"Goa"],
+  ["Malacca is seized",1511,"1511",0,[102.25,2.19,2.4],"Malacca"],["Hormuz is seized",1515,"1515",0,[56.46,27.06,2.4],"Hormuz"],
+  ["A trading post at Macau",1557,"1557",0,[113.54,22.19,2.4],"Macau"]],
+ after:(r,N)=>"In 75 years Portugal reached from West Africa to China: mostly by holding fortified ports and controlling the sea lanes with guns on ships."});
+
+/* ======================================================================== 15. From the Americas, or to them? (hgunpowder,
+   The Columbian exchange) The card's own lists: maize, potatoes, tomatoes, chillies and cacao went from the Americas;
+   wheat, sugar cane, coffee, horses, cattle and pigs, and smallpox, went to them. */
+const BINS_EXCH=BINS({tours:["hgunpowder"],title:"The Columbian exchange",
+ tip:"After 1492 ships carried plants, animals and germs both ways. Which way did each go?",ask:"Which way across the Atlantic?",
+ bins:["From the Americas","To the Americas"],turn:[[-80,5,1.2],[0,28,1.2]],
+ items:[["Potatoes",0,"From the Andes. The potato later helped Europe’s population grow."],
+  ["Maize",0,"From Mexico and Central America; it became a staple across Africa."],
+  ["Horses",1,"Europeans brought them west across the Atlantic."],
+  ["Chillies",0,"Before 1492 there were no chillies in India."],
+  ["Wheat",1,"It came from the Old World."],
+  ["Smallpox",1,"New to the Americas, it killed a huge share of their peoples in the 1500s."],
+  ["Tomatoes",0,"Before 1492 there were no tomatoes in Italy."],
+  ["Coffee",1,"It came from the Old World."],
+  ["Cattle",1,"Brought by Europeans from the Old World."],
+  ["Cacao",0,"Chocolate’s bean comes from the Americas."]],
+ after:(r,N)=>(r===N?"All right! ":"")+"The exchange changed what the whole world eats, but the germs did the most harm."});
+
+/* ======================================================================== 16. Silver round the world (hgunpowder, Silver
+   and the Manila galleons) Potosí, Acapulco and Manila are 174° of longitude apart; the texts are the card's own. */
+const TURN_GALLEON=TURNER({tours:["hgunpowder"],title:"Silver and the Manila galleons",mark:true,
+ tip:"Follow the silver halfway round the world with the buttons.",
+ places:[["Potosí",-65.75,-19.58,2.2,"In 1545 the Spanish found a mountain of silver at Potosí, in today’s Bolivia, and forced Indigenous workers to mine it."],
+  ["Acapulco",-99.9,16.85,2.2,"Much of the silver went north to Acapulco, in Mexico. From 1565 to 1815 a galleon sailed from here to Manila every year.",1],
+  ["Manila",120.97,14.6,2.2,"Over 14,000 km of open ocean later, Chinese merchants traded silk and porcelain for the silver at Manila. Ming China collected its taxes in silver.",1]]});
+
 
 /* styles for this file's own controls (the race) */
 {const s=document.createElement("style");s.textContent=`
@@ -538,7 +630,7 @@ const BINS_TREATY=BINS({tours:["hantarctica"],title:"A continent for science",tu
 :is(body.dark-theme,body.sky-night) .rw7-ra{color:#9fc3ff}:is(body.dark-theme,body.sky-night) .rw7-rs{color:#ff8a9e}:is(body.dark-theme,body.sky-night) .rw7-note{color:#aab6c8}
 `;document.head.appendChild(s)}
 
-const DEFS=[TURN_RUBBER,GUESS_FALK,SORT_SAM,TURN_FLEET,TURN_ANZAC,SORT_VOTE,TURN_SIGHT,RACE,BINS_TREATY];
+const DEFS=[TURN_RUBBER,GUESS_FALK,SORT_SAM,TURN_FLEET,TURN_ANZAC,SORT_VOTE,TURN_SIGHT,RACE,BINS_TREATY,TURN_SOUTH,BINS_MS,BINS_FAITH,BINS_ACC,SORT_PORT,BINS_EXCH,TURN_GALLEON];
 
 
 

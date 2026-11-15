@@ -189,9 +189,59 @@ protApply();setTimeout(protApply,1500);setTimeout(protApply,6000);addEventListen
 
 FIX.timeline={};
 
-FIX.words={};
+FIX.words={
+  /* Amsterdam, London and Lisbon, where 'te' and 'chá' arrived, lay under the card, their labels pushed onto leaders
+     over Turkey and the Arctic: the stop's game turns the globe to each language's home (the labels stay) */
+  /* a "United Kingdom" label on a leader (the map names it, and the lines show where the words came to) */
+  "Borrowed words":S=>DROP(S,/^United Kingdom$/),
+  /* Iraq, Egypt and China were shaded, which pushed the Uruk photo onto Eritrea and the Abydos label off Egypt;
+     Anyang was at the globe's edge and Mexico, the third birthplace, round the back: shading off, and the stop's buttons
+     turn the globe to each place where writing began */
+  "Writing begins":S=>{NOSHADE(S);VIEW(S,[38,29,2.2])},
+  /* "North Korea" and "South Korea" labels sat on the map's own names */
+  "Hangul: an alphabet by design":S=>DROP(S,/^(North|South) Korea$/),
+  /* Dagestan's label hung far from its place and the Tbilisi photo was pushed onto Azerbaijan: framed closer */
+  "The mountain of languages":S=>VIEW(S,[45,42.3,5.5]),
+  /* a "Papua New Guinea" label on a leader into Indonesia (the map names it), and Vanuatu and the Solomon Islands off
+     the globe's edge: the label goes; framed further east */
+  "Papua New Guinea: 840 languages":S=>{DROP(S,/^Papua New Guinea$/);VIEW(S,[153,-9,2.4])},
+  /* the globe looked at the empty Pacific: Wales and Israel were round the back and New Zealand at the bottom edge by
+     the map's notices; the stop's buttons turn the globe to each language (the far ones are left out of the opening
+     frame), and the "New Zealand" and "Israel" labels go (the map names them) */
+  "Endangered and revived":S=>{NOSHADE(S);DROP(S,/^(New Zealand|Israel)$/);AREA(S,/^(Welsh|Hebrew)/);VIEW(S,[-170,-8,1.1])},
+  /* a "Poland" label on the map's own name, and the shading of Poland pushed the photos off their places */
+  "Esperanto":S=>{NOSHADE(S);DROP(S,/^Poland$/)},
+  "Now explore":S=>{}
+};
 
-FIX.learning={};
+FIX.learning={
+  /* the Seoul photo sat on the map's zoom buttons: framed a little wider */
+  "Exams for an empire":S=>VIEW(S,[114,31,1.7]),
+  /* Kairouan, where Fatima al-Fihri's family came from, was off the globe's right edge (only the dashed line showed),
+     and Morocco and Tunisia were shaded: shading off, framed wider, Fez to Kairouan */
+  "Al-Qarawiyyin":S=>{NOSHADE(S);VIEW(S,[5,34,3])},
+  /* "United Kingdom", "France", "Spain" and "Italy" labels on leaders (the map names them), the shading of the four
+     countries that pushed the town labels away, and Bologna's label under the map key: labels and shading go, framed
+     further east */
+  "Bologna, Paris and Oxford":S=>{NOSHADE(S);DROP(S,/^(United Kingdom|France|Spain|Italy)$/);VIEW(S,[10,47,3])},
+  /* a "Germany" label on a leader (the map names it) and the shading of Germany; the Stockholm photo hung over the map's
+     switches at the top (the Sweden pin is on Stockholm): label, shading and photo go */
+  "Print, Protestants and reading":S=>{NOSHADE(S);DROP(S,/^Germany$/);DROPPH(S,/^Stockholm$/);VIEW(S,[10,50,2.6])},
+  /* the globe looked at the middle of Canada, shaded, with the cable's two ends at its top edge by the map's switches,
+     and "Ireland" and "Canada" labels on leaders: framed on the Atlantic between the two ends, labels and shading go */
+  "Cables under the sea":S=>{NOSHADE(S);DROP(S,/^(Ireland|Canada)$/);VIEW(S,[-32,50,2.2])},
+  /* Finland's label hung over the map's switches at the globe's top edge and Australia was off its bottom: the stop's
+     buttons turn the globe from country to country (the far ones are left out of the opening frame) */
+  "School around the world":S=>{NOSHADE(S);AREA(S,/^(Finland|Japan|Australia):/);VIEW(S,[104,12,1.6])},
+  /* an "Australia" label on a long leader (the map names it) */
+  "School by radio":S=>DROP(S,/^Australia$/),
+  /* a "Kenya" label on a long leader across Garissa's (the map names it) */
+  "Libraries on camels":S=>DROP(S,/^Kenya$/),
+  /* a "United Kingdom" label on a leader (the map names it), and the whole of Britain shown though the stop is about
+     10 km of London: label and shading go, framed on London */
+  "The Knowledge":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/);VIEW(S,[-0.13,51.5,40])},
+  "Now explore":S=>VIEW(S,[40,30,1])
+};
 
 
 const EARLY={};
@@ -390,7 +440,63 @@ const TURN_LOW=TURNER({tours:["elev"],title:"Countries that could disappear",mar
  places:[["The Maldives",73.4,2.5,2.2,"About 1,200 coral islands; the highest natural point is only about 2.4 m. A raised island, Hulhumalé, about 2 m above the sea, is being built as a safer place to live.",1],
   ["Tuvalu",179.2,-8.5,2.4,"Nine small islands that reach only about 4.6 m at their highest. In 2023 Tuvalu signed a treaty with Australia letting some citizens move there each year.",1]]});
 
-const DEFS=[GUESS_NORTH,TURN_LOW];
+/* ======================================================================== 3. Cha or te? (words, Tea or chá?) Each
+   language's word is the stop's own (its pins and its text), except Indonesian teh: WALS Online, chapter 138, "Tea"
+   (Östen Dahl): "teh" in Malay/Indonesian and the languages of former Dutch colonies, from the Amoy (Min) form the Dutch
+   adopted; the Portuguese, trading through Macao, took Cantonese chá. Each answer turns the globe to the language's
+   home. */
+const BINS_TEA=BINS({tours:["words"],title:"Tea or chá?",turnItems:true,mark:true,markTag:it=>it[4],
+ tip:"Cha came overland, te came by sea. Which family is each word for tea in?",ask:"A cha word or a te word?",
+ bins:["Cha (overland)","Te (by sea)"],
+ items:[["Russian: chai",0,"Tea reached Russia overland, from China.",[37.62,55.75,2.2],"Moscow"],
+  ["Dutch: thee",1,"Dutch ships bought tea at Xiamen (Amoy), where the local Min Chinese says te.",[4.9,52.37,2.6],"Amsterdam"],
+  ["French: thé",1,"It came by sea, through the Dutch trade.",[2.35,48.86,2.6],"Paris"],
+  ["Turkish: çay",0,"Overland, along the Silk Roads.",[28.98,41.01,2.4],"Istanbul"],
+  ["Portuguese: chá",0,"The odd one out: Portugal came by sea too, but its traders bought tea at Macau, where Cantonese says cha.",[-9.14,38.72,2.6],"Lisbon"],
+  ["English: tea",1,"From the Dutch trade; English once said it more like ‘tay’.",[-0.13,51.5,2.6],"London"],
+  ["Hindi: chai",0,"Overland, like Persian chay.",[77.2,28.6,2.2],"Delhi"],
+  ["Indonesian: teh",1,"The Dutch traded here, bringing the te word with them.",[106.85,-6.2,2.2],"Jakarta"],
+  ["German: Tee",1,"By sea, from the Dutch.",[13.4,52.52,2.6],"Berlin"]],
+ after:(r,N)=>(r===N?"All right! ":"")+"The word tells you the road: cha travelled with caravans across Asia, te with Dutch ships from the port of Xiamen."});
+
+/* ======================================================================== 4. Where writing began (words, Writing begins)
+   The texts are the card's own, Oaxaca's place from Wikipedia, "Zapotec script": San José Mogote's Monument 3, "dated
+   to before 500 BCE", and the inscriptions of Monte Albán, both in Oaxaca. */
+const TURN_WRITE=TURNER({tours:["words"],title:"Writing begins",mark:true,
+ tip:"Writing was invented in places far apart: turn the globe to each one.",
+ places:[["Mesopotamia and Egypt",38,29,2.2,"Cuneiform, from Uruk around 3200 BC, began as tallies of grain and sheep pressed into clay; Egypt’s hieroglyphs may have been invented on their own too.",2],
+  ["Anyang, China",114.35,36.1,3,"China’s oldest writing is on ‘oracle bones’ from Anyang, about 1200 BC.",1],
+  ["Oaxaca, Mexico",-96.77,17.04,3,"In Mexico and Central America, the Zapotecs and later the Maya were writing by around 500 BC: some of the oldest carvings are in the valley of Oaxaca."]]});
+
+/* ======================================================================== 5. Languages coming back (words, Endangered and
+   revived) The places are half a world apart; the texts are the card's own. */
+const TURN_REVIVE=TURNER({tours:["words"],title:"Endangered and revived",mark:true,
+ tip:"Languages are coming back all over the world: turn the globe to each one.",
+ places:[["Hawaii and New Zealand",-170,-8,1.1,"In New Zealand, kōhanga reo, ‘language nests’, have taught young children in Māori since 1982, and Hawaii copied them in 1984.",2],
+  ["Wales",-3.8,52.4,3,"About 538,000 people said they could speak Welsh in the 2021 census.",1],
+  ["Israel",35.2,31.78,3,"Hebrew, for centuries used mainly in prayer and writing, became the everyday language of millions in Israel.",1]]});
+
+/* ======================================================================== 6. School around the world (learning) The
+   countries are spread round the globe; the texts are the card's own. */
+const TURN_SCHOOL=TURNER({tours:["learning"],title:"School around the world",mark:true,
+ tip:"School is different everywhere: turn the globe from country to country.",
+ places:[["Singapore",103.82,1.35,2,"In the 2022 PISA tests of 15-year-olds in 81 countries and economies, Singapore came top in maths, reading and science.",1],
+  ["Finland and England",10,57,2.2,"Children in Finland start school at seven; in England many start at four. Finland, known for short school days and little homework, also scored above the average of rich countries.",2],
+  ["Japan",139.69,35.69,2.4,"Japan’s school year starts in April, with the cherry blossom; Japan was close behind Singapore in PISA 2022.",1],
+  ["Australia",134,-27,1.6,"In Australia, Brazil and South Africa the school year starts in January or February, after the long summer holidays.",2]]});
+
+/* ======================================================================== 7. Places of learning in order (learning, Now
+   explore) The tour's own dates; each tap turns the globe there and names the place. */
+const SORT_LEARN=SORTM({tours:["learning"],title:"Now explore",turns:true,
+ tip:"Over 2,000 years of learning: put the tour’s moments in order, oldest first. Each one you tap turns the globe there.",
+ first:"Longest ago",last:"Most recent",bars:false,
+ items:[["The Library of Alexandria is founded",-250,"early 200s BC",0,[29.91,31.21,2.4],"Alexandria"],["Nalanda is founded",450,"400s",0,[85.44,25.14,2.4],"Nalanda"],
+  ["China’s exams for officials begin",605,"605",0,[116.4,39.9,2.2],"China"],["Fatima al-Fihri founds al-Qarawiyyin",859,"859",0,[-4.98,34.06,2.4],"Fez"],
+  ["Bologna’s university begins",1088,"1088",0,[11.34,44.49,2.4],"Bologna"],["Gutenberg prints at Mainz",1450,"about 1450",0,[8.27,50,2.4],"Mainz"],
+  ["School of the Air goes on the radio",1951,"1951",0,[133.88,-23.7,2],"Alice Springs"],["Kenya’s camel libraries set out",1996,"1996",0,[39.65,-0.45,2.4],"Garissa"]],
+ after:(r,N)=>"From scrolls to radio waves: learning has always found a way to travel to the people who want it."});
+
+const DEFS=[GUESS_NORTH,TURN_LOW,BINS_TEA,TURN_WRITE,TURN_REVIVE,TURN_SCHOOL,SORT_LEARN];
 
 
 
