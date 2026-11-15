@@ -67,7 +67,16 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
  const at=(R,lo,la)=>{const n=2**R.z;let [px,py]=merc(lo,la,R.z);let tx=Math.floor(px/256);if(tx<R.tx0)tx+=n,px+=n*256;const ty=Math.floor(py/256),T=R.TM.get(tx+","+ty);if(!T)return NaN;
    const x=Math.min(255,Math.max(0,px-tx*256-.5)),y=Math.min(255,Math.max(0,py-ty*256-.5)),x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(255,x0+1),y1=Math.min(255,y0+1),fx=x-x0,fy=y-y0;
    return(T[y0*256+x0]*(1-fx)+T[y0*256+x1]*fx)*(1-fy)+(T[y1*256+x0]*(1-fx)+T[y1*256+x1]*fx)*fy};
- const seaPic=(lo,la)=>{const o=picAt(PI,lo,la);return PI.d[o+2]>PI.d[o]+25};
+ const seaPic0=(lo,la)=>{const o=picAt(PI,lo,la);return PI.d[o+2]>PI.d[o]+25};
+ /* land below sea level (round the Caspian, the Dead Sea, the Netherlands) is told from sea by the map's own land shapes drawn
+    for this view, not by the zoomed-out picture, whose 20 km pixels made it in blocky steps */
+ let MK=null;try{const F=gv.features;if(F&&F.length){const cv=document.createElement("canvas");cv.width=nx;cv.height=ny;const x=cv.getContext("2d",{willReadFrequently:true}),c0=(v.lon0+v.lon1)/2;
+  const pr=d3.geoEquirectangular().rotate([-c0,0]).scale(180/Math.PI).translate([0,0]).precision(.1);x.setTransform(1/dlon,0,0,1/dlat,-(v.lon0-c0)/dlon,v.lat1/dlat);x.beginPath();const pa=d3.geoPath(pr,x);F.forEach(f=>{if(f.geometry)pa(f)});x.fillStyle="#fff";x.fill();
+  const d=x.getImageData(0,0,nx,ny).data;MK=new Uint8Array(nx*ny);for(let i=0;i<nx*ny;i++)MK[i]=d[i*4+3]>127?1:0}}catch(e){MK=null}
+ const seaPic=(lo,la)=>{if(MK){const i=Math.floor((lo-v.lon0)/dlon),j=Math.floor((v.lat1-la)/dlat);if(i>=0&&j>=0&&i<nx&&j<ny)return!MK[j*nx+i]}return seaPic0(lo,la)};
+ /* NOAA's grid is read at its own fine size only close in; zoomed out it comes in coarse blocks, and low land along the coast
+    (the Arctic coast of Russia) came out as sea in a band of steps. So only close in may it make low land into sea (an atoll's lagoon) */
+ const fineN=(v.lon1-v.lon0)/NW<.02;
  /* each cell: its height (land) or depth (sea), and whether it is land; NaN (left to the picture) where nothing is known */
  const H=new Float32Array(nx*ny),LND=new Uint8Array(nx*ny);let ok=0;
  for(let j=0;j<ny;j++){const la=v.lat1-(j+.5)*dlat;for(let i=0;i<nx;i++){const lo=v.lon0+(i+.5)*dlon,k=j*nx+i,hL=at(A,lo,la),hS=S===A?hL:at(S,lo,la),nh=noaaAt(N,lo,la);
@@ -82,7 +91,7 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
    else{
     /* land below sea level (round the Caspian) is land where the picture shows land; an atoll's lagoon, which the zoom-10 tiles
        give at about 0 m (or as made-up hills up to about 100 m), is sea where NOAA gives it a few metres deep */
-    if(z>10)land=hL>.5||(hL<-.5&&!seaPic(lo,la));else land=hL>=0?!(hL<120&&nh<-3):!seaPic(lo,la);
+    if(z>10)land=hL>.5||(hL<-.5&&!seaPic(lo,la));else land=hL>=0?!(fineN&&hL<120&&nh<-3):!seaPic(lo,la);
     h=land?hL:nh<0?nh:isFinite(hS)&&hS<0?hS:-1}
    H[k]=h;LND[k]=land?1:0}}
  if(ok<nx*ny*.5){busy=false;return}
