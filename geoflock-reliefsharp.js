@@ -68,7 +68,9 @@ function pixWork(d,cw,s,l,Q,i0,i1){
   /* the layer's value at a patch pixel, smoothly between its own pixels */
   const at=(L,px,py,o)=>{let u=L.fx+(px+.5)*L.kx-.5,v=L.fy+(py+.5)*L.ky-.5;if(u<0)u=0;if(v<0)v=0;if(u>L.w-1.001)u=L.w-1.001;if(v>L.h-1.001)v=L.h-1.001;
    const x0=u|0,y0=v|0,fx=u-x0,fy=v-y0,D=L.d,a=(y0*L.w+x0)*4,b=a+4,c=a+L.w*4,e=c+4;
-   for(let k=0;k<4;k++)o[k]=(D[a+k]*(1-fx)+D[b+k]*fx)*(1-fy)+(D[c+k]*(1-fx)+D[e+k]*fx)*fy};
+   /* weighted by each pixel's opacity, so see-through pixels add no darkness (as the browser itself enlarges pictures) */
+   const w0=(1-fx)*(1-fy)*D[a+3],w1=fx*(1-fy)*D[b+3],w2=(1-fx)*fy*D[c+3],w3=fx*fy*D[e+3],ws=w0+w1+w2+w3;o[3]=ws;
+   if(ws>0)for(let k=0;k<3;k++)o[k]=(w0*D[a+k]+w1*D[b+k]+w2*D[c+k]+w3*D[e+k])/ws;else o[0]=o[1]=o[2]=0};
   for(let i=i0;i<i1;i+=4){const n=i>>2,px=n%cw,py=(n-px)/cw;at(s,px,py,S);let a=S[3]/255;if(a>0)for(let c=0;c<3;c++)d[i+c]=d[i+c]*(1-a)+a*d[i+c]*S[c]/255;
    if(l){at(l,px,py,Lq);if((a=Lq[3]/255)>0)for(let c=0;c<3;c++){const D0=d[i+c]/255,S0=Lq[c]/255;d[i+c]=255*(D0*(1-a)+a*(S0+D0-S0*D0))}}}}}
 let WK=null,wid=0;const WP=new Map();
