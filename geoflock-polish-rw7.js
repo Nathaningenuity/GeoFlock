@@ -205,6 +205,29 @@ FIX.hantarctica={
   "Tourists on the ice":S=>VIEW(S,[-66,-60,3.2])
 };
 
+FIX.hg3c={
+  /* the Lumbini, Varanasi and Tokyo labels sat around the map key, and Jerusalem's at the card's edge: framed a little west */
+  "Two kinds of faith":S=>VIEW(S,[55,25,1]),
+  /* Brampton, round the back of the globe, had its label pinned to the globe's top edge over the map's switches: the
+     stop's buttons turn the globe there and name it (part 2) */
+  "Sikhism goes abroad":S=>{DROP(S,/^Brampton/);VIEW(S,[40,35,1])},
+  /* Hawaii was round the back of the globe and Madagascar's label hung under the card: the stop's buttons turn the
+     globe to them (part 2) */
+  "Other language families":S=>{DROP(S,/^(Madagascar|Hawaii)$/);VIEW(S,[125,5,1])},
+  /* Papua New Guinea was round the back of the globe and Haiti's label under the card's edge: the stop's buttons turn
+     the globe from one to the other (part 2), opening on Haiti */
+  "Pidgins and creoles":S=>VIEW(S,[-72.3,18.9,2.6])
+};
+
+FIX.hgunpowder={
+  /* Amsterdam's and Meissen's labels hung off the globe's top edge, over the map's switches: framed further north and west */
+  "Where “china” was made":S=>VIEW(S,[60,30,1]),
+  /* the stop's buttons turn the globe along the silver's route (part 2), opening on the Pacific crossing */
+  "Silver and the Manila galleons":S=>VIEW(S,[-150,10,1]),
+  /* the card sat on the right */
+  "Japan closes its doors":S=>VIEW(S,[137,35.3,3.6])
+};
+
 
 
 const EARLY={};
@@ -254,7 +277,12 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=0;refl=0;touched=0}goAt++;ps._gfAimed=psSteps()[ps.i];
  /* a stop whose own game turns the globe is left to it */
- if(document.querySelector(".rw7-ctl[data-turns]"))return;
+ if(document.querySelector(".rw7-ctl[data-turns]")){
+  /* (rw7) a turn the game asked for can be cut off half way on a busy page (another file's flight takes over, as seen on
+     the Culture map): if the globe has come to rest away from the place asked for, it turns there again, at most twice,
+     unless the reader has dragged or zoomed the globe since */
+  const T=TT;if(T&&T.key===key&&!touched&&!ps.g._flying&&T.tries<2&&Date.now()-T.at>2500){const c=[-ps.g.rot[0],-ps.g.rot[1]];
+   if(d3.geoDistance(c,[T.to[0],T.to[1]])>.06){T.tries++;T.at=Date.now();turnGlobe(T.ll[0],T.ll[1],T.ll[2],1)}}return}
  if(touched||refl>=2||goAt<4||goAt>32||ps.g._flying)return;
  const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||Math.abs(ps.g.zoom-T[2])>.15){refl++;psFlyGlobe()}}catch(e){}},250);
 /* the same stop opened again (Back, a dot, a link) gets the same window: psGo is wrapped to start the count again */
@@ -310,8 +338,11 @@ function SORT(cfg){return{tours:cfg.tours,title:cfg.title,globe:false,turns:!!cf
   else say(L,right===N?"All "+N+" in the right place!":right+" of "+N+" in the right place",cfg.after(right,N))}};}
 
 
-function turnGlobe(lon,lat,z){try{const G=ps&&ps.g;if(!G||ps.mode!=="globe")return;let L0=lon;const over=typeof psCardOver==="function"?psCardOver():0;
+let TT=null;
+function turnGlobe(lon,lat,z,again){try{const G=ps&&ps.g;if(!G||ps.mode!=="globe")return;let L0=lon;const over=typeof psCardOver==="function"?psCardOver():0;
  if(over){const R=G.size().r*z,a=Math.asin(Math.min(.6,Math.abs(over)/2/R))*180/Math.PI;L0-=Math.sign(over)*a/Math.max(.35,Math.cos(lat*Math.PI/180))}
+ /* (rw7) remembered, so the check above can finish a turn that was cut off */
+ if(!again)TT={key:ps.tour+"|"+ps.i,ll:[lon,lat,z],to:[L0,lat],at:Date.now(),tries:0};else if(TT)TT.to=[L0,lat];
  const from=[-G.rot[0],-G.rot[1]],to=[L0,lat],ip=d3.geoInterpolate(from,to),z0=G.zoom,ms=matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches?0:1400,t0=performance.now();
  const id=G._flyId=(G._flyId||0)+1;G._flying=true;
  const step=t=>{if(G._flyId!==id||G._dead||ps.g!==G)return;const k=ms?Math.min(1,(t-t0)/ms):1,e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,c=ip(e),lift=Math.sin(Math.PI*e)*.35;
@@ -553,6 +584,33 @@ const BINS_ACC=BINS({tours:["hg3c"],title:"Acculturation and assimilation",
   ["Children of immigrants watch local TV, then pray at their parents’ temple",0,"Two cultures side by side in one family."]],
  after:(r,N)=>(r===N?"All right! ":"")+"Acculturation adds; assimilation replaces. Many families pass from the first to the second over a few generations."});
 
+/* ======================================================================== 14. Where Sikhs live (hg3c, Sikhism goes abroad)
+   Amritsar, Southall and Brampton are 155° of longitude apart; the texts are the card's own. */
+const TURN_SIKH=TURNER({tours:["hg3c"],title:"Sikhism goes abroad",mark:true,
+ tip:"Follow Sikhism from its hearth to two new homes with the buttons.",
+ places:[["Amritsar",74.88,31.62,2.4,"Guru Nanak founded Sikhism in Punjab around 1500; most of its roughly 25 million followers still live there. The Golden Temple is in Amritsar.",1],
+  ["Southall, London",-0.38,51.51,2.6,"From the 1960s chain migration, each family following relatives, carried Sikhism to Britain: gurdwaras, with free community kitchens, mark Southall in west London."],
+  ["Brampton, Canada",-79.76,43.73,2.6,"In Canada’s 2021 census about a quarter of Brampton’s 650,000 people were Sikh."]]});
+
+/* ======================================================================== 15. Taiwan to everywhere (hg3c, Other language
+   families) The card's own places: Austronesian spread by canoe from Taiwan to Madagascar, Hawaii and New Zealand.
+   Wikipedia, "Austronesian languages": its homeland is "most likely the main island of Taiwan", and (after Blust) "the
+   Formosan languages form nine of the ten primary branches"; Malagasy is among its major languages, and it "ranges from
+   Madagascar to Easter Island". */
+const TURN_AUS=TURNER({tours:["hg3c"],title:"Other language families",mark:true,
+ tip:"Austronesian languages spread by canoe across half the world: follow them with the buttons.",
+ places:[["Taiwan",121,23.7,2,"The hearth of the Austronesian family: nine of its ten main branches are languages of Taiwan.",1],
+  ["Madagascar",46.9,-19,2,"Far to the west, across the Indian Ocean, Malagasy is an Austronesian language too: the family’s western end."],
+  ["Hawaii",-155.5,19.6,2,"Far to the east, canoes carried the family to Hawaii, in the middle of the Pacific."],
+  ["New Zealand",174.8,-41,2,"And south to New Zealand, where Māori is spoken."]]});
+
+/* ======================================================================== 16. Two creoles (hg3c, Pidgins and creoles) Haiti
+   and Papua New Guinea are on opposite sides of the world; the texts are the card's own. */
+const TURN_CREOLE=TURNER({tours:["hg3c"],title:"Pidgins and creoles",mark:true,
+ tip:"Creoles grew up on opposite sides of the world: turn the globe from one to the other.",
+ places:[["Haiti",-72.3,18.9,2.6,"Haitian Creole grew from French and West African languages.",1],
+  ["Papua New Guinea",147.2,-6.5,2.4,"Tok Pisin, from English, is an official language of Papua New Guinea.",1]]});
+
 /* ======================================================================== 14. Portugal's sea road in order (hgunpowder,
    Round Africa to India) The stop's own dates (its pins and photos); each tap turns the globe there. */
 const SORT_PORT=SORTM({tours:["hgunpowder"],title:"Round Africa to India",turns:true,
@@ -586,7 +644,8 @@ const BINS_EXCH=BINS({tours:["hgunpowder"],title:"The Columbian exchange",
    and the Manila galleons) Potosí, Acapulco and Manila are 174° of longitude apart; the texts are the card's own. */
 const TURN_GALLEON=TURNER({tours:["hgunpowder"],title:"Silver and the Manila galleons",mark:true,
  tip:"Follow the silver halfway round the world with the buttons.",
- places:[["Potosí",-65.75,-19.58,2.2,"In 1545 the Spanish found a mountain of silver at Potosí, in today’s Bolivia, and forced Indigenous workers to mine it."],
+ places:[["The Pacific crossing",-150,10,1,"Every year a galleon crossed the widest ocean on Earth, from Acapulco to Manila (the ruler).",2],
+  ["Potosí",-65.75,-19.58,2.2,"In 1545 the Spanish found a mountain of silver at Potosí, in today’s Bolivia, and forced Indigenous workers to mine it."],
   ["Acapulco",-99.9,16.85,2.2,"Much of the silver went north to Acapulco, in Mexico. From 1565 to 1815 a galleon sailed from here to Manila every year.",1],
   ["Manila",120.97,14.6,2.2,"Over 14,000 km of open ocean later, Chinese merchants traded silk and porcelain for the silver at Manila. Ming China collected its taxes in silver.",1]]});
 
@@ -602,7 +661,7 @@ const TURN_GALLEON=TURNER({tours:["hgunpowder"],title:"Silver and the Manila gal
 :is(body.dark-theme,body.sky-night) .rw7-ra{color:#9fc3ff}:is(body.dark-theme,body.sky-night) .rw7-rs{color:#ff8a9e}:is(body.dark-theme,body.sky-night) .rw7-note{color:#aab6c8}
 `;document.head.appendChild(s)}
 
-const DEFS=[TURN_RUBBER,GUESS_FALK,SORT_SAM,TURN_FLEET,TURN_ANZAC,SORT_VOTE,TURN_SIGHT,RACE,BINS_TREATY,BINS_FAITH,BINS_ACC,SORT_PORT,BINS_EXCH,TURN_GALLEON];
+const DEFS=[TURN_RUBBER,GUESS_FALK,SORT_SAM,TURN_FLEET,TURN_ANZAC,SORT_VOTE,TURN_SIGHT,RACE,BINS_TREATY,BINS_FAITH,BINS_ACC,TURN_SIKH,TURN_AUS,TURN_CREOLE,SORT_PORT,BINS_EXCH,TURN_GALLEON];
 
 
 
