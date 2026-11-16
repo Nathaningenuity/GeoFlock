@@ -117,7 +117,10 @@ W("histFeatures",()=>frame());
 W("histYear",()=>yearObj());
 W("histLabelList",()=>labMode()==="off"?[]:labList());
 W("histFill",p=>{if(histFocus&&focusAny(frame())&&!inFocus(p))return p.k===0?"#f1ece2":"#e6e1d6";if(p.k===0||!p.c)return p.k===0?HIST_LAND:"hsl(200,28%,80%)";return p.c});
-W("histDescribe",f=>{const p=f.properties;let s=p.n||"Unnamed";if(p.k===0)return s+" — peoples without a state";const G=p.gk&&HIST_DATA.groups[p.gk];if(G&&G[0]!==p.n&&!KN["g:"+p.gk]&&!/^(Russia|China|India|Persia|Germany|Italy|Japan|Egypt)$/.test(G[0]))s+=" — "+G[0];
+/* a few areas drawn as peoples without a state are named as states (Imperial Japan (Fujiwara), the Hawaiian Kingdom, khanates):
+   those are not called stateless */
+const STATE_NAME=/\b(kingdom|khanates?|khaganate|emirate|empire|imperial|sultanate|caliphate|princely state|japan)\b/i;
+W("histDescribe",f=>{const p=f.properties;let s=p.n||"Unnamed";if(p.k===0)return STATE_NAME.test(s)?s:s+" — peoples without a state";const G=p.gk&&HIST_DATA.groups[p.gk];if(G&&G[0]!==p.n&&!KN["g:"+p.gk]&&!/^(Russia|China|India|Persia|Germany|Italy|Japan|Egypt)$/.test(G[0]))s+=" — "+G[0];
  if(p.o){const a=Math.floor(p.s),b=p.e>=9999?null:Math.floor(p.e);s+=" ("+(b==null?"since "+yLabel(a):yLabel(a).replace(/^AD /,"")+"–"+yLabel(b).replace(/^AD /,""))+")"}return s});
 /* the bar shows a few broad eras; the 21 story periods stay in the story card */
 const ERAS=[[-2999,-499,"Ancient world"],[-499,500,"Classical"],[500,1450,"Middle Ages"],[1450,1800,"Exploration"],[1800,1914,"Empires"],[1914,1991,"World wars"],[1991,3000,"Now"]];
