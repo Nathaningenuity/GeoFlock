@@ -109,10 +109,75 @@ const ABOVE=(S,re)=>XF(S,"pins","above"+re,P=>P.map(p=>Array.isArray(p)&&re.test
 const NOCOUNTRY=(S,list)=>DROP(S,new RegExp("^("+list.join("|")+")$"));
 const SAM=["Peru","Bolivia","Brazil","Argentina","Uruguay","Paraguay","Chile","Colombia","Ecuador","Venezuela"];
 
+FIX.geo={
+  /* the Greenland photo and marker 1 sat on the map's switches at the globe's top edge: framed a little further north */
+  "The world’s best surprises":S=>VIEW(S,[22,30,1]),
+  /* Mauna Kea and Chimborazo, two of the stop's three mountains, were round the back of the globe: it opens on
+     Everest and the stop's buttons turn to the other two (part 2) */
+  "Everest isn’t the tallest mountain":S=>VIEW(S,[87,28,1.6]),
+  /* Calgary's pin lay under the card and its label hung on a long leader over the map's switches */
+  "Further north than you think":S=>DROP(S,/^Calgary/),
+  /* the tree-kangaroo photo sat under the map key and Lombok's label against it: framed a little further west */
+  "The Wallace Line":S=>VIEW(S,[120,-5,1.7]),
+  /* most of France's lands were round the back of the globe, the Caribbean label on the card's edge: the stop's buttons
+     turn the globe to each (part 2) */
+  "France: the most time zones":S=>VIEW(S,[-20,12,1]),
+  /* the line ran off the globe: its end, Kamchatka, was off the globe's edge and the Madagascar photo below the screen:
+     framed from Pakistan to Madagascar, and the stop's buttons follow the line (part 2) */
+  "The longest straight line at sea":S=>VIEW(S,[58,-4,1.25]),
+  /* an "Australia" label on a long leader under the Moon (the map names it): it goes; framed a little further east so
+     Steep Point's label sits nearer its place */
+  "Wider than the Moon":S=>{DROP(S,/^Australia$/);VIEW(S,[137,-26,2])}
+};
+
+FIX.pop={
+  /* China's label hung on a long leader over the search box at the globe's top right: framed further east */
+  "The most populous countries":S=>VIEW(S,[92,24,1.1])
+};
+
+FIX.climate={
+  /* the Congo was at the globe's edge and Indonesia round the back: it opens on the Amazon and the stop's buttons turn
+     the globe along the rain belt (part 2) */
+  "The rain belt":S=>VIEW(S,[-61,-4,1.6]),
+  /* the Sonoran's label hung over the map's switches from a pin under the card, and the Namib photo was below the
+     screen: framed on the Equator between the two belts; the Sonoran label goes (the more text names it) */
+  "The desert belts":S=>{DROP(S,/^Sonoran$/);VIEW(S,[14,3,1])},
+  /* the globe turned to the empty Pacific halfway between the two records, Death Valley at its top edge and Vostok at
+     its bottom: it opens on Death Valley, and the stop's buttons turn to Vostok (part 2) */
+  "The hottest and coldest ever recorded":S=>VIEW(S,[-116.87,36.46,2])
+};
+
+FIX.africa={
+  /* the card sat on the right and the map key on the left, over the Great Rift Valley's label: card left */
+  "The roof of Africa":S=>VIEW(S,[37,-2,3.48])
+};
+
+FIX.europe={
+  /* the western half of the line, from Gibraltar to the Bosphorus, lay under the card, and the Atlantic's label hung
+     over the map's switches: framed further west */
+  "Where Europe ends":S=>VIEW(S,[30,50,1.2])
+};
+
+FIX.plates={
+  /* the St Helens photo sat on the map's switches, Kīlauea under the card and Chaitén below the screen: the stop opens
+     on North America and its buttons turn to each volcano (part 2) */
+  "Why some volcanoes explode":S=>VIEW(S,[-100,12,1])
+};
+
+FIX.antarctica={
+  /* the krill photo sat on the map's switches at the globe's top edge, the penguin label under the map key: framed
+     between the krill sea and the penguin coast, over the pole */
+  "Life at the edge":S=>VIEW(S,[20,-78,1.3])
+};
+
 FIX.words={
   /* Dagestan's label hung on a long leader across Georgia, far from its place, and the Tbilisi photo was pushed onto
      Azerbaijan: the label sits right above Dagestan, framed a little closer and further east */
-  "The mountain of languages":S=>{ABOVE(S,/^Dagestan/);VIEW(S,[45.6,42.2,6.5])}
+  "The mountain of languages":S=>{ABOVE(S,/^Dagestan/);VIEW(S,[45.6,42.2,6.5])},
+  /* the globe looked at the Pacific off Central America: San Francisco under the card, São Paulo, Rio and the Río de
+     la Plata off the globe's bottom edge, though the stop is about Rio: framed on South America, and the stop's buttons
+     turn the globe north to the Spanish names in the United States (part 2) */
+  "Saints and rivers":S=>VIEW(S,[-52,-22,1.5])
 };
 
 FIX.learning={
@@ -148,8 +213,9 @@ const applied=new WeakSet();
    is in (see XF): if this file locked the field first, the portrait could not be added */
 let waiting=false;
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;
- /* every stop's card on the left (a tour question could flip it to the right, over the map key) */
- LOCK(S,"card","left");TOUR_OF.set(S,tour);const f=F[strip(S.title)];if(!f){applied.add(S);return}
+ /* (rw8) only the stops fixed here get their card on the left: these tours' other stops keep their own side (some
+    tours, like the seas tour, put the card on the right with the map key on the left, and their frames are made for it) */
+ TOUR_OF.set(S,tour);const f=F[strip(S.title)];if(!f){applied.add(S);return}LOCK(S,"card","left");
  PEND=false;try{f(S)}catch(e){console.error("rw8 fix",tour,S.title,e)}if(PEND)waiting=true;else applied.add(S)})}
 let lastKey="";
 every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}
@@ -160,7 +226,7 @@ every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){last
 /* (not at page load: other files fill in these stops' photos after load by assigning S.phPins; the fixes go in when one
    of these tours opens). Only the card side is locked at load, so a tour's first stop already opens with its card on
    the left. */
-const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S)LOCK(S,"card","left")})})}catch(e){}};
+const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S&&FIX[t][strip(S.title)])LOCK(S,"card","left")})})}catch(e){}};
 cardsLeft();setTimeout(cardsLeft,1500);setTimeout(cardsLeft,6000);
 
 /* The card shift, kept (as geoflock-polish-rvb.js, -rvt.js and -rvu.js do for theirs): psFlyGlobe (index.html) turns a
@@ -359,9 +425,73 @@ const KNOW=BINS({tours:["learning"],title:"The Knowledge",turnItems:true,mark:tr
  if(!L.rt)L.rt=tag(L,"rw8-ctag rw8-small");const bot=proj(L,[KNOW_C[0],KNOW_C[1]-KNOW_R]);putTag(L,L.rt,bot&&q&&bot[1]-q[1]>60?bot:null,"6 miles from Charing Cross",6)}catch(e){}};
  /* (the ring follows the globe as it turns) */const w0=KNOW.wire;KNOW.wire=function(L){w0.call(this,L);L.dirty=1}}
 
+/* ======================================================================== 3. Saints north and south (words, Saints and
+   rivers) The stop's names run from San Francisco to the Río de la Plata, 73° of latitude: it opens on South America
+   and the buttons turn north. The texts are the card's own. */
+const TURN_SAINTS=TURNER({tours:["words"],title:"Saints and rivers",mark:true,
+ tip:"Turn the globe between the saints’ names of South and North America.",
+ places:[["South America",-52,-22,1.5,"Rio de Janeiro, ‘River of January’: Portuguese sailors entered its bay on 1 January 1502 and took it for a river mouth.",2],
+  ["North America",-114,35,2,"Los Angeles began as the town of ‘Our Lady, Queen of the Angels’. San and Santa names dot the southern United States too.",2]]});
+
+/* ======================================================================== 4. Three mountains (geo, Everest isn’t the
+   tallest mountain) The texts are the card's own. */
+const TURN_PEAKS=TURNER({tours:["geo"],title:"Everest isn’t the tallest mountain",mark:true,
+ tip:"Highest, tallest, farthest out: turn the globe to each mountain.",
+ places:[["Everest",86.925,27.988,1.6,"Everest’s 8,849 m above sea level beats every other peak; K2, the runner-up, is 8,611 m.",1],
+  ["Mauna Kea",-155.468,19.821,2.2,"Only about 4,207 m of it rises above the waves, but from its base on the Pacific floor it is over 10,000 m tall.",1],
+  ["Chimborazo",-78.817,-1.469,2.2,"Almost on the equator, where Earth bulges, its summit is about 2 km farther from Earth’s centre than Everest’s, though it is only 6,263 m above the sea.",1]]});
+
+/* ======================================================================== 5. France round the world (geo, France: the most
+   time zones) Each place's standard time is its zone in the IANA time zone database (Europe/Paris, America/Martinique,
+   America/Cayenne, Indian/Reunion, Indian/Kerguelen, Pacific/Noumea, Pacific/Tahiti). */
+const TURN_FRANCE=TURNER({tours:["geo"],title:"France: the most time zones",mark:true,
+ tip:"Turn the globe to France’s lands around the world.",
+ places:[["The Atlantic",-20,12,1,"Metropolitan France, the Caribbean islands and French Guiana face each other across the Atlantic.",2],
+  ["Metropolitan France",2.35,46.6,2.4,"Paris keeps UTC+1 in winter.",1],
+  ["The Caribbean islands",-61.3,15.6,2.4,"Guadeloupe and Martinique: UTC−4, five hours behind Paris in winter.",1],
+  ["French Guiana",-53,4,2.4,"In South America: UTC−3.",1],
+  ["Réunion",55.5,-21.1,2.4,"In the Indian Ocean: UTC+4.",1],
+  ["Kerguelen",69.4,-49.3,2.4,"Far south in the Indian Ocean: UTC+5.",1],
+  ["New Caledonia",165.5,-21.3,2.4,"In the South Pacific: UTC+11.",1],
+  ["French Polynesia",-149.5,-17.6,2.4,"Tahiti keeps UTC−10, eleven hours behind Paris in winter.",1]]});
+
+/* ======================================================================== 6. Along the line (geo, The longest straight
+   line at sea) The texts are the card's own. */
+const TURN_LINE=TURNER({tours:["geo"],title:"The longest straight line at sea",mark:true,
+ tip:"Follow the line round the world with the buttons.",
+ places:[["The start",58,-4,1.25,"The line leaves Sonmiani, in Pakistan, and heads south-west.",2],
+  ["Madagascar",42,-16.5,1.8,"It slips between Africa and Madagascar.",1],
+  ["The Drake Passage",-63,-58.5,1.6,"It squeezes between South America and Antarctica.",1],
+  ["The Pacific",-125,-5,1.1,"Then it crosses the whole Pacific.",2],
+  ["Kamchatka",163,59.1,1.8,"It ends on the coast of Kamchatka, in Russia.",1]]});
+
+/* ======================================================================== 7. Round the rain belt (climate, The rain belt)
+   The texts are the card's own. */
+const TURN_RAIN=TURNER({tours:["climate"],title:"The rain belt",mark:true,
+ tip:"Turn the globe along the rain belt to the three great rainforests.",
+ places:[["The Amazon",-61,-4,1.6,"The Amazon holds the biggest of the rainforests that sit along the equator.",1],
+  ["The Congo basin",21,-0.5,1.6,"Africa’s rainforest. Many places in the rain belt get over 2,000 mm of rain a year.",1],
+  ["Indonesia and New Guinea",118,-2,1.4,"The islands of Indonesia and New Guinea hold the third great block of tropical rainforest.",1]]});
+
+/* ======================================================================== 8. The two records (climate, The hottest and
+   coldest ever recorded) The texts are the card's own. */
+const TURN_RECORDS=TURNER({tours:["climate"],title:"The hottest and coldest ever recorded",mark:true,
+ tip:"Turn the globe from the hottest record to the coldest.",
+ places:[["Death Valley",-116.87,36.46,2,"A deep, narrow basin below sea level, ringed by mountains: hot air gets trapped and keeps heating. 56.7 °C in 1913.",1],
+  ["Vostok station",106.84,-78.46,1.8,"3,500 m up on the East Antarctic Ice Sheet, in months of polar night: −89.2 °C in 1983.",1]]});
+
+/* ======================================================================== 9. Four volcanoes (plates, Why some volcanoes
+   explode) The kinds of magma are the stop's own labels; the texts are the card's own. */
+const TURN_VOLC=TURNER({tours:["plates"],title:"Why some volcanoes explode",mark:true,
+ tip:"From runny to stiff: turn the globe to each volcano.",
+ places:[["Kīlauea",-155.29,19.41,2.4,"Runny basalt lets gas bubble out, so Hawaii’s volcanoes ooze lava. Volcanoes over hotspots tend to erupt basalt.",1],
+  ["Soufrière Hills",-62.18,16.72,2.4,"Andesite, richer in silica: where one plate dives under another, water from the sinking plate melts rock richer in silica.",1],
+  ["Mount St Helens",-122.18,46.2,2.4,"On the Ring of Fire, which has the most explosive volcanoes: stiff magma traps the gas until it blasts free, as here in 1980.",1],
+  ["Chaitén",-72.65,-42.83,2.4,"Rhyolite, the most silica-rich of the four magmas here, and the stiffest.",1]]});
+
 /*@@DEFS@@*/
 
-const DEFS=[TURN_VOC,KNOW];
+const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC];
 
 
 
