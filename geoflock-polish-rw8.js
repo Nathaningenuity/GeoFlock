@@ -260,6 +260,21 @@ FIX.borders={
   "Countries inside countries":S=>VIEW(S,[12.5,42.5,3])
 };
 
+FIX.samerica={
+  /* the Washington photo sat on the map's switches at the globe's top edge: framed a little further north
+     (geoflock-polish-rvd.js's frame was [-75,2,1]) */
+  "Further east than you think":S=>VIEW(S,[-75,14,1]),
+  /* Brazil, the stop's subject, lay at the globe's right edge with the drag-me outline of the US under the map key:
+     framed on Brazil (Chile and Ecuador, with no border, still show to its west) */
+  "Brazil is half the continent":S=>VIEW(S,[-58,-15,1.1])
+};
+
+FIX.time={
+  /* the globe looked down on the Arctic: Kaliningrad's and Moscow's labels lay on the card and Vladivostok's on the
+     zoom buttons. It opens on European Russia, and the stop's buttons turn east clock by clock (part 2) */
+  "Russia: eleven clocks":S=>VIEW(S,[50,58,1.4])
+};
+
 FIX.words={
   /* Dagestan's label hung on a long leader across Georgia, far from its place, and the Tbilisi photo was pushed onto
      Azerbaijan: the label sits right above Dagestan, framed a little closer and further east */
@@ -656,9 +671,19 @@ const TURN_ENCL=TURNER({tours:["borders"],title:"Countries inside countries",mar
  places:[["Italy",12.5,42.5,3,"Vatican City and San Marino are surrounded by Italy.",2],
   ["Lesotho",28.2,-29.6,3,"Lesotho is surrounded by South Africa.",1]]});
 
+/* ======================================================================== 19. Across Russia (time, Russia: eleven clocks)
+   The zones are the stop's own labels; the texts are the card's own. */
+const TURN_RUSSIA=TURNER({tours:["time"],title:"Russia: eleven clocks",mark:true,
+ tip:"Cross Russia clock by clock with the buttons.",
+ places:[["Kaliningrad",20.51,54.71,2.2,"UTC+2. When it is 9 a.m. here on the Baltic Sea…",1],
+  ["Moscow",37.62,55.75,2.2,"UTC+3. Until 2018 all Russia’s trains ran on Moscow time.",1],
+  ["Novosibirsk",82.92,55.03,2,"UTC+7.",1],
+  ["Vladivostok",131.89,43.12,2.2,"UTC+10: a train ticket bought here once showed a time seven hours off.",1],
+  ["Kamchatka",158.65,53.02,2.2,"UTC+12. …it is already 7 p.m. here on the Pacific.",1]]});
+
 /*@@DEFS@@*/
 
-const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC,TURN_LEB,TURN_NEW,TURN_LOC,TURN_MIG,TURN_STRIPES,TURN_SQUARE,TURN_SIKH8,TURN_GIANTS,TURN_RISE,TURN_ENCL];
+const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC,TURN_LEB,TURN_NEW,TURN_LOC,TURN_MIG,TURN_STRIPES,TURN_SQUARE,TURN_SIKH8,TURN_GIANTS,TURN_RISE,TURN_ENCL,TURN_RUSSIA];
 
 
 
