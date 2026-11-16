@@ -47,10 +47,15 @@ function viewBox(gv){const pr=gv.projection(),{w,h}=gv.size(),c=[-gv.rot[0],-gv.
  /* a margin round the view, so the edges of the close-up (faded, below) fall outside it rather than across the map */
  const px=(x1-x0)*.05,py=(y1-y0)*.05;x0-=px;x1+=px;y0-=py;y1+=py;
  if(n<30||y1>84||y0<-84||x1-x0>150)return null;return{lon0:c[0]+x0,lon1:c[0]+x1,lat0:y0,lat1:y1,w,h}}
-let P=null,busy=false,timer=0;
-async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false;return}const PI=picOf(key);if(!PI){busy=false;return}
- /* about a screen pixel a cell, at most 1100 a side */
- const nx=Math.min(1100,Math.max(64,Math.round(v.w))),ny=Math.min(1100,Math.max(64,Math.round(v.h))),dlon=(v.lon1-v.lon0)/nx,dlat=(v.lat1-v.lat0)/ny;
+let P=null,busy=false,timer=0,lastShown=0;
+/* the grid for a view: stage 1 about a device pixel a cell (sharp on a Retina screen too), at most 2048 a side and 2.6
+   million cells; stage 0, the quick first look, half that on each side */
+const dprNow=()=>{try{return window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)}catch(e){return 1}};
+function gridFor(v,stage){const f=dprNow()*(stage?1:.5);let nx=Math.max(64,Math.round(v.w*f)),ny=Math.max(64,Math.round(v.h*f));const k=Math.min(1,2048/nx,2048/ny,Math.sqrt(2.6e6/(nx*ny)));
+ return[Math.max(64,Math.round(nx*k)),Math.max(64,Math.round(ny*k))]}
+const breath=()=>new Promise(r=>setTimeout(r,0));
+async function build(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=viewBox(gv);if(!v){busy=false;return}const PI=picOf(key);if(!PI){busy=false;return}
+ const [nx,ny]=gridFor(v,stage),dlon=(v.lon1-v.lon0)/nx,dlat=(v.lat1-v.lat0)/ny;
  /* the tiles' zoom: about one tile pixel a cell, fewer tiles if the view needs too many. (A tile pixel spans 360/256/2^z degrees
     of longitude at every latitude, as a cell spans dlon: no cos(latitude) here, which made the tiles near 70 degrees nearly
     three times coarser than the screen.) */
@@ -81,7 +86,7 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
  const fineN=(v.lon1-v.lon0)/NW<.02;
  /* each cell: its height (land) or depth (sea), and whether it is land; NaN (left to the picture) where nothing is known */
  const H=new Float32Array(nx*ny),LND=new Uint8Array(nx*ny);let ok=0;
- for(let j=0;j<ny;j++){const la=v.lat1-(j+.5)*dlat;for(let i=0;i<nx;i++){const lo=v.lon0+(i+.5)*dlon,k=j*nx+i,hL=at(A,lo,la),hS=S===A?hL:at(S,lo,la),nh=noaaAt(N,lo,la);
+ for(let j=0;j<ny;j++){if((j&63)===63)await breath();const la=v.lat1-(j+.5)*dlat;for(let i=0;i<nx;i++){const lo=v.lon0+(i+.5)*dlon,k=j*nx+i,hL=at(A,lo,la),hS=S===A?hL:at(S,lo,la),nh=noaaAt(N,lo,la);
    if(!isFinite(hL)){H[k]=NaN;continue}ok++;let land,h;
    if(iceZone(lo,la)){
     /* ice sheets: the Terrain Tiles give the rock under the ice, NOAA the top of the ice. Ice that floats (an ice shelf: the rock
@@ -104,28 +109,39 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
  const mx=dlon*111320*Math.cos(midLat*Math.PI/180),my=dlat*110540,L=[-.5,.5,.707];
  const out=new Uint8ClampedArray(nx*ny*4);
  const nb=(k,k2)=>isFinite(H[k2])&&LND[k2]===LND[k]?H[k2]:H[k];
- for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=LND[k]===1;
+ for(let j=0;j<ny;j++){if((j&127)===127)await breath();for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=LND[k]===1;
   const hx=(nb(k,j*nx+Math.min(nx-1,i+1))-nb(k,j*nx+Math.max(0,i-1)))/(2*mx),hy=(nb(k,Math.max(0,j-1)*nx+i)-nb(k,Math.min(ny-1,j+1)*nx+i))/(2*my);
   const ex=land?1.6:1.1,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.8)*(dot-L[2])));
-  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=Math.round(255*Math.min(1,Math.min(i,nx-1-i)/(nx*.04),Math.min(j,ny-1-j)/(ny*.04)))}
+  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=Math.round(255*Math.min(1,Math.min(i,nx-1-i)/(nx*.04),Math.min(j,ny-1-j)/(ny*.04)))}}
+ if(sig(gv,key)!==want){busy=false;return}
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=P&&P.gl===G?P.tex:G.createTexture();G.activeTexture(G.TEXTURE6);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
  G.texImage2D(G.TEXTURE_2D,0,G.RGBA,nx,ny,0,G.RGBA,G.UNSIGNED_BYTE,new Uint8Array(out.buffer));[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));
  G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_S,G.CLAMP_TO_EDGE);G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_T,G.CLAMP_TO_EDGE);G.activeTexture(G.TEXTURE0);
- P={gl:G,tex:t,bb:[v.lon0,v.lat1,nx*dlon,ny*dlat],key:sig(gv,key),H,LND,nx,ny,z,noaa:!!N};try{gv.request?gv.request():gv.render()}catch(e){}}catch(e){console.error(e)}busy=false}
+ const now=performance.now();
+ /* fades in only when no close-up was showing; the sharper stage replaces the quick one in one swap */
+ P={gl:G,tex:t,bb:[v.lon0,v.lat1,nx*dlon,ny*dlat],key:want,stage,cell:dlon,H,LND,nx,ny,z,noaa:!!N,t0:now-lastShown<300?(P?P.t0:-1e9):now};try{gv.request?gv.request():gv.render()}catch(e){}}catch(e){console.error(e)}busy=false}
 function blur(H,nx,ny,r){const T=new Float32Array(nx*ny),O=new Float32Array(nx*ny);
  for(let j=0;j<ny;j++){let s=0,c=0;for(let i=-r;i<nx+r;i++){const a=i+r,b=i-r-1;if(a>=0&&a<nx&&isFinite(H[j*nx+a])){s+=H[j*nx+a];c++}if(b>=0&&b<nx&&isFinite(H[j*nx+b])){s-=H[j*nx+b];c--}if(i>=0&&i<nx)T[j*nx+i]=c?s/c:NaN}}
  for(let i=0;i<nx;i++){let s=0,c=0;for(let j=-r;j<ny+r;j++){const a=j+r,b=j-r-1;if(a>=0&&a<ny&&isFinite(T[a*nx+i])){s+=T[a*nx+i];c++}if(b>=0&&b<ny&&isFinite(T[b*nx+i])){s-=T[b*nx+i];c--}if(j>=0&&j<ny)O[j*nx+i]=c?s/c:NaN}}return O}
 const sig=(gv,key)=>[key,gv.rot[0].toFixed(3),gv.rot[1].toFixed(3),gv.zoom.toFixed(3)].join("|");
-/* from when the picture starts to be magnified (it has about 11 pixels a degree), full a little after */
 /* the height under the pointer, from the same tiles (zoom 10, about 150 m a pixel); null until that tile has loaded */
 const HV=new Map();
 window.gfElevHeight=function(ll){if(iceZone(ll[0],ll[1])){/* on the ice sheets, the top of the ice from the last close-up worked out (NOAA), if it covers the point */
   if(!P||!P.noaa)return null;const i=Math.floor((((ll[0]-P.bb[0])%360+360)%360)/P.bb[2]*P.nx),j=Math.floor((P.bb[1]-ll[1])/P.bb[3]*P.ny);if(i<0||j<0||i>=P.nx||j>=P.ny)return null;const h=P.H[j*P.nx+i];return isFinite(h)?Math.round(h):null}const z=10,n=2**z,la=Math.max(-85,Math.min(85,ll[1]))*Math.PI/180,px=(((ll[0]+180)/360)%1+1)%1*n*256,py=(1-Math.log(Math.tan(la)+1/Math.cos(la))/Math.PI)/2*n*256,tx=Math.floor(px/256),ty=Math.floor(py/256),k=z+"/"+tx+"/"+ty;
  if(!HV.has(k)){HV.set(k,null);tile(k).then(h=>{HV.set(k,h);while(HV.size>40)HV.delete(HV.keys().next().value)})}const T=HV.get(k);if(!T)return null;return T[Math.min(255,Math.floor(py-ty*256))*256+Math.min(255,Math.floor(px-tx*256))]};
-window.gfElevPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180,a=Math.max(0,Math.min(1,(ppd/11.4-.9)/.6));if(a<=0)return null;
+/* In steps, not a slow blur-to-sharp: once the picture (about 11.4 pixels a degree) is magnified, the close-up for the view
+   comes in with a quick fade, first a quick half-sharp one (stage 0), then in one swap one about a device pixel a cell
+   (stage 1). After the view moves, the quick one is only made again if the last close-up does not cover the new view or
+   is coarser than it would be; otherwise the sharp one is made straight away and swapped in. */
+const ON=11.4*1.05,FADE=260;
+function covers(v){if(!P||!v)return false;const l=((v.lon0-P.bb[0])%360+360)%360;return l+(v.lon1-v.lon0)<=P.bb[2]+1e-6&&v.lat1<=P.bb[1]+1e-6&&v.lat0>=P.bb[1]-P.bb[3]-1e-6}
+const req=gv=>{try{gv.request?gv.request():gv.render()}catch(e){}};
+window.gfElevPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180;if(ppd<ON)return null;
  if(P&&P.gl!==G.gl)P=null;const k=sig(gv,o.key);
- if((!P||P.key!==k)&&!busy){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving){timer=setTimeout(go,250);return}if(!busy)build(gv,o.key)},250)}
- return P?{tex:P.tex,bb:P.bb,a}:null};
+ if((!P||P.key!==k||P.stage<1)&&!busy){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving){timer=setTimeout(go,250);return}if(busy)return;
+   let st=1;if(!P||P.key!==sig(gv,o.key)){const v=viewBox(gv);if(v){const c0=(v.lon1-v.lon0)/gridFor(v,0)[0];if(!covers(v)||P.cell>c0*1.01)st=0}}
+   build(gv,o.key,st).then(()=>req(gv))},P&&P.key===k?30:250)}
+ if(!P)return null;const now=performance.now(),a=Math.max(0,Math.min(1,(now-P.t0)/FADE));if(a<1)requestAnimationFrame(()=>req(gv));lastShown=now;return{tex:P.tex,bb:P.bb,a}};
 /* for checking: what the last close-up was worked out from */
-window.gfElevPatch.dbg=()=>P&&{bb:P.bb,nx:P.nx,ny:P.ny,z:P.z,noaa:P.noaa,busy};
+window.gfElevPatch.dbg=()=>P&&{bb:P.bb,nx:P.nx,ny:P.ny,z:P.z,noaa:P.noaa,stage:P.stage,busy};
 })();
