@@ -43,8 +43,10 @@ function picOf(key){try{const im=globeImages(key,()=>{});if(!im||!im.length)retu
  if(im.length===2){x.drawImage(im[0],0,0,1024,1024);x.drawImage(im[1],1024,0,1024,1024)}else x.drawImage(a,0,0,2048,1024);PIC={a,d:x.getImageData(0,0,2048,1024).data};return PIC}catch(e){return null}}
 const picAt=(P,lo,la)=>{const x=Math.max(0,Math.min(2047,Math.floor((((lo+180)%360+360)%360)/360*2048))),y=Math.max(0,Math.min(1023,Math.floor((90-la)/180*1024))),o=(y*2048+x)*4;return o};
 function viewBox(gv){const pr=gv.projection(),{w,h}=gv.size(),c=[-gv.rot[0],-gv.rot[1]];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9,n=0;
- for(let i=0;i<=10;i++)for(let j=0;j<=10;j++){const q=pr.invert&&pr.invert([w*i/10,h*j/10]);if(!q||!isFinite(q[0])||d3.geoDistance(q,c)>Math.PI/2)continue;const dl=((q[0]-c[0]+540)%360)-180;x0=Math.min(x0,dl);x1=Math.max(x1,dl);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]);n++}
- if(n<6||y1>84||y0<-84)return null;return{lon0:c[0]+x0,lon1:c[0]+x1,lat0:y0,lat1:y1,w,h}}
+ for(let i=0;i<=24;i++)for(let j=0;j<=24;j++){const q=pr.invert&&pr.invert([w*i/24,h*j/24]);if(!q||!isFinite(q[0])||d3.geoDistance(q,c)>Math.PI/2)continue;const dl=((q[0]-c[0]+540)%360)-180;x0=Math.min(x0,dl);x1=Math.max(x1,dl);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1]);n++}
+ /* a margin round the view, so the edges of the close-up (faded, below) fall outside it rather than across the map */
+ const px=(x1-x0)*.05,py=(y1-y0)*.05;x0-=px;x1+=px;y0-=py;y1+=py;
+ if(n<30||y1>84||y0<-84||x1-x0>150)return null;return{lon0:c[0]+x0,lon1:c[0]+x1,lat0:y0,lat1:y1,w,h}}
 let P=null,busy=false,timer=0;
 async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false;return}const PI=picOf(key);if(!PI){busy=false;return}
  /* about a screen pixel a cell, at most 1100 a side */
@@ -105,7 +107,7 @@ async function build(gv,key){busy=true;try{const v=viewBox(gv);if(!v){busy=false
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=LND[k]===1;
   const hx=(nb(k,j*nx+Math.min(nx-1,i+1))-nb(k,j*nx+Math.max(0,i-1)))/(2*mx),hy=(nb(k,Math.max(0,j-1)*nx+i)-nb(k,Math.min(ny-1,j+1)*nx+i))/(2*my);
   const ex=land?1.6:1.1,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.8)*(dot-L[2])));
-  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=255}
+  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=Math.round(255*Math.min(1,Math.min(i,nx-1-i)/(nx*.04),Math.min(j,ny-1-j)/(ny*.04)))}
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=P&&P.gl===G?P.tex:G.createTexture();G.activeTexture(G.TEXTURE6);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
  G.texImage2D(G.TEXTURE_2D,0,G.RGBA,nx,ny,0,G.RGBA,G.UNSIGNED_BYTE,new Uint8Array(out.buffer));[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));
  G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_S,G.CLAMP_TO_EDGE);G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_T,G.CLAMP_TO_EDGE);G.activeTexture(G.TEXTURE0);
