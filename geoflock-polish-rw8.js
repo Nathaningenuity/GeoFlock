@@ -223,6 +223,43 @@ FIX.inventions={
   "Where ideas were born":S=>VIEW(S,[30,25,1])
 };
 
+FIX.flags={
+  /* Liberia's flag sat at the globe's right edge by the map key and Malaysia, the third flag of the stop, was round the
+     back: framed further east, and the stop's buttons turn to Liberia and Malaysia (part 2); the "United States" label,
+     whose pin is then under the card, hung over the map's switches and goes (the flag pictures name it) */
+  "Stars and stripes":S=>{DROP(S,/^United States$/);VIEW(S,[-28,20,1.1])},
+  /* Switzerland and Vatican City, the two square flags shaded on the globe, were off its edge: the stop's buttons
+     turn to them (part 2) */
+  "Not a rectangle":S=>VIEW(S,[85,28,2.2])
+};
+
+FIX.langrel={
+  /* the globe looked down on the Arctic (geoflock-polish-rvh.js's frame, made for a card on the right): with the card
+     on the left, Brampton, Canada and the US lay under it and Amritsar at the globe's edge under the map key. It opens
+     on Punjab, and the stop's buttons turn to Britain and Canada (part 2) */
+  "Sikhism’s Punjab":S=>VIEW(S,[74.88,31.62,2.2])
+};
+
+FIX.gdp={
+  /* the globe looked at the empty North Pacific halfway between the two giants: the US lay under the card (on the
+     right, beside the map's side panel), China at the globe's left edge and the New York photo on the zoom buttons. It
+     opens on the US, the card kept on the right, and the stop's buttons turn to China (part 2) */
+  "Two giants":S=>VIEW(S,[-95,38,1.4],"right"),
+  /* China, the stop's subject, was at the globe's right edge and Italy's label below the card: it opens on China, and
+     the stop's buttons turn to Italy (part 2) */
+  "China’s rise":S=>VIEW(S,[105,33,1.6])
+};
+
+FIX.borders={
+  /* the card sat on the right, over Ohio and the Ambassador Bridge, and the "Canada" and "United States" labels hung on
+     long leaders off the globe's edges: card left, framed from Vancouver to Ohio; the two country labels go (the map
+     names them) */
+  "Borders still stop trade":S=>{DROP(S,/^(Canada|United States)$/);VIEW(S,[-96,46,1.8])},
+  /* the Vatican photo sat on the year banner and the map's switches at the globe's top edge, Lesotho's below the
+     screen: it opens on Italy, and the stop's buttons turn to Lesotho (part 2) */
+  "Countries inside countries":S=>VIEW(S,[12.5,42.5,3])
+};
+
 FIX.words={
   /* Dagestan's label hung on a long leader across Georgia, far from its place, and the Tbilisi photo was pushed onto
      Azerbaijan: the label sits right above Dagestan, framed a little closer and further east */
@@ -257,8 +294,8 @@ early();setTimeout(early,1500);setTimeout(early,6000);addEventListener("load",()
 /* Each stop's frame, by tour and title, read once from FIX at load (each fix run on a stand-in stop that has only its
    title), as geoflock-polish-rvt.js does: on a tour's very first launch index.html flies to the opening stop before the
    fixes are applied to it, so psGlobeTarget (wrapped above) finds the frame by title as well. */
-const FRAMES={};
-for(const t in FIX)for(const k in FIX[t]){try{const D={title:k};FIX[t][k](D);const v=VIEWED.get(D);if(v)FRAMES[t+"|"+k]=v}catch(e){}}
+const FRAMES={},SIDE={};
+for(const t in FIX)for(const k in FIX[t]){try{const D={title:k};FIX[t][k](D);const v=VIEWED.get(D);if(v)FRAMES[t+"|"+k]=v;SIDE[t+"|"+k]=D.card||"left"}catch(e){}}
 let OVR=null;
 const viewOf=S=>{if(OVR)return OVR;const v=VIEWED.get(S);if(v)return v;try{return S&&ps&&ps.tour&&FRAMES[ps.tour+"|"+strip(S.title)]}catch(e){return null}};
 const applied=new WeakSet();
@@ -266,9 +303,9 @@ const applied=new WeakSet();
    is in (see XF): if this file locked the field first, the portrait could not be added */
 let waiting=false;
 function applyTo(tour,steps){const F=FIX[tour];if(!F||!steps)return;steps.forEach(S=>{if(!S||applied.has(S))return;
- /* (rw8) only the stops fixed here get their card on the left: these tours' other stops keep their own side (some
+ /* (rw8) only the stops fixed here get their card side locked (the left, unless the fix's VIEW names the right): these tours' other stops keep their own side (some
     tours, like the seas tour, put the card on the right with the map key on the left, and their frames are made for it) */
- TOUR_OF.set(S,tour);const f=F[strip(S.title)];if(!f){applied.add(S);return}LOCK(S,"card","left");
+ TOUR_OF.set(S,tour);const f=F[strip(S.title)];if(!f){applied.add(S);return}LOCK(S,"card",SIDE[tour+"|"+strip(S.title)]||"left");
  PEND=false;try{f(S)}catch(e){console.error("rw8 fix",tour,S.title,e)}if(PEND)waiting=true;else applied.add(S)})}
 let lastKey="";
 every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){lastKey="";return}
@@ -279,7 +316,7 @@ every(()=>{try{const t=typeof ps!=="undefined"&&ps&&ps.tour;if(!t||!FIX[t]){last
 /* (not at page load: other files fill in these stops' photos after load by assigning S.phPins; the fixes go in when one
    of these tours opens). Only the card side is locked at load, so a tour's first stop already opens with its card on
    the left. */
-const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S&&FIX[t][strip(S.title)])LOCK(S,"card","left")})})}catch(e){}};
+const cardsLeft=()=>{try{Object.keys(FIX).forEach(t=>{const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{if(S&&FIX[t][strip(S.title)])LOCK(S,"card",SIDE[t+"|"+strip(S.title)]||"left")})})}catch(e){}};
 cardsLeft();setTimeout(cardsLeft,1500);setTimeout(cardsLeft,6000);
 
 /* The card shift, kept (as geoflock-polish-rvb.js, -rvt.js and -rvu.js do for theirs): psFlyGlobe (index.html) turns a
@@ -577,9 +614,51 @@ const TURN_MIG=TURNER({tours:["animals"],title:"Great journeys",mark:true,
   ["The Arctic",-20,74,1.5,"The Arctic tern flies about 70,000 km a year, chasing summer at both ends of the Earth: it nests in the far north…",1],
   ["Off Antarctica",5,-66,1.5,"…and spends the southern summer off Antarctica.",1]]});
 
+/* ======================================================================== 14. Three striped flags (flags, Stars and
+   stripes) The texts are the card's own. */
+const TURN_STRIPES=TURNER({tours:["flags"],title:"Stars and stripes",mark:true,
+ tip:"Turn the globe to the three flags.",
+ places:[["The Atlantic",-28,20,1.1,"The US flag has 13 stripes for the original colonies and 50 stars for today’s states.",2],
+  ["Liberia",-10.8,6.3,2.4,"Founded from 1822 by free Black Americans; its flag has eleven red and white stripes and one star.",1],
+  ["Malaysia",102,4,2.2,"Malaysia’s flag has 14 stripes and a crescent."]]});
+
+/* ======================================================================== 15. Not four-sided, not oblong (flags, Not a
+   rectangle) The texts are the card's own. */
+const TURN_SQUARE=TURNER({tours:["flags"],title:"Not a rectangle",mark:true,
+ tip:"Turn the globe from the one flag that isn’t four-sided to the two square ones.",
+ places:[["Nepal",84,28.4,2.2,"Nepal is the only country whose flag isn’t four-sided: two triangles, one on top of the other.",1],
+  ["Switzerland",8.2,46.8,3,"Two flags are square instead of rectangular: Switzerland’s…"],
+  ["Vatican City",12.45,41.9,3.4,"…and Vatican City’s."]]});
+
+/* ======================================================================== 16. Punjab and beyond (langrel, Sikhism’s
+   Punjab) The texts are the card's own. */
+const TURN_SIKH8=TURNER({tours:["langrel"],title:"Sikhism’s Punjab",mark:true,
+ tip:"Turn the globe from Punjab to two big Sikh communities abroad.",
+ places:[["Amritsar",74.88,31.62,2.2,"The Golden Temple is the holiest place; its free kitchen, the langar, feeds tens of thousands of visitors a day, whatever their faith.",1],
+  ["Southall, London",-0.38,51.51,2.6,"Many Sikhs moved to Britain.",1],
+  ["Brampton, near Toronto",-79.8,43.7,2.4,"Canada’s 2021 census counted about 770,000 Sikhs, the second-largest community after India: about 2.1% of Canadians.",1]]});
+
+/* ======================================================================== 17. The two giants (gdp, Two giants) and China
+   and Italy (gdp, China’s rise) The texts are the cards' own. */
+const TURN_GIANTS=TURNER({tours:["gdp"],title:"Two giants",mark:true,
+ tip:"Turn the globe between the two giants.",
+ places:[["The United States",-95,38,1.4,"The US makes about a quarter of the world’s output.",1],
+  ["China",105,33,1.4,"China makes about a sixth.",1]]});
+const TURN_RISE=TURNER({tours:["gdp"],title:"China’s rise",mark:true,
+ tip:"Turn the globe between China and Italy.",
+ places:[["China",105,33,1.6,"For about 30 years China grew by nearly 10% a year.",1],
+  ["Italy",12.5,42.5,2.4,"In 1990 Italy’s economy was bigger than China’s.",1]]});
+
+/* ======================================================================== 18. Enclaved (borders, Countries inside
+   countries) The texts are the card's own. */
+const TURN_ENCL=TURNER({tours:["borders"],title:"Countries inside countries",mark:true,
+ tip:"Turn the globe to the three countries surrounded by one other.",
+ places:[["Italy",12.5,42.5,3,"Vatican City and San Marino are surrounded by Italy.",2],
+  ["Lesotho",28.2,-29.6,3,"Lesotho is surrounded by South Africa.",1]]});
+
 /*@@DEFS@@*/
 
-const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC,TURN_LEB,TURN_NEW,TURN_LOC,TURN_MIG];
+const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC,TURN_LEB,TURN_NEW,TURN_LOC,TURN_MIG,TURN_STRIPES,TURN_SQUARE,TURN_SIKH8,TURN_GIANTS,TURN_RISE,TURN_ENCL];
 
 
 
