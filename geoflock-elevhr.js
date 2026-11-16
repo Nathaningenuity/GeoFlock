@@ -119,7 +119,7 @@ async function build(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=
  G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_S,G.CLAMP_TO_EDGE);G.texParameteri(G.TEXTURE_2D,G.TEXTURE_WRAP_T,G.CLAMP_TO_EDGE);G.activeTexture(G.TEXTURE0);
  const now=performance.now();
  /* fades in only when no close-up was showing; the sharper stage replaces the quick one in one swap */
- P={gl:G,tex:t,bb:[v.lon0,v.lat1,nx*dlon,ny*dlat],key:want,stage,cell:dlon,H,LND,nx,ny,z,noaa:!!N,t0:now-lastShown<300?(P?P.t0:-1e9):now};try{gv.request?gv.request():gv.render()}catch(e){}}catch(e){console.error(e)}busy=false}
+ P={gl:G,tex:t,bb:[v.lon0,v.lat1,nx*dlon,ny*dlat],key:want,stage,cell:dlon,H,LND,nx,ny,z,noaa:!!N,t0:lastShown?(P?P.t0:-1e9):now};try{gv.request?gv.request():gv.render()}catch(e){}}catch(e){console.error(e)}busy=false}
 function blur(H,nx,ny,r){const T=new Float32Array(nx*ny),O=new Float32Array(nx*ny);
  for(let j=0;j<ny;j++){let s=0,c=0;for(let i=-r;i<nx+r;i++){const a=i+r,b=i-r-1;if(a>=0&&a<nx&&isFinite(H[j*nx+a])){s+=H[j*nx+a];c++}if(b>=0&&b<nx&&isFinite(H[j*nx+b])){s-=H[j*nx+b];c--}if(i>=0&&i<nx)T[j*nx+i]=c?s/c:NaN}}
  for(let i=0;i<nx;i++){let s=0,c=0;for(let j=-r;j<ny+r;j++){const a=j+r,b=j-r-1;if(a>=0&&a<ny&&isFinite(T[a*nx+i])){s+=T[a*nx+i];c++}if(b>=0&&b<ny&&isFinite(T[b*nx+i])){s-=T[b*nx+i];c--}if(j>=0&&j<ny)O[j*nx+i]=c?s/c:NaN}}return O}
@@ -138,12 +138,15 @@ const ON=11.4*1.05,FADE=260;
 function covers(v){if(!P||!v)return false;const mx=(v.lon1-v.lon0)/22,my=(v.lat1-v.lat0)/22,l=((v.lon0+mx-P.bb[0])%360+360)%360;
  return l+(v.lon1-v.lon0-2*mx)<=P.bb[2]+1e-6&&v.lat1-my<=P.bb[1]+1e-6&&v.lat0+my>=P.bb[1]-P.bb[3]-1e-6}
 const req=gv=>{try{gv.request?gv.request():gv.render()}catch(e){}};
-window.gfElevPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180;if(ppd<ON)return null;
+const patch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180;if(ppd<ON)return null;
  if(P&&P.gl!==G.gl)P=null;const k=sig(gv,o.key);
  if((!P||P.key!==k||P.stage<1)&&!busy){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving){timer=setTimeout(go,250);return}if(busy)return;
    let st=1;if(!P||P.key!==sig(gv,o.key)){const v=viewBox(gv);if(v){const c0=(v.lon1-v.lon0)/gridFor(v,0)[0];if(!covers(v)||P.cell>c0*1.01)st=0}}
    build(gv,o.key,st).then(()=>req(gv))},P&&P.key===k?30:250)}
  if(!P)return null;const now=performance.now(),a=Math.max(0,Math.min(1,(now-P.t0)/FADE));if(a<1)requestAnimationFrame(()=>req(gv));lastShown=now;return{tex:P.tex,bb:P.bb,a}};
+/* a new close-up fades in only after a frame drawn without one; otherwise it replaces the shown one in one swap (it is made
+   once the globe stops, often more than 300 ms after the last frame, and used to fade in from the blurry picture each time) */
+window.gfElevPatch=function(G,o){const r=patch(G,o);if(!r)lastShown=0;return r};
 /* for checking: what the last close-up was worked out from */
 window.gfElevPatch.dbg=()=>P&&{bb:P.bb,nx:P.nx,ny:P.ny,z:P.z,noaa:P.noaa,stage:P.stage,busy};
 })();

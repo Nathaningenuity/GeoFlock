@@ -75,7 +75,7 @@ async function build(gv,lv,sig,ppd){busy=true;try{const G=gv.gl&&gv.gl.gl;if(!G|
  G.activeTexture(G.TEXTURE0);if(P&&P.tex&&P.gl===G)try{G.deleteTexture(P.tex)}catch(e){}
  /* fades in only when nothing sharp was showing; a step from one size to the next is one swap */
  const now=performance.now();
- P={key,lv,sig,ppd,sc,gl:G,tex:t,bb:[c0*D-180,90-r0*D,cols*D,rows*D],box:[c0*D-180,c1*D-180+D,90-r1*D-D,90-r0*D],t0:now-lastShown<300?-1e9:now};busy=false;req()}catch(e){console.error(e);busy=false}}
+ P={key,lv,sig,ppd,sc,gl:G,tex:t,bb:[c0*D-180,90-r0*D,cols*D,rows*D],box:[c0*D-180,c1*D-180+D,90-r1*D-D,90-r0*D],t0:lastShown?-1e9:now};busy=false;req()}catch(e){console.error(e);busy=false}}
 function inside(gv){if(!P)return false;const v=viewBox(gv);if(!v)return false;const l=((v.l0-P.box[0])%360+360)%360,r=l+(v.l1-v.l0);return l>=0&&r<=P.box[1]-P.box[0]+1e-6&&v.b0>=P.box[2]-1e-6&&v.b1<=P.box[3]+1e-6}
 const sigNow=key=>oceanNow(key)+"|"+(typeof DENS_LEVELS!=="undefined"?DENS_LEVELS.colours.length+DENS_LEVELS.colours[40]:"");
 function prefetch(gv,lv){const now=performance.now();if(now-preT<300||!IDX)return;preT=now;const G=gv.gl&&gv.gl.gl;if(!G)return;const tf=tilesFor(gv,lv,maxPx(G));if(!tf)return;
@@ -93,7 +93,9 @@ function patch(G,o){const gv=o.gv;if(!gv||gv._flat||!wanted())return null;const 
  if(!P||P.sig!==sig)return null;const now=performance.now(),f=Math.max(0,Math.min(1,(now-P.t0)/FADE));
  if(f<1)requestAnimationFrame(req);lastShown=now;return{tex:P.tex,bb:P.bb,a:f}}
 const prev=window.gfHRPatch;
-window.gfHRPatch=function(G,o){if(o&&isDens(o.key))return patch(G,o);return prev?prev(G,o):null};
+/* lastShown is cleared whenever a frame is drawn without a patch: a new patch fades in only then, and replaces a shown one in one swap
+   (it is often made more than 300 ms after the last frame, once the globe stops, and used to fade in from the blurry picture) */
+window.gfHRPatch=function(G,o){if(o&&isDens(o.key)){const r=patch(G,o);if(!r)lastShown=0;return r}return prev?prev(G,o):null};
 window.gfHRPatch.state=prev&&prev.state;window.gfPopHR={state:()=>({busy,key:P&&P.key,lv:P&&P.lv,cached:IMG.size,idx:!!IDX})};
 /* the flat map's picture: the same data, coloured the same way (the one in the map file was labelled NASA GPWv4 2015) */
 const FLAT="textures/FLAT_DENS_IMG.webp?v=1";

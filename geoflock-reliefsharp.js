@@ -104,13 +104,13 @@ async function build(gv,o,lv,sig){busy=true;try{const G=gv.gl&&gv.gl.gl;if(!G){b
  G.activeTexture(G.TEXTURE0);if(P&&P.tex&&P.gl===G)try{G.deleteTexture(P.tex)}catch(e){}
  /* fades in only when nothing sharp was showing; a step up from half-size to full tiles is one swap */
  const now=performance.now();
- P={key,lv,sig,gl:G,tex:t,bb,box:[c0*D-180,c1*D-180+D,90-r1*D-D,90-r0*D],t0:now-lastShown<300?-1e9:now};busy=false;req()}catch(e){console.error(e);busy=false}}
+ P={key,lv,sig,gl:G,tex:t,bb,box:[c0*D-180,c1*D-180+D,90-r1*D-D,90-r0*D],t0:lastShown?-1e9:now};busy=false;req()}catch(e){console.error(e);busy=false}}
 function inside(gv){if(!P)return false;const v=viewBox(gv);if(!v)return false;const l=((v.l0-P.box[0])%360+360)%360,r=l+(v.l1-v.l0);return l>=0&&r<=P.box[1]-P.box[0]+1e-6&&v.b0>=P.box[2]-1e-6&&v.b1<=P.box[3]+1e-6}
 function sigNow(o){let s=/^gfRelShade/.test(o.key||"")?"s"+(EQ?EQ.sk:"")+(window.GFL?GFL.shadeKey:""):"p";const a=adjNow();if(a)s+="|"+JSON.stringify(a);return s}
 /* fetch ahead the tiles the next step will need, a few at a time */
 function prefetch(gv,lv){const now=performance.now();if(now-preT<300)return;preT=now;const G=gv.gl&&gv.gl.gl;if(!G)return;const tf=tilesFor(gv,lv,maxC(G));if(!tf)return;
  const k=lv+":"+tf.c0+","+tf.r0+","+tf.c1+","+tf.r1;if(k===preKey)return;preKey=k;tf.ks.forEach(t=>img(t[2]))}
-window.gfHRPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!isRelief(o.key)||!wanted())return null;const ppd=o.s*Math.PI/180;
+const patch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!isRelief(o.key)||!wanted())return null;const ppd=o.s*Math.PI/180;
  if(P&&P.gl!==G.gl)P=null;
  if(ppd<ON){if(ppd>PRE0)prefetch(gv,0);return null}
  const lv=ppd>ON1?1:0,sig=sigNow(o);if(lv===0&&ppd>PRE1)prefetch(gv,1);
@@ -122,5 +122,7 @@ window.gfHRPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||!isRelief(o.ke
  /* a patch made with other shading or shades is never shown */
  if(!P||P.sig!==sig)return null;const now=performance.now(),f=Math.max(0,Math.min(1,(now-P.t0)/FADE));
  if(f<1)requestAnimationFrame(req);lastShown=now;return{tex:P.tex,bb:P.bb,a:f}};
+/* a new patch fades in only after a frame drawn without one; otherwise it replaces the shown one in one swap */
+window.gfHRPatch=function(G,o){const r=patch(G,o);if(!r)lastShown=0;return r};
 gfHRPatch.state=()=>({busy,key:P&&P.key,worker:!!WK,cached:IMG.size});
 })();
