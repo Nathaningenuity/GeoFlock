@@ -277,7 +277,7 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=0;refl=0;touched=0}goAt++;ps._gfAimed=psSteps()[ps.i];
  /* a stop whose own game turns the globe is left to it */
- if(document.querySelector(".rw7-ctl[data-turns]")){
+ /* (rw8: also when geoflock-polish-rw8.js's controls on one of these tours' stops turn the globe) */if(document.querySelector(".rw7-ctl[data-turns],.rw8-ctl[data-turns]")){
   /* (rw7) a turn the game asked for can be cut off half way on a busy page (another file's flight takes over, as seen on
      the Culture map): if the globe has come to rest away from the place asked for, it turns there again, at most twice,
      unless the reader has dragged or zoomed the globe since */

@@ -237,8 +237,9 @@ FIX.learning={
   "School by radio":S=>DROP(S,/^Australia$/),
   /* a "Kenya" label on a long leader across Garissa's (the map names it) */
   "Libraries on camels":S=>DROP(S,/^Kenya$/),
-  /* a "United Kingdom" label on a leader (the map names it), and Britain's shading: both go */
-  "The Knowledge":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/)},
+  /* a "United Kingdom" label on a leader (the map names it), and Britain's shading: both go; (rw8) the Charing Cross
+     label sat on the end of the ruler: put above its pin (the stop's frame and six-mile ring are geoflock-polish-rw8.js's) */
+  "The Knowledge":S=>{NOSHADE(S);DROP(S,/^United Kingdom$/);ABOVE(S,/^Charing Cross$/)},
   "Now explore":S=>VIEW(S,[40,30,1])
 };
 
@@ -290,7 +291,7 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=0;refl=0;touched=0}goAt++;ps._gfAimed=psSteps()[ps.i];
  /* a stop whose own game turns the globe is left to it */
- if(document.querySelector(".rw5-ctl[data-turns]"))return;
+ /* (rw8: also when geoflock-polish-rw8.js's controls on one of these tours' stops turn the globe) */if(document.querySelector(".rw5-ctl[data-turns],.rw8-ctl[data-turns]"))return;
  if(touched||refl>=2||goAt<4||goAt>32||ps.g._flying)return;
  const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||Math.abs(ps.g.zoom-T[2])>.15){refl++;psFlyGlobe()}}catch(e){}},250);
 /* the same stop opened again (Back, a dot, a link) gets the same window: psGo is wrapped to start the count again */
