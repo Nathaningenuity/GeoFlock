@@ -170,6 +170,59 @@ FIX.antarctica={
   "Life at the edge":S=>VIEW(S,[20,-78,1.3])
 };
 
+FIX.explorers={
+  /* the Hawaii photo sat on the map's switches at the globe's top edge: framed a little further north */
+  "Captain Cook":S=>VIEW(S,[-170,-12,1]),
+  /* Brest's label sat at the globe's top edge, against the map's switches: framed a little further north */
+  "The first woman to sail round the world":S=>VIEW(S,[-10,-2,1])
+};
+
+FIX.hantarctica={
+  /* the South Georgia photo sat on the map's switches at the globe's top edge; turned to the side, the square (set out
+     from the globe's middle) landed on the zoom buttons instead: on this opening overview the photo goes (South
+     Georgia has its own stops later), and the polar view is drawn a little smaller */
+  "Antarctica’s story":S=>{DROPPH(S,/South Georgia/);VIEW(S,[-40,-90,1.35])}
+};
+
+FIX.food={
+  /* Ireland's label sat over the search box at the globe's top edge: framed a little further north (geoflock-polish-
+     rvq.js's frame was [-30,-5,1]) */
+  "From Titicaca to Ireland":S=>VIEW(S,[-30,10,1])
+};
+
+FIX.migration={
+  /* the Naples photo sat on the zoom buttons at the globe's right edge, 90° east of New York: no frame beside the card
+     holds both ends of the crossing and Naples, so the photo goes (Italy's emigrants are in the stop's text) */
+  "The great Atlantic crossing":S=>DROPPH(S,/^Naples$/),
+  /* the Beirut photo sat on the zoom buttons at the globe's edge, Mexico City's against the card and Sydney round the
+     back: it opens on Lebanon and West Africa, and the stop's buttons turn to each community (part 2) */
+  "Lebanon’s global family":S=>VIEW(S,[22,20,1.3]),
+  /* the Auckland label sat under the map key and Toronto and Vancouver were round the back: it opens on Australia, and
+     the stop's buttons turn to New Zealand and Canada (part 2) */
+  "Built by newcomers":S=>VIEW(S,[140,-30,1.5])
+};
+
+FIX.hazards={
+  /* the globe looked at the Atlantic: East Africa's swarms and the Maasai Mara photo were at its right edge under the
+     map key, and the Caribbean under the card: it opens on the desert locust's Sahel, and the stop's buttons turn to
+     the two plagues (part 2) */
+  "Plagues of locusts":S=>VIEW(S,[14,12,1.4])
+};
+
+FIX.animals={
+  /* the Arctic tern photo sat on the map's switches at the globe's top edge, the Antarctic terns below the screen and
+     the monarchs round the back: it opens on the Serengeti and the stop's buttons follow each journey (part 2) */
+  "Great journeys":S=>VIEW(S,[35,-1.5,1.8]),
+  /* the okapi and Grauer's gorilla photos sat under the map key: framed a little further east */
+  "The Congo rainforest":S=>VIEW(S,[24,-1,3.2])
+};
+
+FIX.inventions={
+  /* the globe turned to the Arctic, with the Nashtifan and Jingdezhen photos on the map's switches: framed on the
+     northern lands where the tour's inventions were born */
+  "Where ideas were born":S=>VIEW(S,[30,25,1])
+};
+
 FIX.words={
   /* Dagestan's label hung on a long leader across Georgia, far from its place, and the Tbilisi photo was pushed onto
      Azerbaijan: the label sits right above Dagestan, framed a little closer and further east */
@@ -489,9 +542,44 @@ const TURN_VOLC=TURNER({tours:["plates"],title:"Why some volcanoes explode",mark
   ["Mount St Helens",-122.18,46.2,2.4,"On the Ring of Fire, which has the most explosive volcanoes: stiff magma traps the gas until it blasts free, as here in 1980.",1],
   ["Chaitén",-72.65,-42.83,2.4,"Rhyolite, the most silica-rich of the four magmas here, and the stiffest.",1]]});
 
+/* ======================================================================== 10. The Lebanese abroad (migration, Lebanon’s
+   global family) The texts are the card's own. */
+const TURN_LEB=TURNER({tours:["migration"],title:"Lebanon’s global family",mark:true,
+ tip:"Turn the globe to Lebanese communities around the world.",
+ places:[["Beirut",35.5,33.9,2.2,"Lebanese have emigrated since the 1800s, escaping hunger, war and a lack of jobs, and trading all over the world.",1],
+  ["Abidjan",-4.02,5.35,2.2,"Lebanese traders settled across West Africa, from Senegal to Ivory Coast.",1],
+  ["São Paulo",-46.63,-23.55,2,"Brazil says it has millions of people of Lebanese descent, though estimates vary widely. Michel Temer, its president from 2016 to 2018, is the son of Lebanese parents.",1],
+  ["Mexico City",-99.13,19.43,2,"Carlos Slim, one of the world’s richest men, was born in Mexico to a Lebanese father.",1],
+  ["Sydney",151.2,-33.87,2,"Lebanese also settled in Australia, Canada and the US.",1]]});
+
+/* ======================================================================== 11. Three countries of newcomers (migration,
+   Built by newcomers) The texts are the card's own. */
+const TURN_NEW=TURNER({tours:["migration"],title:"Built by newcomers",mark:true,
+ tip:"Turn the globe between the countries in the stop.",
+ places:[["Australia",140,-30,1.5,"About three in ten Australians were born abroad; the biggest groups were born in England, India and China.",2],
+  ["New Zealand",174.76,-36.85,2.4,"New Zealand also has nearly three in ten people born overseas.",1],
+  ["Canada",-100,50,1.4,"About a quarter of Canadians were born abroad, and nearly half of Toronto’s people. Canada invented the points system in 1967.",2]]});
+
+/* ======================================================================== 12. Two plagues (hazards, Plagues of locusts)
+   The texts are the card's own. */
+const TURN_LOC=TURNER({tours:["hazards"],title:"Plagues of locusts",mark:true,
+ tip:"Turn the globe to two great locust plagues.",
+ places:[["The Sahel",14,12,1.4,"After good rains, desert locusts crowd together, change colour and form swarms of up to 80 million per km².",2],
+  ["East Africa",38,1,2.2,"In 2019–21, swarms in East Africa were the worst Kenya had seen in 70 years.",1],
+  ["The Caribbean",-61,13.5,1.8,"In 1988 swarms flew across the Atlantic from West Africa to the Caribbean, about 5,000 km, in roughly ten days.",1]]});
+
+/* ======================================================================== 13. Three journeys (animals, Great journeys)
+   The texts are the card's own. */
+const TURN_MIG=TURNER({tours:["animals"],title:"Great journeys",mark:true,
+ tip:"Follow three great journeys with the buttons.",
+ places:[["The Serengeti",35.03,-1.55,1.8,"About two million wildebeest, zebras and gazelles walk a loop of about 800 km following the rains.",1],
+  ["Michoacán",-100.3,19.6,2,"Monarch butterflies fly up to about 4,000 km to a few fir-covered mountains in Mexico.",1],
+  ["The Arctic",-20,74,1.5,"The Arctic tern flies about 70,000 km a year, chasing summer at both ends of the Earth: it nests in the far north…",1],
+  ["Off Antarctica",5,-66,1.5,"…and spends the southern summer off Antarctica.",1]]});
+
 /*@@DEFS@@*/
 
-const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC];
+const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC,TURN_LEB,TURN_NEW,TURN_LOC,TURN_MIG];
 
 
 

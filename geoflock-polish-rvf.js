@@ -129,7 +129,7 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=performance.now();refl=0;touched=0}ps._gfAimed=psSteps()[ps.i];
  /* a stop whose own game turns the globe (the oil barrels, the coral reef) is left to it */
- if(document.querySelector(".gc3-ctl,.ge2-ctl,.rvf-ctl[data-turns]"))return;
+ if(document.querySelector(".gc3-ctl,.ge2-ctl,.rvf-ctl[data-turns],.rw8-ctl[data-turns]"))return;
  const t=performance.now()-goAt;if(touched||refl>=2||t<900||t>4500||ps.g._flying)return;
  const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||Math.abs(ps.g.zoom-T[2])>.15){refl++;psFlyGlobe()}}catch(e){}},250);
 
