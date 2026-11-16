@@ -134,22 +134,24 @@ window.gfNatureFocusable=()=>vecOn()&&allMapsSubMode.nature!=="eco";window.gfNat
 let rank=null;/* "intact" | "converted" */
 function legend(){const t=allMapsSubMode.nature;
  if(t==="biomes"){const list=(N.cards||[]).slice();let rows;
-  if(rank){const key=rank==="intact"?(c=>-(c.intactPct!=null?c.intactPct:100-(c.convertedPct||0))):(c=>-(c.convertedPct!=null?c.convertedPct:0));rows=list.filter(c=>c.convertedPct!=null||c.intactPct!=null).sort((a,b)=>key(a)-key(b)).map((c,i)=>'<span class="legend-swatch gf-nat-sw" data-nb="'+c.b+'"><i style="background:'+c.col+'"></i>'+(i+1)+". "+esc(c.n)+"<em>"+(rank==="intact"?(c.intactPct!=null?c.intactPct:100-c.convertedPct)+"% natural":c.convertedPct+"% converted")+"</em></span>").join("")}
-  else rows=list.map(c=>'<span class="legend-swatch gf-nat-sw'+(focus===c.b?" is-on":"")+'" data-nb="'+c.b+'" role="button" tabindex="0"><i style="background:'+c.col+'"></i>'+esc(c.n)+(c.share!=null?"<em>"+c.share+"%</em>":"")+"</span>").join("");
-  return'<span class="legend-title">Biomes</span><span class="gf-nat-rank"><button type="button" data-rank=""'+(rank?"":' class="on"')+'>All biomes</button><button type="button" data-rank="intact"'+(rank==="intact"?' class="on"':"")+'>Most intact</button><button type="button" data-rank="converted"'+(rank==="converted"?' class="on"':"")+'>Most converted</button></span><span class="legend-swatches th-swatches">'+rows+'</span><span class="legend-note">A biome is a big kind of natural home, shaped by climate: rainforest, desert, tundra… Numbers show each biome’s share of Earth’s land. Click a colour to show only that biome, or click the map for its card.'+(focus!=null?' <a href="#" class="gf-nat-clear">Show all</a>':"")+" "+esc(N.credit||"")+"</span>"}
+  if(rank){const key=rank==="intact"?(c=>-(c.intactPct!=null?c.intactPct:100-(c.convertedPct||0))):(c=>-(c.convertedPct!=null?c.convertedPct:0));rows=list.filter(c=>c.convertedPct!=null||c.intactPct!=null).sort((a,b)=>key(a)-key(b)).map((c,i)=>'<span class="legend-swatch gf-nat-sw'+(focus===c.b?" is-on":"")+'" data-nb="'+c.b+'" role="button" tabindex="0"><i style="background:'+c.col+'"></i>'+(i+1)+". "+esc(c.n)+"<em>"+(rank==="intact"?(c.intactPct!=null?c.intactPct:100-c.convertedPct)+"% natural":c.convertedPct+"% converted")+"</em>"+'<span class="gf-nat-more" role="button" tabindex="0" data-more="'+c.b+'" title="Open its card">Learn more</span>'+"</span>").join("")}
+  else rows=list.map(c=>'<span class="legend-swatch gf-nat-sw'+(focus===c.b?" is-on":"")+'" data-nb="'+c.b+'" role="button" tabindex="0"><i style="background:'+c.col+'"></i>'+esc(c.n)+(c.share!=null?"<em>"+c.share+"%</em>":"")+'<span class="gf-nat-more" role="button" tabindex="0" data-more="'+c.b+'" title="Open its card">Learn more</span>'+"</span>").join("");
+  return'<span class="legend-title">Biomes</span><span class="gf-nat-rank"><button type="button" data-rank=""'+(rank?"":' class="on"')+'>All biomes</button><button type="button" data-rank="intact"'+(rank==="intact"?' class="on"':"")+'>Most intact</button><button type="button" data-rank="converted"'+(rank==="converted"?' class="on"':"")+'>Most converted</button></span><span class="legend-swatches th-swatches">'+rows+'</span><span class="legend-note">A biome is a big kind of natural home, shaped by climate: rainforest, desert, tundra… Numbers show each biome’s share of Earth’s land. Click a row to show only that biome (click it again to show all); Learn more opens its card.'+(focus!=null?' <a href="#" class="gf-nat-clear">Show all</a>':"")+" "+esc(N.credit||"")+"</span>"}
  if(t==="eco")return'<span class="legend-title">Ecoregions</span><span class="legend-note">'+(ECO?ECO.length:846)+" ecoregions: areas with their own mix of plants and animals, coloured by their biome (each a slightly different shade). Hover or click one for its card; famous ones have photos and more. "+esc(N.credit||"")+" Descriptions: Wikipedia, CC BY-SA 4.0."+(ECO?"":" Loading…")+"</span>";
- if(t==="realms"){const R=Object.keys(REALM_COL);return'<span class="legend-title">Ocean realms</span><span class="legend-swatches th-swatches">'+R.map(r=>'<span class="legend-swatch gf-nat-sw'+(focus===r?" is-on":"")+'" data-nr="'+esc(r)+'" role="button" tabindex="0"><i style="background:'+REALM_COL[r]+'"></i>'+esc(r)+"</span>").join("")+'</span><span class="legend-note">The coastal seas split into twelve big realms, each with its own sea life. Click the sea for a realm’s card. '+esc(N.realmCredit||"")+"</span>"}
+ if(t==="realms"){const R=Object.keys(REALM_COL);return'<span class="legend-title">Ocean realms</span><span class="legend-swatches th-swatches">'+R.map(r=>'<span class="legend-swatch gf-nat-sw'+(focus===r?" is-on":"")+'" data-nr="'+esc(r)+'" role="button" tabindex="0"><i style="background:'+REALM_COL[r]+'"></i>'+esc(r)+'<span class="gf-nat-more" role="button" tabindex="0" data-more="'+esc(r)+'" title="Open its card">Learn more</span>'+"</span>").join("")+'</span><span class="legend-note">The coastal seas split into twelve big realms, each with its own sea life. Click a row to show only that realm (again to show all); Learn more opens its card. '+esc(N.realmCredit||"")+"</span>"}
  if(t==="footprint")return'<span class="legend-title">Human footprint</span><span class="legend-swatches th-swatches">'+FOOT.map(c=>'<span class="legend-swatch gf-nat-sw'+(focus===c[0]?" is-on":"")+'" data-nf="'+c[0]+'" role="button" tabindex="0"><i style="background:'+c[2]+'"></i>'+esc(c[1])+"</span>").join("")+'</span><span class="legend-note">How much people have changed the land: cities, farms, roads, mines and power lines. Green areas are still wild. '+esc(N.footCredit||"")+"</span>";
  return""}
 {const _lg=allMapsLegendHTML;allMapsLegendHTML=function(){if(vecOn())return legend();return _lg.apply(this,arguments)}}
-document.addEventListener("click",e=>{if(!vecOn())return;const t=e.target;if(!t.closest||!t.closest("#populationLegend, #flKey"))return;if(t.closest("#flKey"))e.stopPropagation();
+document.addEventListener("click",e=>{if(!vecOn())return;const t=e.target;if(!t.closest||!t.closest("#populationLegend, #flKey"))return;
+ /* only clicks on this key's own rows and buttons are taken here: the floating key's Show all and fold buttons keep working */
+ if(!t.closest(".gf-nat-sw, [data-rank], .gf-nat-clear"))return;if(t.closest("#flKey"))e.stopPropagation();
+ const mo=t.closest(".gf-nat-more");if(mo){e.preventDefault();const k=mo.dataset.more;if(allMapsSubMode.nature==="realms")card({kind:"realm",d:Object.assign({n:k},(N.realmCards||{})[k]||{})});else{const c=CARD[+k];if(c)card({kind:"biome",d:c})}return}
  const r=t.closest("[data-rank]");if(r){e.preventDefault();rank=r.dataset.rank||null;focus=null;refresh();return}
  if(t.closest(".gf-nat-clear")){e.preventDefault();focus=null;refresh();return}
  const s=t.closest(".gf-nat-sw");if(!s)return;const v=s.dataset.nb!=null?+s.dataset.nb:s.dataset.nf!=null?+s.dataset.nf:s.dataset.nr;
- if(rank&&s.dataset.nb!=null){const c=CARD[v];if(c)card({kind:"biome",d:c});return}
- /* a biome in the key: picked out on the map, and its card opens */
- if(s.dataset.nb!=null){focus=v;refresh();const c=CARD[v];if(c)card({kind:"biome",d:c});return}
+ /* a row picks its colour out on the map; clicking it again shows every colour (the card opens from Learn more) */
  focus=focus===v?null:v;refresh()},true);
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList&&(e.target.classList.contains("gf-nat-sw")||e.target.classList.contains("gf-nat-more"))&&vecOn()){e.preventDefault();e.target.click()}});
 function refresh(){try{const w=wrapEl();applyAllMapsColorMode(w)}catch(e){}drawFlat(true);globe()}
 
 const st=document.createElement("style");st.textContent=`
@@ -175,6 +177,14 @@ const st=document.createElement("style");st.textContent=`
 .gf-nat-wiki a{ font-weight:700; white-space:nowrap; }
 .gf-nat-wiki small{ display:block; opacity:.55; font-size:10.5px; margin-top:2px; text-transform:none; letter-spacing:0; font-weight:400; }
 .gf-nat-credit{ font-size:11px; opacity:.55; margin:12px 0 0; }
+.legend-swatch.gf-nat-sw{ cursor:pointer; }
+.gf-nat-sw{ position:relative; }
+/* Learn more shows on the row under the pointer, the picked row, and always on touch screens; it covers the percentage */
+.gf-nat-sw .gf-nat-more{ display:none; position:absolute; right:2px; top:50%; transform:translateY(-50%); box-shadow:0 0 0 4px var(--surface,#fff); border:1px solid rgba(0,0,0,.14); background:var(--surface,#fff); color:inherit; border-radius:999px; padding:2px 8px; font:700 10.5px/1.3 inherit; cursor:pointer; opacity:.75; white-space:nowrap; }
+.gf-nat-sw:hover .gf-nat-more, .gf-nat-sw.is-on .gf-nat-more, .gf-nat-sw:focus-within .gf-nat-more{ display:inline-block; }
+@media (hover:none){ .gf-nat-sw .gf-nat-more{ display:inline-block; position:static; transform:none; box-shadow:none; } }
+.gf-nat-sw .gf-nat-more:hover{ opacity:1; background:var(--accent,#2f8a7a); color:#fff; border-color:transparent; }
+body.dark-theme .gf-nat-sw .gf-nat-more{ background:#1f2b3a; box-shadow:0 0 0 4px #1f2b3a; border-color:rgba(255,255,255,.18); }
 .gf-nat-rank{ display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 6px; }
 .gf-nat-rank button{ border:1px solid rgba(0,0,0,.12); background:#fff; border-radius:999px; padding:4px 10px; font:600 12px/1 inherit; cursor:pointer; color:inherit; }
 .gf-nat-rank button.on{ background:var(--accent,#2f8a7a); color:#fff; border-color:transparent; }
