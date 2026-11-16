@@ -134,7 +134,9 @@ window.gfElevHeight=function(ll){if(iceZone(ll[0],ll[1])){/* on the ice sheets, 
    (stage 1). After the view moves, the quick one is only made again if the last close-up does not cover the new view or
    is coarser than it would be; otherwise the sharp one is made straight away and swapped in. */
 const ON=11.4*1.05,FADE=260;
-function covers(v){if(!P||!v)return false;const l=((v.lon0-P.bb[0])%360+360)%360;return l+(v.lon1-v.lon0)<=P.bb[2]+1e-6&&v.lat1<=P.bb[1]+1e-6&&v.lat0>=P.bb[1]-P.bb[3]-1e-6}
+/* whether the last close-up covers what is on screen (the view box without the margin viewBox adds) */
+function covers(v){if(!P||!v)return false;const mx=(v.lon1-v.lon0)/22,my=(v.lat1-v.lat0)/22,l=((v.lon0+mx-P.bb[0])%360+360)%360;
+ return l+(v.lon1-v.lon0-2*mx)<=P.bb[2]+1e-6&&v.lat1-my<=P.bb[1]+1e-6&&v.lat0+my>=P.bb[1]-P.bb[3]-1e-6}
 const req=gv=>{try{gv.request?gv.request():gv.render()}catch(e){}};
 window.gfElevPatch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180;if(ppd<ON)return null;
  if(P&&P.gl!==G.gl)P=null;const k=sig(gv,o.key);
