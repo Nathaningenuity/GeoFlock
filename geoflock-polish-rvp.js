@@ -46,7 +46,8 @@ const FIX={
   /* the photos of Lagos, the Niger Delta's gas flare and Niger lay on top of each other, Lagos's point under the card's
      edge, and Dhaka's garment factory hung over the zoom buttons. The Niger Delta's oil and Dhaka's garment workers
      have their own stops (Dependency, Women at work); their photos go, and the globe turns so Lagos clears the card */
-  "Measuring development":S=>{DROPPH(S,/^(Niger Delta|Dhaka)/);VIEW(S,[43,16,1])},
+  /* (rw8) the Norway photo too: it sat on the map banner at the globe's top edge */
+  "Measuring development":S=>{DROPPH(S,/^(Niger Delta|Dhaka|Norway)/);VIEW(S,[43,16,1])},
   /* India's GDP per person in 2024: about $2,592 at market exchange rates and $10,719 at purchasing power parity,
      4.1 times as much (World Bank, World Development Indicators, NY.GDP.PCAP.CD and NY.GDP.PCAP.PP.CD; 2022: 3.9
      times). The stop said "three to four times" */

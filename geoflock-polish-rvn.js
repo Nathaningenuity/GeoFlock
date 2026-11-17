@@ -99,7 +99,8 @@ const FIX={
   /* the card stood on the right, over the Aral Sea photo, the Banaue photo sat above the globe and Havana's round
      the back, and Rondônia's (the card's own photo) fell under the card. Banaue, Havana and Rondônia have their own
      stops later in the tour */
-  "Farming and the planet":S=>{DROPPH(S,/^(Banaue|Havana|Rondônia)/);VIEW(S,[12,18,1],"left")},
+  /* (rw8) the Moynaq photo too: it sat against the zoom buttons at the globe's top-right edge (the Aral Sea has its own stop) */
+  "Farming and the planet":S=>{DROPPH(S,/^(Banaue|Havana|Rondônia|Moynaq)/);VIEW(S,[12,18,1],"left")},
   /* the line from Florida ran off the globe's edge */
   "Bees on lorries":S=>VIEW(S,[-90,38,1.7],"left"),
   /* the card stood on the right, "USA" was labelled twice (the pin and the highlighted country) and Argentina sat at

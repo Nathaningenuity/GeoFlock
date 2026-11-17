@@ -394,6 +394,31 @@ FIX.hg4c={
   /* the Brussels photo sat against the map key at the globe's right edge: framed a little further east */
   "Empires, power and unions":S=>VIEW(S,[36,30,1.2])
 };
+FIX.hg4d={
+  /* the Essex County label hung against the map key at the globe's top edge: framed further north, and the label sits
+     right above its place */
+  "Drawing the voting map":S=>{ABOVE(S,/^Essex County/);VIEW(S,[-82,52,1.8])}
+};
+FIX.hg5c={
+  /* the "European supermarkets" label sat on the zoom buttons at the globe's top-right edge: framed further north and east,
+     so Germany comes down from the edge (Ecuador still in sight) */
+  "From farm to supermarket":S=>VIEW(S,[-25,38,1]),
+  /* the Aalsmeer label sat under the map's banner at the globe's top edge and Lake Naivasha's against the map key at
+     its bottom: drawn smaller, with both ends of the flight well inside */
+  "Roses from the equator":S=>VIEW(S,[36,24,1.15])
+};
+FIX.hg6a={
+  /* the Tokyo photo sat on the zoom buttons and the map key at the globe's right edge: drawn a little smaller and further
+     north, Delhi to Tokyo in sight */
+  "Megacities":S=>VIEW(S,[122,22,1.02])
+};
+FIX.hg7c={
+  /* the Shanghai label hung under the map key at the globe's right edge: it sits right above its place */
+  "Complementarity":S=>{ABOVE(S,/^Shanghai/);VIEW(S,[125,20,1.2])},
+  /* the Marshall Islands, one of the three biggest flags of convenience, were round the back: the stop's buttons turn
+     to each registry (part 2) */
+  "The world’s biggest fleet sails under Liberia":S=>VIEW(S,[-36,16,1])
+};
 FIX.houses={
   /* the Hong Kong photos sat at the globe's top-right edge by the zoom buttons: framed a little further east */
   "Cities of towers":S=>VIEW(S,[112,9,1.7])
@@ -918,6 +943,14 @@ const TURN_NAM=TURNER({tours:["hcoldwar"],title:"Neither East nor West",mark:tru
   ["Bandung, 1955",107.61,-6.92,2.6,"Six years earlier, the new countries of Asia and Africa had met at Bandung, in Indonesia.",1]]});
 DEFS.push(TURN_P5,TURN_SUPER,TURN_NAM);
 
+
+const TURN_FLAGS=TURNER({tours:["hg7c"],title:"The world’s biggest fleet sails under Liberia",mark:true,
+ tip:"Turn the globe to the three biggest ship registries.",
+ places:[["The Atlantic",-36,16,1,"A ship can fly a flag of convenience: it registers in a country with low fees, light rules and cheap crews, whoever owns it.",2],
+  ["Monrovia, Liberia",-10.8,6.3,2.8,"Liberia’s registry is run by a company based near Washington, in Virginia.",1],
+  ["Panama",-80,8.5,2.8,"Panama keeps one of the three biggest registries.",1],
+  ["The Marshall Islands",171,7.1,2.4,"So do the Marshall Islands, a country of about 40,000 people in the Pacific.",1]]});
+DEFS.push(TURN_FLAGS);
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
