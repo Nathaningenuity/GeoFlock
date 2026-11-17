@@ -117,7 +117,12 @@ function flatCtx(g){const ctx=g.ctx;if(ctx._gfFlat)return;ctx._gfFlat=1;const A=
  ctx.createRadialGradient=function(){const gr=RG.apply(this,arguments);if(!g._flat)return gr;const add=gr.addColorStop.bind(gr);gr.addColorStop=(o,c)=>add(o,"rgba(0,0,0,0)");return gr}}
 {const _r=P._render;P._render=function(){const D=defOf(this);if(!D){this._flat=false;return _r.apply(this,arguments)}
  window._gfFlatNow=this;const want=D.wanted();if(want!==!!this._flat){this._flat=want;if(want){this.zoom=Math.max(1,this.zoom);if(this._flatHome!==false){this.zoom=1;this.rot=[0,0]}}else{this.zoom=1;this.rot=this.cfg.rot?this.cfg.rot.slice():[-15,-20]}
-  this.host.classList.toggle("gf-flat",want);const v=document.getElementById(D.view);if(v)v.classList.toggle("gf-flatc",want);if(want)setTimeout(()=>{try{wire(this);this.request()}catch(e){}},0)}
+  this.host.classList.toggle("gf-flat",want);const v=document.getElementById(D.view);if(v)v.classList.toggle("gf-flatc",want);if(want)setTimeout(()=>{try{wire(this);this.request()}catch(e){}},0)
+  /* a tour stop flown to before the switch (a tour's first launch turns the round globe on, and the switch only lands on
+     the next frame, so a stop opened straight away was aimed with the flat map's frame) is flown to again, now with the
+     frame of the map it is really on: the flight under way is stopped, and the stop's own flight starts from here */
+  if(typeof ps!=="undefined"&&ps&&ps.mode==="globe"&&ps.g===this&&typeof psFlyGlobe==="function"){const g=this;g._flyId=(g._flyId||0)+1;g._flying=false;
+   setTimeout(()=>{try{if(typeof ps!=="undefined"&&ps&&ps.mode==="globe"&&ps.g===g&&!!g._flat===want)psFlyGlobe()}catch(e){}},0)}}
  /* the globe's offset is the layout fix's (geoflock-mapfix.js): reset only when switching between flat and globe, never on every frame (that made the globe and its buttons jump) */
  if(this._gfMtFlat!==!!this._flat){this._gfMtFlat=!!this._flat;this.host.style.removeProperty("margin-top")}
  if(!this._flat)return _r.apply(this,arguments);
