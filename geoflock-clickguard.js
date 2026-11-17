@@ -24,7 +24,7 @@ const UI=["button","a","input","select","textarea","label","option","summary","[
 /* the map containers of World Maps (flat map, flat globe and 3-D globe) and, for the capital card, the other maps */
 const WORLD="#allMapsView, #allMapsWrap, #amGlobeHost";
 const ANYMAP=WORLD+", .globe-host, .globe-stage, .map-wrap";
-const MODAL="#flagZoomOverlay, .game-modal-backdrop, .gf-nat-back, [aria-modal='true']";
+const MODAL="#flagZoomOverlay:not(.pf-min), .game-modal-backdrop, .gf-nat-back, [aria-modal='true']";
 const el=t=>t&&t.nodeType===1?t:t&&t.parentElement||null;
 const vis=e=>!!(e&&e.isConnected&&e.getClientRects().length);
 function inWorld(t){t=el(t);if(!t||!t.closest)return false;if(t.closest(WORLD))return true;try{return!!(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe.host&&amGlobe.host.contains(t))}catch(e){return false}}
