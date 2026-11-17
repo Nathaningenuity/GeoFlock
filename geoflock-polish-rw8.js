@@ -512,6 +512,19 @@ FIX.brihla={
   "Judge of the Maldives":S=>VIEW(S,[80,6.8,4.5]),
   "China: the far edge of the world":S=>VIEW(S,[112,22,1.7])
 };
+FIX.bplagues={
+  /* the labels of Olduvai, Yunnan, Ragusa and Freetown ran under the map key on the globe's right side: each stop is
+     framed a little further east (Yunnan's label sits right above its place) */
+  "Born among parasites":S=>VIEW(S,[33,-2,1.5]),
+  "The Mongols open the steppe":S=>{ABOVE(S,/^Yunnan/);VIEW(S,[84,38,1.35])},
+  "Forty days: the first quarantines":S=>VIEW(S,[20.5,43.5,3.5]),
+  "The influenza of 1918":S=>VIEW(S,[-38,44,1])
+};
+FIX.b12maps={
+  /* the marshes', Sippar's and Taprobane's labels ran under the map key: framed a little further east and wider */
+  "The world on a clay tablet":S=>VIEW(S,[44.5,31,2.5]),
+  "Ptolemy’s Geography":S=>VIEW(S,[46,22,1])
+};
 FIX.houses={
   /* the Hong Kong photos sat at the globe's top-right edge by the zoom buttons: framed a little further east */
   "Cities of towers":S=>VIEW(S,[112,9,1.7])

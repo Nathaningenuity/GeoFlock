@@ -106,7 +106,8 @@ const ABOVE=(S,re)=>XF(S,"pins","above"+re,P=>P.map(p=>Array.isArray(p)&&re.test
 FIX.bextinction={
   /* the Monteverde photo lay under the card and the Bay of Naples photo was stacked by the Neanderthal's at the globe's
      edge by the zoom buttons (each place has a stop of its own) */
-  "The Sixth Extinction":S=>{DROPPH(S,/^(Monteverde cloud forest|The Bay of Naples)/);VIEW(S,[-30,15,1])},
+  /* (rw8) the Neanderthal photo too: it sat on the zoom buttons at the globe's top edge (it has its own stop) */
+  "The Sixth Extinction":S=>{DROPPH(S,/^(Monteverde cloud forest|The Bay of Naples|A Neanderthal)/);VIEW(S,[-30,15,1])},
   /* El Valle and the golden frog's photo lay at the globe's edge by the map key, and "Costa Rica" and "Panama" labels
      hung on long leaders (the map names both): framed a little east; the labels go */
   "The Panamanian golden frog":S=>{DROP(S,/^(Costa Rica|Panama)$/);VIEW(S,[-81.2,9.3,5])},
