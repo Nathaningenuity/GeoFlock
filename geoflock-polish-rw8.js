@@ -385,6 +385,15 @@ FIX.hcoldwar={
   /* Bandung, where the movement first met, was round the back: the stop's buttons turn to it (part 2) */
   "Neither East nor West":S=>VIEW(S,[40,15,1])
 };
+FIX.hsince91={
+  /* the Northern Ireland label hung on a long leader to the globe's edge, under the map key: it sits right above its
+     place */
+  "Brexit":S=>ABOVE(S,/^Northern Ireland/)
+};
+FIX.hg4c={
+  /* the Brussels photo sat against the map key at the globe's right edge: framed a little further east */
+  "Empires, power and unions":S=>VIEW(S,[36,30,1.2])
+};
 FIX.houses={
   /* the Hong Kong photos sat at the globe's top-right edge by the zoom buttons: framed a little further east */
   "Cities of towers":S=>VIEW(S,[112,9,1.7])
@@ -453,7 +462,9 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
 ["pointerdown","wheel"].forEach(t=>addEventListener(t,e=>{try{if(e.target&&e.target.closest&&e.target.closest(".globe-host canvas, .globe-stage"))touched=1}catch(err){}},true));
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=0;refl=0;touched=0}goAt++;ps._gfAimed=psSteps()[ps.i];
- /* a stop whose own game turns the globe is left to it */
+ /* a stop whose own game turns the globe is left to it (also another review file's game: these tours' other stops
+    carry buttons from geoflock-polish-rvl.js, -rvn.js, -rvu.js and others, which a re-aim here would undo) */
+ if(document.querySelector('[data-turns]:not(.rw8-ctl),[data-turned],.gc3-ctl,.ge2-ctl'))return;
  if(document.querySelector(".rw8-ctl[data-turns]")){
   /* (rw8) a turn the game asked for can be cut off half way on a busy page (another file's flight takes over, as seen on
      the Culture map): if the globe has come to rest away from the place asked for, it turns there again, at most twice,
@@ -906,6 +917,7 @@ const TURN_NAM=TURNER({tours:["hcoldwar"],title:"Neither East nor West",mark:tru
   ["Belgrade, 1961",20.46,44.82,2.6,"25 countries met in Belgrade in 1961 to found the Non-Aligned Movement.",1],
   ["Bandung, 1955",107.61,-6.92,2.6,"Six years earlier, the new countries of Asia and Africa had met at Bandung, in Indonesia.",1]]});
 DEFS.push(TURN_P5,TURN_SUPER,TURN_NAM);
+
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
