@@ -190,7 +190,7 @@ function flyTarget(){const S=psSteps()[ps.i];let[lon,lat,z]=psGlobeTarget(S);con
 every(()=>{try{if(typeof ps==="undefined"||!ps||!MYT.has(ps.tour)||ps.mode!=="globe"||!ps.g||typeof psGlobeTarget!=="function"||typeof psFlyGlobe!=="function")return;
  const S=psSteps()[ps.i];if(S&&S.gfSun)return;
  const key=ps.tour+"|"+ps.i;if(key!==goKey){goKey=key;goAt=0;refl=0;touched=0}goAt++;ps._gfAimed=S;
- if(document.querySelector(".rvw-ctl[data-turned]"))return;
+ if(document.querySelector(".rvw-ctl[data-turned],.rw8-ctl[data-turns]"))return;
  if(touched||refl>=2||goAt<4||goAt>32||ps.g._flying)return;
  const T=flyTarget(),c=[-ps.g.rot[0],-ps.g.rot[1]];if(d3.geoDistance(c,[T[0],T[1]])>.06||Math.abs(ps.g.zoom-T[2])>.15){refl++;psFlyGlobe()}}catch(e){}},250);
 /* the same stop opened again (Back, a dot, a link) gets the same eight seconds */

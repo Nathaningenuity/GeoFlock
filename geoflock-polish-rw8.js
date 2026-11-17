@@ -299,6 +299,113 @@ FIX.hgunpowder={
 };
 
 
+/* ---- (rw8, second pass) the tours the first pass did not reach: arts, sport, festivals, houses, capitals, food and
+   the ocean, each stop looked at on the globe at 1280×860 ---- */
+FIX.music={
+  /* the Rio photo sat at the very bottom of the screen: framed a little further south */
+  "Samba and bossa nova":S=>VIEW(S,[-12,-15,1.2]),
+  /* Lagos, the stop's subject, sat at the globe's right edge and Accra in the middle: framed a little further east */
+  "Afrobeats from Lagos":S=>VIEW(S,[1,7,3])
+};
+FIX.art={
+  /* the stop is about the hand stencil on Muna, off Sulawesi, which was round the back of the globe (the opening frame
+     looked at Arabia, with the Lascaux photo on the map's switches): it opens on Sulawesi, and the stop's buttons turn
+     to Europe's painted caves (part 2) */
+  "The first artists":S=>VIEW(S,[121,-3,2.2]),
+  /* Benin City, the stop's subject, sat at the bottom of the screen: framed a little wider */
+  "The Benin Bronzes":S=>VIEW(S,[3,22,1.25]),
+  /* Edo and Mount Fuji were at the globe's top-right edge by the zoom buttons and Paris under the card: it opens on Japan,
+     and the stop's buttons turn to Paris and Berlin (part 2) */
+  "The Great Wave":S=>VIEW(S,[139,36,3])
+};
+FIX.sports={
+  /* Johannesburg and Qatar, two of the hosts named, were round the back: the stop's buttons turn to them (part 2) */
+  "World Cup hosts":S=>VIEW(S,[-78,30,1.3]),
+  /* Koshien was round the back: the buttons turn to the Caribbean and Japan (part 2) */
+  "Baseball’s map":S=>VIEW(S,[-68,28,1.4]),
+  /* Ellis Park was round the back: the buttons turn to Johannesburg and to Rugby School (part 2) */
+  "Rugby in the South Pacific and southern Africa":S=>VIEW(S,[170,-24,1.6]),
+  /* the globe looked at the Sahara: the Silverstone photo sat on the map's switches at its top edge and Singapore,
+     Suzuka and Melbourne were round the back. It opens on Silverstone and Monaco, and the buttons follow the season
+     (part 2) */
+  "Formula One":S=>VIEW(S,[5,47.5,2.8]),
+  /* the Springfield photo sat at the globe's top-right edge by the zoom buttons and Tokyo was round the back: it opens
+     on Massachusetts, and the buttons turn to the other birthplaces (part 2) */
+  "Where sports were invented":S=>VIEW(S,[-72.6,42.6,3.2])
+};
+FIX.festivals={
+  /* the Holi photo sat on the zoom buttons at the globe's edge and the New York one under the card: on this opening
+     overview both go (each festival has its own stop later) */
+  "Festivals and holidays":S=>{DROPPH(S,/^Holi in Barsana$/);DROPPH(S,/^Lunar New Year in New York$/)},
+  /* Cologne and Venice were round the back: the stop's buttons turn to each Carnival (part 2) */
+  "Carnival":S=>VIEW(S,[-60,8,1.05]),
+  /* the Dhaka photo sat on the zoom buttons and Jakarta off the globe's edge: framed a little further east, and the
+     buttons turn to Mecca, Dhaka and Jakarta (part 2) */
+  "Ramadan and Eid":S=>VIEW(S,[99,16,1]),
+  /* Sydney and Japan were round the back: the buttons turn to each Christmas (part 2) */
+  "Christmas and Easter":S=>VIEW(S,[20,20,1]),
+  /* Chiang Mai's label sat under the map key: framed a little further east */
+  "New year in spring":S=>VIEW(S,[86,28,1.4]),
+  /* the Munich photo sat on the zoom buttons: framed further east */
+  "Oktoberfest and La Tomatina":S=>VIEW(S,[10,45,3]),
+  /* the Sapporo photo and the Japan label sat on the map's switches and the search box at the globe's top edge, Harbin
+     at its edge: it opens on Harbin, the stop's subject, and the buttons turn to Sweden and Shetland (part 2) */
+  "Fire and ice in midwinter":S=>VIEW(S,[133,45,2.4])
+};
+FIX.ranges={
+  /* the Gotthard and Ötzi labels sat under the map key at the globe's right edge: framed a little further east and wider */
+  "The Alps":S=>VIEW(S,[12.5,46.1,5.2])
+};
+FIX.deserts={
+  /* Australia's deserts and the Sonoran were round the back: the stop's buttons turn along both tropics (part 2) */
+  "Deserts on the tropics":S=>VIEW(S,[16,4,1]),
+  /* the labels of the Chilean coast, the steppe and the ice field ran under the map key: framed further east */
+  "Behind the mountains":S=>VIEW(S,[-63,-47,2.6])
+};
+FIX.ice={
+  /* the "Winter storms from the west" label hung on the card's edge, its pin far off under the card: the label sits
+     on the storms' way in, at the Karakoram's western end */
+  "The glaciers that aren’t shrinking":S=>{MOVE(S,/^Winter storms from the west/,[71.5,37]);VIEW(S,[79,36,6])},
+  /* the photo of an iceberg off west Greenland sat on the map's switches at the globe's top edge: framed a little
+     further north and wider */
+  "Icebergs and the Titanic":S=>VIEW(S,[-48,58,1.75])
+};
+FIX.hwars={
+  /* China, one of the five permanent members the stop lights up, was round the back: the stop's buttons turn to each
+     (part 2) */
+  "The United Nations":S=>VIEW(S,[-25,40,1])
+};
+FIX.hcoldwar={
+  /* the stop names both superpowers, but the United States was round the back: the stop's buttons turn to it (part 2) */
+  "Two superpowers":S=>VIEW(S,[45,45,1]),
+  /* the Algiers label hung on a leader over the card's edge: it sits right above its place */
+  "The Year of Africa":S=>{ABOVE(S,/^Algiers/);VIEW(S,[15,5,1.05])},
+  /* a "United States" label hung over the year banner at the globe's top edge (the map names it) */
+  "The space race":S=>{NOCOUNTRY(S,["United States"]);VIEW(S,[25,40,1])},
+  /* Bandung, where the movement first met, was round the back: the stop's buttons turn to it (part 2) */
+  "Neither East nor West":S=>VIEW(S,[40,15,1])
+};
+FIX.houses={
+  /* the Hong Kong photos sat at the globe's top-right edge by the zoom buttons: framed a little further east */
+  "Cities of towers":S=>VIEW(S,[112,9,1.7])
+};
+FIX.capitals={
+  /* the Sydney Harbour photo sat at the globe's right edge by the zoom buttons: drawn a little smaller */
+  "Canberra, the compromise":S=>VIEW(S,[149.5,-35,3.3])
+};
+FIX.crops={
+  /* Kansas lay under the card and the pampas round the back: the stop's buttons turn to each breadbasket (part 2) */
+  "The world’s breadbaskets":S=>VIEW(S,[40,49,2]),
+  /* the stop is about China, Brazil and the US, but the globe looked at Africa: China round the back, Mato Grosso under
+     the card. It opens on northern China, and the buttons turn to Brazil and the Midwest (part 2) */
+  "Soybeans from China":S=>VIEW(S,[118,36,2.2])
+};
+FIX.ocean={
+  /* the Lost City photo sat on the zoom buttons at the globe's edge: it opens on the Galápagos Rift, and the buttons turn
+     along the ridges (part 2) */
+  "Life without sunlight":S=>VIEW(S,[-92,8,1.7])
+};
+
 const EARLY={};
 const early=()=>{try{for(const t in EARLY){const T=PS_TOURS[t];if(T&&T.steps)T.steps.forEach(S=>{const f=S&&EARLY[t][strip(S.title)];if(f)f(S)})}}catch(e){}};
 early();setTimeout(early,1500);setTimeout(early,6000);addEventListener("load",()=>setTimeout(early,500));
@@ -686,6 +793,119 @@ const TURN_RUSSIA=TURNER({tours:["time"],title:"Russia: eleven clocks",mark:true
 const DEFS=[TURN_VOC,KNOW,TURN_SAINTS,TURN_PEAKS,TURN_FRANCE,TURN_LINE,TURN_RAIN,TURN_RECORDS,TURN_VOLC,TURN_LEB,TURN_NEW,TURN_LOC,TURN_MIG,TURN_STRIPES,TURN_SQUARE,TURN_SIKH8,TURN_GIANTS,TURN_RISE,TURN_ENCL,TURN_RUSSIA];
 
 
+
+/* ======================================================================== (second pass) buttons that turn the globe to
+   far places. The texts are the cards' own, unless a source is named. */
+const TURN_CAVEART=TURNER({tours:["art"],title:"The first artists",mark:true,
+ tip:"Turn the globe from the oldest cave art to Europe’s painted caves.",
+ places:[["Muna, Sulawesi",122.7,-4.9,2.2,"Someone pressed a hand against a cave wall and blew red pigment over it, at least 67,800 years ago: the oldest dated cave art yet found."],
+  ["Lascaux and Chauvet, France",3,44.7,4.2,"Lascaux is painted with about 600 animals, made some 17,000 years ago; Chauvet’s lions and rhinos are around 36,000 years old.",1]]});
+const TURN_WAVE=TURNER({tours:["art"],title:"The Great Wave",mark:true,
+ tip:"Follow the Great Wave from Edo to Paris, and its blue back to Berlin.",
+ places:[["Edo (Tokyo)",139.77,35.68,3,"Hokusai, then about 70, made The Great Wave around 1831 for his Thirty-six Views of Mount Fuji.",1],
+  ["Paris",2.35,48.86,3,"When Japan opened to trade in the 1850s, prints reached Paris, about 9,700 km away, and inspired Monet, Degas and Van Gogh.",1],
+  ["Berlin",13.4,52.52,3,"The wave’s deep blue is Prussian blue, a pigment made in Berlin around 1706: a European blue that came back to Europe in a Japanese print."]]});
+const TURN_WCUP=TURNER({tours:["sports"],title:"World Cup hosts",mark:true,
+ tip:"Turn the globe to the World Cups held far from here.",
+ places:[["North America, 2026",-78,30,1.3,"The United States, Canada and Mexico hosted 104 matches in 16 cities; the final was at MetLife Stadium, near New York, on 19 July 2026.",2],
+  ["Rio de Janeiro, 1950",-43.23,-22.91,2.6,"About 200,000 people crammed into Rio’s Maracanã for the deciding match of 1950, when Uruguay stunned Brazil."],
+  ["Johannesburg, 2010",28,-26.2,2.6,"Africa’s first World Cup.",1],
+  ["Qatar, 2022",51.5,25.3,2.8,"The first World Cup held in the Arab world.",1],
+  ["Spain, Portugal and Morocco, 2030",-5,37,2.2,"The 2030 World Cup, 100 years after the first, will be shared by three countries on two continents.",2]]});
+const TURN_BASEBALL=TURNER({tours:["sports"],title:"Baseball’s map",mark:true,
+ tip:"Turn the globe to baseball’s other homes.",
+ places:[["The United States",-68,28,1.4,"Baseball spread with American sailors, soldiers and teachers from the 1870s.",2],
+  ["San Pedro de Macorís",-69.3,18.46,3.2,"About one in ten Major League players comes from the Dominican Republic, and this town alone has produced dozens.",1],
+  ["Koshien, Japan",135.36,34.72,3,"Japan won three of the first five World Baseball Classics, and its high-school tournament at Koshien Stadium fills the stands every summer.",1]]});
+const TURN_RUGBY=TURNER({tours:["sports"],title:"Rugby in the South Pacific and southern Africa",mark:true,
+ tip:"Turn the globe from the Pacific to South Africa and to where the game began.",
+ places:[["The South Pacific",170,-24,1.6,"In New Zealand, Fiji, Samoa and Tonga rugby is the national game.",2],
+  ["Johannesburg",28.06,-26.2,2.8,"In 1995 Nelson Mandela, in a Springbok shirt, handed the World Cup to South Africa’s captain at Ellis Park.",1],
+  ["Rugby, England",-1.26,52.37,3.2,"Rugby began at Rugby School in England in the 1800s and spread through the British Empire."]]});
+const TURN_F1=TURNER({tours:["sports"],title:"Formula One",mark:true,
+ tip:"Follow the Formula One season round the world.",
+ places:[["Silverstone and Monaco",5,47.5,2.8,"The first World Championship race was at Silverstone on 13 May 1950; Monaco’s street race was first run in 1929.",2],
+  ["Singapore",103.86,1.29,3,"The first night race, 2008.",1],
+  ["Melbourne",144.97,-37.85,3,"Formula One now races about two dozen Grands Prix a year on five continents, from Melbourne…",1],
+  ["Las Vegas",-115.17,36.11,3,"…to Las Vegas."],
+  ["Kyalami, South Africa",28.08,-26,3,"Africa has had no Grand Prix since South Africa’s at Kyalami in 1993.",1]]});
+const TURN_INVENT=TURNER({tours:["sports"],title:"Where sports were invented",mark:true,
+ tip:"Turn the globe to the birthplaces of four more sports.",
+ places:[["Springfield and Holyoke",-72.6,42.6,3.2,"Basketball (Springfield, 1891) and volleyball (Holyoke, 1895) were invented just 12 km apart.",2],
+  ["Montreal",-73.57,45.5,3.2,"The first organised indoor ice hockey game was played in Montreal on 3 March 1875.",1],
+  ["Wimbledon",-0.21,51.43,3.4,"Lawn tennis held its first championship at Wimbledon in 1877.",1],
+  ["Tokyo",139.7,35.7,3,"Judo was created in Tokyo in 1882 by Kanō Jigorō; it joined the Olympics at Tokyo in 1964.",1]]});
+const TURN_CARNIVAL=TURNER({tours:["festivals"],title:"Carnival",mark:true,
+ tip:"Turn the globe from Carnival to Carnival.",
+ places:[["The Americas",-60,8,1.05,"Carnival is the feast before Lent, so its date moves with Easter; in 2026 it peaked in mid-February.",2],
+  ["Rio de Janeiro",-43.2,-22.91,2.8,"Rio’s samba schools spend all year on floats, costumes and songs for their parade through the Sambadrome."],
+  ["Port of Spain",-61.51,10.65,3,"Trinidad’s Carnival grew from the celebrations of freed Africans after slavery ended, and gave the world the steelpan.",1],
+  ["Venice",12.34,45.43,3.4,"Venice is famous for its masks, worn since the Middle Ages.",1],
+  ["Cologne",6.96,50.94,3.4,"In Germany’s Rhineland, Carnival is the ‘fifth season’ of the year.",1]]});
+const TURN_EID=TURNER({tours:["festivals"],title:"Ramadan and Eid",mark:true,
+ tip:"Turn the globe to Ramadan from Mecca to Jakarta.",
+ places:[["From Morocco to Indonesia",99,16,1,"Ramadan begins when the new crescent moon is seen; each evening families break the fast together with a meal called iftar.",2],
+  ["Mecca",39.83,21.42,3,"Eid al-Adha, about ten weeks after Ramadan, falls during the Hajj, the pilgrimage to Mecca.",1],
+  ["Dhaka",90.41,23.81,3,"The month ends with Eid al-Fitr, a festival of prayers, new clothes, visits and sweets.",1],
+  ["Jakarta",106.83,-6.17,2.8,"Indonesia has more Muslims than any other country; Jakarta’s Istiqlal is South-East Asia’s biggest mosque.",1]]});
+const TURN_XMAS=TURNER({tours:["festivals"],title:"Christmas and Easter",mark:true,
+ tip:"Turn the globe to four very different Christmases.",
+ places:[["Noon in London, 25 December",20,20,1,"The far north stays dark all day, while Antarctica, in midsummer, has daylight round the clock.",2],
+  ["Bethlehem",35.2,31.7,3.4,"Christians, about a third of the world’s people, celebrate the birth of Jesus on 25 December.",1],
+  ["Lalibela, Ethiopia",39.04,12.03,3.4,"Many Orthodox churches follow the older Julian calendar, now 13 days behind, so their Christmas falls on 7 January.",1],
+  ["Sydney",151.27,-33.89,2.8,"Christmas comes in midsummer in Australia.",1],
+  ["Japan",139.7,35.7,2.8,"In Japan a fried-chicken dinner is a popular Christmas tradition.",1]]});
+const TURN_ICE=TURNER({tours:["festivals"],title:"Fire and ice in midwinter",mark:true,
+ tip:"Turn the globe from Harbin’s ice city to Europe’s midwinter fire and ice.",
+ places:[["Harbin",133,45,2.4,"In Harbin, in north-east China, January nights average about −24 °C. Since 1985 its Ice and Snow Festival has turned river ice into castles, slides and towers.",1],
+  ["Jukkasjärvi, Sweden",20.62,67.85,3,"Sweden’s Icehotel builds new rooms from the ice of the Torne River every winter, and they melt away every spring.",1],
+  ["Lerwick, Shetland",-1.15,60.15,3.4,"On the last Tuesday of January, about 1,000 torch-carrying ‘guizers’ drag a replica Viking longship through the streets and set it on fire.",1]]});
+const TURN_WHEAT=TURNER({tours:["crops"],title:"The world’s breadbaskets",mark:true,
+ tip:"Turn the globe to each of the world’s breadbaskets.",
+ places:[["Ukraine and Russia",40,49,2,"The steppes of Ukraine and Russia: Russia sells more wheat abroad than any other country.",2],
+  ["The North American prairies",-98.5,42,2,"The prairies of the US and Canada, with their deep, dark soils.",2],
+  ["The Argentine pampas",-61,-35,2.4,"The pampas, Argentina’s old grasslands.",1],
+  ["Australia’s wheat belt",117.5,-31.5,2.4,"Part of Australia’s wheat belt, in Western Australia."],
+  ["China and India",95,31,1.6,"China and India grow even more wheat than Russia.",2]]});
+const TURN_SOY=TURNER({tours:["crops"],title:"Soybeans from China",mark:true,
+ tip:"Turn the globe from soy’s homeland to where most of it grows now.",
+ places:[["Northern China",118,36,2.2,"Soy was tamed in northern China several thousand years ago and became tofu, soy sauce and miso.",1],
+  ["Mato Grosso, Brazil",-55.5,-13,2.4,"In the last 50 years soy has boomed in Brazil; its fields have spread into the Cerrado savanna and the edge of the Amazon.",1],
+  ["The American Midwest",-92,41,2.4,"The US is the other giant grower; China buys most of the soy that is traded."]]});
+const TURN_VENTS=TURNER({tours:["ocean"],title:"Life without sunlight",mark:true,
+ tip:"Turn the globe along the ridges to three vent fields.",
+ places:[["Galápagos Rift",-86.1,0.8,2.4,"In 1977 scientists in the submersible Alvin found animals thriving around hot springs 2,500 m down.",1],
+  ["East Pacific Rise",-109,21,2.4,"Black ‘smokers’ build chimneys of metal sulphides as tall as houses.",1],
+  ["Lost City, mid-Atlantic",-42.1,30.1,2.4,"Vents form along the mid-ocean ridges, where plates pull apart.",1]]});
+DEFS.push(TURN_CAVEART,TURN_WAVE,TURN_WCUP,TURN_BASEBALL,TURN_RUGBY,TURN_F1,TURN_INVENT,TURN_CARNIVAL,TURN_EID,TURN_XMAS,TURN_ICE,TURN_WHEAT,TURN_SOY,TURN_VENTS);
+
+const TURN_TROPICS=TURNER({tours:["deserts"],title:"Deserts on the tropics",mark:true,
+ tip:"Turn the globe along the two tropics to the deserts round the back.",
+ places:[["Africa and Arabia",16,4,1,"That belt holds the Sahara, Arabia and the Kalahari.",2],
+  ["Australia’s deserts",128,-25,1.8,"Australia is the driest inhabited continent: about 70% of it is desert or dry scrub, and most Australians live along the wetter coasts.",1],
+  ["The Sonoran Desert",-112,30,2.2,"The great hot deserts sit around the Tropics of Cancer and Capricorn, roughly 20° to 30° from the equator: in North America too.",1]]});
+DEFS.push(TURN_TROPICS);
+
+/* the permanent members' seats: China's passed from the Republic of China to the People's Republic in 1971 (UN General
+   Assembly resolution 2758), the Soviet Union's to Russia in December 1991 (Wikipedia, "United Nations Security
+   Council") */
+const TURN_P5=TURNER({tours:["hwars"],title:"The United Nations",mark:true,
+ tip:"Turn the globe to the five permanent members of the Security Council.",
+ places:[["The Atlantic",-25,40,1,"Five winners of the war became permanent members of the Security Council, each with a veto.",2],
+  ["The United States",-98,39,1.5,"The UN’s headquarters are in New York, and its Charter was signed in San Francisco in June 1945.",2],
+  ["Britain and France",-1,50,2.6,"Britain and France, two of the five permanent members.",2],
+  ["The Soviet Union",60,56,1.3,"The Soviet Union’s seat passed to Russia in December 1991.",2],
+  ["China",105,34,1.5,"China’s seat was held by the government in Taipei until 1971, when it passed to Beijing.",2]]});
+const TURN_SUPER=TURNER({tours:["hcoldwar"],title:"Two superpowers",mark:true,
+ tip:"Turn the globe between the two superpowers.",
+ places:[["The Soviet Union",45,45,1,"The Soviet Union and its allies in Eastern Europe.",2],
+  ["The United States",-98,39,1.4,"They never fought each other directly, so the long stand-off was called the Cold War.",2]]});
+const TURN_NAM=TURNER({tours:["hcoldwar"],title:"Neither East nor West",mark:true,
+ tip:"Turn the globe from Belgrade to Bandung, where the new countries first met.",
+ places:[["The non-aligned world",40,15,1,"Many new countries did not want to pick a side in the Cold War.",2],
+  ["Belgrade, 1961",20.46,44.82,2.6,"25 countries met in Belgrade in 1961 to found the Non-Aligned Movement.",1],
+  ["Bandung, 1955",107.61,-6.92,2.6,"Six years earlier, the new countries of Asia and Africa had met at Bandung, in Indonesia.",1]]});
+DEFS.push(TURN_P5,TURN_SUPER,TURN_NAM);
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
