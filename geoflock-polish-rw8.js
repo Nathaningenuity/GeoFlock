@@ -334,9 +334,6 @@ FIX.sports={
   "Where sports were invented":S=>VIEW(S,[-72.6,42.6,3.2])
 };
 FIX.festivals={
-  /* the Holi photo sat on the zoom buttons at the globe's edge and the New York one under the card: on this opening
-     overview both go (each festival has its own stop later) */
-  "Festivals and holidays":S=>{DROPPH(S,/^Holi in Barsana$/);DROPPH(S,/^Lunar New Year in New York$/)},
   /* Cologne and Venice were round the back: the stop's buttons turn to each Carnival (part 2) */
   "Carnival":S=>VIEW(S,[-60,8,1.05]),
   /* the Dhaka photo sat on the zoom buttons and Jakarta off the globe's edge: framed a little further east, and the
@@ -418,6 +415,43 @@ FIX.hg7c={
   /* the Marshall Islands, one of the three biggest flags of convenience, were round the back: the stop's buttons turn
      to each registry (part 2) */
   "The world’s biggest fleet sails under Liberia":S=>VIEW(S,[-36,16,1])
+};
+FIX.bprisoners={
+  /* the Bosporus photo hung below the screen and Vladivostok was round the back: it opens on Europe's side of Russia,
+     and the stop's buttons turn to each of Russia's sea gates (part 2) */
+  "The hunt for a warm-water port":S=>VIEW(S,[30,58,2.2]),
+  /* the Kinshasa label sat on the card's edge: framed a little further east */
+  "Congo: too big to hold":S=>VIEW(S,[27.5,-6.5,3])
+};
+FIX.bggs={
+  /* the Machu Picchu photo hung below the screen: framed a little further south (Cajamarca and Tumbes still in sight) */
+  "Cajamarca, 1532":S=>VIEW(S,[-71.3,-7.5,3.2]),
+  /* the Great Zimbabwe photo sat at the screen's bottom edge: framed a little further south */
+  "Africa’s great migration":S=>VIEW(S,[26.2,-14.5,2.1])
+};
+FIX.bnations={
+  /* the "East: serfs bound" label hung under the map key at the globe's right edge: framed a little further east */
+  "The Black Death splits Europe":S=>VIEW(S,[19,50,2]),
+  /* the Orapa label sat under the map key and the Okavango photo at the screen's bottom edge, the globe turned halfway
+     to London: it opens on Botswana, and the stop's buttons turn to London, where the chiefs went (part 2) */
+  "Botswana’s chiefs":S=>VIEW(S,[26.5,-21,2.6]),
+  /* the Pendembu label hung under the map key: framed a little further east */
+  "Tearing up the railway":S=>VIEW(S,[-9.8,8.4,6])
+};
+FIX.bcandide={
+  /* this tour's map key sits on the globe's right side; the stops below had labels or photos under it, or at the
+     globe's top edge on the switches and zoom buttons: each is framed a little further east (or south), so its places
+     come in from the key */
+  /* (on the opening overview the photos of Münster, Venice and Hagia Sophia, crowded on the switches and zoom buttons
+     at the globe's top edge, go: each place has its own stop) */
+  "Candide":S=>{DROPPH(S,/^(Münster|Venice$|Hagia Sophia)/);VIEW(S,[-14,12,1])},
+  "Lisbon, 1 November 1755":S=>VIEW(S,[-7,35.5,3.6]),
+  /* (Cádiz was off the globe's edge) */
+  "From Cádiz to Buenos Aires":S=>VIEW(S,[-30,2,1.1]),
+  "The Jesuits of Paraguay":S=>VIEW(S,[-53,-27,4]),
+  "Portsmouth: to encourage the others":S=>VIEW(S,[6,45.5,3.4]),
+  "Six kings at the Carnival":S=>VIEW(S,[20,48,2]),
+  "Voltaire’s own garden":S=>VIEW(S,[7.5,46.3,6])
 };
 FIX.houses={
   /* the Hong Kong photos sat at the globe's top-right edge by the zoom buttons: framed a little further east */
@@ -951,6 +985,21 @@ const TURN_FLAGS=TURNER({tours:["hg7c"],title:"The world’s biggest fleet sails
   ["Panama",-80,8.5,2.8,"Panama keeps one of the three biggest registries.",1],
   ["The Marshall Islands",171,7.1,2.4,"So do the Marshall Islands, a country of about 40,000 people in the Pacific.",1]]});
 DEFS.push(TURN_FLAGS);
+
+const TURN_PORTS=TURNER({tours:["bprisoners"],title:"The hunt for a warm-water port",mark:true,
+ tip:"Turn the globe to each of Russia’s ways out to the oceans.",
+ places:[["European Russia",30,58,2.2,"Most of Russia’s coastline is frozen for months.",2],
+  ["Murmansk",33.08,68.97,3,"Murmansk stays open thanks to warm Atlantic water but is far from everywhere.",1],
+  ["The Danish straits",12.65,56,3.4,"Ships from the Baltic must pass the narrow Danish straits.",1],
+  ["The Bosporus",29.05,41.12,3.4,"Ships from the Black Sea must pass the Bosporus, which Turkey controls.",1],
+  ["Vladivostok",131.89,43.12,3,"Russia’s Pacific port, a whole continent away from Moscow.",1]]});
+DEFS.push(TURN_PORTS);
+
+const TURN_TSWANA=TURNER({tours:["bnations"],title:"Botswana’s chiefs",mark:true,
+ tip:"Turn the globe from Botswana to London, where three chiefs went in 1895.",
+ places:[["Botswana",26.5,-21,2.6,"Botswana was one of the world’s poorest countries in 1966; it has since been one of the fastest-growing.",2],
+  ["London",-0.12,51.5,3,"In 1895 three Tswana chiefs travelled to London and persuaded the British government to keep their land out of Cecil Rhodes’s company."]]});
+DEFS.push(TURN_TSWANA);
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);
