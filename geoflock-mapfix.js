@@ -235,7 +235,7 @@ if(typeof gfSubFlat==="function"){const _sf=gfSubFlat;
  #allMapsSubModes.gf-sub-inrow .chip{ background:rgba(255,255,255,.7) !important; box-shadow:0 1px 4px rgba(20,40,70,.1) !important; }
  #allMapsSubModes.gf-sub-inrow .chip.active{ background:#3f9c96 !important; color:#fff !important; }
  #allMapsSubModes.gf-sub-inrow .chip{ font-size:11.5px; padding:4px 11px; min-height:0; line-height:1.2; border:none; box-shadow:none; white-space:nowrap; margin:0; }
- body.dark-theme #allMapsSubModes.gf-sub-inrow{ background:rgba(20,28,44,.6); }`;document.head.appendChild(st)}
+ body.dark-theme #allMapsSubModes.gf-sub-inrow, body.dark-theme #allMapsSubModes.gf-sub-top{ background:transparent !important; }`;document.head.appendChild(st)}
 /* 8. */
 try{if(typeof PS_ICONS!=="undefined"&&PS_ICONS.waterfall&&!/^<g transform="matrix\(-1/.test(PS_ICONS.waterfall))PS_ICONS.waterfall='<g transform="matrix(-1 0 0 1 24 0)">'+PS_ICONS.waterfall+"</g>"}catch(e){}
 /* 9. */
