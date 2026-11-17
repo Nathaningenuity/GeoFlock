@@ -14,8 +14,11 @@
    geoflock-reliefsharp.js). As with the Relief map it comes in steps, not a slow blur-to-sharp: once the globe picture
    is magnified the 30 px tiles fade in quickly, and each next size replaces the last in one swap once the last would be
    magnified (all counted in screen pixels, so on a sharp screen the steps come sooner). The tiles of the next step are
-   fetched ahead while you zoom and decoded off the page (createImageBitmap). The flat map keeps its own picture (now from
-   the same data, about 10 km a pixel); it is not drawn from the tiles. */
+   fetched ahead while you zoom and decoded off the page (createImageBitmap).
+   The flat map has its own picture (the same data, about 10 km a pixel). Zoomed in on it, the view is drawn again at
+   screen resolution from these same tiles by geoflock-nightsharp.js (as it does for City Lights and Satellite), which
+   asks gfPopHR.flat (below) for them: the smallest tile size with as many pixels a degree as the screen's device pixels,
+   coloured with the same 64 colours, the sea left see-through (as in the flat picture), so the step is only in sharpness. */
 (function(){
 "use strict";
 const BASE="textures/pophr/",V="?v=1",T=360,FADE=260;
@@ -103,6 +106,57 @@ function flatSwap(wrapEl){try{const svg=wrapEl&&wrapEl.querySelector?wrapEl.quer
  if(el&&el.getAttribute("href")!==FLAT){el.setAttribute("href",FLAT);try{densSampler=null}catch(e){}try{if(typeof PSC_THR!=="undefined"){PSC_THR.popLv=null;PSC_THR.pop={}}}catch(e){}}}catch(e){}}
 if(typeof applyAllMapsColorMode==="function"){const _a=applyAllMapsColorMode;applyAllMapsColorMode=function(wrapEl){flatSwap(wrapEl);return _a.apply(this,arguments)}}
 if(typeof allMapsLegendHTML==="function"){const _l=allMapsLegendHTML;allMapsLegendHTML=function(){const h=_l.apply(this,arguments);if(!(typeof amDensityOn==="function"&&amDensityOn()))return h;
- return h.replace("NASA GPWv4 (2015, ~11 km cells)","GHS-POP 2025 (European Commission JRC, CC BY 4.0), 1 km cells zoomed in on the globe")}}
+ return h.replace("NASA GPWv4 (2015, ~11 km cells)","GHS-POP 2025 (European Commission JRC, CC BY 4.0), 1 km cells when zoomed in")}}
 flatSwap(document);
+
+/* ---------- tiles for the sharp flat map (geoflock-nightsharp.js) ----------
+   The compressed files are kept (about 15 kB each, at most BLOBS of them); coloured tiles (half a MB each) only the last
+   COLS. Decoding is off the page (createImageBitmap); colouring is done in slices of a few milliseconds. */
+const BLOBS=1200,COLS=96,MAXT=260,SLICEC=6;
+const BL=new Map(),CO=new Map();
+function blob(k){if(BL.has(k)){const v=BL.get(k);BL.delete(k);BL.set(k,v);return v}
+ const p=fetch(BASE+k+".webp"+V).then(r=>r.ok?r.blob():null).catch(()=>null);BL.set(k,p);
+ p.then(b=>{if(!b&&BL.get(k)===p)BL.delete(k)});/* a failed file is asked for again next time */
+ while(BL.size>BLOBS)BL.delete(BL.keys().next().value);return p}
+let LUTF=null;const lutF=()=>{if(!LUTF){LUTF=lut("#000000");LUTF[0]=0}return LUTF};/* grey 0 (sea): see-through */
+/* the colouring queue: one tile at a time, in slices */
+const CQ=[];let cqOn=false;
+function pump(){cqOn=false;const t0=performance.now();
+ while(CQ.length&&performance.now()-t0<SLICEC){const [bm,res]=CQ.shift();try{const c=document.createElement("canvas");c.width=bm.width;c.height=bm.height;const x=c.getContext("2d",{willReadFrequently:true});
+   x.drawImage(bm,0,0);try{bm.close&&bm.close()}catch(e){}const id=x.getImageData(0,0,c.width,c.height),d=id.data,u=new Uint32Array(d.buffer),L=lutF();
+   for(let i=0,n=u.length;i<n;i++)u[i]=L[d[i*4]];x.putImageData(id,0,0);res(c)}catch(e){res(null)}}
+ if(CQ.length&&!cqOn){cqOn=true;setTimeout(pump,0)}}
+function coloured(k){if(CO.has(k)){const v=CO.get(k);CO.delete(k);CO.set(k,v);return v}
+ const p=blob(k).then(b=>b?createImageBitmap(b,{colorSpaceConversion:"none",premultiplyAlpha:"none"}).catch(()=>createImageBitmap(b)).catch(()=>null):null)
+  .then(bm=>bm?new Promise(res=>{CQ.push([bm,res]);if(!cqOn){cqOn=true;setTimeout(pump,0)}}):null);
+ CO.set(k,p);p.then(c=>{if(!c&&CO.get(k)===p)CO.delete(k)});
+ /* let go, not freed: a picture still being put together may be using it */
+ while(CO.size>COLS)CO.delete(CO.keys().next().value);return p}
+const fppd=z=>T*Math.pow(2,z)/12;/* 30, 60, 120 px a degree */
+/* the tiles of level z over longitudes lo0..lo1 (may run past ±180) and latitudes la1 (south) .. la0 (north) */
+function range(z,lo0,lo1,la0,la1){const L=IDX.levels[z],D=L.deg;return{L,D,c0:Math.floor((lo0+180)/D),c1:Math.floor((lo1+180-1e-9)/D),r0:Math.max(0,Math.floor((90-la0)/D)),r1:Math.min(L.rows-1,Math.floor((90-la1-1e-9)/D))}}
+const nTiles=q=>(q.c1-q.c0+1)*(q.r1-q.r0+1);
+window.gfPopHR.flat={
+ /* whether this flat picture is the Population map's (and the map is showing it) */
+ match:h=>typeof h==="string"&&/FLAT_DENS_IMG/.test(h)&&wanted(),
+ ready:()=>!!IDX,load:index,ppd:fppd,
+ /* the smallest tile size enough for need device pixels a degree, coarser if the view would need too many tiles;
+    null when even the coarsest would */
+ level(need,lo0,lo1,la0,la1){if(!IDX)return null;let z=0;while(z<2&&fppd(z)<need*.98)z++;
+  if(lo0!=null)while(z>=0&&nTiles(range(z,lo0,lo1,la0,la1))>MAXT)z--;return z<0?null:z},
+ /* a piece of the world (x,y,w,h in a virtual picture TW x TH of the whole world, TW=360*ppd(z)) drawn at rw x rh */
+ crop(z,cx,cy,cw,ch,rw,rh,TW,TH){const lon0=cx/TW*360-180,lon1=(cx+cw)/TW*360-180,lat0=90-cy/TH*180,lat1=90-(cy+ch)/TH*180,q=range(z,lon0,lon1,lat0,lat1),H=HAVE[z];
+  const c=document.createElement("canvas");c.width=rw;c.height=rh;const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
+  const sx=rw/(lon1-lon0),sy=rh/(lat0-lat1),L=lutF(),w1=L[1],white="rgb("+(w1&255)+","+(w1>>8&255)+","+(w1>>16&255)+")",jobs=[],ks=[];
+  /* whole pixels: neighbouring tiles meet exactly, with no seam */
+  const X=lo=>Math.round((lo-lon0)*sx),Y=la=>Math.round((lat0-la)*sy);
+  const mc=(q.c0+q.c1)/2,mr=(q.r0+q.r1)/2;for(let r=q.r0;r<=q.r1;r++)for(let cc=q.c0;cc<=q.c1;cc++)ks.push([cc,r,(cc-mc)**2+(r-mr)**2]);ks.sort((a,b)=>a[2]-b[2]);
+  for(const [cc,r] of ks){const k=(((cc%q.L.cols)+q.L.cols)%q.L.cols)+"_"+r,lo=-180+cc*q.D,la=90-r*q.D,x0=X(lo),y0=Y(la),w=X(lo+q.D)-x0,h=Y(la-q.D)-y0;if(w<=0||h<=0)continue;
+   if(H.h.has(k))jobs.push(coloured(z+"/"+k).then(t=>{if(!t){c._gfMiss=(c._gfMiss||0)+1;return}x.drawImage(t,x0,y0,w,h)}));
+   else if(H.e.has(k)){x.fillStyle=white;x.fillRect(x0,y0,w,h)}}
+  return Promise.all(jobs).then(()=>c)},
+ /* fetch (only) the files of a view ahead of time: [W,N,E,S], at most max tiles */
+ prefetch(z,b,max){if(!IDX)return;const q=range(z,b[0],b[2],b[1],b[3]);if(nTiles(q)>(max||120))return;
+  for(let r=q.r0;r<=q.r1;r++)for(let cc=q.c0;cc<=q.c1;cc++){const k=(((cc%q.L.cols)+q.L.cols)%q.L.cols)+"_"+r;if(HAVE[z].h.has(k))blob(z+"/"+k)}},
+ state:()=>({blobs:BL.size,coloured:CO.size,queue:CQ.length})};
 })();

@@ -14,7 +14,10 @@
    nothing is ever bare.
    Memory: one screen-sized canvas is kept (plus, while a new one is made, a second one and screen-sized working copies);
    all freed when the map is zoomed out or leaves City Lights. The globe picture is kept only as its compressed file
-   (about 0.5 MB), never as a whole decoded picture. Hooked from geoflock-flatglobe.js (_flatPictures). */
+   (about 0.5 MB), never as a whole decoded picture. Hooked from geoflock-flatglobe.js (_flatPictures).
+   The Population map's flat picture is sharpened the same way, from the local 1 km population tiles (geoflock-pophr.js,
+   gfPopHR.flat: kind "pop"), in their three sizes as you zoom in. Its sea is see-through, so the flat picture is not
+   drawn under a finished sharp picture (gfNightSharp.hole): its blurred coasts would show round the sharp ones. */
 /* NASA GIBS tiles, 512 px in plain latitude/longitude (EPSG:4326); level z tiles are 288/2^z degrees square, down to about
    500 m a pixel at level 7. Used where the view needs more detail than the 8192-px globe pictures.
    - night: VIIRS Black Marble 2016, through the same colour table the night picture was made with.
@@ -81,7 +84,7 @@ const IDLE=120,SLICE=8,BAND=8,MINMAG=1;/* only once the flat picture is being en
 let TEX={},texUnused=0,O=null,job=null,timer=0,want=null,lastKey="";
 const free=cv=>{try{if(cv&&cv.close)cv.close();else if(cv){cv.width=0;cv.height=0}}catch(e){}};
 /* which picture the flat map shows: the night picture or (the same way) the satellite one */
-const kindOf=h=>{try{if(typeof NL_IMAGE!=="undefined"&&h===NL_IMAGE)return"night";if(typeof SAT_FLAT_IMG!=="undefined"&&h===SAT_FLAT_IMG)return"sat"}catch(e){}return null};
+const kindOf=h=>{try{if(window.gfPopHR&&gfPopHR.flat&&gfPopHR.flat.match(h))return"pop";if(typeof NL_IMAGE!=="undefined"&&h===NL_IMAGE)return"night";if(typeof SAT_FLAT_IMG!=="undefined"&&h===SAT_FLAT_IMG)return"sat"}catch(e){}return null};
 /* the globe picture as its file (a Blob) and its size: {blob,W,H}, or a promise while it loads */
 function texture(kind){if(TEX[kind])return TEX[kind];let src;try{src=kind==="sat"?GLOBE_SAT_IMG:GLOBE_NIGHT_IMG}catch(e){return null}if(!src||typeof createImageBitmap!=="function")return null;
  const t=TEX[kind]={p:null,ok:false};
@@ -96,7 +99,7 @@ function viewOf(g,dpr,kind){const p=g.projection(),S=p.scale(),t=p.translate(),{
 function kill(j){if(!j)return;j.dead=true;free(j.O);free(j.E);(j.B||[]).forEach(free);if(job===j)job=null}
 function dropAll(){kill(job);free(O&&O.cv);O=null;clearTimeout(timer);timer=0;lastKey=""}
 /* off the map, or out of City Lights: free everything; the file itself is let go after a while unused */
-setInterval(()=>{try{if((O||job)&&!(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat&&amGlobe.host&&amGlobe.host.isConnected&&amGlobe.host.offsetParent&&appMode==="allmaps"&&(allMapsColorMode==="night"||allMapsColorMode==="satellite")))dropAll()}catch(e){}
+setInterval(()=>{try{if((O||job)&&!(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat&&amGlobe.host&&amGlobe.host.isConnected&&amGlobe.host.offsetParent&&appMode==="allmaps"&&(allMapsColorMode==="night"||allMapsColorMode==="satellite"||allMapsColorMode==="population")))dropAll()}catch(e){}
  if(!O&&!job&&Date.now()-texUnused>60000)TEX={}},2000);
 
 /* called by the flat map right after it drew its own picture */
@@ -106,7 +109,7 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
  /* how much the flat picture is enlarged on screen: below about 1:1 it is already as sharp as the screen */
  const mag=V?V.S/318.31/C.F*dpr:0;
  if(!V||mag<MINMAG){if(O||job)dropAll();return}
- texUnused=Date.now();
+ texUnused=Date.now();if(V.kind==="pop")prefetchView(g,V);
  /* the latest sharp picture, moved and scaled to this view (exact: the flat map only slides and scales); not when it
     would be enlarged more than the flat picture is */
  if(O&&O.dl===V.dl&&O.dpr===V.dpr&&O.kind===V.kind){const a=V.S/O.S;if(O.key===V.key||a<=mag){ctx.save();ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality=Math.abs(a-1)>.01?"high":"medium";
@@ -124,13 +127,23 @@ window.gfNightSharp.covers=function(g,dpr,list,C){try{const kind=list&&list.leng
  if(!(O&&typeof amGlobe!=="undefined"&&g===amGlobe&&g._flat&&!g._gfOx&&kind&&(list.length===1||kind==="sat")&&list[0].blend==="normal"&&!list[0].tf&&list[0].op>.99&&C))return false;
  const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<MINMAG||O.dl!==V.dl||O.dpr!==V.dpr||O.kind!==V.kind)return false;return O.key===V.key||V.S/O.S<=mag}catch(e){return false}};
 
+/* the part of the canvas (device pixels: x, y, w, h) that the call above will cover with a finished Population picture,
+   or null: the flat picture is left out there */
+window.gfNightSharp.hole=function(g,dpr,list,C){try{if(!O||O.kind!=="pop"||O.miss)return null;const kind=list&&list.length===1?kindOf(list[0].h):null;
+ if(kind!=="pop"||!(typeof amGlobe!=="undefined"&&g===amGlobe&&g._flat&&!g._gfOx&&list[0].blend==="normal"&&!list[0].tf&&list[0].op>.99&&C))return null;
+ const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<MINMAG||O.dl!==V.dl||O.dpr!==V.dpr)return null;const a=V.S/O.S;if(!(O.key===V.key||a<=mag))return null;
+ /* a pixel inside the sharp picture's edge, so no gap opens between the two */
+ return[a*O.x+dpr*(V.t[0]-a*O.t[0])+1,a*O.y+dpr*(V.t[1]-a*O.t[1])+1,a*O.cv.width-2,a*O.cv.height-2]}catch(e){return null}};
 /* for checks: whether a sharp picture is on the map, being made, or missing tiles */
 window.gfNightSharp.state=()=>({on:!!O,kind:O&&O.kind,busy:!!job,miss:!!(O&&O.miss)});
 /* while the flat map moves: fetch the NASA tiles of the view meanwhile (at most every 300 ms) */
 let pfAt=0;function prefetchView(g,V){try{const now=Date.now();if(now-pfAt<300||!gfGibs.prefetch)return;pfAt=now;const pr=g.projection(),{w,h}=g.size(),q=[];
  for(let i=0;i<=4;i++)for(let j=0;j<=4;j++){const ll=pr.invert([w*i/4,h*j/4]);if(ll&&isFinite(ll[0])&&isFinite(ll[1]))q.push(ll)}if(q.length<4)return;
  const lo=q.map(x=>x[0]),la=q.map(x=>x[1]),W=Math.min(...lo),E=Math.max(...lo);if(E-W>120)return;
- const z=gfGibs.level(V.S*Math.PI/180*V.dpr*.85);if(z!=null)gfGibs.prefetch(z,[W,Math.max(...la),E,Math.min(...la)],V.kind,40)}catch(e){}}
+ const b=[W,Math.max(...la),E,Math.min(...la)],need=V.S*Math.PI/180*V.dpr*.85;
+ /* Population: the size the view needs, and the next one as well once close to it */
+ if(V.kind==="pop"){const F=window.gfPopHR&&gfPopHR.flat;if(!F)return;if(!F.ready()){F.load();return}const z=F.level(need,b[0],b[2],b[1],b[3]);if(z==null)return;F.prefetch(z,b,160);if(z<2&&need>F.ppd(z)*.7)F.prefetch(z+1,b,160);return}
+ const z=gfGibs.level(need);if(z!=null)gfGibs.prefetch(z,b,V.kind,40)}catch(e){}}
 const later=cb=>window.requestIdleCallback?requestIdleCallback(cb,{timeout:150}):setTimeout(cb,16);
 function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V.key&&!again)return;
  if(g._moving||g._flying||g._gfOx){prefetchView(g,V);timer=setTimeout(()=>{timer=0;start(g)},IDLE);return}
@@ -147,8 +160,12 @@ function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V
   const a=Math.max(-180,(XL/dpr-t[0])/hw*180),b=Math.min(180,(XR/dpr-t[0])/hw*180);if(b>a){L0=Math.min(L0,a);L1=Math.max(L1,b)}ppd=Math.max(ppd,hw*dpr/180)}
  if(!(L1>L0))return;
  /* zoomed in past the globe picture's detail: NASA's tiles (GIBS) at the level the screen needs; otherwise the picture */
- const Z=window.gfGibs?gfGibs.level(ppd):null;let T=null,TW,TH;
- if(Z!=null){TW=360*gfGibs.ppd(Z);TH=180*gfGibs.ppd(Z)}
+ const PF=V.kind==="pop"?window.gfPopHR&&gfPopHR.flat:null;if(V.kind==="pop"&&!PF)return;
+ if(PF&&!PF.ready()){PF.load().then(()=>{try{g.request()}catch(e){}});return}
+ /* Population: the local tiles, the smallest size enough for the screen (none when the view would need far too many) */
+ const Z=PF?PF.level(ppd,L0-dl,L1-dl,latE[0],latE[H]):window.gfGibs?gfGibs.level(ppd):null;if(PF&&Z==null)return;let T=null,TW,TH;
+ if(PF){TW=360*PF.ppd(Z);TH=180*PF.ppd(Z)}
+ else if(Z!=null){TW=360*gfGibs.ppd(Z);TH=180*gfGibs.ppd(Z)}
  else{T=texture(V.kind);if(!T)return;if(!T.ok){T.p.then(()=>{try{g.request()}catch(e){}});return}TW=T.W;TH=T.H}
  const span=L1-L0,res=Math.min(TW/360,ppd),EW=Math.max(2,Math.min(8192,Math.ceil(span*res)));
  /* the rows of the globe picture in view, and its one or two pieces across the ±180° seam (in this east–west frame) */
@@ -159,7 +176,7 @@ function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V
    return{sx,sw,cx,cw,rw,dx:off/span*EW,dw}}).filter(p=>p.cw>0&&p.sw>0);
  const me=job={V,dead:false,B:[],E:null,O:null};
  /* only the piece in view is decoded, off the main thread, already scaled to about screen size */
- Promise.all(parts.map(p=>Z!=null?gfGibs.crop(Z,p.cx,syA,p.cw,cropH,p.rw,rh,TW,TH,V.kind):createImageBitmap(T.blob,p.cx,syA,p.cw,cropH,{resizeWidth:p.rw,resizeHeight:rh,resizeQuality:"high"}))).then(B=>{
+ Promise.all(parts.map(p=>PF?PF.crop(Z,p.cx,syA,p.cw,cropH,p.rw,rh,TW,TH):Z!=null?gfGibs.crop(Z,p.cx,syA,p.cw,cropH,p.rw,rh,TW,TH,V.kind):createImageBitmap(T.blob,p.cx,syA,p.cw,cropH,{resizeWidth:p.rw,resizeHeight:rh,resizeQuality:"high"}))).then(B=>{
   if(me.dead||job!==me){B.forEach(free);return}me.B=B;
   const E=me.E=document.createElement("canvas");E.width=EW;E.height=H;const ex=E.getContext("2d");ex.imageSmoothingEnabled=true;ex.imageSmoothingQuality="high";
   const NO=me.O=document.createElement("canvas");NO.width=W;NO.height=H;const ox=NO.getContext("2d");ox.imageSmoothingEnabled=true;ox.imageSmoothingQuality="high";
@@ -184,10 +201,10 @@ window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.heigh
 /* a clean redraw once the City Lights flat map settles (after opening, zooming or panning): otherwise the last frame
    could stay a scaled, blurred stand-in until the next interaction */
 (function(){let key="",since=0,done="";
- setInterval(()=>{try{if(typeof amGlobe==="undefined"||!amGlobe||!amGlobe._flat||appMode!=="allmaps"||(allMapsColorMode!=="night"&&allMapsColorMode!=="satellite"))return;
+ setInterval(()=>{try{if(typeof amGlobe==="undefined"||!amGlobe||!amGlobe._flat||appMode!=="allmaps"||(allMapsColorMode!=="night"&&allMapsColorMode!=="satellite"&&!(allMapsColorMode==="population"&&typeof amDensityOn==="function"&&amDensityOn())))return;
   const p=amGlobe.projection(),t=p.translate(),k=[p.scale().toFixed(2),t[0].toFixed(1),t[1].toFixed(1),amGlobe._gfDl||0].join("|");
   if(k!==key){key=k;since=Date.now();return}
-  if(done!==k&&Date.now()-since>450&&!amGlobe._moving&&!amGlobe._flying){done=k;const r=()=>{try{if(key===k&&(allMapsColorMode==="night"||allMapsColorMode==="satellite")&&amGlobe._flat)(amGlobe.render?amGlobe.render():amGlobe.request())}catch(e){}};[0,1200,3500].forEach(ms=>setTimeout(r,ms))}}catch(e){}},150)})();
+  if(done!==k&&Date.now()-since>450&&!amGlobe._moving&&!amGlobe._flying){done=k;const r=()=>{try{if(key===k&&(allMapsColorMode==="night"||allMapsColorMode==="satellite"||allMapsColorMode==="population")&&amGlobe._flat)(amGlobe.render?amGlobe.render():amGlobe.request())}catch(e){}};[0,1200,3500].forEach(ms=>setTimeout(r,ms))}}catch(e){}},150)})();
 /* safety: map flights last under 2 s; if one never reported its end (cut off mid-way), "flying" is cleared, so the sharp
    pictures (which wait for the map to stop) are not held back for good */
 (function(){let since=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||!g._flying){since=0;return}

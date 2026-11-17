@@ -92,7 +92,11 @@ P._flatPictures=function(ctx,dpr){const p=this.projection(),S=p.scale(),t=p.tran
    Satellite map's sea light and clouds) are drawn again over it, each blended on its own, so they show at every zoom */
  let top=null;try{if(list.length>1&&window.gfNightSharp&&gfNightSharp.covers&&gfNightSharp.covers(this,dpr,list,C)){const Cb=composite([list[0]],{key:D.key+"~0",f:D.f}),T=Cb&&list.slice(1).map((o,i)=>[o,composite([o],{key:D.key+"~"+(i+1),f:D.f})]);if(Cb&&T.every(q=>q[1])){C=Cb;top=T}}}catch(e){console.error(e)}
  const Wd=2*Math.PI*S,vw=this.size().w,self=this;/* "medium" shrinks a large picture through blurred half-size copies; "high" keeps it sharp (cheap enough once still) */ctx.imageSmoothingQuality=k>3||!(this._moving||this._fastMove)?"high":"medium";
- const put=Cx=>{const src=spun(Cx,self._gfDl||0);for(let n=-2;n<=2;n++){if(n&&!self._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/Cx.F,0,0,dpr*k/Cx.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}};put(C);
+ const put=Cx=>{const src=spun(Cx,self._gfDl||0);for(let n=-2;n<=2;n++){if(n&&!self._gfOx)continue;const x0=t[0]+n*Wd;if(x0+Wd/2<0||x0-Wd/2>vw)continue;ctx.setTransform(dpr*k/Cx.F,0,0,dpr*k/Cx.F,dpr*(x0-1e3*k),dpr*(t[1]-500.5*k));ctx.drawImage(src,0,0)}};
+ /* zoomed in on the Population map: the flat picture is left out where the sharp picture (below) covers it, since its sea
+    is see-through and the flat picture's blurred coasts would show round the sharp ones */
+ let hole=null;try{hole=window.gfNightSharp&&gfNightSharp.hole&&gfNightSharp.hole(this,dpr,list,C)}catch(e){}
+ if(hole){const cw=ctx.canvas.width,ch=ctx.canvas.height;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.beginPath();ctx.rect(0,0,cw,ch);ctx.rect(hole[0],hole[1],hole[2],hole[3]);ctx.clip("evenodd");put(C);ctx.restore()}else put(C);
  /* zoomed in on City Lights: a sharp picture of the view from the globe's picture over it (geoflock-nightsharp.js) */
  if(window.gfNightSharp)try{window.gfNightSharp(this,ctx,dpr,list,C)}catch(e){console.error(e)}
  if(top){ctx.imageSmoothingEnabled=true;top.forEach(([o,Cx])=>{ctx.globalAlpha=1;ctx.globalCompositeOperation=o.blend==="normal"?"source-over":o.blend==="plus-lighter"?"lighter":o.blend;put(Cx)});ctx.globalCompositeOperation="source-over"}ctx.restore();return 1}
