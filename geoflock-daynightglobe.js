@@ -81,13 +81,21 @@ precision highp float;
 uniform vec2 uC; uniform float uS; uniform float uF; uniform float uLam0; uniform float uSp; uniform float uCp; uniform vec2 uRoll;
 uniform float uSpace; uniform sampler2D uSat; uniform sampler2D uNight; uniform sampler2D uPatch; uniform vec4 uPB; uniform float uPatchOn; uniform float uNightOnly; uniform sampler2D uDPatch; uniform vec4 uDPB; uniform float uDPatchOn; uniform sampler2D uCl; uniform float uClA;
 uniform float uClSt;
-uniform float uClNoNight; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn;
+uniform float uClNoNight; uniform vec3 uSun; uniform sampler2D uGlow; uniform float uGlowOn; uniform sampler2D uBathy; uniform float uBathyOn; uniform float uSea; uniform float uDayOnly; uniform sampler2D uIceT; uniform float uIceOn; uniform sampler2D uIcePh; uniform float uIcePhOn;
 out vec4 o;
-/* sea ice (textures/SEAICE_POLAR.png): two squares centred on the poles (left Arctic, right Antarctic), azimuthal
-   equidistant out to 50°, so nothing pinches at the pole. R = sea-ice concentration from the NSIDC Sea Ice Index (one month:
-   September 2026 Arctic minimum, February 2026 Antarctic minimum), G = Antarctic ice shelves. The ice is drawn here: a crisp
-   edge at 15% cover (the extent line the NSIDC uses), and inside it floes and cracks (leads) whose open water grows as
-   the concentration falls. */
+/* sea ice: two pictures with the same layout, two squares centred on the poles (left Arctic, right Antarctic),
+   azimuthal equidistant out to 30° from the pole (latitude 60), so nothing pinches at the pole.
+   textures/SEAICE_POLAR.png (tools/build-seaice-amsr2.py): R = sea-ice concentration, University of Bremen AMSR2 ASI
+   3.125 km daily grids (Spreen, Kaleschke & Heygster 2008), the mean of a week round each 2026 minimum (Arctic 9–15
+   September 2026, minimum 12 Sept; Antarctic 23 Feb–1 Mar 2026, minimum 26 Feb); G = Antarctic ice shelves (Natural
+   Earth); B = sea in the AMSR2 grid (keeps the sea ice off land).
+   textures/SEAICE_PHOTO.webp (tools/build-seaice-photo.py): a cloud-free photo of the ice from the same weeks, the
+   clearest of the daily NASA GIBS MODIS (Terra, Aqua) and VIIRS (Suomi NPP, NOAA-20, NOAA-21) Corrected Reflectance
+   pictures per pixel, picked with the short-wave infrared false colour (ice dark at 2.1 µm, clouds bright); its alpha
+   says how sure that pixel is a clear photo.
+   The ice is drawn here: a crisp edge at 15% cover (the extent line the NSIDC uses); inside it the real photo (its
+   floes, leads and grey thin ice), and where no clean photo exists (cloud every day, or no sun near the North Pole in
+   mid-September) floes and cracks (leads) drawn from noise, whose open water grows as the concentration falls. */
 float ihash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
 float inoise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(ihash(i), ihash(i + vec3(1,0,0)), f.x), mix(ihash(i + vec3(0,1,0)), ihash(i + vec3(1,1,0)), f.x), f.y),
@@ -170,18 +178,27 @@ void main(){
       float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0; sea = mix(sea, depthColour(120.0), lake); }
     day = mix(day, sea, water); }
   if(uIceOn > 0.5){ float lat = 90.0 - v * 180.0;
-    if(abs(lat) >= 50.0){ float lon = radians(u * 360.0 - 180.0), r = (90.0 - abs(lat)) / 40.0;
+    if(abs(lat) >= 60.0){ float lon = radians(u * 360.0 - 180.0), r = (90.0 - abs(lat)) / 30.0;
       vec2 q = lat > 0.0 ? vec2(0.5 + 0.5 * r * sin(lon), 0.5 + 0.5 * r * cos(lon)) : vec2(0.5 + 0.5 * r * sin(lon), 0.5 - 0.5 * r * cos(lon));
-      vec3 ic = texture(uIceT, vec2((q.x + (lat > 0.0 ? 0.0 : 1.0)) * 0.5, q.y)).rgb;
+      vec2 tq = vec2((q.x + (lat > 0.0 ? 0.0 : 1.0)) * 0.5, q.y);
+      vec3 ic = texture(uIceT, tq).rgb;
       float c = ic.r, shelf = ic.g;
+      /* sea in the AMSR2 grid, or water in the satellite picture right at the coast */
+      float sea = max(smoothstep(0.3, 0.7, ic.b), water);
       vec3 P = nrm(radians(lat), lon);
       float n = ifbm(P * 90.0), fine = ifbm(P * 420.0);
-      float edge = smoothstep(0.13, 0.17, c);                       /* the ice edge: sharp, at 15% cover */
+      float edge = smoothstep(0.13, 0.17, c) * sea;                 /* the ice edge: sharp, at 15% cover */
       float open = clamp(1.0 - c, 0.0, 1.0);                         /* share of open water inside the pack */
       float floe = smoothstep(open * 1.15 - 0.04, open * 1.15 + 0.04, mix(n, fine, 0.35)); /* floes; leads where the noise is low */
-      float cover = max(edge * floe, smoothstep(0.3, 0.7, shelf));
       vec3 ice = mix(vec3(0.80, 0.86, 0.91), vec3(0.93, 0.95, 0.97), smoothstep(0.55, 0.95, c)) * (0.92 + 0.12 * fine);
-      day = mix(day, ice, cover * smoothstep(0.0, 0.25, water + 0.15)); } }
+      /* the photo: bright = ice, dark = open water in the leads (the sea below shows through), grey thin ice between */
+      vec4 ph = uIcePhOn > 0.5 ? texture(uIcePh, tq) : vec4(0.0);
+      float pl = dot(ph.rgb, vec3(0.3, 0.55, 0.15)), pf = smoothstep(0.08, 0.45, pl), pa = ph.a;
+      float sea_ice = edge * mix(floe, pf, pa);
+      float shelfK = smoothstep(0.3, 0.7, shelf);
+      ice = mix(ice, min(ph.rgb * 1.06 + 0.02, vec3(1.0)), pa * (1.0 - shelfK));
+      float cover = max(sea_ice, shelfK * smoothstep(0.0, 0.25, water + 0.15));
+      day = mix(day, ice, cover); } }
   /* light from the real geometry. s = dot(surface normal, direction to the subsolar point) = sine of the sun's height here,
      both in the same geographic frame (the sun's latitude = declination, and its longitude). Blending happens in display
      (sRGB) space: textures are uploaded as plain RGBA and written straight to the canvas.
@@ -218,9 +235,9 @@ void main(){
 const VS="#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
 function prog(G){if(G._dng!==undefined)return G._dng;G._dng=null;const gl=G.gl;
  try{const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
-  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));/* sea ice: geoflock-seaice.js */gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.bindAttribLocation(pr,gl.getAttribLocation(G.prog,"p"),"p");gl.linkProgram(pr);
   if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(pr));
-  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uPatch","uPB","uPatchOn","uNightOnly","uDPatch","uDPB","uDPatchOn","uCl","uClA","uClSt","uClNoNight","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
+  const u={};["uF","uC","uS","uLam0","uSp","uCp","uRoll","uSpace","uSat","uNight","uPatch","uPB","uPatchOn","uNightOnly","uDPatch","uDPB","uDPatchOn","uCl","uClA","uClSt","uClNoNight","uSun","uGlow","uGlowOn","uBathy","uBathyOn","uSea","uDayOnly","uIceT","uIceOn","uIcePh","uIcePhOn"].forEach(n=>u[n]=gl.getUniformLocation(pr,n));G._dng={pr,u}}
  catch(e){console.error("Day & Night globe:",e)}return G._dng}
 /* the coastal glow picture: loaded once, one small GPU texture per globe */
 let GLOW_IMG=null;
@@ -234,13 +251,22 @@ function bathyTex(G){if(G._dngBathy)return G._dngBathy;if(!BATHY_IMG){BATHY_IMG=
  if(!BATHY_IMG.complete||!BATHY_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,BATHY_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngBathy=t}
-/* the sea-ice picture: loaded once, one GPU texture per globe */
-let ICE_IMG=null;
-function iceTex(G){if(G._dngIce)return G._dngIce;if(!ICE_IMG){ICE_IMG=new Image();ICE_IMG.onload=()=>{try{req()}catch(e){}};ICE_IMG.src="textures/SEAICE_POLAR.png?v=1"}
+/* the sea-ice pictures: loaded once (only when the Satellite globe or Day & Night draws), one GPU texture each per globe */
+let ICE_IMG=null,ICEPH_IMG=null;
+function iceTex(G){if(G._dngIce)return G._dngIce;if(!ICE_IMG){ICE_IMG=new Image();ICE_IMG.onload=()=>{try{req()}catch(e){}};ICE_IMG.src="textures/SEAICE_POLAR.png?v=2"}
  if(!ICE_IMG.complete||!ICE_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,ICE_IMG);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngIce=t}
+/* the photo of the ice (RGBA, alpha = clear photo); mipmapped, so the zoomed-out globe shows it without shimmer */
+function icePhTex(G){if(G._dngIcePh)return G._dngIcePh;if(!ICEPH_IMG){ICEPH_IMG=new Image();ICEPH_IMG.onload=()=>{try{req()}catch(e){}};ICEPH_IMG.src="textures/SEAICE_PHOTO.webp?v=1"}
+ if(!ICEPH_IMG.complete||!ICEPH_IMG.naturalWidth)return null;const gl=G.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+ gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,ICEPH_IMG);gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return G._dngIcePh=t}
+/* home: the Home page globe uses the photo only once the Satellite map has loaded it (no extra download there) */
+function bindIce(G,gl,u,home){const it=iceTex(G),pt=it&&(!home||ICEPH_IMG)?icePhTex(G):null;gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0);
+ gl.activeTexture(gl.TEXTURE8);gl.bindTexture(gl.TEXTURE_2D,pt);gl.uniform1i(u.uIcePh,8);gl.uniform1f(u.uIcePhOn,pt?1:0)}
 /* the sea colour on the Satellite globe (toolkit Palette): "normal", "light" or "turq"; unset = lighter in Day & Night,
    the plain picture in Day */
 const SEA_KEY="gfSatSea";let seaPick=null;try{seaPick=localStorage.getItem(SEA_KEY)}catch(e){}
@@ -275,7 +301,7 @@ const nightReady=()=>{try{return GLOBE_TEX.night?globeImages("night",()=>req()):
    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N?N.list[0]:o.tex.list[0]);gl.uniform1i(u.uNight,1);
    /* the Day & Night globe (lit by the Sun) keeps the built-in pictures: no sharp tiles there (the owner's call) */{const dp=o._nightOnly||S.on||seaSat?null:patchFor(this,"sat");gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,dp?dp.t:null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,dp?1:0);if(dp)gl.uniform4f(u.uDPB,dp.b[0],dp.b[1],dp.b[2],dp.b[3])}
    {const pt=day||S.on?null:patchFor(this,"night");gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,pt?pt.t:null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,pt?1:0);if(pt)gl.uniform4f(u.uPB,pt.b[0],pt.b[1],pt.b[2],pt.b[3])}
-   {const it=iceTex(this);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0)}
+   bindIce(this,gl,u);
    {const bt=bathyTex(this);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}
    {const gt=glowTex(this);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,gt);gl.uniform1i(u.uGlow,5);gl.uniform1f(u.uGlowOn,gt?1:0)}
    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return}}}catch(e){console.error(e)}
@@ -556,7 +582,7 @@ function drawOn(G,o,sun){try{
  gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,N.list[0]);gl.uniform1i(u.uNight,1);
  gl.activeTexture(gl.TEXTURE7);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uPatch,7);gl.uniform1f(u.uPatchOn,0);
  gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,null);gl.uniform1i(u.uDPatch,2);gl.uniform1f(u.uDPatchOn,0);
- {const it=iceTex(G);gl.activeTexture(gl.TEXTURE4);gl.bindTexture(gl.TEXTURE_2D,it);gl.uniform1i(u.uIceT,4);gl.uniform1f(u.uIceOn,it?1:0)}
+ bindIce(G,gl,u,1);
  {const bt=bathyTex(G);gl.activeTexture(gl.TEXTURE6);gl.bindTexture(gl.TEXTURE_2D,bt);gl.uniform1i(u.uBathy,6);gl.uniform1f(u.uBathyOn,bt?1:0)}
  {const gt=glowTex(G);gl.activeTexture(gl.TEXTURE5);gl.bindTexture(gl.TEXTURE_2D,gt);gl.uniform1i(u.uGlow,5);gl.uniform1f(u.uGlowOn,gt?1:0)}
  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);return true}catch(e){console.error("Day & Night drawOn",e);return false}}
