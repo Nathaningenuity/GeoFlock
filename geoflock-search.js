@@ -426,7 +426,14 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;e._off=[o[0]+dx,o[1]+dy];pin(e)};
    const up=()=>{card.removeEventListener("pointermove",mv);card.removeEventListener("pointerup",up);card.removeEventListener("pointercancel",up);if(!moved){const Q=picsFor(e)[e._pi||0];try{psPhotoOpen(Q?Q.P:P,Q?Q.cap:e.n)}catch(err){}}};
    card.addEventListener("pointermove",mv);card.addEventListener("pointerup",up);card.addEventListener("pointercancel",up)});
-  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));document.body.appendChild(el);e._els.push(el);labOf(e);
+  ["click","mousedown","wheel"].forEach(t=>card.addEventListener(t,ev=>ev.stopPropagation()));
+  /* the name under the photo drags the card too (and is all there is to drag once the photo is hidden) */
+  {const lb=el.querySelector(".gfs-lab");lb.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._off||e._base||[0,0],x0=ev.clientX,y0=ev.clientY;try{lb.setPointerCapture(ev.pointerId)}catch(err){}
+   const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(Math.hypot(dx,dy)<3)return;e._off=[o[0]+dx,o[1]+dy];pin(e)};
+   const up=()=>{lb.removeEventListener("pointermove",mv);lb.removeEventListener("pointerup",up);lb.removeEventListener("pointercancel",up)};
+   lb.addEventListener("pointermove",mv);lb.addEventListener("pointerup",up);lb.addEventListener("pointercancel",up)});
+   ["click","mousedown","wheel"].forEach(t=>lb.addEventListener(t,ev=>ev.stopPropagation()))}
+  document.body.appendChild(el);e._els.push(el);labOf(e);
   const sp=spotFor(e);if(sp){const s2=e._spot=document.createElement("div");s2.className="gfs-spotpin";s2.innerHTML=sp;document.body.appendChild(s2);e._els.push(s2);e._base=[0,-34]}else e._base=[0,0]}
  if(!el&&mode!=="icon"&&mode!=="city"){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-name";el.innerHTML='<span class="gfs-lab">'+esc(e.n)+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e);
   /* a name can be dragged off its place too (a line keeps it tied); an island's name starts a little above the island */
@@ -437,8 +444,14 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
    lab.addEventListener("pointermove",mv);lab.addEventListener("pointerup",up);lab.addEventListener("pointercancel",up)});
   ["click","mousedown","wheel"].forEach(t=>lab.addEventListener(t,ev=>ev.stopPropagation()))}
  if(!el){el=e._pin=document.createElement("div");el.className="gfs-pin gfs-"+mode+(e.cat==="coords"?" gfs-coordpin":"");const ic=e.cat==="volcanoes"?"volcano":e.cat==="waterfalls"?"waterfall":"mountain";
-  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+(e.sub?' <small>'+esc(e.sub)+'</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e)}
- const hide=()=>{el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
+  el.innerHTML=(mode==="city"?'<span class="gfs-dot"></span>':(spotFor(e)||'<span class="gfs-ic" style="--ipc:'+COL[e.cat]+'">'+(typeof psIconSVG==="function"?psIconSVG(ic):"▲")+'</span>'))+'<span class="gfs-lab">'+esc(e.n)+(e.h?' <small>'+Math.round(e.h).toLocaleString()+' m</small>':'')+(e.sub?' <small>'+esc(e.sub)+'</small>':'')+'</span>';document.body.appendChild(el);e._els.push(el);labOf(e);
+  /* a city's or a peak's name can be dragged off too: the dot or icon stays on the place, a thin line ties the name to it */
+  const lab=el.querySelector(".gfs-lab");lab.addEventListener("pointerdown",ev=>{ev.preventDefault();ev.stopPropagation();const o=e._loff||[0,0],x0=ev.clientX,y0=ev.clientY;try{lab.setPointerCapture(ev.pointerId)}catch(err){}
+   const mv=m=>{const dx=m.clientX-x0,dy=m.clientY-y0;if(Math.hypot(dx,dy)<3)return;e._loff=[o[0]+dx,o[1]+dy];pin(e)};
+   const up=()=>{lab.removeEventListener("pointermove",mv);lab.removeEventListener("pointerup",up);lab.removeEventListener("pointercancel",up)};
+   lab.addEventListener("pointermove",mv);lab.addEventListener("pointerup",up);lab.addEventListener("pointercancel",up)});
+  ["click","mousedown","wheel","dblclick"].forEach(t=>lab.addEventListener(t,ev=>ev.stopPropagation()))}
+ const hide=()=>{if(e._lline)e._lline.style.display="none";el.style.display="none";if(e._spot)e._spot.style.display="none";if(e._leash)e._leash.style.display="none"};
  const s0=screenOf(e.ll);if(!s0){hide();return}const wr=mapRect();
  if(s0[0]<wr.left||s0[0]>wr.right||s0[1]<wr.top||s0[1]>wr.bottom){hide();return}el.style.display="";const isPh=el.classList.contains("gfs-photo")||el.classList.contains("gfs-name"),base=isPh&&e._base||[0,0],off=isPh&&e._off||base;
  /* the emoji grows with the zoom: half size with the whole world in view, full size (a little over) close in */
@@ -446,6 +459,13 @@ function pin(e,labelOnly){const mode=SHOW[e.cat];e._els=e._els||[];let el=e._pin
   if(el._gsk!==k){el._gsk=k;el.style.setProperty("--gsk",k);if(e._spot)e._spot.style.setProperty("--gsk",k)}}
  if(el._usz!==(e.lsz||1)+"|"+(e.isz||1)){el._usz=(e.lsz||1)+"|"+(e.isz||1);sizeOf(e)}
  if(e._spot){e._spot.style.left=s0[0]+"px";e._spot.style.top=s0[1]+"px";e._spot.style.display=""}el.style.left=(s0[0]+off[0])+"px";el.style.top=(s0[1]+off[1])+"px";
+ /* a moved city or peak name: shifted from its usual place beside the dot, with a thin line back to the dot */
+ if(!isPh){const lab=el.querySelector(".gfs-lab"),lo=e._loff;if(lab){lab.style.transform=lo?"translate("+lo[0]+"px,"+lo[1]+"px)":"";
+  let ln=e._lline;if(lo&&Math.hypot(lo[0],lo[1])>8){if(!ln){ln=e._lline=document.createElement("div");ln.className="gfs-lline";document.body.appendChild(ln);e._els.push(ln)}
+   /* from the dot or icon (which stays put) to the nearest point of the moved name */
+   const mk=el.querySelector(".gfs-dot,.gfs-ic,.gfs-spot"),mr=mk&&mk.getBoundingClientRect(),sx=mr&&mr.width?mr.left+mr.width/2:s0[0],sy=mr&&mr.width?mr.top+mr.height/2:s0[1];
+   const r=lab.getBoundingClientRect(),px=Math.max(r.left+2,Math.min(r.right-2,sx)),py=Math.max(r.top+2,Math.min(r.bottom-2,sy)),len=Math.hypot(px-sx,py-sy),ang=Math.atan2(py-sy,px-sx)*180/Math.PI;
+   ln.style.cssText="left:"+sx+"px;top:"+sy+"px;width:"+len+"px;transform:rotate("+ang+"deg)"}else if(ln)ln.style.display="none"}}
  /* the line from a moved card back to its place */
  if(isPh){let ln=e._leash;let far=Math.hypot(off[0]-base[0],off[1]-base[1])>8;
   /* an area (a forest, a country, a lake...): no line while the card is still over it; once dragged off, the line starts
@@ -714,7 +734,8 @@ const css=document.createElement("style");css.textContent=`
 .gfs-tog:hover{ opacity:1; } .gfs-tog.off{ opacity:.45; text-decoration:line-through; }
 #gfsX .gfs-row .gfs-tog{ display:inline-flex; width:auto; height:auto; border-radius:999px; padding:2px 8px; font:700 10.5px/1.3 system-ui,sans-serif; background:none; border:1px solid rgba(255,255,255,.6); }
 #gfsX .gfs-row .gfs-tog:hover{ background:rgba(255,255,255,.15); }
-.gfs-pin.gfs-name .gfs-lab{ pointer-events:auto; cursor:grab; touch-action:none; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
+.gfs-pin .gfs-lab{ pointer-events:auto; cursor:grab; touch-action:none; } .gfs-pin .gfs-lab:active{ cursor:grabbing; }
+.gfs-lline{ position:fixed; z-index:39; height:2px; margin-top:-1px; transform-origin:0 50%; background:rgba(16,28,48,.85); box-shadow:0 0 0 1px rgba(255,255,255,.6); pointer-events:none; } #gfsX .gfs-row:hover{ background:rgba(16,28,48,.97); }
 #gfsX .gfs-all{ border:0; background:rgba(255,255,255,.85); color:#16324f; font:700 11.5px system-ui,sans-serif; border-radius:999px; padding:4px 10px; cursor:pointer; }
 #gfsX .gfs-max{ font-size:10.5px; opacity:.8; padding:0 6px; background:rgba(255,255,255,.75); border-radius:6px; }
 .gfs-did{ padding:6px 14px 2px; font-size:12px; opacity:.6; font-style:italic; }
