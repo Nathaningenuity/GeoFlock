@@ -453,6 +453,65 @@ FIX.bcandide={
   "Six kings at the Carnival":S=>VIEW(S,[20,48,2]),
   "Voltaire’s own garden":S=>VIEW(S,[7.5,46.3,6])
 };
+FIX.bjourneywest={
+  /* this tour's map key sits on the globe's right side, and the labels of Chang'an, Monkey's mountain, the Jade Gate
+     beacons, Bodh Gaya and Lake Zorkul ran under it: each stop is framed a little further east, so its places come in
+     from the key */
+  "Journey to the West":S=>VIEW(S,[106,32,1.3]),
+  "Monkey, Pigsy and Sandy":S=>VIEW(S,[130,30,1.3]),
+  "Leaving Chang’an against orders":S=>VIEW(S,[110,35,3.4]),
+  "Alone across the Gobi":S=>VIEW(S,[98.5,41,5.56]),
+  "Harsha’s India":S=>VIEW(S,[87.5,26,4.25]),
+  "Over the Pamirs":S=>VIEW(S,[76,37.5,6])
+};
+FIX.bflat={
+  /* the Cape Girardeau label ran under the map key: framed a little further east */
+  "Drive-through orders from far away":S=>VIEW(S,[-90,37.3,2.5]),
+  /* the Valentia photo, Singapore's label and the Yangshan photo sat against the map key on the globe's right side:
+     framed a little further east */
+  "Three ages of globalisation":S=>VIEW(S,[-26,49.1,1.4]),
+  "Fibre under the sea":S=>VIEW(S,[96,20,1]),
+  "China joins the world’s factory floor":S=>VIEW(S,[120,27,2.6])
+};
+FIX.bcollapse={
+  /* the Copán photo and the Tikopia label sat under the map key on the globe's right side: framed a little further
+     east (Copán) and drawn smaller (Tokyo to Tikopia) */
+  "The Classic Maya":S=>VIEW(S,[-88.6,16.6,6]),
+  "Societies that succeeded":S=>VIEW(S,[158,12,1.1])
+};
+FIX.bsilkroads={
+  /* this tour's map key sits on the globe's right side, and the labels of Susa, Han China, the Khazars, Jerusalem,
+     Khanbaliq and the Khyber Pass ran under or against it: each stop is framed a little further east */
+  "Persia’s royal road":S=>VIEW(S,[53,32.1,2.1]),
+  "Silk and heavenly horses":S=>VIEW(S,[102,38,2]),
+  "Furs, slaves and silver":S=>VIEW(S,[49,51.6,2.2]),
+  "Crusades and Italian fortunes":S=>VIEW(S,[37,36,2]),
+  "The Mongol road":S=>VIEW(S,[82,48,1]),
+  "The Great Game":S=>VIEW(S,[73,35.8,4.5])
+};
+FIX.bspiky={
+  /* São Paulo and Mexico City were round the back and Lagos's label hung off the globe's edge: the stop's buttons turn
+     to each crowd (part 2) */
+  "Where people are":S=>VIEW(S,[90,25,1]),
+  /* the Frankfurt–Stuttgart label hung off the globe's right edge: framed a little further east */
+  "Europe’s banana":S=>VIEW(S,[9.6,47.5,4.2])
+};
+FIX.bbeagle={
+  /* the penguin photo, the Ecuador label, the island game's "drag the Beagle" tag and the Matavai Bay label sat under
+     or against the map key on the globe's right side: each stop is framed a little further east */
+  "Tierra del Fuego":S=>VIEW(S,[-58,-54.5,3.4]),
+  "Galápagos: islands of difference":S=>VIEW(S,[-82,-1.5,3]),
+  "Tortoises, mockingbirds and finches":S=>VIEW(S,[-87,-0.6,6]),
+  "Tahiti and New Zealand":S=>VIEW(S,[-160,-28,1.5])
+};
+FIX.brihla={
+  /* the Old Muscat photo sat against the zoom buttons at the globe's top edge, and the labels of Sarai, Sri Lanka and
+     Guangzhou against the map key on its right side: framed a little further south (Swahili coast) or east */
+  "Down the Swahili coast":S=>VIEW(S,[51.5,4,2.05]),
+  "The Golden Horde and Constantinople":S=>VIEW(S,[43.5,46,2.4]),
+  "Judge of the Maldives":S=>VIEW(S,[80,6.8,4.5]),
+  "China: the far edge of the world":S=>VIEW(S,[112,22,1.7])
+};
 FIX.houses={
   /* the Hong Kong photos sat at the globe's top-right edge by the zoom buttons: framed a little further east */
   "Cities of towers":S=>VIEW(S,[112,9,1.7])
@@ -1000,6 +1059,15 @@ const TURN_TSWANA=TURNER({tours:["bnations"],title:"Botswana’s chiefs",mark:tr
  places:[["Botswana",26.5,-21,2.6,"Botswana was one of the world’s poorest countries in 1966; it has since been one of the fastest-growing.",2],
   ["London",-0.12,51.5,3,"In 1895 three Tswana chiefs travelled to London and persuaded the British government to keep their land out of Cecil Rhodes’s company."]]});
 DEFS.push(TURN_TSWANA);
+
+const TURN_CROWDS=TURNER({tours:["bspiky"],title:"Where people are",mark:true,
+ tip:"Turn the globe to the great crowds of people on each continent.",
+ places:[["Asia",90,25,1,"The Population map shows how people crowd into river valleys, coasts and great cities.",2],
+  ["Cairo and the Nile",31.24,30.04,2.6,"Deserts stay almost empty; the crowd follows the river.",1],
+  ["Lagos",3.38,6.52,2.8,"Lagos, on the Gulf of Guinea, is one of Africa’s biggest cities.",1],
+  ["São Paulo",-46.63,-23.55,2.6,"South America’s biggest city.",1],
+  ["Mexico City",-99.13,19.43,2.6,"But a crowd is not a peak by itself: Florida’s next maps ask what all these people make.",1]]});
+DEFS.push(TURN_CROWDS);
 
 let L=null,raf=0;
 function activeDef(){try{if(typeof ps==="undefined"||!ps||!ps.tour||!ps.card)return null;const S=psSteps()[ps.i];if(!S)return null;const t=strip(S.title);

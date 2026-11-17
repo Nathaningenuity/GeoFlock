@@ -192,7 +192,8 @@ FIX.bspiky={
   /* the card opened on the right and the globe looked down on the North Pole (index.html flew to the middle of pins from
      San Francisco to Tokyo), Tokyo, Shanghai and Hong Kong photos hanging below the globe: framed on the Atlantic, New York
      to London and Lagos; the Asian photos and the San Francisco label go (they have stops of their own) */
-  "The World Is Spiky":S=>{DROP(S,/^(San Francisco Bay|Tokyo|Shanghai)$/);DROPPH(S,/^(Shibuya|Shanghai at night|Hong Kong at night)/);VIEW(S,[-12,38,1])},
+  /* (rw8) the Lagos photo too: it sat under the map key */
+  "The World Is Spiky":S=>{DROP(S,/^(San Francisco Bay|Tokyo|Shanghai)$/);DROPPH(S,/^(Shibuya|Shanghai at night|Hong Kong at night|Lagos)/);VIEW(S,[-12,38,1])},
   /* Tokyo and Shanghai sat by the zoom buttons */
   "Where people are":S=>VIEW(S,[90,25,1]),
   /* the globe looked down from high over the Arctic, the US north-east and Central Africa at its edges: framed on the
@@ -232,7 +233,8 @@ FIX.bbeagle={
   /* Darwin's portrait (at Plymouth) hung over the search box and the Plymouth and Falmouth labels at the top edge; the
      Ushuaia photo lay below the globe, Table Mountain's by the map key and the tortoise's and Aconcagua's under the card:
      framed a little further south and east; those four photos go (each place has its own stop) */
-  "The Voyage of the Beagle":S=>{DROPPH(S,/^(Ushuaia|Table Mountain|A Galápagos giant tortoise|Aconcagua)/);VIEW(S,[-25,15,1])},
+  /* (rw8) Darwin's portrait too: it sat on the map's switches at the globe's top edge (he has it on two later stops) */
+  "The Voyage of the Beagle":S=>{NOPPL(S,"Charles Darwin");DROPPH(S,/^(Ushuaia|Table Mountain|A Galápagos giant tortoise|Aconcagua)/);VIEW(S,[-25,15,1])},
   /* the Plymouth, Shrewsbury and Cambridge labels were stacked by the search box */
   "Plymouth, 1831: a young man joins":S=>VIEW(S,[1,32,1.7]),
   /* the Porto Praya label ran under the map key */
