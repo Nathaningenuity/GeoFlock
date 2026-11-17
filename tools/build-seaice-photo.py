@@ -19,8 +19,12 @@ Clouds vs ice: in both false-colour pictures red is the 2.1-2.25 um band (MODIS 
 (they show cyan); water clouds are bright in both (white); open water is dark in both. Per pixel and per picture the
 score green - 1.5 * red is high for clear ice, near zero for clear water and negative for cloud, so for every pixel
 the clearest of the 35 pictures (5 satellites x 7 days) is taken (a soft maximum over a blurred score, so
-the choice changes smoothly between neighbouring pixels, no patchwork). Where even the best picture is cloudy or
-there is no picture (no sun), the alpha channel is low and the map falls back to its drawn floe pattern.
+the choice changes smoothly between neighbouring pixels, no patchwork). Each satellite's own daily sea-ice product on
+GIBS (MODIS_*_Sea_Ice = MOD29/MYD29, VIIRS_*_Sea_Ice, both with the satellite's cloud mask) says per pixel whether
+the sky was clear (sea ice or open ocean), cloudy or undecided (night, no decision); cloudy pictures are left out and
+undecided ones count far less. (VIIRS_NOAA21_Sea_Ice is listed in GetCapabilities but returned "TIME does not exist"
+for these dates, so NOAA-21 only fills in where nothing flagged clear exists.) Where even the best picture is cloudy
+or there is no picture (no sun), the alpha channel is low and the map falls back to its drawn floe pattern.
 
 Output: RGBA, same layout as SEAICE_POLAR.png (two squares, left Arctic, right Antarctic, azimuthal equidistant to
 latitude 60): RGB = true colour, A = confidence that the pixel is a clear photo (0 where there is no ice).

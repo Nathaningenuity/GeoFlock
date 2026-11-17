@@ -1,12 +1,22 @@
-const {chromium}=require('playwright');const fs=require('fs');
+/* Builds textures/SEAICE_FLAT_N.webp and _S.webp: the sea ice of the flat Satellite map, as two strips in the flat map's
+   Robinson frame (x 0-2000, north strip y -7..188, south strip y 813..1008 in map units).
+   It runs the globe's own rules (geoflock-daynightglobe.js) in the browser against the local server, so globe and flat
+   map match: textures/SEAICE_POLAR.png (AMSR2 ASI concentration, University of Bremen; ice shelves, Natural Earth;
+   sea mask) and textures/SEAICE_PHOTO.webp (cloud-free NASA GIBS MODIS / VIIRS photo of the ice), both made by
+   tools/build-seaice-amsr2.py and tools/build-seaice-photo.py.
+   Usage: python3 -m http.server 8765 (repo root), then  node tools/build-seaice-flat.js OUT_DIR
+   and copy OUT_DIR/SEAICE_FLAT_N.webp, _S.webp into textures/. */
+const {chromium}=require('playwright');const fs=require('fs');const path=require('path');
+const OUT=process.argv[2]||'.';const K=+(process.argv[3]||3);/* pixels per map unit */
 (async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:800,height:600}});
 p.on('console',m=>console.log('C',m.text().slice(0,200)));p.on('pageerror',e=>console.log('ERR',e.message));
 await p.goto('http://localhost:8765/index.html');await p.waitForTimeout(3000);
-const out=await p.evaluate(async()=>{
+const out=await p.evaluate(async K=>{
  const ld=s=>new Promise((res,rej)=>{const i=new Image;i.onload=()=>res(i);i.onerror=rej;i.src=s});
  const data=im=>{const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0);return x.getImageData(0,0,c.width,c.height)};
- const ice=data(await ld('textures/SEAICE_POLAR.png?v=1')),sat=data(await ld('textures/SAT_FLAT_IMG.webp?v=2'));
- const IW=ice.width,IH=ice.height,ID=ice.data,SW=sat.width,SH=sat.height,SD=sat.data;
+ const ice=data(await ld('textures/SEAICE_POLAR.png?v=2')),pho=data(await ld('textures/SEAICE_PHOTO.webp?v=1')),sat=data(await ld('textures/SAT_FLAT_IMG.webp?v=2'));
+ const IW=ice.width,IH=ice.height,ID=ice.data,PD=pho.data,SW=sat.width,SH=sat.height,SD=sat.data;
+ if(pho.width!==IW||pho.height!==IH)throw new Error('photo and concentration differ in size');
  const SX0=0,SY0=-6.688,SKX=SW/2000,SKY=SH/1014.376;
  const fr=x=>x-Math.floor(x);
  const ih=(x,y,z)=>{x=fr(x*.3183099+.1)*17;y=fr(y*.3183099+.1)*17;z=fr(z*.3183099+.1)*17;return fr(x*y*z*(x+y+z))};
@@ -15,29 +25,36 @@ const out=await p.evaluate(async()=>{
   return L(L(L(ih(ix,iy,iz),ih(ix+1,iy,iz),fx),L(ih(ix,iy+1,iz),ih(ix+1,iy+1,iz),fx),fy),L(L(ih(ix,iy,iz+1),ih(ix+1,iy,iz+1),fx),L(ih(ix,iy+1,iz+1),ih(ix+1,iy+1,iz+1),fx),fy),fz)};
  const fbm=(x,y,z)=>.5*no(x,y,z)+.27*no(x*2.07,y*2.07,z*2.07)+.15*no(x*4.31,y*4.31,z*4.31)+.08*no(x*8.9,y*8.9,z*8.9);
  const ss=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t)};
- const iceAt=(qx,qy,south)=>{/* bilinear in one square */const fx=((qx+(south?1:0))*.5)*IW-.5,fy=qy*IH-.5;const x0=Math.floor(fx),y0=Math.floor(fy),tx=fx-x0,ty=fy-y0;
+ /* bilinear in one square of a 2:1 picture, channels 0-3, 0-1 */
+ const bil=(D,qx,qy,south)=>{const fx=((qx+(south?1:0))*.5)*IW-.5,fy=qy*IH-.5;const x0=Math.floor(fx),y0=Math.floor(fy),tx=fx-x0,ty=fy-y0;
   const lo=south?IW/2:0,hi=south?IW-1:IW/2-1;const cx=v=>Math.min(hi,Math.max(lo,v)),cy=v=>Math.min(IH-1,Math.max(0,v));
-  const g=(x,y,c)=>ID[(cy(y)*IW+cx(x))*4+c];const v=c=>L(L(g(x0,y0,c),g(x0+1,y0,c),tx),L(g(x0,y0+1,c),g(x0+1,y0+1,c),tx),ty)/255;return[v(0),v(1)]};
+  const g=(x,y,c)=>D[(cy(y)*IW+cx(x))*4+c];const v=c=>L(L(g(x0,y0,c),g(x0+1,y0,c),tx),L(g(x0,y0+1,c),g(x0+1,y0+1,c),tx),ty)/255;return[v(0),v(1),v(2),v(3)]};
  const satAt=(mx,my)=>{const x=Math.min(SW-1,Math.max(0,Math.round((mx-SX0)*SKX-.5))),y=Math.min(SH-1,Math.max(0,Math.round((my-SY0)*SKY-.5)));const i=(y*SW+x)*4;return[SD[i]/255,SD[i+1]/255,SD[i+2]/255,SD[i+3]/255]};
- const ROB=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);const K=2;const res=[];
+ const ROB=d3.geoRobinson().scale(318.31).translate([1e3,500.5]);const res=[];
+ /* the strips keep their old frame (latitude 50 to the pole), so geoflock-seaiceflat.js places them as before */
  for(const [la0,la1,south] of [[90,50,false],[-50,-90,true]]){
   const y0=Math.floor(ROB([0,la0])[1]),y1=Math.ceil(ROB([0,la1])[1]),W=2000*K,H=(y1-y0)*K;
   const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');const id=x.createImageData(W,H),D=id.data;
-  for(let py=0;py<H;py++){const my=y0+(py+.5)/K;const ll0=ROB.invert([1e3,my]);if(!ll0)continue;const lat=ll0[1];if(Math.abs(lat)<50)continue;
+  for(let py=0;py<H;py++){const my=y0+(py+.5)/K;const ll0=ROB.invert([1e3,my]);if(!ll0)continue;const lat=ll0[1];if(Math.abs(lat)<60)continue;
    const e=ROB([180,lat]);const hw=e[0]-1e3;if(!(hw>0))continue;
    for(let px=0;px<W;px++){const mx=(px+.5)/K;const lonD=(mx-1e3)/hw*180;if(Math.abs(lonD)>180)continue;
-    const lon=lonD*Math.PI/180,r=(90-Math.abs(lat))/40;
+    const lon=lonD*Math.PI/180,r=(90-Math.abs(lat))/30;
     const qx=.5+.5*r*Math.sin(lon),qy=south?.5-.5*r*Math.cos(lon):.5+.5*r*Math.cos(lon);
-    const [cc,shelf]=iceAt(qx,qy,south);if(cc<.12&&shelf<.25)continue;
-    const la=lat*Math.PI/180,X=Math.cos(la)*Math.cos(lon),Y=Math.cos(la)*Math.sin(lon),Z=Math.sin(la);
-    const n=fbm(X*90,Y*90,Z*90),fine=fbm(X*420,Y*420,Z*420);
-    const edge=ss(.13,.17,cc),open=Math.min(1,Math.max(0,1-cc)),floe=ss(open*1.15-.04,open*1.15+.04,L(n,fine,.35));
+    const [cc,shelf,seaM]=bil(ID,qx,qy,south);if(cc<.12&&shelf<.25)continue;
     const s=satAt(mx,my);if(s[3]<.5)continue;const lum=s[0]*.3+s[1]*.55+s[2]*.15;
     const water=ss(.015,.07,s[2]-Math.max(s[0],s[1]*.82))*(1-ss(.28,.5,lum));
-    const shelfC=ss(.3,.7,shelf);const a=Math.max(edge*floe*ss(0,.25,water+.15),shelfC);if(a<.004)continue;
-    const t=ss(.55,.95,cc),k=.92+.12*fine;const ir=L(.80,.93,t)*k,ig=L(.86,.95,t)*k,ib=L(.91,.97,t)*k;
+    const sea=Math.max(ss(.3,.7,seaM),water);
+    const la=lat*Math.PI/180,X=Math.cos(la)*Math.cos(lon),Y=Math.cos(la)*Math.sin(lon),Z=Math.sin(la);
+    const n=fbm(X*90,Y*90,Z*90),fine=fbm(X*420,Y*420,Z*420);
+    const edge=ss(.13,.17,cc)*sea,open=Math.min(1,Math.max(0,1-cc)),floe=ss(open*1.15-.04,open*1.15+.04,L(n,fine,.35));
+    const ph=bil(PD,qx,qy,south),pl=ph[0]*.3+ph[1]*.55+ph[2]*.15,pf=ss(.08,.45,pl),pa=ph[3];
+    const seaIce=edge*L(floe,pf,pa),shelfK=ss(.3,.7,shelf);
+    const a=Math.max(seaIce,shelfK*ss(0,.25,water+.15));if(a<.004)continue;
+    const t=ss(.55,.95,cc),k=.92+.12*fine,wp=pa*(1-shelfK);
+    const ir=L(L(.80,.93,t)*k,Math.min(1,ph[0]*1.06+.02),wp),ig=L(L(.86,.95,t)*k,Math.min(1,ph[1]*1.06+.02),wp),ib=L(L(.91,.97,t)*k,Math.min(1,ph[2]*1.06+.02),wp);
     const i=(py*W+px)*4;D[i]=Math.min(255,ir*255);D[i+1]=Math.min(255,ig*255);D[i+2]=Math.min(255,ib*255);D[i+3]=a*255}}
-  x.putImageData(id,0,0);res.push({y:y0,h:y1-y0,url:c.toDataURL('image/png')})}
- return res});
-out.forEach((o,i)=>{fs.writeFileSync('band'+i+'.png',Buffer.from(o.url.split(',')[1],'base64'));console.log(i,o.y,o.h)});
+  x.putImageData(id,0,0);res.push({y:y0,h:y1-y0,url:c.toDataURL('image/webp',.86)})}
+ return res},K);
+fs.mkdirSync(OUT,{recursive:true});
+out.forEach((o,i)=>{const f=path.join(OUT,i?'SEAICE_FLAT_S.webp':'SEAICE_FLAT_N.webp');fs.writeFileSync(f,Buffer.from(o.url.split(',')[1],'base64'));console.log(f,o.y,o.h,fs.statSync(f).size)});
 await b.close()})();
