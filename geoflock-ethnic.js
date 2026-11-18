@@ -2,7 +2,8 @@
    Culture map: traditional homelands of the world's ethnic groups from GREG, Geo-Referencing of Ethnic Groups (Weidmann,
    Rød & Cederman 2010, Journal of Peace Research 47(4): 491–99), a GIS version of the Soviet Atlas Narodov Mira (1964).
    Data: textures/ETHNIC_GROUPS.json (topojson, object "eth"; one geometry per group or mix of groups, multipart pieces
-   merged, clipped to land, simplified). Properties: n = name (the atlas's name; a few outdated, misspelt or offensive
+   merged, clipped to land, simplified); the band 65–69°N, lost when the file was first built, restored from the original GREG shapefile by
+   tools/fix-ethnic-arctic-band.py). Properties: n = name (the atlas's name; a few outdated, misspelt or offensive
    ones replaced by the usual name today), x = other names the atlas gives, c = colour index (one per polygon of a
    MultiPolygon, or one number for all). The colours come from a neighbour colouring done once when the data was built
    (no two touching pieces share a colour), so they mean nothing on their own: there is no per-group key, the patchwork
@@ -58,7 +59,7 @@ function viewTest(p,gv,cv){try{if(gv&&!gv._flat&&gv.visibleAngle){const ctr=[-gv
 function lodLevel(p,gv){let ppd=1;try{ppd=gv&&!gv._flat&&gv.size?gv.size().r*(gv.zoom||1)*Math.PI/180:p.scale()*Math.PI/180}catch(e){}const t=.9/ppd;let k=0;LODS.forEach((v,i)=>{if(v<=t)k=i});return k}
 let NAT=null;function natBorders(){if(NAT)return NAT;try{NAT=topojson.mesh(PROJ_WORLD,PROJ_WORLD.objects.countries,(a,b)=>a!==b)}catch(e){NAT={type:"MultiLineString",coordinates:[]}}return NAT}
 let G=null,gLoad=null;
-function load(){if(gLoad)return gLoad;gLoad=fetch("textures/ETHNIC_GROUPS.json").then(r=>r.json()).then(t=>{G=build(t);redraw()}).catch(e=>{console.error(e);gLoad=null});return gLoad}
+function load(){if(gLoad)return gLoad;gLoad=fetch("textures/ETHNIC_GROUPS.json?v=2").then(r=>r.json()).then(t=>{G=build(t);redraw()}).catch(e=>{console.error(e);gLoad=null});return gLoad}
 let M=null,mLoad=null;
 function loadM(){if(mLoad)return mLoad;mLoad=fetch("textures/ETHNIC_MURDOCK.json").then(r=>r.json()).then(t=>{M=build(t);reqTour()}).catch(e=>{console.error(e);mLoad=null});return mLoad}
 function at(D,ll){if(!D||!ll)return null;for(const[b,f]of D.box){const w=b[0][0]<=b[1][0];if(w?(ll[0]<b[0][0]||ll[0]>b[1][0]):(ll[0]<b[0][0]&&ll[0]>b[1][0]))continue;if(ll[1]<b[0][1]||ll[1]>b[1][1])continue;if(d3.geoContains(f,ll))return f}return null}
