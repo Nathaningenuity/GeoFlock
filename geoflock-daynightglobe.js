@@ -177,6 +177,7 @@ void main(){
       water = max(water, smoothstep(0.03, 0.09, bv));
       float lake = water > 0.0 ? smoothstep(0.45, 0.85, enclosed(vec2(u, v))) : 0.0; sea = mix(sea, depthColour(120.0), lake); }
     day = mix(day, sea, water); }
+  float iceK = 0.0; vec3 iceC = vec3(0.0);
   if(uIceOn > 0.5){ float lat = 90.0 - v * 180.0;
     if(abs(lat) >= 60.0){ float lon = radians(u * 360.0 - 180.0), r = (90.0 - abs(lat)) / 30.0;
       vec2 q = lat > 0.0 ? vec2(0.5 + 0.5 * r * sin(lon), 0.5 + 0.5 * r * cos(lon)) : vec2(0.5 + 0.5 * r * sin(lon), 0.5 - 0.5 * r * cos(lon));
@@ -198,7 +199,7 @@ void main(){
       float shelfK = smoothstep(0.3, 0.7, shelf);
       ice = mix(ice, min(ph.rgb * 1.06 + 0.02, vec3(1.0)), pa * (1.0 - shelfK));
       float cover = max(sea_ice, shelfK * smoothstep(0.0, 0.25, water + 0.15));
-      day = mix(day, ice, cover); } }
+      day = mix(day, ice, cover); iceK = cover; iceC = ice; } }
   /* light from the real geometry. s = dot(surface normal, direction to the subsolar point) = sine of the sun's height here,
      both in the same geographic frame (the sun's latitude = declination, and its longitude). Blending happens in display
      (sRGB) space: textures are uploaded as plain RGBA and written straight to the canvas.
@@ -210,6 +211,9 @@ void main(){
   float light = uDayOnly > 0.5 ? 1.0 : dayLight;
   float lights = uDayOnly > 0.5 ? 0.0 : 1.0 - smoothstep(-0.26, 0.1, s);
   /* Night only (City Lights zoomed in): the night picture as the ordinary globe draws it, so zooming in changes nothing */
+  /* at night the ice glows faintly in the night picture's own tone for Greenland's ice sheet (about rgb 15,21,35), its floes
+     and leads kept, so sea ice and Greenland read alike on the dark side */
+  if(iceK > 0.0) ngt = mix(ngt, vec3(0.060, 0.084, 0.140) * (iceC / 0.88), iceK);
   if(uNightOnly < 0.5) ngt = max(ngt - vec3(0.035, 0.04, 0.06), 0.0) * 1.12;
   float cl = 0.0;
   if(uClA > 0.0){ float r0 = textureGrad(uCl, vec2(uc, v), gx, gy).r, r1 = textureGrad(uCl, vec2(uc + 0.0018 * (1.0 + uClSt), v - 0.0014 * (1.0 + uClSt)), gx, gy).r;
