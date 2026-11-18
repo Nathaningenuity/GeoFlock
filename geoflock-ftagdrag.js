@@ -30,6 +30,10 @@ function wire(el,k){el._gfDrag=1;el.style.pointerEvents="auto";el.style.cursor="
   el.addEventListener("pointermove",mv);el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up)});
  ["mousedown","touchstart","wheel"].forEach(t=>el.addEventListener(t,e=>e.stopPropagation(),{passive:true}))}
 const _s=gfFlagTagsSync;gfFlagTagsSync=function(){const r=_s.apply(this,arguments);after();return r};
+/* when the tour ends (closed, finished or switched), its flag labels and their leader lines go with it */
+const clear=()=>{try{document.querySelectorAll(".gf-ftags, svg.gf-ftl").forEach(e=>e.remove())}catch(e){}};
+if(typeof psEnd==="function"){const _e=psEnd;psEnd=function(){const r=_e.apply(this,arguments);if(!ps)clear();return r}}
+setInterval(()=>{try{if(!ps&&document.querySelector(".gf-ftags"))clear()}catch(e){}},1000);
 const st=document.createElement("style");st.textContent=`
 svg.gf-ftl{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
 svg.gf-ftl line{ stroke:rgba(16,28,48,.8); stroke-width:1.6; stroke-linecap:round; }

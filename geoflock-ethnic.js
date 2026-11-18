@@ -16,6 +16,11 @@ if(typeof ALLMAPS_SUBMODES==="undefined"||typeof TH_THEMES==="undefined"||typeof
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ID="eth";
 if(!ALLMAPS_SUBMODES.culture.some(s=>s.id===ID)){const i=ALLMAPS_SUBMODES.culture.findIndex(s=>s.id==="lang");ALLMAPS_SUBMODES.culture.splice(i<0?ALLMAPS_SUBMODES.culture.length:i+1,0,{id:ID,label:"Ethnic groups"})}
+/* the Culture map opens on Ethnic groups */
+try{if(typeof allMapsSubMode!=="undefined"&&(!allMapsSubMode.culture||allMapsSubMode.culture==="rel"))allMapsSubMode.culture=ID}catch(e){}
+/* tours were written when Religion was the Culture map's default: a stop that names no sub-map still gets Religion */
+if(typeof psSetSub==="function"){const _pss=psSetSub;psSetSub=function(sub){const r=_pss.apply(this,arguments);try{if(!sub&&typeof ps!=="undefined"&&ps&&allMapsSubMode.culture===ID){allMapsSubMode.culture="rel";
+  if(allMapsColorMode==="culture"){document.querySelectorAll("#allMapsSubModes [data-allmaps-sub]").forEach(x=>x.classList.toggle("active",x.dataset.allmapsSub==="rel"));applyAllMapsColorMode(document.getElementById("allMapsWrap"));if(typeof amGlobeOn==="function"&&amGlobeOn())amGlobeSync()}}}catch(e){}return r}}
 const on=()=>{try{return appMode==="allmaps"&&allMapsColorMode==="culture"&&allMapsSubMode.culture===ID}catch(e){return false}};
 const dark=()=>document.body.classList.contains("sky-night");
 /* seven soft colours that sit well on the light map (it stays light in the dark theme too); in the dark theme a little deeper. No sky blue: a blue patch would read as water */
