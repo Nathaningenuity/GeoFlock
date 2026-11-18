@@ -74,7 +74,7 @@ const SRC={
  fi25:"Statistics Finland 2025, registered mother tongue",it11:"Census 2011: South Tyrol language-group declarations (ASTAT), share of the whole region",
  ee21:"Statistics Estonia, Census 2021, by nationality",kz:"Bureau of National Statistics of Kazakhstan, by nationality (2020s figures)",
  my25:"Department of Statistics Malaysia, 2025 estimates (citizens; Bumiputera, Chinese, Indian)",cn20:"China 2020 census, by nationality",
- ru21:"Russian Census 2021, by nationality (of those who gave one)",mx20:"INEGI Census 2020, people aged 3+ who speak an Indigenous language",
+ ru21:"Russian Census 2021, by nationality (of those who gave one)",mx20:"INEGI Census 2020, people aged 3+ who speak an Indigenous language"/* state shares as quoted from INEGI 2020 by the Quintana Roo government's Instituto para el Desarrollo del Pueblo Maya (Etnicidad en Quintana Roo, 2025) and, for Campeche, INEGI's 2020 state results; Puebla, San Luis Potosí and Veracruz left out until their shares are checked against INEGI's tables */,
  greg:"homeland in the Atlas Narodov Mira (1964), via GREG (Weidmann, Rød & Cederman 2010)"};
 /* ---------- country shares: [source, [family, % or "a–b" range, languages]…]; "speak" sources may add up to more than 100 ---------- */
 const CS={
@@ -193,7 +193,7 @@ const RS={
  "mx:Oaxaca":["mx20",["ame",31.2,"Zapotec, Mixtec, Mazatec, Mixe…"]],"mx:Chiapas":["mx20",["ame",28.2,"Tseltal, Tsotsil, Ch’ol…"]],
  "mx:Yucatán":["mx20",["ame",23.7,"Yucatec Maya"]],"mx:Guerrero":["mx20",["ame",15.5,"Nahuatl, Mixtec, Tlapanec, Amuzgo"]],
  "mx:Hidalgo":["mx20",["ame",12.3,"Nahuatl, Otomi"]],"mx:Quintana Roo":["mx20",["ame",11.7,"Yucatec Maya"]],"mx:Campeche":["mx20",["ame",10.4,"Yucatec Maya, Ch’ol"]],
- "mx:Puebla":["mx20",["ame",9.9,"Nahuatl, Totonac"]],"mx:San Luis Potosí":["mx20",["ame",8.6,"Nahuatl, Huastec (Teenek)"]],"mx:Veracruz":["mx20",["ame",7.9,"Nahuatl, Totonac, Huastec"]]};
+ };
 const SPEAK=new Set(["mx20","eu21"]);/* "speak" counts: the rest grow up with the country's main language too, mostly */
 const COUNTRY_NAME=c=>{try{return allMapsCountryName(c)||c}catch(e){return c}};
 
