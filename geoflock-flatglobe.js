@@ -265,7 +265,7 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
  {const _r=P._render;P._render=function(){const ctx=this.ctx;if(this._flat&&ctx&&!ctx._gfThin){ctx._gfThin=1;const g=this,ST=ctx.stroke;ctx.stroke=function(){if(g._flat&&!g._fastMove&&/^rgba\((25, 25, 25|20, 30, 20)/.test(String(this.strokeStyle).replace(/rgba\((\d+),(\d+),(\d+)/,"rgba($1, $2, $3"))){const lw=this.lineWidth;this.lineWidth=lw*.55;const r=ST.apply(this,arguments);this.lineWidth=lw;return r}return ST.apply(this,arguments)}}return _r.apply(this,arguments)}}
 })();
 
-/* Capitals study, Map view: the same smooth flat map as Places, with each capital's gold star (from the old map's stars:
+/* Capitals study, Map view: the same smooth flat map as Places, with each capital as a ringed dot (placed from the old map's stars:
    the ones for the chosen region) and its name; a click near a star opens that country's profile. */
 (function(){if(typeof stGlobeSync!=="function")return;
  const capMap=()=>{try{const b=document.querySelector('#studyView [data-cv="map"]');return typeof appMode!=="undefined"&&appMode==="capital"&&typeof activeTab!=="undefined"&&activeTab==="study"&&!!b&&b.classList.contains("on")}catch(e){return false}};
@@ -281,11 +281,43 @@ setInterval(()=>{try{if(typeof stGlobe!=="undefined"&&stGlobe){wire(stGlobe);if(
  function fit(){try{const g=stGlobe;if(!g||!g._flat||!STARS.length)return;const b=g._flatBase(),{w,h}=g.size();const P2=STARS.map(s=>b(s.ll));if(STARS.length>120){g.zoom=1;g.rot=[0,0];g.request();return}
   const xs=P2.map(p=>p[0]),ys=P2.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),bw=Math.max(40,x1-x0),bh=Math.max(30,y1-y0);
   const z=Math.max(1,Math.min(8,Math.min(w/bw,h/bh)*.72));const ll=b.invert([(x0+x1)/2,(y0+y1)/2]);g.zoom=z;if(ll)g.rot=[-ll[0],-ll[1]];g.request()}catch(e){}}
- const P=GlobeView.prototype,_dm=P._drawMeasure;P._drawMeasure=function(ctx,p){try{if(this._flat&&typeof stGlobe!=="undefined"&&this===stGlobe&&window._gfCapMap){const S=stars(),z=Math.min(1.6,Math.pow(Math.max(1,this.zoom),.4)),r=5.2*z;
-   ctx.save();ctx.lineJoin="round";S.forEach(s=>{const q=p(s.ll);if(!q)return;ctx.save();ctx.translate(q[0],q[1]);ctx.scale(r/9,r/9);ctx.beginPath();ctx.moveTo(0,-9);[[2.6,-3.2],[8.6,-2.8],[4,1.2],[5.4,7.4],[0,4],[-5.4,7.4],[-4,1.2],[-8.6,-2.8],[-2.6,-3.2]].forEach(([x,y])=>ctx.lineTo(x,y));ctx.closePath();ctx.fillStyle="#f5c518";ctx.strokeStyle="rgba(90,60,0,.85)";ctx.lineWidth=1.4;ctx.fill();ctx.stroke();ctx.restore();s._q=q});
-   const fs=Math.max(8,9*this.ls());ctx.font="700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif';ctx.textBaseline="middle";const placed=[];
-   S.forEach(s=>{s._lb=null;if(!s._q||!s.cap)return;const w=ctx.measureText(s.cap).width,x=s._q[0]+r+2,y=s._q[1],b=[x,y-fs/2,x+w,y+fs/2];if(placed.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]))return;placed.push(b);s._lb=b;
-    ctx.strokeStyle="rgba(255,255,255,.9)";ctx.lineWidth=3;ctx.strokeText(s.cap,x,y);ctx.fillStyle="#3a2a00";ctx.fillText(s.cap,x,y)});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)};
+ /* calm colours on this map: soft tints of each country's own colour on a gentle sea, white borders (dark at night), and
+    countries outside the chosen region washed out instead of darkened; capitals are ringed dots whose names are placed
+    first (right, left, above or below, never on another capital), so the country names step aside for them */
+ const P=GlobeView.prototype,_dm=P._drawMeasure;
+ const capOn=g=>!!(g&&g._flat&&typeof stGlobe!=="undefined"&&g===stGlobe&&window._gfCapMap&&typeof appMode!=="undefined"&&appMode==="capital");
+ const dark=()=>document.body.classList.contains("sky-night");
+ const TINT=new Map(),pc=document.createElement("canvas").getContext("2d");
+ const tint=(c,nt)=>{const k=c+(nt?"|n":"|d");let v=TINT.get(k);if(v)return v;pc.fillStyle="#000";pc.fillStyle=c;const h=String(pc.fillStyle),m=h.match(/^#([0-9a-f]{6})$/i),a=m?[0,2,4].map(i=>parseInt(m[1].substr(i,2),16)):(h.match(/\d+(\.\d+)?/g)||[]).slice(0,3).map(Number);
+  if(a.length<3)return c;const b=nt?[47,59,84]:[250,248,241],t=nt?.64:.5;v="rgb("+a.map((x,i)=>Math.round(x*(1-t)+b[i]*t)).join(",")+")";TINT.set(k,v);return v};
+ {const _r=P._render;P._render=function(){if(!capOn(this))return _r.apply(this,arguments);const cfg=this.cfg,nt=dark(),c2=Object.create(cfg);
+  c2.ocean=()=>nt?"#1b2842":"#dbe9f2";c2.fill=(code,f)=>{const v=cfg.fill?cfg.fill(code,f):null;return v?tint(v,nt):v};c2.dimFill=nt?"rgba(26,38,62,.6)":"rgba(247,245,239,.74)";
+  const ctx=this.ctx;if(ctx&&!ctx._gfCmS){ctx._gfCmS=1;const outer=!!ctx._gfThin,g=this,ST=ctx.stroke;
+   ctx.stroke=function(){if(g._gfCmOn&&/^rgba\((25, 25, 25|20, 30, 20)/.test(String(this.strokeStyle).replace(/rgba\((\d+),\s*(\d+),\s*(\d+)/,"rgba($1, $2, $3"))){const ss=this.strokeStyle,lw=this.lineWidth;
+     this.strokeStyle=g._gfCmOn===2?"rgba(14,22,40,.8)":"rgba(255,255,255,.95)";this.lineWidth=lw*(outer?.55:1)*1.6;try{return ST.apply(this,arguments)}finally{this.strokeStyle=ss;this.lineWidth=lw}}return ST.apply(this,arguments)}}
+  textPatch(this,ctx);this.cfg=c2;this._gfCmOn=nt?2:1;this._gfCapLay=null;try{return _r.apply(this,arguments)}finally{this.cfg=cfg;this._gfCmOn=0}}}
+ /* country and city names in a quieter colour than the capitals' (and light on dark at night) */
+ function textPatch(g,ctx){if(!ctx||ctx._gfCmT)return;ctx._gfCmT=1;const FT=ctx.fillText,STx=ctx.strokeText,DK=new Set(["#26231a","#1e2a35"]);
+  ctx.fillText=function(){if(g._gfCmOn&&DK.has(String(this.fillStyle))){const f=this.fillStyle;this.fillStyle=g._gfCmOn===2?"#a3afc4":"#6a6458";try{return FT.apply(this,arguments)}finally{this.fillStyle=f}}return FT.apply(this,arguments)};
+  ctx.strokeText=function(){if(g._gfCmOn===2&&/^(rgba\(255, ?255, ?255|#ffffff)/.test(String(this.strokeStyle))){const f=this.strokeStyle;this.strokeStyle="rgba(16,24,42,.85)";try{return STx.apply(this,arguments)}finally{this.strokeStyle=f}}return STx.apply(this,arguments)}}
+ /* the capitals are drawn as this map's own dots, so the cities layer leaves them out */
+ {const _c=P._cities,CO=new WeakMap();P._cities=function(ctx,p,O){if(capOn(this)&&O&&O.cities){let o=CO.get(O);if(!o||o.n!==O.cities.length){o=Object.create(O);o.cities=O.cities.filter(c=>!c.cap);o.n=O.cities.length;CO.set(O,o)}const a=[...arguments];a[2]=o;return _c.apply(this,a)}return _c.apply(this,arguments)}}
+ function capLayout(g,ctx,p){const S=stars(),z=Math.min(1.6,Math.pow(Math.max(1,g.zoom),.4)),r=3.6*z,fs=Math.max(9,9.4*g.ls()),font="700 "+fs.toFixed(1)+'px Inter, "Baloo 2", system-ui, sans-serif',{w,h}=g.size();
+  ctx.save();ctx.font=font;const boxes=[],dots=[],over=(b,o)=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1];
+  S.forEach(s=>{s._q=null;s._lb=null;const q=p(s.ll);if(!q||q[0]<-20||q[0]>w+20||q[1]<-20||q[1]>h+20)return;s._q=q;dots.push([q[0]-r-2,q[1]-r-2,q[0]+r+2,q[1]+r+2])});
+  S.forEach(s=>{if(!s._q||!s.cap)return;const tw=ctx.measureText(s.cap).width,q=s._q,hh=fs*.6,gap=r+3;
+   for(const [x,y] of [[q[0]+gap,q[1]],[q[0]-gap-tw,q[1]],[q[0]-tw/2,q[1]-gap-hh+1],[q[0]-tw/2,q[1]+gap+hh-1]]){const b=[x-1,y-hh,x+tw+1,y+hh];
+    if(b[0]<2||b[2]>w-2||b[1]<2||b[3]>h-2||boxes.some(o=>over(b,o))||dots.some(o=>over(b,o)))continue;boxes.push(b);s._lb=b;s._lx=[x,y];break}});
+  ctx.restore();return g._gfCapLay={S,r,fs,font,boxes:dots.concat(boxes)}}
+ {const _lab=P._labels;P._labels=function(ctx,p){if(capOn(this)){try{const L=capLayout(this,ctx,p);if(this._placed)L.boxes.forEach(b=>this._placed.push(b))}catch(e){console.error(e)}}return _lab.apply(this,arguments)}}
+ P._drawMeasure=function(ctx,p){try{if(capOn(this)){const L=this._gfCapLay||capLayout(this,ctx,p),nt=dark(),{S,r,fs,font}=L;this._gfCapLay=null;
+   ctx.save();S.forEach(s=>{if(!s._q)return;const[x,y]=s._q;ctx.beginPath();ctx.arc(x,y,r+1.8,0,7);ctx.fillStyle=nt?"rgba(12,20,36,.5)":"rgba(255,255,255,.65)";ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=nt?"#1b2842":"#fff";ctx.fill();ctx.lineWidth=Math.max(1.3,r*.36);ctx.strokeStyle=nt?"#f4f1ff":"#2c2552";ctx.stroke();
+    ctx.beginPath();ctx.arc(x,y,r*.42,0,7);ctx.fillStyle=nt?"#ffd34d":"#2c2552";ctx.fill()});
+   ctx.font=font;ctx.textBaseline="middle";ctx.textAlign="left";ctx.lineJoin="round";
+   S.forEach(s=>{if(!s._lb)return;const[x,y]=s._lx;ctx.lineWidth=Math.max(2.6,fs*.36);ctx.strokeStyle=nt?"rgba(14,22,40,.92)":"rgba(255,255,255,.95)";ctx.strokeText(s.cap,x,y);ctx.fillStyle=nt?"#f4f1ff":"#231e3f";ctx.fillText(s.cap,x,y)});ctx.restore()}}catch(e){console.error(e)}return _dm.apply(this,arguments)};
+ /* redraw when the theme changes */
+ new MutationObserver(()=>{try{if(window._gfCapMap&&typeof stGlobe!=="undefined"&&stGlobe)stGlobe.request()}catch(e){}}).observe(document.body,{attributes:true,attributeFilter:["class"]});
  /* a click on a star or on a capital's name opens a card about the capital: its photo, name and a short description,
     with a link to the country (a drag of the map is not a click) */
  let down=null;document.addEventListener("pointerdown",e=>{down=[e.clientX,e.clientY]},true);

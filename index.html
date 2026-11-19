@@ -11415,6 +11415,7 @@ function capInit(){if(Object.keys(CAPXY).length)return;const byName=new Map();tr
   const FIX={ps:[35.2,31.9],ye:[44.21,15.35],ad:[1.52,42.51],co:[-74.07,4.71],tt:[-61.52,10.65],us:[-77.04,38.9],nr:[166.92,-0.55]};
   (typeof COUNTRIES!=="undefined"?COUNTRIES:[]).forEach(c=>{let p=null;for(const n of c.caps||[]){p=byName.get(norm0(n));if(p)break}if(FIX[c.c])p=LFP(FIX[c.c]);if(p)CAPXY[c.c]=p})}
 let CS={view:"cards",dir:"c2cap"};try{Object.assign(CS,JSON.parse(localStorage.getItem("gfCapUI")||"{}"))}catch(e){}
+/* Study opens on Cards unless the learner chose Map themselves (remembered in gfCapView) */CS.view="cards";try{if(localStorage.getItem("gfCapView")==="map")CS.view="map"}catch(e){}
 const saveCS=()=>{try{localStorage.setItem("gfCapUI",JSON.stringify(CS))}catch(e){}};
 const capName=c=>(c.caps||[]).join(" / ")||"—";
 const STAR="M0,-9 L2.6,-3.2 L8.6,-2.8 L4,1.2 L5.4,7.4 L0,4 L-5.4,7.4 L-4,1.2 L-8.6,-2.8 L-2.6,-3.2Z";
@@ -11422,7 +11423,7 @@ let CFEAT=null;function capFeat(code){try{if(!CFEAT){CFEAT=new Map();projFeature
 let CMAP=null;
 function capStudyMap(){const view=$("studyView");if(!view||appMode!=="capital")return;
   const addSwitch=()=>{const tb=view.querySelector(".study-toolbar-actions");if(tb&&!tb.querySelector(".cap-viewsw"))tb.insertAdjacentHTML("afterbegin",'<span class="lf-levels cap-viewsw">'+[["cards","Cards"],["map","Map"]].map(([v,l])=>'<button type="button" data-cv="'+v+'" class="'+(CS.view===v?"on":"")+'">'+l+'</button>').join("")+'</span>');
-    view.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{CS.view=b.dataset.cv;saveCS();renderStudyReference()})};
+    view.querySelectorAll("[data-cv]").forEach(b=>b.onclick=()=>{CS.view=b.dataset.cv;saveCS();try{localStorage.setItem("gfCapView",CS.view)}catch(e){}renderStudyReference()})};
   if(CS.view!=="map"){addSwitch();return}
   /* the same map as Practise locations (same frames, size and toggles), with every capital as a star */
   try{renderMapAtlasStudy()}catch(e){console.error(e);return}
@@ -12411,7 +12412,7 @@ if(document.readyState==="complete")setTimeout(start,0);else window.addEventList
 <script src="geoflock-layers.js?v=202611191"></script>
 <script src="geoflock-nature-data.js?v=202610291524"></script>
 <script src="geoflock-nature.js?v=202611161"></script>
-<script src="geoflock-flatglobe.js?v=2026111702"></script><script src="geoflock-capwiki.js?v=202610291523"></script>
+<script src="geoflock-flatglobe.js?v=2026111901"></script><script src="geoflock-capwiki.js?v=202610291523"></script>
 <script src="geoflock-outlines2.js?v=202610291523"></script>
 <script src="geoflock-practice.js?v=202611192"></script>
 <script src="geoflock-tours-hist1.js?v=202610291523"></script>
@@ -12494,5 +12495,6 @@ if(document.readyState==="complete")setTimeout(start,0);else window.addEventList
 <script src="geoflock-tourfold.js?v=5"></script>
 <script src="geoflock-citylightschip.js?v=2"></script>
 <script src="geoflock-satdefaults.js?v=2"></script>
+<script src="geoflock-studymaps.js?v=1"></script>
 </body>
 </html>
