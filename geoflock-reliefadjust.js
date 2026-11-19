@@ -57,5 +57,10 @@ async function section(p){const st=style();if(!st||p.querySelector(".gfra"))retu
    /* a well put back to its starting colour is no change */if(inp.value.toLowerCase()===hx(B[inp.dataset.ra]))delete ADJ[st][inp.dataset.ra];save();go()}));
  div.querySelector("[data-ra-reset]").onclick=()=>{delete ADJ[st];save();OUT[st]=null;refresh();div.querySelectorAll("[data-ra]").forEach(inp=>inp.value=hx(B[inp.dataset.ra]))}}
 new MutationObserver(()=>{const p=document.getElementById("gfkPal");if(p&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="relief")section(p)}).observe(document.body,{childList:true,subtree:true});
-window.gfReliefAdj={ADJ,build,base,OUT};
+/* the shallow sea as the picture now shows it: the picture's own shallow-sea colour moved by your shades, the way every pixel
+   is (a pixel is shared between the kinds of ground it is close to, so it moves only part of the way to the colour picked).
+   Lakes open to the sea (Lake Maracaibo) are drawn in it, so they match the sea round them. Null until the picture is read */
+function shallow(st){if(!SRC[st])return null;const B=BASE[st];if(!B){if(shallow[st])return null;shallow[st]=1;base(st).then(()=>{try{window._gfSeaSig=Date.now();refresh()}catch(e){}}).catch(()=>{});return null}
+ const D=B.shallow.slice().concat(255);if(has(st))shiftData(D,B,ADJ[st]);return hx(D.slice(0,3))}
+window.gfReliefAdj={ADJ,build,base,OUT,shallow};
 })();

@@ -185,6 +185,10 @@ function isLakeSea(o){if(o._lk!==undefined)return o._lk;o._lk=false;try{const L=
 function bigLakes(d){return d.ocean.filter(isLakeSea).map(o=>{if(!o._K){o._K={cls:"lake",rings:o.rings,bb:bboxOf(o.rings),int:0,_big:1,n:o._lkn};o._K._casp=undefined}return o._K})}
 let SEAL=null;function seaLakes(){if(SEAL)return SEAL;try{SEAL=globeOverlays().lakes.filter(L=>window.gfSeaLake&&gfSeaLake(L.n))}catch(e){SEAL=[]}return SEAL}
 function isSeaLake(K){if(K._sl!==undefined)return K._sl;const c=[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2];K._sl=seaLakes().some(L=>{try{return d3.geoContains(L,c)}catch(e){return false}});return K._sl}
+/* the named sea lakes other than the Caspian (Maracaibo, Lagoa dos Patos...): on the Relief map they are drawn in the palette's
+   shallow-sea colour. A lake split over tiles keeps the answer of any piece of it (by its id) */
+const SEAL_IDS=new Set();
+function isNamedSea(K){if(K._ns===undefined){const c=[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2];K._ns=K._big?!!(K.n&&window.gfSeaLake&&gfSeaLake(K.n)&&!/^(Caspian|Garabogaz|Kara-?Bogaz)/.test(K.n)):seaLakes().some(L=>{if(/^(Caspian|Garabogaz|Kara-?Bogaz)/.test(L.n||""))return false;try{return d3.geoContains(L,c)}catch(e){return false}});if(K._ns&&K.id!=null)SEAL_IDS.add(K.id)}return K._ns||(K.id!=null&&SEAL_IDS.has(K.id))}
 let CASP=null;function caspian(){if(CASP!==null)return CASP;try{CASP=globeOverlays().lakes.find(L=>/^Caspian/.test(L.n||""))||false}catch(e){CASP=false}return CASP}
 function isCaspian(K){if(K._casp!==undefined)return K._casp;const C=caspian();K._casp=!!(C&&K.bb[2]-K.bb[0]>.5&&d3.geoContains(C,[(K.bb[0]+K.bb[2])/2,(K.bb[1]+K.bb[3])/2]));return K._casp}
 /* how many pixels about 25 km makes on screen (the coarse picture's coast can be off by about that much) */
@@ -255,7 +259,10 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  /* Elevation: water joined to the sea is the colour of the shallow sea on its depth scale (a few tens of metres), not a colour
     read off the coast, which came out dark blue in bays beside pale shallows (the Gulf of Venezuela, Lagoa dos Patos) */
  const elev=I.texKey==="elevation";
- const seaC=elev?"#b3d3ea":I.drewRaster&&!sat?(seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s))))||window._gfSeaC||"rgb(38,116,185)"):null;/* no open sea in view (the Caspian): the last sea colour seen *//* the Relief picture's sea colour, remembered for the rivers and sea lakes drawn without tiles; Elevation's fixed shallow-sea colour is not (it used to linger on the Relief map after a visit) */if(seaC&&!elev)window._gfSeaC=seaC;
+ /* Relief: the palette's shallow-sea colour, for Lake Maracaibo and the other named sea lakes (the colour read off the picture
+    failed on pale or green-blue seas, Vintage or your own shades, and a fixed blue stood in) */const shal=(rel||/^gfStyle/.test(I.texKey||""))/* (the drawn styles, Vintage to Nocturne) */&&!elev&&!sat&&window.gfShallowSea?gfShallowSea():null;
+ const seaR=I.drewRaster&&!sat&&!elev?seaCol(ctx,pj,s,Math.max(6,Math.min(70,bandPx(pj,s)))):null;/* (read off the picture; null when it cannot be) */
+ const seaC=elev?"#b3d3ea":I.drewRaster&&!sat?(seaR||window._gfSeaC||"rgb(38,116,185)"):null;/* no open sea in view (the Caspian): the last sea colour seen *//* the Relief picture's sea colour, remembered for the rivers and sea lakes drawn without tiles; Elevation's fixed shallow-sea colour is not (it used to linger on the Relief map after a visit) */if(seaC&&!elev)window._gfSeaC=seaC;
  /* raster maps (Relief, Elevation...): the picture's own coast is coarse, and in places shows land where the sea is (the Gulf
     of Venezuela off Maracaibo). Along the sharp coast, a band of the picture's own sea colour is painted on the sea side only. */
  /* only on the plain Relief and Elevation pictures: on City Lights (a dark picture) and on maps coloured over the relief
@@ -282,21 +289,24 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
       painted in the picture's own land colour from just inland of it */
    if(false)try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
  /* Elevation: the named lakes the tiles store as sea (Lake Maracaibo, Lagoa dos Patos) in the lakes' blue, kept to the tiles'
-    water, so they look as every other lake does (zoomed out they are the map's own lakes, in the same blue) */
- if(ov.lakes&&elev&&window.gfSeaLake)try{const LK=(globeOverlays().lakes||[]).filter(L=>L&&L.n&&!/^Caspian/.test(L.n)&&gfSeaLake(L.n));if(LK.length){const LP=d3.geoPath(g.projection(),ctx);
-   each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");ctx.beginPath();LK.forEach(L=>LP(L));ctx.fillStyle="#bedaee";ctx.fill()})}}catch(e){}
+    water, so they look as every other lake does (zoomed out they are the map's own lakes, in the same blue). Relief: the same,
+    in the palette's shallow-sea colour (the coarse tiles hold no lake there, and the picture shows its own lake colour); the
+    outline is grown a little, still kept to the water, so no rim of the picture's colour shows along a rough shore */
+ if(ov.lakes&&(elev||shal)&&window.gfSeaLake)try{const LK=(globeOverlays().lakes||[]).filter(L=>L&&L.n&&!/^(Caspian|Garabogaz|Kara-?Bogaz)/.test(L.n)&&gfSeaLake(L.n));if(LK.length){const LP=d3.geoPath(g.projection(),ctx);
+   each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");ctx.beginPath();LK.forEach(L=>LP(L));ctx.fillStyle=elev?"#bedaee":shal;ctx.fill();if(!elev){ctx.strokeStyle=shal;ctx.lineWidth=3;ctx.lineJoin="round";ctx.stroke()}})}}catch(e){}
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":elev?"#bedaee"/* Elevation: lakes in its lightest blue (the shallowest water on its scale) */:I.drewRaster?((window.gfLakeColor&&gfLakeColor())||seaC||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
-  each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();/* (Elevation: pieces of sea that lie in a sea lake's rough outline are left to the depth picture: filled, they made straight-edged blocks off Maracaibo) */const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster&&!elev?bigLakes(d).filter(K=>!isCaspian(K)):[]);
+  each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();/* (Elevation: pieces of sea that lie in a sea lake's rough outline are left to the depth picture: filled, they made straight-edged blocks off Maracaibo) */const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster&&!elev?bigLakes(d).filter(K=>!isCaspian(K)&&!(shal&&isNamedSea(K))):[]);/* (Relief: a named sea lake's tile-sized piece of sea is not filled: it runs on to the tile's edge, over the Gulf of Venezuela, and
+     made straight-edged blocks there; the lake is the tiles' own sharp lake and the outline above) */
    /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
    if(seaC)seaLinks(d);/* big lakes that the tiles store as sea (Lake Albert, the Great Lakes) stay lakes, unless they are a known sea lake (Maracaibo) */const SL=seaC?L0.filter(K=>K._sea||(K._big&&!isCaspian(K)&&window.gfSeaLake&&gfSeaLake(K.n||""))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
    if(SL.length&&(seaC||!ne)){/* Elevation: a named lake (Maracaibo, Lagoa dos Patos) in the lakes' blue like every other lake; only bays and
      estuaries open to the sea keep the shallow-sea colour, so they join the sea beside them */
    const isLk=K=>isSeaLake(K)||(window.gfSeaLake&&K.n&&gfSeaLake(K.n));
    const fillSet=(L2,c)=>{if(!L2.length)return;ctx.fillStyle=c;L2.forEach(K=>{ctx.beginPath();K.rings.forEach(r=>ringPath(ctx,pj,r,true));ctx.fill("evenodd")})};
-   if(elev){fillSet(SL.filter(isLk),lf);fillSet(SL.filter(K=>!isLk(K)),seaC)}else fillSet(SL,seaC||"#6fa3cd")}
+   if(elev){fillSet(SL.filter(isLk),lf);fillSet(SL.filter(K=>!isLk(K)),seaC)}else if(shal){/* Relief: the named sea lakes in the shallow-sea colour */fillSet(SL.filter(isNamedSea),shal);/* other water joined to the sea (lagoons, bays) in the sea colour read off the picture, else the shallow sea */fillSet(SL.filter(K=>!isNamedSea(K)),seaR||shal)}else fillSet(SL,seaC||"#6fa3cd")}
    /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
    [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
     const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
@@ -338,7 +348,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
 const LAB={lake:"Lake",river:"River",pond:"Pond",dock:"Dock",basin:"Reservoir",reservoir:"Reservoir",lagoon:"Lagoon",stream:"Stream",canal:"Canal",drain:"Drain",ditch:"Ditch",swimming_pool:"Pool"};
 function d3poly(rings){/* d3 wants each piece wound the other way from the tile's; check by area */const pol=rings.map(r=>{const c=[];for(let i=0;i<r.length;i+=3)c.push([r[i],r[i+1]]);if(c.length&&(c[0][0]!==c[c.length-1][0]||c[0][1]!==c[c.length-1][1]))c.push(c[0].slice());return c});
  let P={type:"Polygon",coordinates:pol};try{if(d3.geoArea(P)>2*Math.PI)P={type:"Polygon",coordinates:pol.map(r=>r.slice().reverse())}}catch(e){}return P}
-function lakeAt(s,ll){for(const t of s.tiles){if(!t.d)continue;for(const K of t.d.lakes.concat(bigLakes(t.d))){if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])continue;if(inRings(K.rings,ll))return K}}return null}
+function lakeAt(s,ll){for(const t of s.tiles){if(!t.d)continue;for(const K of t.d.lakes.concat(bigLakes(t.d).filter(K=>!isNamedSea(K)))){if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])continue;if(inRings(K.rings,ll))return K}}return null}
 /* lakes the tiles leave unnamed (Crater Lake…) are named from a list of about 7,000 named lakes and their positions
    (Wikidata, CC0): a named point inside the lake, or just off its shore, names it */
 let GAZ=null,GAZG=null;function gazLoad(){if(GAZ)return;GAZ=[];fetch("textures/GF_LAKENAMES.json").then(r=>r.ok?r.json():[]).then(d=>{GAZ=d;GAZG=new Map();d.forEach(p=>{const k=Math.floor(p[1])+","+Math.floor(p[2]);let a=GAZG.get(k);if(!a)GAZG.set(k,a=[]);a.push(p)})}).catch(()=>{})}

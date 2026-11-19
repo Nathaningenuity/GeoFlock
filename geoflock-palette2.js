@@ -7,6 +7,14 @@ const KEY="gfLakeCol";let LAKE={};try{LAKE=JSON.parse(localStorage.getItem(KEY)|
 const style=()=>{try{return gfMS().style}catch(e){return null}};
 window.gfLakeColor=function(){const s=style();return(s&&LAKE[s])||null};
 const DEF_LAKE="#2f7ab8";/* the rivers' blue */
+/* the Relief map's shallow-sea colour as the map shows it: on Natural Earth and Bright the picture's shallow sea with your shades
+   (geoflock-reliefadjust.js), on the drawn styles their shallowest sea (their flat sea when Ocean is Flat). Lakes open to the sea
+   (Lake Maracaibo, Lagoa dos Patos) are drawn in it, so they match the sea whatever the palette */
+const PIC_SHALLOW={natural:"#2775ba",bright:"#9fcfe8"};/* (until the picture has been read) */
+window.gfShallowSea=function(){try{const st=style();if(!st||(typeof allMapsColorMode!=="undefined"&&allMapsColorMode!=="relief"))return null;
+  if(PIC_SHALLOW[st]){const A=window.gfReliefAdj;return(A&&A.shallow&&A.shallow(st))||PIC_SHALLOW[st]}
+  const S=typeof GF_STYLES!=="undefined"&&GF_STYLES[st];if(!S||!S.sea||!S.sea.length)return null;
+  return(gfMS().ocean==="flat"&&S.flat)||S.sea[0][1]}catch(e){return null}};
 function legendRefresh(){try{const lg=document.getElementById("populationLegend");if(lg&&allMapsColorMode==="relief"&&typeof allMapsLegendHTML==="function")lg.innerHTML=allMapsLegendHTML()}catch(e){}}
 /* the flat map's lakes are coloured by a stylesheet rule (marked important): a rule of our own, a step stronger, carries the chosen colour */
 function lakeCss(){let st=document.getElementById("gfLakeCss");const c=gfLakeColor();if(!c){if(st)st.textContent="";return}if(!st){st=document.createElement("style");st.id="gfLakeCss";document.head.appendChild(st)}
