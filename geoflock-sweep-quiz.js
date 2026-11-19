@@ -41,7 +41,12 @@ const css=`
 .gfsq-said{display:block;font-size:12px;color:#a35a12}
 .gfsq-ok{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:#2f9e6e;opacity:.8}
 .gfsq-row.miss .gfsq-ok{background:#e8a03c}
-.gfsq-map{margin:12px auto 2px;max-width:480px}
+.gfsq-map{margin:10px auto 2px;max-width:340px}
+/* between parts and at the end of a round, the buttons stay in sight at the bottom of the screen, and Next stands out */
+.quiz-stage:has(> .summary-card.gfsq) > .round-actions{position:sticky;bottom:12px;z-index:6;margin-top:10px;padding:10px 12px;border-radius:18px;background:rgba(255,255,255,.92);box-shadow:0 8px 28px rgba(22,50,79,.22);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+:is(body.dark-theme,body.sky-night) .quiz-stage:has(> .summary-card.gfsq) > .round-actions{background:rgba(28,36,80,.94);box-shadow:0 8px 28px rgba(0,0,0,.45)}
+.quiz-stage:has(> .summary-card.gfsq) #partNextBtn, .quiz-stage:has(> .summary-card.gfsq) #gfsqNext{font-size:17px !important;padding:13px 28px !important;border-radius:999px !important;background:#2f9e6e !important;color:#fff !important;border:0 !important;font-weight:800 !important;box-shadow:0 6px 18px rgba(47,158,110,.45) !important;order:-1}
+.quiz-stage:has(> .summary-card.gfsq) #partNextBtn:hover, .quiz-stage:has(> .summary-card.gfsq) #gfsqNext:hover{filter:brightness(1.08)}
 .gfsq-map svg{width:100%;height:auto;display:block;border-radius:12px;background:rgba(80,140,200,.12)}
 .gfsq-map .l{fill:rgba(127,127,127,.28);stroke:none}
 .gfsq-map .k{fill:#2f9e6e}.gfsq-map .m{fill:#e8a03c}
@@ -191,6 +196,7 @@ function decorateSummary(){const card=document.querySelector("#quizView .summary
 wrap("renderSummary",o=>function(){const r=o.apply(this,arguments);try{decorateSummary()}catch(e){console.error(e)}return r});
 
 /* the break between parts: the same review for this part, the map, and plain button names */
+setInterval(()=>{try{const n=document.getElementById("partNextBtn");if(n&&n.offsetParent&&!n._gfFoc){n._gfFoc=1;n.focus({preventScroll:true})}}catch(e){}},300);
 wrap("partsBreakHTML",o=>function(r){let h=o.apply(this,arguments);try{const pp=r.pp,k=pp.part;const kind=kindNow();
  let L=(r._gfsq||[]).filter(e=>e.part===k);L=items(L);
  const back=new Set((pp.carry||[]).filter(x=>x.part===k).map(x=>x.c));L.forEach(x=>{if(!x.ok&&back.has(x.c))x.back=true});
