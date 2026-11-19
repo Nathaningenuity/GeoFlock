@@ -16,7 +16,8 @@
 if(typeof ALLMAPS_SUBMODES==="undefined"||typeof TH_THEMES==="undefined"||typeof d3==="undefined"||typeof topojson==="undefined")return;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ID="eth";
-if(!ALLMAPS_SUBMODES.culture.some(s=>s.id===ID)){const i=ALLMAPS_SUBMODES.culture.findIndex(s=>s.id==="lang");ALLMAPS_SUBMODES.culture.splice(i<0?ALLMAPS_SUBMODES.culture.length:i+1,0,{id:ID,label:"Ethnic groups"})}
+/* first in the Culture map's list */
+{const L=ALLMAPS_SUBMODES.culture,i=L.findIndex(s=>s.id===ID),e=i>=0?L.splice(i,1)[0]:{id:ID,label:"Ethnic groups"};L.unshift(e)}
 /* the Culture map opens on Ethnic groups */
 try{if(typeof allMapsSubMode!=="undefined"&&(!allMapsSubMode.culture||allMapsSubMode.culture==="rel"))allMapsSubMode.culture=ID}catch(e){}
 /* tours were written when Religion was the Culture map's default: a stop that names no sub-map still gets Religion */

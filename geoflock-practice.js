@@ -16,6 +16,15 @@ const curSubj=()=>isOther()?"other":appMode;
 
 /* ---------- the top-bar pill ---------- */
 const css=document.createElement("style");css.textContent=`
+.pr-ask{ position:fixed; inset:0; z-index:9500; display:flex; align-items:center; justify-content:center; padding:16px; }
+.pr-ask-box{ position:relative; width:min(560px,100%); padding:22px 22px 20px; }
+.pr-ask-box h3{ margin:0 0 14px; font-size:20px; text-align:center; }
+.pr-ask-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.pr-ask-grid button{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:14px 10px; border-radius:16px; border:2px solid var(--c); background:color-mix(in srgb,var(--c) 22%,transparent); color:inherit; cursor:pointer; font-family:inherit; text-align:center; }
+.pr-ask-grid button:hover, .pr-ask-grid button:focus-visible{ background:color-mix(in srgb,var(--c) 40%,transparent); outline:none; }
+.pr-ask-grid button span{ font-size:28px; line-height:1; } .pr-ask-grid button b{ font-size:15px; } .pr-ask-grid button small{ font-size:11.5px; opacity:.75; line-height:1.3; }
+.pr-ask .modal-x{ position:absolute; top:10px; right:12px; }
+@media (max-width:520px){ .pr-ask-grid{ grid-template-columns:1fr; } .pr-ask-grid button{ flex-direction:row; text-align:left; } .pr-ask-grid button small{ display:none; } }
 #appModeMapBtn,#appModeFlagBtn,#appModeCapitalBtn,#appModeLandformsBtn{ display:none !important; }
 #appModePracticeBtn{ --mc:#b8476f; } #appModePracticeBtn .tb-s{ display:none; }
 @media (max-width:1180px) and (min-width:761px){ #appModePracticeBtn .tb-l{ display:none; } #appModePracticeBtn .tb-s{ display:inline; } }
@@ -76,7 +85,26 @@ body.sky-night .pro-alt{ background:#253049 !important; color:#e8ecf6 !important
 const icon='<svg class="mode-icon gf-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5C4.5 4 8 4 12 6c4-2 7.5-2 10-.5V19c-2.5-1.5-6-1.5-10 .5-4-2-7.5-2-10-.5z"/><path d="M12 6v13.5"/></svg>';
 function addPill(){if(document.getElementById("appModePracticeBtn"))return true;const after=document.getElementById("appModeApBtn")||document.getElementById("appModeAllMapsBtn");if(!after)return false;
  after.insertAdjacentHTML("afterend",'<button class="tab-btn" id="appModePracticeBtn" type="button" title="Study & Quiz — places, flags, capitals, landforms and more: study, flashcards and quizzes">'+icon+'<span class="tb-l">Study &amp; Quiz</span><span class="tb-s">Study</span></button>');
- document.getElementById("appModePracticeBtn").onclick=()=>{const P=PS();if(!P.seen)chooser();else go(P.last||"map",true)};return true}
+ document.getElementById("appModePracticeBtn").onclick=()=>openQuiz();return true}
+
+/* ---------- the Study & Quiz button: it opens on the Flags quiz and asks, in a small window, what to learn; Places, Flags or
+   Capitals switch to that subject's quiz, and closing the window (×, Esc, a click outside) stays on Flags ---------- */
+function toQuiz(){try{if(activeTab!=="quiz"){activeTab="quiz";renderChrome();renderActiveView()}}catch(e){console.error(e)}}
+function openQuiz(){go("flag",true);toQuiz();sync();scrollTo(0,0);askWhat()}
+function askWhat(){document.querySelectorAll(".pr-ask").forEach(x=>x.remove());
+ const W=SUBJ.filter(x=>["map","flag","capital"].includes(x.k));
+ const d=document.createElement("div");d.className="game-modal-backdrop pr-ask";
+ d.innerHTML='<div class="game-modal pr-ask-box" role="dialog" aria-modal="true" aria-labelledby="prAskH"><button class="modal-x" type="button" aria-label="Close">×</button><h3 id="prAskH">What would you like to learn?</h3><div class="pr-ask-grid">'+
+  W.map(x=>'<button type="button" data-prs="'+x.k+'" style="--c:'+x.c+';--d:'+x.d+'"><span aria-hidden="true">'+x.ic+'</span><b>'+x.n+'</b><small>'+esc(x.b)+'</small></button>').join("")+'</div></div>';
+ const close=()=>{d.remove();removeEventListener("keydown",esc1,true)};
+ const esc1=e=>{if(e.key==="Escape"){e.stopPropagation();close()}};addEventListener("keydown",esc1,true);
+ d.addEventListener("click",e=>{if(e.target===d||e.target.closest(".modal-x")){close();return}
+  const b=e.target.closest("[data-prs]");if(!b)return;close();if(b.dataset.prs!=="flag"){go(b.dataset.prs);toQuiz();sync()}});
+ document.body.appendChild(d);setTimeout(()=>{try{d.querySelector('[data-prs="flag"]').focus({preventScroll:true})}catch(e){}},30)}
+window.gfPracticeAsk=askWhat;
+/* this runs before the older first-visit and Models handlers (they listen on the document), so the button always does this */
+addEventListener("click",e=>{const t=e.target&&e.target.closest&&e.target.closest("#appModePracticeBtn");if(!t)return;e.preventDefault();e.stopImmediatePropagation();
+ try{localStorage.setItem("gfFirstStudy","1")}catch(_){}openQuiz()},true);
 
 /* ---------- moving between subjects, keeping the tab and the region ---------- */
 const TABN={study:"Study",flashcards:"Flashcards",flash:"Flashcards",quiz:"Quiz",speed:"Speed Round",pgames:"Games"};
