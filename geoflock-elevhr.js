@@ -17,7 +17,9 @@ const TILES=new Map();
 function tile(k){if(TILES.has(k))return TILES.get(k);
  const pr=new Promise(res=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);
    const d=g.getImageData(0,0,256,256).data,h=new Float32Array(65536);for(let i=0;i<65536;i++)h[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768;res(h)}catch(e){res(null)}};im.onerror=()=>res(null);
-  im.src="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"+k+".png"});TILES.set(k,pr);while(TILES.size>160)TILES.delete(TILES.keys().next().value);return pr}
+  im.src="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"+k+".png"});TILES.set(k,pr);
+ /* a tile that failed (a dropped connection) is not remembered: it is asked for again next time */
+ pr.then(h=>{if(!h&&TILES.get(k)===pr)TILES.delete(k)});while(TILES.size>160)TILES.delete(TILES.keys().next().value);return pr}
 /* NOAA DEM Global Mosaic for a box: float32 heights, a row a latitude (north first), split at the date line; null if it fails */
 const NOAA="https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_global_mosaic/ImageServer/exportImage";
 async function noaaPart(lo0,lo1,la0,la1,w,h){const ac=typeof AbortController!=="undefined"?new AbortController():null,t=setTimeout(()=>ac&&ac.abort(),20000);
@@ -54,40 +56,49 @@ const dprNow=()=>{try{return window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1
 function gridFor(v,stage){const f=dprNow()*(stage?1:.5);let nx=Math.max(64,Math.round(v.w*f)),ny=Math.max(64,Math.round(v.h*f));const k=Math.min(1,2048/nx,2048/ny,Math.sqrt(2.6e6/(nx*ny)));
  return[Math.max(64,Math.round(nx*k)),Math.max(64,Math.round(ny*k))]}
 const breath=()=>new Promise(r=>setTimeout(r,0));
-async function build(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=viewBox(gv);if(!v){busy=false;return}const PI=picOf(key);if(!PI){busy=false;return}
- const [nx,ny]=gridFor(v,stage),dlon=(v.lon1-v.lon0)/nx,dlat=(v.lat1-v.lat0)/ny;
+/* whether a land shape may reach into a box (its bounds, worked out once); the others are not drawn into the land mask */
+const FB=new WeakMap();
+function near(f,v){let b=FB.get(f);if(!b){try{b=d3.geoBounds(f)}catch(e){b=null}FB.set(f,b||0)}if(!b||!isFinite(b[0][0]))return true;
+ if(b[1][1]<v.lat0||b[0][1]>v.lat1)return false;if(b[0][0]>b[1][0]||v.lon1-v.lon0>=360)return true;/* across the date line */
+ const c=(v.lon0+v.lon1)/2,h=(v.lon1-v.lon0)/2,fc=(b[0][0]+b[1][0])/2,fh=(b[1][0]-b[0][0])/2,d=Math.abs((((fc-c)%360)+540)%360-180);return d<=h+fh+.5}
+/* the heights of a box of the world (v: lon0..lon1 west to east, lat0 south .. lat1 north) on an nx by ny grid of plain
+   latitude/longitude cells, coloured and shaded: {out (RGBA), H, LND, z, N, miss}, or null. Used by the globe close-up
+   (build, below) and by the flat map's close-up (gfElevHR.flat, below), so the two look the same.
+   o: PI (the picture, for telling sea from land where the map's shapes do not), maxT (tiles at most), fade (fade the edges
+   out, for the globe), stop() (true: given up) */
+async function heights(gv,v,nx,ny,o){const PI=o.PI,dlon=(v.lon1-v.lon0)/nx,dlat=(v.lat1-v.lat0)/ny,maxT=o.maxT||36;
  /* the tiles' zoom: about one tile pixel a cell, fewer tiles if the view needs too many. (A tile pixel spans 360/256/2^z degrees
     of longitude at every latitude, as a cell spans dlon: no cos(latitude) here, which made the tiles near 70 degrees nearly
     three times coarser than the screen.) */
- const midLat=(v.lat0+v.lat1)/2;let z=Math.round(Math.log2(360/dlon/256));z=Math.max(2,Math.min(12,z));
- const merc=(lo,la,z)=>{const n=2**z,s=Math.sin(Math.max(-85,Math.min(85,la))*Math.PI/180);return[(((lo+180)/360)%1+1)%1*n*256,(.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n*256]};
- const span=z=>{const a=merc(v.lon0,v.lat1,z),b=merc(v.lon1,v.lat0,z),r={z,tx0:Math.floor(a[0]/256),ty0:Math.floor(a[1]/256),tx1:Math.floor(b[0]/256),ty1:Math.floor(b[1]/256)};if(r.tx1<r.tx0)r.tx1+=2**z;return r};
- let A;for(;;){A=span(z);if((A.tx1-A.tx0+1)*(A.ty1-A.ty0+1)<=36||z<=2)break;z--}
+ const midLat=(v.lat0+v.lat1)/2;let z=tileZoom(dlon);
+ const span=z=>tileSpan(v,z);
+ let A;for(;;){A=span(z);if((A.tx1-A.tx0+1)*(A.ty1-A.ty0+1)<=maxT||z<=2)break;z--}
  /* from zoom 11 the tiles that touch land have the sea at 0 m: the sea's depth (and the rock under ice shelves) is read at zoom 10 */
- const S=z>10?span(10):A;
+ const S=z>10?span(10):A;let miss=0;
  const load=async R=>{const n=2**R.z,ks=[];for(let ty=R.ty0;ty<=R.ty1;ty++)for(let tx=R.tx0;tx<=R.tx1;tx++)ks.push([tx,ty]);
-  const hs=await Promise.all(ks.map(([tx,ty])=>tile(R.z+"/"+(((tx%n)+n)%n)+"/"+Math.max(0,Math.min(n-1,ty)))));R.TM=new Map();ks.forEach(([tx,ty],i)=>R.TM.set(tx+","+ty,hs[i]));return R};
+  const hs=await Promise.all(ks.map(([tx,ty])=>tile(R.z+"/"+(((tx%n)+n)%n)+"/"+Math.max(0,Math.min(n-1,ty)))));R.TM=new Map();ks.forEach(([tx,ty],i)=>{if(!hs[i])miss++;R.TM.set(tx+","+ty,hs[i])});return R};
  /* NOAA's grid: about a cell a pixel, no finer than its own 15 arc-seconds in the open sea */
  const NW=Math.max(8,Math.min(nx,Math.ceil((v.lon1-v.lon0)*240))),NH=Math.max(8,Math.min(ny,Math.ceil((v.lat1-v.lat0)*240)));
  const [,,N]=await Promise.all([load(A),S===A?null:load(S),noaa(v.lon0,v.lon1,v.lat0,v.lat1,NW,NH)]);
- if(gv._moving){busy=false;return}
- const at=(R,lo,la)=>{const n=2**R.z;let [px,py]=merc(lo,la,R.z);let tx=Math.floor(px/256);if(tx<R.tx0)tx+=n,px+=n*256;const ty=Math.floor(py/256),T=R.TM.get(tx+","+ty);if(!T)return NaN;
+ if(o.stop&&o.stop())return null;
+ const at=(R,lo,la)=>{if(la>85||la<-85)return NaN;const n=2**R.z;let [px,py]=merc(lo,la,R.z);let tx=Math.floor(px/256);if(tx<R.tx0)tx+=n,px+=n*256;const ty=Math.floor(py/256),T=R.TM.get(tx+","+ty);if(!T)return NaN;
    const x=Math.min(255,Math.max(0,px-tx*256-.5)),y=Math.min(255,Math.max(0,py-ty*256-.5)),x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(255,x0+1),y1=Math.min(255,y0+1),fx=x-x0,fy=y-y0;
    return(T[y0*256+x0]*(1-fx)+T[y0*256+x1]*fx)*(1-fy)+(T[y1*256+x0]*(1-fx)+T[y1*256+x1]*fx)*fy};
- const seaPic0=(lo,la)=>{const o=picAt(PI,lo,la);return PI.d[o+2]>PI.d[o]+25};
+ const seaPic0=(lo,la)=>{if(!PI)return false;const o=picAt(PI,lo,la);return PI.d[o+2]>PI.d[o]+25};
  /* land below sea level (round the Caspian, the Dead Sea, the Netherlands) is told from sea by the map's own land shapes drawn
     for this view, not by the zoomed-out picture, whose 20 km pixels made it in blocky steps */
  let MK=null;try{const F=gv.features;if(F&&F.length){const cv=document.createElement("canvas");cv.width=nx;cv.height=ny;const x=cv.getContext("2d",{willReadFrequently:true}),c0=(v.lon0+v.lon1)/2;
-  const pr=d3.geoEquirectangular().rotate([-c0,0]).scale(180/Math.PI).translate([0,0]).precision(.1);x.setTransform(1/dlon,0,0,1/dlat,-(v.lon0-c0)/dlon,v.lat1/dlat);x.beginPath();const pa=d3.geoPath(pr,x);F.forEach(f=>{if(f.geometry)pa(f)});x.fillStyle="#fff";x.fill();
-  const d=x.getImageData(0,0,nx,ny).data;MK=new Uint8Array(nx*ny);for(let i=0;i<nx*ny;i++)MK[i]=d[i*4+3]>127?1:0}}catch(e){MK=null}
+  const pr=d3.geoEquirectangular().rotate([-c0,0]).scale(180/Math.PI).translate([0,0]).precision(.1);x.setTransform(1/dlon,0,0,1/dlat,-(v.lon0-c0)/dlon,v.lat1/dlat);x.beginPath();const pa=d3.geoPath(pr,x);F.forEach(f=>{if(f.geometry&&near(f,v))pa(f)});x.fillStyle="#fff";x.fill();
+  const d=x.getImageData(0,0,nx,ny).data;MK=new Uint8Array(nx*ny);for(let i=0;i<nx*ny;i++)MK[i]=d[i*4+3]>127?1:0;cv.width=0}}catch(e){MK=null}
  const seaPic=(lo,la)=>{if(MK){const i=Math.floor((lo-v.lon0)/dlon),j=Math.floor((v.lat1-la)/dlat);if(i>=0&&j>=0&&i<nx&&j<ny)return!MK[j*nx+i]}return seaPic0(lo,la)};
  /* NOAA's grid is read at its own fine size only close in; zoomed out it comes in coarse blocks, and low land along the coast
     (the Arctic coast of Russia) came out as sea in a band of steps. So only close in may it make low land into sea (an atoll's lagoon) */
  const fineN=(v.lon1-v.lon0)/NW<.02;
  /* each cell: its height (land) or depth (sea), and whether it is land; NaN (left to the picture) where nothing is known */
- const H=new Float32Array(nx*ny),LND=new Uint8Array(nx*ny);let ok=0;
- for(let j=0;j<ny;j++){if((j&63)===63)await breath();const la=v.lat1-(j+.5)*dlat;for(let i=0;i<nx;i++){const lo=v.lon0+(i+.5)*dlon,k=j*nx+i,hL=at(A,lo,la),hS=S===A?hL:at(S,lo,la),nh=noaaAt(N,lo,la);
-   if(!isFinite(hL)){H[k]=NaN;continue}ok++;let land,h;
+ const H=new Float32Array(nx*ny),LND=new Uint8Array(nx*ny);let ok=0,tb=performance.now();
+ for(let j=0;j<ny;j++){if(performance.now()-tb>12){await breath();if(o.stop&&o.stop())return null;tb=performance.now()}const la=v.lat1-(j+.5)*dlat;for(let i=0;i<nx;i++){const lo=v.lon0+(i+.5)*dlon,k=j*nx+i,hL=at(A,lo,la),hS=S===A?hL:at(S,lo,la),nh=noaaAt(N,lo,la);
+   if(!isFinite(hL)){/* beyond the tiles (within 5 degrees of the poles): the top of the ice from NOAA, if it is known */
+    if((la>85||la<-85)&&isFinite(nh)){H[k]=nh;LND[k]=nh>0?1:0;ok++}else H[k]=NaN;continue}ok++;let land,h;
    if(iceZone(lo,la)){
     /* ice sheets: the Terrain Tiles give the rock under the ice, NOAA the top of the ice. Ice that floats (an ice shelf: the rock
        deeper than about 8 times the ice's height above the sea) is sea, as on the zoomed-out picture. Rock above the sea in the
@@ -101,18 +112,28 @@ async function build(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=
     if(z>10)land=hL>.5||(hL<-.5&&!seaPic(lo,la));else land=hL>=0?!(fineN&&hL<120&&nh<-3):!seaPic(lo,la);
     h=land?hL:nh<0?nh:isFinite(hS)&&hS<0?hS:-1}
    H[k]=h;LND[k]=land?1:0}}
- if(ok<nx*ny*.5){busy=false;return}
+ if(ok<nx*ny*.5)return null;
  /* the Elevation map's own colours for each height (its legend's stops, the same as the zoomed-out picture: tools/build-elev.py) */
  const stops=(S,h)=>{let i=1;while(i<S.length-1&&S[i][0]<h)i++;const a=S[i-1],b=S[i],t=Math.max(0,Math.min(1,(h-a[0])/(b[0]-a[0]))),A=hex(a[1]),B=hex(b[1]);return[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t]};
  /* shading: light from the north-west, about as strong as the picture's; the slope from the cell's neighbours of its own kind
-    (land or sea), so the drop from the shore to the sea floor does not draw a dark or bright rim along the coast */
- const mx=dlon*111320*Math.cos(midLat*Math.PI/180),my=dlat*110540,L=[-.5,.5,.707];
+    (land or sea), so the drop from the shore to the sea floor does not draw a dark or bright rim along the coast. Slopes
+    look gentler on coarser cells, so the land's relief is raised more on them: 1.6 times on cells of 1 km or less, up to
+    the picture's 6 times on its own 10 km cells, so the close-up's first step looks like the picture, only sharper */
+ const mx=dlon*111320*Math.cos(midLat*Math.PI/180),my=dlat*110540,L=[-.5,.5,.707],exL=Math.min(6,1.6*Math.pow(Math.max(1,my/1000),.574));
  const out=new Uint8ClampedArray(nx*ny*4);
  const nb=(k,k2)=>isFinite(H[k2])&&LND[k2]===LND[k]?H[k2]:H[k];
- for(let j=0;j<ny;j++){if((j&127)===127)await breath();for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=LND[k]===1;
+ for(let j=0;j<ny;j++){if(performance.now()-tb>12){await breath();if(o.stop&&o.stop())return null;tb=performance.now()}for(let i=0;i<nx;i++){const k=j*nx+i,h=H[k];if(!isFinite(h))continue;const land=LND[k]===1;
   const hx=(nb(k,j*nx+Math.min(nx-1,i+1))-nb(k,j*nx+Math.max(0,i-1)))/(2*mx),hy=(nb(k,Math.max(0,j-1)*nx+i)-nb(k,Math.min(ny-1,j+1)*nx+i))/(2*my);
-  const ex=land?1.6:1.1,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.8)*(dot-L[2])));
-  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=Math.round(255*Math.min(1,Math.min(i,nx-1-i)/(nx*.04),Math.min(j,ny-1-j)/(ny*.04)))}}
+  const ex=land?exL:1.1,nl=Math.hypot(hx*ex,hy*ex,1),dot=(-hx*ex*L[0]-hy*ex*L[1]+L[2])/nl,sh=Math.max(.55,Math.min(1.35,1+(land?1.1:.8)*(dot-L[2])));
+  const c=land?stops(LANDS,Math.max(0,h)):stops(SEAS,Math.min(0,h));out[k*4]=c[0]*sh;out[k*4+1]=c[1]*sh;out[k*4+2]=c[2]*sh;out[k*4+3]=o.fade?Math.round(255*Math.min(1,Math.min(i,nx-1-i)/(nx*.04),Math.min(j,ny-1-j)/(ny*.04))):255}}
+ return{out,H,LND,z,N,miss}}
+/* the Terrain Tiles' zoom for cells dlon degrees wide (about one tile pixel a cell), and the tiles a box needs at zoom z */
+const tileZoom=dlon=>Math.max(2,Math.min(12,Math.round(Math.log2(360/dlon/256))));
+const merc=(lo,la,z)=>{const n=2**z,s=Math.sin(Math.max(-85,Math.min(85,la))*Math.PI/180);return[(((lo+180)/360)%1+1)%1*n*256,(.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n*256]};
+function tileSpan(v,z){const a=merc(v.lon0,v.lat1,z),b=merc(v.lon1,v.lat0,z),r={z,tx0:Math.floor(a[0]/256),ty0:Math.floor(a[1]/256),tx1:Math.floor(b[0]/256),ty1:Math.floor(b[1]/256)};if(r.tx1<r.tx0)r.tx1+=2**z;return r}
+async function build(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=viewBox(gv);if(!v){busy=false;return}const PI=picOf(key);if(!PI){busy=false;return}
+ const [nx,ny]=gridFor(v,stage),dlon=(v.lon1-v.lon0)/nx,dlat=(v.lat1-v.lat0)/ny;
+ const R=await heights(gv,v,nx,ny,{PI,maxT:36,fade:true,stop:()=>gv._moving});if(!R){busy=false;return}const {out,H,LND,z,N}=R;
  if(sig(gv,key)!==want){busy=false;return}
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=P&&P.gl===G?P.tex:G.createTexture();G.activeTexture(G.TEXTURE6);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
  G.texImage2D(G.TEXTURE_2D,0,G.RGBA,nx,ny,0,G.RGBA,G.UNSIGNED_BYTE,new Uint8Array(out.buffer));[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));
@@ -149,4 +170,41 @@ const patch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation"
 window.gfElevPatch=function(G,o){const r=patch(G,o);if(!r)lastShown=0;return r};
 /* for checking: what the last close-up was worked out from */
 window.gfElevPatch.dbg=()=>P&&{bb:P.bb,nx:P.nx,ny:P.ny,z:P.z,noaa:P.noaa,stage:P.stage,busy};
+
+/* ---------- the flat map's close-up (drawn by geoflock-nightsharp.js) ----------
+   The flat Elevation map is one picture of about 10 km a pixel. Zoomed in on it, geoflock-nightsharp.js draws the view again
+   at screen resolution (device pixels), as it does for City Lights, Satellite and Population, and asks gfElevHR.flat for
+   the pieces of the world it needs, in plain latitude/longitude: they are worked out here from the same heights, with the
+   same colours and the same light from the north-west as the globe's close-up (heights, above). A "level" is only a size,
+   ppd(z) pixels a degree, the smallest at least as fine as the screen; the tiles are fetched at about one tile pixel a
+   screen pixel (at most FLATT tiles). The grid is at most FLATC cells (larger screens get a slightly enlarged one). */
+const FLATT=96,FLATC=4.2e6,fppd=z=>8*2**z;
+const flatWanted=()=>{try{return typeof appMode!=="undefined"&&appMode==="allmaps"&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="elevation"&&!(typeof gfSeaLevel==="function"&&gfSeaLevel())}catch(e){return false}};
+let flatLoad=null;
+window.gfElevHR={flat:{
+ /* whether this flat picture is the Elevation map's (and the map is showing it) */
+ match(h){if(!flatWanted()||typeof h!=="string")return false;const el=document.getElementById("allMapsElevationLayer");return!!el&&(el.getAttribute("href")||el.getAttribute("xlink:href"))===h},
+ /* the zoomed-out globe picture, for telling sea from land where the map's shapes leave it open */
+ ready:()=>!!picOf("elevation"),
+ load(){if(picOf("elevation"))return Promise.resolve();if(flatLoad)return flatLoad;
+  flatLoad=new Promise(res=>{try{if(globeImages("elevation",()=>res()))res()}catch(e){res()}setTimeout(res,15000)}).then(()=>{flatLoad=null});return flatLoad},
+ ppd:fppd,
+ /* the size for need device pixels a degree; null when the view is too wide for the tiles */
+ level(need,lo0,lo1){if(lo0!=null&&!(lo1-lo0<=200))return null;let z=0;while(z<12&&fppd(z)<need*.98)z++;return z},
+ /* a piece of the world (x,y,w,h in a virtual picture TW x TH of the whole world, TW=360*ppd(z)) drawn at rw x rh;
+    stop(): true when it is no longer wanted. Where nothing is known the piece is see-through (the flat picture shows) */
+ async crop(z,cx,cy,cw,ch,rw,rh,TW,TH,stop){const v={lon0:cx/TW*360-180,lon1:(cx+cw)/TW*360-180,lat1:90-cy/TH*180,lat0:90-(cy+ch)/TH*180};
+  const k=Math.min(1,Math.sqrt(FLATC/(rw*rh))),nx=Math.max(2,Math.round(rw*k)),ny=Math.max(2,Math.round(rh*k));
+  const c=document.createElement("canvas");c.width=rw;c.height=rh;let R=null;
+  try{R=await heights(typeof amGlobe!=="undefined"?amGlobe:{},v,nx,ny,{PI:picOf("elevation"),maxT:FLATT,fade:false,stop})}catch(e){console.error(e)}
+  if(!R)return c;if(R.miss)c._gfMiss=R.miss;
+  const id=new ImageData(R.out,nx,ny);if(nx===rw&&ny===rh)c.getContext("2d").putImageData(id,0,0);
+  else{const t=document.createElement("canvas");t.width=nx;t.height=ny;t.getContext("2d").putImageData(id,0,0);const x=c.getContext("2d");x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.drawImage(t,0,0,rw,rh);t.width=0}
+  return c},
+ /* fetch (only) the tiles of a view ahead of time: need cells a degree over [W,N,E,S], at most max tiles */
+ prefetch(need,b,max){const v={lon0:b[0],lon1:b[2],lat1:Math.min(85,b[1]),lat0:Math.max(-85,b[3])};if(!(v.lat1>v.lat0)||!(v.lon1>v.lon0))return;
+  let z=tileZoom(1/need),A;for(;;){A=tileSpan(v,z);if((A.tx1-A.tx0+1)*(A.ty1-A.ty0+1)<=FLATT||z<=2)break;z--}
+  const list=[A];if(z>10)list.push(tileSpan(v,10));if(list.reduce((s,R)=>s+(R.tx1-R.tx0+1)*(R.ty1-R.ty0+1),0)>(max||FLATT+30))return;
+  list.forEach(R=>{const n=2**R.z;for(let ty=R.ty0;ty<=R.ty1;ty++)for(let tx=R.tx0;tx<=R.tx1;tx++)tile(R.z+"/"+(((tx%n)+n)%n)+"/"+Math.max(0,Math.min(n-1,ty)))})},
+ state:()=>({tiles:TILES.size})}};
 })();
