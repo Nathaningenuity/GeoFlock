@@ -4,6 +4,7 @@
    several hundred metres low. */
 (function(){
 if(typeof d3==="undefined")return;
+let XS_YOPEN=false;document.addEventListener("toggle",e=>{const t=e.target;if(t&&t.classList&&t.classList.contains("gf-xs-ydet"))XS_YOPEN=t.open},true);
 const $=id=>document.getElementById(id),esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const mode=()=>{try{return appMode==="allmaps"?allMapsColorMode:null}catch(e){return null}};
 /* works on the flat map and on the globe */
@@ -130,11 +131,25 @@ body.dark .gf-xs-up, body.dark .gf-xs-pick button:not(.on){ background:#25304a; 
 .gf-xs-srcbox{ display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .gf-xs-tabs button small{ font-size:10px; opacity:.75; margin-left:2px; }
 .gf-xs-help{ font-size:12px; opacity:.75; padding:6px 6px 2px; text-align:center; }
+.gf-xs-help:empty{ display:none; }
+.gf-xs-tabs button{ font-size:11.5px !important; padding:3px 9px !important; }
+.gf-xs-top{ row-gap:5px; column-gap:6px; }
+.gf-xs-top .gf-xs-pre{ max-width:180px !important; }
+.gf-xs-top .gf-xs-go, .gf-xs-top .gf-xs-clear{ padding:4px 10px !important; font-size:12px !important; }
+/* the line's description and its lone "Hide line" button share one row */
+.gf-xs-note{ display:inline-block; max-width:calc(100% - 96px); vertical-align:middle; margin:0 6px 4px 0 !important; }
+.gf-xs-note + .gf-xs-edbar:has(> button:only-child){ display:inline-flex !important; vertical-align:middle; margin:0 0 4px !important; padding:0 !important; }
+.gf-xs-note + .gf-xs-edbar:has(> button:only-child) button{ padding:2px 9px !important; font-size:11.5px !important; }
+.gf-xs-ydet{ margin:3px 0 0; font-size:11.5px; }
+.gf-xs-ydet > summary{ cursor:pointer; display:inline-block; list-style:none; font-weight:700; opacity:.75; padding:1px 8px; border:1px solid rgba(0,0,0,.14); border-radius:999px; }
+.gf-xs-ydet > summary::-webkit-details-marker{ display:none; }
+.gf-xs-ydet > summary::before{ content:"▸ "; } .gf-xs-ydet[open] > summary::before{ content:"▾ "; }
+:is(body.dark,body.dark-theme,body.sky-night) .gf-xs-ydet > summary{ border-color:rgba(255,255,255,.2); }
 .gf-xs-src{ font-size:10.5px; opacity:.55; margin-top:3px; }
 .gf-xs.gf-xs-empty .gf-xs-src{ display:none; }
 /* short while there is nothing to show; wider once a profile is drawn; the corner handle resizes it either way */
 .gf-xs.gf-xs-empty{ right:auto; width:min(470px, calc(100% - 68px)); }
-.gf-xs svg{ height:var(--xs-h,190px); }
+.gf-xs svg{ height:var(--xs-h,150px); }
 .gf-xs-rz{ position:absolute; z-index:2; touch-action:none; }
 .gf-xs-rz.w{ right:-3px; top:14px; bottom:14px; width:9px; cursor:ew-resize; }
 .gf-xs-rz.h{ left:14px; right:14px; top:-3px; height:9px; cursor:ns-resize; }
@@ -269,7 +284,9 @@ function loop(){cancelAnimationFrame(raf);if(!on)return;raf=requestAnimationFram
   if(lines.length===1&&L.edit&&!armed&&!L.edit.hide){const E=L.edit.pts;E.forEach((ll,i)=>{if(L.edit.kind==="line"||i===0||i===E.length-1)return;const q=pr(ll);if(!q)return;x.fillStyle="#fff";x.strokeStyle=L.c;x.lineWidth=1.6;x.beginPath();x.arc(q[0],q[1],4.2,0,7);x.fill();x.stroke()})}
   if(lines.length===1){lab(pts[0],"A");lab(pts[pts.length-1],"B")}});
  if(drawing){stroke(drawing.ll.map(ll=>{const q=pr(ll);return q&&isFinite(q[0])?q:null}),"#c0392b")}
- if(hover){const q=pr(hover.ll);if(q){x.fillStyle=hover.c||"#c0392b";x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],6,0,7);x.fill();x.stroke()}}x.restore()}
+ if(hover){const q=pr(hover.ll);if(q){x.fillStyle=hover.c||"#c0392b";x.strokeStyle="#fff";x.lineWidth=2.5;x.beginPath();x.arc(q[0],q[1],6,0,7);x.fill();x.stroke();
+  /* the height at the playhead, just the number, above the dot */
+  if(hover.e!=null&&isFinite(hover.e)){const t=fmtE(hover.e);x.font="800 13px system-ui";x.textAlign="center";x.textBaseline="bottom";x.lineJoin="round";x.lineWidth=4;x.strokeStyle="rgba(255,255,255,.95)";x.strokeText(t,q[0],q[1]-10);x.fillStyle="#1d2433";x.fillText(t,q[0],q[1]-10)}}}x.restore()}
 /* ---------- named landforms along a line ----------
    mountain ranges, plateaus, plains, basins and deserts (the outlines the map search uses), the map's own seas and lakes,
    and the deep-sea trenches (rough centre lines) */
@@ -587,11 +604,11 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
  const rvNow=lines.some(L=>L.river),cmpNow=lines.length>1||title==="Rivers compared";
  const hctl=rvNow?'<div class="gf-xs-hctl"><span class="gf-xs-seg gf-xs-hz">'+[[YSPAN,"Same scale for every river (0–1,700 m)"],[250,"Lowlands (0–250 m)"],["all","Whole river"]].map(([v,t])=>'<button type="button" data-hz="'+v+'" class="'+(String(yv.span)===String(v)?"on":"")+'">'+t+'</button>').join("")+'</span>'+(yv.span!=="all"?'<button type="button" class="gf-xs-up" data-sc="1" title="Scroll up (or use the mouse wheel over the chart)">▲ higher</button><button type="button" class="gf-xs-up" data-sc="-1" title="Scroll down">▼ lower</button>':'')+'</div>':'';
  const chips=cmpNow?'<div class="gf-xs-pick">'+Object.keys(RIVERS).map(k=>'<button type="button" data-rv="'+k+'" class="'+(picks.includes(k)?"on":"")+'" style="--c:'+RIVERS[k].c+'">'+k+'</button>').join("")+'</div>':'';
- const yctl=!rvNow&&!cmpNow&&lines.length&&lines[0].P?'<div class="gf-xs-yctl"><span>Height from</span><input type="number" step="100" data-yl="lo" placeholder="auto" value="'+(yl.lo==null?'':yl.lo)+'"><span>to</span><input type="number" step="100" data-yl="hi" placeholder="auto" value="'+(yl.hi==null?'':yl.hi)+'"><span>m</span><button type="button" data-yf="fit" title="Start the chart just below the lowest point, so small ups and downs show">Fit to the land</button><button type="button" data-yf="sea" title="From sea level up">From sea level</button></div>':'';
+ const yctl=!rvNow&&!cmpNow&&lines.length&&lines[0].P?'<details class="gf-xs-ydet"'+(XS_YOPEN||yl.lo!=null||yl.hi!=null?" open":"")+'><summary>Height scale</summary><div class="gf-xs-yctl"><span>Height from</span><input type="number" step="100" data-yl="lo" placeholder="auto" value="'+(yl.lo==null?'':yl.lo)+'"><span>to</span><input type="number" step="100" data-yl="hi" placeholder="auto" value="'+(yl.hi==null?'':yl.hi)+'"><span>m</span><button type="button" data-yf="fit" title="Start the chart just below the lowest point, so small ups and downs show">Fit to the land</button><button type="button" data-yf="sea" title="From sea level up">From sea level</button></div></details>':'';
  const hsw=hist.length?'<div class="gf-xs-hist"><span>Your lines</span>'+hist.map((h,i)=>'<button type="button" data-hi="'+i+'" class="'+(lines.includes(h)?'on':'')+'" style="--c:'+h.c+'" title="'+esc(h.title)+'"><i></i>'+(i+1)+'</button>').join('')+(hist.length>1?'<button type="button" data-hstep="-1" title="Previous line">‹</button><button type="button" data-hstep="1" title="Next line">›</button>':'')+'<small>'+hist.length+' of '+MAXL+(hist.length>=MAXL?' · a new line replaces the oldest':'')+'</small></div>':'';
  const body=!DEM?'<div class="gf-xs-help">Loading heights…</div>':lines.length&&lines[0].P?(note?'<p class="gf-xs-note">'+esc(note)+'</p>':'')+(lines.length===1&&lines[0].edit?(lines[0].edit.kind==="line"?'<div class="gf-xs-edbar"><span>Drag A or B on the map to move an end, or add a dot to bend the line.</span><button type="button" data-ed="add" title="Add a dot: the straight line becomes a path you can reshape">+ Add dot</button>'+'<button type="button" data-ed="hideline" class="'+(lines[0].hideLine?"on":"")+'" title="Hide the line on the map; the dot that follows the chart stays">'+(lines[0].hideLine?"Show line":"Hide line")+'</button>'+'</div>':(E=>'<div class="gf-xs-edbar"><span>'+(E.tool==="add"?"Click the line to add a dot.":E.tool==="del"?"Click a dot to remove it.":E.tool==="cut"?"Click the line to cut it there; the shorter piece goes.":"Drag a dot to reshape your path.")+'</span>'+
   '<button type="button" data-ed="add" class="'+(E.tool==="add"?"on":"")+'">+ Add dot</button><button type="button" data-ed="del" class="'+(E.tool==="del"?"on":"")+'">− Remove dot</button><button type="button" data-ed="cut" class="'+(E.tool==="cut"?"on":"")+'">✂ Cut</button>'+
-  '<button type="button" data-ed="hide" class="'+(E.hide?"on":"")+'">'+(E.hide?"Show dots":"Hide dots")+'</button><button type="button" data-ed="smooth" class="'+(E.smooth?"on":"")+'" title="A smooth curve through the dots">〰 Smooth curve</button>'+'<button type="button" data-ed="hideline" class="'+(lines[0].hideLine?"on":"")+'" title="Hide the line on the map; the dot that follows the chart stays">'+(lines[0].hideLine?"Show line":"Hide line")+'</button>'+'</div>')(lines[0].edit)):lines.length===1?'<div class="gf-xs-edbar">'+'<button type="button" data-ed="hideline" class="'+(lines[0].hideLine?"on":"")+'" title="Hide the line on the map; the dot that follows the chart stays">'+(lines[0].hideLine?"Show line":"Hide line")+'</button>'+'</div>':'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake beds: surveyed where shown solid, estimated where dashed.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"Pick a ready-made line, or press Draw.")+'</div>';
+  '<button type="button" data-ed="hide" class="'+(E.hide?"on":"")+'">'+(E.hide?"Show dots":"Hide dots")+'</button><button type="button" data-ed="smooth" class="'+(E.smooth?"on":"")+'" title="A smooth curve through the dots">〰 Smooth curve</button>'+'<button type="button" data-ed="hideline" class="'+(lines[0].hideLine?"on":"")+'" title="Hide the line on the map; the dot that follows the chart stays">'+(lines[0].hideLine?"Show line":"Hide line")+'</button>'+'</div>')(lines[0].edit)):lines.length===1?'<div class="gf-xs-edbar">'+'<button type="button" data-ed="hideline" class="'+(lines[0].hideLine?"on":"")+'" title="Hide the line on the map; the dot that follows the chart stays">'+(lines[0].hideLine?"Show line":"Hide line")+'</button>'+'</div>':'')+chips+hctl+chartSVG()+((lines[0]&&lines[0].lk||[]).some(k=>k.n)?'<p class="gf-xs-lknote">Lake beds: surveyed where shown solid, estimated where dashed.</p>':'')+yctl+(cmpNow?cmpTable():''):'<div class="gf-xs-help'+(armed?' armed':'')+'">'+(armed?(shape==="line"?"Drag across the map to draw a straight line.":"Drag across the map to draw your own path."):"")+'</div>';
  const drawUI=armed||!lines.length;
  {const em=!(lines.length&&lines[0].P),was=panel.classList.contains("gf-xs-empty");if(was&&!em&&panel.style.width){const hw=panel.parentNode.getBoundingClientRect().width,l=parseFloat(panel.style.left)||10;panel.style.width=Math.max(panel.getBoundingClientRect().width,Math.min(860,hw-68,hw-l-10))+"px"}panel.classList.toggle("gf-xs-empty",em);try{G().host.classList.toggle("gf-xs-armed",!!armed)}catch(e){}}panel.innerHTML='<div class="gf-xs-top"><b>✂ '+esc(title||"Cross-section")+'</b>'+(drawUI?'<span class="gf-xs-seg"><button type="button" data-sh="line" class="'+(shape==="line"?"on":"")+'">Straight</button><button type="button" data-sh="free" class="'+(shape==="free"?"on":"")+'">Freehand</button></span>':'')+
   (window.gfShovelDig?'<button type="button" class="gf-xs-dig" title="Dig straight through the Earth instead">⛏ Dig through</button>':'')+'<button type="button" class="gf-xs-go'+(armed?" on":"")+'">'+(armed?"Drawing… drag on the map":drawUI?"✏ Draw":"✏ Draw your own")+'</button>'+(armed?'<button type="button" class="gf-xs-exit" title="Stop drawing (Esc)">✕ Exit</button>':'')+(!armed&&lines.length?'<button type="button" class="gf-xs-clear" title="Clear the chart and remove the line from the map">✕ Clear line</button>':'')+'<span class="gf-xs-srcbox">'+srcTabs+'<select class="gf-xs-pre">'+presetOpts+'</select></span><button type="button" class="gf-xs-min" title="Fold">▾</button><button type="button" class="gf-xs-x" title="Close">×</button></div><div class="gf-xs-body">'+hsw+body+
@@ -625,7 +642,7 @@ function renderPanel(){if(!panel)return;const nMine=myInk().length;const presetO
   /* a playhead, like a video's: it stays put, jumps to wherever you click, drags left and right, and its point shows on the map */
   const X0=chartSVG.X(0),put=vx=>{let best=null,bd=1e9;
    lines.forEach(L=>(L.P||[]).forEach(p=>{const d=Math.abs(chartSVG.X(chartSVG.comp?p.fromSea:p.km)-vx);if(d<bd){bd=d;best={p,L}}}));if(!best)return;
-   const p=best.p,xx=chartSVG.X(chartSVG.comp?p.fromSea:p.km),yy=chartSVG.Y(p.e);head=xx;hover={ll:p.ll,c:best.L.c};const nm=lines.length===1?(cname(p.c||countryAt(p.ll)||(p.e>0?nearCountry(p.ll):null))||waterName(p.ll)):best.L.name;
+   const p=best.p,xx=chartSVG.X(chartSVG.comp?p.fromSea:p.km),yy=chartSVG.Y(p.e);head=xx;hover={ll:p.ll,c:best.L.c,e:p.e};const nm=lines.length===1?(cname(p.c||countryAt(p.ll)||(p.e>0?nearCountry(p.ll):null))||waterName(p.ll)):best.L.name;
    const T=(best.L.P[best.L.P.length-1]||{}).km||1,ft=best.L.P.find(q=>q.n&&Math.abs(q.km-p.km)<T*.012);
    const txt=Math.round(chartSVG.comp?p.fromSea:p.km).toLocaleString()+" km · "+fmtE(p.e)+(ft?" · "+ft.n:nm?" · "+nm:"");
    const yyc=Math.max(14,Math.min(chartSVG.H-24,yy));cur.innerHTML='<line x1="'+xx+'" x2="'+xx+'" y1="12" y2="'+(chartSVG.H-24)+'" stroke="#1d2433" stroke-opacity=".7" stroke-width="1.6"/><path d="M'+(xx-6)+',6 h12 v5 l-6,6 l-6,-6z" fill="#1d2433"/><circle cx="'+xx+'" cy="'+yyc+'" r="5" fill="'+best.L.c+'" stroke="#fff" stroke-width="2"/><text x="'+Math.min(chartSVG.W-150,Math.max(60,xx+8))+'" y="26" font-size="12" font-weight="800" fill="#1d2433" stroke="#fff" stroke-width="3" paint-order="stroke">'+esc(txt)+'</text>';
