@@ -5,7 +5,9 @@
    geoflock-daynightglobe.js); the Relief map's zoom-detail tiles (geoflock-detail.js) are looked at every few tenths of
    a second (gfSharpBusy.poll). The ring sits under the map's buttons (zoom, reset...), in the same column.
    It never spins for good:
-   - each load counts for at most 15 s: after that it is dropped, even if its tiles never answer. The 15 s are counted
+   - each load counts for at most 15 s (or the time its loader gives: start(key, token, ms), at most 60 s; the Elevation
+     close-ups, which wait for NOAA's sea depth after the land, give 30 s): after that it is dropped, even if its tiles
+     never answer. The time is counted
      over every try for the same key and token (the same view), so a view whose tiles keep failing and are asked for
      again does not keep the ring turning; a new token (the view changed) is a new load;
    - every load is dropped when you leave the Maps page, change map or switch between globe and flat map;
@@ -18,9 +20,9 @@ const A=new Map(),POLL=new Map(),SPENT=new Map();let el=null,shownAt=0,idleAt=0,
 /* which map is showing: loads are for this map only */
 function mapNow(){try{if(typeof appMode==="undefined"||appMode!=="allmaps"||document.hidden)return null;const g=typeof amGlobe!=="undefined"&&amGlobe;
  if(!g||!g.host||!g.host.isConnected||!g.host.offsetParent)return null;return allMapsColorMode+(g._flat?"|flat":"|globe")}catch(e){return null}}
-function start(key,tok){const m=mapNow();if(!m||!key)return;tok=tok==null?"":String(tok);const e=A.get(key);
+function start(key,tok,max){const m=mapNow();max=Math.min(60000,max>0?max:TMAX);if(!m||!key)return;tok=tok==null?"":String(tok);const e=A.get(key);
  if(e&&e.tok===tok&&e.m===m)return;/* the same load: its clock goes on (and a load past its time stays dropped) */
- end(key);const id=key+"#"+tok,sp=SPENT.get(id)||0;A.set(key,{t0:Date.now(),sp,tok,m,id,dead:sp>=TMAX});run()}
+ end(key);const id=key+"#"+tok,sp=SPENT.get(id)||0;A.set(key,{t0:Date.now(),sp,tok,m,id,max,dead:sp>=max});run()}
 /* the time a load has run is kept (for its key and token), the last 100 */
 function end(key){const e=A.get(key);if(!e)return false;A.delete(key);SPENT.delete(e.id);SPENT.set(e.id,e.sp+Date.now()-e.t0);while(SPENT.size>100)SPENT.delete(SPENT.keys().next().value);return true}
 function done(key){if(end(key))run()}
@@ -40,7 +42,7 @@ function ring(){if(!el){el=document.createElement("div");el.className="gf-busy";
 function show(on){if(on){const r=ring();if(!r.classList.contains("on")){r.classList.add("on");shownAt=Date.now()}}else if(el&&el.classList.contains("on"))el.classList.remove("on")}
 function tick(){timer=0;const now=Date.now(),m=mapNow();
  POLL.forEach((fn,k)=>{let t=null;try{t=m?fn():null}catch(e){t=null}if(t)start(k,t);else end(k)});
- let first=Infinity;A.forEach((e,k)=>{if(e.m!==m){end(k);return}if(!e.dead&&e.sp+now-e.t0>TMAX)e.dead=true;if(!e.dead)first=Math.min(first,e.t0)});
+ let first=Infinity;A.forEach((e,k)=>{if(e.m!==m){end(k);return}if(!e.dead&&e.sp+now-e.t0>e.max)e.dead=true;if(!e.dead)first=Math.min(first,e.t0)});
  const busy=first<Infinity,vis=!!(el&&el.classList.contains("on"));
  /* off the Maps page, or another map: hidden at once */
  const moved=m!==lastM;lastM=m;

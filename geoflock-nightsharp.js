@@ -104,7 +104,8 @@ function texture(kind){if(TEX[kind])return TEX[kind];let src;try{src=kind==="sat
 /* the view as the overlay sees it: scale, centre, east–west frame and canvas size */
 function viewOf(g,dpr,kind){const p=g.projection(),S=p.scale(),t=p.translate(),{w,h}=g.size();return{S,t:[t[0],t[1]],dl:g._gfDl||0,w,h,dpr,kind,key:[kind,S.toFixed(3),t[0].toFixed(2),t[1].toFixed(2),g._gfDl||0,w,h,dpr].join("|")}}
 /* the loading ring (geoflock-busy.js) turns while a sharp picture is being made, and stops when it is done or given up */
-const BUSY=on=>{try{if(window.gfSharpBusy)on?gfSharpBusy.start("flat",on):gfSharpBusy.done("flat")}catch(e){}};
+/* the Elevation map's pieces may wait for NOAA's sea depth (geoflock-elevhr.js): 30 s for them */
+const BUSY=on=>{try{if(window.gfSharpBusy)on?gfSharpBusy.start("flat",on,/^elev\|/.test(on)?30000:0):gfSharpBusy.done("flat")}catch(e){}};
 function kill(j){if(!j)return;j.dead=true;free(j.O);free(j.E);(j.B||[]).forEach(free);if(job===j){job=null;BUSY(null)}}
 function dropAll(){kill(job);free(O&&O.cv);O=null;clearTimeout(timer);timer=0;lastKey="";BUSY(null)}
 /* off the map, or out of City Lights: free everything; the file itself is let go after a while unused */
@@ -205,7 +206,10 @@ function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V
      if(++k>=H){stage=2;break}}}}
    catch(e){console.error(e);kill(me);return}
    if(stage<2){later(step);return}
-   free(E);me.E=null;me.O=null;job=null;BUSY(null);const old=O;O={cv:NO,key:V.key,S,t,dl,dpr,x:XL,y:ya,kind:V.kind,miss:B.some(b=>b&&b._gfMiss),at:Date.now()};if(old)free(old.cv);if(O.miss)setTimeout(()=>{try{g.request()}catch(e){}},4300);
+   free(E);me.E=null;me.O=null;job=null;const old=O;O={cv:NO,key:V.key,S,t,dl,dpr,x:XL,y:ya,kind:V.kind,miss:B.some(b=>b&&b._gfMiss),at:Date.now()};
+   /* an Elevation picture made before NOAA's sea depth came in keeps the ring turning until it is made again with it (or
+      NOAA has failed) */
+   if(!(V.kind==="elev"&&B.some(b=>b&&b._gfLate)))BUSY(null);if(old)free(old.cv);if(O.miss)setTimeout(()=>{try{g.request()}catch(e){}},4300);
    try{g.request()}catch(e){}};
   later(step)}).catch(e=>{console.error(e);kill(me)})}
 window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.height]:null,building:!!job,kind:O&&O.kind,miss:!!(O&&O.miss)});
