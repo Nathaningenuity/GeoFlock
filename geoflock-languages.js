@@ -234,7 +234,7 @@ let REG=null,regLoad=null;
 /* countries drawn by region or homeland (known before the file loads, so their country stripes never flash) */
 const REG_CC=new Set(Object.keys(RS).map(k=>k.slice(0,2)).concat(["gt","pe","bo","ir","iq","tr","sy","af","ng","ne","td","sd","ml","mr","ke","ug","et","ss","cm"]));
 function langOn(){try{return allMapsColorMode==="culture"&&allMapsSubMode.culture==="lang"&&(typeof thOn!=="function"||thOn())}catch(e){return false}}
-function loadReg(){if(regLoad)return regLoad;regLoad=fetch("textures/LANG_REGIONS.json?v=2").then(r=>r.json()).then(t=>{
+function loadReg(){if(regLoad)return regLoad;regLoad=fetch("textures/LANG_REGIONS.json?v=3").then(r=>r.json()).then(t=>{
  const fc=topojson.feature(t,t.objects.r);const list=[];
  fc.features.forEach(f=>{if(!f.geometry)return;const k=f.properties.k,c=k.slice(0,2);let fams,src,text="",name,rows=null,extra="";
   if(k.indexOf(":g:")===2){name=k.slice(5);const fs=String(f.properties.f||"").split("+").filter(Boolean);const n=fs.length;
