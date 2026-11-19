@@ -42,7 +42,7 @@ function viewBounds(g){try{const pr=g.projection(),{w,h}=g.size(),pts=[];for(let
  /* across the date line the patch simply runs past ±180° (the tiles wrap round, and the shader reads longitudes from the patch's west edge) */if(E-W>=359)return null;return[W,N,E,Sx]}catch(e){return null}}
 function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g||g.gl!==G||g._flat||!window.gfGibs){PDBG="not globe";return null}
  const dpr=(window.gfDpr?gfDpr():Math.min(2,devicePixelRatio||1)),ppdNeed=g.projection().scale()*Math.PI/180*dpr;let z=gfGibs.level(ppdNeed);
- if(z==null){if(st.P){try{G.gl.deleteTexture(st.P.t)}catch(e){}st.P=null}return null}
+ if(z==null){if(st.P){try{G.gl.deleteTexture(st.P.t)}catch(e){}st.P=null}if(window.gfSharpBusy)gfSharpBusy.done("gibs-"+kind);return null}
  /* the gentle auto-spin alone does not count as moving: the patch is made wider instead, to cover ~30 s of it */
  let spin=false;try{spin=typeof gfSpinWanted==="function"&&gfSpinWanted(g)&&!g._gfDown&&!g._flying}catch(e){}
  const vk=(spin?"":g.rot[0].toFixed(3)+",")+g.rot[1].toFixed(3)+","+g.zoom.toFixed(3),now=performance.now();if(vk!==pView){pView=vk;pViewT=now}
@@ -64,6 +64,8 @@ function patchFor(G,kind){const st=PS[kind];PDBG="called";try{const g=typeof amG
   clearTimeout(st.T);st.T=setTimeout(()=>{st.T=0;st.key="";try{g.render()}catch(e){}},200)}
  return st.P&&st.P.G===G?st.P:null}catch(e){return null}}
 function build(G,z,b,kind){const st=PS[kind],id=++st.job,pp=gfGibs.ppd(z);let [W,N,E,Sx]=b;
+ /* the loading ring (geoflock-busy.js) turns until the last tile is in */
+ const BK="gibs-"+kind,BZ=()=>{if(id===st.job&&window.gfSharpBusy)gfSharpBusy.done(BK)};if(window.gfSharpBusy)gfSharpBusy.start(BK,z+"|"+b.join(","));
  /* at most 4096 px a side: widen the degrees per pixel if the view needs more */
  let pw=Math.ceil((E-W)*pp),ph=Math.ceil((N-Sx)*pp);const k=Math.max(1,pw/4096,ph/4096);pw=Math.round(pw/k);ph=Math.round(ph/k);
  const TW=360*pp,TH=180*pp;
@@ -73,7 +75,7 @@ function build(G,z,b,kind){const st=PS[kind],id=++st.job,pp=gfGibs.ppd(z);let [W
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
    /* while loading it counts as having holes, so it is not taken as finished */
    st.P={G,t,b:[W,N,E,Sx],z,miss:fin?!!c._gfMiss:true,part:!fin,at:performance.now()};if(fin){if(c._gfMiss)setTimeout(()=>{try{req()}catch(e){}},4300);c.width=0}req()}catch(e){console.error(e)}};
- gfGibs.crop(z,(W+180)/360*TW,(90-N)/180*TH,(E-W)/360*TW,(N-Sx)/180*TH,pw,ph,TW,TH,kind,c=>up(c,false)).then(c=>up(c,true)).catch(e=>{console.error(e);if(id===st.job)st.key=""})}
+ gfGibs.crop(z,(W+180)/360*TW,(90-N)/180*TH,(E-W)/360*TW,(N-Sx)/180*TH,pw,ph,TW,TH,kind,c=>up(c,false)).then(c=>{up(c,true);BZ()}).catch(e=>{console.error(e);BZ();if(id===st.job)st.key=""})}
 window.gfNightPatch=()=>PS.night.P&&{b:PS.night.P.b,z:PS.night.P.z};window.gfDayPatch=()=>PS.sat.P&&{b:PS.sat.P.b,z:PS.sat.P.z};
 /* ---------- the shader ---------- */
 const FS=`#version 300 es

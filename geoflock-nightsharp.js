@@ -84,6 +84,10 @@ window.gfGibs={level,ppd,crop,tile,tdeg,ZMAX,URL0,prefetch};
 (function(){
 if(typeof GlobeView==="undefined"||typeof d3==="undefined"||!d3.geoRobinson)return;
 const IDLE=120,SLICE=8,BAND=8,MINMAG=1;/* only once the flat picture is being enlarged: zoomed out, the flat picture shrunk to the screen is sharper than the overlay */
+/* Elevation: from 1.5 times. Its heights at 1:1 are no finer than its flat picture (about 11 pixels a degree both), and
+   drawn from them the view came out a little softer than the picture it replaced; from 1.5 times the heights are read
+   at twice the picture's detail, so the first sharp step is a clear step up */
+const minMag=k=>k==="elev"?1.5:MINMAG;
 let TEX={},texUnused=0,O=null,job=null,timer=0,want=null,lastKey="";
 const free=cv=>{try{if(cv&&cv.close)cv.close();else if(cv){cv.width=0;cv.height=0}}catch(e){}};
 /* which picture the flat map shows: the night picture or (the same way) the satellite one */
@@ -99,8 +103,10 @@ function texture(kind){if(TEX[kind])return TEX[kind];let src;try{src=kind==="sat
  return t}
 /* the view as the overlay sees it: scale, centre, east–west frame and canvas size */
 function viewOf(g,dpr,kind){const p=g.projection(),S=p.scale(),t=p.translate(),{w,h}=g.size();return{S,t:[t[0],t[1]],dl:g._gfDl||0,w,h,dpr,kind,key:[kind,S.toFixed(3),t[0].toFixed(2),t[1].toFixed(2),g._gfDl||0,w,h,dpr].join("|")}}
-function kill(j){if(!j)return;j.dead=true;free(j.O);free(j.E);(j.B||[]).forEach(free);if(job===j)job=null}
-function dropAll(){kill(job);free(O&&O.cv);O=null;clearTimeout(timer);timer=0;lastKey=""}
+/* the loading ring (geoflock-busy.js) turns while a sharp picture is being made, and stops when it is done or given up */
+const BUSY=on=>{try{if(window.gfSharpBusy)on?gfSharpBusy.start("flat",on):gfSharpBusy.done("flat")}catch(e){}};
+function kill(j){if(!j)return;j.dead=true;free(j.O);free(j.E);(j.B||[]).forEach(free);if(job===j){job=null;BUSY(null)}}
+function dropAll(){kill(job);free(O&&O.cv);O=null;clearTimeout(timer);timer=0;lastKey="";BUSY(null)}
 /* off the map, or out of City Lights: free everything; the file itself is let go after a while unused */
 setInterval(()=>{try{if((O||job)&&!(typeof amGlobe!=="undefined"&&amGlobe&&amGlobe._flat&&amGlobe.host&&amGlobe.host.isConnected&&amGlobe.host.offsetParent&&appMode==="allmaps"&&(allMapsColorMode==="night"||allMapsColorMode==="satellite"||allMapsColorMode==="population"||allMapsColorMode==="elevation")))dropAll()}catch(e){}
  if(!O&&!job&&Date.now()-texUnused>60000)TEX={}},2000);
@@ -112,8 +118,8 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
  /* how much the flat picture is enlarged on screen: below about 1:1 it is already as sharp as the screen */
  const mag=V?V.S/318.31/C.F*dpr:0;
  /* Elevation: its height tiles come from the network, so they are fetched a little before they are needed */
- if(V&&V.kind==="elev"&&mag>=MINMAG*.6)prefetchView(g,V);
- if(!V||mag<MINMAG){if(O||job)dropAll();return}
+ if(V&&V.kind==="elev"&&mag>=minMag(V.kind)*.6)prefetchView(g,V);
+ if(!V||mag<minMag(V.kind)){if(O||job)dropAll();return}
  texUnused=Date.now();if(V.kind==="pop")prefetchView(g,V);
  /* the latest sharp picture, moved and scaled to this view (exact: the flat map only slides and scales); not when it
     would be enlarged more than the flat picture is */
@@ -130,13 +136,13 @@ window.gfNightSharp=function(g,ctx,dpr,list,C){
    the bottom one, e.g. the Satellite map's clouds, again over it) */
 window.gfNightSharp.covers=function(g,dpr,list,C){try{const kind=list&&list.length>=1?kindOf(list[0].h):null;
  if(!(O&&typeof amGlobe!=="undefined"&&g===amGlobe&&g._flat&&!g._gfOx&&kind&&(list.length===1||kind==="sat")&&list[0].blend==="normal"&&!list[0].tf&&list[0].op>.99&&C))return false;
- const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<MINMAG||O.dl!==V.dl||O.dpr!==V.dpr||O.kind!==V.kind)return false;return O.key===V.key||V.S/O.S<=mag}catch(e){return false}};
+ const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<minMag(kind)||O.dl!==V.dl||O.dpr!==V.dpr||O.kind!==V.kind)return false;return O.key===V.key||V.S/O.S<=mag}catch(e){return false}};
 
 /* the part of the canvas (device pixels: x, y, w, h) that the call above will cover with a finished Population picture,
    or null: the flat picture is left out there */
 window.gfNightSharp.hole=function(g,dpr,list,C){try{if(!O||O.kind!=="pop"||O.miss)return null;const kind=list&&list.length===1?kindOf(list[0].h):null;
  if(kind!=="pop"||!(typeof amGlobe!=="undefined"&&g===amGlobe&&g._flat&&!g._gfOx&&list[0].blend==="normal"&&!list[0].tf&&list[0].op>.99&&C))return null;
- const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<MINMAG||O.dl!==V.dl||O.dpr!==V.dpr)return null;const a=V.S/O.S;if(!(O.key===V.key||a<=mag))return null;
+ const V=viewOf(g,dpr,kind),mag=V.S/318.31/C.F*dpr;if(mag<minMag(kind)||O.dl!==V.dl||O.dpr!==V.dpr)return null;const a=V.S/O.S;if(!(O.key===V.key||a<=mag))return null;
  /* a pixel inside the sharp picture's edge, so no gap opens between the two */
  return[a*O.x+dpr*(V.t[0]-a*O.t[0])+1,a*O.y+dpr*(V.t[1]-a*O.t[1])+1,a*O.cv.width-2,a*O.cv.height-2]}catch(e){return null}};
 /* for checks: whether a sharp picture is on the map, being made, or missing tiles */
@@ -180,7 +186,7 @@ function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V
  const a0=((L0-dl)%360+540)%360-180,parts=(a0+span<=180?[[a0,span,0]]:[[a0,180-a0,0],[-180,a0+span-180,180-a0]]).map(([lo,sp,off])=>{
    const sx=(lo+180)/360*TW,sw=sp/360*TW,cx=Math.max(0,Math.floor(sx)-1),cw=Math.min(TW,Math.ceil(sx+sw)+1)-cx,dw=sp/span*EW,rw=Math.max(1,Math.min(cw,Math.ceil(cw*dw/Math.max(1e-6,sw))+2));
    return{sx,sw,cx,cw,rw,dx:off/span*EW,dw}}).filter(p=>p.cw>0&&p.sw>0);
- const me=job={V,dead:false,B:[],E:null,O:null};
+ const me=job={V,dead:false,B:[],E:null,O:null};BUSY(V.key);
  /* only the piece in view is decoded, off the main thread, already scaled to about screen size */
  Promise.all(parts.map(p=>PF?PF.crop(Z,p.cx,syA,p.cw,cropH,p.rw,rh,TW,TH,()=>me.dead||job!==me):Z!=null?gfGibs.crop(Z,p.cx,syA,p.cw,cropH,p.rw,rh,TW,TH,V.kind):createImageBitmap(T.blob,p.cx,syA,p.cw,cropH,{resizeWidth:p.rw,resizeHeight:rh,resizeQuality:"high"}))).then(B=>{
   if(me.dead||job!==me){B.forEach(free);return}me.B=B;
@@ -199,7 +205,7 @@ function start(g,again){const V=want;if(!V||job&&job.V.key===V.key||O&&O.key===V
      if(++k>=H){stage=2;break}}}}
    catch(e){console.error(e);kill(me);return}
    if(stage<2){later(step);return}
-   free(E);me.E=null;me.O=null;job=null;const old=O;O={cv:NO,key:V.key,S,t,dl,dpr,x:XL,y:ya,kind:V.kind,miss:B.some(b=>b&&b._gfMiss),at:Date.now()};if(old)free(old.cv);if(O.miss)setTimeout(()=>{try{g.request()}catch(e){}},4300);
+   free(E);me.E=null;me.O=null;job=null;BUSY(null);const old=O;O={cv:NO,key:V.key,S,t,dl,dpr,x:XL,y:ya,kind:V.kind,miss:B.some(b=>b&&b._gfMiss),at:Date.now()};if(old)free(old.cv);if(O.miss)setTimeout(()=>{try{g.request()}catch(e){}},4300);
    try{g.request()}catch(e){}};
   later(step)}).catch(e=>{console.error(e);kill(me)})}
 window.gfNightSharpState=()=>({on:!!O,key:O&&O.key,size:O?[O.cv.width,O.cv.height]:null,building:!!job,kind:O&&O.kind,miss:!!(O&&O.miss)});

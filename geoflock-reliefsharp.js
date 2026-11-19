@@ -83,7 +83,9 @@ async function pixels(d,cw,s,l,Q){const w=worker();
 function adjNow(){try{const A=window.gfReliefAdj;return A&&A.OUT&&A.OUT.natural&&A.ADJ.natural&&Object.keys(A.ADJ.natural).length?A.ADJ.natural:null}catch(e){return null}}
 const maxC=G=>Math.floor(Math.min(4096,G.getParameter(G.MAX_TEXTURE_SIZE)||4096)/T);
 /* ---- the patch for the part in view ---- */
-async function build(gv,o,lv,sig){busy=true;try{const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}
+/* the loading ring (geoflock-busy.js) turns while a patch is fetched and made */
+async function build(gv,o,lv,sig){const B=window.gfSharpBusy;if(B)B.start("relief-globe",lv+"|"+sig+"|"+gv.rot.map(v=>v.toFixed(2))+"|"+gv.zoom.toFixed(3));try{return await build0(gv,o,lv,sig)}finally{if(B)B.done("relief-globe")}}
+async function build0(gv,o,lv,sig){busy=true;try{const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}
  const tf=tilesFor(gv,lv,maxC(G));if(!tf){busy=false;return}const{c0,c1,r0,r1,D,ks}=tf;
  const key=[lv,c0,c1,r0,r1,sig].join(",");if(P&&P.key===key){busy=false;return}
  const ims=await Promise.all(ks.map(k=>img(k[2])));

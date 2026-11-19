@@ -60,7 +60,9 @@ function lut(sea){const C=DENS_LEVELS.colours,N=C.length,per=N/(DENS_LEVELS.hi-D
    let n=g<2?0:Math.floor(((g-2)/32-1-DENS_LEVELS.lo)*per+1e-9);n=Math.max(0,Math.min(N-1,n));c=hex(C[n])}
   out[g]=pack(c[0],c[1],c[2])}return out}
 const maxPx=G=>Math.min(4096,G.getParameter(G.MAX_TEXTURE_SIZE)||4096);
-async function build(gv,lv,sig,ppd){busy=true;try{const G=gv.gl&&gv.gl.gl;if(!G||!IDX){busy=false;return}
+/* the loading ring (geoflock-busy.js) turns while a patch is fetched and made */
+async function build(gv,lv,sig,ppd){const B=window.gfSharpBusy;if(B)B.start("pop-globe",lv+"|"+sig+"|"+gv.rot.map(v=>v.toFixed(2))+"|"+gv.zoom.toFixed(3));try{return await build0(gv,lv,sig,ppd)}finally{if(B)B.done("pop-globe")}}
+async function build0(gv,lv,sig,ppd){busy=true;try{const G=gv.gl&&gv.gl.gl;if(!G||!IDX){busy=false;return}
  /* a view over a pole needs every longitude: then a coarser size, if this one would need too many tiles */
  let tf=null,ul=lv;for(;ul>=0&&!(tf=tilesFor(gv,ul,maxPx(G)));ul--);if(!tf){busy=false;return}const{c0,c1,r0,r1,D,ks,sc}=tf;
  const key=[ul,c0,c1,r0,r1,sig].join(",");if(P&&P.key===key){P.ppd=ppd;busy=false;return}

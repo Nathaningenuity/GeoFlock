@@ -17,6 +17,8 @@ const TILES=new Map();
 function tile(k){if(TILES.has(k))return TILES.get(k);
  const pr=new Promise(res=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{try{const c=document.createElement("canvas");c.width=c.height=256;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0);
    const d=g.getImageData(0,0,256,256).data,h=new Float32Array(65536);for(let i=0;i<65536;i++)h[i]=d[i*4]*256+d[i*4+1]+d[i*4+2]/256-32768;res(h)}catch(e){res(null)}};im.onerror=()=>res(null);
+  /* a tile that never answers counts as failed after 12 s, so a close-up waiting for it is not held up for good */
+  setTimeout(()=>{if(!im.complete){im.onload=im.onerror=null;im.src="";res(null)}},12000);
   im.src="https://s3.amazonaws.com/elevation-tiles-prod/terrarium/"+k+".png"});TILES.set(k,pr);
  /* a tile that failed (a dropped connection) is not remembered: it is asked for again next time */
  pr.then(h=>{if(!h&&TILES.get(k)===pr)TILES.delete(k)});while(TILES.size>160)TILES.delete(TILES.keys().next().value);return pr}
@@ -110,7 +112,15 @@ async function heights(gv,v,nx,ny,o){const PI=o.PI,dlon=(v.lon1-v.lon0)/nx,dlat=
     /* land below sea level (round the Caspian) is land where the picture shows land; an atoll's lagoon, which the zoom-10 tiles
        give at about 0 m (or as made-up hills up to about 100 m), is sea where NOAA gives it a few metres deep */
     if(z>10)land=hL>.5||(hL<-.5&&!seaPic(lo,la));else land=hL>=0?!(fineN&&hL<120&&nh<-3):!seaPic(lo,la);
-    h=land?hL:nh<0?nh:isFinite(hS)&&hS<0?hS:-1}
+    h=land?hL:nh<0?nh:isFinite(hS)&&hS<0?hS:-1;
+    /* the Terrain Tiles have holes round the date line in Fiji: Taveuni's eastern half comes as sea 1,500 m deep from zoom
+       10, its western half as sea at every zoom (0 m from zoom 11), and from zoom 11 parts of Vanua Levu at 0 m. It came out
+       as flat green land, or as sea, with a straight seam at 180 degrees. Where they give deep sea, or no land where the
+       map's own land shapes have it, and NOAA's fine grid gives land, NOAA's height is used */
+    if(fineN&&nh>2&&(hL<-50||!land&&!seaPic(lo,la))){land=true;h=nh}
+    /* and some tiles there have smooth made-up hills of a few hundred metres over the reefs, ending in a straight line at the
+       tile's edge: where NOAA's fine grid gives sea and so do the map's own land shapes, it is sea */
+    else if(land&&fineN&&nh<-3&&hL<600&&seaPic(lo,la)){land=false;h=nh}}
    H[k]=h;LND[k]=land?1:0}}
  if(ok<nx*ny*.5)return null;
  /* the Elevation map's own colours for each height (its legend's stops, the same as the zoomed-out picture: tools/build-elev.py) */
@@ -131,9 +141,19 @@ async function heights(gv,v,nx,ny,o){const PI=o.PI,dlon=(v.lon1-v.lon0)/nx,dlat=
 const tileZoom=dlon=>Math.max(2,Math.min(12,Math.round(Math.log2(360/dlon/256))));
 const merc=(lo,la,z)=>{const n=2**z,s=Math.sin(Math.max(-85,Math.min(85,la))*Math.PI/180);return[(((lo+180)/360)%1+1)%1*n*256,(.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n*256]};
 function tileSpan(v,z){const a=merc(v.lon0,v.lat1,z),b=merc(v.lon1,v.lat0,z),r={z,tx0:Math.floor(a[0]/256),ty0:Math.floor(a[1]/256),tx1:Math.floor(b[0]/256),ty1:Math.floor(b[1]/256)};if(r.tx1<r.tx0)r.tx1+=2**z;return r}
-async function build(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=viewBox(gv);if(!v){busy=false;return}const PI=picOf(key);if(!PI){busy=false;return}
+/* the loading ring (geoflock-busy.js) turns while a close-up is worked out */
+async function build(gv,key,stage){const B=window.gfSharpBusy;if(B)B.start("elev-globe",sig(gv,key)+"|"+stage);try{return await build0(gv,key,stage)}finally{if(B)B.done("elev-globe")}}
+/* a view whose close-up could not be made (the height tiles failed, or the view is too wide for them) is tried again only
+   after a pause, longer each time (1.5 s, 3 s, 6 s ... at most 30 s): before, it was tried again every quarter second,
+   asking for the same failed tiles over and over while the height server could not be reached */
+let FAIL={k:"",n:0,until:0};
+function failed(gv,want){if(gv._moving||sig(gv,want.split("|")[0])!==want)return;const n=FAIL.k===want?FAIL.n+1:0,d=Math.min(30000,1500*2**n);
+ FAIL={k:want,n,until:performance.now()+d};setTimeout(()=>req(gv),d+60)}
+async function build0(gv,key,stage){busy=true;const want=sig(gv,key);try{const v=viewBox(gv);if(!v){busy=false;failed(gv,want);return}const PI=picOf(key);if(!PI){busy=false;return}
  const [nx,ny]=gridFor(v,stage),dlon=(v.lon1-v.lon0)/nx,dlat=(v.lat1-v.lat0)/ny;
- const R=await heights(gv,v,nx,ny,{PI,maxT:36,fade:true,stop:()=>gv._moving});if(!R){busy=false;return}const {out,H,LND,z,N}=R;
+ /* at most 36 tiles, 80 on a sharp (Retina) screen: with 36, the four times as many cells got tiles a zoom coarser than the
+    cells, and zoomed right in the close-up stopped getting sharper (the Alps stayed at zoom 10, 2.5 cells a tile pixel) */
+ const R=await heights(gv,v,nx,ny,{PI,maxT:dprNow()>1.5?80:36,fade:true,stop:()=>gv._moving});if(!R){busy=false;failed(gv,want);return}const {out,H,LND,z,N}=R;FAIL.k="";
  if(sig(gv,key)!==want){busy=false;return}
  const G=gv.gl&&gv.gl.gl;if(!G){busy=false;return}const t=P&&P.gl===G?P.tex:G.createTexture();G.activeTexture(G.TEXTURE6);G.bindTexture(G.TEXTURE_2D,t);G.pixelStorei(G.UNPACK_FLIP_Y_WEBGL,false);
  G.texImage2D(G.TEXTURE_2D,0,G.RGBA,nx,ny,0,G.RGBA,G.UNSIGNED_BYTE,new Uint8Array(out.buffer));[G.TEXTURE_MIN_FILTER,G.TEXTURE_MAG_FILTER].forEach(p=>G.texParameteri(G.TEXTURE_2D,p,G.LINEAR));
@@ -155,14 +175,23 @@ window.gfElevHeight=function(ll){if(iceZone(ll[0],ll[1])){/* on the ice sheets, 
    (stage 1). After the view moves, the quick one is only made again if the last close-up does not cover the new view or
    is coarser than it would be; otherwise the sharp one is made straight away and swapped in. */
 const ON=11.4*1.05,FADE=260;
+/* whether a close-up of the view would be finer than the picture: its cells (a device pixel each, at most 2048 across)
+   at least ON a degree. Zoomed in a little on a wide view (far from the equator the view spans many more longitudes)
+   they were not: at 46 degrees north the first close-up had about 6 cells a degree, so it was blurrier than the
+   picture it replaced (and on the Alps none came at all until zoomed in further). Then the picture is kept, and the
+   quick half-size look (stage 0) is made only when it too is finer than the picture. Worked out once a view. */
+const fineFor=(v,stage)=>{if(!v)return false;const g=gridFor(v,stage);return g[0]/(v.lon1-v.lon0)>=ON&&g[1]/(v.lat1-v.lat0)>=ON};
+let FQ={k:"",ok:false};
+function fine(gv,k){if(FQ.k!==k)FQ={k,ok:fineFor(viewBox(gv),1)};return FQ.ok}
 /* whether the last close-up covers what is on screen (the view box without the margin viewBox adds) */
 function covers(v){if(!P||!v)return false;const mx=(v.lon1-v.lon0)/22,my=(v.lat1-v.lat0)/22,l=((v.lon0+mx-P.bb[0])%360+360)%360;
  return l+(v.lon1-v.lon0-2*mx)<=P.bb[2]+1e-6&&v.lat1-my<=P.bb[1]+1e-6&&v.lat0+my>=P.bb[1]-P.bb[3]-1e-6}
 const req=gv=>{try{gv.request?gv.request():gv.render()}catch(e){}};
 const patch=function(G,o){const gv=o&&o.gv;if(!gv||gv._flat||o.key!=="elevation")return null;const ppd=o.s*Math.PI/180;if(ppd<ON)return null;
  if(P&&P.gl!==G.gl)P=null;const k=sig(gv,o.key);
- if((!P||P.key!==k||P.stage<1)&&!busy){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving){timer=setTimeout(go,250);return}if(busy)return;
-   let st=1;if(!P||P.key!==sig(gv,o.key)){const v=viewBox(gv);if(v){const c0=(v.lon1-v.lon0)/gridFor(v,0)[0];if(!covers(v)||P.cell>c0*1.01)st=0}}
+ if(!fine(gv,k))return null;
+ if((!P||P.key!==k||P.stage<1)&&!busy&&!(FAIL.k===k&&performance.now()<FAIL.until)){clearTimeout(timer);timer=setTimeout(function go(){if(gv._moving){timer=setTimeout(go,250);return}if(busy)return;
+   let st=1;if(!P||P.key!==sig(gv,o.key)){const v=viewBox(gv);if(v){const c0=(v.lon1-v.lon0)/gridFor(v,0)[0];if((!covers(v)||P.cell>c0*1.01)&&fineFor(v,0))st=0}}
    build(gv,o.key,st).then(()=>req(gv))},P&&P.key===k?30:250)}
  if(!P)return null;const now=performance.now(),a=Math.max(0,Math.min(1,(now-P.t0)/FADE));if(a<1)requestAnimationFrame(()=>req(gv));lastShown=now;return{tex:P.tex,bb:P.bb,a}};
 /* a new close-up fades in only after a frame drawn without one; otherwise it replaces the shown one in one swap (it is made
