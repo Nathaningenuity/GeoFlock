@@ -209,22 +209,33 @@ function seaCol(ctx,pj,s,W){if(s._sea!==undefined)return s._sea;if(!STILL){PEND=
    Tablazo Bay, lagoons like Lagoa dos Patos) is drawn in the sea's colour, not the lakes' pale blue. A lake is joined when
    it shares points with the sea in the same tile, touches water already found to be joined, or is a known sea lake. */
 const SEA_IDS=new Set();
+/* a lake split over tiles is open to the sea when any piece of it is (a piece in a tile with no sea, such as the middle of the
+   Venetian Lagoon, used to stay a lake, outlined and named after a river ending in it): the lake's id is remembered, at the tile
+   zoom it was found at. Found in a sharp tile (zoom 10 and up) it holds at every zoom; found in a coarse one, only at that zoom
+   (a coarse tile's coast is rough, so a closed lake near it can pass for open there) */
+const SEA_AT=new Map();
+const seaJ=K=>{if(K.cls==="river")return false;if(K._sea)return true;if(K.id==null)return false;if(SEA_IDS.has(K.id))return true;const A=SEA_AT.get(K._z);return!!(A&&A.has(K.id))};
 function vkeys(rings,set){rings.forEach(r=>{for(let i=0;i<r.length;i+=3){if(r[i+2])continue;set.add(r[i].toFixed(4)+","+r[i+1].toFixed(4))}})}
 function shares(K,set){let n=0;for(const r of K.rings)for(let i=0;i<r.length;i+=3){if(r[i+2])continue;if(set.has(r[i].toFixed(4)+","+r[i+1].toFixed(4))&&++n>=2)return true}return false}
-/* lakes right on the coast (lagoons and limans behind a sand bar, like those around Odessa): any point within about 2 km of the sea */
-const NEAR=.02;
-function coastGrid(d){const G=new Map();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>{for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const k=Math.floor(r[i]/NEAR)+","+Math.floor(r[i+1]/NEAR);let a=G.get(k);if(!a)G.set(k,a=[]);a.push(r[i],r[i+1])}})});return G}
-function nearCoast(K,G){if(!G.size)return false;for(const r of K.rings)for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const x=r[i],y=r[i+1],cx=Math.floor(x/NEAR),cy=Math.floor(y/NEAR);
-  for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const P=G.get((cx+a)+","+(cy+b));if(!P)continue;for(let j=0;j<P.length;j+=2){const dx=(P[j]-x)*Math.cos(y*Math.PI/180),dy=P[j+1]-y;if(dx*dx+dy*dy<NEAR*NEAR)return true}}}return false}
-function seaLinks(d){if(d._seaDone)return;d._seaDone=1;try{const S=new Set();d.ocean.forEach(o=>{if(!isLakeSea(o))vkeys(o.rings,S)});const CG=coastGrid(d);
+/* lakes right on the coast and open to it (lagoons behind a sand bar with an inlet, as the Venetian Lagoon): a point of the
+   lake's shore within about 400 m of the sea's edge in the same tile (measured to the coast's lines, not only its points). A
+   closed lake behind the dunes, further off, stays a lake (it used to be anything within 2 km) */
+const NEAR=.004;
+function coastGrid(d){const G=new Map();const add=r=>{const n=r.length/3;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&&r[j+2])continue;const x1=r[i],y1=r[i+1],x2=r[j],y2=r[j+1];
+  /* the segment goes into every cell along it */const st=Math.max(1,Math.ceil(Math.hypot(x2-x1,y2-y1)/(NEAR*.5)));if(st>4000)continue;let last=null;
+  for(let q=0;q<=st;q++){const x=x1+(x2-x1)*q/st,y=y1+(y2-y1)*q/st,key=Math.floor(x/NEAR)+","+Math.floor(y/NEAR);if(key===last)continue;last=key;let a=G.get(key);if(!a)G.set(key,a=[]);a.push(x1,y1,x2,y2)}}};
+ d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(add)});G.add=add;return G}
+function nearCoast(K,G,tol){tol=tol||NEAR;const w=Math.ceil(tol/NEAR);if(!G.size)return false;for(const r of K.rings)for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const x=r[i],y=r[i+1],c=Math.cos(y*Math.PI/180),cx=Math.floor(x/NEAR),cy=Math.floor(y/NEAR);
+  for(let a=-w;a<=w;a++)for(let b=-w;b<=w;b++){const P=G.get((cx+a)+","+(cy+b));if(!P)continue;for(let j=0;j<P.length;j+=4){const vx=(P[j+2]-P[j])*c,vy=P[j+3]-P[j+1],px=(x-P[j])*c,py=y-P[j+1],L2=vx*vx+vy*vy;let u=L2?(px*vx+py*vy)/L2:0;u=Math.max(0,Math.min(1,u));const dx=px-u*vx,dy=py-u*vy;if(dx*dx+dy*dy<tol*tol)return true}}}return false}
+function seaLinks(d,z){if(d._seaDone)return;d._seaDone=1;z=z||12;/* how near counts as touching: about 400 m, more in coarse tiles (their coast is simplified) */const tol=Math.max(NEAR,720/Math.pow(2,z)/256);try{const S=new Set();d.ocean.forEach(o=>{if(!isLakeSea(o))vkeys(o.rings,S)});const CG=coastGrid(d);
  /* the Caspian is drawn as sea by the picture: water joined to it (Garabogazköl) is sea-coloured too */
- d.lakes.concat(bigLakes(d)).forEach(K=>{if(!isCaspian(K))return;vkeys(K.rings,S);K.rings.forEach(r=>{for(let i=0;i<r.length;i+=3){if(r[i+2])continue;const k=Math.floor(r[i]/NEAR)+","+Math.floor(r[i+1]/NEAR);let a=CG.get(k);if(!a)CG.set(k,a=[]);a.push(r[i],r[i+1])}})});
+ d.lakes.concat(bigLakes(d)).forEach(K=>{if(!isCaspian(K))return;vkeys(K.rings,S);K.rings.forEach(CG.add)});
  const L=d.lakes;/* only water joined to the sea directly counts: river channels are sea-coloured as rivers, but do not pass the sea on to
     the lakes and reservoirs along them (Sobradinho on the São Francisco stays a lake) */
- L.forEach(K=>{if(K.cls==="river"){K._sea=false;return}K._sea=(K.id!=null&&SEA_IDS.has(K.id))||(!isCaspian(K)&&isSeaLake(K))||(S.size>0&&shares(K,S))||(!isCaspian(K)&&nearCoast(K,CG))});
+ L.forEach(K=>{if(K.cls==="river"){K._sea=false;return}K._z=z;K._sea=(!isCaspian(K)&&isSeaLake(K))||(S.size>0&&shares(K,S))||(!isCaspian(K)&&nearCoast(K,CG,tol))||(inLagoon(K)&&nearCoast(K,CG,.03))});
  /* joined through other joined water (a bay, then the lake behind it) */
  for(let pass=0;pass<4;pass++){const J=new Set();L.forEach(K=>{if(K._sea&&K.cls!=="river")vkeys(K.rings,J)});let more=false;L.forEach(K=>{if(!K._sea&&K.cls!=="river"&&!isCaspian(K)&&J.size&&shares(K,J)){K._sea=true;more=true}});if(!more)break}
- L.forEach(K=>{if(K._sea&&K.id!=null)SEA_IDS.add(K.id)})}catch(e){console.error(e)}}
+ let A=SEA_AT.get(z);if(!A)SEA_AT.set(z,A=new Set());L.forEach(K=>{if(K._sea&&K.id!=null&&K.cls!=="river"){A.add(K.id);if(z>=10)SEA_IDS.add(K.id)}})}catch(e){console.error(e)}}
 /* ---- the sea colour along each stretch of coast ---- */
 const CH=24;/* points per stretch */
 function colSig(I){let a="";try{const st=gfMS().style;a=st+"|"+JSON.stringify((window.gfReliefAdj&&gfReliefAdj.ADJ&&gfReliefAdj.ADJ[st])||"")+"|"+(window.gfLakeColor&&gfLakeColor())}catch(e){}return I.texKey+"|"+a+"|"+(window._gfSeaSig||"")}
@@ -294,6 +305,8 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
     outline is grown a little, still kept to the water, so no rim of the picture's colour shows along a rough shore */
  if(ov.lakes&&(elev||shal)&&window.gfSeaLake)try{const LK=(globeOverlays().lakes||[]).filter(L=>L&&L.n&&!/^(Caspian|Garabogaz|Kara-?Bogaz)/.test(L.n)&&gfSeaLake(L.n));if(LK.length){const LP=d3.geoPath(g.projection(),ctx);
    each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");ctx.beginPath();LK.forEach(L=>LP(L));ctx.fillStyle=elev?"#bedaee":shal;ctx.fill();if(!elev){ctx.strokeStyle=shal;ctx.lineWidth=3;ctx.lineJoin="round";ctx.stroke()}})}}catch(e){}
+ /* which water is open to the sea, over every tile on show first: a lake split over tiles then reads the same in each */
+ if(ov.lakes&&seaC)s.tiles.forEach(t=>{if(t.d)seaLinks(t.d,t.z)});
  if(ov.lakes){/* Satellite: only when Lakes is switched on (hover works either way), in clear blue, small lakes coming in with the zoom */
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":elev?"#bedaee"/* Elevation: lakes in its lightest blue (the shallowest water on its scale) */:I.drewRaster?((window.gfLakeColor&&gfLakeColor())||seaC||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
@@ -301,7 +314,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
   each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();/* (Elevation: pieces of sea that lie in a sea lake's rough outline are left to the depth picture: filled, they made straight-edged blocks off Maracaibo) */const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster&&!elev?bigLakes(d).filter(K=>!isCaspian(K)&&!(shal&&isNamedSea(K))):[]);/* (Relief: a named sea lake's tile-sized piece of sea is not filled: it runs on to the tile's edge, over the Gulf of Venezuela, and
      made straight-edged blocks there; the lake is the tiles' own sharp lake and the outline above) */
    /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
-   if(seaC)seaLinks(d);/* big lakes that the tiles store as sea (Lake Albert, the Great Lakes) stay lakes, unless they are a known sea lake (Maracaibo) */const SL=seaC?L0.filter(K=>K._sea||(K._big&&!isCaspian(K)&&window.gfSeaLake&&gfSeaLake(K.n||""))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
+   if(seaC)seaLinks(d);/* (every tile on show was looked at first, below) *//* big lakes that the tiles store as sea (Lake Albert, the Great Lakes) stay lakes, unless they are a known sea lake (Maracaibo) */const SL=seaC?L0.filter(K=>seaJ(K)||(K._big&&!isCaspian(K)&&window.gfSeaLake&&gfSeaLake(K.n||""))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
    if(SL.length&&(seaC||!ne)){/* Elevation: a named lake (Maracaibo, Lagoa dos Patos) in the lakes' blue like every other lake; only bays and
      estuaries open to the sea keep the shallow-sea colour, so they join the sea beside them */
    const isLk=K=>isSeaLake(K)||(window.gfSeaLake&&K.n&&gfSeaLake(K.n));
@@ -348,6 +361,17 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
 const LAB={lake:"Lake",river:"River",pond:"Pond",dock:"Dock",basin:"Reservoir",reservoir:"Reservoir",lagoon:"Lagoon",stream:"Stream",canal:"Canal",drain:"Drain",ditch:"Ditch",swimming_pool:"Pool"};
 function d3poly(rings){/* d3 wants each piece wound the other way from the tile's; check by area */const pol=rings.map(r=>{const c=[];for(let i=0;i<r.length;i+=3)c.push([r[i],r[i+1]]);if(c.length&&(c[0][0]!==c[c.length-1][0]||c[0][1]!==c[c.length-1][1]))c.push(c[0].slice());return c});
  let P={type:"Polygon",coordinates:pol};try{if(d3.geoArea(P)>2*Math.PI)P={type:"Polygon",coordinates:pol.map(r=>r.slice().reverse())}}catch(e){}return P}
+/* well-known lagoons open to the sea, for naming them on hover when the tiles do not: name, longitude, latitude, reach in degrees */
+const LAGOONS=[["Venetian Lagoon",12.33,45.4,.25],["Lagoon of Marano and Grado",13.25,45.72,.22],["Sacca di Goro",12.33,44.81,.07],["Valli di Comacchio",12.17,44.62,.13],
+ ["Laguna Madre",-97.4,26.9,.9],["Laguna Madre",-97.6,24.6,.8],["Pamlico Sound",-76.0,35.25,.65],["Albemarle Sound",-76.1,36.05,.4],["Currituck Sound",-75.85,36.4,.2],
+ ["Indian River Lagoon",-80.6,28.0,.9],["Laguna de Términos",-91.55,18.65,.4],["Lagos Lagoon",3.55,6.5,.15],["Lekki Lagoon",4.1,6.5,.15],["Ébrié Lagoon",-4.15,5.28,.4],
+ ["Keta Lagoon",.9,5.9,.2],["Curonian Lagoon",21.1,55.3,.45],["Vistula Lagoon",19.85,54.45,.4],["Szczecin Lagoon",14.15,53.77,.25],["Ria Formosa",-7.85,37.0,.2],
+ ["Mar Menor",-.79,37.72,.15],["Étang de Thau",3.6,43.4,.12],["Lake Manzala",32.05,31.3,.3],["Lake Burullus",30.85,31.5,.3],["Lake Edku",30.25,31.25,.1],
+ ["Chilika Lake",85.35,19.7,.35],["Pulicat Lake",80.2,13.55,.25],["Vembanad Lake",76.37,9.6,.4],["Lagoa dos Patos",-51.3,-31.0,1.2],["Mar Chiquita",-57.42,-37.65,.1]];
+/* a piece of a well-known lagoon joined to the sea only by canals or a channel (Valli di Comacchio, Lagos Lagoon) is sea when it
+   lies within about 3 km of the sea in its tile */
+function inLagoon(K){if(K._lg===undefined){const b=K.bb;K._lg=!!lagoonAt([(b[0]+b[2])/2,(b[1]+b[3])/2])}return K._lg}
+function lagoonAt(ll){let best=null,bd=1;for(const[n,x,y,r]of LAGOONS){const d=Math.hypot((ll[0]-x)*Math.cos(y*Math.PI/180),ll[1]-y)/r;if(d<bd){bd=d;best=n}}return best}
 function lakeAt(s,ll){for(const t of s.tiles){if(!t.d)continue;for(const K of t.d.lakes.concat(bigLakes(t.d).filter(K=>!isNamedSea(K)))){if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])continue;if(inRings(K.rings,ll))return K}}return null}
 /* lakes the tiles leave unnamed (Crater Lake…) are named from a list of about 7,000 named lakes and their positions
    (Wikidata, CC0): a named point inside the lake, or just off its shore, names it */
@@ -364,12 +388,14 @@ function riverThrough(s,K){if(K._rt!==undefined)return K._rt;K._rt=null;const cn
 function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out={};
  /* close up, a lake is outlined from the tiles' sharp shape, every piece of it; named from the tiles, or else from the map's own lake
     under the pointer, or else by its kind ("Lake", "Reservoir"...) */
- if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
-   let name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||gz||null;
+ if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||(seaJ(K)&&lagoonAt(ll)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
+   /* water open to the sea (a lagoon) is named as the lagoon, from a short list of well-known ones where the tiles carry no name,
+      else just "Lagoon": never after a river that ends in it (the Venetian Lagoon read "Fiume Marzenego - Osellino Foce") */
+   const sj=seaJ(K);let name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||(sj&&lagoonAt(ll))||gz||null;
    /* an unnamed lake that a named river runs through is a widening of that river (Lac Saint-Pierre on the St. Lawrence, the
       lakes strung along the Ottawa): called by the river's name, not just "Lake" */
-   if(!name){const rn=riverThrough(s,K);if(rn)name=rn}
-   name=name||LAB[K.cls]||"Lake";const co=[];
+   if(!name&&!sj){const rn=riverThrough(s,K);if(rn)name=rn}
+   name=name||(sj?"Lagoon":LAB[K.cls]||"Lake");const co=[];
    const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);
    /* filled from every tile on show (a part not yet loaded sharply is still covered), but outlined only from the sharpest tiles
       that hold this lake: a coarser parent tile would add its rough outline on top of the sharp one */
@@ -379,7 +405,7 @@ function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out=
     if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))co.push(d3poly(Q.rings).coordinates)})});
    const ed=[];const shore=rings=>rings.forEach(r=>{const n=r.length/3;let cur=null;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if(r[i+2]&r[j+2]){if(cur&&cur.length>1)ed.push(cur);cur=null;continue}if(!cur)cur=[[r[i],r[i+1]]];cur.push([r[j],r[j+1]])}if(cur&&cur.length>1)ed.push(cur)});
    T2.forEach(t=>{t.d.lakes.forEach(Q=>{if(same(Q))shore(Q.rings)});if(K._big)bigLakes(t.d).forEach(Q=>{if(Q===K||(K.n&&Q.n===K.n))shore(Q.rings)})});
-   out.water=name;out.lake={type:"MultiPolygon",coordinates:co,n:out.water,dry:!!K.int,edge:{type:"MultiLineString",coordinates:ed}};/* (dry: often dry, drawn faint on the map, so faint when hovered too) */return out}}
+   out.water=name;out.lake={type:"MultiPolygon",coordinates:co,n:out.water,dry:!!K.int,sea:sj/* (drawn as sea: the hover outlines it only) */,edge:{type:"MultiLineString",coordinates:ed}};/* (dry: often dry, drawn faint on the map, so faint when hovered too) */return out}}
  if(ov.rivers&&allMapsColorMode!=="satellite"){const pj=projector(g),rc=g.canvas.getBoundingClientRect(),mx=cx-rc.left,my=cy-rc.top;let best=6,hit=null;const pad=.5;
   s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best&&R.name&&(t=>t==="major"||t!=="stream"&&g.zoom/(window.gfRiverLate?gfRiverLate(g):1)>18*Math.pow(4/reach(R),.7)*1.25&&(t==="medium"||g.zoom/(window.gfRiverLate?gfRiverLate(g):1)>60))(R._t||(R._t=tier(R)))){best=d;hit=R}}a=b}})})});
   if(hit){const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(R===hit||(hit.name&&R.name===hit.name))R.ls.forEach(l=>{const c=[];for(let i=0;i<l.length;i+=3)c.push([l[i],l[i+1]]);co.push(c)})})});
@@ -598,7 +624,7 @@ function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||
    polys.forEach(P=>{const pg={type:"Polygon",coordinates:P};let bb;try{bb=CP.bounds(pg)}catch(e){return}if(!isFinite(bb[0][0]))return;
     if(Math.max(bb[1][0]-bb[0][0],bb[1][1]-bb[0][1])>18)return;ctx.beginPath();CP(pg);st.forEach(([c,w])=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()})})});ctx.restore()}catch(e){}
  return true}
-window.gfDetail={hotSharp:()=>false/* highlights use the map's own outline too */,seaAt:lls=>seaAt(lls).catch(()=>null),sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:K._sea,casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)}/* zoomed in, the coast and border lines are the tiles' alone (the map's own outline is then drawn only as the hover highlight) */,draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
+window.gfDetail={hotSharp:()=>false/* highlights use the map's own outline too */,seaAt:lls=>seaAt(lls).catch(()=>null),sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:seaJ(K),casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)}/* zoomed in, the coast and border lines are the tiles' alone (the map's own outline is then drawn only as the hover highlight) */,draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
 setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.host;if(!h)return;let c=h.querySelector(".gf-dt-cred");const v=!!(g&&on(g));if(v&&!c){c=document.createElement("div");c.className="gf-dt-cred";c.innerHTML='Detail © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';h.appendChild(c)}if(c)c.hidden=!v}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=".gf-dt-cred{position:absolute;right:62px;bottom:4px;z-index:6;font:500 9.5px system-ui,sans-serif;color:#33475b;background:rgba(255,255,255,.62);padding:1px 6px;border-radius:6px;pointer-events:auto}.gf-dt-cred a{color:inherit}.gf-dt-cred[hidden]{display:none}";document.head.appendChild(st)}
