@@ -303,7 +303,16 @@ function globeDraw(ctx,p,gv){if(!relOn())return;loadRegions();const path=d3.geoP
    if(r.bands&&Math.max(rv.sw,rv.sh)>=4)drawBands(E,r.f,rv,r.bands,[r.f],anchorOf(f));else drawPlain(E,r.f,rv,SYM_OF[rk],[r.f],COL_OF[rk])});
   /* the regions' borders, faintly */
   ctx.strokeStyle="rgba(255,255,255,0.7)";ctx.lineWidth=0.8;ctx.beginPath();R.forEach(r=>{if(r.b[1][1]>=v.la0&&r.b[0][1]<=v.la1)path(r.f)});ctx.stroke();ctx.strokeStyle=SYM_FILL;ctx.restore()});
+ /* the hover highlight goes on top of the patterns: the region under the pointer where the country has regions, else the country */
+ try{const hc=gv&&gv.hot;if(hc){const f=feats.find(x=>x.properties&&x.properties.c===hc&&x.geometry);
+  if(f&&(catShown(hc)||regionsOf(hc))){let g=f;const R=regionsOf(hc);if(R&&gv._relLL){const r=regionAt(hc,gv._relLL);if(r)g=r.f}
+   ctx.beginPath();path(g);ctx.lineJoin="round";ctx.strokeStyle="rgba(20,30,45,.45)";ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=2.2;ctx.stroke()}}}catch(e){}
  ctx.restore()}
+/* the globe remembers where the pointer is, so the hovered region can be outlined; it redraws when the region changes */
+if(typeof GlobeView!=="undefined"&&!GlobeView.prototype._hover._gfRel){const _hv=GlobeView.prototype._hover;
+ GlobeView.prototype._hover=function(e){const r=_hv.apply(this,arguments);try{if(relOn()&&this.hot&&regionsOf(this.hot)){const h=this.hit(e.clientX,e.clientY);if(h&&h.ll){
+   const rr=regionAt(this.hot,h.ll),id=rr?rr.n:null;this._relLL=h.ll;if(id!==this._relId){this._relId=id;this.request()}}}else{this._relLL=null;this._relId=null}}catch(err){}return r};
+ GlobeView.prototype._hover._gfRel=1}
 function patchGlobe(){try{if(typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._relPatched){const d0=amGlobe.cfg.drawExtra;
   amGlobe.cfg.drawExtra=(ctx,p,gv)=>{if(d0)d0(ctx,p,gv);try{globeDraw(ctx,p,gv)}catch(e){console.error(e)}};amGlobe._relPatched=true;amGlobe.request()}}catch(e){}}
 {const _gs=amGlobeSync;amGlobeSync=function(){const r=_gs.apply(this,arguments);patchGlobe();return r}}
@@ -314,7 +323,7 @@ function patchGlobe(){try{if(typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._re
  /* the mixed look, in one line, with a striped swatch, before the sources */
  const sw=`<i class="gf-rel-sw gf-rel-mix" aria-hidden="true"></i>`;
  return h.replace(/<span class="legend-note">/,`<span class="legend-note gf-rel-mixnote">${sw}${MIX_LINE}</span><span class="legend-note">`)}}
-const css=document.createElement("style");css.textContent=`.legend-swatch i.gf-rel-sw{width:22px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;flex:none}.legend-swatch i.gf-rel-sw svg{width:82%;height:82%;display:block}.gf-rel-mixnote{display:flex;align-items:center;gap:6px}.gf-rel-mixnote i.gf-rel-mix{width:22px;height:16px;border-radius:3px;flex:none;background:repeating-linear-gradient(135deg,#3e9a62 0 5px,#8ea8c9 5px 9px)}`;
+const css=document.createElement("style");css.textContent=`.globe-tip{max-width:min(380px,70vw);white-space:normal !important;line-height:1.3}.legend-swatch i.gf-rel-sw{width:22px;height:22px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;flex:none}.legend-swatch i.gf-rel-sw svg{width:82%;height:82%;display:block}.gf-rel-mixnote{display:flex;align-items:center;gap:6px}.gf-rel-mixnote i.gf-rel-mix{width:22px;height:16px;border-radius:3px;flex:none;background:repeating-linear-gradient(135deg,#3e9a62 0 5px,#8ea8c9 5px 9px)}`;
 document.head.appendChild(css);
 
 /* ---------- hover: every group's share, for the country or, where it has its own figures, the region ---------- */
