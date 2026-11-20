@@ -414,7 +414,11 @@ function leaveModels(forget){if(!window._gfModels)return;window._gfModels=false;
 function renderTab(){if(!onModels())return;const v=document.getElementById("triviaView");if(!v)return;
  const L=models();if(v.querySelector(".gfm-br")&&v._gfmN===L.length){fixTabs();return}
  v.innerHTML=browserHTML(false);v._gfmN=L.length;wireBrowser(v.querySelector(".gfm-br"),openModel);fixTabs()}
+/* Models is no longer a Study & Quiz subject (it stays in the map Toolkit): never add the tab, and take down one drawn earlier */
+const NO_SUBJ=true;
+try{const P=practiceState();if(P.lastM){P.lastM=false;try{saveStats()}catch(e){}}}catch(e){}
 function fixTabs(){const el=document.getElementById("prSubj");if(!el)return;
+ if(NO_SUBJ){el.querySelectorAll("[data-gfm-subj]").forEach(x=>x.remove());return}
  let b=el.querySelector('[data-gfm-subj]');
  if(!b){const n=el.querySelectorAll("[data-prs]").length;if(!n)return;b=document.createElement("button");b.type="button";b.setAttribute("role","tab");b.dataset.gfmSubj="models";b.style.cssText="--c:"+MCOL.c+";--d:"+MCOL.d;
   b.title="Every simulation and diagram, to play with (key "+(n+1)+")";b.innerHTML='<span class="pr-ic" aria-hidden="true">🧪</span>Models <kbd>'+(n+1)+'</kbd>';b.onclick=()=>{if(!onModels())openTab()};el.appendChild(b)}
@@ -424,7 +428,7 @@ function fixTabs(){const el=document.getElementById("prSubj");if(!el)return;
 /* leaving: any subject tab, the Trivia pill or another page */
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#prSubj [data-prs], #prChoose [data-prs], #prMoved, #appModeTriviaBtn, #appModePracticeBtn");if(!t)return;
  if(t.dataset.prs||t.id==="prMoved")practiceState().lastM=false;
- if(t.id==="appModePracticeBtn"){const P=practiceState();if(P.seen&&P.lastM&&!onModels()){e.preventDefault();e.stopImmediatePropagation();openTab()}return}
+ if(t.id==="appModePracticeBtn"){const P=practiceState();if(!NO_SUBJ&&P.seen&&P.lastM&&!onModels()){e.preventDefault();e.stopImmediatePropagation();openTab()}return}
  if(!onModels())return;leaveModels(!!t.dataset.prs);
  if(t.dataset.prs==="other"){e.preventDefault();e.stopImmediatePropagation();try{gfPracticeGo("other")}catch(err){}}},true);
 if(typeof switchAppMode==="function"&&!switchAppMode._gfm){const _s=switchAppMode;switchAppMode=function(m){const subj=["map","flag","capital","landforms"].includes(m);if(!entering){if(window._gfModels)leaveModels(subj);else if(subj)practiceState().lastM=false}return _s.apply(this,arguments)};switchAppMode._gfm=1}
