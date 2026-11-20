@@ -226,7 +226,7 @@ function humans(){if(!once("humans"))return;
 }
 
 function islandlife(){if(!once("islandlife"))return;
- ins("islandlife","Islands in the sky",{title:"Snake Island",view:[-50.5,-26,-44,-22],globe:[-46.67,-24.49,5],card:"left",gfSeaUI:1,
+ ins("islandlife","Islands in the sky",{title:"Snake Island",view:[-48.6,-25.6,-45.4,-23.3],globe:[-46.67,-24.49,6],card:"left",gfSeaUI:1,
   pins:[P([-46.674,-24.487],"Ilha da Queimada Grande"),P([-46.33,-23.96],"Santos")],
   stat:"Brazil bars almost everyone from an island where thousands of venomous snakes live, a kind found nowhere else",
   body:"When the sea rose at the end of the last ice age, about 11,000 years ago, it cut this hill off from the mainland, about 35 km away. Its lanceheads had no prey left on the ground, so they took to the trees to catch the migrating birds that stop to rest. A bitten bird can fly off and die out of reach, so the golden lancehead is thought to have evolved unusually fast-acting venom. Drag the sea level down to join the island to the mainland again.",

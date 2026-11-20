@@ -25,7 +25,23 @@ const ZOOMS=[
  {tour:"bremote",title:"Christmas Island",at:[105.63,-10.49],ringKm:12,img:"photos/s2-christmas.webp",name:"Christmas Island",sub:"about 19 km across · from space",credit:S2},
  {tour:"bremote",title:"Rapa Nui",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
  {tour:"bcollapse",title:"Easter Island",at:[-109.35,-27.12],ringKm:14,img:"photos/s2-rapanui.webp",name:"Rapa Nui (Easter Island)",sub:"about 24 km across · from space",credit:S2},
- {tour:"islandlife",title:"Krakatoa starts again",at:[105.42,-6.11],ringKm:7,img:"photos/s2-krakatau.webp",name:"Krakatoa",sub:"what is left of the 1883 volcano, Anak Krakatau in the middle",credit:S2}];
+ {tour:"islandlife",title:"Krakatoa starts again",at:[105.42,-6.11],ringKm:7,img:"photos/s2-krakatau.webp",name:"Krakatoa",sub:"what is left of the 1883 volcano, Anak Krakatau in the middle",credit:S2},
+ /* Added for places smaller than a pixel at their stop. Same source and method as the crops above: tiles of the EOX WMTS
+    layer s2cloudless_3857 (Sentinel-2 cloudless 2016, https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{row}/{col}.jpg),
+    stitched round the spot, cut to a square of the stated width and saved at 512 px. Sizes from the island's Wikipedia
+    article; lengths measured on the crop.
+    s2-snake.webp: Ilha da Queimada Grande, 2.5 km square, centre 24.4845°S 46.675°W.
+    s2-surtsey.webp: Surtsey, 3 km square, centre 63.303°N 20.605°W.
+    s2-hans.webp: Hans Island, 3 km square, centre 80.827°N 66.455°W (the island sits here on the image; the stop's pin is 1.5 km west).
+    s2-tristan.webp: Tristan da Cunha, 14 km square, centre 37.11°S 12.30°W.
+    s2-bluehole.webp: the Great Blue Hole in Lighthouse Reef, Belize, 4 km square, centre 17.316°N 87.535°W.
+    s2-niue.webp: Niue, 27 km square, centre 19.055°S 169.87°W. */
+ {tour:"islandlife",title:"Snake Island",at:[-46.675,-24.4845],ringKm:1.2,img:"photos/s2-snake.webp",name:"Ilha da Queimada Grande",sub:"0.43 km² · about 1.8 km long · from space",credit:S2},
+ {tour:"islands",title:"Island born in 1963",at:[-20.605,63.303],ringKm:1.2,img:"photos/s2-surtsey.webp",name:"Surtsey",sub:"about 1.3 km² in 2016, and shrinking",credit:S2},
+ {tour:"borders",title:"The whisky war island",at:[-66.455,80.827],ringKm:1,img:"photos/s2-hans.webp",name:"Hans Island",sub:"1.3 km² · split between Canada and Denmark",credit:S2},
+ {tour:"islands",title:"The loneliest island town",at:[-12.30,-37.11],ringKm:7,img:"photos/s2-tristan.webp",name:"Tristan da Cunha",sub:"about 11 km across · one volcano",credit:S2},
+ {tour:"caves",title:"Stalactites underwater",at:[-87.535,17.316],ringKm:1,img:"photos/s2-bluehole.webp",name:"The Great Blue Hole",sub:"about 300 m across, in Lighthouse Reef",credit:S2},
+ {tour:"migration",title:"Niue lives in Auckland",at:[-169.87,-19.055],ringKm:11,img:"photos/s2-niue.webp",name:"Niue",sub:"about 260 km² · one raised coral island",credit:S2}];
 let C=ZOOMS[0];
 const clean=s=>String(s==null?"":s).replace(/​/g,"").trim();
 const tourOn=()=>typeof ps!=="undefined"&&!!ps;
@@ -76,7 +92,7 @@ function place(){
  const R=Math.round(Math.max(56,Math.min(118,Math.min(vx1-vx0,vy1-vy0)*.15)));
  const small=innerWidth<=600,CAP=small?22:46,M=small?6:12,HW=Math.max(R,small?60:92),card=cardRect(br);
  /* other things on the map to keep clear of: the photo squares and the stop's own pins */
- const avoid=[];try{box.querySelectorAll(".ps-sq,.ps-pin,.ps-legend,.ps-tourlegend,.ps-mapkey,.ps-lbl,.globe-btns button").forEach(el=>{if(el.closest(".gf-eyez"))return;const q=el.getBoundingClientRect();if(q.width&&q.height)avoid.push({l:q.left-br.left,r:q.right-br.left,t:q.top-br.top,b:q.bottom-br.top})})}catch(e){}
+ const avoid=[];try{box.querySelectorAll(".ps-sq,.ps-pin,.ps-lab,.gf-ftag,.ps-legend,.ps-tourlegend,.ps-mapkey,.ps-lbl,.globe-btns button").forEach(el=>{if(el.closest(".gf-eyez"))return;{const ft=el.closest(".gf-ftags");if(ft&&ft.style.visibility==="hidden")return}const q=el.getBoundingClientRect();if(q.width&&q.height)avoid.push({l:q.left-br.left,r:q.right-br.left,t:q.top-br.top,b:q.bottom-br.top})})}catch(e){}
  const ok=(x,y)=>{const rc={l:x-HW,r:x+HW,t:y-R,b:y+R+CAP};
   if(rc.l<vx0+M||rc.r>vx1-M||rc.t<vy0+M||rc.b>vy1-M)return-1;
   if(card&&hits(rc,card))return-1;

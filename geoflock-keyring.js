@@ -10,7 +10,14 @@ const AUTO=false;
 const RINGS={
  "islands|An island in a lake on an island":[{at:[98.83,2.61],km:54}],
  "bbeagle|Galápagos: islands of difference":[{at:[-90.55,-0.6],km:150}],
- "bbeagle|Coral atolls: Cocos (Keeling)":[{at:[96.85,-12.15],km:28}]};
+ "bbeagle|Coral atolls: Cocos (Keeling)":[{at:[96.85,-12.15],km:28}],
+ /* small islands that are the point of their stop but less than a few pixels across there (centres from the map's own
+    island shapes; Funafuti on its lagoon; Funk Island and Eldey from the stop's pins) */
+ "oceania|Tuvalu’s lucky letters":[{at:[179.13,-8.52],km:14}],
+ "bcollapse|Pitcairn and Henderson":[{at:[-134.97,-23.12],km:12},{at:[-130.107,-25.07],km:4},{at:[-128.317,-24.366],km:7}],
+ "bcollapse|Societies that succeeded":[{at:[168.813,-12.278],km:4}],
+ "hantarctica|Endurance":[{at:[-55.235,-61.156],km:18}],
+ "bextinction|The great auk":[{at:[-53.18,49.76],km:3},{at:[-22.96,63.74],km:3}]};
 const SMALL=110;/* a ring this many pixels across or more is not a small place any more */
 const KINDS={islands:1,groups:1,lakes:1};
 const NS="http://www.w3.org/2000/svg";
