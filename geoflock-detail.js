@@ -238,7 +238,7 @@ function seaLinks(d,z){if(d._seaDone)return;d._seaDone=1;z=z||12;/* how near cou
  let A=SEA_AT.get(z);if(!A)SEA_AT.set(z,A=new Set());L.forEach(K=>{if(K._sea&&K.id!=null&&K.cls!=="river"){A.add(K.id);if(z>=10)SEA_IDS.add(K.id)}})}catch(e){console.error(e)}}
 /* ---- the sea colour along each stretch of coast ---- */
 const CH=24;/* points per stretch */
-function colSig(I){let a="";try{const st=gfMS().style;a=st+"|"+JSON.stringify((window.gfReliefAdj&&gfReliefAdj.ADJ&&gfReliefAdj.ADJ[st])||"")+"|"+(window.gfLakeColor&&gfLakeColor())}catch(e){}return I.texKey+"|"+a+"|"+(window._gfSeaSig||"")}
+function colSig(I){let a="";try{const st=gfMS().style;a=st+"|"+JSON.stringify((window.gfReliefAdj&&gfReliefAdj.ADJ&&gfReliefAdj.ADJ[st])||"")+"|"+(window.gfLakeColor&&gfLakeColor())+"|"+(window.gfRiverColor&&gfRiverColor())}catch(e){}return I.texKey+"|"+a+"|"+(window._gfSeaSig||"")}
 /* reads single pixels of the picture as drawn so far, in screen terms (one read of a small square around each point) */
 /* the picture is read once per frame, as a whole, the first time a colour is needed: hundreds of small reads each stalled the
    drawing (a zoom ran at a few frames a second) */
@@ -329,7 +329,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  /* Satellite: the tiles give the sharp coast and borders only; rivers are the map's own major ones (and lakes are in the photo) */
  if(ov.rivers&&!sat){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
-  const RC=(!elev&&seaC)||rivCol;ctx.fillStyle=RC;if(seaC&&!elev)ctx.globalAlpha=1;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});ctx.globalAlpha=rivA;
+  const RC=(!elev&&I.drewRaster&&window.gfRiverColor&&gfRiverColor())/* (the Relief map: the Palette's River colour) */||(!elev&&seaC)||rivCol;ctx.fillStyle=RC;if(seaC&&!elev)ctx.globalAlpha=1;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});ctx.globalAlpha=rivA;
   /* a river stops at a lake's shore: inside each tile, its lakes are cut out of where rivers are drawn */
   const lakeOut=d=>{if(!ov.lakes)return;const K=d.lakes.filter(k=>k.cls!=="river").concat(bigLakes(d));if(!K.length)return;const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);K.forEach(k=>k.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd")};
   /* major rivers bold from the start; every other river fades in at its own zoom, by how far it reaches (long ones first,

@@ -33,9 +33,11 @@ async function paint(u,W,B,T){const im=await load(u);const H=Math.round(im.heigh
  return await new Promise(r=>c.toBlob(b=>r(URL.createObjectURL(b)),"image/webp",.9))}
 let OUT={},N=0,busy=null;
 const has=st=>{const T=ADJ[st];return!!(T&&Object.keys(T).length)};
-async function build(st){const T=ADJ[st];if(!has(st)){OUT[st]=null;return}const B=await base(st),me=++N;
+/* each build (and "Back to the original") takes a new number; a build still painting when a newer one starts, or when the
+   shades are put back, is dropped when it finishes, so it can't bring old shades back */
+async function build(st){const T=ADJ[st],me=++N;if(!has(st)){OUT[st]=null;refresh();return}const B=await base(st);if(me!==N)return;
  const urls={w:await paint(SRC[st].w,2048,B,T),e:await paint(SRC[st].e,2048,B,T),all:await paint(SRC[st].all,4000,B,T),atlas:await paint(SRC[st].atlas,4000,B,T)};
- if(me!==N)return;const key="reliefAdj"+me;GLOBE_TEX[key]={kind:"halves",src:[urls.w,urls.e]};OUT[st]={key,urls};refresh()}
+ if(me!==N||!has(st))return;const key="reliefAdj"+me;GLOBE_TEX[key]={kind:"halves",src:[urls.w,urls.e]};OUT[st]={key,urls};refresh()}
 function refresh(){try{gfReliefApply()}catch(e){}try{GFG.sig=null;gfGlobeDirty()}catch(e){}try{amGlobe&&amGlobe.request()}catch(e){}}
 /* which globe texture and flat pictures to use now */
 function curKey(k){if(k!=="relief")return k;const st=style();if(st&&OUT[st])return OUT[st].key;return st==="natural"?"reliefNE":k}
@@ -55,7 +57,8 @@ async function section(p){const st=style();if(!st||p.querySelector(".gfra"))retu
  const go=async()=>{busyEl.hidden=false;try{await build(st)}finally{busyEl.hidden=true}};
  div.querySelectorAll("[data-ra]").forEach(inp=>inp.addEventListener("change",()=>{(ADJ[st]=ADJ[st]||{})[inp.dataset.ra]=inp.value;
    /* a well put back to its starting colour is no change */if(inp.value.toLowerCase()===hx(B[inp.dataset.ra]))delete ADJ[st][inp.dataset.ra];save();go()}));
- div.querySelector("[data-ra-reset]").onclick=()=>{delete ADJ[st];save();OUT[st]=null;refresh();div.querySelectorAll("[data-ra]").forEach(inp=>inp.value=hx(B[inp.dataset.ra]))}}
+ div.querySelector("[data-ra-reset]").onclick=()=>{N++;delete ADJ[st];save();OUT[st]=null;busyEl.hidden=true;
+  /* the sea colour remembered for rivers and sea lakes is read again from the original picture */try{delete window._gfSeaC}catch(e){window._gfSeaC=undefined}window._gfSeaSig=Date.now();refresh();div.querySelectorAll("[data-ra]").forEach(inp=>inp.value=hx(B[inp.dataset.ra]))}}
 new MutationObserver(()=>{const p=document.getElementById("gfkPal");if(p&&typeof allMapsColorMode!=="undefined"&&allMapsColorMode==="relief")section(p)}).observe(document.body,{childList:true,subtree:true});
 /* the shallow sea as the picture now shows it: the picture's own shallow-sea colour moved by your shades, the way every pixel
    is (a pixel is shared between the kinds of ground it is close to, so it moves only part of the way to the colour picked).
