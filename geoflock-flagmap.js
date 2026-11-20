@@ -1,12 +1,12 @@
-/* GeoFlock: two things for the Flags subject of Study & Quiz.
+/* GeoFlock: the Flags subject (top-bar Flags pill).
    1. "Flag map": a chip on the Flags study region row (next to Flag families, Flags tour and Flag history). It draws the world
       (Robinson, from the same PROJ_WORLD shapes as World Maps → Projections) with every country filled by its own flag: the flag
       image is clipped to the country's outline and stretched over the country's bounding box. A country's far-off parts
       (Alaska, Hawaii, French Guiana, Svalbard…) get a flag of their own sized to themselves; nearby islands share the main one.
       Overseas departments and parts the data counts as the owning country (countsAs) carry the owner's flag.
       Wheel / pinch / buttons zoom, drag pans, hover names the country, click opens its flag card.
-   2. First visits: the first time Study & Quiz is opened (localStorage gfFirstStudy) it opens on Flags › Study instead of the
-      subject chooser; the first time a Quiz tab is opened there (gfFirstQuiz) it goes to Flags › Quiz and starts the flags quiz.
+   2. (Removed.) First visits used to be steered to Flags (gfFirstStudy, gfFirstQuiz); now Places, Flags, Capitals and Other each
+      have their own top-bar pill and open on their own subject.
    A patch file: wraps renderChrome and renderActiveView after load, like geoflock-flags-extra.js. */
 (function(){
 if(typeof renderChrome!=="function"||typeof renderActiveView!=="function")return;
@@ -127,18 +127,5 @@ function draw(box){const M=build();const W=M.W,H=M.H,y0=M.y0;
    row.querySelectorAll('.chip:not([data-r="__flagmap__"])').forEach(x=>{if(!x._fm){x._fm=1;x.addEventListener("click",()=>{on=false},true)}})}}catch(e){console.error(e)}return r}}
 {const _rav=renderActiveView;renderActiveView=function(){const r=_rav.apply(this,arguments);try{if(on&&appMode==="flag"&&activeTab==="study")show()}catch(e){console.error(e)}return r}}
 
-/* ---------- first visits: Study opens on Flags, the first Quiz is the flags quiz ---------- */
-const prSeen=()=>{try{return!!(stats.practice&&stats.practice.seen)}catch(e){return false}};
-const inPractice=()=>(!!window._prOther&&appMode==="trivia")||["map","flag","capital","landforms"].includes(appMode);
-function flagsQuiz(){const q=()=>{const b=[...document.querySelectorAll('nav.tabs .tab-btn[data-tab="quiz"]')].find(x=>x.offsetParent);if(b)b.click();else{activeTab="quiz";try{quizSection="standard"}catch(e){}renderChrome();renderActiveView()}};
- if(appMode!=="flag"||window._prOther){if(typeof gfPracticeGo==="function")gfPracticeGo("flag",true);else switchAppMode("flag")}setTimeout(q,0)}
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#appModePracticeBtn, nav.tabs .tab-btn[data-tab=\"quiz\"], #landformsView [data-lfm=\"quiz\"], [data-prt=\"quiz\"]");if(!t)return;
- if(t.id==="appModePracticeBtn"){if(LS.get("gfFirstStudy"))return;LS.set("gfFirstStudy","1");if(prSeen())return;/* someone who has used Study before keeps the usual behaviour */
-  e.preventDefault();e.stopImmediatePropagation();
-  if(typeof gfPracticeGo==="function")gfPracticeGo("flag",true);else switchAppMode("flag");
-  if(activeTab!=="study"){activeTab="study";renderChrome();renderActiveView()}scrollTo(0,0);return}
- if(!inPractice()||LS.get("gfFirstQuiz"))return;LS.set("gfFirstQuiz","1");
- if(appMode==="flag"&&!window._prOther&&t.matches('nav.tabs .tab-btn[data-tab="quiz"]'))return;/* already the flags quiz: let the tab start it */
- e.preventDefault();e.stopImmediatePropagation();flagsQuiz()},true);
 window.gfFlagMap={open(){if(typeof gfPracticeGo==="function")gfPracticeGo("flag",true);activeTab="study";on=true;renderChrome();renderActiveView()}};
 })();

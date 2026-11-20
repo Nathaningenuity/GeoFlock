@@ -426,9 +426,8 @@ function fixTabs(){const el=document.getElementById("prSubj");if(!el)return;
  if(on){el.querySelectorAll("[data-prs]").forEach(x=>{x.classList.remove("on");x.setAttribute("aria-selected","false")});el.style.setProperty("--pr-c",MCOL.c);
   const t=document.getElementById("headerTitle"),st=document.getElementById("headerSubtitle");if(t&&t.textContent!=="Models")t.textContent="Models";const sub="simulations and diagrams to play with";if(st&&st.textContent!==sub)st.textContent=sub}}
 /* leaving: any subject tab, the Trivia pill or another page */
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#prSubj [data-prs], #prChoose [data-prs], #prMoved, #appModeTriviaBtn, #appModePracticeBtn");if(!t)return;
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("#prSubj [data-prs], #prSubj [data-pro], #prMoved, #appModeTriviaBtn, [data-pr-pill]");if(!t)return;
  if(t.dataset.prs||t.id==="prMoved")practiceState().lastM=false;
- if(t.id==="appModePracticeBtn"){const P=practiceState();if(!NO_SUBJ&&P.seen&&P.lastM&&!onModels()){e.preventDefault();e.stopImmediatePropagation();openTab()}return}
  if(!onModels())return;leaveModels(!!t.dataset.prs);
  if(t.dataset.prs==="other"){e.preventDefault();e.stopImmediatePropagation();try{gfPracticeGo("other")}catch(err){}}},true);
 if(typeof switchAppMode==="function"&&!switchAppMode._gfm){const _s=switchAppMode;switchAppMode=function(m){const subj=["map","flag","capital","landforms"].includes(m);if(!entering){if(window._gfModels)leaveModels(subj);else if(subj)practiceState().lastM=false}return _s.apply(this,arguments)};switchAppMode._gfm=1}
@@ -439,8 +438,8 @@ if(typeof renderChrome==="function"&&!renderChrome._gfm){const _rc=renderChrome;
 /* the subject tabs are redrawn by Study & Quiz itself: put Models back each time, and keep the page title */
 {const watch=()=>{const el=document.getElementById("prSubj");if(!el||el._gfmW)return!!el;el._gfmW=1;new MutationObserver(()=>fixTabs()).observe(el,{childList:true});fixTabs();return true};if(!watch()){const t=setInterval(()=>{if(watch())clearInterval(t)},300)}}
 {const t=document.getElementById("headerTitle");if(t)new MutationObserver(()=>{if(onModels()&&t.textContent!=="Models")fixTabs()}).observe(t,{childList:true,characterData:true,subtree:true})}
-/* key 6 opens Models while studying, as 1–5 open the other subjects; 5 goes back to Other */
-document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;
+/* (when Models was a subject tab) key 6 opened Models while studying, as 1–5 opened the other subjects; off with NO_SUBJ */
+document.addEventListener("keydown",e=>{if(NO_SUBJ||e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;
  const el=document.getElementById("prSubj");if(!el||el.classList.contains("pr-off")||!el.offsetParent)return;
  if(onModels()){if(/^[1-5]$/.test(e.key)){const b=el.querySelectorAll("[data-prs]")[+e.key-1];if(b){e.preventDefault();e.stopImmediatePropagation();b.click()}}return}
  const n=el.querySelectorAll("[data-prs]").length;if(e.key!==String(n+1))return;
