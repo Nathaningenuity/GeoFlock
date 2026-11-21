@@ -1,8 +1,8 @@
 /* GeoFlock: how seas nest inside each other, and Landforms sea levels.
    - GF_SEA_PARENT: which sea or ocean each sea, gulf or bay belongs to (roughly the International Hydrographic Organization's limits).
    - Landforms: the Pacific and the Atlantic are one shape each (not north and south halves).
-     Easy: oceans and the biggest seas, with the smaller seas inside them counted as part of them.
-     Medium: more seas named on their own, the smallest still merged.  Hard: every sea, gulf and bay on its own.
+     Every sea, gulf and bay is always its own shape. Easy: oceans, the biggest seas and the seas directly inside them.
+     Medium: more. Hard: every sea, gulf and bay.
    Loaded after the landforms data and before the main page script, which builds its lists from this data later. */
 (function(){
 window.GF_SEA_PARENT={
@@ -20,6 +20,8 @@ window.GF_SEA_PARENT={
  "Weddell Sea":"Southern Ocean","Ross Sea":"Southern Ocean","Amundsen Sea":"Southern Ocean","Bellingshausen Sea":"Southern Ocean","Scotia Sea":"Southern Ocean","Drake Passage":"Southern Ocean"};
 if(typeof LANDFORMS==="undefined"||!LANDFORMS.items)return;
 const P=window.GF_SEA_PARENT,L=LANDFORMS.items;
+/* islands known only by a point (drawn as little triangles) leave Landforms: every island left has its real outline */
+for(let i=L.length-1;i>=0;i--)if(L[i].cat==="islands"&&(!L[i].geom||L[i].geom.t!=="poly"))L.splice(i,1);
 /* the Caspian is a lake: listed once, with the lakes */
 const lakeNames=new Set(L.filter(x=>x.cat==="lakes").map(x=>x.name));
 for(let i=L.length-1;i>=0;i--)if(L[i].cat==="seas"&&lakeNames.has(L[i].name))L.splice(i,1);
@@ -34,14 +36,8 @@ const wm=x=>x.wm==null?4:x.wm;
 /* the nearest sea or ocean that is shown at this level */
 const host=(x,max)=>{let n=x.name,g=0;while(g++<8){const p=P[n];if(!p)return null;const h=byName.get(p);if(h&&wm(h)<=max)return h;n=p}return null};
 const SHOWN=[[1,1],[2,2],[3,9]];/* level: biggest wm shown on its own */
-const extra=[];
+/* every sea keeps its own shape at every level (never merged into a bigger one). A level shows the seas big enough for it
+   plus the seas sitting directly inside one of those (the Adriatic, Aegean, Tyrrhenian… inside the Mediterranean), each on its own */
 seas.forEach(x=>{x.lvs=[]});
-SHOWN.forEach(([lv,max])=>{
- seas.forEach(x=>{if(wm(x)>max)return;/* x is named on its own at this level; collect the smaller ones merged into it */
-  const kids=seas.filter(y=>y!==x&&wm(y)>max&&host(y,max)===x);
-  if(!kids.length){x.lvs.push(lv);return}
-  const names=kids.map(y=>y.name);
-  extra.push(Object.assign({},x,{id:x.id+"__L"+lv,lvs:[lv],geom:{t:"poly",c:polysOf(x.geom).concat(kids.flatMap(y=>polysOf(y.geom)))},incl:names,
-   fact:(x.fact?x.fact+" ":"")+"Here it includes the "+names.slice(0,6).join(", ")+(names.length>6?" and "+(names.length-6)+" more":"")+"."}))})});
-extra.forEach(x=>L.push(x));
+SHOWN.forEach(([lv,max])=>{seas.forEach(x=>{const p=byName.get(P[x.name]);if(wm(x)<=max||(p&&!/Ocean$/.test(p.name)&&wm(p)<=max&&(wm(x)<=max+1||p.name==="Mediterranean Sea")))x.lvs.push(lv)})});
 })();

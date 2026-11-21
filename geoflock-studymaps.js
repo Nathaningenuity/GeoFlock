@@ -37,8 +37,8 @@ if(document.body)start();else document.addEventListener("DOMContentLoaded",start
 /* ---------- styles ---------- */
 const LF={/* original colour → calmer, harmonious colour (day / night) */
   "#2f7fc4":["#3d86c6","#6aa9e0"],"#8d5a2b":["#a5643a","#e08a5e"],"#2b2b2b":["#3b3833","#ece6da"],"#d9480f":["#de5a24","#ff8a5c"],
-  "#e2ad2c":["#e8b440","#f4d360"],"#2f8a3e":["#3f9a58","#6cc185"],"#1c64c8":["#2f78c8","#72b4f0"],"#4aa3e0":["#55a9df","#7cc2f0"],
-  "#c2259a":["#1f8f86","#4fc6b6"],"#e0569f":["#5bb8a4","#8ad8c4"],"#7d3cc8":["#8a63c9","#b597ec"],"#5b6b82":["#6c7a90","#a4b1c6"],
+  "#e2ad2c":["#e8b440","#f4d360"],"#2f8a3e":["#6f9a34","#a3cf68"],"#1c64c8":["#2f78c8","#72b4f0"],"#4aa3e0":["#55a9df","#7cc2f0"],
+  "#c2259a":["#1690a8","#4fc4dc"],"#e0569f":["#56bfd3","#8fdcec"],"#7d3cc8":["#8a63c9","#b597ec"],"#5b6b82":["#6c7a90","#a4b1c6"],
   "#ffd21f":["#f2c230","#ffd85a"],"#c0392b":["#c6493c","#ff8577"]};
 const sel=(pre,col)=>pre+' [style*="--fc:'+col+'"]';
 const lfVars=Object.entries(LF).map(([o,[d,n]])=>sel("#landformsView .gf-lfmap",o)+"{--fc:"+d+" !important}"+
