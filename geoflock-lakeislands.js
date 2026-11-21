@@ -89,20 +89,28 @@ const onMaps=g=>{try{return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==
 const lakeShown=(ov,I)=>!!ov.lakes&&!(I.L&&I.L.minor&&!ov.minorLakes&&!window._gfMinorOn);
 /* pixels per degree of longitude at a point (small islands are only marked once the map is zoomed in that far) */
 const pxDeg=(p,ll)=>{const c=p(ll),q=p([ll[0]+.1,ll[1]]);return c&&q?Math.hypot(q[0]-c[0],q[1]-c[1])*10:0};
+/* the island as the map draws it when zoomed in: the sharp map tiles' holes in the lake around the island's rough outline (it and
+   its islets), so the highlight and the hover match the land on show. Falls back to the rough outline when the tiles do not
+   have it whole (not on show, or cut at a tile edge) */
+function sharpIsle(g,I){if(I.kind!=="s"||!window.gfDetail||!gfDetail.islesIn)return I.g;const pad=I.r*1.3*180/Math.PI,cl=Math.max(.2,Math.cos(I.c[1]*Math.PI/180));
+ const bb=[I.c[0]-pad/cl,I.c[1]-pad,I.c[0]+pad/cl,I.c[1]+pad];const R=gfDetail.islesIn(g,bb);if(!R)return I.g;if(I._shk===R.key)return I._sh;
+ const polys=[];let a=0;R.list.forEach(h=>{const m=[(h.bb[0]+h.bb[2])/2,(h.bb[1]+h.bb[3])/2];if(d3.geoDistance(m,I.c)>I.r*1.25)return;
+  const ring=h.ring.slice();if(ring[0][0]!==ring[ring.length-1][0]||ring[0][1]!==ring[ring.length-1][1])ring.push(ring[0].slice());const P=smallPoly(ring);polys.push(P.coordinates);a+=d3.geoArea(P)*R_KM*R_KM});
+ const sh=polys.length&&a>=.4*I.km2&&a<=2.5*I.km2?{type:"MultiPolygon",coordinates:polys}:I.g;I._shk=R.key;I._sh=sh;return sh}
 /* is this island shown, and where is the mouse on it? */
 function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g.cfg.overlays():{};const raster=!!(g.cfg.raster&&g.cfg.raster());
  const p=g.projection(),ctr=[-g.rot[0],-g.rot[1]];let best=null,bd=Infinity;
  for(const I of ISLES){if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.01)continue;
   const lakeOn=lakeShown(ov,I);const c=p(I.kind==="s"?I.c:I.ll);if(!c)continue;
   const d=Math.hypot(c[0]-mx,c[1]-my);
-  if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r+.002)continue;
+  if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r*1.3+.002)continue;/* (a quick test: its islets can lie a little beyond its rough outline) */
    /* size on screen: the island's radius in pixels */
    const e=p([I.c[0]+I.r*180/Math.PI/Math.max(.2,Math.cos(I.c[1]*Math.PI/180)),I.c[1]]),px=e?Math.abs(e[0]-c[0]):0;
    if(!lakeOn&&!(raster&&px*2>=BIG_ALONE_PX))continue;
    /* an island too small to see at this zoom is not hovered, unless the outlines (borders) layer draws its outline */
    {let ol=false;try{ol=typeof allMapsBordersOn!=="undefined"&&allMapsBordersOn!==false}catch(e){}if(!ol&&px*2<(sat()?10:6))continue}
    /* hovered only on the island itself, with no margin: the lake water round it is the lake's */
-   if(!d3.geoContains(I.g,ll))continue;if(d<bd){bd=d;best=I}}
+   if(!d3.geoContains(sharpIsle(g,I),ll))continue;if(d<bd){bd=d;best=I}}
   else{/* islands known only as a point have no outline on the map: not hovered (and no dot is drawn for them) */continue;if(!lakeOn||(d3.geoDistance(I.ll,ll)*R_KM>PT_KM&&d>TINY_PX)||sat())continue;/* on the satellite picture these islands are not drawn: nothing to hover */if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
  return best}
 /* small islands the lake is painted over show as a dot of land once the map is zoomed in far enough to see them
@@ -128,7 +136,7 @@ function install(){const P=GlobeView.prototype;
   try{const ctx=this.ctx,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),{w,h,r:R}=this.size(),p=this.projection(),dk=dark();
    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,R,0,2*Math.PI);ctx.clip()}
    ctx.lineJoin="round";ctx.lineCap="round";const fill=dk?"rgba(255,226,120,0.62)":"rgba(255,206,64,0.58)",edge=dk?"#fff3c4":"#7a4a00";
-   if(I.kind==="s"){const path=d3.geoPath(p,ctx);ctx.beginPath();path(I.g);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke()}
+   if(I.kind==="s"){const path=d3.geoPath(p,ctx);ctx.beginPath();path(sharpIsle(this,I));ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke()}
    else{const c=p(I.ll);if(c){ctx.beginPath();ctx.arc(c[0],c[1],4.2,0,2*Math.PI);ctx.fillStyle=dk?"#ffe27a":"#ffc52e";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#ffffff";ctx.stroke();ctx.beginPath();ctx.arc(c[0],c[1],5.6,0,2*Math.PI);ctx.lineWidth=1.1;ctx.strokeStyle=edge;ctx.stroke()}}
    ctx.restore()}catch(err){console.error(err)}return r};
  addSearch()}
