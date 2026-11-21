@@ -62,7 +62,7 @@ body.pr-other[data-mode="trivia"]{ --mc:${OTHER.d}; }
  background:rgba(255,255,255,.6); color:var(--d); cursor:pointer; transition:background .15s; }
 .pr-subj button:hover{ background:color-mix(in srgb,var(--c) 30%,#fff); }
 .pr-subj button.on{ background:var(--c); color:#14361a; }
-.pr-subj button.pr-lf{ font-size:14.5px; padding:7px 16px 8px; }
+
 .pr-subj .pr-sep{ width:2px; align-self:stretch; margin:4px 4px; border-radius:2px; background:color-mix(in srgb,var(--c) 55%,transparent); }
 body.dark .pr-subj button, body.sky-night .pr-subj button{ background:rgba(20,26,38,.55); color:var(--c); }
 body.dark .pr-subj button:hover, body.sky-night .pr-subj button:hover{ background:color-mix(in srgb,var(--c) 22%,rgba(20,26,38,.7)); }
@@ -125,7 +125,7 @@ function sync(){const oth=appMode==="landforms"||(isOther()&&!inModels());docume
  const tv=document.getElementById("appModeTriviaBtn");if(tv)tv.classList.toggle("active",appMode==="trivia"&&!window._prOther);
  const el=tabsEl();if(!el)return;el.classList.toggle("pr-off",!oth);if(!oth)return;
  const cur=appMode==="landforms"?"landforms":PS().dl,L=[{id:"landforms",name:"Landforms",icon:"⛰️"}].concat(drills());
- const html=L.map((x,i)=>(i===1?'<span class="pr-sep" aria-hidden="true"></span>':'')+'<button type="button" role="tab" aria-selected="'+(x.id===cur)+'" class="'+(x.id===cur?"on":"")+(i?"":" pr-lf")+'" data-pro="'+x.id+'"><span aria-hidden="true">'+x.icon+'</span>'+esc(x.name)+'</button>').join("");
+ const html=L.map((x,i)=>'<button type="button" role="tab" aria-selected="'+(x.id===cur)+'" class="'+(x.id===cur?"on":"")+(i?"":" pr-lf")+'" data-pro="'+x.id+'"><span aria-hidden="true">'+x.icon+'</span>'+esc(x.name)+'</button>').join("");
  if(el._h!==html){el.innerHTML=html;el._h=html;el.querySelectorAll("[data-pro]").forEach(b=>b.onclick=()=>{const id=b.dataset.pro;
    if(id==="landforms"){if(appMode!=="landforms")go("landforms");return}
    const P=PS();P.dl=id;P.oth="drill";save();if(isOther()){try{triviaState().fcMode="quiz"}catch(e){}renderOther();scrollTo(0,0)}else go("other")})}
