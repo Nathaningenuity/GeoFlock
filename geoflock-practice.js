@@ -159,8 +159,13 @@ function renderOther(){const v=document.getElementById("triviaView");if(!v||!isO
  v.querySelectorAll("[data-prt]").forEach(b=>b.onclick=()=>{P.tab=b.dataset.prt;saveStats();renderOther()});
  v.querySelectorAll("[data-prr]").forEach(b=>b.onclick=()=>{P.reg=b.dataset.prr;saveStats();renderOther()});
  const qi=v.querySelector("#proQ");if(qi)qi.oninput=()=>{P.q=qi.value;clearTimeout(qi._t);qi._t=setTimeout(()=>{const pos=qi.selectionStart;renderOther();const n=document.getElementById("proQ");if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(e){}}},180)};
- const s=v.querySelector("#proStart");if(s)s.onclick=()=>startDrill(D.id,tab);const li=v.querySelector("#proLangId");if(li)li.onclick=()=>startDrill("langid",tab)}
-function startDrill(id,tab){const t=triviaState();try{_speedEndAt=0}catch(e){}
+ const s=v.querySelector("#proStart");if(s)s.onclick=()=>startDrill(D.id,tab);
+ /* no extra "Start" page: picking a topic or a tab goes straight in. Coming back out of a drill (its Back button) lands
+    here without starting again; Language's quiz keeps its page because it offers two different quizzes */
+ if(s&&!window._proBack&&!(D.id==="lang"&&tab==="quiz")){setTimeout(()=>{if(document.getElementById("proStart")===s)startDrill(D.id,tab)},0)}
+ window._proBack=false;const li=v.querySelector("#proLangId");if(li)li.onclick=()=>startDrill("langid",tab)}
+addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-pro],[data-prt],#appModeOtherBtn"))window._proBack=false},true);
+function startDrill(id,tab){window._proBack=true;const t=triviaState();try{_speedEndAt=0}catch(e){}
  if(id==="langid"){const v=document.getElementById("triviaView");v.innerHTML='<div class="li-wrap" id="prLang"></div>';gfLangId.round(v.querySelector("#prLang"),{n:10,title:"Which language?",back:()=>renderOther(),backLabel:"Other",level:"all"});scrollTo(0,0);return}
  if(id==="pv"){const S=gfDrills.st();S.pv=true;t.fcMode="drills";saveStats();renderTriviaView();scrollTo(0,0);return}
  try{gfDrills.st().region=REG.includes(PS().reg)?PS().reg:"all"}catch(e){}
