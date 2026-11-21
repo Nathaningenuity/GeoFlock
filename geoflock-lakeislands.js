@@ -5,6 +5,7 @@
    - Small islands are not in the lake shapes: each has a centre point and is hovered within about 1.5 km of it (or 3 px). Where the lake
      is painted over one, a small dot of land marks it once the map is zoomed in far enough (not on the satellite picture),
      and it is highlighted while hovered.
+   - An outlined island is hovered only while the mouse is on its own outline: no boost or margin, so the lake water round it is the lake's.
    - Islands are hoverable while the lakes are shown; with the lakes off only on a picture map (relief, satellite…) and
      only islands big enough on screen to be seen on their own.
    Works on the Maps page's flat map and globe (both are amGlobe), in light and dark themes. The islands are in search too. */
@@ -66,8 +67,7 @@ const ISLES=[
 /* Samosir: the stretch of Lake Toba's own ring that runs round the island, closed across the isthmus at Pangururan */
 const SAMOSIR=[[98.69,2.608],[98.74,2.531],[98.858,2.441],[98.899,2.428],[98.978,2.463],[98.978,2.48],[98.845,2.678],[98.796,2.73],[98.732,2.755],[98.701,2.744],[98.679,2.709],[98.676,2.627],[98.69,2.608]];
 const HOVER_PX=9,PT_MIN_PXDEG=20,BIG_ALONE_PX=8;
-/* hovering an island: on the island itself. Only very small islands (radius under about 6 km) get a little extra, fixed to
-   the map (it grows and shrinks with the zoom, like the island), plus a tiny 3 px so they can still be found */
+/* hovering an island: on the island itself only, with no extra margin or pixel boost round it */
 const TINY_PX=3,SMALL_KM=6,PT_KM=1.5,R_KM=6371;
 const dark=()=>document.body.classList.contains("sky-night");
 const smallPoly=r=>{const g={type:"Polygon",coordinates:[r.slice()]};if(d3.geoArea(g)>2*Math.PI)g.coordinates=[r.slice().reverse()];return g};
@@ -95,15 +95,14 @@ function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g
  for(const I of ISLES){if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.01)continue;
   const lakeOn=lakeShown(ov,I);const c=p(I.kind==="s"?I.c:I.ll);if(!c)continue;
   const d=Math.hypot(c[0]-mx,c[1]-my);
-  if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r+.02&&d>HOVER_PX)continue;
+  if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r+.002)continue;
    /* size on screen: the island's radius in pixels */
    const e=p([I.c[0]+I.r*180/Math.PI/Math.max(.2,Math.cos(I.c[1]*Math.PI/180)),I.c[1]]),px=e?Math.abs(e[0]-c[0]):0;
    if(!lakeOn&&!(raster&&px*2>=BIG_ALONE_PX))continue;
    /* an island too small to see at this zoom is not hovered, unless the outlines (borders) layer draws its outline */
    {let ol=false;try{ol=typeof allMapsBordersOn!=="undefined"&&allMapsBordersOn!==false}catch(e){}if(!ol&&px*2<(sat()?10:6))continue}
-   /* hovered on its own outline, with a slight margin in proportion to the island (about 15% of its size), so a small island
-      stays small to hit when the map is zoomed out */
-   const inside=d3.geoContains(I.g,ll);if(!inside&&!(d3.geoDistance(I.c,ll)<=I.r*1.15))continue;const s=inside?-1:d;if(s<bd){bd=s;best=I}}
+   /* hovered only on the island itself, with no margin: the lake water round it is the lake's */
+   if(!d3.geoContains(I.g,ll))continue;if(d<bd){bd=d;best=I}}
   else{/* islands known only as a point have no outline on the map: not hovered (and no dot is drawn for them) */continue;if(!lakeOn||(d3.geoDistance(I.ll,ll)*R_KM>PT_KM&&d>TINY_PX)||sat())continue;/* on the satellite picture these islands are not drawn: nothing to hover */if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
  return best}
 /* small islands the lake is painted over show as a dot of land once the map is zoomed in far enough to see them
