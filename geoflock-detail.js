@@ -55,6 +55,23 @@ function toLL(pts,z,tx,ty,E,flag){const n=Math.pow(2,z),o=new Float64Array(pts.l
   o[i*3]=(tx+x/E)/n*360-180;const m=Math.PI*(1-2*(ty+y/E)/n);o[i*3+1]=Math.atan(Math.sinh(m))*180/Math.PI;o[i*3+2]=flag?((x<=0?1:0)|(x>=E?2:0)|(y<=0?4:0)|(y>=E?8:0)):0}return o}
 function bboxOf(rs){let a=1e9,b=1e9,c=-1e9,d=-1e9;rs.forEach(r=>{for(let i=0;i<r.length;i+=3){a=Math.min(a,r[i]);c=Math.max(c,r[i]);b=Math.min(b,r[i+1]);d=Math.max(d,r[i+1])}});return[a,b,c,d]}
 const nm=t=>t["name:en"]||t.name_en||t.name_int||t.name||"";
+/* river names: the first one written in Latin letters (a tile's "English" name is sometimes just the Arabic one: the Damietta branch of
+   the Nile read "فرع دمياط River"), else a known English name, else the local one */
+const RALIAS={"فرع دمياط":"Damietta Branch","فرع رشيد":"Rosetta Branch","نهر النيل":"Nile","النيل":"Nile","Nil":"Nile"};
+const nmL=t=>[t["name:en"],t.name_en,t.name_int,t["name:latin"],t.name].find(v=>v&&/[A-Za-z]/.test(v))||RALIAS[t.name]||nm(t);
+/* a river's name as shown: a name with no Latin letters left is the map's own big river it runs along, when it is one (the Nile) */
+function rdisp(R){let n=R.name||"";if(RALIAS[n])return RALIAS[n];if(n&&!/[A-Za-z]/.test(n)){if(!R._t)R._t=tier(R);n=R.cn||n}return n}
+/* "River" is added to a bare name (the Nile River), not to one that already says what it is (Rosetta Branch, Wadi Ur, Khawr Ambikul,
+   Canal du Midi) or that is not in Latin letters */
+function riverLabel(R){const n=rdisp(R);return R.cls==="river"?withRiver(n):n}
+function withRiver(n){if(!n||!/[A-Za-z]/.test(n)||/river|rio|río|rivière|riviere|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr|branch|bra[țt]ul|mouth|arm\b|channel|canal|kanal|creek|brook|stream|bayou|arroyo|^(wadi|wādī|oued|khawr|khor|khor|nullah|rambla)\b/i.test(n))return n;return n+" River"}
+/* the reservoir behind the Aswan High Dam is Lake Nasser in Egypt and Lake Nubia in Sudan. The map data (OpenStreetMap, via the tiles) holds
+   them as two lakes split along the 22nd parallel: "Lake Nasser / Lake Nubia" to the north and "Nubia Lake" to the south. Named the same
+   way here, at every zoom: a sharp lake by which side of 22°N it lies on, the map's one rough lake by the side the pointer is on */
+const NASSER=/^(Lake Nasser( \/ Lake Nubia)?|Nubia Lake|Lake Nubia)$/;
+/* the map's own data, and some tiles, give Titicaca in Spanish or bare ("Lago Titicaca", "Titicaca"): Lake Titicaca throughout */
+function lakeAlias(n,ll,g,K){if(n==="Lago Titicaca"||n==="Titicaca")return"Lake Titicaca";if(!n||!NASSER.test(n))return n;const south=K&&K.bb?K.bb[3]<=22.005:ll?ll[1]<22:false;return south?"Lake Nubia":"Lake Nasser"}
+window.gfLakeAlias=(n,ll,g)=>{try{return lakeAlias(n,ll,g)}catch(e){return n}};
 function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],rivers:[],borders:[],names:[]};
  if(L.water){const E=L.water.ext;T.feats(L.water).forEach(f=>{if(f.type!==3||!f.geom)return;const cls=f.tags.class;const rings=parts(f.geom);
    /* group: an outer ring (positive area) followed by its holes */const lls=[],n2=Math.pow(2,z);rings.forEach(r=>{if(r.length<4)return;/* not cut to the tile here (cutting big lakes made broken shapes): the drawing clips each tile to its square */let c=r.slice(0,-1);
@@ -66,7 +83,7 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
    const depth=lls.map((r,i)=>lls.reduce((n,o,j)=>n+(j!==i&&o.length>8&&inRings([o],[r[0],r[1]])?1:0),0));
    const polys=[];lls.forEach((r,i)=>{const hole=depth[i]%2===1,ar=areaLL(r);if(hole?ar<0:ar>0)revLL(r);if(!hole||!polys.length)polys.push([r]);else polys[polys.length-1].push(r)});
    if(!polys.length)return;const all=polys.flat();if(cls==="ocean")D.ocean.push({rings:all});else D.lakes.push({id:f.tags.id,cls,int:f.tags.intermittent,polys,rings:all,bb:bboxOf(all)})})}
- if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nm(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));const ek=R.keys[0];if(ek){const e=EXT.get(ek),b=R.bb;EXT.set(ek,e?[Math.min(e[0],b[0]),Math.min(e[1],b[1]),Math.max(e[2],b[2]),Math.max(e[3],b[3])]:b.slice())}D.rivers.push(R)}})}
+ if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nmL(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));const ek=R.keys[0];if(ek){const e=EXT.get(ek),b=R.bb;EXT.set(ek,e?[Math.min(e[0],b[0]),Math.min(e[1],b[1]),Math.max(e[2],b[2]),Math.max(e[3],b[3])]:b.slice())}D.rivers.push(R)}})}
  if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||!(t.admin_level>=2&&t.admin_level<=4)||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,lv:t.admin_level,ls})})}
  if(L.water_name){const E=L.water_name.ext;T.feats(L.water_name).forEach(f=>{if(f.type!==1||!f.geom)return;const p=parts(f.geom)[0];if(!p||!p[0])return;const ll=toLL([p[0]],z,tx,ty,E,false);D.names.push({n:nm(f.tags),cls:f.tags.class,ll:[ll[0],ll[1]]})})}
  /* below zoom 11 the tiles' lakes have lost their islands (Lake Nicaragua comes without Ometepe, Canada's lakes without theirs):
@@ -95,6 +112,11 @@ let CO=null;function coarse(){if(CO)return CO;CO=[];try{globeOverlays().rivers.f
 function nearCoarse(R){let best=null;R.ls.forEach(l=>{if(!best||l.length>best.length)best=l});if(!best||best.length<9)return false;const n=best.length/3;let hits=0;
  [.25,.5,.75].forEach(f=>{const i=Math.floor(n*f)*3,x=best[i],y=best[i+1],c=Math.cos(y*Math.PI/180);let d=1e9,dn=null;for(const q of coarse()){if(Math.abs(q[1]-y)>1||Math.abs(q[0]-x)>2)continue;const vx=(q[2]-q[0])*c,vy=q[3]-q[1],px=(x-q[0])*c,py=y-q[1],L2=vx*vx+vy*vy||1e-9;let u=(px*vx+py*vy)/L2;u=Math.max(0,Math.min(1,u));const dd=Math.hypot(px-u*vx,py-u*vy);if(dd<d){d=dd;dn=q[4]}}if(d<.2){hits++;R.cn=dn}});return hits>=2}
 function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();{const k=R.keys.find(k=>M.has(k));if(k){R.cn=MAJN.get(k)||null;return"major"}}if(nearCoarse(R)){R.keys.forEach(k=>M.add(k));return"major"}if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
+/* which of the map's own big rivers the tiles on show already hold (drawn sharp): those are not drawn from the rough built-in line,
+   and so must not answer the pointer from it either */
+function coarseHave(s){if(s._have)return s._have;const have=new Set();s.tiles.forEach(t=>{if(t.d)t.d.rivers.forEach(R=>{if((R._t||(R._t=tier(R)))==="major"&&R.cn)have.add(R.cn)})});return(s._have=have)}
+/* is the map's own (rough) line of this river drawn now? Only while the tiles are coarse (level 8 or less), and only for a big river they leave out */
+function coarseRiverDrawn(s,n){return s.z<=8&&!!n&&!/^[A-Z]{2}[-\\/]/.test(n)&&!coarseHave(s).has(n)}
 function inRings(rs,p){let c=false;for(const r of rs){for(let i=0,j=r.length-3;i<r.length;j=i,i+=3){const xi=r[i],yi=r[i+1],xj=r[j],yj=r[j+1];if((yi>p[1])!==(yj>p[1])&&p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi)c=!c}}return c}
 
 /* ---------- tiles: which are wanted, loading, cache ---------- */
@@ -345,7 +367,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
    each(d=>{if(!L.some(([R,dd])=>dd===d))return;lakeOut(d);ctx.beginPath();L.forEach(([R,dd])=>{if(dd!==d)return;R.ls.forEach(l=>ringPath(ctx,pj,l,false))});ctx.stroke()})});
   /* the map's own big rivers that these tiles leave out (the first detail levels hold only some rivers): drawn from the map's own line, so none vanishes */
   /* (only while the tiles are coarse: from level 9 on they hold every river, and a rough built-in line would show beside the sharp one) */
-  if(s.z<=8){const have=new Set();each(d=>d.rivers.forEach(R=>{if(R._t==="major"&&R.cn)have.add(R.cn)}));ctx.globalAlpha=rivA;ctx.lineWidth=Math.min(1.8,.55+.07*z);ctx.save();try{if(ov.lakes){const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);globeOverlays().lakes.forEach(Lk=>{if(Lk.minor)return;try{d3.geoPath(g.projection(),ctx)(Lk)}catch(e){}});ctx.clip("evenodd")}}catch(e){}ctx.beginPath();
+  if(s.z<=8){const have=coarseHave(s);ctx.globalAlpha=rivA;ctx.lineWidth=Math.min(1.8,.55+.07*z);ctx.save();try{if(ov.lakes){const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);globeOverlays().lakes.forEach(Lk=>{if(Lk.minor)return;try{d3.geoPath(g.projection(),ctx)(Lk)}catch(e){}});ctx.clip("evenodd")}}catch(e){}ctx.beginPath();
    try{globeOverlays().rivers.forEach(Rv=>{if(have.has(Rv.n)||/^[A-Z]{2}[-\\/]/.test(Rv.n))return;Rv.coordinates.forEach(l=>{let pen=false;for(const q of l){const v=pj(q[0],q[1]);if(!v){pen=false;continue}if(pen)ctx.lineTo(v[0],v[1]);else{ctx.moveTo(v[0],v[1]);pen=true}}})})}catch(e){}ctx.stroke();ctx.restore()}
   ctx.globalAlpha=1}
  /* borders over the sea are left out: the tiles carry some claim lines out across the water (a dashed line through the Gulf
@@ -367,7 +389,8 @@ const LAGOONS=[["Venetian Lagoon",12.33,45.4,.25],["Lagoon of Marano and Grado",
  ["Indian River Lagoon",-80.6,28.0,.9],["Laguna de Términos",-91.55,18.65,.4],["Lagos Lagoon",3.55,6.5,.15],["Lekki Lagoon",4.1,6.5,.15],["Ébrié Lagoon",-4.15,5.28,.4],
  ["Keta Lagoon",.9,5.9,.2],["Curonian Lagoon",21.1,55.3,.45],["Vistula Lagoon",19.85,54.45,.4],["Szczecin Lagoon",14.15,53.77,.25],["Ria Formosa",-7.85,37.0,.2],
  ["Mar Menor",-.79,37.72,.15],["Étang de Thau",3.6,43.4,.12],["Lake Manzala",32.05,31.3,.3],["Lake Burullus",30.85,31.5,.3],["Lake Edku",30.25,31.25,.1],
- ["Chilika Lake",85.35,19.7,.35],["Pulicat Lake",80.2,13.55,.25],["Vembanad Lake",76.37,9.6,.4],["Lagoa dos Patos",-51.3,-31.0,1.2],["Mar Chiquita",-57.42,-37.65,.1]];
+ ["Chilika Lake",85.35,19.7,.35],["Pulicat Lake",80.2,13.55,.25],["Vembanad Lake",76.37,9.6,.4],["Lagoa dos Patos",-51.3,-31.0,1.2],["Mar Chiquita",-57.42,-37.65,.1],
+ ["Garabogazköl",53.7,41.35,.85],["Lake Razim",28.98,44.9,.18]/* (Razelm, the Danube delta's lagoon) *//* (the Caspian's great lagoon, Kara-Bogaz-Gol: read "Lagoon") */];
 /* a piece of a well-known lagoon joined to the sea only by canals or a channel (Valli di Comacchio, Lagos Lagoon) is sea when it
    lies within about 3 km of the sea in its tile */
 function inLagoon(K){if(K._lg===undefined){const b=K.bb;K._lg=!!lagoonAt([(b[0]+b[2])/2,(b[1]+b[3])/2])}return K._lg}
@@ -383,19 +406,26 @@ function gazName(K){if(K._gz!==undefined)return K._gz;gazLoad();if(!GAZG)return 
 setTimeout(gazLoad,4000);
 function riverThrough(s,K){if(K._rt!==undefined)return K._rt;K._rt=null;const cnt=new Map();
  s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(!R.name||R.cls==="stream"||R.cls==="ditch"||R.cls==="drain")return;const b=R.bb;if(b[0]>K.bb[2]||b[2]<K.bb[0]||b[1]>K.bb[3]||b[3]<K.bb[1])return;
-  let n=0;R.ls.forEach(l=>{for(let i=0;i<l.length;i+=3){const x=l[i],y=l[i+1];if(x<K.bb[0]||x>K.bb[2]||y<K.bb[1]||y>K.bb[3])continue;if(inRings(K.rings,[x,y]))n++}});if(n)cnt.set(R.name,(cnt.get(R.name)||0)+n)})});
- let best=null,bn=0;cnt.forEach((n,k)=>{if(n>bn){bn=n;best=k}});if(best)K._rt=/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr|canal|creek/i.test(best)?best:best+" River";return K._rt}
+  let n=0;R.ls.forEach(l=>{for(let i=0;i<l.length;i+=3){const x=l[i],y=l[i+1];if(x<K.bb[0]||x>K.bb[2]||y<K.bb[1]||y>K.bb[3])continue;if(inRings(K.rings,[x,y]))n++}});if(n){const rn=rdisp(R);cnt.set(rn,(cnt.get(rn)||0)+n)}})});
+ let best=null,bn=0;cnt.forEach((n,k)=>{if(n>bn){bn=n;best=k}});
+ /* a piece of a wide river's water with no named line through it (the coarser tiles' lines are simplified, and can miss a narrow
+    piece of the Madeira): the nearest named river within about 12 km names it, rather than just "River" */
+ if(!best&&K.cls==="river"){const cx=(K.bb[0]+K.bb[2])/2,cy=(K.bb[1]+K.bb[3])/2,c=Math.cos(cy*Math.PI/180);let bd=.11+Math.hypot((K.bb[2]-K.bb[0])*c,K.bb[3]-K.bb[1])/2;
+  s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(!R.name||R.cls!=="river")return;const b=R.bb;if(b[0]>cx+1||b[2]<cx-1||b[1]>cy+1||b[3]<cy-1)return;R.ls.forEach(l=>{for(let i=0;i<l.length;i+=3){const d=Math.hypot((l[i]-cx)*c,l[i+1]-cy);if(d<bd){bd=d;best=rdisp(R)}}})})})}
+ if(best)K._rt=withRiver(best);return K._rt}
+/* the name of the map's own lake under the pointer, small ones too (on maps that leave those out, the sharp Lake Van read just "Lake") */
+function roughLakeName(ll){try{for(const L of globeOverlays().lakes){if(!L.n||!L.c)continue;if(d3.geoDistance(L.c,ll)<=L.r&&d3.geoContains(L,ll))return L.n}}catch(e){}return null}
 function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out={};
  /* close up, a lake is outlined from the tiles' sharp shape, every piece of it; named from the tiles, or else from the map's own lake
     under the pointer, or else by its kind ("Lake", "Reservoir"...) */
  if(ov.lakes){const K=lakeAt(s,ll);if(K){let gz=null;if(!((base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||(seaJ(K)&&lagoonAt(ll)))){gz=gazName(K);if(!gz&&K.id!=null)s.tiles.forEach(t=>{if(gz||!t.d)return;t.d.lakes.forEach(Q=>{if(!gz&&Q!==K&&Q.id===K.id)gz=gazName(Q)})});if(gz&&K.id!=null)NAMES.set(K.id,gz)}
    /* water open to the sea (a lagoon) is named as the lagoon, from a short list of well-known ones where the tiles carry no name,
       else just "Lagoon": never after a river that ends in it (the Venetian Lagoon read "Fiume Marzenego - Osellino Foce") */
-   const sj=seaJ(K);let name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||(sj&&lagoonAt(ll))||gz||null;
+   const sj=seaJ(K);let name=(base&&base.lake&&base.water)||K.n||(K.id!=null&&NAMES.get(K.id))||(sj&&lagoonAt(ll))||gz||(!sj&&roughLakeName(ll))||null;
    /* an unnamed lake that a named river runs through is a widening of that river (Lac Saint-Pierre on the St. Lawrence, the
       lakes strung along the Ottawa): called by the river's name, not just "Lake" */
    if(!name&&!sj){const rn=riverThrough(s,K);if(rn)name=rn}
-   name=name||(sj?"Lagoon":LAB[K.cls]||"Lake");const co=[];
+   name=lakeAlias(name||(sj?"Lagoon":LAB[K.cls]||"Lake"),ll,g,K);const co=[];
    const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);
    /* filled from every tile on show (a part not yet loaded sharply is still covered), but outlined only from the sharpest tiles
       that hold this lake: a coarser parent tile would add its rough outline on top of the sharp one */
@@ -408,8 +438,8 @@ function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out=
    out.water=name;out.lake={type:"MultiPolygon",coordinates:co,n:out.water,dry:!!K.int,sea:sj/* (drawn as sea: the hover outlines it only) */,edge:{type:"MultiLineString",coordinates:ed}};/* (dry: often dry, drawn faint on the map, so faint when hovered too) */return out}}
  if(ov.rivers&&allMapsColorMode!=="satellite"){const pj=projector(g),rc=g.canvas.getBoundingClientRect(),mx=cx-rc.left,my=cy-rc.top;let best=6,hit=null;const pad=.5;
   s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(ll[0]<R.bb[0]-pad||ll[0]>R.bb[2]+pad||ll[1]<R.bb[1]-pad||ll[1]>R.bb[3]+pad)return;R.ls.forEach(l=>{let a=null;for(let i=0;i<l.length;i+=3){const b=pj(l[i],l[i+1]);if(a&&b){const vx=b[0]-a[0],vy=b[1]-a[1],L2=vx*vx+vy*vy||1;let u=((mx-a[0])*vx+(my-a[1])*vy)/L2;u=Math.max(0,Math.min(1,u));const d=Math.hypot(a[0]+u*vx-mx,a[1]+u*vy-my);if(d<best&&R.name&&(t=>t==="major"||t!=="stream"&&g.zoom/(window.gfRiverLate?gfRiverLate(g):1)>18*Math.pow(4/reach(R),.7)*1.25&&(t==="medium"||g.zoom/(window.gfRiverLate?gfRiverLate(g):1)>60))(R._t||(R._t=tier(R)))){best=d;hit=R}}a=b}})})});
-  if(hit){const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(R===hit||(hit.name&&R.name===hit.name))R.ls.forEach(l=>{const c=[];for(let i=0;i<l.length;i+=3)c.push([l[i],l[i+1]]);co.push(c)})})});
-   const n=hit.name;out.water=hit.name&&hit.cls==="river"&&!/river|rio|río|fleuve|fluss|joki|älv|elva|reka|река|nehri|nahr/i.test(n)?n+" River":n;out.river={type:"MultiLineString",coordinates:joinedPart(co,ll,6),n:out.water};return out}}
+  if(hit){const co=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.rivers.forEach(R=>{if(R===hit||(hit.name&&(R.name===hit.name||(R.name&&rdisp(R)===rdisp(hit)))))R.ls.forEach(l=>{const c=[];for(let i=0;i<l.length;i+=3)c.push([l[i],l[i+1]]);co.push(c)})})});
+   out.water=riverLabel(hit);out.river={type:"MultiLineString",coordinates:joinedPart(co,ll,6),n:out.water};return out}}
  return null}
 const _wa=GlobeView.prototype.waterAt;/* a hovered river lights up only the stretch joined to where the pointer is: two rivers can share a name (the Rio Grande, the
    Rio Negro), and the map's data has stray pieces filed under a big river's name */
@@ -423,7 +453,13 @@ function joinedPart(lines,ll,tolKm){if(!lines||lines.length<2)return lines;const
 (function cleanRivers(){let O=null;try{O=globeOverlays()}catch(e){}if(!O||!O.rivers){setTimeout(cleanRivers,1000);return}
  O.rivers.forEach(R=>{if(!R.coordinates)return;const bad=l=>R.n==="Yangtze"&&l[0][1]<26||/^Selenge/.test(R.n)&&l[0][0]<60;const k=R.coordinates.filter(l=>!bad(l));if(k.length&&k.length<R.coordinates.length)R.coordinates=k})})();
 GlobeView.prototype.waterAt=function(ll,cx,cy){const out=_wa.apply(this,arguments)||{};try{if(out.river&&out.river.coordinates&&out.river.coordinates.length>1){const c=joinedPart(out.river.coordinates,ll,80);if(c.length<out.river.coordinates.length)out.river=Object.assign({},out.river,{coordinates:c})}}catch(e){}try{let ov=this.cfg.overlays?this.cfg.overlays():{};/* Satellite: lakes are in the photo; hovering one names it even with Lakes off */if(allMapsColorMode==="satellite"&&!ov.lakes)ov=Object.assign({},ov,{lakes:true});if(view(this)&&(ov.lakes||ov.rivers)){const h=waterHit(this,ll,cx,cy,ov,out);
-  if(h){delete out.lake;delete out.river;Object.assign(out,h);if(out.lake&&!h.lake)delete out.lake}else if(on(this)){/* the built-in shapes are not drawn now: keep only a name from them */if(out.lake){const n=out.water;delete out.lake;out.water=n}/* rivers: the big ones are still drawn from the built-in lines at this zoom (a tile with no named line for them), so a hit on one stands */}}}catch(e){console.error(e)}return out};
+  if(h){delete out.lake;delete out.river;Object.assign(out,h);if(out.lake&&!h.lake)delete out.lake}else{const s=on(this);if(s){/* the built-in lake shapes are not drawn now (the tiles' sharp lakes are): off the sharp lake, the rough one neither
+   lights up nor names the place (it reached into the desert beside Lake Nasser) */if(out.lake){if(out.water===out.lake.n)delete out.water;delete out.lake}
+  /* rivers: a big one the tiles leave out is still drawn from the built-in line while the tiles are coarse (and always on Satellite), so a hit on it
+     stands; otherwise the rough line is not on the map, and hovering where it would run (in the desert beside the Nile) finds nothing */
+  if(out.river&&allMapsColorMode!=="satellite"&&!coarseRiverDrawn(s,out.river.n)){if(out.water&&out.river.n&&out.water.indexOf(out.river.n)===0)delete out.water;delete out.river}}}/* the map's own river lines are named as the sharp ones are: the Amazon (its line is filed as "Amazonas"), the Rio Grande (not "Rio Grande River") */
+  if(out.river&&out.river.c&&out.river.n&&out.water===(/river/i.test(out.river.n)?out.river.n:out.river.n+" River"))out.water=withRiver(out.river.n==="Amazonas"?"Amazon":out.river.n);
+  if(out.lake&&out.water&&!out.lake.edge){const n2=lakeAlias(out.water,ll,this);if(n2!==out.water){out.water=n2;if(out.lake.n!==n2)out.lake=Object.assign({},out.lake,{n:n2})}}}}catch(e){console.error(e)}return out};
 
 /* sharp outlines for a searched island or lake (geoflock-search.js): from the tiles on show, the coast rings (islands are holes in
    the sea) or lake shapes that lie within the place's box. null when the tiles are not on show or nothing fits */
@@ -632,7 +668,7 @@ function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||
    polys.forEach(P=>{const pg={type:"Polygon",coordinates:P};let bb;try{bb=CP.bounds(pg)}catch(e){return}if(!isFinite(bb[0][0]))return;
     if(Math.max(bb[1][0]-bb[0][0],bb[1][1]-bb[0][1])>18)return;ctx.beginPath();CP(pg);st.forEach(([c,w])=>{ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()})})});ctx.restore()}catch(e){}
  return true}
-window.gfDetail={hotSharp:(g,ctx,fs,lw,all)=>{try{return hotSharp(g,ctx,fs,lw,all)}catch(e){return false}}/* zoomed in, the hover highlight follows the same sharp coast and borders the map draws */,seaAt:lls=>seaAt(lls).catch(()=>null),islesIn:(g,bb)=>{try{return islesIn(g,bb)}catch(e){return null}},sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:seaJ(K),casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)}/* zoomed in, the coast and border lines are the tiles' alone (the map's own outline is then drawn only as the hover highlight) */,draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
+window.gfDetail={on:g=>{try{return!!on(g)}catch(e){return false}}/* the sharp tiles are what the map shows now (the built-in rivers and lakes are not drawn) */,hotSharp:(g,ctx,fs,lw,all)=>{try{return hotSharp(g,ctx,fs,lw,all)}catch(e){return false}}/* zoomed in, the hover highlight follows the same sharp coast and borders the map draws */,seaAt:lls=>seaAt(lls).catch(()=>null),islesIn:(g,bb)=>{try{return islesIn(g,bb)}catch(e){return null}},sharp:(g,kind,bb,ll)=>{try{return sharpFor(g,kind,bb,ll)}catch(e){return null}},onRedraw:f=>REDRAW.add(f),dbg:()=>({WSIG:WSIG.slice(0,60),q:queue.length,inflight,loads}),lakeInfo:(g,ll)=>{const s=on(g);if(!s)return'off';const out=[];s.tiles.forEach(t=>{if(!t.d)return;t.d.lakes.concat(bigLakes(t.d)).forEach(K=>{if(ll[0]<K.bb[0]||ll[0]>K.bb[2]||ll[1]<K.bb[1]||ll[1]>K.bb[3])return;if(inRings(K.rings,ll))out.push({cls:K.cls,big:!!K._big,n:K.n,sea:seaJ(K),casp:isCaspian(K),bb:K.bb.map(v=>+v.toFixed(2))})})});return out},covers:g=>{try{if(allMapsColorMode==="satellite")return false}catch(e){}return!!on(g)},ownsCoast:g=>{const s=on(g);return!!(s&&s.z>=COASTZ)}/* zoomed in, the coast and border lines are the tiles' alone (the map's own outline is then drawn only as the hover highlight) */,draw:(g,ctx,I)=>{try{draw(g,ctx,I)}catch(e){console.error(e)}},state:g=>view(g)?state(g):null,cache:CACHE};
 /* the credit, shown on the map while the tiles are in use */
 setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;const h=g&&g.host;if(!h)return;let c=h.querySelector(".gf-dt-cred");const v=!!(g&&on(g));if(v&&!c){c=document.createElement("div");c.className="gf-dt-cred";c.innerHTML='Detail © <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';h.appendChild(c)}if(c)c.hidden=!v}catch(e){}},700);
 {const st=document.createElement("style");st.textContent=".gf-dt-cred{position:absolute;right:62px;bottom:4px;z-index:6;font:500 9.5px system-ui,sans-serif;color:#33475b;background:rgba(255,255,255,.62);padding:1px 6px;border-radius:6px;pointer-events:auto}.gf-dt-cred a{color:inherit}.gf-dt-cred[hidden]{display:none}";document.head.appendChild(st)}
