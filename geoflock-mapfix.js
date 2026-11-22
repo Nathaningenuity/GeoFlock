@@ -735,3 +735,36 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
  /* after the globe stops moving, one more frame at full detail */
  let t=0;setInterval(()=>{try{const g=typeof amGlobe!=="undefined"&&amGlobe;if(!g)return;if(g._moving){t=1}else if(t){t=0;g.request?g.request():g.render()}}catch(e){}},200)})();
 
+/* Bir Tawil, the strip of desert south of the 22nd parallel that neither Egypt nor Sudan claims (Egypt holds to the 1899 line along
+   22°N, Sudan to the 1902 administrative line, which leaves Bir Tawil to Egypt and gives Sudan the Halaib Triangle). The flat maps
+   already have it as a place of its own; the globe's country shapes (and the 10 m ones used zoomed in) put it inside Sudan, so
+   hovering it lit up Sudan along the straight 22°N line while the map drew the dashed 1902 line round it. On the All Maps globe and
+   flat map it is now cut out of Sudan and is a shape of its own: hovered and outlined alone, with its own note. Its edge is the one
+   the detailed tiles draw (OpenStreetMap's: 22°N from 33.17°E to 34.08°E, and the straight 1902 line south of it). The Halaib
+   Triangle stays with Egypt, which runs it, as the map's country shapes have it (other places held by one country and claimed by
+   another are shown the same way, with the holder). */
+(function(){
+ const RING=[[33.1667,21.9995],[33.5529,21.725],[34.0,21.7667],[34.0798,21.9995],[33.1667,21.9995]];
+ const area=r=>d3.geoArea({type:"Polygon",coordinates:[r]});
+ const OUTER=area(RING)<2*Math.PI?RING:RING.slice().reverse(),HOLE=OUTER.slice().reverse(),MID=[33.62,21.85];
+ const BT={type:"Feature",properties:{c:"birtawil",n:"Bir Tawil"},geometry:{type:"Polygon",coordinates:[OUTER]}};
+ /* Sudan with Bir Tawil as a hole in the piece that holds it (once: a shape that no longer holds it is left as it is) */
+ const CUT=new WeakMap();
+ function cutGeom(G){if(!G)return G;const polys=G.type==="Polygon"?[G.coordinates]:G.type==="MultiPolygon"?G.coordinates:null;if(!polys)return G;let hit=-1;
+  polys.forEach((P,i)=>{if(hit<0){try{if(d3.geoContains({type:"Polygon",coordinates:P},MID))hit=i}catch(e){}}});if(hit<0)return G;
+  const np=polys.map((P,i)=>i===hit?P.concat([HOLE]):P);return G.type==="Polygon"?{type:"Polygon",coordinates:np[0]}:{type:"MultiPolygon",coordinates:np}}
+ function cutF(f){if(!f||!f.properties||f.properties.c!=="sd"||!f.geometry)return f;let v=CUT.get(f);if(v)return v;
+  v=Object.assign({},f,{geometry:cutGeom(f.geometry)});if(f._hiOf)v._hiOf=cutF(f._hiOf);CUT.set(f,v);CUT.set(v,v);return v}
+ window.gfCutBT=f=>{try{return cutF(f)}catch(e){return f}};window.gfBirTawil=BT;
+ /* the detailed shapes the globe swaps in when zoomed in: Sudan's has the hole too (on the All Maps globe, whose Sudan is marked) */
+ if(typeof globeLod==="function"){const _gl=globeLod;globeLod=function(obj,level){const r=_gl.apply(this,arguments);try{if(obj&&obj._gfNoBT&&r&&r!==obj)return cutF(r)}catch(e){}return r}}
+ function patch(g){if(!g||g._gfBT||!g.features||!g.bounds)return;const i=g.features.findIndex(f=>f&&f.properties&&f.properties.c==="sd");if(i<0)return;g._gfBT=1;
+  const sd=g.features[i],sd2=Object.assign({},sd,{geometry:cutGeom(sd.geometry),_gfNoBT:1});
+  g.features=g.features.slice();g.features[i]=sd2;g.features.push(BT);
+  g.bounds=g.bounds.slice();g.bounds[i]=d3.geoBounds(sd2);g.bounds.push(d3.geoBounds(BT));
+  if(g.circles){g.circles=g.circles.slice();g.circles.push({c:MID,r:.012})}
+  g._boosts=null;try{g.request?g.request():g.render()}catch(e){}}
+ setInterval(()=>{try{if(typeof amGlobe!=="undefined"&&amGlobe&&!amGlobe._gfBT)patch(amGlobe)}catch(e){}},500);
+ /* the Politics map's themes counted it as a dependency ("governed by another country"): no one governs it, so it is left out, as Antarctica is */
+ if(typeof thCatOf==="function"){const _t=thCatOf;thCatOf=function(code){if(code==="birtawil")return null;return _t.apply(this,arguments)}}
+})();

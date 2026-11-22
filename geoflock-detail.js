@@ -637,6 +637,7 @@ function hotSharp(g,ctx,fs,lw,all){const s=on(g);if(!s||s.z<COASTZ||!fs.length||
  const T=ctx.getTransform(),pj=projector(g);
  /* the country's own shape: Natural Earth 10 m (the finer outlines, within about a kilometre) when loaded, else the map's */
  let src=fs;try{if(typeof HI10!=="undefined"&&HI10&&HI10.byN){const cs=new Set(fs.map(f=>f.properties&&f.properties.c).filter(Boolean));if(cs.size){const Hh=[...HI10.byN.values()].filter(f=>cs.has(f.properties.c));if(Hh.length)src=Hh}}}catch(e){}
+ /* Sudan without Bir Tawil, which is a place of its own (geoflock-mapfix.js) */if(window.gfCutBT)src=src.map(gfCutBT);
  /* the shape drawn as a mask in screen pixels, read back once for this view */
  const key=[W,H,T.a,T.e,T.f,g.rot[0],g.rot[1],g.zoom,g.roll?g.roll():0,src.length,src[0]&&src[0].properties&&src[0].properties.c].join("|");
  if(!HM._k||HM._k!==key){const m=HM.getContext("2d",{willReadFrequently:true}),P=d3.geoPath(g.projection(),m);m.setTransform(1,0,0,1,0,0);m.clearRect(0,0,W,H);m.setTransform(T);m.beginPath();src.forEach(f=>P(f));m.fillStyle="#000";m.fill();
