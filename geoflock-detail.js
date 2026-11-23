@@ -116,7 +116,12 @@ function major(){if(MAJ)return MAJ;MAJ=new Set();try{(ALLMAPS_RIVERS||[]).forEac
 let CO=null;function coarse(){if(CO)return CO;CO=[];try{globeOverlays().rivers.forEach(Rv=>Rv.coordinates.forEach(l=>{for(let i=1;i<l.length;i++)CO.push([l[i-1][0],l[i-1][1],l[i][0],l[i][1],Rv.n])}))}catch(e){}return CO}
 function nearCoarse(R){let best=null;R.ls.forEach(l=>{if(!best||l.length>best.length)best=l});if(!best||best.length<9)return false;const n=best.length/3;let hits=0;
  [.25,.5,.75].forEach(f=>{const i=Math.floor(n*f)*3,x=best[i],y=best[i+1],c=Math.cos(y*Math.PI/180);let d=1e9,dn=null;for(const q of coarse()){if(Math.abs(q[1]-y)>1||Math.abs(q[0]-x)>2)continue;const vx=(q[2]-q[0])*c,vy=q[3]-q[1],px=(x-q[0])*c,py=y-q[1],L2=vx*vx+vy*vy||1e-9;let u=(px*vx+py*vy)/L2;u=Math.max(0,Math.min(1,u));const dd=Math.hypot(px-u*vx,py-u*vy);if(dd<d){d=dd;dn=q[4]}}if(d<.2){hits++;R.cn=dn}});return hits>=2}
-function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();{const k=R.keys.find(k=>M.has(k));if(k){R.cn=MAJN.get(k)||null;return"major"}}if(nearCoarse(R)){R.keys.forEach(k=>M.add(k));return"major"}if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
+/* a branch of one of the map's big rivers (the Nile's Damietta and Rosetta branches, a delta's arms) starts or ends on that river:
+   it is drawn as the river is, so the Nile does not turn from a bold line into faint threads at Cairo */
+function branchOf(R){const n=RALIAS[R.name]||R.name||"";if(!/\b(branch|arm)\b/i.test(n))return false;
+ for(const l of R.ls){if(l.length<6)continue;for(const i of [0,l.length-3]){const x=l[i],y=l[i+1],c=Math.cos(y*Math.PI/180);for(const q of coarse()){if(Math.abs(q[1]-y)>.3||Math.abs(q[0]-x)>.4)continue;
+  const vx=(q[2]-q[0])*c,vy=q[3]-q[1],px=(x-q[0])*c,py=y-q[1],L2=vx*vx+vy*vy||1e-9;let u=(px*vx+py*vy)/L2;u=Math.max(0,Math.min(1,u));if(Math.hypot(px-u*vx,py-u*vy)<.06){R.cn=q[4];return true}}}}return false}
+function tier(R){if(R.cls&&R.cls!=="river")return R.cls==="canal"?"minor":"stream";const M=major();{const k=R.keys.find(k=>M.has(k));if(k){R.cn=MAJN.get(k)||null;return"major"}}if(nearCoarse(R)){R.keys.forEach(k=>M.add(k));return"major"}if(branchOf(R))return"major";if(R.lowz||R.keys.some(k=>MED.has(k)))return"medium";return"minor"}
 /* which of the map's own big rivers the tiles on show already hold (drawn sharp): those are not drawn from the rough built-in line,
    and so must not answer the pointer from it either */
 function coarseHave(s){if(s._have)return s._have;const have=new Set();s.tiles.forEach(t=>{if(t.d)t.d.rivers.forEach(R=>{if((R._t||(R._t=tier(R)))==="major"&&R.cn)have.add(R.cn)})});return(s._have=have)}
@@ -371,7 +376,9 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
  /* Satellite: the tiles give the sharp coast and borders only; rivers are the map's own major ones (and lakes are in the photo) */
  if(ov.rivers&&!sat){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
-  const RC=(!elev&&I.drewRaster&&window.gfRiverColor&&gfRiverColor())/* (the Relief map: the Palette's River colour) */||(!elev&&seaC)||rivCol;ctx.globalAlpha=1;layered(ctx,seaC&&!elev?1:rivA,c=>{c.fillStyle=RC;s.tiles.forEach(t=>{if(!t.d)return;c.save();if(boxClip(c,pj,t)){c.beginPath();t.d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(c,pj,r,true))});c.fill("evenodd")}c.restore()})});ctx.globalAlpha=rivA;
+  const RC=(!elev&&I.drewRaster&&window.gfRiverColor&&gfRiverColor())/* (the Relief map: the Palette's River colour) */||(!elev&&seaC)||rivCol;ctx.globalAlpha=1;/* (edged with a line as wide as a big river's, so a narrow stretch drawn as water, as the Nile's delta branches, reads as the
+     same river line that runs into it, not a faint thread beside a bold one) */
+  layered(ctx,seaC&&!elev?1:rivA,c=>{c.fillStyle=c.strokeStyle=RC;c.lineWidth=Math.min(1.8,.55+.07*z);c.lineJoin="round";s.tiles.forEach(t=>{if(!t.d)return;c.save();if(boxClip(c,pj,t)){c.beginPath();t.d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(c,pj,r,true))});c.fill("evenodd");c.beginPath();t.d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>edgePath(c,pj,r,true))});c.stroke()}c.restore()})});ctx.globalAlpha=rivA;
   /* a river stops at a lake's shore: inside each tile, its lakes are cut out of where rivers are drawn */
   const lakeOut=d=>{if(!ov.lakes)return;const K=d.lakes.filter(k=>k.cls!=="river").concat(bigLakes(d));if(!K.length)return;const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);K.forEach(k=>k.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd")};
   /* major rivers bold from the start; every other river fades in at its own zoom, by how far it reaches (long ones first,
