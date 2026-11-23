@@ -159,9 +159,12 @@ function compute(g,sz){const P=g.projection(),inv=q=>{try{const ll=P.invert(q);i
  let z=Math.min(MAXZ,z0+1);
  /* the tiles under a grid of points over the view */
  const pts=[];const N=40,M=28;for(let i=0;i<=N;i++)for(let j=0;j<=M;j++){const ll=inv([sz.w*i/N,sz.h*j/M]);if(ll)pts.push(ll)}
+ /* how many tiles: in proportion to the map's area on screen (a bigger map, as in full screen, needs more tiles for the same
+    sharpness: a fixed count made full screen drop a level and look coarser than the smaller map) */
+ const B=Math.round(MAXTILES*Math.max(1,sz.w*sz.h/(880*880)));
  let tiles;for(;;){const S=new Map(),n=Math.pow(2,z);pts.forEach(([lo,la])=>{la=Math.max(-85.05,Math.min(85.05,la));const x=Math.min(n-1,Math.floor((lo+180)/360*n)),r=la*Math.PI/180,y=Math.min(n-1,Math.max(0,Math.floor((1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n)));
     S.set(key(z,x,y),[x,y])});
-  if(S.size<=MAXTILES){tiles=[...S.entries()].map(([k,[x,y]])=>({k,z,x,y}));break}z--;if(z<MINZ)return{on:false,z}}
+  if(S.size<=B){tiles=[...S.entries()].map(([k,[x,y]])=>({k,z,x,y}));break}z--;if(z<MINZ)return{on:false,z}}
  if(z<MINZ)return{on:false,z};
  /* each tile drawn from itself, or while it loads from a loaded parent (up to three levels up) */
  tiles.forEach(t=>{t.d=got(t.k);t.src=t;if(!t.d)for(let u=1;u<=3&&z-u>=MINZ-1;u++){const pk=key(z-u,t.x>>u,t.y>>u),pd=got(pk);if(pd){t.d=pd;t.src={z:z-u,x:t.x>>u,y:t.y>>u};break}}});
