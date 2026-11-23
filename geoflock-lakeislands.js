@@ -89,28 +89,65 @@ const onMaps=g=>{try{return typeof amGlobe!=="undefined"&&g===amGlobe&&appMode==
 const lakeShown=(ov,I)=>!!ov.lakes&&!(I.L&&I.L.minor&&!ov.minorLakes&&!window._gfMinorOn);
 /* pixels per degree of longitude at a point (small islands are only marked once the map is zoomed in that far) */
 const pxDeg=(p,ll)=>{const c=p(ll),q=p([ll[0]+.1,ll[1]]);return c&&q?Math.hypot(q[0]-c[0],q[1]-c[1])*10:0};
-/* the island as the map draws it when zoomed in: the sharp map tiles' holes in the lake around the island's rough outline (it and
-   its islets), so the highlight and the hover match the land on show. Falls back to the rough outline when the tiles do not
-   have it whole (not on show, or cut at a tile edge) */
-function sharpIsle(g,I){if(I.kind!=="s"||!window.gfDetail||!gfDetail.islesIn)return I.g;const pad=I.r*1.3*180/Math.PI,cl=Math.max(.2,Math.cos(I.c[1]*Math.PI/180));
- const bb=[I.c[0]-pad/cl,I.c[1]-pad,I.c[0]+pad/cl,I.c[1]+pad];const R=gfDetail.islesIn(g,bb);if(!R)return I.g;if(I._shk===R.key)return I._sh;
- const polys=[];let a=0;R.list.forEach(h=>{const m=[(h.bb[0]+h.bb[2])/2,(h.bb[1]+h.bb[3])/2];if(d3.geoDistance(m,I.c)>I.r*1.25)return;
-  const ring=h.ring.slice();if(ring[0][0]!==ring[ring.length-1][0]||ring[0][1]!==ring[ring.length-1][1])ring.push(ring[0].slice());const P=smallPoly(ring);polys.push(P.coordinates);a+=d3.geoArea(P)*R_KM*R_KM});
- const sh=polys.length&&a>=.4*I.km2&&a<=2.5*I.km2?{type:"MultiPolygon",coordinates:polys}:I.g;I._shk=R.key;I._sh=sh;return sh}
+/* the island as the map draws it when zoomed in. Once the sharp map tiles are on show the island is only the land they draw
+   with water all round it, near the island's place: a hole in one lake, or land between several lake pieces (a lake cut at
+   tile edges, Great Salt Lake's arms), found on a grid of about a screen pixel. The rough outline is never used then: where
+   the tiles draw no such island (Antelope Island is joined to the shore by Farmington Bay's mud flats in them), the island
+   is not hovered and the land there is the country's. Zoomed out the rough outline is the island (the lake is drawn with it as a hole). */
+const ISL_MAX=1100;
+function ptIn(rs,x,y){let c=false;for(const r of rs)for(let i=0,j=r.length-3;i<r.length;j=i,i+=3){const yi=r[i+1],yj=r[j+1];if((yi>y)!==(yj>y)&&x<(r[j]-r[i])*(y-yi)/(yj-yi)+r[i])c=!c}return c}
+function detIsle(g,I){if(I.kind!=="s"||!window.gfDetail||!gfDetail.waterIn)return null;const cl=Math.max(.2,Math.cos(I.c[1]*Math.PI/180)),pad=I.r*1.6*180/Math.PI;
+ const x0=I.c[0]-pad/cl,x1=I.c[0]+pad/cl,y0=I.c[1]-pad,y1=I.c[1]+pad;const W=gfDetail.waterIn(g,[x0,y0,x1,y1]);if(!W)return null;
+ const p=g.projection(),k=pxDeg(p,I.c);const ck=W.key+"|"+k.toFixed(1);if(I._dk===ck)return I._d;
+ /* the grid: about one cell per screen pixel (at most ISL_MAX a side) */
+ let gw=Math.max(48,Math.ceil((x1-x0)*k)),gh=Math.max(48,Math.ceil((y1-y0)*k/cl));const sc=Math.min(1,ISL_MAX/Math.max(gw,gh));gw=Math.ceil(gw*sc);gh=Math.ceil(gh*sc);
+ const cv=document.createElement("canvas");cv.width=gw;cv.height=gh;const c=cv.getContext("2d",{willReadFrequently:true});
+ c.setTransform(gw/(x1-x0),0,0,-gh/(y1-y0),-x0*gw/(x1-x0),y1*gh/(y1-y0));c.fillStyle="#000";
+ W.list.forEach(rs=>{c.beginPath();rs.forEach(r=>{for(let i=0;i<r.length;i+=3)i?c.lineTo(r[i],r[i+1]):c.moveTo(r[i],r[i+1]);c.closePath()});c.fill("evenodd")});
+ const px=c.getImageData(0,0,gw,gh).data,N=gw*gh,cdx=(x1-x0)/gw,cdy=(y1-y0)/gh,cellKm2=cdx*cl*cdy*111.2*111.2,Q=new Int32Array(N);
+ /* the land cut off by water near the island's place. Which land is cut off is decided first on the land shrunk by a cell, so a
+    neck a pixel wide (a causeway, a narrow channel drawn shut at this scale) does not join an island to the shore, the island
+    being that core grown back by the cell, on land only; an island too small for that is taken as it is */
+ const pick=erode=>{const lab=new Int32Array(N),land=new Uint8Array(N);/* lab: 0 land not yet seen, -1 water, -2 land reached from the box's edge, n>0 an enclosed piece */
+  for(let i=0;i<N;i++){if(px[i*4+3]>=128)lab[i]=-1;else land[i]=1}
+  if(erode)for(let y=0;y<gh;y++)for(let x=0;x<gw;x++){const i=y*gw+x;if(land[i]&&(x>0&&!land[i-1]||x<gw-1&&!land[i+1]||y>0&&!land[i-gw]||y<gh-1&&!land[i+gw]))lab[i]=-1}
+  const flood=(seeds,v)=>{let h=0,t=0;seeds.forEach(i=>{if(lab[i]===0){lab[i]=v;Q[t++]=i}});let n=0,sx=0,sy=0;
+   while(h<t){const i=Q[h++],x=i%gw,y=(i-x)/gw;n++;sx+=x;sy+=y;const nb=[x>0?i-1:-1,x<gw-1?i+1:-1,y>0?i-gw:-1,y<gh-1?i+gw:-1];for(const j of nb)if(j>=0&&lab[j]===0){lab[j]=v;Q[t++]=j}}return{n,sx,sy}};
+  const edge=[];for(let x=0;x<gw;x++)edge.push(x,(gh-1)*gw+x);for(let y=0;y<gh;y++)edge.push(y*gw,y*gw+gw-1);flood(edge,-2);
+  const near=new Set();let id=0,main=0,mn=0;for(let i=0;i<N;i++)if(lab[i]===0){const r=flood([i],++id),m=[x0+(r.sx/r.n+.5)*cdx,y1-(r.sy/r.n+.5)*cdy];if(d3.geoDistance(m,I.c)<=I.r*1.25){near.add(id);if(r.n>mn){mn=r.n;main=id}}}
+  if(!main)return null;
+  /* the island is the biggest such piece, with the pieces and islets just off it (within a few pixels, or 6% of its size); not
+     other islands further out, nor islands in the lakes of the land round about */
+  const keep=new Set([main]),K0=Math.max(3,Math.round(.06*I.r*180/Math.PI/cdy)),dist=new Int16Array(N).fill(-1);let h=0,t=0;
+  for(let i=0;i<N;i++)if(lab[i]===main){dist[i]=0;Q[t++]=i}
+  while(h<t){const i=Q[h++],x=i%gw,y=(i-x)/gw;if(lab[i]>0&&near.has(lab[i]))keep.add(lab[i]);if(dist[i]>=K0)continue;for(const j of [x>0?i-1:-1,x<gw-1?i+1:-1,y>0?i-gw:-1,y<gh-1?i+gw:-1])if(j>=0&&dist[j]<0){dist[j]=dist[i]+1;Q[t++]=j}}const sel=new Uint8Array(N);let a=0;const K=i=>lab[i]>0&&keep.has(lab[i]);
+  for(let y=0;y<gh;y++)for(let x=0;x<gw;x++){const i=y*gw+x;if(!land[i])continue;if(K(i)||erode&&(x>0&&K(i-1)||x<gw-1&&K(i+1)||y>0&&K(i-gw)||y<gh-1&&K(i+gw))){sel[i]=1;a+=cellKm2}}
+  return a>=.4*I.km2&&a<=2.5*I.km2?sel:null};
+ const sel=pick(1)||pick(0);let D={ok:false};
+ if(sel){
+  /* the island grown by a cell (into the water round it), as runs along each row: drawn, then the exact water cut out of it */
+  const runs=[];for(let y=0;y<gh;y++){let s0=-1;for(let x=0;x<=gw;x++){let on=0;if(x<gw)for(let b=-1;b<=1&&!on;b++)for(let e=-1;e<=1;e++){const xx=x+e,yy=y+b;if(xx>=0&&xx<gw&&yy>=0&&yy<gh&&sel[yy*gw+xx]){on=1;break}}
+   if(on&&s0<0)s0=x;if(!on&&s0>=0){runs.push([x0+s0*cdx,y1-y*cdy,x0+x*cdx,y1-(y+1)*cdy]);s0=-1}}}
+  D={ok:true,sel,gw,gh,x0,y1,cdx,cdy,runs,W:W.list}}
+ I._dk=ck;I._d=D;return D}
+/* is the point on the island as drawn? (null: the sharp tiles are not on show) */
+function onDet(g,I,ll){const D=detIsle(g,I);if(!D)return null;if(!D.ok)return false;const x=Math.floor((ll[0]-D.x0)/D.cdx),y=Math.floor((D.y1-ll[1])/D.cdy);
+ if(x<0||y<0||x>=D.gw||y>=D.gh)return false;for(const rs of D.W)if(ptIn(rs,ll[0],ll[1]))return false;/* in the water: the lake's */
+ for(let b=-1;b<=1;b++)for(let e=-1;e<=1;e++){const xx=x+e,yy=y+b;if(xx>=0&&xx<D.gw&&yy>=0&&yy<D.gh&&D.sel[yy*D.gw+xx])return true}return false}
 /* is this island shown, and where is the mouse on it? */
 function find(g,ll,mx,my){prep();if(!READY)return null;const ov=g.cfg.overlays?g.cfg.overlays():{};const raster=!!(g.cfg.raster&&g.cfg.raster());
  const p=g.projection(),ctr=[-g.rot[0],-g.rot[1]];let best=null,bd=Infinity;
  for(const I of ISLES){if(!g._flat&&d3.geoDistance(I.ll,ctr)>Math.PI/2-.01)continue;
   const lakeOn=lakeShown(ov,I);const c=p(I.kind==="s"?I.c:I.ll);if(!c)continue;
   const d=Math.hypot(c[0]-mx,c[1]-my);
-  if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r*1.3+.002)continue;/* (a quick test: its islets can lie a little beyond its rough outline) */
+  if(I.kind==="s"){if(d3.geoDistance(I.c,ll)>I.r*1.6+.002)continue;/* (a quick test: its islets can lie a little beyond its rough outline) */
    /* size on screen: the island's radius in pixels */
    const e=p([I.c[0]+I.r*180/Math.PI/Math.max(.2,Math.cos(I.c[1]*Math.PI/180)),I.c[1]]),px=e?Math.abs(e[0]-c[0]):0;
    if(!lakeOn&&!(raster&&px*2>=BIG_ALONE_PX))continue;
    /* an island too small to see at this zoom is not hovered, unless the outlines (borders) layer draws its outline */
    {let ol=false;try{ol=typeof allMapsBordersOn!=="undefined"&&allMapsBordersOn!==false}catch(e){}if(!ol&&px*2<(sat()?10:6))continue}
    /* hovered only on the island itself, with no margin: the lake water round it is the lake's */
-   if(!d3.geoContains(sharpIsle(g,I),ll))continue;if(d<bd){bd=d;best=I}}
+   {const od=onDet(g,I,ll);if(od===false||(od===null&&!d3.geoContains(I.g,ll)))continue}if(d<bd){bd=d;best=I}}
   else{/* islands known only as a point have no outline on the map: not hovered (and no dot is drawn for them) */continue;if(!lakeOn||(d3.geoDistance(I.ll,ll)*R_KM>PT_KM&&d>TINY_PX)||sat())continue;/* on the satellite picture these islands are not drawn: nothing to hover */if(pxDeg(p,I.ll)<PT_MIN_PXDEG)continue;if(d<bd){bd=d;best=I}}}
  return best}
 /* small islands the lake is painted over show as a dot of land once the map is zoomed in far enough to see them
@@ -123,6 +160,16 @@ function dots(g){/* the little dots for point-only islands are no longer drawn *
  ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=dk?"#8f8a6c":"#d2c79f";ctx.strokeStyle=dk?"rgba(255,255,255,.55)":"rgba(70,58,30,.6)";ctx.lineWidth=.8;
  /* a little bigger as the map zooms in, but always small: these islands are only a few km across */
  list.forEach(([c,k])=>{const rr=Math.max(1.8,Math.min(3.4,k/40));ctx.beginPath();ctx.arc(c[0],c[1],rr,0,2*Math.PI);ctx.fill();ctx.stroke()});ctx.restore()}
+/* the island as the tiles draw it: its grid cells (grown by one) with the tiles' water cut out, edged along the shore */
+let OFF=null;
+function drawDet(g,ctx,D,fill,edge,dpr){const pj=gfDetail.pj(g),cv=ctx.canvas;if(!OFF)OFF=document.createElement("canvas");if(OFF.width!==cv.width||OFF.height!==cv.height){OFF.width=cv.width;OFF.height=cv.height}
+ const o=OFF.getContext("2d");o.setTransform(1,0,0,1,0,0);o.clearRect(0,0,OFF.width,OFF.height);o.setTransform(dpr,0,0,dpr,0,0);
+ const runsPath=c=>{c.beginPath();D.runs.forEach(([a,b,e,f])=>{const q=[pj(a,b),pj(e,b),pj(e,f),pj(a,f)];if(q.some(v=>!v))return;c.moveTo(q[0][0],q[0][1]);c.lineTo(q[1][0],q[1][1]);c.lineTo(q[2][0],q[2][1]);c.lineTo(q[3][0],q[3][1]);c.closePath()})};
+ const water=(c,edges)=>{D.W.forEach(rs=>{c.beginPath();rs.forEach(r=>{let pen=false;const n=r.length/3;for(let k=0;k<n;k++){const i=k*3,j=((k+1)%n)*3;if(edges&&(r[i+2]&r[j+2])){pen=false;continue}const a=pj(r[i],r[i+1]),b=pj(r[j],r[j+1]);if(!a||!b){pen=false;continue}if(!pen){c.moveTo(a[0],a[1]);pen=true}c.lineTo(b[0],b[1])}});edges?c.stroke():c.fill("evenodd")})};
+ runsPath(o);o.fillStyle=fill;o.fill("nonzero");o.globalCompositeOperation="destination-out";o.fillStyle="#000";water(o,false);o.globalCompositeOperation="source-over";
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(OFF,0,0);ctx.restore();
+ /* the shore: the water's edges (not the tiles' cut edges) inside the island's grown cells */
+ ctx.save();runsPath(ctx);ctx.clip("nonzero");ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;water(ctx,true);ctx.strokeStyle=edge;ctx.lineWidth=1.3;water(ctx,true);ctx.restore()}
 function install(){const P=GlobeView.prototype;
  const _hov=P._hover;P._hover=function(e){const r=_hov.apply(this,arguments);if(!onMaps(this))return r;const was=this._gfIsle;let I=null;
   try{if(e&&isFinite(e.clientX)){const h=this.hit(e.clientX,e.clientY);if(h&&h.ll){const rc=this.canvas.getBoundingClientRect();I=find(this,h.ll,e.clientX-rc.left,e.clientY-rc.top)}}}catch(err){console.error(err)}
@@ -136,7 +183,7 @@ function install(){const P=GlobeView.prototype;
   try{const ctx=this.ctx,dpr=(window.gfDpr?gfDpr():Math.min(2,window.devicePixelRatio||1)),{w,h,r:R}=this.size(),p=this.projection(),dk=dark();
    ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);if(!this._flat){ctx.beginPath();ctx.arc(w/2,h/2,R,0,2*Math.PI);ctx.clip()}
    ctx.lineJoin="round";ctx.lineCap="round";const fill=dk?"rgba(255,226,120,0.62)":"rgba(255,206,64,0.58)",edge=dk?"#fff3c4":"#7a4a00";
-   if(I.kind==="s"){const path=d3.geoPath(p,ctx);ctx.beginPath();path(sharpIsle(this,I));ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke()}
+   if(I.kind==="s"){const D=detIsle(this,I);if(D&&D.ok)drawDet(this,ctx,D,fill,edge,dpr);else if(!D){const path=d3.geoPath(p,ctx);ctx.beginPath();path(I.g);ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle="rgba(255,255,255,0.95)";ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=edge;ctx.lineWidth=1.3;ctx.stroke()}}
    else{const c=p(I.ll);if(c){ctx.beginPath();ctx.arc(c[0],c[1],4.2,0,2*Math.PI);ctx.fillStyle=dk?"#ffe27a":"#ffc52e";ctx.fill();ctx.lineWidth=2;ctx.strokeStyle="#ffffff";ctx.stroke();ctx.beginPath();ctx.arc(c[0],c[1],5.6,0,2*Math.PI);ctx.lineWidth=1.1;ctx.strokeStyle=edge;ctx.stroke()}}
    ctx.restore()}catch(err){console.error(err)}return r};
  addSearch()}
@@ -158,5 +205,5 @@ function addSearch(){const S=window.gfSearch;if(!S||!S.build)return;const FOLD={
 /* installed after every other script, so these wrappers are the outermost */
 const go=()=>setTimeout(()=>{try{install()}catch(e){console.error(e)}},0);
 if(document.readyState==="complete")go();else addEventListener("load",go);
-window.gfLakeIslands={list:ISLES,find:(g,ll,x,y)=>find(g,ll,x,y),prep};
+window.gfLakeIslands={list:ISLES,find:(g,ll,x,y)=>find(g,ll,x,y),prep,det:(g,I)=>detIsle(g,I)};
 })();
