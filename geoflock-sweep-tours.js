@@ -21,7 +21,7 @@ const FIX={
  /* Population: Nigeria and Lagos were half under the card */
  "pop|Africa’s two crowded corners":S=>FRAME(S,8,3,1.6,[-31,-12,46,18]),
  /* Population: London and Manchester, the banana's top end, were under the card */
- "pop|Europe’s Blue Banana":S=>FRAME(S,-1,50,3.5,[-16,42.5,14,57]),
+ "pop|Europe’s Blue Banana":S=>FRAME(S,-2.5,49.6,3.3,[-19,42.5,13,57]),
  /* Population: the whole of Russia shows, European Russia beside the card instead of under it */
  "pop|Russia lives west of the Urals":S=>FRAME(S,45,58,1.2,[-95,35,185,78]),
  /* Elevation: Beringia was half under the card (Chukotka side): the whole land bridge beside it */
@@ -122,7 +122,7 @@ const TXT={
  /* Population: the card and "Tell me more" both opened with the same sentence */
  "pop|China’s Hu line":{re:[["more","That is about 1.3 billion people, on less than half of China. ","They live on less than half of China’s land. "]]},
  /* a sentence without a verb */
- "pop|Europe’s Blue Banana":{body:"Counts run from about 110 to 145 million, depending on where the line is drawn. It stretches from Manchester to Milan and follows the Rhine, Europe’s busiest trade route for centuries."},
+ "pop|Europe’s Blue Banana":{body:"Counts run from about 110 to 145 million, depending on where the line is drawn. It stretches from Manchester to Milan, and its spine is the Rhine (traced in blue), Europe’s busiest trade route for centuries."},
  /* a stat line two lines long: the capitals move into the text */
  "pop|Central America faces the Pacific":{stat:"People crowd the Pacific side and the highlands; the Caribbean side is nearly empty",
   re:[["body","A chain of volcanoes (dashed)","All five capitals of the old Central American federation are on the Pacific side or up in the highlands. A chain of volcanoes (dashed)"]]},
