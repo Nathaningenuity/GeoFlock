@@ -84,8 +84,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  Object.values(PS_TOURS).forEach(T=>(T.steps||[]).forEach(S=>{if(!S.lines)return;const i=S.lines.findIndex(L=>L.coords&&L.coords[0]&&L.coords[0][0]===98.22&&L.coords[0][1]===39.8);
   if(i<0)return;const k=S.lines[i].kind;S.lines.splice(i,1,...G.coordinates.filter(c=>c.length>1).map(c=>({coords:c,kind:k==="dash"?"solid":k||"solid",w:2})))}));return true}catch(e){return false}};
  if(!fix())document.addEventListener("DOMContentLoaded",fix)})();
-/* 6. Mountain-range names sit on the range itself, along its length, and steep ones read upwards (bottom to top, like the
-   Appalachians), never downwards. Position and slant come from each range's mapped shape. */
+/* 6. Mountain-range names sit on the range itself, along its length, reading from left to right (section 8). Position and slant come from each range's mapped shape. */
 (function(){if(typeof globeOverlays!=="function"||typeof LANDFORMS==="undefined")return;
  const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\b(mountains|mts|mountain|range|ranges|peninsula|the)\b/g,"").replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
  const geomOf=g=>{if(!g||g.t!=="poly")return null;const deep=Array.isArray(g.c[0]&&g.c[0][0]&&g.c[0][0][0]);return{type:"MultiPolygon",coordinates:deep?g.c:g.c.map(r=>[r])}};
@@ -98,8 +97,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
   let mx=0,my=0;pts.forEach(([q])=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(([q])=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
   let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;/* -90..90, screen y down */
   /* an elongated range gets its slant; a round one stays level */const l1=(sxx+syy)/2+Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l2=(sxx+syy)/2-Math.sqrt(((sxx-syy)/2)**2+sxy*sxy);if(l1<2.2*Math.max(l2,1e-9))a=0;
-  /* steep names read from top to bottom: a steep slant rising to the right is turned round to read downwards */
-  if(a<-50)a+=180;
+  /* (which way the name reads is settled on screen as it is drawn: section 8) */
   /* the middle of the shape along its length: the points halfway along its long axis (a curved range such as the Andes has
      its centre of mass off the range, out to one side) */
   /* (the halfway point of its length, and the middle of its width there: an average of the outline's points would be pulled
@@ -158,7 +156,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
      The spots are worked out from the sea's own outline in longitude and latitude when the sea is first named (the
      earlier spots, kept from page load, could be some 30 degrees out, putting the Arabian Sea in the Bay of Bengal).
    - Which way: level whenever a level name fits inside the sea there; only a sea too narrow for that (the Red Sea,
-     the Gulf of California, the Adriatic) has its name slanted along its length, steep names reading top to bottom.
+     the Gulf of California, the Adriatic) has its name slanted along its length, reading from left to right (section 8).
    - Size: grows as the globe is zoomed in, like the country and city names, and a little more (about half as big
      again close up), so a sea name is not lost beside the land's names. */
 (function(){if(typeof GlobeView==="undefined"||typeof ALLMAPS_MARINE==="undefined"||typeof globeParsePath!=="function")return;
@@ -166,7 +164,7 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  ALLMAPS_MARINE.forEach(r=>{try{const n=r[0],d=r[4];if(!n||!d||ANG.has(n))return;const pts=globeParsePath(d).flat();if(pts.length<6)return;
   let mx=0,my=0;pts.forEach(q=>{mx+=q[0];my+=q[1]});mx/=pts.length;my/=pts.length;let sxx=0,syy=0,sxy=0;pts.forEach(q=>{const dx=q[0]-mx,dy=q[1]-my;sxx+=dx*dx;syy+=dy*dy;sxy+=dx*dy});
   const h=(sxx+syy)/2,r2=Math.sqrt(((sxx-syy)/2)**2+sxy*sxy),l1=h+r2,l2=h-r2;let a=.5*Math.atan2(2*sxy,sxx-syy)*180/Math.PI;
-  if(l1<3*Math.max(l2,1e-9)||Math.abs(a)<12)a=0;if(a<-50)a+=180;ANG.set(n,a)}catch(e){}});
+  if(l1<3*Math.max(l2,1e-9)||Math.abs(a)<12)a=0;ANG.set(n,a)}catch(e){}});
  const D2R=Math.PI/180;
  /* the sea's outline as flat rings of [lon,lat] (outer rings and islands alike: inside = inside an odd number of rings).
     Each ring is made continuous in longitude: a point on the map's edge can come back as 180 degrees east or west, and a
@@ -210,10 +208,29 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
    const fits=(xy,a)=>{const ca=Math.cos(a),sa=Math.sin(a),hx=tw/2+2,hy=fs/2+1;for(const[u,v] of [[0,0],[-1,0],[1,0],[-1,-1],[1,-1],[-1,1],[1,1],[-.5,-1],[.5,-1],[-.5,1],[.5,1],[0,-1],[0,1]]){const X=xy[0]+ca*u*hx-sa*v*hy,Y=xy[1]+sa*u*hx+ca*v*hy;if(X<X0+2||Y<Y0+2||X>X1-2||Y>Y1-2||Math.hypot(X-w/2,Y-h/2)>Math.min(R,RD)-4)return false;const q=pr.invert([X,Y]);if(!q||!isFinite(q[0])||!inside(g,q[0],q[1]))return false}return true};
    const box=(xy,a)=>{const c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a)),hw=(tw*c+fs*s)/2,hh=(tw*s+fs*c)/2;return[xy[0]-hw,xy[1]-hh,xy[0]+hw,xy[1]+hh]};
    let pick=null,fb=null;
-   for(const E of sc.slice(0,14)){const tries=[0];if(a0)tries.push(a0);for(const a of tries){const b=box(E.xy,a);if(!this._fits(b)){continue}
+   for(const E of sc.slice(0,14)){const tries=[0];if(a0)tries.push(window.gfLabelAng?gfLabelAng(p,E.A.ll,a0/D2R):a0);for(const a of tries){const b=box(E.xy,a);if(!this._fits(b)){continue}
      /* (_fits took the box; it is given back unless this is the spot chosen) */this._placed.pop();
      if(fits(E.xy,a)&&![-1,0,1].some(u=>hidden(E.xy[0]+Math.cos(a)*u*tw/2,E.xy[1]+Math.sin(a)*u*tw/2))){pick={E,a,b};break}if(!fb&&a===0)fb={E,a,b}}if(pick)break}
    /* nowhere does the whole name fit inside the sea: still named, level, at its most open spot in view, as long as the
       name stays mostly on its water (its middle and both ends) */
    if(!pick&&fb){const ok=[[0],[-.45],[.45]].every(([u])=>{const X=fb.E.xy[0]+u*tw,Y=fb.E.xy[1];if(X<X0||X>X1||Math.hypot(X-w/2,Y-h/2)>Math.min(R,RD)-4||hidden(X,Y))return false;const q=pr.invert([X,Y]);return q&&isFinite(q[0])&&inside(g,q[0],q[1])});if(ok)pick=fb}
    if(!pick)return;this._placed.push(pick.b);this._text(ctx,S.n,pick.E.xy[0],pick.E.xy[1],ink,halo,font,pick.a||undefined)})}})();
+/* 8. Slanted names read from left to right. Whatever the slant a name is given (a sea or gulf along its length, a mountain
+   range or desert along its shape), it is turned so its text runs rightwards: a name slanted past the upright is turned
+   round. Only a name that stands (almost) straight up, within 3 degrees, reads from top to bottom; any more tilt than that
+   and it reads from bottom left to top right. The slant is taken on screen as the map is drawn: the globe turns, tilts and
+   curves a sea's length, so the Chesapeake Bay that runs up the screen on one view runs across it on another.
+   gfLabelAng(p,ll,deg): a slant measured on the flat (Robinson) map at ll, as it shows on the projection p, read rightwards.
+   gfReadAng(a): an on-screen slant (radians, clockwise, y down) turned to read rightwards. Every slanted name drawn on the
+   globe or the flat map (GlobeView._text) goes through it. */
+(function(){const TOL=3*Math.PI/180,RB=d3.geoRobinson();
+ function gfReadAng(a){if(!a||!isFinite(a))return a;a=Math.atan2(Math.sin(a),Math.cos(a));
+  if(Math.abs(Math.abs(a)-Math.PI/2)<=TOL)return a<0?a+Math.PI:a;/* upright: top to bottom */
+  return Math.cos(a)<0?(a>0?a-Math.PI:a+Math.PI):a}
+ function gfLabelAng(p,ll,deg){const r=(+deg||0)*Math.PI/180;if(!r)return 0;
+  try{const q=RB(ll);if(q){const ux=Math.cos(r),uy=Math.sin(r),A=RB.invert([q[0]-ux,q[1]-uy]),B=RB.invert([q[0]+ux,q[1]+uy]),a=A&&p(A),b=B&&p(B);
+   if(a&&b&&isFinite(a[0])&&isFinite(b[0])&&Math.hypot(b[0]-a[0],b[1]-a[1])>1e-6)return gfReadAng(Math.atan2(b[1]-a[1],b[0]-a[0]))}}catch(e){}
+  return gfReadAng(r)}
+ window.gfReadAng=gfReadAng;window.gfLabelAng=gfLabelAng;
+ if(typeof GlobeView==="undefined")return;const P=GlobeView.prototype,_t=P._text;if(!_t||_t._gfRead)return;
+ P._text=function(ctx,txt,x,y,fill,halo,font,ang){if(ang){const A=Array.prototype.slice.call(arguments);A[7]=gfReadAng(ang);return _t.apply(this,A)}return _t.apply(this,arguments)};P._text._gfRead=1})();
