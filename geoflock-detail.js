@@ -326,14 +326,18 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
     ctx.save();ctx.beginPath();d.ocean.forEach(o=>o.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd");
     ctx.lineWidth=W*2;ctx.lineJoin=ctx.lineCap="round";try{ctx.filter="blur("+Math.round(W/3)+"px)"}catch(e){}
     G.forEach((list,col)=>{ctx.strokeStyle=col;ctx.beginPath();list.forEach(([r,a,b])=>edgeSpan(ctx,pj,r,a,b));ctx.stroke()});ctx.restore()});
+
+   /* ...and the other way: land on the sharp coast that the picture shows as sea (fjord walls, headlands, small islands) is
+      painted in the picture's own land colour from just inland of it */
+   if(false)try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
+ /* (on the 3D globe too: the band above is left out there, but nothing else fills these, and Laguna Madre de Tamaulipas showed
+    as land edged by thin coast lines) */
+ if(I.drewRaster&&!sat&&plain&&seaC)try{
    /* sea the picture shows as land (lagoons behind barrier islands, as Laguna Madre; narrow gulfs and estuaries): wherever the
       sharp sea lies inside the map's rough land, which is about where the picture has land, it is filled with the sea colour */
    const land=(g._base||[]).filter(f=>f&&f.geometry);if(land.length){const LP=d3.geoPath(g.projection(),ctx);
     each(d=>{if(!d.ocean.length)return;ctx.beginPath();d.ocean.forEach(o=>{if(isLakeSea(o))return;o.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.clip("evenodd");
-     ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}
-   /* ...and the other way: land on the sharp coast that the picture shows as sea (fjord walls, headlands, small islands) is
-      painted in the picture's own land colour from just inland of it */
-   if(false)try{landOut(g,ctx,s,pj,I,land,each)}catch(e){console.error(e)}}}catch(e){console.error(e)}}
+     ctx.beginPath();land.forEach(f=>LP(f));ctx.fillStyle=seaC;ctx.fill()})}}catch(e){console.error(e)}
  /* Elevation: the named lakes the tiles store as sea (Lake Maracaibo, Lagoa dos Patos) in the lakes' blue, kept to the tiles'
     water, so they look as every other lake does (zoomed out they are the map's own lakes, in the same blue). Relief: the same,
     in the palette's shallow-sea colour (the coarse tiles hold no lake there, and the picture shows its own lake colour); the
@@ -401,7 +405,7 @@ function d3poly(rings){/* d3 wants each piece wound the other way from the tile'
  let P={type:"Polygon",coordinates:pol};try{if(d3.geoArea(P)>2*Math.PI)P={type:"Polygon",coordinates:pol.map(r=>r.slice().reverse())}}catch(e){}return P}
 /* well-known lagoons open to the sea, for naming them on hover when the tiles do not: name, longitude, latitude, reach in degrees */
 const LAGOONS=[["Venetian Lagoon",12.33,45.4,.25],["Lagoon of Marano and Grado",13.25,45.72,.22],["Sacca di Goro",12.33,44.81,.07],["Valli di Comacchio",12.17,44.62,.13],
- ["Laguna Madre",-97.4,26.9,.9],["Laguna Madre",-97.6,24.6,.8],["Pamlico Sound",-76.0,35.25,.65],["Albemarle Sound",-76.1,36.05,.4],["Currituck Sound",-75.85,36.4,.2],
+ ["Laguna Madre",-97.4,26.9,.9],["Laguna Madre (Tamaulipas)",-97.6,24.6,.8],["Pamlico Sound",-76.0,35.25,.65],["Albemarle Sound",-76.1,36.05,.4],["Currituck Sound",-75.85,36.4,.2],
  ["Indian River Lagoon",-80.6,28.0,.9],["Laguna de Términos",-91.55,18.65,.4],["Lagos Lagoon",3.55,6.5,.15],["Lekki Lagoon",4.1,6.5,.15],["Ébrié Lagoon",-4.15,5.28,.4],
  ["Keta Lagoon",.9,5.9,.2],["Curonian Lagoon",21.1,55.3,.45],["Vistula Lagoon",19.85,54.45,.4],["Szczecin Lagoon",14.15,53.77,.25],["Ria Formosa",-7.85,37.0,.2],
  ["Mar Menor",-.79,37.72,.15],["Étang de Thau",3.6,43.4,.12],["Lake Manzala",32.05,31.3,.3],["Lake Burullus",30.85,31.5,.3],["Lake Edku",30.25,31.25,.1],
@@ -442,7 +446,11 @@ function waterHit(g,ll,cx,cy,ov,base){const s=on(g);if(!s)return null;const out=
       lakes strung along the Ottawa): called by the river's name, not just "Lake" */
    if(!name&&!sj){const rn=riverThrough(s,K);if(rn)name=rn}
    name=lakeAlias(name||(sj?"Lagoon":LAB[K.cls]||"Lake"),ll,g,K);const co=[];
-   const same=Q=>Q===K||(K.id!=null&&Q.id===K.id);
+   /* the whole named water body: every piece with the same map id, and every other piece carrying the same name (a lagoon or lake
+      the map data files as several pieces, as Laguna Madre: hovering lit up one slice of it) */
+   const qName=Q=>Q.n||(Q.id!=null&&NAMES.get(Q.id))||(seaJ(Q)&&lagoonAt([(Q.bb[0]+Q.bb[2])/2,(Q.bb[1]+Q.bb[3])/2]))||null;
+   const nm0=(name&&name!==LAB[K.cls]&&name!=="Lake"&&name!=="Lagoon")?(K.n||(K.id!=null&&NAMES.get(K.id))||(sj&&lagoonAt(ll))||null):null;
+   const same=Q=>Q===K||(K.id!=null&&Q.id===K.id)||(!!nm0&&Q.cls!=="river"&&!!seaJ(Q)===!!sj&&qName(Q)===nm0);
    /* filled from every tile on show (a part not yet loaded sharply is still covered), but outlined only from the sharpest tiles
       that hold this lake: a coarser parent tile would add its rough outline on top of the sharp one */
    let zt=-1;s.tiles.forEach(t=>{if(t.d&&t.z>zt&&(t.d.lakes.some(same)||(K._big&&bigLakes(t.d).some(Q=>Q===K||(K.n&&Q.n===K.n)))))zt=t.z});
