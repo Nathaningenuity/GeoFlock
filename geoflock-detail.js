@@ -82,7 +82,7 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
       an odd number of others is a hole; each ring is then turned so outlines and holes wind opposite ways (filled "nonzero") */
    const depth=lls.map((r,i)=>lls.reduce((n,o,j)=>n+(j!==i&&o.length>8&&inRings([o],[r[0],r[1]])?1:0),0));
    const polys=[];lls.forEach((r,i)=>{const hole=depth[i]%2===1,ar=areaLL(r);if(hole?ar<0:ar>0)revLL(r);if(!hole||!polys.length)polys.push([r]);else polys[polys.length-1].push(r)});
-   if(!polys.length)return;const all=polys.flat();if(cls==="ocean")D.ocean.push({rings:all});else D.lakes.push({id:f.tags.id,cls,int:f.tags.intermittent,polys,rings:all,bb:bboxOf(all)})})}
+   if(!polys.length)return;const all=polys.flat();if(cls==="ocean")D.ocean.push({rings:all});else{const K={id:f.tags.id,cls,int:f.tags.intermittent,polys,rings:all,bb:bboxOf(all)};if(cls==="river"||!(K.int&&dryKm(K)<Math.min(20,whole(K)?1e9:.5*40075*Math.cos((K.bb[1]+K.bb[3])/2*Math.PI/180)/n2)))D.lakes.push(K)}})}
  if(L.waterway){const E=L.waterway.ext;T.feats(L.waterway).forEach(f=>{if(f.type!==2||!f.geom)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length){const t=f.tags,R={name:nmL(t),cls:t.class,ls,bb:bboxOf(ls),keys:[...new Set([t["name:en"],t.name_en,t.name_int,t.name].filter(Boolean).map(rkey))],lowz:z<=8};if(R.lowz)R.keys.forEach(k=>MED.add(k));const ek=R.keys[0];if(ek){const e=EXT.get(ek),b=R.bb;EXT.set(ek,e?[Math.min(e[0],b[0]),Math.min(e[1],b[1]),Math.max(e[2],b[2]),Math.max(e[3],b[3])]:b.slice())}D.rivers.push(R)}})}
  if(L.boundary){const E=L.boundary.ext;T.feats(L.boundary).forEach(f=>{const t=f.tags;if(f.type!==2||!f.geom||!(t.admin_level>=2&&t.admin_level<=4)||t.maritime)return;const ls=[];parts(f.geom).forEach(l=>clipLine(l,E).forEach(c=>{if(c.length>1)ls.push(toLL(c,z,tx,ty,E,false))}));if(ls.length)D.borders.push({disp:!!t.disputed,lv:t.admin_level,ls})})}
  if(L.water_name){const E=L.water_name.ext;T.feats(L.water_name).forEach(f=>{if(f.type!==1||!f.geom)return;const p=parts(f.geom)[0];if(!p||!p[0])return;const ll=toLL([p[0]],z,tx,ty,E,false);D.names.push({n:nm(f.tags),cls:f.tags.class,ll:[ll[0],ll[1]]})})}
@@ -97,6 +97,11 @@ function build(u8,z,tx,ty){const T=readTile(u8),L=T.layers,D={lakes:[],ocean:[],
  D.names.forEach(N=>{if(!N.n||(N.cls&&!/^(lake|reservoir|lagoon|pond|basin)$/.test(N.cls)))return;for(const K of D.lakes){if(N.ll[0]<K.bb[0]||N.ll[0]>K.bb[2]||N.ll[1]<K.bb[1]||N.ll[1]>K.bb[3])continue;if(inRings(K.rings,N.ll)){if(K.id!=null)NAMES.set(K.id,N.n);K.n=N.n;break}}});
  return D}
 const NAMES=new Map();
+/* Small lakes that are usually dry (the pale grey patches on the mud flats round Great Salt Lake) are left out: not drawn, not
+   hovered. A piece cut at a tile edge counts as small only when it is under half a tile across (it may be part of a big
+   one); big dry lakes (Lake Eyre, Sevier Lake) stay, drawn faint. Salt evaporation ponds are water and are drawn as lakes, like any other */
+const whole=K=>K.rings.every(r=>{for(let i=2;i<r.length;i+=3)if(r[i])return false;return true});
+function dryKm(K){const b=K.bb,c=Math.cos((b[1]+b[3])/2*Math.PI/180);return Math.hypot((b[2]-b[0])*c,b[3]-b[1])*111.2}
 function areaLL(r){let a=0;for(let i=0,j=r.length-3;i<r.length;j=i,i+=3)a+=r[j]*r[i+1]-r[i]*r[j+1];return a/2}
 function revLL(r){const n=r.length/3;for(let i=0;i<n>>1;i++){const a=i*3,b=(n-1-i)*3;for(let k=0;k<3;k++){const t=r[a+k];r[a+k]=r[b+k];r[b+k]=t}}}
 /* river importance: the map's own named rivers (the Amazon, the Congo…) are major; rivers already in the small-scale tiles
@@ -281,10 +286,15 @@ function edgeSpan(ctx,pj,r,a,b){let pen=false;const n=r.length/3;for(let k=a;k<b
    read a few milliseconds' worth per frame, and the map is drawn again until all are in */
 let STILL=true,PEND=false,PT=0,T0=0;
 function draw(g,ctx,I){const s=on(g);if(!s)return;FRAME++;STILL=!(g._moving||performance.now()-(g._viewT||0)<300);PEND=false;T0=performance.now();try{draw1(g,ctx,I,s)}finally{if(PEND){clearTimeout(PT);PT=setTimeout(redraw,STILL?0:200)}}}
+/* a see-through fill drawn opaque into a layer, then laid on the map once at its strength (overlaps inside it do not darken) */
+let LAYER=null;
+function layered(ctx,alpha,fn){if(alpha>=.999){fn(ctx);return}const cv=ctx.canvas;if(!LAYER)LAYER=document.createElement("canvas");if(LAYER.width!==cv.width||LAYER.height!==cv.height){LAYER.width=cv.width;LAYER.height=cv.height}
+ const c=LAYER.getContext("2d");c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,LAYER.width,LAYER.height);c.setTransform(ctx.getTransform());fn(c);
+ ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=alpha;ctx.drawImage(LAYER,0,0);ctx.restore()}
 function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projector(g),ov=I.ov||{},sat=I.texKey==="satellite",rel=I.drewRaster&&/^(relief|gfRelShade)/.test(I.texKey||"");
  const borders=g.cfg.borders?g.cfg.borders():true,coast=s.z>=COASTZ,LT=window.gfRiverLate?gfRiverLate(g):1,z=g.zoom/LT;/* rivers: later on maps other than Relief and Elevation */
  /* each tile is drawn whole (begin, path, fill or stroke) so a tile drawn from its parent can be clipped to its own square */
- const each=fn=>s.tiles.forEach(t=>{if(!t.d)return;ctx.save();if(!boxClip(ctx,pj,t)){ctx.restore();return}try{fn(t.d)}finally{ctx.restore()}});
+ const each=fn=>s.tiles.forEach(t=>{if(!t.d)return;ctx.save();if(!boxClip(ctx,pj,t)){ctx.restore();return}try{fn(t.d,t)}finally{ctx.restore()}});
  const rivCol=sat?"rgb(26,66,120)":I.drewRaster?"#2f7ab8":"#14568c",rivA=Math.max(LT>1?.05:.12,Math.min(.9,(LT>1?.05:.12)+.4*(z-1)));
  /* fill maps: the sea drawn again over the land colours along the sharp coast */
  if(coast&&!I.drewRaster){/* cut the land colours back to the sharp coast, then put the sea colour (which may be clear) under the gap */
@@ -336,7 +346,7 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
   /* lakes in the rivers' own blue (unless a colour is chosen in the palette) */const lf=sat?"rgba(64,138,214,0.76)":elev?"#bedaee"/* Elevation: lakes in its lightest blue (the shallowest water on its scale) */:I.drewRaster?((window.gfLakeColor&&gfLakeColor())||seaC||rivCol):(I.ocean||"#5797cf");/* Elevation: lakes a clear blue, apart from the pale shallow sea (they looked white) */
   const ls=sat?"rgba(205,228,255,0.55)":rel?"rgba(40,90,140,0.45)":"rgba(255,255,255,0.5)";ctx.lineWidth=.4;
   const vis=K=>{if(!sat)return 1;const d=Math.hypot(K.bb[2]-K.bb[0],K.bb[3]-K.bb[1]);const za=3*Math.pow(.6/Math.max(.005,d),.6);return Math.min(1,Math.max(0,(g.zoom-za)/za))};
-  each(d=>{const ne=window.gfSeaLake&&gfSeaLake.ne();/* (Elevation: pieces of sea that lie in a sea lake's rough outline are left to the depth picture: filled, they made straight-edged blocks off Maracaibo) */const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster&&!elev?bigLakes(d).filter(K=>!isCaspian(K)&&!(shal&&isNamedSea(K))):[]);/* (Relief: a named sea lake's tile-sized piece of sea is not filled: it runs on to the tile's edge, over the Gulf of Venezuela, and
+  const PER=[];each((d,tl)=>{const ne=window.gfSeaLake&&gfSeaLake.ne();/* (Elevation: pieces of sea that lie in a sea lake's rough outline are left to the depth picture: filled, they made straight-edged blocks off Maracaibo) */const L0=d.lakes.filter(K=>K.cls!=="river"&&!(I.drewRaster&&isCaspian(K))).concat(I.drewRaster&&!elev?bigLakes(d).filter(K=>!isCaspian(K)&&!(shal&&isNamedSea(K))):[]);/* (Relief: a named sea lake's tile-sized piece of sea is not filled: it runs on to the tile's edge, over the Gulf of Venezuela, and
      made straight-edged blocks there; the lake is the tiles' own sharp lake and the outline above) */
    /* lakes open to the sea look like the sea: left to the Natural Earth picture, sea-coloured on Bright */
    if(seaC)seaLinks(d);/* (every tile on show was looked at first, below) *//* big lakes that the tiles store as sea (Lake Albert, the Great Lakes) stay lakes, unless they are a known sea lake (Maracaibo) */const SL=seaC?L0.filter(K=>seaJ(K)||(K._big&&!isCaspian(K)&&window.gfSeaLake&&gfSeaLake(K.n||""))):rel?L0.filter(isSeaLake):[],L=L0.filter(K=>!SL.includes(K));
@@ -345,16 +355,19 @@ function draw1(g,ctx,I,s){JUMP=g._gfProj?g.size().w*.25:Infinity;const pj=projec
    const isLk=K=>isSeaLake(K)||(window.gfSeaLake&&K.n&&gfSeaLake(K.n));
    const fillSet=(L2,c)=>{if(!L2.length)return;ctx.fillStyle=c;L2.forEach(K=>{ctx.beginPath();K.rings.forEach(r=>ringPath(ctx,pj,r,true));ctx.fill("evenodd")})};
    if(elev){fillSet(SL.filter(isLk),lf);fillSet(SL.filter(K=>!isLk(K)),seaC)}else if(shal){/* Relief: the named sea lakes in the shallow-sea colour */fillSet(SL.filter(isNamedSea),shal);/* other water joined to the sea (lagoons, bays) in the sea colour read off the picture, else the shallow sea */fillSet(SL.filter(K=>!isNamedSea(K)),seaR||shal)}else fillSet(SL,seaC||"#6fa3cd")}
-   /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full */
-   [[0,1],[1,.4]].forEach(([dry,fa])=>{const M=L.filter(K=>!!K.int===!!dry);if(!M.length)return;
-    const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
-    groups.forEach(([lo,hi])=>{const G=M.filter(K=>{const v=vis(K);return v>lo&&v<=hi||(!sat&&true)});if(!G.length)return;const a=sat?(lo+hi)/2:1;
-     ctx.globalAlpha=Math.min(1,a)*fa;ctx.fillStyle=lf;/* each lake on its own, even-odd: its islands (Ometepe in Lake Nicaragua) stay holes whichever way their rings run */G.forEach(K=>{ctx.beginPath();K.rings.forEach(r=>ringPath(ctx,pj,r,true));ctx.fill("evenodd")});
-     if(I.drewRaster||dry){ctx.globalAlpha=Math.min(1,a);ctx.strokeStyle=ls;if(dry)ctx.setLineDash([3,2]);ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>edgePath(ctx,pj,r,true)));ctx.stroke();ctx.setLineDash([])}})});ctx.globalAlpha=1})}
+   PER.push({t:tl,L})});
+  /* lakes that are often dry (Lake Eyre, salt pans) are drawn faint, with a dashed edge, so they do not look full. A see-through
+     fill is drawn whole into a layer first, tile by tile, and laid on at its strength once: drawn straight on, the tiles' fills
+     overlapped by a pixel at their shared edges and showed a darker seam across the water */
+  const lfo=sat?"rgb(64,138,214)":lf,lfa=sat?.76:1;
+  [[0,1],[1,.4]].forEach(([dry,fa])=>{const groups=sat?[[.25,.5],[.5,.75],[.75,1.01]]:[[0,1.01]];
+   groups.forEach(([lo,hi])=>{const a=sat?(lo+hi)/2:1;const GT=PER.map(({t,L})=>({t,G:L.filter(K=>!!K.int===!!dry&&(!sat||(v=>v>lo&&v<=hi)(vis(K))))})).filter(x=>x.G.length);if(!GT.length)return;
+    layered(ctx,Math.min(1,a)*fa*lfa,c=>{c.fillStyle=lfo;GT.forEach(({t,G})=>{c.save();if(boxClip(c,pj,t)){/* each lake on its own, even-odd: its islands (Ometepe in Lake Nicaragua) stay holes whichever way their rings run */G.forEach(K=>{c.beginPath();K.rings.forEach(r=>ringPath(c,pj,r,true));c.fill("evenodd")})}c.restore()})});
+    if(I.drewRaster||dry){ctx.globalAlpha=Math.min(1,a);ctx.strokeStyle=ls;if(dry)ctx.setLineDash([3,2]);GT.forEach(({t,G})=>{ctx.save();if(boxClip(ctx,pj,t)){ctx.beginPath();G.forEach(K=>K.rings.forEach(r=>edgePath(ctx,pj,r,true)));ctx.stroke()}ctx.restore()});ctx.setLineDash([]);ctx.globalAlpha=1}})})}
  /* Satellite: the tiles give the sharp coast and borders only; rivers are the map's own major ones (and lakes are in the photo) */
  if(ov.rivers&&!sat){ctx.lineJoin="round";ctx.lineCap="round";ctx.globalAlpha=rivA;
   /* wide rivers drawn as water areas, in the river colour */
-  const RC=(!elev&&I.drewRaster&&window.gfRiverColor&&gfRiverColor())/* (the Relief map: the Palette's River colour) */||(!elev&&seaC)||rivCol;ctx.fillStyle=RC;if(seaC&&!elev)ctx.globalAlpha=1;each(d=>{ctx.beginPath();d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(ctx,pj,r,true))});ctx.fill("evenodd")});ctx.globalAlpha=rivA;
+  const RC=(!elev&&I.drewRaster&&window.gfRiverColor&&gfRiverColor())/* (the Relief map: the Palette's River colour) */||(!elev&&seaC)||rivCol;ctx.globalAlpha=1;layered(ctx,seaC&&!elev?1:rivA,c=>{c.fillStyle=RC;s.tiles.forEach(t=>{if(!t.d)return;c.save();if(boxClip(c,pj,t)){c.beginPath();t.d.lakes.forEach(K=>{if(K.cls==="river")K.rings.forEach(r=>ringPath(c,pj,r,true))});c.fill("evenodd")}c.restore()})});ctx.globalAlpha=rivA;
   /* a river stops at a lake's shore: inside each tile, its lakes are cut out of where rivers are drawn */
   const lakeOut=d=>{if(!ov.lakes)return;const K=d.lakes.filter(k=>k.cls!=="river").concat(bigLakes(d));if(!K.length)return;const{w,h}=g.size();ctx.beginPath();ctx.rect(-60,-60,w+120,h+120);K.forEach(k=>k.rings.forEach(r=>ringPath(ctx,pj,r,true)));ctx.clip("evenodd")};
   /* major rivers bold from the start; every other river fades in at its own zoom, by how far it reaches (long ones first,
